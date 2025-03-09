@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Ignorer les fichiers spécifiques à Laravel
 /vendor
 /node_modules
@@ -40,3 +41,5 @@ yarn-error.log
 
 # Ignorer les fichiers de Laravel Nova (si tu l’utilises)
 /nova
+=======
+
