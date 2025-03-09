@@ -1,0 +1,42 @@
+# Ignorer les fichiers spécifiques à Laravel
+/vendor
+/node_modules
+/storage
+/storage/*.key
+/storage/oauth-private.key
+/storage/oauth-public.key
+/storage/framework/*
+/storage/logs/*
+/bootstrap/cache/*
+/public/hot
+/public/storage
+/public/build
+.env
+.env.*
+/auth.json
+
+# Ignorer les fichiers de cache PHP
+/.phpunit.cache
+/.phpunit.result.cache
+/.phpactor.json
+
+# Ignorer les configurations de développement
+Homestead.json
+Homestead.yaml
+/.idea
+/.vscode
+/.nova
+/.fleet
+/.zed
+
+# Ignorer les fichiers de debug
+npm-debug.log
+yarn-error.log
+
+# Ignorer les fichiers de JetBrains IDEs (PHPStorm, WebStorm)
+/.idea/
+/*.iml
+/.phpstorm.meta.php
+
+# Ignorer les fichiers de Laravel Nova (si tu l’utilises)
+/nova
