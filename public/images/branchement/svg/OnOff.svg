@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Capa_1" data-name="Capa 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2651.88 1253.53">
+  <defs>
+    <style>
+      .cls-1 {
+        font-family: MyriadPro-Regular, 'Myriad Pro';
+        font-size: 413.45px;
+      }
+
+      .cls-1, .cls-2 {
+        fill: #004461;
+      }
+
+      .cls-3 {
+        fill: #e94d2a;
+        font-family: NewRubrik-Bold, 'New Rubrik';
+        font-size: 263.62px;
+        font-weight: 700;
+      }
+
+      .cls-4 {
+        letter-spacing: 0em;
+      }
+
+      .cls-5 {
+        letter-spacing: -.01em;
+      }
+    </style>
+  </defs>
+  <path class="cls-2" d="m1140.73,172.4c0-16.5,13.5-30,30-30s30,13.5,30,30v268.7c0,16.5-13.5,30-30,30s-30-13.5-30-30V172.4Z"/>
+  <path class="cls-2" d="m1170.73,697.61c-99.96,0-181,81.04-181,181s81.04,181,181,181,181-81.04,181-181-81.04-181-181-181Zm0,301.6c-66.6,0-120.6-53.99-120.6-120.6s53.99-120.6,120.6-120.6,120.6,53.99,120.6,120.6-53.99,120.6-120.6,120.6Z"/>
+  <g>
+    <path class="cls-2" d="m441.43,724.94c-34,34-79.2,54.7-127.3,54.7s-95.3-20.7-129.3-54.7c-34-34-52.7-79.2-52.7-127.3s18.7-93.2,52.7-127.2c5.7-5.7,13.2-8.8,21.2-8.8s15.6,3.1,21.2,8.8c11.7,11.7,11.7,30.7,0,42.5-22.6,22.5-35.1,52.7-35.1,84.7s12.5,62.2,35.1,84.9c21.7,21.6,54.6,34,86.9,34s63.2-12.4,84.9-34.1c22.7-22.7,35.1-52.8,35.1-84.8s-12.5-62.2-35.2-84.9c-11.7-11.7-11.7-30.7,0-42.4,5.7-5.6,13.2-8.7,21.3-8.7s15.6,3.1,21.2,8.8c34,34,52.7,79.2,52.7,127.2s-18.7,93.3-52.7,127.3Z"/>
+    <path class="cls-2" d="m278.15,410.64c0-16.5,13.5-30,30-30s30,13.5,30,30v180c0,16.5-13.5,30-30,30s-30-13.5-30-30v-180Z"/>
+  </g>
+  <text class="cls-1" transform="translate(618.02 721.51)"><tspan x="0" y="0">=</tspan></text>
+  <text class="cls-3" transform="translate(1534.08 404.5)"><tspan x="0" y="0">Ma</tspan><tspan class="cls-5" x="390.03" y="0">r</tspan><tspan x="493.76" y="0">che</tspan></text>
+  <text class="cls-3" transform="translate(1534.08 964.13)"><tspan x="0" y="0">A</tspan><tspan class="cls-4" x="182.82" y="0">r</tspan><tspan class="cls-5" x="287.88" y="0">r</tspan><tspan x="391.61" y="0">êt</tspan></text>
+</svg>

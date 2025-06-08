@@ -1,0 +1,82 @@
+<!-- NAVBAR AVEC SOUS-MENU CLIQUABLE -->
+<nav class="bg-white border-b shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center">
+
+      <!-- Logo -->
+      <div class="flex items-center mb-4 md:mb-0">
+        <a href="{{ route('index') }}">
+          <img src="/frontend/assets/img/front-pages/branding/LogoOneducPositionG.svg"
+               alt="Logo Onéduc"
+               class="h-[60px] w-auto">
+        </a>
+      </div>
+
+      <!-- Menu -->
+      <div class="flex flex-wrap justify-center md:justify-end items-center gap-10 text-base font-varela text-gray-700">
+
+        <a href="{{ route('index') }}" class="px-2 hover:text-orangeone transition">Accueil</a>
+        <a href="{{ route('categories.all') }}" class="px-2 hover:text-orangeone transition">Formations</a>
+
+        <!-- Association avec sous-menu -->
+        <div x-data="{ open: false }" class="relative">
+          <button
+            @click="open = !open"
+            class="px-2 flex items-center gap-1 hover:text-orangeone transition focus:outline-none"
+          >
+            Association
+            <!-- Icône flèche -->
+            <svg :class="{ 'rotate-180': open }" class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          <!-- Sous-menu -->
+          <ul
+            x-show="open"
+            @click.outside="open = false"
+            x-transition
+            class="absolute left-0 mt-2 bg-white text-gray-900 shadow-md rounded-md py-2 w-48 z-50"
+          >
+            <li>
+              <a href="{{ route('association') }}" class="block px-4 py-2 hover:bg-orangeone hover:text-white transition">Associations</a>
+            </li>
+            <li>
+              <a href="{{ route('adhesion') }}" class="block px-4 py-2 hover:bg-orangeone hover:text-white transition">Adhésions</a>
+            </li>
+            <li>
+                <a href="{{ route('contact') }}" class="block px-4 py-2 hover:bg-orangeone hover:text-white transition">Contactez-nous</a>
+
+            </li>
+          </ul>
+        </div>
+
+        @auth
+          @php
+              $role = Auth::user()->role;
+              $dashboardRoute = match ($role) {
+                  'admin' => route('admin.dashboard'),
+                  'formateur' => route('formateur.dashboard'),
+                  'stagiaire' => route('stagiaire.dashboard'),
+                  default => '#',
+              };
+          @endphp
+          <a href="{{ $dashboardRoute }}" class="btn-oneduc flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M5.121 17.804A9 9 0 0112 15a9 9 0 016.879 2.804M15 10a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            Tableau de bord
+          </a>
+        @else
+          <a href="{{ route('connexion') }}" class="btn-oneduc flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M5.121 17.804A9 9 0 0112 15a9 9 0 016.879 2.804M15 10a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            Connexion
+          </a>
+        @endauth
+
+      </div>
+    </div>
+  </nav>

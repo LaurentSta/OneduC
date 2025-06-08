@@ -1,0 +1,27 @@
+@import url('https://fonts.googleapis.com/css2?family=Raleway:wght@400;700&family=Varela+Round&display=swap');
+@font-face {
+    font-family: 'OpenDyslexic';
+    src: url('/fonts/OpenDyslexic/OpenDyslexic-Regular.woff2') format('woff2'),
+         url('/fonts/OpenDyslexic/OpenDyslexic-Regular.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+  }
+  p {
+    @apply font-lisible;
+  }
+  h1 {
+    @apply font-raleway text-4xl md:text-5xl font-bold text-gray-900 mb-6;
+  }
+
+  h2 {
+    @apply font-varela;
+  }
+  .video-js {
+    position: static !important;
+    width: auto !important;
+    height: auto !important;
+}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
