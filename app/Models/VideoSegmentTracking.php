@@ -9,7 +9,7 @@ class VideoSegmentTracking extends Model
 {
     protected $fillable = [
         'user_id',
-        'video_id',
+        'lecture_id',
         'segment_start',
         'segment_end',
         'watch_count',
@@ -21,8 +21,8 @@ class VideoSegmentTracking extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function video(): BelongsTo
+    public function lecture(): BelongsTo
     {
-        return $this->belongsTo(Video::class);
+        return $this->belongsTo(ModuleLecture::class, 'lecture_id');
     }
 }
