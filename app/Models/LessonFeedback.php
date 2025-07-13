@@ -15,6 +15,8 @@ class LessonFeedback extends Model
         'comment',
         'type',
         'rating',
+        'response',
+        'status',
         'urgency', // ✅ Ajout ici
     ];
 
