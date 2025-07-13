@@ -13,7 +13,7 @@
      {
          Schema::create('module_sections', function (Blueprint $table) {
              $table->id();
-             $table->integer('module_id');
+            $table->foreignId('module_id')->constrained('modules')->onDelete('cascade');
              $table->string('section_title');
              $table->timestamps();
          });

@@ -13,8 +13,8 @@
      {
          Schema::create('module_lectures', function (Blueprint $table) {
              $table->id();
-             $table->integer('module_id')->nullable();
-             $table->unsignedBigInteger('section_id');
+            $table->foreignId('module_id')->constrained('modules')->onDelete('cascade');
+            $table->foreignId('section_id')->constrained('module_sections')->onDelete('cascade');
              $table->string('lecture_title')->nullable();
              $table->string('video')->nullable();
              $table->string('url')->nullable();
