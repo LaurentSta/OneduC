@@ -11,7 +11,7 @@
       */
      public function up(): void
      {
-        Schema::create('module_user', function (Blueprint $table) {
+       Schema::create('learning_objectives', function (Blueprint $table) {
             $table->id();
             $table->foreignId('module_id')->constrained('modules')->onDelete('cascade');
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
@@ -28,6 +28,6 @@
       */
      public function down(): void
      {
-         Schema::dropIfExists('module_goals');
+        Schema::dropIfExists('learning_objectives');
      }
  };
