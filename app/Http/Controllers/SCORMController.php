@@ -65,27 +65,7 @@ class SCORMController extends Controller
             $scormScore->save();
         }
 
-        // ❗ 3. lesson_status = completed / incomplete
-        if ($scormKey === 'cmi.core.lesson_status') {
-            $existing = ScormScore::where('user_id', $userId)
-                ->where('lecture_id', $lectureId)
-                ->first();
-
-            // Si aucune entrée → on crée
-            if (!$existing) {
-                ScormScore::create([
-                    'user_id' => $userId,
-                    'lecture_id' => $lectureId,
-                    'lesson_status' => $scormValue,
-                ]);
-            } else {
-                // Si déjà 'completed', on ne modifie pas
-                if ($existing->lesson_status !== 'completed') {
-                    $existing->lesson_status = $scormValue;
-                    $existing->save();
-                }
-            }
-        }
+        
 
 
         // 🕒 Traitement de cmi.core.session_time

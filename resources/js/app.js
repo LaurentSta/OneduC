@@ -1,4 +1,7 @@
+import '../css/app.css'; // ✅ Ajoute Tailwind
+
 import './bootstrap';
+
 /*
   Add custom scripts here
 */
