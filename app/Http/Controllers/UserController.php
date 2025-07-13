@@ -350,10 +350,6 @@ class UserController extends Controller
 
         return back()->with('message', 'Votre mot de passe a été modifié avec succès.');
     }
-    public function groupesStagiaire()
-    {
-        return $this->belongsToMany(Group::class, 'group_user');
-    }
 
     public function showCodeLoginForm()
     {
