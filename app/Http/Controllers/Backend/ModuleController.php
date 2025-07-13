@@ -419,15 +419,6 @@ public function section($id, $section_id)
     }
 
 
-        public function sections()
-    {
-        return $this->hasMany(ModuleSection::class);
-    }
-
-    public function lectures()
-    {
-        return $this->hasMany(ModuleLecture::class);
-    }
 
     public function lire(Request $request, $id)
     {
