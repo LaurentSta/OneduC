@@ -13,7 +13,6 @@ use App\Models\ScormResult;
 use App\Models\ModuleLecture;
 use App\Models\ModuleSection;
 
-
 class AdminController extends Controller
 {
     /**
