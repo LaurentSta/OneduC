@@ -54,7 +54,7 @@
                         <h4 class="text-sm font-medium text-gray-600 font-varela">Modules associés :</h4>
                         @forelse ($groupe->modules as $module)
                             <a href="{{ route('frontend.modules.show', $module->id) }}"
-                               class="inline-block bg-orangeone/10 text-orangeone text-xs font-varela mr-2 mb-2 px-3 py-1 rounded-full hover:bg-orangeone/20 transition">
+                            class="inline-block bg-vertone/10 text-vertone text-xs font-varela mr-2 mb-2 px-3 py-1 rounded-full hover:bg-vertone/20 transition">
                                 {{ Str::limit($module->module_title, 30) }}
                             </a>
                         @empty
