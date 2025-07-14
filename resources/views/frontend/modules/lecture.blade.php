@@ -14,7 +14,7 @@
             <script>
                 window.SCORM_CONTEXT = {
                     lecture_id: {{ $selectedLecture->id }},
-                    next_url: "{{ route('module.lecture', ['id' => $module->id, 'lecon' => $nextLecture->id ?? 0]) }}"
+                    next_url: "{{ route('module.lesson', ['module' => $module->id, 'section' => $nextLecture->section_id ?? $selectedLecture->section_id, 'lesson' => $nextLecture->id ?? 0]) }}"
                 };
             </script>
 
@@ -152,10 +152,10 @@
     if (nextLecture) {
         // Si la prochaine leçon est dans la même section → on continue
         if (nextLecture.section_id === currentSectionId) {
-            nextUrl = `/formation/module/${moduleId}/lecture?lecon=${nextLecture.id}`;
+            nextUrl = `/formation/module/${moduleId}/section/${nextLecture.section_id}/lesson/${nextLecture.id}`;
         } else {
             // Sinon → on passe par la vue section
-            nextUrl = `/module/${moduleId}/section/${nextLecture.section_id}`;
+            nextUrl = `/formation/module/${moduleId}/section/${nextLecture.section_id}`;
         }
     }
 
