@@ -420,13 +420,19 @@ public function section($id, $section_id)
 
 
 
-    public function lire(Request $request, $id)
+    public function lire($module, $section, $lesson)
     {
-        $module = Module::with('sections.lectures')->findOrFail($id);
-        $selectedLecture = null;
+        $module = Module::with('sections.lectures')->findOrFail($module);
+        $sectionModel = $module->sections->firstWhere('id', $section);
 
-        if ($request->has('lecon')) {
-            $selectedLecture = \App\Models\ModuleLecture::find($request->lecon);
+        if (!$sectionModel) {
+            abort(404, 'Section non trouvée');
+        }
+
+        $selectedLecture = $sectionModel->lectures->firstWhere('id', $lesson);
+
+        if (!$selectedLecture) {
+            abort(404, 'Leçon non trouvée');
         }
 
         $nextLecture = null;
