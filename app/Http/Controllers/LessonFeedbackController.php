@@ -29,9 +29,10 @@ class LessonFeedbackController extends Controller
         $lecture = ModuleLecture::with('section.module')->findOrFail($validated['lesson_id']);
         $moduleId = $lecture->section->module->id ?? null;
 
-        return redirect()->route('module.lecture', [
-            'id' => $moduleId,
-            'lecon' => $lecture->id,
+        return redirect()->route('module.lesson', [
+            'module' => $moduleId,
+            'section' => $lecture->section_id,
+            'lesson'  => $lecture->id,
         ])->with('success', 'Merci pour votre retour !')
         ->with('open_modal', true);
     }

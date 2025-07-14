@@ -125,7 +125,7 @@
                                                 <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-5.197-3.027A1 1 0 008 9v6a1 1 0 001.555.832l5.197-3.027a1 1 0 000-1.664z"/>
                                                 </svg>
-                                                <a href="{{ route('module.lecture', ['id' => $module->id, 'lecon' => $lecture->id]) }}"
+                                                <a href="{{ route('module.lesson', ['module' => $module->id, 'section' => $section->id, 'lesson' => $lecture->id]) }}"
                                                     class="flex items-center justify-between px-2 py-1 hover:bg-gray-100 rounded text-sm font-medium text-gray-800">
                                                     <span>{{ $lecture->lecture_title }}</span>
                                                     <span class="ml-2">
@@ -184,7 +184,7 @@
                         @endphp
 
                         @if($firstSection)
-                            <a href="{{ route('module.section', ['id' => $module->id, 'section_id' => $firstSection->id]) }}"
+                            <a href="{{ route('module.section', ['module' => $module->id, 'section' => $firstSection->id]) }}"
                             class="block text-center bg-indigo-600 hover:bg-indigo-700 text-white font-semibold mt-6 py-2 rounded">
                                 🚀 Démarrer la formation
                             </a>
