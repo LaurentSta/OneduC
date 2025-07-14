@@ -6,7 +6,7 @@
     @foreach ($module->sections as $section)
     <div class="mb-4">
         <h3 class="text-lg font-semibold text-gray-700">
-    <a href="{{ route('module.section', ['id' => $module->id, 'section_id' => $section->id]) }}"
+    <a href="{{ route('module.section', ['module' => $module->id, 'section' => $section->id]) }}"
        class="hover:underline hover:text-blue-600 transition-colors">
         {{ $section->section_title }}
     </a>
@@ -25,7 +25,7 @@
         <ul class="mt-2 space-y-1">
             @foreach ($section->lectures as $lec)
                 <li>
-                    <a href="{{ route('module.lecture', ['id' => $module->id, 'lecon' => $lec->id]) }}"
+                    <a href="{{ route('module.lesson', ['module' => $module->id, 'section' => $section->id, 'lesson' => $lec->id]) }}"
                        class="block px-1 py-1 rounded hover:bg-blue-100 text-sm font-medium
                        {{ isset($selectedLecture) && $selectedLecture->id == $lec->id ? 'bg-blue-50 font-semibold' : '' }}">
                         {{ $lec->lecture_title }}

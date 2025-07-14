@@ -57,13 +57,16 @@ Route::middleware(['auth'])->group(function () {
 // ----------------------------------------------------------
 // Affiche une leçon précise
 Route::get('/lecture/{id}', [\App\Http\Controllers\Frontend\LectureController::class, 'show'])->name('lecture.show');
-// Lance la lecture d'un module dans le contexte d'une formation
-Route::get('/formation/module/{id}/lecture', [\App\Http\Controllers\Backend\ModuleController::class, 'lire'])->name('module.lecture');
+// Lance la lecture d'une leçon dans le contexte d'une formation
+Route::get(
+    '/formation/module/{module}/section/{section}/lesson/{lesson}',
+    [ModuleController::class, 'lire']
+)->name('module.lesson');
 // ----------------------------------------------------------
 // 🎥 Lecture d’une section
 // ----------------------------------------------------------
 // Affiche une section précise d'un module
-Route::get('/module/{id}/section/{section_id}', [ModuleController::class, 'section'])->name('module.section');
+Route::get('/formation/module/{module}/section/{section}', [ModuleController::class, 'section'])->name('module.section');
 
 
 // ----------------------------------------------------------
