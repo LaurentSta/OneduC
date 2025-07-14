@@ -5,7 +5,7 @@
 
     <h2 class="text-2xl font-bold mb-6 text-[#004461]">Ajouter une sous-catégorie</h2>
 
-    <form method="POST" action="{{ route('admin.subcategories.all') }}" enctype="multipart/form-data" class="space-y-6">
+    <form method="POST" action="{{ route('admin.subcategories.store') }}" enctype="multipart/form-data">
         @csrf
 
         <!-- Catégorie parente -->

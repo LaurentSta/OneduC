@@ -6,6 +6,7 @@ use App\Models\VideoSegmentTracking;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 
+
 class VideoSegmentTrackingController extends Controller
 {
     public function store(Request $request)

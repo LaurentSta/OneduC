@@ -13,9 +13,11 @@
                 </div>
 
                 <div class="mt-4">
-                    <a href="{{ route('frontend.modules.show', $module->id) }}" class="btn-oneduc w-full text-center">
-                        Voir le module
+                    <a href="{{ route('stagiaire.module.detail', $module->id) }}"
+                    class="btn-oneduc w-full text-center">
+                    Commencer le module
                     </a>
+
 
                 </div>
             </div>
