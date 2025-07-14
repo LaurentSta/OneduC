@@ -211,34 +211,46 @@ class FormateurController extends Controller
     })
     ->findOrFail($id);
 
-            return view('formateur.backend.stagiaires.edit', compact('stagiaire'));
+            return view('formateur.backend.stagiaires.edit_stagiaire', compact('stagiaire'));
         }
-    public function updateStagiaire(Request $request, $id)
+    
+        public function updateStagiaire(Request $request, $id)
         {
             $stagiaire = User::where('role', 'stagiaire')
-    ->where(function ($query) {
-        $query->where('formateur_id', auth()->id())
-              ->orWhereHas('groupesStagiaire', function ($q) {
-                  $q->where('instructor_id', auth()->id());
-              });
-    })
-    ->findOrFail($id);
-
+                ->where(function ($query) {
+                    $query->where('formateur_id', auth()->id())
+                        ->orWhereHas('groupesStagiaire', function ($q) {
+                            $q->where('instructor_id', auth()->id());
+                        });
+                })
+                ->findOrFail($id);
 
             $request->validate([
                 'prenom' => 'required|string|max:255',
                 'name' => 'required|string|max:255',
                 'email' => 'required|email|unique:users,email,' . $stagiaire->id,
+                'password' => 'nullable|string|min:8',
             ]);
 
-            $stagiaire->update([
-                'prenom' => $request->prenom,
-                'name' => $request->name,
-                'email' => $request->email,
-            ]);
+            $stagiaire->prenom = $request->prenom;
+            $stagiaire->name = $request->name;
+            $stagiaire->email = $request->email;
+
+            if ($request->filled('password')) {
+                $stagiaire->password = Hash::make($request->password);
+            }
+
+            $stagiaire->save();
 
             return redirect()->route('formateur.stagiaires.index')->with('success', 'Stagiaire modifié avec succès ✅');
         }
+
+        // Supprimer un stagiaire
+
+
+
+
+
     public function destroyStagiaire($id)
         {
             $stagiaire = User::where('role', 'stagiaire')
