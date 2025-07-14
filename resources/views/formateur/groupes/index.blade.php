@@ -1,75 +1,96 @@
 @extends('formateur.dashboard')
 
 @section('formateur')
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <h2 class="text-3xl font-bold mb-6 text-gray-800">Mes groupes</h2>
 
+{{-- 🧩 EN-TÊTE DE PAGE --}}
+<div class="container mx-auto px-4 pt-8 pb-2">
+    <div class="bg-white rounded-[20px] shadow-md px-8 py-0 mb-4 w-full max-w-[1285px] mx-auto">
+        <div class="grid grid-cols-12 gap-6 items-center">
+            <div class="col-span-12 md:col-span-8">
+                <x-typography variant="titre">Mes groupes de formation</x-typography>
+                <x-typography variant="sous-titre" class="font-varela text-sous-titre text-orangeone">
+                    Gérez facilement vos groupes, modules et stagiaires.
+                </x-typography>
+                <x-typography>
+                    Retrouvez ici tous vos groupes. Vous pouvez les modifier, leur associer des modules ou ajouter des stagiaires.
+                </x-typography>
+            </div>
+            <div class="col-span-12 md:col-span-4 flex justify-center md:justify-end">
+                <div class="w-full max-w-xs">
+                    {!! file_get_contents(public_path('frontend/assets/img/illustrations/AssociationOneduc.svg')) !!}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- 💼 CONTENU PRINCIPAL --}}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
     @if (session('success'))
-        <div class="bg-green-100 text-green-800 px-4 py-3 rounded mb-6">
+        <div class="bg-green-100 text-green-800 px-4 py-3 rounded mb-6 font-lisible">
             {{ session('success') }}
         </div>
     @endif
 
-    @if ($groupes->isEmpty())
-        <p class="text-gray-500">Vous n’avez encore créé aucun groupe.</p>
-    @else
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            @foreach ($groupes as $groupe)
-                <div class="bg-white border border-gray-200 rounded-2xl shadow p-5 flex flex-col justify-between h-full">
-                    <div>
-                        <h3 class="text-xl font-semibold text-blue-700 mb-1">{{ $groupe->name }}</h3>
-                        <p class="text-gray-600 text-sm mb-4">{{ Str::limit($groupe->description, 120) }}</p>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {{-- ➕ Carte "Ajouter un groupe" --}}
+        <a href="{{ route('formateur.groupes.create') }}"
+           class="flex flex-col items-center justify-center border-4 border-dashed border-orangeone rounded-2xl p-10 h-full text-orangeone hover:bg-orangeone hover:text-white transition font-varela text-lg font-semibold">
+            Ajouter un groupe
+        </a>
 
-                        <div class="mb-3">
-                            <h4 class="text-sm font-medium text-gray-500">Modules associés :</h4>
-                            <ul class="list-disc list-inside text-sm text-gray-700 space-y-1">
-                                @forelse ($groupe->modules as $module)
-                                <li>
-                                    <a href="{{ route('frontend.modules.show', $module->id) }}" class="text-blue-500 hover:underline">
-                                        {{ $module->module_title }}
-                                    </a>
-                                </li>
-                                @empty
-                                    <li class="text-gray-400 italic">Aucun module</li>
-                                @endforelse
-                            </ul>
-                        </div>
+        {{-- 📋 Liste des groupes --}}
+        @forelse ($groupes as $groupe)
+            <div class="bg-white border border-gray-200 rounded-2xl shadow p-6 flex flex-col justify-between">
+                <div class="flex-1">
+                    <h3 class="text-xl font-bold text-bleuone font-raleway mb-2 truncate">
+                        {{ $groupe->name }}
+                    </h3>
+                    <p class="text-sm text-gray-700 font-lisible mb-4 line-clamp-3">
+                        {{ $groupe->description }}
+                    </p>
 
-                        <div class="mb-2">
-                            <h4 class="text-sm font-medium text-gray-500">Stagiaires :</h4>
-                            <p class="text-gray-700 text-sm">
-                                {{ $groupe->students->count() }} stagiaire{{ $groupe->students->count() > 1 ? 's' : '' }}
-                            </p>
-                        </div>
+                    <div class="mb-4">
+                        <h4 class="text-sm font-medium text-gray-600 font-varela">Modules associés :</h4>
+                        @forelse ($groupe->modules as $module)
+                            <a href="{{ route('frontend.modules.show', $module->id) }}"
+                               class="inline-block bg-orangeone/10 text-orangeone text-xs font-varela mr-2 mb-2 px-3 py-1 rounded-full hover:bg-orangeone/20 transition">
+                                {{ Str::limit($module->module_title, 30) }}
+                            </a>
+                        @empty
+                            <p class="text-sm text-gray-400 font-lisible italic">Aucun module</p>
+                        @endforelse
                     </div>
-                    <form action="{{ route('formateur.groupes.destroy', $groupe->id) }}" method="POST" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce groupe ?');" class="ml-2">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-md transition">
-                            🗑️ Supprimer
-                        </button>
-                    </form>
 
-
-                    <div class="mt-4 flex justify-end">
-                        <a href="{{ route('formateur.groupes.edit', $groupe->id) }}"
-                           class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md transition">
-                            ✏️ Modifier
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-600 font-varela">Stagiaires :</h4>
+                        <a href="{{ route('formateur.stagiaires.index') }}"
+                        class="text-sm text-orangeone hover:underline font-lisible">
+                        {{ $groupe->students->count() }} stagiaire{{ $groupe->students->count() > 1 ? 's' : '' }}
                         </a>
+
                     </div>
                 </div>
-            @endforeach
 
-
-        </div>
-    @endif
-    <!-- Bloc Ajouter un groupe -->
-                <a href="{{ route('formateur.groupes.create') }}"
-                class="flex flex-col items-center justify-center border-2 border-dashed border-[#E94D2A] rounded-2xl p-10 h-full text-[#E94D2A] hover:bg-[#E94D2A] hover:text-white transition">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-16 h-16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-                </svg>
-                <div class="mt-4 text-lg font-semibold">Ajouter un groupe</div>
-                </a>
+                <div class="flex justify-between items-center mt-6 space-x-2">
+                    <a href="{{ route('formateur.groupes.edit', $groupe->id) }}" class="btn-oneduc w-1/2 text-center">
+                        Modifier
+                    </a>
+                    <form action="{{ route('formateur.groupes.destroy', $groupe->id) }}" method="POST"
+                          onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce groupe ?');"
+                          class="w-1/2">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn-oneduc bg-bleuone border-bleuone hover:bg-white hover:text-bleuone w-full">
+                            Supprimer
+                        </button>
+                    </form>
+                </div>
+            </div>
+        @empty
+            <p class="text-gray-500 col-span-full font-lisible">Aucun groupe n’a encore été créé.</p>
+        @endforelse
+    </div>
 </div>
+
 @endsection
