@@ -41,11 +41,12 @@
         {{-- ▶️ Bouton de démarrage --}}
         @php $firstLecture = $section->lectures->first(); @endphp
         @if($firstLecture)
-            <a href="{{ route('module.lesson', ['module' => $module->id, 'section' => $section->id, 'lesson' => $firstLecture->id]) }}"
-               class="inline-block bg-orangeone text-white font-medium px-6 py-2 rounded shadow hover:bg-orange-600 transition">
+            <a href="{{ route('stagiaire.module.lecture', ['module' => $module->id, 'section' => $section->id, 'lesson' => $firstLecture->id]) }}"
+            class="inline-block bg-orangeone text-white font-medium px-6 py-2 rounded shadow hover:bg-orange-600 transition">
                 ▶️ Commencer cette section
             </a>
         @endif
+
 
         {{-- 🎬 Vidéo pédagogique --}}
 <div class="relative w-full" style="padding-top: 56.25%;">
@@ -67,7 +68,7 @@
             <ul class="space-y-2">
                 @foreach($section->lectures as $lecture)
                     <li>
-                        <a href="{{ route('module.lesson', ['module' => $module->id, 'section' => $section->id, 'lesson' => $lecture->id]) }}"
+                        <a href="{{ route('stagiaire.module.lecture', ['module' => $module->id, 'section' => $section->id, 'lesson' => $lecture->id]) }}"
                            class="text-blue-600 hover:underline">{{ $lecture->lecture_title }}</a>
                     </li>
                 @endforeach

@@ -194,21 +194,26 @@ class StagiaireController extends Controller
 
         }
     public function StagiaireModules()
-        {
-            $user = Auth::user();
+    {
+        $user = Auth::user();
 
-            // Récupérer tous les groupes où il est stagiaire
-            $groupes = \App\Models\Group::with('modules')
-                ->whereHas('students', function ($query) use ($user) {
-                    $query->where('email', $user->email);
-                })
-                ->get();
+        // Récupérer les groupes du stagiaire
+        $groupes = \App\Models\Group::with('modules')
+            ->whereHas('students', function ($query) use ($user) {
+                $query->where('email', $user->email);
+            })
+            ->get();
 
-            // Fusionner tous les modules (en supprimant les doublons)
-            $modules = $groupes->flatMap->modules->unique('id');
+        // Extraire les modules liés, sans doublons
+        $modules = $groupes->flatMap->modules->unique('id')->values();
 
-            return view('stagiaire.stagiaire_modules', compact('modules'));
-        }
+        // Requête Eloquent avec chargement des sections
+        $eloquentModules = \App\Models\Module::whereIn('id', $modules->pluck('id'))->with('sections')->get();
+
+        return view('stagiaire.stagiaire_modules', ['modules' => $eloquentModules]);
+    }
+
+
 
 
     public function StagiaireResultats()
