@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\StagiaireController;
+use App\Http\Controllers\Backend\ModuleController;
 
 Route::middleware(['auth', 'role:stagiaire', 'track.time'])->prefix('stagiaire')->name('stagiaire.')->group(function () {
 
@@ -18,4 +19,9 @@ Route::middleware(['auth', 'role:stagiaire', 'track.time'])->prefix('stagiaire')
     Route::get('/modules/{id}', [StagiaireController::class, 'StagiaireModuleDetail'])->name('module.detail');
     Route::get('/resultats', [StagiaireController::class, 'StagiaireResultats'])->name('resultats');
 
+    // Lecture d'une section d’un module
+    Route::get('/modules/{module}/sections/{section}', [ModuleController::class, 'section'])->name('module.section');
+
+    // Lecture d'une leçon
+    Route::get('/modules/{module}/sections/{section}/lessons/{lesson}', [ModuleController::class, 'lire'])->name('module.lecture');
 });
