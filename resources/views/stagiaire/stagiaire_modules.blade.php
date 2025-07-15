@@ -2,23 +2,67 @@
 
 @section('content')
 <div class="p-6">
-    <h1 class="text-titre font-raleway text-bleuone mb-6">Mes modules de formation</h1>
+    <div class="bg-white rounded-[20px] shadow-md p-8 mb-6">
+        <x-typography variant="titre">Mes modules de formation</x-typography>
+        <x-typography variant="sous-titre" class="text-orangeone">
+            Accédez à vos contenus et suivez votre progression.
+        </x-typography>
+    </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         @forelse($modules as $module)
-            <div class="bg-white shadow-lg rounded-xl p-5 flex flex-col justify-between">
-                <div>
-                    <h2 class="text-lg font-varela text-orangeone mb-2">{{ $module->module_title }}</h2>
-                    <p class="font-lisible text-gray-600 text-sm">{{ Str::limit($module->description, 100) }}</p>
-                </div>
+            <div class="bg-white shadow-lg rounded-xl overflow-hidden flex flex-col">
+                {{-- Image du module --}}
+                @if($module->module_image)
+                    <img src="{{ asset('storage/' . $module->module_image) }}"
+                         alt="Image du module"
+                         class="w-full h-40 object-cover">
+                @endif
 
-                <div class="mt-4">
-                    <a href="{{ route('stagiaire.module.detail', $module->id) }}"
-                    class="btn-oneduc w-full text-center">
-                    Commencer le module
-                    </a>
+                <div class="p-5 flex flex-col flex-1 justify-between">
+                    <div>
+                        <h2 class="text-lg font-varela text-bleuone mb-1">{{ $module->module_title }}</h2>
+                        <p class="text-sm text-gray-600 font-lisible mb-3">{{ Str::limit($module->description, 100) }}</p>
 
+                        {{-- Statut et progression --}}
+                        @php
+                            $status = $module->progression_status ?? 'not_started';
+                            $percentage = $module->progression_percent ?? 0;
 
+                            $badgeText = [
+                                'completed' => 'Terminé',
+                                'in_progress' => 'En cours',
+                                'not_started' => 'Non commencé'
+                            ][$status] ?? 'Indéfini';
+
+                            $badgeColor = [
+                                'completed' => 'bg-vertone text-white',
+                                'in_progress' => 'bg-orangeone text-white',
+                                'not_started' => 'bg-gray-200 text-gray-700'
+                            ][$status] ?? 'bg-gray-200 text-gray-700';
+                        @endphp
+
+                        <div class="flex items-center justify-between mt-2">
+                            <span class="text-xs font-varela px-3 py-1 rounded-full {{ $badgeColor }}">
+                                {{ $badgeText }}
+                            </span>
+                            <span class="text-xs text-gray-500 font-lisible">
+                                {{ $percentage }}%
+                            </span>
+                        </div>
+
+                        <div class="w-full bg-gray-200 h-2 rounded mt-2">
+                            <div class="h-2 rounded bg-vertone transition-all duration-500"
+                                 style="width: {{ $percentage }}%"></div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <a href="{{ route('stagiaire.module.detail', $module->id) }}"
+                           class="btn-oneduc w-full text-center">
+                            Accéder au module
+                        </a>
+                    </div>
                 </div>
             </div>
         @empty

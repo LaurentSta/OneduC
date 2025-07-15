@@ -142,11 +142,17 @@ return view('admin.backend.modules.edit_module', compact('module', 'categories',
         'certificat' => 'required|in:1,0',
         'video' => ['nullable', 'url', 'regex:/^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+/i'],
         'evaluation_id' => 'nullable|exists:evaluations,id',
+        'formateur_id' => 'required|exists:users,id',
+
 
     ]);
 
     $imagePath = $module->module_image;
     if ($request->hasFile('module_image')) {
+        if ($module->module_image) {
+            Storage::disk('public')->delete($module->module_image);
+        }
+
         $image = $request->file('module_image');
         $imageName = time() . '_' . Str::slug($request->module_name) . '.' . $image->getClientOriginalExtension();
         $image->storeAs('uploads/modules/images', $imageName, 'public');
@@ -155,11 +161,16 @@ return view('admin.backend.modules.edit_module', compact('module', 'categories',
 
     $headerImagePath = $module->header_image;
     if ($request->hasFile('header_image')) {
+        if ($module->header_image) {
+            Storage::disk('public')->delete($module->header_image);
+        }
+
         $headerImage = $request->file('header_image');
         $headerImageName = time() . '_header_' . Str::slug($request->module_name) . '.' . $headerImage->getClientOriginalExtension();
         $headerImage->storeAs('uploads/modules/headers', $headerImageName, 'public');
         $headerImagePath = 'uploads/modules/headers/' . $headerImageName;
     }
+
 
     // ✅ Vidéo = URL directe
     $videoPath = $request->video;
@@ -189,8 +200,9 @@ return view('admin.backend.modules.edit_module', compact('module', 'categories',
         'evaluation_id' => $request->evaluation_id,
 
     ]);
+    
 
-
+    
     return redirect()->route('admin.modules')->with('success', 'Module mis à jour avec succès !');
 }
 
