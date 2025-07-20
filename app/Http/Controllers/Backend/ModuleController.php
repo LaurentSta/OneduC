@@ -351,17 +351,27 @@ public function section($id, $section_id)
     // 🔹 9. Sauvegarde une nouvelle lecture (cours) dans une section
     public function SaveLecture(Request $request)
     {
-        $lecture = new ModuleLecture();
-        $lecture->module_id = $request->module_id;
-        $lecture->section_id = $request->section_id;
-        $lecture->lecture_title = $request->lecture_title;
-        $lecture->url = $request->lecture_url;
-        $lecture->content = $request->content;
-        $lecture->scorm_path = $request->scorm_path; // ✅ Ajout ici
-        $lecture->save();
+        $request->validate([
+            'module_id' => 'required|exists:modules,id',
+            'section_id' => 'required|exists:module_sections,id',
+            'lecture_title' => 'required|string|max:255',
+        ]);
 
-        return response()->json(['success' => 'Lecture Saved Successfully']);
+       $lastPosition = ModuleLecture::where('section_id', $request->section_id)->max('position') ?? 0;
+
+        ModuleLecture::create([
+            'module_id' => $request->module_id,
+            'section_id' => $request->section_id,
+            'lecture_title' => $request->lecture_title,
+            'position' => $lastPosition + 1,
+            'slide_count' => 0,
+            'question_count' => 0,
+            'scorm_path' => null,
+        ]);
+
+        return response()->json(['success' => 'Leçon enregistrée avec succès.']);
     }
+
 
     // 🔹 10. Affiche le formulaire d’édition d’une lecture
     public function EditLecture($id){
@@ -372,22 +382,29 @@ public function section($id, $section_id)
     }// End Method
 
     // 🔹 11. Met à jour les données d’une lecture
-    public function UpdateModuleLecture(Request $request){
-        $lid = $request->id;
-
-        ModuleLecture::find($lid)->update([
-            'lecture_title' => $request->lecture_title,
-            'url' => $request->url,
-            'content' => $request->content,
-            'scorm_path' => $request->scorm_path, // ✅ LIGNE MANQUANTE
+    public function UpdateModuleLecture(Request $request)
+    {
+        $request->validate([
+            'id' => 'required|exists:module_lectures,id',
+            'lecture_title' => 'required|string|max:255',
+            'scorm_path' => 'nullable|string|max:255',
+            'slide_count' => 'nullable|integer|min:0',
+            'question_count' => 'nullable|integer|min:0',
         ]);
 
-        $notification = array(
-            'message' => 'Module Lecture Updated Successfully',
-            'alert-type' => 'success'
-        );
-        return redirect()->back()->with($notification);
+        $lecture = ModuleLecture::findOrFail($request->id);
+
+        $lecture->update([
+            'lecture_title' => $request->lecture_title,
+            'scorm_path' => $request->scorm_path,
+            'slide_count' => $request->slide_count ?? 0,
+            'question_count' => $request->question_count ?? 0,
+        ]);
+
+        return redirect()->route('admin.modules.lecture.add', ['id' => $lecture->module_id])
+                        ->with('success', 'La lecture a été mise à jour avec succès.');
     }
+
 
     // 🔹 12. Supprime une lecture d’un
 
