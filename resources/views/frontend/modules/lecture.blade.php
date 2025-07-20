@@ -14,7 +14,8 @@
             <script>
                 window.SCORM_CONTEXT = {
                     lecture_id: {{ $selectedLecture->id }},
-                    next_url: "{{ route('module.lesson', ['module' => $module->id, 'section' => $nextLecture->section_id ?? $selectedLecture->section_id, 'lesson' => $nextLecture->id ?? 0]) }}"
+                    
+
                 };
             </script>
 

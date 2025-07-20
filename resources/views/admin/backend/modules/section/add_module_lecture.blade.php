@@ -1,8 +1,6 @@
 @extends('admin.admin_dashboard')
 @section('admin')
-
 <div class="max-w-6xl mx-auto p-6">
-
     <!-- Formulaire d'ajout de section -->
     <div class="bg-white p-6 shadow rounded-lg mb-6">
         <h2 class="text-lg font-bold text-[#004461] mb-4">Ajouter une section au module : {{ $module->module_title }}</h2>
@@ -16,7 +14,6 @@
             </div>
         </form>
     </div>
-
     <!-- Liste des sections -->
 @foreach ($section as $key => $item)
 <div class="bg-white shadow rounded-lg mb-6">
@@ -128,29 +125,22 @@
         wrapper.classList.add('bg-white', 'rounded', 'border', 'p-4', 'space-y-2', 'mt-2');
 
         wrapper.innerHTML = `
-            <label class="block text-sm font-medium text-gray-700">Titre de la lecture</label>
-            <input type="text" class="w-full px-3 py-2 border rounded lecture-title" placeholder="Ex : Introduction">
+    <label class="block text-sm font-medium text-gray-700">Titre de la leçon</label>
+    <input type="text" class="w-full px-3 py-2 border rounded lecture-title" placeholder="Ex : Introduction">
 
-            <label class="block text-sm font-medium text-gray-700">Contenu</label>
-            <textarea class="w-full px-3 py-2 border rounded lecture-content" rows="3" placeholder="Décris le contenu ici..."></textarea>
+    <div class="flex justify-end gap-2 pt-3">
+        <button onclick="saveLecture(${moduleId}, ${sectionId}, '${containerId}', this.parentNode.parentNode)"
+                class="px-4 py-1 bg-green-600 text-white rounded hover:bg-green-700">Enregistrer</button>
+        <button onclick="this.closest('div').remove()"
+                class="px-4 py-1 bg-gray-300 text-gray-700 rounded hover:bg-gray-400">Annuler</button>
+    </div>
+`;
 
-            <label class="block text-sm font-medium text-gray-700">URL vidéo</label>
-            <input type="url" class="w-full px-3 py-2 border rounded lecture-url" placeholder="https://">
-
-            <div class="flex justify-end gap-2 pt-3">
-                <button onclick="saveLecture(${moduleId}, ${sectionId}, '${containerId}', this.parentNode.parentNode)"
-                        class="px-4 py-1 bg-green-600 text-white rounded hover:bg-green-700">Enregistrer</button>
-                <button onclick="this.closest('div').remove()"
-                        class="px-4 py-1 bg-gray-300 text-gray-700 rounded hover:bg-gray-400">Annuler</button>
-            </div>
-        `;
         container.appendChild(wrapper);
     }
 
     function saveLecture(moduleId, sectionId, containerId, lectureDiv) {
         const title = lectureDiv.querySelector('.lecture-title').value;
-        const content = lectureDiv.querySelector('.lecture-content').value;
-        const url = lectureDiv.querySelector('.lecture-url').value;
 
         fetch('{{ route('admin.modules.lecture.store') }}', {
             method: 'POST',
@@ -162,8 +152,6 @@
                 module_id: moduleId,
                 section_id: sectionId,
                 lecture_title: title,
-                content: content,
-                lecture_url: url,
             }),
         })
         .then(response => response.json())
@@ -178,6 +166,7 @@
             console.error(error);
         });
     }
+
 </script>
 
 @endsection

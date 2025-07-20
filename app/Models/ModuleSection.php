@@ -13,8 +13,9 @@ class ModuleSection extends Model
 
     public function lectures()
     {
-        return $this->hasMany(ModuleLecture::class, 'section_id');
+        return $this->hasMany(ModuleLecture::class, 'section_id')->orderBy('position');
     }
+
 
     public function module()
     {
