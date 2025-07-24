@@ -1,3 +1,0 @@
-(function(){var loadHandler=window['sl_{C1395346-1995-4AA6-9ED5-453A88A5C51F}'];loadHandler&&loadHandler(3, '<div id="spr0_4a249a2"><div id="spr1_4a249a2" class="kern slide"><img id="img1_4a249a2" src="data/img8.png" width="1280px" height="720px" alt="" style="left:0px;top:0px;"/></div><div id="spr2_4a249a2" class="kern slide"><div id="spr3_4a249a2" style="left:100px;top:6.425px;"><img id="img0_4a249a2" src="data/img7.png" width="1119" height="713.25" alt="Une image contenant texte, capture d’écran, Police, nombre\
-\
-Le contenu généré par l’IA peut être incorrect." style="left:0.125px;top:0.122px;"/></div></div></div>', '{"s":[]}');})();
