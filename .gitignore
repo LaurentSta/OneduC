@@ -33,3 +33,12 @@ auth.json
 
 # Ignorer SCORM local (important pour ne pas pousser les ressources lourdes)
 public/modules/scorm/*
+/storage/framework/*
+/storage/logs/*
+/storage/debugbar/*
+/.phpunit.cache
+/resources/scorm/
+
+/.vite
+/.vite-inspect
+
