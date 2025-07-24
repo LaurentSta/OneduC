@@ -52,7 +52,7 @@
                         </div>
 
                         <div class="w-full bg-gray-200 h-2 rounded mt-2">
-                            <div class="h-2 rounded bg-vertone transition-all duration-500"
+                            <div class="h-2 rounded bg-vertone transition-all duration-200"
                                  style="width: {{ $percentage }}%"></div>
                         </div>
                     </div>
