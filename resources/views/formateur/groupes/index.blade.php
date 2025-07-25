@@ -14,6 +14,24 @@
                 <x-typography>
                     Retrouvez ici tous vos groupes. Vous pouvez les modifier, leur associer des modules ou ajouter des stagiaires.
                 </x-typography>
+                <nav class="text-sm font-varela text-gray-600 mt-2 mb-6" aria-label="Fil d'Ariane">
+                    <ol class="list-none p-0 inline-flex items-center space-x-1">
+                        {{-- Accueil formateur --}}
+                        <li class="flex items-center">
+                            <a href="{{ route('formateur.dashboard') }}" class="text-orangeone hover:underline flex items-center">
+                                {{-- Icône maison --}}
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M3 9.75L12 3l9 6.75V19a2 2 0 01-2 2h-4a1 1 0 01-1-1v-5H10v5a1 1 0 01-1 1H5a2 2 0 01-2-2V9.75z"/>
+                                </svg>
+                            </a>
+                            <span class="mx-2 text-gray-400">/</span>
+                        </li>
+
+                        {{-- Étape finale stylisée comme "..." --}}
+                <li class="text-gray-400">…</li>
+                    </ol>
+                </nav>
             </div>
             <div class="col-span-12 md:col-span-4 flex justify-center md:justify-end">
                 <div class="w-full max-w-xs">
@@ -22,6 +40,7 @@
             </div>
         </div>
     </div>
+    
 </div>
 
 {{-- 💼 CONTENU PRINCIPAL --}}
