@@ -24,8 +24,14 @@
 
     <div class="flex bg-gray-50 min-h-screen">
     @if(isset($module))
-        @include('frontend.modules.body.sidebar')
+        @include('frontend.modules.body.sidebar', [
+            'module' => $module,
+            'lectureStats' => $lectureStats ?? [],
+            'sectionStatuses' => $sectionStatuses ?? [],
+            'selectedLecture' => $selectedLecture ?? null,
+        ])
     @endif
+
 
     <div class="flex-1 px-4 lg:px-8 py-8">
         @yield('content')
