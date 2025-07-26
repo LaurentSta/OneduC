@@ -10,6 +10,8 @@ use App\Models\ScormInteraction;
 use App\Models\LessonFeedback;
 use App\Models\VideoSegmentTracking;
 use App\Models\ScormEvaluationScore;
+use App\Models\ModuleLecture;
+use App\Models\ScormScore;
 
 class UserController extends Controller
 {
@@ -177,6 +179,75 @@ class UserController extends Controller
             'code_acces' => 'Code d’accès invalide ou utilisateur non autorisé.',
         ]);
     }
+    public function getProgressionJson($moduleId)
+    {
+        $userId = Auth::id();
+
+        // Récupère toutes les leçons du module
+        $lectures = ModuleLecture::where('module_id', $moduleId)->get();
+
+        $progression = [];
+
+        foreach ($lectures as $lecture) {
+            $score = ScormScore::where('user_id', $userId)
+                ->where('lecture_id', $lecture->id)
+                ->first();
+
+            $status = $score->lesson_status ?? 'not_started';
+            $scoreValue = $score->last_score ?? null;
+
+            $progression[] = [
+                'lecture_id' => $lecture->id,
+                'lecture_title' => $lecture->lecture_title,
+                'status' => $status,
+                'score' => $scoreValue,
+                'slides' => $lecture->slide_count ?? 0,
+                'questions' => $lecture->question_count ?? 0,
+            ];
+        }
+
+        return response()->json([
+            'progression' => $progression
+        ]);
+    }
+
+    public function getLectureStats($moduleId)
+    {
+        $userId = Auth::id();
+
+        $lectures = ModuleLecture::where('module_id', $moduleId)->get();
+        $resultats = [];
+
+        foreach ($lectures as $lecture) {
+            $interactions = \App\Models\ScormInteraction::where('user_id', $userId)
+                ->where('lecture_id', $lecture->id)
+                ->get();
+
+            $total = $interactions->count();
+            $correct = $interactions->where('result', 'correct')->count();
+
+            if ($total > 0) {
+                $score = round(($correct / $total) * 100);
+                $status = match (true) {
+                    $score >= 50 => 'acquired',
+                    $score < 50 => 'not_acquired',
+                    default => 'incomplete'
+                };
+            } else {
+                $score = null;
+                $status = 'not_started';
+            }
+
+            $resultats[$lecture->id] = [
+                'score' => $score,
+                'status' => $status,
+                'answered' => $total,
+            ];
+        }
+
+        return $resultats;
+    }
+
 
 
 

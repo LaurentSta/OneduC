@@ -24,4 +24,8 @@ Route::middleware(['auth', 'role:stagiaire', 'track.time'])->prefix('stagiaire')
 
     // Lecture d'une leçon
     Route::get('/modules/{module}/sections/{section}/lessons/{lesson}', [ModuleController::class, 'lire'])->name('module.lecture');
+    
+    Route::get('/modules/{id}/progression-json', [UserController::class, 'getProgressionJson'])->name('module.progression.json');
+
+
 });
