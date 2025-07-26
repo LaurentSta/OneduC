@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\ScormResult;
 use App\Models\ScormScore;
 use App\Models\Evaluation;
+use App\Models\ScormInteraction;
 
 class ModuleController extends Controller
 {
@@ -500,10 +501,68 @@ public function section($id, $section_id)
             };
         }
 
+        // 🔁 Progression enrichie (slides, questions, score, statut)
+        $userId = auth()->id();
+        $lectureStats = [];
+
+        foreach ($module->sections->flatMap->lectures as $lecture) {
+            $totalQuestions = $lecture->question_count ?? 0;
+
+            // 🔁 On récupère toutes les interactions, triées par date et groupées par identifiant unique
+            $grouped = ScormInteraction::where('user_id', $userId)
+                ->where('lecture_id', $lecture->id)
+                ->orderBy('created_at')
+                ->get()
+                ->groupBy('interaction_id');
+
+            $answered = 0;
+            $correct = 0;
+
+            foreach ($grouped as $attempts) {
+                $latestAttempt = $attempts->last(); // ← dernière tentative de cette interaction
+                if (!empty($latestAttempt)) {
+                    $answered++;
+                    if ($latestAttempt->result === 'correct') {
+                        $correct++;
+                    }
+                }
+            }
+
+            // 🎯 Calcul du score (basé uniquement sur la dernière tentative de chaque question)
+            $score = $totalQuestions > 0 ? round(($correct / $totalQuestions) * 100) : null;
+
+            // 🔖 Statut en fonction du score et du nombre de réponses
+            $status = 'not_started';
+            if ($answered === 0) {
+                $status = 'not_started';
+            } elseif ($answered < $totalQuestions) {
+                $status = 'incomplete';
+            } elseif ($score >= 50) {
+                $status = 'acquired';
+            } else {
+                $status = 'not_acquired';
+            }
+
+            $lectureStats[$lecture->id] = [
+                'lecture_id' => $lecture->id,
+                'status' => $status,
+                'score' => $score,
+                'answered' => $answered,
+                'correct' => $correct,
+                'slides' => $lecture->slide_count ?? 0,
+                'questions' => $totalQuestions,
+            ];
+        }
+
+
+
+
         return view('frontend.modules.lecture', compact(
             'module', 'selectedLecture', 'nextLecture', 'isCompleted',
-            'lessonStatuses', 'sectionStatuses'
+            'lessonStatuses', 'sectionStatuses', 'lectureStats' // ✅ nom réel de la variable
         ));
+
+
     }
 
 
