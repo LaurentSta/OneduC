@@ -4,7 +4,8 @@
 <main class="max-w-full mx-auto">
     <div class="bg-white rounded-[20px] shadow-md p-8 mb-6">
         <h1 class="text-titre font-raleway text-bleuone">
-            {{ $section->section_title }}
+            {{ $selectedSection->section_title }}
+
         </h1>
         <h2 class="text-sous-titre font-varela text-orangeone mt-2">
             Objectifs et déroulé pédagogique.
@@ -36,7 +37,7 @@
         {{-- Colonne gauche : Accordéon pédagogique --}}
         <div x-data="{ openItem: 1 }" class="space-y-3">
             {{-- Objectif pédagogique --}}
-            @if($section->objectif)
+            @if($selectedSection->objectif)
             <div class="border rounded-md">
                 <button
                     @click="openItem = openItem === 1 ? null : 1"
@@ -51,12 +52,12 @@
                 </button>
                 <div x-show="openItem === 1" x-collapse
                     class="overflow-hidden p-4 bg-white font-lisible text-[17px] text-gray-800 leading-relaxed">
-                    {{ $section->objectif }}     
+                    {{ $selectedSection->objectif }}     
                 </div>
             </div>
             @endif
             {{-- Méthode pédagogique --}}
-            @if($section->methode)
+            @if($selectedSection->methode)
             <div class="border rounded-md">
                 <button
                     @click="openItem = openItem === 2 ? null : 2"
@@ -70,12 +71,12 @@
                     </svg>
                 </button>
                 <div x-show="openItem === 2" x-collapse class="p-4 bg-white font-lisible text-[17px] text-gray-800 leading-relaxed">
-                    {{ $section->methode }}
+                    {{ $selectedSection->methode }}
                 </div>
             </div>
             @endif
             {{-- Contexte pédagogique --}}
-            @if($section->contexte)
+            @if($selectedSection->contexte)
             <div class="border rounded-md">
                 <button
                     @click="openItem = openItem === 3 ? null : 3"
@@ -90,7 +91,7 @@
                     </svg>
                 </button>
                 <div x-show="openItem === 3" x-collapse class="p-4 bg-white font-lisible text-[17px] text-gray-800 leading-relaxed">
-                    {{ $section->contexte }}
+                    {{ $selectedSection->contexte }}
                 </div>
             </div>
             @endif
@@ -98,10 +99,10 @@
         {{-- Colonne droite : Vidéo + bouton + leçons --}}
         <div class="space-y-6">
             @php
-                $isFullUrl = Str::startsWith($section->video_url, ['http', '/']);
-                $videoPath = $isFullUrl ? $section->video_url : '/modules/scorm/02_videos/' . ltrim($section->video_url, '/');
+                $isFullUrl = Str::startsWith($selectedSection->video_url, ['http', '/']);
+                $videoPath = $isFullUrl ? $selectedSection->video_url : '/modules/scorm/02_videos/' . ltrim($selectedSection->video_url, '/');
                 $videoSrc = asset($videoPath);
-                $firstLecture = $section->lectures->first();
+                $firstLecture = $selectedSection->lectures->first();
             @endphp
 
             {{-- Vidéo pédagogique --}}
@@ -118,7 +119,7 @@
             {{-- Bouton démarrer --}}
             @if($firstLecture)
             <div class="mt-4">
-                <a href="{{ route('stagiaire.module.lecture', ['module' => $module->id, 'section' => $section->id, 'lesson' => $firstLecture->id]) }}"
+                <a href="{{ route('stagiaire.module.lecture', ['module' => $module->id, 'section' => $selectedSection->id, 'lesson' => $firstLecture->id]) }}"
                 class="btn-oneduc flex items-center justify-center gap-2">
                     Commencer cette section
                 </a>
@@ -130,9 +131,9 @@
             <div>
                 <h2 class="text-xl font-semibold text-gray-700 mb-2">Leçons de cette section</h2>
                 <ul class="space-y-2">
-                    @foreach($section->lectures as $lecture)
+                    @foreach($selectedSection->lectures as $lecture)
                         <li>
-                            <a href="{{ route('stagiaire.module.lecture', ['module' => $module->id, 'section' => $section->id, 'lesson' => $lecture->id]) }}"
+                            <a href="{{ route('stagiaire.module.lecture', ['module' => $module->id, 'section' => $selectedSection->id, 'lesson' => $lecture->id]) }}"
                                class="text-blue-600 hover:underline">{{ $lecture->lecture_title }}</a>
                         </li>
                     @endforeach
@@ -174,7 +175,7 @@
                         'Accept': 'application/json'
                     },
                     body: JSON.stringify({
-                        lecture_id: {{ $section->lectures->first()?->id ?? 'null' }},
+                        lecture_id: {{ $selectedSection->lectures->first()?->id ?? 'null' }},
                         segment_start: startTime,
                         segment_end: endTime,
                         watch_time: duration

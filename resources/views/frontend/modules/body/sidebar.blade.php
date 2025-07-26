@@ -30,7 +30,7 @@
                     @endphp
                     <li>
                         <a href="{{ route('stagiaire.module.lecture', ['module' => $module->id, 'section' => $section->id, 'lesson' => $lec->id]) }}"
-                        class="block px-3 py-2 rounded-lg text-sm transition {{ isset($selectedLecture) && $selectedLecture->id == $lec->id ? 'bg-orangeone text-white' : 'hover:bg-gray-100 text-gray-800' }}">
+                        class="block px-3 py-2 rounded-lg text-sm transition {{ optional($selectedLecture)->id === $lec->id ? 'bg-orangeone text-white' : 'hover:bg-gray-100 text-gray-800' }}">
                             <div class="flex justify-between font-varela">
                                 <span>{{ $lec->lecture_title }}</span>
                                 <span>

@@ -335,17 +335,87 @@ return view('admin.backend.modules.edit_module', compact('module', 'categories',
 }
 
 
-public function section($id, $section_id)
-{
-    $module = Module::with('sections.lectures')->findOrFail($id);
-    $section = $module->sections->where('id', $section_id)->first();
+    public function section($id, $section_id)
+        {
+            $module = Module::with('sections.lectures')->findOrFail($id);
+            $section = $module->sections->where('id', $section_id)->first();
 
-    if (!$section) {
-        abort(404, 'Section non trouvée');
-    }
+            if (!$section) {
+                abort(404, 'Section non trouvée');
+            }
 
-    return view('frontend.modules.section', compact('module', 'section'));
-}
+            // 🔁 Calcul lectureStats
+            $lectureStats = [];
+            $userId = auth()->id();
+
+            foreach ($module->sections->flatMap->lectures as $lecture) {
+                $totalQuestions = $lecture->question_count ?? 0;
+
+                $grouped = ScormInteraction::where('user_id', $userId)
+                    ->where('lecture_id', $lecture->id)
+                    ->orderBy('created_at')
+                    ->get()
+                    ->groupBy('interaction_id');
+
+                $answered = 0;
+                $correct = 0;
+
+                foreach ($grouped as $attempts) {
+                    $latestAttempt = $attempts->last();
+                    if (!empty($latestAttempt)) {
+                        $answered++;
+                        if ($latestAttempt->result === 'correct') {
+                            $correct++;
+                        }
+                    }
+                }
+
+                $score = $totalQuestions > 0 ? round(($correct / $totalQuestions) * 100) : null;
+
+                $status = 'not_started';
+                if ($answered === 0) {
+                    $status = 'not_started';
+                } elseif ($answered < $totalQuestions) {
+                    $status = 'incomplete';
+                } elseif ($score >= 50) {
+                    $status = 'acquired';
+                } else {
+                    $status = 'not_acquired';
+                }
+
+                $lectureStats[$lecture->id] = [
+                    'lecture_id' => $lecture->id,
+                    'status' => $status,
+                    'score' => $score,
+                    'answered' => $answered,
+                    'correct' => $correct,
+                    'slides' => $lecture->slide_count ?? 0,
+                    'questions' => $totalQuestions,
+                ];
+            }
+
+            // 🔁 Calcul sectionStatuses
+            $sectionStatuses = [];
+            foreach ($module->sections as $sec) {
+                $total = $sec->lectures->count();
+                $acquired = $sec->lectures->filter(function ($lec) use ($lectureStats) {
+                    return ($lectureStats[$lec->id]['status'] ?? null) === 'acquired';
+                })->count();
+
+                $sectionStatuses[$sec->id] = $acquired === $total
+                    ? 'completed'
+                    : ($acquired > 0 ? 'in_progress' : 'not_started');
+            }
+
+            return view('frontend.modules.section', [
+                'module' => $module,
+                'selectedSection' => $section,
+                'lectureStats' => $lectureStats,
+                'sectionStatuses' => $sectionStatuses,
+                'selectedLecture' => null, // pour éviter les erreurs dans la sidebar
+            ]);
+        }
+
 
 
 
@@ -447,9 +517,6 @@ public function section($id, $section_id)
 
         return view('frontend.contenu.module_detail', compact('module'));
     }
-
-
-
     public function lire($module, $section, $lesson)
     {
         $module = Module::with('sections.lectures')->findOrFail($module);
@@ -465,50 +532,19 @@ public function section($id, $section_id)
             abort(404, 'Leçon non trouvée');
         }
 
+        // 🔁 Détermination de la prochaine leçon
         $nextLecture = null;
-        $isCompleted = false;
-
-        if ($selectedLecture) {
-            $lectures = $module->sections->flatMap->lectures;
-            $currentIndex = $lectures->search(fn($lec) => $lec->id === $selectedLecture->id);
-            $nextLecture = $lectures->get($currentIndex + 1);
-
-            $isCompleted = ScormResult::where('user_id', auth()->id())
-                ->where('lecture_id', $selectedLecture->id)
-                ->where('scorm_key', 'cmi.core.lesson_status')
-                ->where('scorm_value', 'completed')
-                ->exists();
-        }
-
-        // 🔹 Statuts par leçon
-        $lessonStatuses = ScormScore::where('user_id', auth()->id())
-            ->whereIn('lecture_id', $module->sections->flatMap->lectures->pluck('id'))
-            ->pluck('lesson_status', 'lecture_id');
-
-        // 🔹 Statuts par section (calcul dynamique)
-        $sectionStatuses = [];
-        foreach ($module->sections as $section) {
-            $lectures = $section->lectures;
-            $total = $lectures->count();
-            $completed = $lectures->filter(function ($lec) use ($lessonStatuses) {
-                return ($lessonStatuses[$lec->id] ?? null) === 'completed';
-            })->count();
-
-            $sectionStatuses[$section->id] = match (true) {
-                $completed === 0 => 'pending',
-                $completed < $total => 'in_progress',
-                default => 'completed',
-            };
-        }
+        $lectures = $module->sections->flatMap->lectures;
+        $currentIndex = $lectures->search(fn($lec) => $lec->id === $selectedLecture->id);
+        $nextLecture = $lectures->get($currentIndex + 1);
 
         // 🔁 Progression enrichie (slides, questions, score, statut)
         $userId = auth()->id();
         $lectureStats = [];
 
-        foreach ($module->sections->flatMap->lectures as $lecture) {
+        foreach ($lectures as $lecture) {
             $totalQuestions = $lecture->question_count ?? 0;
 
-            // 🔁 On récupère toutes les interactions, triées par date et groupées par identifiant unique
             $grouped = ScormInteraction::where('user_id', $userId)
                 ->where('lecture_id', $lecture->id)
                 ->orderBy('created_at')
@@ -519,7 +555,7 @@ public function section($id, $section_id)
             $correct = 0;
 
             foreach ($grouped as $attempts) {
-                $latestAttempt = $attempts->last(); // ← dernière tentative de cette interaction
+                $latestAttempt = $attempts->last();
                 if (!empty($latestAttempt)) {
                     $answered++;
                     if ($latestAttempt->result === 'correct') {
@@ -528,10 +564,8 @@ public function section($id, $section_id)
                 }
             }
 
-            // 🎯 Calcul du score (basé uniquement sur la dernière tentative de chaque question)
             $score = $totalQuestions > 0 ? round(($correct / $totalQuestions) * 100) : null;
 
-            // 🔖 Statut en fonction du score et du nombre de réponses
             $status = 'not_started';
             if ($answered === 0) {
                 $status = 'not_started';
@@ -554,16 +588,30 @@ public function section($id, $section_id)
             ];
         }
 
+        // 🔁 Statuts par section
+        $sectionStatuses = [];
+        foreach ($module->sections as $section) {
+            $lectures = $section->lectures;
+            $total = $lectures->count();
+            $acquired = $lectures->filter(function ($lec) use ($lectureStats) {
+                return ($lectureStats[$lec->id]['status'] ?? null) === 'acquired';
+            })->count();
 
-
+            $sectionStatuses[$section->id] = $acquired === $total
+                ? 'completed'
+                : ($acquired > 0 ? 'in_progress' : 'not_started');
+        }
 
         return view('frontend.modules.lecture', compact(
-            'module', 'selectedLecture', 'nextLecture', 'isCompleted',
-            'lessonStatuses', 'sectionStatuses', 'lectureStats' // ✅ nom réel de la variable
+            'module',
+            'selectedLecture',
+            'nextLecture',
+            'lectureStats',
+            'sectionStatuses'
         ));
-
-
     }
+
+
 
 
 }

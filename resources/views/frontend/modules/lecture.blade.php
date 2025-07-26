@@ -143,35 +143,36 @@
 
     </main>
    <script>
-    const currentLectureId = {{ $selectedLecture->id }};
-    const currentSectionId = {{ $selectedLecture->section_id }};
-    const nextLecture = @json($nextLecture);
-    const moduleId = {{ $module->id }};
+        const currentLectureId = {{ $selectedLecture->id }};
+        const currentSectionId = {{ $selectedLecture->section_id }};
+        const nextLecture = @json($nextLecture);
+        const moduleId = {{ $module->id }};
 
-    let nextUrl = "#";
+        let nextUrl = "#";
 
-    if (nextLecture) {
-        // Si la prochaine leçon est dans la même section → on continue
-        if (nextLecture.section_id === currentSectionId) {
-            nextUrl = `/formation/module/${moduleId}/section/${nextLecture.section_id}/lesson/${nextLecture.id}`;
-        } else {
-            // Sinon → on passe par la vue section
-            nextUrl = `/formation/module/${moduleId}/section/${nextLecture.section_id}`;
-        }
-    }
-
-    window.SCORM_CONTEXT = {
-        lecture_id: currentLectureId,
-        next_url: nextUrl,
-        goToNextLesson: function () {
-            if (this.next_url !== "#") {
-                window.location.href = this.next_url;
+        if (nextLecture) {
+            // Si la prochaine leçon est dans la même section → on continue
+            if (nextLecture.section_id === currentSectionId) {
+                nextUrl = `/stagiaire/modules/${moduleId}/sections/${nextLecture.section_id}/lessons/${nextLecture.id}`;
             } else {
-                alert("🎓 Module terminé !");
+                // Sinon → on passe par la vue section
+                nextUrl = `/stagiaire/modules/${moduleId}/sections/${nextLecture.section_id}`;
             }
         }
-    };
-</script>
+
+        window.SCORM_CONTEXT = {
+            lecture_id: currentLectureId,
+            next_url: nextUrl,
+            goToNextLesson: function () {
+                if (this.next_url !== "#") {
+                    window.location.href = this.next_url;
+                } else {
+                    alert("🎓 Module terminé !");
+                }
+            }
+        };
+    </script>
+
 
 
 
