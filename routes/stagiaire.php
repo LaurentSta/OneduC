@@ -27,5 +27,10 @@ Route::middleware(['auth', 'role:stagiaire', 'track.time'])->prefix('stagiaire')
     
     Route::get('/modules/{id}/progression-json', [UserController::class, 'getProgressionJson'])->name('module.progression.json');
 
+    Route::get('/progression/detailmodule', [StagiaireController::class, 'ProgressionDetailModule'])
+    ->name('stagiaire.progression.detailmodule');
+
+
+
 
 });
