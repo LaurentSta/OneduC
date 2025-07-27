@@ -237,6 +237,13 @@ class StagiaireController extends Controller
                         ->whereNotNull('interaction_weighting')
                         ->count();
 
+                    $reessayeCount = \App\Models\ScormInteraction::where('user_id', $userId)
+                    ->get()
+                    ->groupBy('interaction_id')
+                    ->filter(fn($g) => $g->count() > 1)
+                    ->count();
+
+
                     $score->answered_questions = ScormInteraction::where('lecture_id', $lectureId)
                         ->where('user_id', $userId)
                         ->whereIn('result', ['correct', 'wrong'])
@@ -261,8 +268,10 @@ class StagiaireController extends Controller
                             ->value('lesson_status') ?? null;
                     }
 
+
                 }
 
-            return view('stagiaire.stagiaire_resultats', compact('resultats'));
+            return view('stagiaire.stagiaire_resultats', compact('resultats', 'reessayeCount'));
+
         }
 }
