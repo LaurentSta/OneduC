@@ -312,13 +312,7 @@ return view('admin.backend.modules.edit_module', compact('module', 'categories',
 
     // ✅ Traitement du champ vidéo
     $videoName = $request->input('video_url');
-    $videoPath = null;
-
-    if ($videoName && !Str::startsWith($videoName, 'http')) {
-        $videoPath = '/modules/scorm/02_videos/' . $videoName;
-    } else {
-        $videoPath = $videoName;
-    }
+    $videoPath = $videoName;
 
     // ✅ Mise à jour des données
     $section->update([

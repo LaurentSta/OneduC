@@ -83,23 +83,23 @@
         type: 'bar',
         indexAxis: 'y',
         data: {
-            labels: ['Questions attendues (modules)', 'Questions attendues (leçons)', 'Réponses enregistrées', 'Questions réessayées'],
+            labels: ['Questions /n Formation', 'Réponses enregistrées', 'Questions réessayées'],
             datasets: [{
                 label: 'Total',
                 data: [
                     {{ $resultats->map(fn($r) => $r->lecture->module)->unique('id')->sum(fn($module) => $module->sections->flatMap->lectures->sum('question_count')) }},
-                    {{ $resultats->sum(fn($r) => $r->lecture->question_count ?? 0) }},
+                    
                     {{ $resultats->sum('answered_questions') }},
                     {{ $reessayeCount }}
                 ],
-                backgroundColor: ['#3b82f6', '#10b981', '#22c55e', '#ef4444'],
+                backgroundColor: ['#3b82f6', '#22c55e', '#ef4444'],
                 borderRadius: 5
             }]
         },
         options: {
             responsive: true,
             plugins: { legend: { display: false } },
-            scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+            scales: { y: { beginAtZero: true, } }
         }
     });
 
@@ -121,7 +121,7 @@
         options: {
             responsive: true,
             plugins: { legend: { display: false } },
-            scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+            scales: { y: { beginAtZero: true} }
         }
     });
 
