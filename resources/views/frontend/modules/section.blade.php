@@ -106,10 +106,7 @@
             @endphp
 
             <div class="w-full">
-    <video controls class="w-full rounded-md" style="max-height: 500px;">
-        <source src="{{ $videoSrc }}" type="video/mp4">
-        Votre navigateur ne supporte pas la lecture vidéo.
-    </video>
+    
 </div>
 
             {{-- Vidéo pédagogique --}}
