@@ -105,6 +105,13 @@
                 $firstLecture = $selectedSection->lectures->first();
             @endphp
 
+            <div class="w-full">
+    <video controls class="w-full rounded-md" style="max-height: 500px;">
+        <source src="{{ $videoSrc }}" type="video/mp4">
+        Votre navigateur ne supporte pas la lecture vidéo.
+    </video>
+</div>
+
             {{-- Vidéo pédagogique --}}
             <div class="relative w-full rounded-md shadow" style="padding-top: 56.25%;">
                 <video id="formation-video"
@@ -144,57 +151,64 @@
 
     {{-- Scripts videojs --}}
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const player = videojs('formation-video');
+    document.addEventListener('DOMContentLoaded', function () {
+        const player = videojs('formation-video');
 
-            let startTime = 0;
+        let startTime = 0;
 
-            player.on('play', () => {
+        player.on('play', () => {
+            if (startTime === 0) {
                 startTime = Math.floor(player.currentTime());
-            });
-
-            player.on('pause', () => {
-                trackSegment();
-            });
-
-            player.on('ended', () => {
-                trackSegment(true);
-            });
-
-            function trackSegment(force = false) {
-                const endTime = Math.floor(player.currentTime());
-                const duration = endTime - startTime;
-
-                if (duration < 5 && !force) return;
-
-                fetch('{{ route('api.video.segment') }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        lecture_id: {{ $selectedSection->lectures->first()?->id ?? 'null' }},
-                        segment_start: startTime,
-                        segment_end: endTime,
-                        watch_time: duration
-                    })
-                }).then(() => {
-                    console.log('Segment enregistré', startTime, endTime);
-                    startTime = endTime;
-                }).catch(err => {
-                    console.error('Erreur tracking vidéo :', err);
-                });
             }
-
-            setInterval(() => {
-                if (!player.paused()) {
-                    trackSegment();
-                }
-            }, 60000);
         });
-    </script>
+
+        player.on('seeked', () => {
+            startTime = Math.floor(player.currentTime()); // ← MAJ du start après glissement curseur
+        });
+
+        player.on('pause', () => {
+            trackSegment();
+        });
+
+        player.on('ended', () => {
+            trackSegment(true);
+        });
+
+        function trackSegment(force = false) {
+            const endTime = Math.floor(player.currentTime());
+            const duration = endTime - startTime;
+
+            if (duration < 5 && !force) return;
+
+            fetch('{{ route('api.video.segment') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    lecture_id: {{ $selectedSection->lectures->first()?->id ?? 'null' }},
+                    segment_start: startTime,
+                    segment_end: endTime,
+                    watch_time: duration
+                })
+            }).then(() => {
+                console.log('Segment enregistré', startTime, endTime);
+                startTime = endTime;
+            }).catch(err => {
+                console.error('Erreur tracking vidéo :', err);
+            });
+        }
+
+        setInterval(() => {
+            if (!player.paused()) {
+                trackSegment();
+            }
+        }, 60000);
+    });
+</script>
+
 
 </main>
 @endsection
