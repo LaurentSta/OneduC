@@ -17,30 +17,6 @@
     </p>
 </div>
 
-<!-- Bloc d'utilisation -->
-<div class="bg-white rounded-xl shadow p-5 mt-4">
-    <h2 class="text-lg font-bold text-gray-700 mb-2">⏱️ Temps d'utilisation</h2>
-    <ul class="space-y-1 text-sm text-gray-800">
-        <li>🖥️ Temps total passé sur la plateforme : <strong>{{ gmdate('H\h i\m s\s', $totalSiteTime ?? 0) }}</strong></li>
-        <li>🧠 Tu as déjà répondu à <strong>{{ $answeredCount }}</strong> question{{ $answeredCount > 1 ? 's' : '' }}.</li>
-        <li>✅ Taux de bonnes réponses : <strong>{{ $tauxBonnesReponses }}%</strong></li>
-        <li>🧠 Temps total de réflexion : <strong>{{ gmdate('H\h i\m s\s', $totalLatencyTime) }}</strong></li>
-        <li>🧮 Temps moyen par question : <strong>{{ gmdate('i\m s\s', $averageLatencyTime) }}</strong></li>
-        <li>💬 Commentaires laissés : <strong>{{ $commentairesTotal }}</strong></li>
-        <!-- Ajout des statistiques vidéo -->
-        <li>🎬 Temps total passé sur les vidéos : <strong>{{ gmdate('H\h i\m s\s', $totalVideoWatchTime ?? 0) }}</strong></li>
-        <li>🔁 Segments visionnés : <strong>{{ $totalVideoSegments ?? 0 }}</strong></li>
-        <li>📊 Nombre total de replays : <strong>{{ $totalVideoReplays ?? 0 }}</strong></li>
-        <!-- Bloc statistiques évaluations SCORM -->
-        <li>📑 Nombre d'évaluations finalisées : <strong>{{ $totalEvaluationsDone }}</strong></li>
-        <li>🥇 Meilleur score (évaluation) : <strong>{{ $bestEvaluationScore ?? 0 }}/100</strong></li>
-        <li>📈 Score moyen sur les évaluations : <strong>{{ number_format($averageEvaluationScore, 1) ?? 0 }}/100</strong></li>
-        <li>🎯 Taux de réussite aux évaluations : <strong>{{ $tauxReussiteEvaluation }}%</strong></li>
-        <li>🕒 Temps total passé sur les évaluations : <strong>{{ gmdate('H\h i\m s\s', $totalEvaluationTime ?? 0) }}</strong></li>
-        <li>❓ Questions répondues dans les évaluations : <strong>{{ $totalEvaluationQuestions ?? 0 }}</strong></li>
-    </ul>
-</div>
-
 <!-- Bloc d'utilisation stylisé -->
 <div class="bg-white rounded-2xl shadow-md p-6 mt-6 space-y-4">
     <h2 class="text-xl font-semibold text-gray-800 flex items-center gap-2">
@@ -64,17 +40,29 @@
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-percent-icon lucide-percent"><line x1="19" x2="5" y1="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
             <span>Taux de bonnes réponses : <strong>{{ $tauxBonnesReponses }}%</strong></span>
         </div>
-        <div class="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-brain-cog-icon lucide-brain-cog"><path d="m10.852 14.772-.383.923"/><path d="m10.852 9.228-.383-.923"/><path d="m13.148 14.772.382.924"/><path d="m13.531 8.305-.383.923"/><path d="m14.772 10.852.923-.383"/><path d="m14.772 13.148.923.383"/><path d="M17.598 6.5A3 3 0 1 0 12 5a3 3 0 0 0-5.63-1.446 3 3 0 0 0-.368 1.571 4 4 0 0 0-2.525 5.771"/><path d="M17.998 5.125a4 4 0 0 1 2.525 5.771"/><path d="M19.505 10.294a4 4 0 0 1-1.5 7.706"/><path d="M4.032 17.483A4 4 0 0 0 11.464 20c.18-.311.892-.311 1.072 0a4 4 0 0 0 7.432-2.516"/><path d="M4.5 10.291A4 4 0 0 0 6 18"/><path d="M6.002 5.125a3 3 0 0 0 .4 1.375"/><path d="m9.228 10.852-.923-.383"/><path d="m9.228 13.148-.923.383"/><circle cx="12" cy="12" r="3"/></svg>
-            <span>Temps de réflexion : <strong>{{ gmdate('H\h i\m s\s', $totalLatencyTime) }}</strong></span>
-        </div>
-        <div class="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-alarm-clock-icon lucide-alarm-clock"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2"/><path d="M5 3 2 6"/><path d="m22 6-3-3"/><path d="M6.38 18.7 4 21"/><path d="M17.64 18.67 20 21"/></svg>
-            <span>Temps moyen / question : <strong>{{ gmdate('i\m s\s', $averageLatencyTime) }}</strong></span>
-        </div>
     </div>
 </div>
+<!-- Bloc d'utilisation -->
+<div class="bg-white rounded-xl shadow p-5 mt-4">
+    <h2 class="text-lg font-bold text-gray-700 mb-2">⏱️ Temps d'utilisation</h2>
+    <ul class="space-y-1 text-sm text-gray-800">
+         <li>🧠 Tu as déjà répondu à <strong>{{ $answeredCount }}</strong> question{{ $answeredCount > 1 ? 's' : '' }}.</li>
+        <li>✅ Taux de bonnes réponses : <strong>{{ $tauxBonnesReponses }}%</strong></li>
 
+        <li>💬 Commentaires laissés : <strong>{{ $commentairesTotal }}</strong></li>
+        <!-- Ajout des statistiques vidéo -->
+        <li>🎬 Temps total passé sur les vidéos : <strong>{{ gmdate('H\h i\m s\s', $totalVideoWatchTime ?? 0) }}</strong></li>
+        <li>🔁 Segments visionnés : <strong>{{ $totalVideoSegments ?? 0 }}</strong></li>
+        <li>📊 Nombre total de replays : <strong>{{ $totalVideoReplays ?? 0 }}</strong></li>
+        <!-- Bloc statistiques évaluations SCORM -->
+        <li>📑 Nombre d'évaluations finalisées : <strong>{{ $totalEvaluationsDone }}</strong></li>
+        <li>🥇 Meilleur score (évaluation) : <strong>{{ $bestEvaluationScore ?? 0 }}/100</strong></li>
+        <li>📈 Score moyen sur les évaluations : <strong>{{ number_format($averageEvaluationScore, 1) ?? 0 }}/100</strong></li>
+        <li>🎯 Taux de réussite aux évaluations : <strong>{{ $tauxReussiteEvaluation }}%</strong></li>
+        <li>🕒 Temps total passé sur les évaluations : <strong>{{ gmdate('H\h i\m s\s', $totalEvaluationTime ?? 0) }}</strong></li>
+        <li>❓ Questions répondues dans les évaluations : <strong>{{ $totalEvaluationQuestions ?? 0 }}</strong></li>
+    </ul>
+</div>
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
     <!-- 📊 Diagramme à barres - Comparatif des temps -->
     <div class="bg-white rounded-xl shadow p-6 col-span-2">
@@ -106,36 +94,7 @@
     </div>
     @endforeach
 </div>
-
 <script>
-    // 📊 Comparatif des temps (en minutes)
-    const tempsChart = new Chart(document.getElementById('tempsChart'), {
-        type: 'bar',
-        data: {
-            labels: ['Plateforme', 'Modules SCORM', 'Temps de réflexion'],
-            datasets: [{
-                label: 'Temps en minutes',
-                data: [
-                    {{ round($totalSiteTime / 60, 2) }},
-                    {{ round($totalScormTime / 60, 2) }},
-                    {{ round($totalLatencyTime / 60, 2) }}
-                ],
-                backgroundColor: ['#3b82f6', '#10b981', '#f59e0b']
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: { display: false }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true
-                }
-            }
-        }
-    });
-
     // 🎯 Taux de bonnes réponses circulaire
     const tauxReussite = {{ $tauxBonnesReponses }};
     const reussiteChart = new Chart(document.getElementById('reussiteChart'), {

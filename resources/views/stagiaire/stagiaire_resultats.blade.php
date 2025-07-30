@@ -26,6 +26,7 @@
     </div>
 
     <h2 class="text-xl font-semibold text-gray-800 mb-6">⏱️ Temps et comportement</h2>
+    
 
     <!-- 🕒 Temps total plateforme -->
     <div class="mb-6">
@@ -42,7 +43,14 @@
         <!-- Temps moyen par activité -->
         <div class="bg-white shadow rounded-xl p-6">
             <h2 class="text-lg font-semibold text-gray-800 mb-4">Temps moyen par activité</h2>
-            <canvas id="timeChart"></canvas>
+            <ul class="space-y-2 text-sm text-gray-700">
+                <li>📚 Temps total passé dans les leçons : <strong>{{ gmdate('H\h i\m s\s', $totalScormTime ?? 0) }}</strong></li>
+                <li>🧠 Temps de réponse aux questions : <strong>{{ gmdate('H\h i\m s\s', $totalLatencyTime ?? 0) }}</strong></li>
+                <li>🔁 Temps total d’engagement SCORM : <strong>{{ gmdate('H\h i\m s\s', $engagementTotal ?? 0) }}</strong></li>
+                <li>🧮 Temps moyen par question : <strong>{{ gmdate('i\m s\s', $averageLatencyTime ?? 0) }}</strong></li>
+               
+
+</ul>
         </div>
 
         <!-- Statistiques vidéo -->
@@ -155,27 +163,7 @@
     });
     document.getElementById('donutCenterText').innerText = `${taux}%`;
 
-    const timeChart = new Chart(document.getElementById('timeChart').getContext('2d'), {
-        type: 'bar',
-        data: {
-            labels: ['Temps leçons (SCORM)', 'Temps de réponse aux questions', 'Temps moyen par question'],
-            datasets: [{
-                label: 'Durée (en minutes)',
-                data: [
-                    {{ round($totalScormTime ?? 0 / 60, 1) }},
-                    {{ round($totalLatencyTime ?? 0 / 60, 1) }},
-                    {{ round($averageLatencyTime ?? 0 / 60, 2) }}
-                ],
-                backgroundColor: ['#60a5fa', '#34d399', '#fbbf24'],
-                borderRadius: 5
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: { legend: { display: false } },
-            scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
-        }
-    });
+    
 
     const evalCtx = document.getElementById('evaluationChart').getContext('2d');
     new Chart(evalCtx, {
