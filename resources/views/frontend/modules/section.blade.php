@@ -146,12 +146,12 @@
         </div>
     </div>
 
-    {{-- Scripts videojs --}}
-    <script>
+   {{-- Scripts videojs --}}
+<script>
     document.addEventListener('DOMContentLoaded', function () {
         const player = videojs('formation-video');
-
         let startTime = 0;
+        let trackingInProgress = false;
 
         player.on('play', () => {
             if (startTime === 0) {
@@ -160,7 +160,7 @@
         });
 
         player.on('seeked', () => {
-            startTime = Math.floor(player.currentTime()); // ← MAJ du start après glissement curseur
+            startTime = Math.floor(player.currentTime());
         });
 
         player.on('pause', () => {
@@ -175,7 +175,9 @@
             const endTime = Math.floor(player.currentTime());
             const duration = endTime - startTime;
 
-            if (duration < 5 && !force) return;
+            if ((duration < 5 && !force) || endTime === startTime) return;
+
+            trackingInProgress = true;
 
             fetch('{{ route('api.video.segment') }}', {
                 method: 'POST',
@@ -193,18 +195,40 @@
             }).then(() => {
                 console.log('Segment enregistré', startTime, endTime);
                 startTime = endTime;
+                trackingInProgress = false;
             }).catch(err => {
                 console.error('Erreur tracking vidéo :', err);
+                trackingInProgress = false;
             });
         }
 
+        // Sauvegarde régulière (toutes les 10s)
         setInterval(() => {
-            if (!player.paused()) {
+            if (!player.paused() && !trackingInProgress) {
                 trackSegment();
             }
-        }, 60000);
+        }, 10000);
+
+        // Sauvegarde de secours à la fermeture
+        window.addEventListener('beforeunload', function () {
+            const endTime = Math.floor(player.currentTime());
+            const duration = endTime - startTime;
+
+            if (duration < 3 || endTime === startTime) return;
+
+            const data = {
+                lecture_id: {{ $selectedSection->lectures->first()?->id ?? 'null' }},
+                segment_start: startTime,
+                segment_end: endTime,
+                watch_time: duration
+            };
+
+            const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+            navigator.sendBeacon('{{ route('api.video.segment') }}', blob);
+        });
     });
 </script>
+
 
 
 </main>
