@@ -92,7 +92,7 @@ class SCORMController extends Controller
                     'lecture_id' => $lectureId,
                 ]);
 
-                $scormScore->session_time = ($scormScore->session_time ?? 0) + $duration;
+                $scormScore->session_time = max($scormScore->session_time ?? 0, $duration);
                 $scormScore->save();
             }
         }
