@@ -2,23 +2,51 @@
 @extends('stagiaire.master')
 
 @section('content')
-<div class="min-h-screen flex justify-center pt-[72px]">
-    {{-- Main Content --}}
-    <div class="flex-1 p-6">
-        <h1 class="text-titre font-raleway text-bleuone mb-4">Tableau de bord Stagiaire</h1>
-        <!-- Chart.js CDN -->
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+{{-- 🧩 EN-TÊTE DE PAGE STAGIAIRE (sans container extérieur) --}}
+<div class="bg-white rounded-[20px] shadow-md px-8 pt-4  w-full max-w-[1285px] mx-auto mb-6">
+    <div class="grid grid-cols-12 gap-6 items-start">
+        <div class="col-span-12">
+            <x-typography variant="titre">Tableau de bord stagiaire</x-typography>
+            <x-typography variant="sous-titre" class="font-varela text-sous-titre text-orangeone">
+                Suivez votre progression et vos modules de formation.
+            </x-typography>
+            <x-typography>
+                Accédez à vos modules, vos statistiques de progression, votre formateur référent et bien plus.
+            </x-typography>
+
+            <nav class="text-sm font-varela text-gray-600 mt-2 mb-6" aria-label="Fil d'Ariane">
+                <ol class="list-none p-0 inline-flex items-center space-x-1">
+                    <li class="flex items-center">
+                        <a href="{{ route('stagiaire.dashboard') }}" class="text-orangeone hover:underline flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M3 9.75L12 3l9 6.75V19a2 2 0 01-2 2h-4a1 1 0 01-1-1v-5H10v5a1 1 0 01-1 1H5a2 2 0 01-2-2V9.75z"/>
+                            </svg>
+                        </a>
+                        <span class="mx-2 text-gray-400">/</span>
+                    </li>
+                    <li class="text-gray-400">Tableau de bord</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+</div>
+
+
 
 <!-- Formateur référent -->
 @if ($formateur)
-<div class="bg-white rounded-xl shadow p-5 mt-6">
+<div class="bg-white rounded-[20px] shadow-md px-8 pt-8 pb-6 mb-6">
     <p class="text-lg font-semibold text-gray-800">
         Formateur référent : {{ $formateur->name }} <span class="text-sm text-gray-600">({{ $formateur->email }})</span>
     </p>
 </div>
 
 <!-- Bloc d'utilisation stylisé -->
-<div class="bg-white rounded-2xl shadow-md p-6 mt-6 space-y-4">
+<div class="bg-white rounded-[20px] shadow-md px-8 pt-8 pb-6 mb-6 space-y-4">
     <h2 class="text-xl font-semibold text-gray-800 flex items-center gap-2">
         En chiffre
     </h2>
@@ -43,7 +71,7 @@
     </div>
 </div>
 <!-- Bloc d'utilisation -->
-<div class="bg-white rounded-xl shadow p-5 mt-4">
+<div class="bg-white rounded-[20px] shadow-md px-8 pt-8 pb-6 mb-6">
     <h2 class="text-lg font-bold text-gray-700 mb-2">⏱️ Temps d'utilisation</h2>
     <ul class="space-y-1 text-sm text-gray-800">
          <li>🧠 Tu as déjà répondu à <strong>{{ $answeredCount }}</strong> question{{ $answeredCount > 1 ? 's' : '' }}.</li>
@@ -58,17 +86,18 @@
         <li>❓ Questions répondues dans les évaluations : <strong>{{ $totalEvaluationQuestions ?? 0 }}</strong></li>
     </ul>
 </div>
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-    <!-- 📊 Diagramme à barres - Comparatif des temps -->
-    <div class="bg-white rounded-xl shadow p-6 col-span-2">
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+    <!-- 📊 Diagramme à barres -->
+    <div class="bg-white rounded-[20px] shadow-md px-8 pt-8 pb-6 col-span-2">
         <h2 class="text-lg font-semibold text-gray-700 mb-4">⏱️ Comparatif des temps</h2>
         <div class="h-[300px]">
             <canvas id="tempsChart"></canvas>
         </div>
     </div>
 
-    <!-- 🎯 Jauge circulaire - Taux de bonnes réponses -->
-    <div class="bg-white rounded-xl shadow p-6 flex flex-col items-center justify-center">
+    
+     <!-- 🎯 Jauge circulaire -->
+    <div class="bg-white rounded-[20px] shadow-md px-8 pt-8 pb-6 flex flex-col items-center justify-center">
         <h2 class="text-lg font-semibold text-gray-700 mb-4 text-center">✅ Taux de bonnes réponses</h2>
         <div class="h-[150px] w-[150px]">
             <canvas id="reussiteChart" width="100" height="100"></canvas>

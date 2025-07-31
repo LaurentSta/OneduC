@@ -2,28 +2,41 @@
 
 @section('formateur')
 
-{{-- 🧩 EN-TÊTE DE PAGE --}}
-<div class="container mx-auto px-4 pt-8 pb-2">
-    <div class="bg-white rounded-[20px] shadow-md px-8 py-0 mb-4 w-full max-w-[1285px] mx-auto">
-        <div class="grid grid-cols-12 gap-6 items-center">
-            <div class="col-span-12 md:col-span-8">
-                <x-typography variant="titre">Modifier un groupe</x-typography>
-                <x-typography variant="sous-titre" class="font-varela text-sous-titre text-orangeone">
-                    Mettez à jour les informations, les modules et les stagiaires.
-                </x-typography>
-                <x-typography>
-                    Cette page vous permet de modifier un groupe existant. Vous pouvez aussi ajouter de nouveaux stagiaires si besoin.
-                </x-typography>
-            </div>
-            <div class="col-span-12 md:col-span-4 flex justify-center md:justify-end">
-                <div class="w-full max-w-xs">
-                    {!! file_get_contents(public_path('frontend/assets/img/illustrations/AssociationOneduc.svg')) !!}
-                </div>
-            </div>
+{{-- 🧩 EN-TÊTE DE PAGE FORMATEUR – Modifier un groupe --}}
+<div class="bg-white rounded-[20px] shadow-md px-8 pt-4 w-full max-w-[1285px] mx-auto mb-6">
+    <div class="grid grid-cols-12 gap-6 items-start">
+        <div class="col-span-12">
+            <x-typography variant="titre">Modifier un groupe</x-typography>
+            <x-typography variant="sous-titre" class="font-varela text-sous-titre text-orangeone">
+                Mettez à jour les informations, les modules et les stagiaires.
+            </x-typography>
+            <x-typography>
+                Cette page vous permet de modifier un groupe existant. Vous pouvez aussi ajouter de nouveaux stagiaires si besoin.
+            </x-typography>
+
+            {{-- 📍 Fil d’Ariane --}}
+            <nav class="text-sm font-varela text-gray-600 mt-2 mb-6" aria-label="Fil d'Ariane">
+                <ol class="list-none p-0 inline-flex items-center space-x-1">
+                    <li class="flex items-center">
+                        <a href="{{ route('formateur.dashboard') }}" class="text-orangeone hover:underline flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M3 9.75L12 3l9 6.75V19a2 2 0 01-2 2h-4a1 1 0 01-1-1v-5H10v5a1 1 0 01-1 1H5a2 2 0 01-2-2V9.75z"/>
+                            </svg>
+                        </a>
+                        <span class="mx-2 text-gray-400">/</span>
+                    </li>
+                    <li class="flex items-center">
+                        <a href="{{ route('formateur.groupes.index') }}" class="hover:underline text-bleuone">Mes groupes</a>
+                        <span class="mx-2 text-gray-400">/</span>
+                    </li>
+                    <li class="text-gray-400">Modifier un groupe</li>
+                </ol>
+            </nav>
         </div>
     </div>
 </div>
-<div class="container mx-auto px-4 pb-12">
+
     <div class="bg-white rounded-[20px] shadow-md px-8 py-10 w-full max-w-[1285px] mx-auto">
         {{-- ✏️ FORMULAIRE DE MISE À JOUR --}}
         
@@ -120,7 +133,7 @@
             </form>
         
     </div>
-</div>
+
 {{-- STYLES & JS --}}
 <style>
     .input {
