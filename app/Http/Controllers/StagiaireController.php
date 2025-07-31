@@ -206,7 +206,9 @@ class StagiaireController extends Controller
 
 
 
-  public function StagiaireResultats()
+ 
+
+public function StagiaireResultats()
 {
     $user = auth()->user();
     $userId = $user->id;
@@ -289,6 +291,9 @@ class StagiaireController extends Controller
         $score->formatted_session_time = gmdate('H\h i\m s\s', $score->session_time ?? 0);
     }
 
+    // 🎥 Statistiques vidéo centralisées
+    $videoStats = VideoSegmentTracking::getStatsForUser($userId);
+
     return view('stagiaire.stagiaire_resultats', compact(
         'resultats',
         'reessayeCount',
@@ -296,9 +301,11 @@ class StagiaireController extends Controller
         'totalScormTime',
         'totalLatencyTime',
         'engagementTotal',
-        'averageLatencyTime'
+        'averageLatencyTime',
+        'videoStats'
     ));
 }
+
 
 
 
