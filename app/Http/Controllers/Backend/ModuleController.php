@@ -65,12 +65,14 @@ class ModuleController extends Controller
         'prerequi' => 'nullable|string',
         'module_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         'header_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-        'video' => ['nullable', 'url', 'regex:/^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+/i'],
+        'module_video' => 'nullable|string|max:255',
+
         'evaluation_id' => 'nullable|exists:evaluations,id',
 
 
 
     ]);
+    
 
     // ✅ Gère l'upload image
     $imagePath = null;
@@ -100,7 +102,7 @@ class ModuleController extends Controller
         'description' => $request->description,
         'module_image' => $imagePath,
         'header_image' => $headerImagePath,
-        'video' => $request->video,
+        'module_video' => $request->module_video,
         'label' => $request->label,
         'duree' => $request->duree,
         'resources' => $request->resources,
@@ -141,7 +143,7 @@ return view('admin.backend.modules.edit_module', compact('module', 'categories',
         'category_id' => 'required|integer|exists:categories,id',
         'subcategory_id' => 'nullable|integer|exists:subcategories,id',
         'certificat' => 'required|in:1,0',
-        'video' => ['nullable', 'url', 'regex:/^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+/i'],
+        'module_video' => 'nullable|string|max:255',
         'evaluation_id' => 'nullable|exists:evaluations,id',
         'formateur_id' => 'required|exists:users,id',
 
@@ -188,7 +190,8 @@ return view('admin.backend.modules.edit_module', compact('module', 'categories',
 
         'module_image' => $imagePath,
         'header_image' => $headerImagePath,
-        'video' => $videoPath,
+        'module_video' => $request->module_video,
+
         'label' => $request->label,
         'duree' => $request->duree,
         'resources' => $request->resources,
