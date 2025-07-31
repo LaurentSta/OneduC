@@ -2,19 +2,42 @@
 @section('title', 'Mes préférences - Oneduc.fr')
 
 @section('content')
-<div class="container mx-auto px-4 pb-8">
-  <div class="bg-white rounded-[20px] shadow-md px-8 py-4 my-10 w-full">
-    <div class="grid grid-cols-12 gap-6 items-center">
-      <div class="col-span-12 md:col-span-8">
-        <x-typography variant="titre">Préférences</x-typography>
-        <x-typography variant="sous-titre" class="font-varela text-sous-titre text-orangeone">
-          Modifier vos informations personnelles
-        </x-typography>
-      </div>
+
+{{-- 🧩 EN-TÊTE DE PAGE STAGIAIRE – Préférences --}}
+<div class="bg-white rounded-[20px] shadow-md px-8 pt-4 w-full max-w-[1285px] mx-auto mb-6">
+  <div class="grid grid-cols-12 gap-6 items-start">
+    <div class="col-span-12">
+      <x-typography variant="titre">Préférences</x-typography>
+      <x-typography variant="sous-titre" class="font-varela text-sous-titre text-orangeone">
+        Modifier vos informations personnelles
+      </x-typography>
+      <x-typography>
+        Vous pouvez ici changer vos coordonnées personnelles et votre photo de profil.
+      </x-typography>
+
+      {{-- 📍 Fil d’Ariane --}}
+      <nav class="text-sm font-varela text-gray-600 mt-2 mb-6" aria-label="Fil d'Ariane">
+        <ol class="list-none p-0 inline-flex items-center space-x-1">
+          <li class="flex items-center">
+            <a href="{{ route('stagiaire.dashboard') }}" class="text-orangeone hover:underline flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M3 9.75L12 3l9 6.75V19a2 2 0 01-2 2h-4a1 1 0 01-1-1v-5H10v5a1 1 0 01-1 1H5a2 2 0 01-2-2V9.75z"/>
+              </svg>
+            </a>
+            <span class="mx-2 text-gray-400">/</span>
+          </li>
+          <li class="text-gray-400">Mes préférences</li>
+        </ol>
+      </nav>
     </div>
   </div>
+</div>
 
-   <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-4">
+{{-- 📄 CONTENU PRINCIPAL – aligné avec l’en-tête --}}
+
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
     <!-- Formulaire préférences -->
     <div class="lg:col-span-2">
       <div class="bg-white rounded-[20px] shadow-md p-8 w-full">
@@ -40,42 +63,35 @@
             </div>
           </div>
 
-          <!-- Champs du formulaire -->
+          <!-- Champs -->
           <div class="flex justify-center">
             <div class="grid gap-y-4 text-sm w-full max-w-md">
-              <div class="grid grid-cols-[140px_auto] gap-x-4 items-center">
-                <label class="text-right text-gray-700 font-medium">Prénom</label>
-                <input type="text" name="prenom" class="w-full rounded-lg border-gray-300" value="{{ old('prenom', $profileData->prenom) }}">
-              </div>
-              <div class="grid grid-cols-[140px_auto] gap-x-4 items-center">
-                <label class="text-right text-gray-700 font-medium">Nom</label>
-                <input type="text" name="name" class="w-full rounded-lg border-gray-300" value="{{ old('name', $profileData->name) }}">
-              </div>
-              <div class="grid grid-cols-[140px_auto] gap-x-4 items-center">
-                <label class="text-right text-gray-700 font-medium">Email</label>
-                <input type="email" name="email" class="w-full rounded-lg border-gray-300" value="{{ old('email', $profileData->email) }}">
-              </div>
-              <div class="grid grid-cols-[140px_auto] gap-x-4 items-center">
-                <label class="text-right text-gray-700 font-medium">Téléphone</label>
-                <input type="text" name="phoneNumber" class="w-full rounded-lg border-gray-300" value="{{ old('phoneNumber', $profileData->phone) }}">
-              </div>
-              <div class="grid grid-cols-[140px_auto] gap-x-4 items-center">
-                <label class="text-right text-gray-700 font-medium">Adresse</label>
-                <input type="text" name="address" class="w-full rounded-lg border-gray-300" value="{{ old('address', $profileData->address) }}">
-              </div>
+              @php $fields = [
+                'prenom' => ['Prénom', 'text'],
+                'name' => ['Nom', 'text'],
+                'email' => ['Email', 'email'],
+                'phoneNumber' => ['Téléphone', 'text'],
+                'address' => ['Adresse', 'text']
+              ]; @endphp
+
+              @foreach ($fields as $name => [$label, $type])
+                <div class="grid grid-cols-[140px_auto] gap-x-4 items-center">
+                  <label class="text-right text-gray-700 font-medium">{{ $label }}</label>
+                  <input type="{{ $type }}" name="{{ $name }}" class="w-full rounded-lg border-gray-300"
+                         value="{{ old($name, $profileData->{$name} ?? '') }}">
+                </div>
+              @endforeach
             </div>
           </div>
 
           <div class="mt-6 text-center">
-            <button type="submit" class="btn-oneduc">
-            Enregistrer les modifications
-            </button>
+            <button type="submit" class="btn-oneduc">Enregistrer les modifications</button>
           </div>
         </form>
       </div>
     </div>
 
-    <!-- Sidebar Navigation -->
+    <!-- Sidebar -->
     <aside class="bg-white rounded-[20px] shadow-md p-6 h-fit">
       <h3 class="text-lg font-semibold text-[#004461] mb-4">Mon Espace</h3>
       <ul class="space-y-3 text-sm">
@@ -94,5 +110,6 @@
       </ul>
     </aside>
   </div>
-</div>
+
+
 @endsection

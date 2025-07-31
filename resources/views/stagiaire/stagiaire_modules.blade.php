@@ -1,13 +1,36 @@
 @extends('stagiaire.master')
 
 @section('content')
-<div class="p-6">
-    <div class="bg-white rounded-[20px] shadow-md p-8 mb-6">
-        <x-typography variant="titre">Mes modules de formation</x-typography>
-        <x-typography variant="sous-titre" class="text-orangeone">
-            Accédez à vos contenus et suivez votre progression.
-        </x-typography>
+{{-- 🧩 EN-TÊTE DE PAGE STAGIAIRE – Mes modules --}}
+<div class="bg-white rounded-[20px] shadow-md px-8 pt-4 w-full max-w-[1285px] mx-auto mb-6">
+    <div class="grid grid-cols-12 gap-6 items-start">
+        <div class="col-span-12">
+            <x-typography variant="titre">Mes formations</x-typography>
+            <x-typography variant="sous-titre" class="font-varela text-sous-titre text-orangeone">
+                Accédez à vos contenus et suivez votre progression.
+            </x-typography>
+            <x-typography>
+                Chaque module regroupe plusieurs sections. Vous pouvez reprendre une leçon à tout moment.
+            </x-typography>
+
+            <nav class="text-sm font-varela text-gray-600 mt-2 mb-6" aria-label="Fil d'Ariane">
+                <ol class="list-none p-0 inline-flex items-center space-x-1">
+                    <li class="flex items-center">
+                        <a href="{{ route('stagiaire.dashboard') }}" class="text-orangeone hover:underline flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M3 9.75L12 3l9 6.75V19a2 2 0 01-2 2h-4a1 1 0 01-1-1v-5H10v5a1 1 0 01-1 1H5a2 2 0 01-2-2V9.75z"/>
+                            </svg>
+                        </a>
+                        <span class="mx-2 text-gray-400">/</span>
+                    </li>
+                    <li class="text-gray-400">Mes modules</li>
+                </ol>
+            </nav>
+        </div>
     </div>
+</div>
+
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         @forelse($modules as $module)
@@ -72,5 +95,5 @@
             </div>
         @endforelse
     </div>
-</div>
+
 @endsection
