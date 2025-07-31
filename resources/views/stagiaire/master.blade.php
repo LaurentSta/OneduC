@@ -15,6 +15,8 @@
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<!-- Video.js CSS -->
+<link href="https://vjs.zencdn.net/7.21.1/video-js.css" rel="stylesheet" />
     <meta name="csrf-token" content="{{ csrf_token() }}">
 </head>
 <body x-data="{ sidebarOpen: true }" class="bg-gray-100 text-gray-900 font-sans">
@@ -30,6 +32,8 @@
 
     {{-- FOOTER --}}
     @include('stagiaire.body.footer')
+    <!-- Video.js JS -->
+<script src="https://vjs.zencdn.net/7.21.1/video.min.js"></script>
 </body>
 </html>
 

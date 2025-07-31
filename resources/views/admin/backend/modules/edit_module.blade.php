@@ -31,7 +31,13 @@
                 <x-oneduc.input label="Nom technique" name="module_name" :value="old('module_name', $module->module_name)" required />
                 <x-oneduc.input label="Titre affiché" name="module_title" :value="old('module_title', $module->module_title)" required />
                 <x-oneduc.input label="Slug" name="module_name_slug" :value="old('module_name_slug', $module->module_name_slug)" />
-                <x-oneduc.input label="Lien vidéo" name="video" type="url" :value="old('video', $module->video)" placeholder="https://youtube.com/..." />
+                <x-oneduc.input
+                    label="Nom de la vidéo locale (MP4)"
+                    name="module_video"
+                    :value="old('module_video', $module->module_video)"
+                    placeholder="ex: intro_module1.mp4 ou dossier/intro.mp4"
+                />
+
                 <x-oneduc.input label="Label (prix, etc.)" name="label" :value="old('label', $module->label)" />
                 <x-oneduc.input label="Durée" name="duree" :value="old('duree', $module->duree)" placeholder="Ex : 2h, 3 jours" />
             </div>

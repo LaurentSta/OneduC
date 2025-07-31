@@ -2,6 +2,7 @@
 
 @section('content')
 
+
 <!-- En-tête avec image -->
 @if($module->header_image)
     <div class="relative w-full h-[300px] overflow-hidden">
@@ -101,25 +102,32 @@
 </div>
 
 
-            {{-- Vidéo ou image à droite --}}
-            @php use Illuminate\Support\Str; @endphp
+   
+           
 
             <div class="lg:w-1/3 w-full">
                 <div class="rounded shadow overflow-hidden">
-                    @if($module->video && (Str::contains($module->video, 'youtube.com') || Str::contains($module->video, 'youtu.be')))
-                        <div class="aspect-w-16 aspect-h-9">
-                            <iframe
-                                src="{{ Str::contains($module->video, 'watch?v=') ? str_replace('watch?v=', 'embed/', $module->video) : str_replace('youtu.be/', 'youtube.com/embed/', $module->video) }}"
-                                title="Vidéo de présentation du module"
-                                class="w-full h-full rounded"
-                                frameborder="0"
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                allowfullscreen>
-                            </iframe>
+                    @php
+                        $baseFolder = 'modules/scorm/02_videos/';
+                        $videoRelativePath = trim($module->module_video ?? '', '/');
+                        $videoSrc = $videoRelativePath ? url($baseFolder . $videoRelativePath) : null;
+                    @endphp
+
+                    @if($videoSrc)
+                        <div class="relative w-full rounded-md shadow" style="padding-top: 56.25%;">
+                            <video id="module-video"
+                                class="video-js absolute top-0 left-0 w-full h-full"
+                                controls preload="metadata"
+                                playsinline
+                                data-setup='{"playbackRates": [0.5, 1, 1.25, 1.5, 2]}'>
+                                <source src="{{ $videoSrc }}" type="video/mp4">
+                            </video>
                         </div>
-                    @else
-                        <p class="text-sm text-gray-500 italic">Aucune vidéo YouTube fournie pour ce module.</p>
                     @endif
+
+
+
+
                 </div>
             </div>
 
@@ -311,6 +319,8 @@
             @endauth
         </div>
     </div>
+    
+
 @endif
 
 @endsection

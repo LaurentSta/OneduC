@@ -14,7 +14,8 @@
                 <x-oneduc.input label="Nom technique" name="module_name" required />
                 <x-oneduc.input label="Titre affiché" name="module_title" required />
                 <x-oneduc.input label="Slug" name="module_name_slug" />
-                <x-oneduc.input label="Lien vidéo" name="video" type="url" placeholder="https://youtube.com/..." />
+                <x-oneduc.input label="Vidéo locale (MP4)" name="module_video" placeholder="ex: intro_module1.mp4 ou dossier/nom.mp4" />
+
                 <x-oneduc.input label="Label (prix, etc.)" name="label" />
                 <x-oneduc.input label="Durée" name="duree" placeholder="Ex : 2h, 3 jours" />
             </div>
@@ -134,6 +135,8 @@
             });
         }
     });
+
+    
 </script>
 
 <style>
