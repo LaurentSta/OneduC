@@ -54,14 +54,15 @@
         </div>
 
         <!-- Statistiques vidéo -->
-        <div class="bg-white shadow rounded-xl p-6">
-            <h2 class="text-lg font-semibold text-gray-800 mb-4">🎥 Statistiques vidéo (fictives)</h2>
-            <ul class="text-gray-700 space-y-2">
-                <li><strong>Temps total vidéos :</strong> à venir</li>
-                <li><strong>Nombre de segments visionnés :</strong> à venir</li>
-                <li><strong>Nombre de relectures :</strong> à venir</li>
-            </ul>
-        </div>
+<div class="bg-white shadow rounded-xl p-6">
+    <h2 class="text-lg font-semibold text-gray-800 mb-4">🎥 Statistiques vidéo</h2>
+    <ul class="text-gray-700 space-y-2">
+        <li>🎬 Temps total vidéos : <strong>{{ gmdate('H\h i\m s\s', $videoStats['totalVideoWatchTime'] ?? 0) }}</strong></li>
+        <li>🧩 Segments visionnés : <strong>{{ $videoStats['totalVideoSegments'] ?? 0 }}</strong></li>
+        <li>🔁 Nombre de relectures : <strong>{{ $videoStats['totalVideoReplays'] ?? 0 }}</strong></li>
+    </ul>
+</div>
+
     </div>
 
     <h2 class="text-xl font-semibold text-gray-800 mb-6">📋 Résultats des évaluations</h2>

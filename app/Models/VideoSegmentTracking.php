@@ -25,4 +25,15 @@ class VideoSegmentTracking extends Model
     {
         return $this->belongsTo(ModuleLecture::class, 'lecture_id');
     }
+    public static function getStatsForUser(int $userId): array
+    {
+        return [
+            'totalVideoWatchTime' => self::where('user_id', $userId)->sum('total_watch_time'),
+            'totalVideoSegments' => self::where('user_id', $userId)->count(),
+            'totalVideoReplays' => self::where('user_id', $userId)
+                ->where('watch_count', '>', 1)
+                ->count(),
+        ];
+    }
+
 }

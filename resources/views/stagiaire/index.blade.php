@@ -49,11 +49,6 @@
          <li>🧠 Tu as déjà répondu à <strong>{{ $answeredCount }}</strong> question{{ $answeredCount > 1 ? 's' : '' }}.</li>
         <li>✅ Taux de bonnes réponses : <strong>{{ $tauxBonnesReponses }}%</strong></li>
 
-        <li>💬 Commentaires laissés : <strong>{{ $commentairesTotal }}</strong></li>
-        <!-- Ajout des statistiques vidéo -->
-        <li>🎬 Temps total passé sur les vidéos : <strong>{{ gmdate('H\h i\m s\s', $totalVideoWatchTime ?? 0) }}</strong></li>
-        <li>🔁 Segments visionnés : <strong>{{ $totalVideoSegments ?? 0 }}</strong></li>
-        <li>📊 Nombre total de replays : <strong>{{ $totalVideoReplays ?? 0 }}</strong></li>
         <!-- Bloc statistiques évaluations SCORM -->
         <li>📑 Nombre d'évaluations finalisées : <strong>{{ $totalEvaluationsDone }}</strong></li>
         <li>🥇 Meilleur score (évaluation) : <strong>{{ $bestEvaluationScore ?? 0 }}/100</strong></li>
