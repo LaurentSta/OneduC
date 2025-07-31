@@ -58,22 +58,12 @@
                     </div>
 
                     <div class="mt-4">
-                        @php
-                            $firstSection = $module->sections->first();
-                        @endphp
-
-                        @if ($firstSection)
-                            <a href="{{ route('stagiaire.module.section', ['module' => $module->id, 'section' => $firstSection->id]) }}"
-                            class="btn-oneduc w-full text-center">
-                                Commencer la formation
-                            </a>
-                        @else
-                            <a href="{{ route('stagiaire.module.detail', $module->id) }}"
-                            class="btn-oneduc w-full text-center">
-                                Voir le module
-                            </a>
-                        @endif
+                        <a href="{{ route('stagiaire.module.detail', $module->id) }}"
+                        class="btn-oneduc w-full text-center">
+                            Voir le module
+                        </a>
                     </div>
+
                 </div>
             </div>
         @empty

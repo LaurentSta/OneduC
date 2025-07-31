@@ -34,25 +34,72 @@
     <div class="max-w-[1248px] mx-auto px-4">
         <div class="flex flex-col lg:flex-row gap-8 items-start">
 
-            {{-- Description à gauche --}}
-            <div class="lg:w-2/3">
-                <h2 class="text-2xl font-bold font-varela text-orangeone">Description</h2>
-                <p class="mt-2 text-[18px] leading-relaxed font-lisible text-gray-800">
-                    {{ $module->description }}
-                </p>
+            <div x-data="{ active: 'presentation' }" class="lg:w-2/3">
+    <!-- Tabs navigation -->
+    <div class="flex gap-2 border-b border-gray-200 mb-4">
+        <button @click="active = 'presentation'"
+                class="px-4 py-2 text-sm font-medium border-b-2"
+                :class="active === 'presentation' ? 'border-orangeone text-orangeone' : 'border-transparent text-gray-500 hover:text-gray-700'">
+            Présentation
+        </button>
+        <button @click="active = 'objectifs'"
+                class="px-4 py-2 text-sm font-medium border-b-2"
+                :class="active === 'objectifs' ? 'border-orangeone text-orangeone' : 'border-transparent text-gray-500 hover:text-gray-700'">
+            Objectifs
+        </button>
+        <button @click="active = 'prerequis'"
+                class="px-4 py-2 text-sm font-medium border-b-2"
+                :class="active === 'prerequis' ? 'border-orangeone text-orangeone' : 'border-transparent text-gray-500 hover:text-gray-700'">
+            Prérequis
+        </button>
+    </div>
 
-                <div class="flex flex-wrap items-center gap-2 mt-4">
-                    @if($module->bestseller)
-                        <span class="bg-green-600 text-white text-xs font-semibold px-2 py-1 rounded">Bestseller</span>
-                    @endif
-                    @if($module->vedette)
-                        <span class="bg-blue-600 text-white text-xs font-semibold px-2 py-1 rounded">À la Une</span>
-                    @endif
-                    @if($module->surevalue)
-                        <span class="bg-yellow-500 text-white text-xs font-semibold px-2 py-1 rounded">Valeur sûre</span>
-                    @endif
-                </div>
-            </div>
+    <!-- Présentation -->
+    <div x-show="active === 'presentation'" class="space-y-4" x-cloak>
+        <h2 class="text-2xl font-bold font-varela text-orangeone">Présentation</h2>
+        <p class="text-[18px] leading-relaxed font-lisible text-gray-800">
+            {{ $module->description }}
+        </p>
+
+        <div class="flex flex-wrap items-center gap-2 mt-2">
+            @if($module->bestseller)
+                <span class="bg-green-600 text-white text-xs font-semibold px-2 py-1 rounded">Bestseller</span>
+            @endif
+            @if($module->vedette)
+                <span class="bg-blue-600 text-white text-xs font-semibold px-2 py-1 rounded">À la Une</span>
+            @endif
+            @if($module->surevalue)
+                <span class="bg-yellow-500 text-white text-xs font-semibold px-2 py-1 rounded">Valeur sûre</span>
+            @endif
+        </div>
+    </div>
+
+    <!-- Objectifs -->
+    <div x-show="active === 'objectifs'" class="space-y-4" x-cloak>
+        <h2 class="text-2xl font-bold font-varela text-orangeone">Ce que vous allez apprendre</h2>
+        <ul class="list-disc list-inside text-gray-800 text-sm space-y-1">
+            <li>Comprendre les principes de base du module</li>
+            <li>Appliquer les méthodes dans un contexte réel</li>
+            <li>Développer des compétences ciblées</li>
+            <li>S'autoévaluer en fin de parcours</li>
+        </ul>
+    </div>
+
+    <!-- Prérequis -->
+    <div x-show="active === 'prerequis'" class="space-y-4" x-cloak>
+        <h2 class="text-2xl font-bold font-varela text-orangeone">Prérequis</h2>
+        @if(!empty($module->prerequi))
+            <ul class="list-disc list-inside text-gray-800 text-sm space-y-1">
+                @foreach(explode("\n", $module->prerequi) as $item)
+                    <li>{{ $item }}</li>
+                @endforeach
+            </ul>
+        @else
+            <p class="italic text-gray-500">Aucun prérequis spécifié pour ce module.</p>
+        @endif
+    </div>
+</div>
+
 
             {{-- Vidéo ou image à droite --}}
             @php use Illuminate\Support\Str; @endphp
@@ -125,7 +172,7 @@
                                                 <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-5.197-3.027A1 1 0 008 9v6a1 1 0 001.555.832l5.197-3.027a1 1 0 000-1.664z"/>
                                                 </svg>
-                                                <a href="{{ route('module.lesson', ['module' => $module->id, 'section' => $section->id, 'lesson' => $lecture->id]) }}"
+                                                <a href="{{ route('stagiaire.module.lecture', ['module' => $module->id, 'section' => $section->id, 'lesson' => $lecture->id]) }}"
                                                     class="flex items-center justify-between px-2 py-1 hover:bg-gray-100 rounded text-sm font-medium text-gray-800">
                                                     <span>{{ $lecture->lecture_title }}</span>
                                                     <span class="ml-2">
@@ -163,12 +210,37 @@
                         </div>
                     </div>
                     <h3 class="text-lg font-semibold mb-4">Informations sur la formation</h3>
-                    <ul class="text-sm text-gray-700 space-y-2">
-                        <li class="flex justify-between"><span>Durée :</span><span>{{ $module->duree }}</span></li>
-                        <li class="flex justify-between"><span>Ressources :</span><span>{{ $module->resources ?? 'Non spécifié' }}</span></li>
-                        <li class="flex justify-between"><span>Certificat :</span><span>{{ $module->certificat ? 'Oui' : 'Non' }}</span></li>
-                        <li class="flex justify-between"><span>Niveau :</span><span>{{ $module->level ?? 'Tous niveaux' }}</span></li>
-                    </ul>
+                    <div class="space-y-3 text-sm text-gray-700">
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-600">Formateur :</span>
+                            <span class="font-medium">{{ $module->formateur->name ?? 'Non défini' }}</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-600">Mise à jour :</span>
+                            <span class="font-medium">{{ $module->updated_at->format('d M Y') }}</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-600">Durée :</span>
+                            <span class="font-medium">{{ $module->duree ?? 'Non précisée' }}</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-600">Ressources :</span>
+                            <span class="font-medium">{{ $module->resources ?? 'Non spécifié' }}</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-600">Certificat :</span>
+                            <span class="font-medium">{{ $module->certificat ? 'Oui' : 'Non' }}</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-600">Niveau :</span>
+                            <span class="font-medium">{{ $module->level ?? 'Tous niveaux' }}</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-600">Langue :</span>
+                            <span class="font-medium">Français</span>
+                        </div>
+                    </div>
+
 
                     @if(!empty($module->prerequi))
                         <h4 class="text-md font-semibold mt-6 mb-2 text-gray-800">Prérequis</h4>
@@ -184,7 +256,7 @@
                         @endphp
 
                         @if($firstSection)
-                            <a href="{{ route('module.section', ['module' => $module->id, 'section' => $firstSection->id]) }}"
+                            <a href="{{ route('stagiaire.module.section', ['module' => $module->id, 'section' => $firstSection->id]) }}"
                             class="block text-center bg-indigo-600 hover:bg-indigo-700 text-white font-semibold mt-6 py-2 rounded">
                                 🚀 Démarrer la formation
                             </a>
