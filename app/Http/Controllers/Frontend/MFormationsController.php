@@ -26,36 +26,30 @@ class MFormationsController extends Controller
 
 
     public function show($id)
-{
-    $module = Module::with('sections.lectures')->findOrFail($id);
+    {
+        $module = Module::with('sections.lectures')->findOrFail($id);
 
-    $userId = auth()->id();
-    $lectures = $module->sections->flatMap->lectures;
+        $userId = auth()->id();
+        $lectures = $module->sections->flatMap->lectures;
 
-    $lessonStatuses = \App\Models\ScormScore::where('user_id', $userId)
-        ->whereIn('lecture_id', $lectures->pluck('id'))
-        ->pluck('lesson_status', 'lecture_id');
+        $lessonStatuses = \App\Models\ScormScore::where('user_id', $userId)
+            ->whereIn('lecture_id', $lectures->pluck('id'))
+            ->pluck('lesson_status', 'lecture_id');
 
-    $total = $lectures->count();
-    $completed = $lessonStatuses->filter(fn($status) => $status === 'completed')->count();
-    $progression = $total > 0 ? intval(($completed / $total) * 100) : 0;
+        $total = $lectures->count();
+        $completed = $lessonStatuses->filter(fn($status) => $status === 'completed')->count();
+        $progression = $total > 0 ? intval(($completed / $total) * 100) : 0;
 
-    $sectionProgress = [];
+        $sectionProgress = [];
+        foreach ($module->sections as $section) {
+            $t = $section->lectures->count();
+            $c = $section->lectures->filter(fn($lec) => ($lessonStatuses[$lec->id] ?? null) === 'completed')->count();
+            $sectionProgress[$section->id] = ['completed' => $c, 'total' => $t];
+        }
 
-    foreach ($module->sections as $section) {
-        $total = $section->lectures->count();
-        $completed = $section->lectures->filter(function ($lec) use ($lessonStatuses) {
-            return ($lessonStatuses[$lec->id] ?? null) === 'completed';
-        })->count();
-
-        $sectionProgress[$section->id] = [
-            'completed' => $completed,
-            'total' => $total,
-        ];
+        $guestView = auth()->guest(); // ← ajoute ça
+        return view('frontend.contenu.module_detail', compact('module','lessonStatuses','progression','sectionProgress','guestView'));
     }
 
-
-    return view('frontend.contenu.module_detail', compact('module', 'lessonStatuses', 'progression', 'sectionProgress'));
-}
 
 }
