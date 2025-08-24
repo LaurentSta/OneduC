@@ -1,6 +1,7 @@
 
 
 @extends('frontend.master')
+
 @section('home')
 
 
@@ -11,11 +12,11 @@
       <div class="w-full md:w-1/2 flex justify-center md:justify-start bg-no-repeat bg-cover bg-center"
            style="background-image: url('{{ asset('frontend/assets/img/front-pages/backgrounds/EnteteBackground.gif') }}');">
         <div class="max-w-2xl text-center md:text-left space-y-6 p-6 flex flex-col justify-center min-h-[500px]">
-          <h1 class="text-[48px] font-raleway text-bleuone uppercase">OUTIL NUMÉRIQUE ÉDUCATIF</h1>
+          <h1 class="text-[40px] md:text-[48px] font-raleway text-bleuone">OUTIL NUMÉRIQUE ÉDUCATIF</h1>
           <h2 class="text-sous-titre text-orangeone font-bold font-varela text-gray-700">Qui favorise l’inclusion numérique</h2>
           <div class="flex flex-wrap justify-center md:justify-start gap-4 font-lisible">
             <a href="{{ route('projet') }}" class="btn-oneduc">Le projet</a>
-            <a href="#" class="inline-block px-4 py-2 text-base tracking-wide font-varela text-orangeone bg-white border-4 border-orangeone rounded-full transition duration-300 hover:bg-orangeone hover:text-white active:scale-95">
+            <a href="{{ route('formateur.inscription.form') }}" class="inline-block px-4 py-2 text-base tracking-wide font-varela text-orangeone bg-white border-4 border-orangeone rounded-full transition duration-300 hover:bg-orangeone hover:text-white active:scale-95">
               S'inscrire gratuitement
             </a>
           </div>
