@@ -10,7 +10,7 @@
     <div class="grid grid-cols-12 gap-6 items-center">
 
       {{-- Bloc texte --}}
-      <div class="col-span-12 md:col-span-9">
+      <div class="col-span-12 md:col-span-8">
         <x-typography variant="titre">Mes stagiaires</x-typography>
         <x-typography variant="sous-titre" class="font-varela text-sous-titre text-orangeone">
           Gérer l’ensemble de vos apprenants en un coup d’œil.
@@ -38,10 +38,11 @@
       </div>
 
       {{-- Bloc image --}}
-      <div class="col-span-12 md:col-span-3 flex justify-center md:justify-end">
+      
+      <div class="col-span-12 md:col-span-4 flex justify-center md:justify-end">
         <img src="{{ asset('images/svg/Stagiaires.svg') }}"
-             alt="Illustration stagiaires"
-             class="w-40 h-auto md:w-52 lg:w-64">
+             alt="Illustration des modules de formation"
+             class="max-w-[400px] h-auto">
       </div>
 
     </div>
