@@ -39,6 +39,12 @@ module.exports = {
         '.prose-oneduc': {
           '@apply text-[18px] leading-relaxed space-y-4 font-lisible': {},
         },
+        '.tooltip-oneduc': {
+          '@apply pointer-events-none absolute z-10 bg-bleuone text-white text-[11px] rounded px-2 py-1 shadow invisible opacity-0': {},
+        },
+        '.tooltip-right': {
+          '@apply left-full ml-2 top-1/2 -translate-y-1/2': {},
+        }
       });
     }),
   ],
