@@ -5,14 +5,20 @@
     <div class="bg-white rounded-[20px] shadow-md p-8 mb-6">
         <h1 class="text-titre font-raleway text-bleuone">
             {{ $selectedSection->section_title }}
-
-        </h1>
-        
-        
+        </h1>  
     </div>
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {{-- Colonne gauche : Accordéon pédagogique --}}
         <div x-data="{ openItem: 1 }" class="space-y-3">
+            {{-- Contenu HTML de la section (dans la colonne gauche, avant l’accordéon) --}}
+        @if(!empty($selectedSection->section_html))
+        <div class="border rounded-md p-4 bg-white">
+            <h2 class="text-base font-varela text-orangeone mb-2">Questions de départ</h2>
+            <div class="prose max-w-none">
+            {!! $selectedSection->section_html !!}
+            </div>
+        </div>
+        @endif
             {{-- Objectif pédagogique --}}
             @if($selectedSection->objectif)
             <div class="border rounded-md">
@@ -108,18 +114,7 @@
             </div>
             @endif
 
-            {{-- Liste des leçons --}}
-            <div>
-                <h2 class="text-xl font-semibold text-gray-700 mb-2">Leçons de cette section</h2>
-                <ul class="space-y-2">
-                    @foreach($selectedSection->lectures as $lecture)
-                        <li>
-                            <a href="{{ route('stagiaire.module.lecture', ['module' => $module->id, 'section' => $selectedSection->id, 'lesson' => $lecture->id]) }}"
-                               class="text-blue-600 hover:underline">{{ $lecture->lecture_title }}</a>
-                        </li>
-                    @endforeach
-                </ul>
-            </div>
+            
         </div>
     </div>
 

@@ -48,81 +48,125 @@
   <main class="grid grid-cols-1 gap-6">
 
     
-{{-- ==== KPIs en 5 colonnes sur une ligne ==== --}}
-<section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
+{{-- ==== KPIs en 4 colonnes ==== --}}
+<section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
 
   {{-- 1) Formateur référent --}}
-  <div class="bg-white rounded-[20px] shadow-md p-4 flex items-center gap-3">
-    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-bleuone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <path d="M20 21a8 8 0 10-16 0"/><circle cx="12" cy="7" r="4"/>
-    </svg>
+  <div class="bg-white rounded-[20px] shadow-md p-5 flex items-center gap-4">
+    <img src="{{ asset('images/svg/Formateur.svg') }}" alt="Formateur référent" class="w-20 h-20 shrink-0">
     @if ($formateur)
       <div class="leading-tight">
-        <p class="text-sm text-gray-600">Formateur référent</p>
-        <p class="font-medium text-gray-800">
-          {{ $formateur->name }}
-          <span class="text-xs text-gray-500">({{ $formateur->email }})</span>
-        </p>
+        <p class="text-base font-semibold text-orangeone">Formateur</p>
+        <p class="text-[17px] font-medium text-bleuone">{{ $formateur->name }}</p>
+        <p class="text-sm text-gray-500">({{ $formateur->email }})</p>
       </div>
     @else
-      <p class="text-gray-500">Aucun formateur défini</p>
+      <div class="leading-tight">
+        <p class="text-base font-semibold text-orangeone">Formateur</p>
+        <p class="text-gray-500">Aucun formateur défini</p>
+      </div>
     @endif
   </div>
 
-  {{-- 2) Temps plateforme --}}
-  <div class="bg-white rounded-[20px] shadow-md p-4 flex items-center gap-3">
-    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-bleuone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/>
-    </svg>
+  {{-- 2) Temps sur la plateforme --}}
+  <div class="bg-white rounded-[20px] shadow-md p-5 flex items-center gap-2">
+    <img src="{{ asset('images/svg/Horloge.svg') }}" alt="Temps sur la plateforme" class="w-20 h-20 shrink-0">
     <div class="leading-tight">
-      <p class="text-sm text-gray-600">Temps sur la plateforme</p>
-      <p class="font-medium text-gray-800">{{ gmdate('H\h i\m s\s', $totalSiteTime ?? 0) }}</p>
+      <p class="text-base font-semibold text-orangeone">Temps de connexion</p>
+      <p class="text-[17px] font-medium text-bleuone">{{ gmdate('H\h i\m s\s', $totalSiteTime ?? 0) }}</p>
     </div>
   </div>
 
-  {{-- 3) Commentaires --}}
-  <div class="bg-white rounded-[20px] shadow-md p-4 flex items-center gap-3">
-    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-bleuone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <path d="M21 15a4 4 0 0 1-4 4H7l-4 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/>
-    </svg>
+  {{-- 3) Questions répondues --}}
+  <div class="bg-white rounded-[20px] shadow-md p-5 flex items-center gap-2">
+    <img src="{{ asset('images/svg/Questions.svg') }}" alt="Questions répondues" class="w-20 h-20 shrink-0">
     <div class="leading-tight">
-      <p class="text-sm text-gray-600">Commentaires</p>
-      <p class="font-medium text-gray-800">
-        {{ $commentairesTotal }} <span class="text-xs text-gray-500">au total</span>
-      </p>
+      <p class="text-base font-semibold text-orangeone">Questions répondues</p>
+      <p class="text-[17px] font-medium text-bleuone">{{ $answeredCount ?? 0 }}</p>
     </div>
   </div>
 
-  {{-- 4) Questions répondues --}}
-  <div class="bg-white rounded-[20px] shadow-md p-4 flex items-center gap-3">
-    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-bleuone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <rect width="18" height="18" x="3" y="3" rx="2"/><path d="m9 12 2 2 4-4"/>
-    </svg>
+  {{-- 4) Taux de bonnes réponses --}}
+  <div class="bg-white rounded-[20px] shadow-md p-5 flex items-center gap-2">
+    <img src="{{ asset('images/svg/TauxReussite.svg') }}" alt="Taux de bonnes réponses" class="w-20 h-20 shrink-0">
     <div class="leading-tight">
-      <p class="text-sm text-gray-600">Questions répondues</p>
-      <p class="font-medium text-gray-800">{{ $answeredCount }}</p>
-    </div>
-  </div>
-
-  {{-- 5) Taux de bonnes réponses --}}
-  <div class="bg-white rounded-[20px] shadow-md p-4 flex items-center gap-3">
-    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-bleuone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <line x1="19" x2="5" y1="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/>
-    </svg>
-    <div class="leading-tight">
-      <p class="text-sm text-gray-600">Taux de bonnes réponses</p>
-      <p class="font-medium text-gray-800">
-        <span class="text-vertone">{{ $tauxBonnesReponses }}%</span>
-      </p>
+      <p class="text-base font-semibold text-orangeone">Taux de bonnes réponses</p>
+      <p class="text-[17px] font-medium text-vertone">{{ number_format($tauxBonnesReponses ?? 0, 0) }}%</p>
     </div>
   </div>
 
 </section>
-{{-- ==== /KPIs ==== --}}
 
-    
+{{-- ==== Carrousel "Formations en cours" ==== --}}
+<section class="bg-white rounded-[20px] shadow-md p-6">
+  <div class="flex items-center justify-between mb-4">
+    <h2 class="text-lg font-semibold text-bleuone">Formations en cours</h2>
 
-    {{-- Détails d'utilisation --}}
+    <div class="flex gap-2">
+      <button type="button"
+              id="carouselPrev"
+              class="px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-orangeone"
+              aria-label="Faire défiler vers la gauche">
+        ‹
+      </button>
+      <button type="button"
+              id="carouselNext"
+              class="px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-orangeone"
+              aria-label="Faire défiler vers la droite">
+        ›
+      </button>
+    </div>
+  </div>
+  <div class="relative">
+    <div id="modulesCarousel"
+         class="flex gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-2"
+         role="region"
+         aria-label="Carrousel des modules en cours"
+         tabindex="0">
+      @forelse ($modules as $module)
+        <article class="snap-start shrink-0 w-[300px] md:w-[360px] bg-white rounded-[16px] shadow-md border border-gray-100">
+          <a href="{{ url('/stagiaire/modules/'.$module->id) }}" class="block focus:outline-none focus:ring-2 focus:ring-orangeone rounded-[16px]">
+            <div class="h-[140px] w-full overflow-hidden rounded-t-[16px] bg-gray-100">
+              @php
+                $img = $module->module_image ?? null;
+              @endphp
+              @if($img)
+                <img src="{{ asset($img) }}" alt="Image du module {{ $module->module_title }}"
+                     class="h-full w-full object-cover">
+              @else
+                <div class="h-full w-full grid place-items-center text-gray-400 text-sm">Aucune image</div>
+              @endif
+            </div>
+            <div class="p-4">
+              <h3 class="text-[17px] font-semibold text-bleuone line-clamp-2">{{ $module->module_title }}</h3>
+              <p class="mt-1 text-sm text-gray-600 line-clamp-2">{{ $module->description }}</p>
+
+              @php
+                // Si disponible côté contrôleur : $module->progress (0..100)
+                $progress = isset($module->progress) ? (int)$module->progress : 0;
+              @endphp
+              <div class="mt-3">
+                <div class="flex items-center justify-between text-xs text-gray-600">
+                  <span>Progression</span>
+                  <span>{{ $progress }}%</span>
+                </div>
+                <div class="mt-1 h-2 w-full bg-gray-200 rounded-full" aria-hidden="true">
+                  <div class="h-2 bg-orangeone rounded-full" style="width: {{ $progress }}%"></div>
+                </div>
+              </div>
+            </div>
+          </a>
+        </article>
+      @empty
+        <p class="text-sm text-gray-600">Aucune formation en cours.</p>
+      @endforelse
+    </div>
+  </div>
+</section>
+{{-- ==== /Carrousel ==== --}}
+
+
+    <!-- {{-- Détails d'utilisation --}}
     <section class="bg-white rounded-[20px] shadow-md p-6">
       <h2 class="text-lg font-bold text-gray-700 mb-2">Temps et évaluations</h2>
       <ul class="space-y-1 text-sm text-gray-800">
@@ -135,37 +179,11 @@
         <li>Temps total évaluations : <strong>{{ gmdate('H\h i\m s\s', $totalEvaluationTime ?? 0) }}</strong></li>
         <li>Questions répondues en évaluations : <strong>{{ $totalEvaluationQuestions ?? 0 }}</strong></li>
       </ul>
-    </section>
+    </section> -->
 
-    {{-- Graphiques --}}
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <section class="bg-white rounded-[20px] shadow-md p-6 col-span-2">
-        <h2 class="text-lg font-semibold text-gray-700 mb-4">Comparatif des temps</h2>
-        <div class="h-[300px]">
-          <canvas id="tempsChart"></canvas>
-        </div>
-      </section>
+    
 
-      <section class="bg-white rounded-[20px] shadow-md p-6 flex flex-col items-center justify-center">
-        <h2 class="text-lg font-semibold text-gray-700 mb-4 text-center">Taux de bonnes réponses</h2>
-        <div class="h-[150px] w-[150px]">
-          <canvas id="reussiteChart" width="100" height="100"></canvas>
-        </div>
-        <p class="mt-4 text-sm text-gray-600">{{ $tauxBonnesReponses }}% de bonnes réponses</p>
-      </section>
-    </div>
-
-    {{-- Modules --}}
-    <section>
-      <div class="grid grid-cols-1 gap-4">
-        @foreach ($modules as $module)
-          <article class="bg-white rounded-[20px] shadow-md p-6">
-            <h3 class="text-orangeone font-bold text-xl mb-2">{{ $module->module_title }}</h3>
-            <p class="text-sm text-gray-600">{{ $module->description }}</p>
-          </article>
-        @endforeach
-      </div>
-    </section>
+    
 
   </main>
 </div>
@@ -187,4 +205,40 @@
     options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, title: { display: true, text: 'Minutes' } } } }
   });
 </script>
+<script>
+  (function () {
+    const track = document.getElementById('modulesCarousel');
+    const prev = document.getElementById('carouselPrev');
+    const next = document.getElementById('carouselNext');
+    if (!track || !prev || !next) return;
+
+    // largeur d’un “card” + gap
+    const getStep = () => {
+      const card = track.querySelector('article');
+      if (!card) return 320;
+      const styles = window.getComputedStyle(track);
+      const gap = parseInt(styles.columnGap || styles.gap || 16, 10);
+      return card.getBoundingClientRect().width + gap;
+    };
+
+    const scrollByStep = (dir = 1) => track.scrollBy({ left: dir * getStep(), behavior: 'smooth' });
+
+    prev.addEventListener('click', () => scrollByStep(-1));
+    next.addEventListener('click', () => scrollByStep(1));
+
+    // Accessibilité clavier
+    track.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight') { e.preventDefault(); scrollByStep(1); }
+      if (e.key === 'ArrowLeft')  { e.preventDefault(); scrollByStep(-1); }
+    });
+
+    // Défilement à la molette horizontale
+    track.addEventListener('wheel', (e) => {
+      if (Math.abs(e.deltaX) < Math.abs(e.deltaY)) return;
+      e.preventDefault();
+      track.scrollLeft += e.deltaX;
+    }, { passive: false });
+  })();
+</script>
+
 @endsection

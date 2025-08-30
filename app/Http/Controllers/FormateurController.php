@@ -17,28 +17,61 @@ class FormateurController extends Controller
     /* -------------------------------------------------------------------------
      | Tableau de bord Formateur
      |-------------------------------------------------------------------------- */
-     public function FormateurDashboard()
-     {
-         $formateurId = auth()->id();
+    public function FormateurDashboard()
+    {
+        $formateurId = auth()->id();
 
-         $modules = Module::withCount('lectures')
-            ->with('groups.users') // pour récupérer les stagiaires indirectement
-            ->where('formateur_id', $formateurId)
-            ->get();
+        // 1) Groupes créés par ce formateur
+        $groupCount = \App\Models\Group::where('instructor_id', $formateurId)->count();
 
-        foreach ($modules as $module) {
-            $stagiaires = collect();
-            foreach ($module->groups as $group) {
-                $stagiaires = $stagiaires->merge(
-                    $group->users->where('role', 'stagiaire')
-                );
-            }
-    $module->stagiaires = $stagiaires->unique('id');
-}
+        // 2) Modules utilisés par ses groupes (distincts)
+        $modulesUsed = \App\Models\Module::whereHas('groups', function ($q) use ($formateurId) {
+            $q->where('instructor_id', $formateurId);
+        })->distinct('modules.id')->count('modules.id');
 
+        // 3) Total stagiaires rattachés à ses groupes (distincts)
+        $learnerCount = \App\Models\User::where('role', 'stagiaire')
+            ->whereHas('groupesStagiaire', function ($q) use ($formateurId) {
+                $q->where('instructor_id', $formateurId);
+            })->distinct('users.id')->count('users.id');
 
-         return view('formateur.index', compact('modules'));
-     }
+        // 4) Taux de complétion moyen
+        // Approche simple et performante: moyenne des derniers scores sur les leçons
+        // vues par les stagiaires de ses groupes (fallback 0 si aucun score).
+        $avgScore = \App\Models\ScormScore::whereHas('lecture.module.groups', function ($q) use ($formateurId) {
+                $q->where('instructor_id', $formateurId);
+            })
+            ->whereHas('user', function ($q) use ($formateurId) {
+                $q->where('role', 'stagiaire')
+                ->whereHas('groupesStagiaire', function ($g) use ($formateurId) {
+                    $g->where('instructor_id', $formateurId);
+                });
+            })
+            ->avg('last_score');
+
+        $avgCompletion = $avgScore ? round($avgScore) : 0;
+
+        // Modules enrichis (si la vue en a besoin)
+        $modules = Module::withCount('lectures')
+            ->with(['groups.users' => function ($q) {
+                $q->where('role', 'stagiaire');
+            }])
+            ->whereHas('groups', function ($q) use ($formateurId) {
+                $q->where('instructor_id', $formateurId);
+            })
+            ->orWhere('formateur_id', $formateurId)
+            ->get()
+            ->map(function ($module) {
+                $stagiaires = $module->groups->flatMap->users->where('role', 'stagiaire')->unique('id')->values();
+                $module->stagiaires = $stagiaires;
+                return $module;
+            });
+
+        return view('formateur.index', compact(
+            'groupCount', 'modulesUsed', 'learnerCount', 'avgCompletion', 'modules'
+        ));
+    }
+
 
     /* -------------------------------------------------------------------------
      | Auth / Déconnexion Formateur
