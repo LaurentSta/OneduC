@@ -58,15 +58,51 @@
   <main class="space-y-12">
 
     {{-- Statistiques globales --}}
-    <section aria-labelledby="stats-title">
-      <h2 id="stats-title" class="sr-only">Statistiques globales</h2>
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <x-oneduc.card-stat title="Groupes créés" value="5" color="orangeone" />
-        <x-oneduc.card-stat title="Modules utilisés" value="8 modules / 4 groupes" color="bleuone" />
-        <x-oneduc.card-stat title="Total stagiaires" value="42" color="vertone" />
-        <x-oneduc.card-stat title="Taux de complétion moyen" value="68%" color="orangeone" />
-      </div>
-    </section>
+{{-- ==== KPIs en 4 colonnes ==== --}}
+<section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+
+  {{-- 1) Groupes créés --}}
+  <div class="bg-white rounded-[20px] shadow-md p-5 flex items-center gap-4">
+    <img src="{{ asset('images/svg/Groupe.svg') }}" alt="" class="w-20 h-20 shrink-0" aria-hidden="true">
+    <div class="leading-tight">
+      <p class="text-base font-semibold text-orangeone">Groupes créés</p>
+      <p class="text-[17px] font-medium text-bleuone">{{ $groupCount ?? 0 }}</p>
+    </div>
+  </div>
+
+  {{-- 2) Modules utilisés --}}
+  <div class="bg-white rounded-[20px] shadow-md p-5 flex items-center gap-2">
+    <img src="{{ asset('images/svg/MFormation.svg') }}" alt="" class="w-20 h-20 shrink-0" aria-hidden="true">
+    <div class="leading-tight">
+      <p class="text-base font-semibold text-orangeone">Modules utilisés</p>
+      <p class="text-[17px] font-medium text-bleuone">{{ $modulesUsed ?? 0 }}</p>
+    </div>
+  </div>
+
+  {{-- 3) Total stagiaires --}}
+  <div class="bg-white rounded-[20px] shadow-md p-5 flex items-center gap-2">
+    <img src="{{ asset('images/svg/Stagiaires.svg') }}" alt="" class="w-20 h-20 shrink-0" aria-hidden="true">
+    <div class="leading-tight">
+      <p class="text-base font-semibold text-orangeone">Total stagiaires</p>
+      <p class="text-[17px] font-medium text-bleuone">{{ $learnerCount ?? 0 }}</p>
+    </div>
+  </div>
+
+  {{-- 4) Taux de complétion moyen --}}
+  <div class="bg-white rounded-[20px] shadow-md p-5 flex items-center gap-2">
+    <img src="{{ asset('images/svg/TauxCompletion.svg') }}" alt="" class="w-20 h-20 shrink-0" aria-hidden="true">
+    <div class="leading-tight">
+      <p class="text-base font-semibold text-orangeone">Taux de complétion moyen</p>
+      <p class="text-[17px] font-medium text-vertone">{{ number_format($avgCompletion ?? 0, 0) }}%</p>
+    </div>
+  </div>
+
+</section>
+
+
+
+
+
 
     {{-- Suivi par groupe --}}
     <section aria-labelledby="groupes-title">

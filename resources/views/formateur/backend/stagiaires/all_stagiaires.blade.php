@@ -40,7 +40,7 @@
       {{-- Bloc image --}}
       
       <div class="col-span-12 md:col-span-4 flex justify-center md:justify-end">
-        <img src="{{ asset('images/svg/Stagiaires.svg') }}"
+        <img src="{{ asset('images/svg/ListesStagiaires.svg') }}"
              alt="Illustration des modules de formation"
              class="max-w-[400px] h-auto">
       </div>
