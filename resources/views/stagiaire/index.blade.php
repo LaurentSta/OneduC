@@ -128,14 +128,13 @@
           <a href="{{ url('/stagiaire/modules/'.$module->id) }}" class="block focus:outline-none focus:ring-2 focus:ring-orangeone rounded-[16px]">
             <div class="h-[140px] w-full overflow-hidden rounded-t-[16px] bg-gray-100">
               @php
-                $img = $module->module_image ?? null;
+                $imgUrl = $module->module_image ? asset('storage/'.$module->module_image) : null;
               @endphp
-              @if($img)
-                <img src="{{ asset($img) }}" alt="Image du module {{ $module->module_title }}"
-                     class="h-full w-full object-cover">
-              @else
-                <div class="h-full w-full grid place-items-center text-gray-400 text-sm">Aucune image</div>
+              @if($imgUrl)
+                <img src="{{ $imgUrl }}" alt="Image du module {{ $module->module_title }}"
+                    class="h-full w-full object-cover" loading="lazy">
               @endif
+
             </div>
             <div class="p-4">
               <h3 class="text-[17px] font-semibold text-bleuone line-clamp-2">{{ $module->module_title }}</h3>
