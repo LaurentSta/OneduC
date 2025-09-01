@@ -108,18 +108,21 @@
                 <button type="button" class="btn-secondary mb-4" onclick="addStagiaire()">+ Ajouter un stagiaire</button>
             </div>
 
-            {{-- Etape 3 --}}
-            <div id="step-3" class="step hidden">
-                <p class="text-sm text-gray-600 mb-4">Sélectionnez les modules de formation à associer à ce groupe.</p>
-                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    @foreach ($modules as $module)
-                        <label class="flex items-center space-x-2 bg-gray-50 border rounded px-4 py-2">
-                            <input type="checkbox" name="modules[]" value="{{ $module->id }}">
-                            <span>{{ $module->module_title }}</span>
-                        </label>
-                    @endforeach
-                </div>
-            </div>
+            {{-- Étape 3 --}}
+    <div id="step-3" class="step hidden">
+        <p class="text-sm text-gray-600 mb-4">Sélectionnez les modules de formation à associer à ce groupe.</p>
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+            @foreach ($modules as $module)
+                @if (!empty($module->status) && (int)$module->status === 1)
+                    <label class="flex items-center space-x-2 bg-gray-50 border rounded px-4 py-2">
+                        <input type="checkbox" name="modules[]" value="{{ $module->id }}">
+                        <span>{{ $module->module_title }}</span>
+                    </label>
+                @endif
+            @endforeach
+        </div>
+    </div>
+
 
             {{-- Navigation --}}
             <div class="flex justify-between mt-8">

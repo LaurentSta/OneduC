@@ -74,7 +74,7 @@
               @php
                 $groupes = $module->groups;
                 $stagiaires = $groupes->flatMap(fn($g) => $g->users->where('role', 'stagiaire'))->unique('id');
-                $statut = $groupes->count() > 0 ? 'Utilisé' : 'Non utilisé';
+                $statut = $groupes->count() > 0 ? 'Utilisé' : 'Non disponible';
               @endphp
               <tr class="border-t hover:bg-gray-50">
                 <td class="px-4 py-3 font-medium">{{ $module->module_title }}</td>

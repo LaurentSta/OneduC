@@ -20,24 +20,31 @@ use App\Models\ScormInteraction;
 
 class ModuleController extends Controller
 {
-
     /**
      * 1. Affiche tous les modules (admin ou formateur)
      */
     public function Modules()
     {
-        $id = Auth::user()->id;
-
-        $modules = Module::orderBy('id', 'desc')->get();
-
+        $modules = Module::query()
+            ->with([
+                'formateur:id,name',
+                'category:id,category_name',
+            ])
+            ->withCount(['sections','lectures'])
+            ->withSum('lectures as questions_count', 'question_count') // total questions prévues
+            ->latest('id')
+            ->get();
 
         return view('admin.backend.modules.modules', compact('modules'));
     }
-
+    public function toggleStatus(\App\Models\Module $module)
+    {
+        $module->update(['status' => $module->status ? 0 : 1]);
+        return back()->with('success', $module->status ? 'Module désactivé' : 'Module activé');
+    }
     /**
      * 2. Affiche le formulaire d'ajout de module
      */
-
      public function AddModule()
      {
          $categories = Category::orderBy('category_name', 'asc')->get();
@@ -46,7 +53,6 @@ class ModuleController extends Controller
           $evaluations = Evaluation::orderBy('titre')->get();
         return view('admin.backend.modules.add_module', compact('categories', 'subcategories', 'formateurs', 'evaluations'));
      }
-
     /**
      * 🔹 3. Enregistre un module en base de données
      */
@@ -606,6 +612,45 @@ return view('admin.backend.modules.edit_module', compact('module', 'categories',
             'lectureStats',
             'sectionStatuses'
         ));
+    }
+
+    public function finModule($moduleId)
+    {
+        $userId = auth()->id();
+
+        $module = Module::with('sections.lectures')->findOrFail($moduleId);
+
+        $totalSections = $module->sections->count();
+        $totalLectures = $module->sections->flatMap->lectures->count();
+
+        // Total de questions prévues (admin)
+        $totalQuestionsPlanned = $module->sections
+            ->flatMap->lectures
+            ->sum(fn($lec) => (int)($lec->question_count ?? 0));
+
+        // Questions répondues (distinct interaction_id, limitées au question_count de chaque leçon)
+        $questionsAnswered = 0;
+
+        foreach ($module->sections->flatMap->lectures as $lecture) {
+            $planned = (int)($lecture->question_count ?? 0);
+            if ($planned === 0) continue;
+
+            $distinctAnswered = ScormInteraction::where('user_id', $userId)
+                ->where('lecture_id', $lecture->id)
+                ->distinct('interaction_id')
+                ->count('interaction_id');
+
+            // Ne pas compter plus que le prévu sur la leçon
+            $questionsAnswered += min($distinctAnswered, $planned);
+        }
+
+        return view('stagiaire.fin_module', [
+            'module' => $module,
+            'totalSections' => $totalSections,
+            'totalLectures' => $totalLectures,
+            'totalQuestionsPlanned' => $totalQuestionsPlanned,
+            'questionsAnswered' => $questionsAnswered,
+        ]);
     }
 
 

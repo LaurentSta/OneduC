@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use App\Services\CodeGeneratorService;
-
+use Illuminate\Validation\Rule;
 
 
 class GroupeController extends Controller
@@ -19,9 +19,10 @@ class GroupeController extends Controller
     /**
      * Affiche le formulaire du wizard
      */
+   
     public function create()
     {
-        $modules = Module::all();
+        $modules = Module::active()->orderBy('module_title')->get();
         return view('formateur.groupes.create', compact('modules'));
     }
 
@@ -35,7 +36,7 @@ class GroupeController extends Controller
             'description' => 'nullable|string',
             'password' => 'required|string|min:8',
             'modules' => 'required|array|min:1',
-            'modules.*' => 'exists:modules,id',
+            'modules.*' => Rule::exists('modules', 'id')->where('status', 1),
             'stagiaires' => 'required|array|min:1',
             'stagiaires.*.email' => 'required|email|distinct',
             'stagiaires.*.prenom' => 'required|string|max:255',
@@ -91,7 +92,8 @@ class GroupeController extends Controller
                 ->with('modules', 'students')
                 ->firstOrFail();
 
-            $modules = Module::all();
+            $modules = Module::active()->orderBy('module_title')->get();
+
 
             return view('formateur.groupes.edit', compact('group', 'modules'));
         }
@@ -102,7 +104,7 @@ class GroupeController extends Controller
         'nom' => 'required|string|unique:groups,name,' . $id,
         'description' => 'nullable|string',
         'modules' => 'required|array|min:1',
-        'modules.*' => 'exists:modules,id',
+        'modules.*' => Rule::exists('modules', 'id')->where('status', 1),
         'stagiaires.*.email' => 'nullable|email|distinct',
         'stagiaires.*.prenom' => 'nullable|string|max:255',
         'stagiaires.*.nom' => 'nullable|string|max:255',
