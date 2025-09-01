@@ -29,6 +29,10 @@ Route::middleware(['auth', 'role:stagiaire', 'track.time'])->prefix('stagiaire')
 
     Route::get('/progression/detailmodule', [StagiaireController::class, 'ProgressionDetailModule'])
     ->name('stagiaire.progression.detailmodule');
+    
+    // Page de fin de module (félicitations + résumé)
+Route::get('/modules/{module}/fin', [ModuleController::class, 'finModule'])
+    ->name('module.fin');
 
 
 

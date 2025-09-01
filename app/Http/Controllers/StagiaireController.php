@@ -16,297 +16,291 @@ class StagiaireController extends Controller
 {
 
     public function StagiaireModuleDetail($id)
-        {
-            $user = auth()->user();
+    {
+        $user = auth()->user();
 
-            // 🔁 Charger le module avec les relations nécessaires
-            $module = \App\Models\Module::with('formateur', 'sections.lectures')->findOrFail($id);
+        // 🔁 Module uniquement s'il est actif
+        $module = Module::with('formateur', 'sections.lectures')
+            ->active()
+            ->findOrFail($id);
 
-            // ✅ Statuts des leçons (à partir des interactions)
-            $interactions = \App\Models\ScormInteraction::where('user_id', $user->id)->get()->groupBy('lecture_id');
+        // ✅ Statuts des leçons (à partir des interactions)
+        $interactions = ScormInteraction::where('user_id', $user->id)->get()->groupBy('lecture_id');
 
-            $lessonStatuses = [];
-            foreach ($module->sections->flatMap->lectures as $lecture) {
-                $expected = $lecture->question_count ?? 0;
-                $answered = $interactions->get($lecture->id)?->count() ?? 0;
+        $lessonStatuses = [];
+        foreach ($module->sections->flatMap->lectures as $lecture) {
+            $expected = $lecture->question_count ?? 0;
+            $answered = $interactions->get($lecture->id)?->count() ?? 0;
 
-                if ($expected === 0) {
-                    $status = 'not_started';
-                } elseif ($answered >= $expected) {
-                    $status = 'completed';
-                } elseif ($answered > 0) {
-                    $status = 'incomplete';
-                } else {
-                    $status = 'not_started';
-                }
-
-                $lessonStatuses[$lecture->id] = $status;
+            if ($expected === 0) {
+                $status = 'not_started';
+            } elseif ($answered >= $expected) {
+                $status = 'completed';
+            } elseif ($answered > 0) {
+                $status = 'incomplete';
+            } else {
+                $status = 'not_started';
             }
 
-            // ✅ Progression par section
-            $sectionProgress = [];
-            foreach ($module->sections as $section) {
-                $total = $section->lectures->count();
-                $completed = collect($section->lectures)->filter(fn($lec) => $lessonStatuses[$lec->id] === 'completed')->count();
-                $sectionProgress[$section->id] = ['total' => $total, 'completed' => $completed];
-            }
-
-            // ✅ Progression globale (en %)
-            $totalLectures = $module->sections->flatMap->lectures->count();
-            $completedLectures = collect($lessonStatuses)->filter(fn($s) => $s === 'completed')->count();
-            $progression = $totalLectures > 0 ? round(($completedLectures / $totalLectures) * 100) : 0;
-
-            return view('stagiaire.stagiaire_module_detail', compact(
-                'module',
-                'lessonStatuses',
-                'sectionProgress',
-                'progression'
-            ));
+            $lessonStatuses[$lecture->id] = $status;
         }
-        // Tableau de bord stagiaire
-    public function StagiaireDashboard()
-        {
-            $user = auth()->user();
 
-            $videoStats = VideoSegmentTracking::where('user_id', $user->id)
+        // ✅ Progression par section
+        $sectionProgress = [];
+        foreach ($module->sections as $section) {
+            $total = $section->lectures->count();
+            $completed = collect($section->lectures)->filter(fn($lec) => $lessonStatuses[$lec->id] === 'completed')->count();
+            $sectionProgress[$section->id] = ['total' => $total, 'completed' => $completed];
+        }
+
+        // ✅ Progression globale (en %)
+        $totalLectures = $module->sections->flatMap->lectures->count();
+        $completedLectures = collect($lessonStatuses)->filter(fn($s) => $s === 'completed')->count();
+        $progression = $totalLectures > 0 ? round(($completedLectures / $totalLectures) * 100) : 0;
+
+        return view('stagiaire.stagiaire_module_detail', compact(
+            'module',
+            'lessonStatuses',
+            'sectionProgress',
+            'progression'
+        ));
+    }
+
+    // Tableau de bord stagiaire
+    public function StagiaireDashboard()
+    {
+        $user = auth()->user();
+
+        $videoStats = VideoSegmentTracking::where('user_id', $user->id)
             ->selectRaw('SUM(total_watch_time) as watch_time, COUNT(*) as segments, SUM(watch_count) - COUNT(*) as replays')
             ->first();
 
-            $totalVideoWatchTime = (int) round($videoStats->watch_time ?? 0);
-            $totalVideoSegments = (int) ($videoStats->segments ?? 0);
-            $totalVideoReplays = (int) ($videoStats->replays ?? 0);
-            // ✅ Tous les scores SCORM du stagiaire
-            $scormScores = \App\Models\ScormScore::with('lecture')
+        $totalVideoWatchTime = (int) round($videoStats->watch_time ?? 0);
+        $totalVideoSegments = (int) ($videoStats->segments ?? 0);
+        $totalVideoReplays = (int) ($videoStats->replays ?? 0);
+
+        // ✅ Tous les scores SCORM du stagiaire
+        $scormScores = ScormScore::with('lecture')
+            ->where('user_id', $user->id)
+            ->get();
+
+        // 🔁 Recalcul des scores pour chaque leçon
+        foreach ($scormScores as $score) {
+            $lectureId = $score->lecture_id;
+
+            $reponsesCorrectes = ScormInteraction::where('lecture_id', $lectureId)
                 ->where('user_id', $user->id)
-                ->get();
-
-            // 🔁 Recalcul des scores pour chaque leçon
-            foreach ($scormScores as $score) {
-                $lectureId = $score->lecture_id;
-
-                $reponsesCorrectes = \App\Models\ScormInteraction::where('lecture_id', $lectureId)
-                    ->where('user_id', $user->id)
-                    ->where('result', 'correct')
-                    ->count();
-
-                $questionsTotal = \App\Models\ScormInteraction::where('lecture_id', $lectureId)
-                    ->where('user_id', $user->id)
-                    ->whereNotNull('interaction_weighting')
-                    ->count();
-
-                $score->correct_score = $reponsesCorrectes * 10;
-                $score->total_score_possible = $questionsTotal * 10;
-            }
-
-            // ✅ Calcul de progression globale
-            $total = $scormScores->count();
-            $completed = $scormScores->where('is_completed', true)->count();
-            $progressionGlobale = $total > 0 ? round(($completed / $total) * 100) : 0;
-
-            // ✅ Score global
-            $totalCorrectScore = $scormScores->sum('correct_score');
-            $totalScorePossible = $scormScores->sum('total_score_possible');
-            $tauxBonnesReponses = $totalScorePossible > 0
-                ? round(($totalCorrectScore / $totalScorePossible) * 100)
-                : 0;
-
-            // ✅ Récupération des groupes + modules + formateur
-            $groupes = $user->groupesStagiaire()->with('modules', 'instructor')->get();
-            $modules = $groupes->flatMap->modules->unique('id')->values();
-            $formateur = $groupes->first()?->instructor;
-
-            // ✅ Temps passé sur la plateforme
-            $totalSiteTime = $user->total_site_time;
-
-            
-            // ✅ Nombre de réponses (correctes ou non)
-            $answeredCount = \App\Models\ScormInteraction::where('user_id', $user->id)
-                ->whereIn('result', ['correct', 'wrong'])
+                ->where('result', 'correct')
                 ->count();
-            // 🔁 On récupère tous les latencies en format "HH:MM:SS"
-            $latencies = \App\Models\ScormInteraction::where('user_id', $user->id)
-                ->whereNotNull('latency')
-                ->pluck('latency');
-            // ⏱️ Convertir en secondes
-            $latencySeconds = $latencies->map(function ($latency) {
-                try {
-                    [$h, $m, $s] = array_pad(explode(':', $latency), 3, 0);
-                    return (int)$h * 3600 + (int)$m * 60 + (int)$s;
-                } catch (\Exception $e) {
-                    return 0; // en cas de données corrompues
-                }
-            });
-            
 
-            $commentairesTotal = LessonFeedback::withTrashed()
+            $questionsTotal = ScormInteraction::where('lecture_id', $lectureId)
+                ->where('user_id', $user->id)
+                ->whereNotNull('interaction_weighting')
+                ->count();
+
+            $score->correct_score = $reponsesCorrectes * 10;
+            $score->total_score_possible = $questionsTotal * 10;
+        }
+
+        // ✅ Calcul de progression globale
+        $total = $scormScores->count();
+        $completed = $scormScores->where('is_completed', true)->count();
+        $progressionGlobale = $total > 0 ? round(($completed / $total) * 100) : 0;
+
+        // ✅ Score global
+        $totalCorrectScore = $scormScores->sum('correct_score');
+        $totalScorePossible = $scormScores->sum('total_score_possible');
+        $tauxBonnesReponses = $totalScorePossible > 0
+            ? round(($totalCorrectScore / $totalScorePossible) * 100)
+            : 0;
+
+        // ✅ Récupération des groupes + modules + formateur
+        $groupes = $user->groupesStagiaire()->with('modules', 'instructor')->get();
+        $modules = $groupes->flatMap->modules->unique('id')->values();
+        $formateur = $groupes->first()?->instructor;
+
+        // ✅ Temps passé sur la plateforme
+        $totalSiteTime = $user->total_site_time;
+
+        // ✅ Nombre de réponses (correctes ou non)
+        $answeredCount = ScormInteraction::where('user_id', $user->id)
+            ->whereIn('result', ['correct', 'wrong'])
+            ->count();
+
+        // 🔁 Latencies en "HH:MM:SS"
+        $latencies = ScormInteraction::where('user_id', $user->id)
+            ->whereNotNull('latency')
+            ->pluck('latency');
+
+        $latencySeconds = $latencies->map(function ($latency) {
+            try {
+                [$h, $m, $s] = array_pad(explode(':', $latency), 3, 0);
+                return (int)$h * 3600 + (int)$m * 60 + (int)$s;
+            } catch (\Exception $e) {
+                return 0;
+            }
+        });
+
+        $commentairesTotal = LessonFeedback::withTrashed()
             ->where('user_id', $user->id)
             ->count();
 
-            // --- Statistiques ÉVALUATIONS SCORM ---
+        // --- Statistiques ÉVALUATIONS SCORM ---
+        $scormEvalScores = ScormEvaluationScore::with('evaluation')
+            ->where('user_id', $user->id)
+            ->get();
 
-            $scormEvalScores = ScormEvaluationScore::with('evaluation')
-                ->where('user_id', $user->id)
-                ->get();
+        // Globales
+        $totalEvaluationsDone = $scormEvalScores->count();
+        $averageEvaluationScore = $scormEvalScores->avg('last_score');
+        $bestEvaluationScore = $scormEvalScores->max('best_score');
+        $totalSuccessEvaluations = $scormEvalScores->where('best_score', '>=', 75)->count();
+        $tauxReussiteEvaluation = $totalEvaluationsDone > 0
+            ? round($totalSuccessEvaluations / $totalEvaluationsDone * 100, 1)
+            : 0;
+        $totalEvaluationTime = $scormEvalScores->sum('session_time');
+        $totalEvaluationQuestions = $scormEvalScores->sum('questions_answered');
 
-            // Globales
-            $totalEvaluationsDone = $scormEvalScores->count();
-            $averageEvaluationScore = $scormEvalScores->avg('last_score');
-            $bestEvaluationScore = $scormEvalScores->max('best_score');
-            $totalSuccessEvaluations = $scormEvalScores->where('best_score', '>=', 75)->count();
-            $tauxReussiteEvaluation = $totalEvaluationsDone > 0
-                ? round($totalSuccessEvaluations / $totalEvaluationsDone * 100, 1)
-                : 0;
-            $totalEvaluationTime = $scormEvalScores->sum('session_time');
-            $totalEvaluationQuestions = $scormEvalScores->sum('questions_answered');
+        return view('stagiaire.index', compact(
+            'scormScores',
+            'progressionGlobale',
+            'modules',
+            'formateur',
+            'totalSiteTime',
+            'answeredCount',
+            'tauxBonnesReponses',
+            'commentairesTotal',
+            'totalVideoWatchTime',
+            'totalVideoSegments',
+            'totalVideoReplays',
+            'scormEvalScores',
+            'totalEvaluationsDone',
+            'averageEvaluationScore',
+            'bestEvaluationScore',
+            'tauxReussiteEvaluation',
+            'totalEvaluationTime',
+            'totalEvaluationQuestions'
+        ));
+    }
 
-
-                return view('stagiaire.index', compact(
-                    'scormScores',
-                    'progressionGlobale',
-                    'modules',
-                    'formateur',
-                    'totalSiteTime',
-                    'answeredCount',
-                    'tauxBonnesReponses',
-                    'commentairesTotal',
-                    'totalVideoWatchTime',
-                    'totalVideoSegments',
-                    'totalVideoReplays',
-                    'scormEvalScores',
-                    'totalEvaluationsDone',
-                    'averageEvaluationScore',
-                    'bestEvaluationScore',
-                    'tauxReussiteEvaluation',
-                    'totalEvaluationTime',
-                    'totalEvaluationQuestions'
-                ));
-
-
-        }
     public function StagiaireModules()
     {
         $user = Auth::user();
 
-        // Récupérer les groupes du stagiaire
-        $groupes = \App\Models\Group::with('modules')
+        // Groupes du stagiaire
+        $groupes = Group::with('modules')
             ->whereHas('students', function ($query) use ($user) {
                 $query->where('email', $user->email);
             })
             ->get();
 
-        // Extraire les modules liés, sans doublons
+        // Modules liés, sans doublons
         $modules = $groupes->flatMap->modules->unique('id')->values();
 
-        // Requête Eloquent avec chargement des sections
-        $eloquentModules = \App\Models\Module::whereIn('id', $modules->pluck('id'))->with('sections')->get();
+        // Charger seulement les modules actifs
+        $eloquentModules = Module::whereIn('id', $modules->pluck('id'))
+            ->active()
+            ->with('sections')
+            ->get();
 
         return view('stagiaire.stagiaire_modules', ['modules' => $eloquentModules]);
     }
 
+    public function StagiaireResultats()
+    {
+        $user = auth()->user();
+        $userId = $user->id;
 
+        // 📚 Temps passé dans les leçons (cmi.core.session_time)
+        $totalScormTime = ScormScore::where('user_id', $userId)
+            ->sum('session_time');
 
+        // 🧠 Temps de réponse aux questions (latency)
+        $latencies = ScormInteraction::where('user_id', $userId)
+            ->whereNotNull('latency')
+            ->pluck('latency');
 
- 
+        $latencySeconds = $latencies->map(function ($latency) {
+            try {
+                [$h, $m, $s] = array_pad(explode(':', $latency), 3, 0);
+                return (int)$h * 3600 + (int)$m * 60 + (int)$s;
+            } catch (\Exception $e) {
+                return 0;
+            }
+        });
 
-public function StagiaireResultats()
-{
-    $user = auth()->user();
-    $userId = $user->id;
+        $totalLatencyTime = $latencySeconds->sum();
 
-    // 📚 Temps passé dans les leçons (cmi.core.session_time)
-    $totalScormTime = \App\Models\ScormScore::where('user_id', $userId)
-        ->sum('session_time');
-
-    // 🧠 Temps de réponse aux questions (latency)
-    $latencies = \App\Models\ScormInteraction::where('user_id', $userId)
-        ->whereNotNull('latency')
-        ->pluck('latency');
-
-    $latencySeconds = $latencies->map(function ($latency) {
-        try {
-            [$h, $m, $s] = array_pad(explode(':', $latency), 3, 0);
-            return (int)$h * 3600 + (int)$m * 60 + (int)$s;
-        } catch (\Exception $e) {
-            return 0;
-        }
-    });
-
-    $totalLatencyTime = $latencySeconds->sum();
-
-    // 🧮 Temps moyen par question
-    $answeredCount = \App\Models\ScormInteraction::where('user_id', $userId)
-        ->whereIn('result', ['correct', 'wrong'])
-        ->count();
-
-    $averageLatencyTime = $answeredCount > 0
-        ? round($totalLatencyTime / $answeredCount)
-        : 0;
-
-    // 🔁 Temps total SCORM (session + réflexion)
-    $engagementTotal = $totalScormTime + $totalLatencyTime;
-
-    // 🔁 Nombre de questions réessayées
-    $reessayeCount = \App\Models\ScormInteraction::where('user_id', $userId)
-        ->get()
-        ->groupBy('interaction_id')
-        ->filter(fn($g) => $g->count() > 1)
-        ->count();
-
-    // ⏱️ Temps total sur la plateforme
-    $totalSiteTime = $user->total_site_time;
-
-    // 📊 Résultats par leçon
-    $resultats = \App\Models\ScormScore::with('lecture')
-        ->where('user_id', $userId)
-        ->get();
-
-    foreach ($resultats as $score) {
-        $lectureId = $score->lecture_id;
-
-        $reponsesCorrectes = \App\Models\ScormInteraction::where('lecture_id', $lectureId)
-            ->where('user_id', $userId)
-            ->where('result', 'correct')
-            ->count();
-
-        $questionsTotal = \App\Models\ScormInteraction::where('lecture_id', $lectureId)
-            ->where('user_id', $userId)
-            ->whereNotNull('interaction_weighting')
-            ->count();
-
-        $score->answered_questions = \App\Models\ScormInteraction::where('lecture_id', $lectureId)
-            ->where('user_id', $userId)
+        // 🧮 Temps moyen par question
+        $answeredCount = ScormInteraction::where('user_id', $userId)
             ->whereIn('result', ['correct', 'wrong'])
             ->count();
 
-        $score->total_questions = $questionsTotal;
-        $score->correct_score = $reponsesCorrectes * 10;
-        $score->total_score_possible = $questionsTotal * 10;
+        $averageLatencyTime = $answeredCount > 0
+            ? round($totalLatencyTime / $answeredCount)
+            : 0;
 
-        if ($score->lesson_status !== 'completed') {
-            $score->lesson_status = \App\Models\ScormScore::where('user_id', $userId)
-                ->where('lecture_id', $lectureId)
-                ->value('lesson_status') ?? null;
+        // 🔁 Temps total SCORM (session + réflexion)
+        $engagementTotal = $totalScormTime + $totalLatencyTime;
+
+        // 🔁 Nombre de questions réessayées
+        $reessayeCount = ScormInteraction::where('user_id', $userId)
+            ->get()
+            ->groupBy('interaction_id')
+            ->filter(fn($g) => $g->count() > 1)
+            ->count();
+
+        // ⏱️ Temps total sur la plateforme
+        $totalSiteTime = $user->total_site_time;
+
+        // 📊 Résultats par leçon
+        $resultats = ScormScore::with('lecture')
+            ->where('user_id', $userId)
+            ->get();
+
+        foreach ($resultats as $score) {
+            $lectureId = $score->lecture_id;
+
+            $reponsesCorrectes = ScormInteraction::where('lecture_id', $lectureId)
+                ->where('user_id', $userId)
+                ->where('result', 'correct')
+                ->count();
+
+            $questionsTotal = ScormInteraction::where('lecture_id', $lectureId)
+                ->where('user_id', $userId)
+                ->whereNotNull('interaction_weighting')
+                ->count();
+
+            $score->answered_questions = ScormInteraction::where('lecture_id', $lectureId)
+                ->where('user_id', $userId)
+                ->whereIn('result', ['correct', 'wrong'])
+                ->count();
+
+            $score->total_questions = $questionsTotal;
+            $score->correct_score = $reponsesCorrectes * 10;
+            $score->total_score_possible = $questionsTotal * 10;
+
+            if ($score->lesson_status !== 'completed') {
+                $score->lesson_status = ScormScore::where('user_id', $userId)
+                    ->where('lecture_id', $lectureId)
+                    ->value('lesson_status') ?? null;
+            }
+
+            $score->formatted_session_time = gmdate('H\h i\m s\s', $score->session_time ?? 0);
         }
 
-        $score->formatted_session_time = gmdate('H\h i\m s\s', $score->session_time ?? 0);
+        // 🎥 Statistiques vidéo centralisées
+        $videoStats = VideoSegmentTracking::getStatsForUser($userId);
+
+        return view('stagiaire.stagiaire_resultats', compact(
+            'resultats',
+            'reessayeCount',
+            'totalSiteTime',
+            'totalScormTime',
+            'totalLatencyTime',
+            'engagementTotal',
+            'averageLatencyTime',
+            'videoStats'
+        ));
     }
-
-    // 🎥 Statistiques vidéo centralisées
-    $videoStats = VideoSegmentTracking::getStatsForUser($userId);
-
-    return view('stagiaire.stagiaire_resultats', compact(
-        'resultats',
-        'reessayeCount',
-        'totalSiteTime',
-        'totalScormTime',
-        'totalLatencyTime',
-        'engagementTotal',
-        'averageLatencyTime',
-        'videoStats'
-    ));
-}
-
-
-
-
 }

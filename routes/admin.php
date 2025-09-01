@@ -9,7 +9,7 @@ use App\Http\Controllers\LessonFeedbackController;
 use App\Http\Controllers\Backend\EvaluationController;
 
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
-
+    
     // 🖥️ Dashboard
     Route::get('/', [AdminController::class, 'AdminDashboard'])->name('dashboard');
 
@@ -59,6 +59,8 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         Route::get('/modules/edit/{id}', 'EditModule')->name('modules.edit');
         Route::put('/modules/update/{id}', 'UpdateModule')->name('modules.update');
         Route::get('/modules/delete/{id}', 'DeleteModule')->name('modules.delete');
+        Route::patch('/modules/{module}/toggle-status', 'toggleStatus')->name('modules.toggle-status');
+
 
         // 🎬 Lectures & sections
         Route::get('/modules/{id}/lectures/add', 'AddModuleLecture')->name('modules.lecture.add');

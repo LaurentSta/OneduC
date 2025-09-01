@@ -124,6 +124,7 @@
          aria-label="Carrousel des modules en cours"
          tabindex="0">
       @forelse ($modules as $module)
+      @if ($module->status) {{-- n’affiche que si actif --}}
         <article class="snap-start shrink-0 w-[300px] md:w-[360px] bg-white rounded-[16px] shadow-md border border-gray-100">
           <a href="{{ url('/stagiaire/modules/'.$module->id) }}" class="block focus:outline-none focus:ring-2 focus:ring-orangeone rounded-[16px]">
             <div class="h-[140px] w-full overflow-hidden rounded-t-[16px] bg-gray-100">
@@ -134,14 +135,12 @@
                 <img src="{{ $imgUrl }}" alt="Image du module {{ $module->module_title }}"
                     class="h-full w-full object-cover" loading="lazy">
               @endif
-
             </div>
             <div class="p-4">
               <h3 class="text-[17px] font-semibold text-bleuone line-clamp-2">{{ $module->module_title }}</h3>
               <p class="mt-1 text-sm text-gray-600 line-clamp-2">{{ $module->description }}</p>
 
               @php
-                // Si disponible côté contrôleur : $module->progress (0..100)
                 $progress = isset($module->progress) ? (int)$module->progress : 0;
               @endphp
               <div class="mt-3">
@@ -156,9 +155,10 @@
             </div>
           </a>
         </article>
-      @empty
-        <p class="text-sm text-gray-600">Aucune formation en cours.</p>
-      @endforelse
+      @endif
+    @empty
+      <p class="text-sm text-gray-600">Aucune formation en cours.</p>
+    @endforelse
     </div>
   </div>
 </section>
