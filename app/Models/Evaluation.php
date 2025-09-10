@@ -3,6 +3,10 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Module;
+use App\Models\ScormEvaluationResult;
+use App\Models\ScormEvaluationScore;
+use App\Models\ScormEvaluationInteraction;
 
 class Evaluation extends Model
 {
@@ -11,25 +15,40 @@ class Evaluation extends Model
         'scorm_path',
     ];
 
-    // 🔗 Relation : une évaluation peut être liée à plusieurs modules
+    /**
+     * Une évaluation peut être liée à plusieurs modules.
+     */
     public function modules()
     {
-        return $this->hasMany(\App\Models\Module::class, 'evaluation_id');
+        // FK sur modules.evaluation_id
+        return $this->hasMany(Module::class, 'evaluation_id', 'id');
+        // ->withDefault() inutile ici côté hasMany
     }
 
+    /**
+     * Traces K/V SCORM de l'évaluation.
+     */
     public function scormResults()
     {
-        return $this->hasMany(ScormEvaluationResult::class);
+        // FK sur scorm_evaluation_results.evaluation_id
+        return $this->hasMany(ScormEvaluationResult::class, 'evaluation_id', 'id');
     }
 
+    /**
+     * Scores agrégés par user+évaluation.
+     */
     public function scormScores()
     {
-        return $this->hasMany(ScormEvaluationScore::class);
+        // FK sur scorm_evaluation_scores.evaluation_id
+        return $this->hasMany(ScormEvaluationScore::class, 'evaluation_id', 'id');
     }
 
+    /**
+     * Historique des interactions.
+     */
     public function scormInteractions()
     {
-        return $this->hasMany(ScormEvaluationInteraction::class);
+        // FK sur scorm_evaluation_interactions.evaluation_id
+        return $this->hasMany(ScormEvaluationInteraction::class, 'evaluation_id', 'id');
     }
-
 }

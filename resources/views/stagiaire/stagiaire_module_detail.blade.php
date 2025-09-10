@@ -34,8 +34,6 @@
         </ol>
       </nav>
     </div>
-
-    
   </div>
 </header>
 
@@ -223,26 +221,36 @@
         @else
           <p class="text-sm text-gray-500 italic mt-6">Aucune section disponible dans ce module.</p>
         @endif
+
+        {{-- Bouton Évaluation finale sous "Démarrer la formation" --}}
+        @if($module->evaluation_id)
+          <button type="button"
+                  class="block w-full text-center mt-3 py-2 rounded border border-orangeone text-orangeone hover:bg-orange-50 font-semibold transition"
+                  onclick="document.getElementById('evaluationModal').classList.remove('hidden')">
+            Passer l’évaluation finale
+          </button>
+        @endif
       </div>
     </aside>
 
   </section>
 
-  {{-- Modal évaluation (optionnel) --}}
+  {{-- Modal évaluation --}}
   @if($module->evaluation_id)
     <div id="evaluationModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center hidden">
       <div class="bg-white p-6 rounded shadow-lg w-full max-w-md">
         <h4 class="text-lg font-semibold mb-4 text-orangeone">Évaluation finale</h4>
         @auth
           <p class="text-sm text-gray-700 mb-4">
-            Cette évaluation ne peut être réalisée <strong>qu’une seule fois</strong>.
+            Cette évaluation peut être réalisée à la fin du module.
           </p>
           <div class="flex justify-end gap-2">
             <a href="{{ route('evaluation.show', ['id' => $module->evaluation_id]) }}"
                class="bg-orangeone hover:bg-orange-600 text-white font-semibold px-4 py-2 rounded">
-              Oui, je suis prêt
+              Commencer
             </a>
-            <button onclick="document.getElementById('evaluationModal').classList.add('hidden')"
+            <button type="button"
+                    onclick="document.getElementById('evaluationModal').classList.add('hidden')"
                     class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold px-4 py-2 rounded">
               Annuler
             </button>

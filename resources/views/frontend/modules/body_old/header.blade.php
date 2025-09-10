@@ -12,7 +12,14 @@
         </svg>
         <span class="font-varela text-sm">Menu</span>
       </button>
-      <h1 class="text-xl font-bold text-[#004661]">Onéduc - Lecture</h1>
+      <!-- Logo -->
+      <div class="flex items-center mb-4 md:mb-0">
+        <a href="{{ route('index') }}">
+          <img src="/frontend/assets/img/front-pages/branding/LogoOneducPositionG.svg"
+               alt="Logo Onéduc"
+               class="h-[60px] w-auto">
+        </a>
+      </div>
     </div>
 
     <!-- Centre : barre de progression globale -->

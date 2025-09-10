@@ -13,10 +13,14 @@
         </button>
 
         <!-- Logo juste à droite du burger -->
-        <a href="{{ url('/') }}" class="inline-flex items-center gap-2">
-        <img src="{{ asset('backend/assets/img/logos/LOGOOneducSVG.svg') }}" alt="Logo Oneduc" class="h-10">
-        <span class="font-bold text-lg text-gray-800">Oneduc.fr</span>
-    </a>
+        <!-- Logo -->
+      <div class="flex items-center mb-4 md:mb-0">
+        <a href="{{ route('index') }}">
+          <img src="/frontend/assets/img/front-pages/branding/LogoOneducPositionG.svg"
+               alt="Logo Onéduc"
+               class="h-[60px] w-auto">
+        </a>
+      </div>
       </div>
 
       <div class="flex items-center gap-4">

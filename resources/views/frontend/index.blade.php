@@ -117,27 +117,40 @@
   </section>
 
   <section class="py-16 bg-white">
-    <div class="max-w-[1248px] mx-auto px-4">
-      <div class="flex flex-col md:flex-row items-center gap-10">
+  <div class="max-w-[1248px] mx-auto px-4">
+    <div class="flex flex-col md:flex-row items-center gap-10">
 
-        <!-- Col gauche : texte -->
-        <div class="w-full md:w-1/2 space-y-6 font-lisible">
-          <h2 class="text-3xl font-semibold flex items-center gap-4 font-raleway text-bleuone">
-            <img src="{{ asset('frontend/assets/img/front-pages/icons/etoile8.gif') }}" width="60" height="61" alt="Étoile">
-            Oneduc.fr c’est quoi ?
-          </h2>
-          <p class="text-lg">Onéduc est une association regroupant des formateurs ayant créé une plateforme open source de digitalisation des formations.</p>
-          <p class="text-lg">Elle met à disposition des formateurs une plateforme de formation en ligne fonctionnant sur tous supports. Utilisée dans le cadre de formations financées par des OPCO ou le CPF (Compte personnel de Formation).</p>
+      <!-- Col gauche : texte -->
+      <div class="w-full md:w-1/2 space-y-6 font-lisible">
+        <h2 class="text-3xl font-semibold flex items-center gap-4 font-raleway text-bleuone">
+          <img src="{{ asset('frontend/assets/img/front-pages/icons/etoile8.gif') }}" 
+               width="60" height="61" alt="" aria-hidden="true">
+          Un projet créé par des formateurs
+        </h2>
+        <div class="max-w-[60ch] space-y-4 leading-relaxed">
+          <p>
+            Onéduc a été créé par des <strong>formateurs et éducateurs spécialisés</strong>,
+            rejoints par des professionnels du numérique engagés pour l’inclusion digitale.
+          </p>
+          <p>
+            Leur objectif commun : offrir une plateforme simple, accessible et durable,
+            pour accompagner tous les apprenants, en particulier ceux qui rencontrent des
+            difficultés avec le numérique.
+          </p>
         </div>
-
-        <!-- Col droite : image -->
-        <div class="w-full md:w-1/2">
-          <img src="{{ asset('frontend/assets/img/front-pages/landing-page/module.svg') }}" alt="Module Oneduc" class="w-full rounded min-h-[300px] object-cover">
-        </div>
-
       </div>
+
+      <!-- Col droite : image -->
+      <div class="w-full md:w-1/2">
+        <img src="{{ asset('frontend/assets/img/front-pages/landing-page/module.svg') }}" 
+             alt="Illustration d’un module Oneduc" 
+             class="w-full rounded min-h-[300px] object-cover">
+      </div>
+
     </div>
-  </section>
+  </div>
+</section>
+
 
   @endsection
 

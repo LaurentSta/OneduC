@@ -345,8 +345,48 @@ class FormateurController extends Controller
                 return view('formateur.formations.index', compact('modules'));
             }
 
+        public function moduleDetail(\App\Models\Module $module)
+            {
+                $formateurId = auth()->id();
 
+                $module->load([
+                    'formateur',                       // si relation existe
+                    'sections.lectures',               // structure pédagogique
+                    'groups' => function ($q) use ($formateurId) {
+                        $q->where('instructor_id', $formateurId)
+                        ->with(['users' => fn($u) => $u->where('role', 'stagiaire')]);
+                    },
+                ]);
 
+                $totalSections   = $module->sections->count();
+                $totalLectures   = $module->sections->flatMap->lectures->count();
+                $totalSlides     = $module->sections->flatMap->lectures->sum('slide_count');
+                $totalQuestions  = $module->sections->flatMap->lectures->sum('question_count');
+                $groupCount      = $module->groups->count();
+                $stagiaires      = $module->groups->flatMap(fn($g) => $g->users)->unique('id')->values();
+                $stagiaireCount  = $stagiaires->count();
+
+                return view('formateur.formations.formateur_module_detail', compact(
+                    'module','totalSections','totalLectures','totalSlides','totalQuestions','groupCount','stagiaires','stagiaireCount'
+                ));
+            }
+        public function preview(Module $module)
+            {
+                $module->load('sections.lectures');
+                $firstSection = $module->sections->first();
+                $firstLecture = $firstSection?->lectures->first();
+
+                if (!$firstSection || !$firstLecture) {
+                    return back()->with('error', 'Aucune leçon disponible à tester.');
+                }
+
+                // Ici tu peux réutiliser la même vue que pour le stagiaire
+                return redirect()->route('stagiaire.module.lecture', [
+                    'module' => $module->id,
+                    'section' => $firstSection->id,
+                    'lesson' => $firstLecture->id
+                ]);
+            }
 
 
 
