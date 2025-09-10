@@ -40,7 +40,6 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         Route::post('/sous-categories/update', 'UpdateSubCategory')->name('subcategories.update');
         Route::get('/sous-categories/delete/{id}', 'DeleteSubCategory')->name('subcategories.delete');
     });
-
     // 👥 Groupes
     Route::controller(GroupeController::class)->group(function () {
         Route::get('/groupes', 'AllGroupe')->name('groupes');
@@ -60,8 +59,6 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         Route::put('/modules/update/{id}', 'UpdateModule')->name('modules.update');
         Route::get('/modules/delete/{id}', 'DeleteModule')->name('modules.delete');
         Route::patch('/modules/{module}/toggle-status', 'toggleStatus')->name('modules.toggle-status');
-
-
         // 🎬 Lectures & sections
         Route::get('/modules/{id}/lectures/add', 'AddModuleLecture')->name('modules.lecture.add');
         Route::post('/modules/sections/store', 'AddModuleSection')->name('modules.section.store');
@@ -76,15 +73,19 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         Route::get('/lectures/{id}/move-up', 'MoveLectureUp')->name('lectures.move.up');
         Route::get('/lectures/{id}/move-down', 'MoveLectureDown')->name('lectures.move.down');
         Route::get('/module/{id}/section/{section_id}', [ModuleController::class, 'section'])->name('module.section');
-
     });
-        Route::controller(EvaluationController::class)->prefix('evaluations')->name('evaluations.')->group(function () {
+        Route::controller(EvaluationController::class)
+    ->prefix('evaluations')
+    ->name('evaluations.')
+    ->group(function () {
         Route::get('/', 'index')->name('index');
         Route::get('/create', 'create')->name('create');
-        Route::post('/store', 'store')->name('store');
-        Route::get('/edit/{id}', 'edit')->name('edit');
-        Route::post('/update/{id}', 'update')->name('update');
-        Route::get('/delete/{id}', 'destroy')->name('delete');
+        Route::post('/', 'store')->name('store');
+
+        Route::get('/{evaluation}', 'show')->name('show');      // binding implicite
+        Route::get('/{evaluation}/edit', 'edit')->name('edit'); // edit
+        Route::put('/{evaluation}', 'update')->name('update');  // update
+        Route::delete('/{evaluation}', 'destroy')->name('delete'); // delete
     });
 
 

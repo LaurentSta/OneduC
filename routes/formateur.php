@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\FormateurController;
 use App\Http\Controllers\Formateur\GroupeController;
 use App\Http\Controllers\Formateur\ProgressionController;
+use App\Http\Controllers\Backend\ModuleController;
 
 Route::middleware(['auth', 'role:formateur'])->prefix('formateur')->name('formateur.')->group(function () {
 
@@ -40,7 +41,18 @@ Route::middleware(['auth', 'role:formateur'])->prefix('formateur')->name('format
     Route::post('/progression/complete', [ProgressionController::class, 'markCompleted'])->name('progression.complete');
 
     // 📂 Mes formations
-    Route::get('/formations', [FormateurController::class, 'mesModules'])->name('formations.index');
+Route::get('/formations', [FormateurController::class, 'mesModules'])->name('formations.index');
+Route::get('/formations/{module}/detail', [FormateurController::class, 'moduleDetail'])->name('formations.detail'); // +++
+Route::get('/formations/{module}/preview', [FormateurController::class, 'preview'])
+     ->name('formations.preview');
+
+// Lecture d’une SECTION (utilise resources/views/frontend/modules/section.blade.php)
+Route::get('/formations/{module}/section/{section}', [ModuleController::class, 'section'])
+    ->name('formations.section');
+
+// Lecture d’une LEÇON SCORM (utilise resources/views/frontend/modules/lecture.blade.php)
+Route::get('/formations/{module}/section/{section}/lesson/{lesson}', [ModuleController::class, 'lire'])
+    ->name('formations.lecture');
 
 
 });

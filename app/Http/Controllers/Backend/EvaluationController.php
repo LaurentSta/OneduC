@@ -1,6 +1,5 @@
 <?php
 
-// app/Http/Controllers/Backend/EvaluationController.php
 namespace App\Http\Controllers\Backend;
 
 use App\Http\Controllers\Controller;
@@ -9,69 +8,80 @@ use App\Models\Evaluation;
 
 class EvaluationController extends Controller
 {
+    /** Base de vues selon rôle connecté. */
+    private function viewBase(): string
+    {
+        $role = optional(auth()->user())->role; // 'admin' | 'formateur' | 'stagiaire'
+        return $role === 'formateur' ? 'formateur.formations' : 'stagiaire.formations';
+    }
+
+    /** Liste paginée. */
     public function index()
     {
-        $evaluations = Evaluation::withCount('modules')->latest()->get();
+        $evaluations = Evaluation::withCount('modules')
+            ->orderBy('titre')
+            ->paginate(50);
+
         return view('admin.backend.evaluations.index', compact('evaluations'));
     }
 
-
+    /** Formulaire de création. */
     public function create()
     {
         return view('admin.backend.evaluations.create');
     }
 
+    /** Enregistrement. */
     public function store(Request $request)
     {
-        $request->validate([
-            'titre' => 'required|string|max:255',
-            'scorm_path' => 'required|string|max:255',
+        $data = $request->validate([
+            'titre'      => ['required','string','max:255'],
+            // dossier uniquement: lettres, chiffres, ., _, -
+            'scorm_path' => ['required','string','max:255','regex:/^[A-Za-z0-9._-]+$/','unique:evaluations,scorm_path'],
         ]);
 
-        Evaluation::create([
-            'titre' => $request->titre,
-            'scorm_path' => $request->scorm_path,
-        ]);
+        Evaluation::create($data);
 
-
-        return redirect()->route('admin.evaluations.index')->with('success', 'Évaluation ajoutée avec succès.');
+        return redirect()->route('admin.evaluations.index')
+            ->with('success', 'Évaluation ajoutée avec succès.');
     }
 
-
-    public function destroy($id)
+    /** Formulaire d’édition. */
+    public function edit(Evaluation $evaluation)
     {
-        Evaluation::findOrFail($id)->delete();
-        return back()->with('success', 'Évaluation supprimée.');
-    }
-
-    public function edit($id)
-    {
-        $evaluation = Evaluation::findOrFail($id);
         return view('admin.backend.evaluations.edit', compact('evaluation'));
     }
 
-    public function update(Request $request, $id)
+    /** Mise à jour. */
+    public function update(Request $request, Evaluation $evaluation)
     {
-        $request->validate([
-            'titre' => 'required|string|max:255',
-            'scorm_path' => 'required|string|max:255',
+        $data = $request->validate([
+            'titre'      => ['required','string','max:255'],
+            'scorm_path' => [
+                'required','string','max:255','regex:/^[A-Za-z0-9._-]+$/',
+                'unique:evaluations,scorm_path,'.$evaluation->id,
+            ],
         ]);
 
-        $evaluation = Evaluation::findOrFail($id);
-        $evaluation->update([
-            'titre' => $request->titre,
-            'scorm_path' => $request->scorm_path,
-        ]);
+        $evaluation->update($data);
 
-        return redirect()->route('admin.evaluations.index')->with('success', 'Évaluation mise à jour avec succès.');
+        return redirect()->route('admin.evaluations.index')
+            ->with('success', 'Évaluation mise à jour avec succès.');
     }
 
+    /** Suppression. */
+    public function destroy(Evaluation $evaluation)
+    {
+        $evaluation->delete();
+        return back()->with('success', 'Évaluation supprimée.');
+    }
+
+    /** Affichage élève/formateur. */
     public function show($id)
     {
-        $evaluation = Evaluation::findOrFail($id);
-        return view('frontend.modules.evaluations.show', compact('evaluation'));
+        $evaluation = \App\Models\Evaluation::findOrFail($id); // ← récupère par l’ID de l’URL
+
+        $base = $this->viewBase(); // 'formateur.formations' | 'stagiaire.formations'
+        return view("$base.evaluations.show", compact('evaluation'));
     }
-
-
-
 }

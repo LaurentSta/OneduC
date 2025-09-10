@@ -26,9 +26,9 @@
 <body x-data="{ sidebarOpen: true }" class="bg-gray-100 text-gray-900 font-sans">
 
     {{-- HEADER FIXE EN HAUT --}}
-@include('formateur.body.header')
+@include('formateur.body_dashboard.header')
   {{-- SIDEBAR FIXE A GAUCHE --}}
-  @include('formateur.body.sidebar')
+  @include('formateur.body_dashboard.sidebar')
   {{-- CONTENU PRINCIPAL --}}
   <main class="flex-1 p-6">
     @yield('formateur')

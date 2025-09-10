@@ -1,23 +1,44 @@
-@import url('https://fonts.googleapis.com/css2?family=Raleway:wght@400;700&family=Varela+Round&display=swap');
-@font-face {
-    
-  }
-  p {
-    @apply font-lisible;
-  }
-  h1 {
-    @apply font-raleway text-4xl md:text-5xl font-bold text-gray-900 mb-6;
-  }
-
-  h2 {
-    @apply font-varela;
-  }
-  .video-js {
-    position: static !important;
-    width: auto !important;
-    height: auto !important;
-}
+/* 1) Tailwind en premier */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* 2) Polices: idéalement via <link> dans <head> ou en local
+   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+   <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;700&family=Varela+Round&display=swap" rel="stylesheet">
+*/
+
+/* 3) Styles base (titres, paragraphes) */
+@layer base {
+  p { @apply font-lisible; }
+  h1 { @apply font-raleway text-4xl md:text-5xl font-bold text-gray-900 mb-6; }
+  h2 { @apply font-varela; }
+}
+
+/* 4) Composants */
+@layer components {
+  /* Player vidéo */
+  .video-js {
+    position: static !important;
+    width: auto !important;
+    height: auto !important;
+  }
+
+  /* Bouton Confort+ (link-mode) */
+  .btn-access{
+    @apply h-12 w-12 rounded-full border bg-white text-[#004461] shadow-md
+           flex items-center justify-center hover:bg-[#E94D2A] hover:text-white
+           focus:outline-none focus:ring;
+    text-indent:-9999px; position:relative;
+  }
+  /* Icône “view” en fond du bouton */
+  .btn-access::after{
+    content:""; position:absolute; width:24px; height:24px;
+    background: center / contain no-repeat url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' viewBox='0 0 24 24'><path d='M21 17v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2'/><path d='M21 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v2'/><circle cx='12' cy='12' r='1'/><path d='M18.944 12.33a1 1 0 0 0 0-.66 7.5 7.5 0 0 0-13.888 0 1 1 0 0 0 0 .66 7.5 7.5 0 0 0 13.888 0'/></svg>");
+  }
+}
+
+/* 5) Utilitaires optionnels */
+@layer utilities {
+  .z-access { z-index: 9999; } /* au besoin pour survoler des iframes */
+}

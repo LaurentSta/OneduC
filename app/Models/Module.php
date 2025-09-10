@@ -39,7 +39,7 @@ class Module extends Model
     // Lectures (contenus)
     public function lectures()
     {
-        return $this->hasMany(ModuleLecture::class);
+        return $this->hasMany(\App\Models\ModuleLecture::class, 'module_id');
     }
     // Groupes liés à ce module
     public function groups()

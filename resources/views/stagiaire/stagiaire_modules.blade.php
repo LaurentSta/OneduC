@@ -39,7 +39,7 @@
 
       {{-- Image (3) --}}
       <div class="col-span-12 md:col-span-4 flex justify-center md:justify-end">
-        <img src="{{ asset('images/svg/MesFormationsStagiaire.svg') }}"
+        <img src="{{ asset('images/svg/FormationStagiaire.svg') }}"
              alt="Illustration des modules de formation"
              class="max-w-[400px] h-auto">
       </div>
