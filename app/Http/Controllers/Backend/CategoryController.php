@@ -109,10 +109,18 @@ class CategoryController extends Controller
     public function showCategoryModules($id)
     {
         $category = Category::findOrFail($id);
-        $modules = Module::where('category_id', $id)->latest()->get();
+
+        $modules = Module::query()
+            ->where('category_id', $id)
+            // visiteurs + rôles non admin → seulement actifs
+            ->when(!auth()->check() || auth()->user()->role !== 'admin', fn ($q) => $q->active())
+            ->select(['id','module_title','module_image','description','status'])
+            ->latest('id')
+            ->get();
 
         return view('frontend.contenu.category_modules', compact('modules', 'category'));
     }
+
     public function DeleteCategory($id)
     {
         $category = Category::findOrFail($id);

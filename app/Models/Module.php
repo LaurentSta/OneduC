@@ -55,5 +55,14 @@ class Module extends Model
     {
         return $q->where('status', 1);
     }
+    // ✅ cast du statut
+    protected $casts = ['status' => 'boolean'];
+
+    /** Règle de visibilité uniforme */
+    public function isVisibleTo(?\App\Models\User $user): bool
+    {
+        if ($user && $user->role === 'admin') return true; // admin voit tout
+        return (bool) $this->status;                        // autres+visiteurs: actifs uniquement
+    }
 
 }
