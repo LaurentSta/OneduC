@@ -64,6 +64,33 @@
 <div id="access-toolbar-anchor" class="access-anchor" aria-label="Outils d’accessibilité"></div>
 
       </div>
+
+      <!-- Pop-up Beta -->
+<div 
+    x-data="{ open: localStorage.getItem('betaPopupSeen') !== '1' }" 
+    x-show="open"
+    class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 min-h-screen p-4"
+    x-cloak
+>
+  <div class="bg-white rounded-lg shadow-lg max-w-md mx-auto p-6 text-center">
+    <h2 class="text-xl font-bold text-bleuone mb-4">Version Bêta</h2>
+    <p class="text-gray-700 mb-6">
+      Ce site est actuellement en <strong>version bêta</strong>.<br>
+      Il est développé par des formateurs bénévoles qui contribuent à son contenu.<br>
+      Des améliorations et corrections sont en cours.
+    </p>
+    <div class="text-center">
+      <button 
+        @click="open = false; localStorage.setItem('betaPopupSeen', '1')" 
+        class="bg-orangeone text-white px-6 py-2 rounded-md hover:bg-orange-600"
+      >
+        Continuer
+      </button>
+    </div>
+  </div>
+</div>
+
+
     <!--======================================
             END HEADER AREA
     ======================================-->
@@ -95,6 +122,6 @@
   };
 </script>
 <script src="{{ asset('confortplus/js/toolbar.min.js') }}" defer></script>
-
+@stack('scripts')
 </body>
 </html>

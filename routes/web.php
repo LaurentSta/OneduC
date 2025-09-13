@@ -2,6 +2,9 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Backend\ModuleController;
+use Illuminate\Support\Facades\Mail;
+use App\Http\Controllers\ContactController;
+
 
 // -------------------------------------------------------------------------
 // Fichier de routes publiques de l'application. Les routes des différents
@@ -125,11 +128,12 @@ Route::get('/stagiaire/connexion-code', [\App\Http\Controllers\UserController::c
 Route::post('/stagiaire/connexion-code', [\App\Http\Controllers\UserController::class, 'loginByCode'])->name('stagiaire.code.login');
 
 // Formulaire de contact
-// Page de contact et envoi du formulaire
-Route::view('/contact', 'frontend.contenu.contact')->name('contact');
-Route::post('/contact', [\App\Http\Controllers\ContactController::class, 'send'])->name('contact.send');
-
-
+Route::middleware(['throttle:contact'])->group(function () {
+    Route::post('/contact', [ContactController::class, 'send'])->name('contact.send');
+});
+// Affichage du formulaire de contact
+Route::get('/contact', fn () => view('frontend.contenu.contact'))->name('contact.form');
+Route::get('/contact', [ContactController::class, 'index'])->name('contact'); // GET pour la page
 
 
 // Auth Laravel (Jetstream/Breeze)
