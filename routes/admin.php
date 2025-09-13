@@ -19,9 +19,14 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 
     // 👤 Formateurs
     Route::get('/formateurs', [AdminController::class, 'AllFormateur'])->name('formateurs');
+    // Supprimer un formateur (soft delete)
+    Route::delete('/formateurs/{user}', [AdminController::class, 'DestroyFormateur'])
+        ->name('formateurs.destroy');
+
     Route::post('/update-user-status', [AdminController::class, 'UpdateUserStatus'])->name('update.user.status');
     // 👤 Stagiaires
     Route::get('/stagiaires', [AdminController::class, 'AllStagiaires'])->name('stagiaires.index');
+    Route::delete('/stagiaires/{user}', [AdminController::class, 'DestroyStagiaire'])->name('stagiaires.destroy');
 
 
     // 📁 Catégories

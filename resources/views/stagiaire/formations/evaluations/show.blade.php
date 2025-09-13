@@ -24,7 +24,36 @@
       title="Évaluation finale"
       src="{{ asset($rel) }}"
       frameborder="0" allowfullscreen class="w-full"
-      style="height: calc(100vh - 64px); display:block;"></iframe>
+      style="height: calc(100vh - 64px); display:block;">
+    </iframe>
+    <script>
+      (function () {
+        const FIN_URL = "{{ route('stagiaire.evaluations.fin', $evaluation->id) }}";
+        const go = () => { window.location.href = FIN_URL; };
+
+        // Contexte partagé pour l’iframe iSpring
+        window.SCORM_CONTEXT = {
+          user_id: {{ auth()->id() }},
+          evaluation_id: {{ $evaluation->id }},
+          post_url: '{{ url('/scorm/evaluation-progress') }}',
+          goToFinEvaluation: go,           // nom que tu as dans iSpring
+          // alias tolérés si jamais tu changes le nom dans iSpring
+          finEvaluation: go,
+          finirEvaluation: go,
+          endEvaluation: go,
+          goToEnd: go,
+        };
+
+        // Sécurité : expose aussi une fonction globale si l’iframe l’appelle sans SCORM_CONTEXT
+        window.goToFinEvaluation = go;
+
+        // Optionnel : support postMessage depuis l’iframe
+        window.addEventListener('message', (e) => {
+          if (!e || !e.data) return;
+          if (e.data === 'goToFinEvaluation') go();
+        });
+      })();
+    </script>
 
     <script src="{{ asset('scorm_core/js/API_evaluation.js') }}"></script>
   @else
