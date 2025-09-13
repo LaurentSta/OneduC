@@ -332,6 +332,7 @@ class ModuleController extends Controller
     public function section($id, $section_id)
     {
         $module  = Module::with('sections.lectures')->findOrFail($id);
+        if (! $module->isVisibleTo(\Illuminate\Support\Facades\Auth::user())) abort(404);
         $section = $module->sections->firstWhere('id', $section_id);
 
         if (!$section) {
@@ -518,8 +519,10 @@ class ModuleController extends Controller
     public function show($id)
     {
         $module = Module::with('sections.lectures')->findOrFail($id);
+        if (! $module->isVisibleTo(\Illuminate\Support\Facades\Auth::user())) abort(404);
         return view('frontend.contenu.module_detail', compact('module'));
     }
+
 
     /**
      * 15. Vue Lecture (stagiaire ou formateur)
@@ -527,6 +530,7 @@ class ModuleController extends Controller
     public function lire($module, $section, $lesson)
     {
         $module = Module::with('sections.lectures')->findOrFail($module);
+        if (! $module->isVisibleTo(\Illuminate\Support\Facades\Auth::user())) abort(404);
         $sectionModel = $module->sections->firstWhere('id', $section);
         if (!$sectionModel) abort(404, 'Section non trouvée');
 
@@ -630,6 +634,8 @@ class ModuleController extends Controller
     {
         $userId = auth()->id();
         $module = Module::with('sections.lectures')->findOrFail($moduleId);
+        if (! $module->isVisibleTo(\Illuminate\Support\Facades\Auth::user())) abort(404);
+
 
         $totalSections = $module->sections->count();
         $totalLectures = $module->sections->flatMap->lectures->count();

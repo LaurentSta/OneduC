@@ -25,7 +25,8 @@
 
                 {{-- Contenu --}}
                 <div class="p-4 flex flex-col flex-grow justify-between">
-                    <h5 class="text-lg font-bold text-center text-gray-800">{{ $module->title }}</h5>
+                    <h5 class="text-lg font-bold text-center text-gray-800">{{ $module->module_title }}</h5>
+
 
                     @if(!empty($module->description))
                         <p class="text-sm text-gray-600 mt-2 line-clamp-3">
