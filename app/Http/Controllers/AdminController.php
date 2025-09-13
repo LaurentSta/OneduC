@@ -182,7 +182,34 @@ class AdminController extends Controller
             'new_status' => $user->status ? 'Actif' : 'Inactif'
         ]);
     }
+    public function DestroyFormateur(\App\Models\User $user)
+    {
+        if ($user->id === auth()->id())          return $this->deny('Vous ne pouvez pas vous supprimer.');
+        if ($user->role !== 'formateur')         return $this->deny('Action non autorisée.');
+        if (!\Schema::hasColumn('users','deleted_at')) return $this->deny('Soft delete indisponible.');
 
+        $user->delete(); // soft delete
+        return $this->ok('Formateur supprimé.', $user->id);
+    }
+
+    public function DestroyStagiaire(\App\Models\User $user)
+    {
+        if ($user->id === auth()->id())          return $this->deny('Vous ne pouvez pas vous supprimer.');
+        if ($user->role !== 'stagiaire')         return $this->deny('Action non autorisée.');
+        if (!\Schema::hasColumn('users','deleted_at')) return $this->deny('Soft delete indisponible.');
+
+        $user->delete(); // soft delete
+        return $this->ok('Stagiaire supprimé.', $user->id);
+    }
+
+    private function ok($msg, $id){
+        if (request()->ajax()) return response()->json(['success'=>true,'message'=>$msg,'id'=>$id]);
+        return back()->with('success',$msg);
+    }
+    private function deny($msg){
+        if (request()->ajax()) return response()->json(['success'=>false,'message'=>$msg], 422);
+        return back()->with('error',$msg);
+    }
 
     /* -------------------------------------------------------------------------
      | FORMATEUR : Demande et validation

@@ -54,7 +54,11 @@ Route::get('/modules/{id}', [\App\Http\Controllers\Frontend\MFormationsControlle
 Route::middleware(['auth'])->group(function () {
     Route::get('/evaluations/{id}', [\App\Http\Controllers\Backend\EvaluationController::class, 'show'])->name('evaluation.show');
 });
-
+Route::middleware(['auth'])->group(function () {
+    Route::get('/evaluations/{evaluation}/fin',
+        [\App\Http\Controllers\Backend\EvaluationController::class, 'fin']
+    )->name('stagiaire.evaluations.fin');
+});
 // ----------------------------------------------------------
 // 🎥 Lecture d’une leçon
 // ----------------------------------------------------------

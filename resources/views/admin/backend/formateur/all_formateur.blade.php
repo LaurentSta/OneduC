@@ -12,7 +12,7 @@
                 </x-typography>
                 <div class="prose-oneduc">
                     Les <strong>formateurs</strong> accompagnent les stagiaires dans leurs parcours de formation.
-                    Depuis ce tableau, vous pouvez activer ou désactiver un compte, accéder aux stagiaires de chaque formateur et ajouter de nouveaux profils.
+                    Depuis ce tableau, vous pouvez activer/désactiver un compte, accéder aux stagiaires et ajouter de nouveaux profils.
                 </div>
             </div>
             <div class="col-span-12 md:col-span-3 flex justify-center md:justify-end">
@@ -46,6 +46,7 @@
                         <th class="px-4 py-3">Stagiaires</th>
                         <th class="px-4 py-3">Statut</th>
                         <th class="px-4 py-3 text-center">Activer</th>
+                        <th class="px-4 py-3 text-center">Supprimer</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -91,8 +92,17 @@
                                     </label>
                                 </div>
                             </td>
-
-
+                            <td class="px-4 py-3 text-center">
+                                <button
+                                    type="button"
+                                    class="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded bg-red-600 text-white hover:bg-red-700 btn-delete"
+                                    data-user-id="{{ $item->id }}"
+                                    data-user-name="{{ $item->name }}"
+                                    aria-haspopup="dialog"
+                                >
+                                    Supprimer
+                                </button>
+                            </td>
                         </tr>
                     @endforeach
                 </tbody>
@@ -100,6 +110,30 @@
         </div>
     </div>
 </div>
+
+<!-- Modale de confirmation -->
+<div id="confirmModal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="absolute inset-0 bg-black/40" data-modal-dismiss></div>
+  <div class="relative mx-auto mt-24 w-full max-w-md rounded-[16px] bg-white shadow-lg">
+    <div class="p-6">
+      <h3 id="modal-title" class="text-lg font-semibold text-gray-900">Confirmer la suppression</h3>
+      <p class="mt-2 text-sm text-gray-700">
+        Supprimer le formateur <span id="modalUserName" class="font-semibold"></span> ?
+        L’accès sera désactivé et le compte masqué.
+      </p>
+      <div class="mt-6 flex justify-end gap-3">
+        <button type="button" class="px-4 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-50" data-modal-dismiss>Annuler</button>
+        <button type="button" id="confirmDeleteBtn" class="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700">Supprimer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Formulaire de suppression -->
+<form id="deleteForm" method="POST" class="hidden">
+  @csrf
+  @method('DELETE')
+</form>
 
 <!-- DataTables -->
 <script>
@@ -111,7 +145,8 @@
             order: [[1, 'asc']],
             columnDefs: [
                 { targets: 0, orderable: false },
-                { targets: -1, orderable: false }
+                { targets: -1, orderable: false }, // Supprimer
+                { targets: -2, orderable: false }  // Activer
             ]
         });
     });
@@ -138,7 +173,6 @@
                 },
                 error: function(){
                     toastr.error("Une erreur est survenue lors de la mise à jour du statut.");
-                    // Revenir à l’état précédent visuellement
                     toggle.prop('checked', !isChecked);
                 }
             });
@@ -146,7 +180,38 @@
     });
 </script>
 
+<!-- Suppression: ouverture modale + submit -->
+<script>
+  (function(){
+    const modal = document.getElementById('confirmModal');
+    const nameSpan = document.getElementById('modalUserName');
+    const confirmBtn = document.getElementById('confirmDeleteBtn');
+    const form = document.getElementById('deleteForm');
 
+    const routeTemplate = "{{ route('admin.formateurs.destroy', ['user' => '__ID__']) }}";
+    let pendingId = null;
+
+    document.querySelectorAll('.btn-delete').forEach(btn => {
+      btn.addEventListener('click', () => {
+        pendingId = btn.dataset.userId;
+        nameSpan.textContent = btn.dataset.userName || '';
+        form.setAttribute('action', routeTemplate.replace('__ID__', pendingId));
+        modal.classList.remove('hidden');
+        setTimeout(() => confirmBtn.focus(), 50);
+      });
+    });
+
+    modal.querySelectorAll('[data-modal-dismiss]').forEach(el => {
+      el.addEventListener('click', () => modal.classList.add('hidden'));
+    });
+
+    confirmBtn.addEventListener('click', () => form.submit());
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') modal.classList.add('hidden');
+    });
+  })();
+</script>
 
 <!-- Toastr -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">

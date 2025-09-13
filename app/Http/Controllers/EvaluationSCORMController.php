@@ -130,4 +130,27 @@ class EvaluationSCORMController extends Controller
 
         return response()->json(['status' => 'ok']);
     }
+    public function fin(Evaluation $evaluation)
+    {
+        $userId = auth()->id();
+
+        $score = ScormEvaluationScore::where('user_id', $userId)
+            ->where('evaluation_id', $evaluation->id)
+            ->first();
+
+        $answered = ScormEvaluationInteraction::where('user_id', $userId)
+            ->where('evaluation_id', $evaluation->id)
+            ->count();
+
+        $base = $this->viewBase(); // 'formateur.formations' | 'stagiaire.formations'
+        return view("$base.evaluations.fin_evaluation", [
+            'evaluation'         => $evaluation,
+            'lastScore'          => $score?->last_score,
+            'bestScore'          => $score?->best_score,
+            'attempts'           => $score?->attempts_count ?? 1,
+            'sessionTimeSeconds' => $score?->session_time ?? 0,
+            'questionsAnswered'  => $answered,
+        ]);
+    }
+
 }
