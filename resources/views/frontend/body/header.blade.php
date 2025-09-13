@@ -46,6 +46,7 @@
             <li>
                 <a href="{{ route('contact') }}" class="block px-4 py-2 hover:bg-orangeone hover:text-white transition">Contactez-nous</a>
 
+
             </li>
           </ul>
         </div>

@@ -63,9 +63,9 @@
 
             <li><a href="{{ route('formateur.inscription.form') }}" class="text-white/80 hover:text-white transition">Devenir formateur</a>
             </li>
-            <li><a href="#" class="text-white/80 hover:text-white transition">À propos</a></li>
-            <li><a href="#" class="text-white/80 hover:text-white transition">Formations</a></li>
-            <li><a href="#" class="text-white/80 hover:text-white transition">Contact</a></li>
+            <li><a href="{{ route('association') }}" class="text-white/80 hover:text-white transition">À propos</a></li>
+            <li><a href="{{ route('categories.all') }}" class="text-white/80 hover:text-white transition">Formations</a></li>
+            <li><a href="{{ route('contact') }}" class="text-white/80 hover:text-white transition">Contact</a></li>
           </ul>
         </div>
 
