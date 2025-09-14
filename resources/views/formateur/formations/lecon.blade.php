@@ -1,4 +1,4 @@
-@extends('formateur.formations.evaluations.master_lecon_evaluation')
+@extends('formateur.formations.master_lecon')
 
 @section('content')
 <meta name="csrf-token" content="{{ csrf_token() }}">

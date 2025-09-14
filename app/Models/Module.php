@@ -8,7 +8,14 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Module extends Model
 {
     use SoftDeletes;
-    protected $guarded = [];
+    protected $fillable = [
+    'category_id','subcategory_id','formateur_id',
+    'module_image','header_image',
+    'module_title','module_name','module_name_slug','description','objectifs',
+    'module_video','label','duree','resources','certificat','prerequi',
+    'bestseller','vedette','surevalue','status','evaluation_id'
+    ];
+
     // Catégorie principale
     public function category()
     {

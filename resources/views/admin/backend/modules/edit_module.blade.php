@@ -123,7 +123,9 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <x-oneduc.textarea label="Prérequis" name="prerequi" :value="old('prerequi', $module->prerequi)" />
                     <x-oneduc.textarea label="Description" name="description" :value="old('description', $module->description)" />
-
+<x-oneduc.textarea label="Objectifs" name="objectifs"
+  :value="old('objectifs', $module->objectifs)" class="md:col-span-2" />
+<p class="mt-2 text-xs text-gray-500">Un objectif par ligne.</p>
             </div>
         </div>
 
