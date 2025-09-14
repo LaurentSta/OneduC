@@ -1,4 +1,4 @@
-@extends('formateur.formations.evaluations.master_lecon_evaluation')
+@extends('formateur.formations.master_lecon')
 
 @section('content')
 <main class="max-w-full mx-auto">

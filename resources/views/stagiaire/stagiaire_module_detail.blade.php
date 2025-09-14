@@ -84,15 +84,18 @@
           </div>
         </div>
 
-        {{-- Objectifs --}}
         <div x-show="active==='objectifs'" x-cloak>
-          <ul class="list-disc list-inside text-gray-800 text-base space-y-1 font-lisible">
-            <li>Comprendre les principes de base du module</li>
-            <li>Appliquer les méthodes dans un contexte réel</li>
-            <li>Développer des compétences ciblées</li>
-            <li>S’autoévaluer en fin de parcours</li>
-          </ul>
-        </div>
+  @if(!empty($module->objectifs))
+    <ul class="list-disc list-inside text-gray-800 text-base space-y-1 font-lisible">
+      @foreach(preg_split('/\r\n|\r|\n/', $module->objectifs) as $obj)
+        @if(trim($obj)!=='')<li>{{ $obj }}</li>@endif
+      @endforeach
+    </ul>
+  @else
+    <p class="italic text-gray-500">Aucun objectif spécifié pour ce module.</p>
+  @endif
+</div>
+
 
         {{-- Prérequis --}}
         <div x-show="active==='prerequis'" x-cloak>

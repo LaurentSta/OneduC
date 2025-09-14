@@ -124,4 +124,12 @@
       </li>
     @endforeach
   </ul>
+
+  {{-- Bloc info formateur --}}
+<div class="mt-8 p-4 bg-gray-50 rounded-lg text-sm text-gray-700 border border-dashed border-gray-300">
+  <p class="font-varela">
+    Ici, pas de suivi de progression&nbsp;: <br>
+    <span class="text-bleuone font-semibold">en tant que formateur, vous êtes déjà l’expert.</span>
+  </p>
+</div>
 </aside>

@@ -90,6 +90,7 @@ class ModuleController extends Controller
             'header_image'  => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
             'module_video'  => 'nullable|string|max:255',
             'evaluation_id' => 'nullable|exists:evaluations,id',
+            'objectifs'    => 'nullable|string',
         ]);
 
         $imagePath = null;
@@ -129,6 +130,8 @@ class ModuleController extends Controller
             'surevalue'       => $request->has('surevalue') ? 1 : 0,
             'status'          => $request->has('status') ? 1 : 0,
             'evaluation_id'   => $request->evaluation_id,
+            'objectifs'       => $request->objectifs,
+
         ]);
 
         return redirect()->route('admin.modules')->with('success', 'Module ajouté avec succès !');
@@ -161,6 +164,7 @@ class ModuleController extends Controller
             'module_video'  => 'nullable|string|max:255',
             'evaluation_id' => 'nullable|exists:evaluations,id',
             'formateur_id'  => 'required|exists:users,id',
+            'objectifs'    => 'nullable|string',
         ]);
 
         $imagePath = $module->module_image;
@@ -206,6 +210,7 @@ class ModuleController extends Controller
             'surevalue'       => $request->has('surevalue') ? 1 : 0,
             'status'          => $request->has('status') ? 1 : 0,
             'evaluation_id'   => $request->evaluation_id,
+            'objectifs' => $request->objectifs,
         ]);
 
         return redirect()->route('admin.modules')->with('success', 'Module mis à jour avec succès !');
