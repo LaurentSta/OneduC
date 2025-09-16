@@ -4,54 +4,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="initial-scale=1.0">
+  <link rel="icon" href="{{ asset('favicon.ico') }}" type="image/x-icon">
   <title>Onéduc - Accueil</title>
   @vite(['resources/css/app.css', 'resources/js/app.js'])
   <script src="https://cdn.jsdelivr.net/npm/alpinejs" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
-  <style>
-  /* Onglet fixé sous la barre de navigation, au bord droit */
-  .access-anchor{
-    position: absolute;
-    z-index: 9999; /* au-dessus du header/menu profil */
-    pointer-events: none; /* laisse passer les clics sauf sur le bouton injecté */
-    right: 20px;    
-  }
-  /* Bouton-onglet généré par Confort+ (classe définie via config JS) */
-  .btn-access{
-    pointer-events: auto;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 44px;
-    min-height: 4px;
-    padding: 10px 8px;
-    border-style: solid;
-    border-color: #e5e7eb;
-    border-width: 0px 1px 1px 1px;
-    
-    border-radius: 0 0 20px 20px;
-    color: #fff!important;
-    outline: none;
-  }
-  .btn-access a {
-  }
-  .btn-access:focus-visible{ outline: 3px solid #E94D2A; outline-offset: 2px; }
-  /* Panneau Confort+ décalé pour ne pas couvrir le header */
-  #accessibility-toolbar, .accessibility-toolbar{
-    position: fixed !important;
-    right: 60px !important;
-    transform: none !important;
-    max-height: calc(100vh - var(--access-top, 96px) - 16px);
-    overflow: auto;
-    z-index: 9998;
-     box-shadow: 0 ;
-  }
-  @media (max-width: 768px){
-    .access-anchor{ right: 16px; top: auto; bottom: 16px; }
-    #accessibility-toolbar, .accessibility-toolbar{ right: 16px !important; top: auto !important; bottom: 80px !important; }
-    .btn-access{ writing-mode: initial; transform: none; width: 56px; min-height: 56px; border-radius: 9999px; padding: 12px; }
-  }
-</style>
 
 </head>
 <body class="bg-white text-gray-900 font-sans " style="background-color: #f8f7fa;">

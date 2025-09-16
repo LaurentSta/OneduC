@@ -45,7 +45,7 @@
         border-width: 0px 1px 1px 1px;
         
         border-radius: 0 0 20px 20px;
-        color: #fff!important;
+        color: #004461!important;
         outline: none;
       }
       .btn-access a {
