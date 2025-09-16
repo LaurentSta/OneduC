@@ -1,6 +1,4 @@
 @extends('stagiaire.formations.master_lecon_evaluation')
-
-
 @section('content')
 <main class="max-w-full mx-auto">
     <div class="bg-white rounded-[20px] shadow-md p-8 mb-6">
@@ -88,21 +86,66 @@
                 $videoSrc = asset($videoPath);
                 $firstLecture = $selectedSection->lectures->first();
             @endphp
-
             <div class="w-full">
-    
 </div>
-
             {{-- Vidéo pédagogique --}}
-            <div class="relative w-full rounded-md shadow" style="padding-top: 56.25%;">
+            <div class="relative w-full rounded-[16px] overflow-hidden shadow-md" style="aspect-ratio:16/9">
                 <video id="formation-video"
-                       class="video-js absolute top-0 left-0 w-full h-full"
-                       controls preload="metadata"
-                       playsinline
-                       data-setup='{"playbackRates": [0.5, 1, 1.25, 1.5, 2]}'>
+                        class="block w-full h-auto"   {{-- <- h-auto au lieu de h-full --}}
+                        controls preload="metadata" playsinline crossorigin="anonymous"
+                        aria-label="Vidéo pédagogique">
                     <source src="{{ $videoSrc }}" type="video/mp4">
                 </video>
             </div>
+
+
+            {{-- Contrôles natifs étendus --}}
+
+<div class="mt-3 w-full flex items-center justify-between text-sm">
+
+  {{-- Bloc vitesse à gauche --}}
+  <div class="relative inline-block">
+  <select id="rate-select"
+          class="w-48 pr-10 rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-[#004461] appearance-none
+                 focus:outline-none focus:ring-2 focus:ring-[#E94D2A] focus:border-[#E94D2A]"
+          style="min-width: 11rem;">
+    <option value="0.5">0.5×</option>
+    <option value="0.75">0.75×</option>
+    <option value="1" selected>1×</option>
+    <option value="1.25">1.25×</option>
+    <option value="1.5">1.5×</option>
+    <option value="1.75">1.75×</option>
+    <option value="2">2×</option>
+  </select>
+
+  {{-- Chevron custom, ne capte pas les clics --}}
+  <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#004461" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M6 9l6 6 6-6"></path>
+    </svg>
+  </span>
+</div>
+>
+
+  {{-- Boutons regroupés à droite --}}
+  <div class="flex items-center gap-2">
+    <button id="back-10" type="button"
+            class="rounded-md bg-[#004461] px-4 py-2 text-white font-semibold
+                   hover:bg-[#00364d] focus:outline-none focus:ring-2 focus:ring-[#E94D2A]">
+      −10 s
+    </button>
+
+    <button id="fwd-10" type="button"
+            class="rounded-md bg-[#E94D2A] px-4 py-2 text-white font-semibold
+                   hover:bg-[#cc4120] focus:outline-none focus:ring-2 focus:ring-[#004461]">
+      +10 s
+    </button>
+  </div>
+</div>
+
+
+
+
 
             {{-- Bouton démarrer --}}
             @if($firstLecture)
@@ -111,96 +154,118 @@
                 class="btn-oneduc flex items-center justify-center gap-2">
                     Commencer cette section
                 </a>
-
             </div>
             @endif
-
-            
         </div>
     </div>
+   <script>
+document.addEventListener('DOMContentLoaded', function () {
+  // Cible vidéo
+  const el = document.getElementById('formation-video');
+  if (!el) return;
 
-   {{-- Scripts videojs --}}
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const player = videojs('formation-video');
-        let startTime = 0;
-        let trackingInProgress = false;
+  // --- Tracking lecture ---
+  let startTime = 0, trackingInProgress = false;
 
-        player.on('play', () => {
-            if (startTime === 0) {
-                startTime = Math.floor(player.currentTime());
-            }
-        });
+  const getCurrent = () => Math.floor(el.currentTime || 0);
+  const onPlay   = () => { if (startTime === 0) startTime = getCurrent(); };
+  const onSeeked = () => { startTime = getCurrent(); };
+  const onPause  = () => trackSegment();
+  const onEnded  = () => trackSegment(true);
 
-        player.on('seeked', () => {
-            startTime = Math.floor(player.currentTime());
-        });
+  el.addEventListener('play',   onPlay);
+  el.addEventListener('seeked', onSeeked);
+  el.addEventListener('pause',  onPause);
+  el.addEventListener('ended',  onEnded);
 
-        player.on('pause', () => {
-            trackSegment();
-        });
+  function trackSegment(force = false) {
+    const endTime  = getCurrent();
+    const duration = endTime - startTime;
+    if ((duration < 5 && !force) || endTime === startTime) return;
 
-        player.on('ended', () => {
-            trackSegment(true);
-        });
+    trackingInProgress = true;
+    fetch('{{ route('api.video.segment') }}', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        lecture_id: {{ $selectedSection->lectures->first()?->id ?? 'null' }},
+        segment_start: startTime,
+        segment_end: endTime,
+        watch_time: duration
+      })
+    }).finally(() => { startTime = endTime; trackingInProgress = false; });
+  }
 
-        function trackSegment(force = false) {
-            const endTime = Math.floor(player.currentTime());
-            const duration = endTime - startTime;
+  // Sauvegarde périodique
+  setInterval(() => {
+    if (!el.paused && !trackingInProgress) trackSegment();
+  }, 10000);
 
-            if ((duration < 5 && !force) || endTime === startTime) return;
+  // Sauvegarde à la fermeture
+  window.addEventListener('beforeunload', function () {
+    const endTime  = getCurrent();
+    const duration = endTime - startTime;
+    if (duration < 3 || endTime === startTime) return;
 
-            trackingInProgress = true;
+    const data = {
+      lecture_id: {{ $selectedSection->lectures->first()?->id ?? 'null' }},
+      segment_start: startTime,
+      segment_end: endTime,
+      watch_time: duration
+    };
+    const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+    navigator.sendBeacon('{{ route('api.video.segment') }}', blob);
+  });
 
-            fetch('{{ route('api.video.segment') }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({
-                    lecture_id: {{ $selectedSection->lectures->first()?->id ?? 'null' }},
-                    segment_start: startTime,
-                    segment_end: endTime,
-                    watch_time: duration
-                })
-            }).then(() => {
-                console.log('Segment enregistré', startTime, endTime);
-                startTime = endTime;
-                trackingInProgress = false;
-            }).catch(err => {
-                console.error('Erreur tracking vidéo :', err);
-                trackingInProgress = false;
-            });
-        }
+  // --- Contrôles natifs étendus ---
+  const rateSelect = document.getElementById('rate-select');
+  const back10 = document.getElementById('back-10');
+  const fwd10  = document.getElementById('fwd-10');
 
-        // Sauvegarde régulière (toutes les 10s)
-        setInterval(() => {
-            if (!player.paused() && !trackingInProgress) {
-                trackSegment();
-            }
-        }, 10000);
+  // Restaurer vitesse
+  const savedRate = parseFloat(localStorage.getItem('video_rate') || '1');
+  if (!isNaN(savedRate)) {
+    el.playbackRate = savedRate;
+    if (rateSelect) rateSelect.value = String(savedRate);
+  }
 
-        // Sauvegarde de secours à la fermeture
-        window.addEventListener('beforeunload', function () {
-            const endTime = Math.floor(player.currentTime());
-            const duration = endTime - startTime;
+  // Sélecteur vitesse
+  rateSelect?.addEventListener('change', () => {
+    const r = parseFloat(rateSelect.value || '1');
+    el.playbackRate = isNaN(r) ? 1 : r;
+    localStorage.setItem('video_rate', String(el.playbackRate));
+  });
 
-            if (duration < 3 || endTime === startTime) return;
+  // Sauts temporels
+  back10?.addEventListener('click', () => { el.currentTime = Math.max(0, el.currentTime - 10); });
+  fwd10?.addEventListener('click',  () => { el.currentTime = el.currentTime + 10; });
 
-            const data = {
-                lecture_id: {{ $selectedSection->lectures->first()?->id ?? 'null' }},
-                segment_start: startTime,
-                segment_end: endTime,
-                watch_time: duration
-            };
+  // Raccourcis clavier
+  document.addEventListener('keydown', (e) => {
+    const tag = (document.activeElement?.tagName || '').toUpperCase();
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
 
-            const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
-            navigator.sendBeacon('{{ route('api.video.segment') }}', blob);
-        });
-    });
+    if (e.key === '[') {
+      el.playbackRate = Math.max(0.25, Math.round((el.playbackRate - 0.25)*100)/100);
+      if (rateSelect) rateSelect.value = String(el.playbackRate);
+      localStorage.setItem('video_rate', String(el.playbackRate));
+    } else if (e.key === ']') {
+      el.playbackRate = Math.min(4, Math.round((el.playbackRate + 0.25)*100)/100);
+      if (rateSelect) rateSelect.value = String(el.playbackRate);
+      localStorage.setItem('video_rate', String(el.playbackRate));
+    } else if (e.key === 'ArrowLeft') {
+      el.currentTime = Math.max(0, el.currentTime - 5);
+    } else if (e.key === 'ArrowRight') {
+      el.currentTime = el.currentTime + 5;
+    }
+  });
+});
 </script>
+
 
 
 
