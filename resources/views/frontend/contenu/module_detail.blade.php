@@ -201,9 +201,11 @@
                              class="flex items-center justify-between px-2 py-1 hover:bg-gray-100 rounded text-sm font-medium text-gray-800"
                              aria-label="Ouvrir la leçon {{ $lecture->lecture_title }}">
                         @else
-                          <a href="{{ route('connexion') }}"
-                             class="flex items-center justify-between px-2 py-1 hover:bg-gray-100 rounded text-sm font-medium text-gray-800"
-                             aria-label="Connecte-toi pour ouvrir la leçon {{ $lecture->lecture_title }}">
+                          <a href="javascript:void(0)"
+                            onclick="openAuthInfoModal()"
+                            class="flex items-center justify-between px-2 py-1 hover:bg-gray-100 rounded text-sm font-medium text-gray-800"
+                            aria-label="Veuillez vous connecter pour ouvrir la leçon {{ $lecture->lecture_title }}">
+
                         @endauth
                             <span>{{ $lecture->lecture_title }}</span>
                             <span class="ml-2">
@@ -252,6 +254,84 @@
             <li class="flex justify-between"><span>Niveau :</span><span>{{ $module->level ?? 'Tous niveaux' }}</span></li>
           </ul>
 
+{{-- =======================
+   MODAL CONNEXION / INSCRIPTION
+======================= --}}
+<div id="authInfoModal"
+     class="fixed inset-0 bg-black/60 z-[60] hidden"
+     role="dialog" aria-modal="true" aria-labelledby="authInfoTitle">
+  <div class="min-h-full w-full flex items-center justify-center p-4">
+    <div class="relative bg-white w-full max-w-lg rounded-[20px] shadow-xl p-8">
+
+      {{-- Bouton de fermeture (croix) --}}
+      <button type="button"
+              onclick="closeAuthInfoModal()"
+              class="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-orangeone"
+              aria-label="Fermer le pop-up">
+        <span class="sr-only">Fermer</span>
+        ✕
+      </button>
+
+      {{-- Titre --}}
+      <h4 id="authInfoTitle" class="text-2xl font-raleway font-semibold mb-6 text-bleuone text-center">
+        Accéder à la formation
+      </h4>
+
+      {{-- Texte introductif --}}
+      <p class="text-base text-gray-700 mb-4 text-center">
+         Vous devez vous connecter pour poursuivre.
+      </p>
+
+      {{-- Bloc Formateurs --}}
+      <div class="bg-bleuone/10 border border-bleuone rounded-lg p-4 mb-4">
+        <p class="text-sm text-gray-800">
+          <strong>Formateurs :</strong> veuillez vous connecter pour créer et gérer vos groupes.<br>
+          Si vous n’avez pas encore de compte, inscrivez-vous.
+        </p>
+      </div>
+
+      {{-- Bloc Stagiaires --}}
+      <div class="bg-orangeone/10 border border-orangeone rounded-lg p-4 mb-8">
+        <p class="text-sm text-gray-800">
+          <strong>Stagiaires :</strong> vous pouvez vous connecter uniquement si votre formateur vous a déjà créé un compte.
+        </p>
+      </div>
+
+      {{-- Boutons d’action --}}
+      <div class="flex flex-col sm:flex-row sm:justify-center gap-3">
+        <a href="{{ route('connexion') }}"
+           class="btn-oneduc bg-white text-orangeone border-orangeone hover:bg-orangeone hover:text-white text-center"
+           aria-label="Aller à la page de connexion">
+          Me connecter
+        </a>
+
+        <a href="{{ route('formateur.inscription.form') }}"
+           class="btn-oneduc-blue text-center"
+           aria-label="Aller au formulaire d’inscription formateur">
+          Je suis formateur • M’inscrire
+        </a>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+<script>
+  function openAuthInfoModal() {
+    const el = document.getElementById('authInfoModal');
+    if (el) el.classList.remove('hidden');
+  }
+  function closeAuthInfoModal() {
+    const el = document.getElementById('authInfoModal');
+    if (el) el.classList.add('hidden');
+  }
+  // Fermeture au clavier (Échap)
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeAuthInfoModal();
+  });
+</script>
+
           {{-- CTA principal --}}
           @php $firstSection = $module->sections->first(); @endphp
           @if($firstSection)
@@ -262,24 +342,38 @@
                 Démarrer la formation
               </a>
             @else
-              <a href="{{ route('connexion') }}"
-                 class="block text-center bg-indigo-600 hover:bg-indigo-700 text-white font-semibold mt-6 py-2 rounded"
-                 aria-label="Connecte-toi pour accéder au module">
-                Connecte-toi
-              </a>
+              <button type="button"
+                    onclick="openAuthInfoModal()"
+                    class="inline-block w-full text-center mt-6 px-4 py-2 text-base tracking-wide font-varela text-white bg-bleuone border-4 border-bleuone rounded-full transition duration-300 hover:bg-white hover:text-bleuone active:scale-95"
+                    aria-label="Ouvrir la fenêtre d'information de connexion">
+              Se connecter / S’inscrire
+            </button>
+
+
+        {{-- Lien direct d’inscription formateur en secours d’accessibilité --}}
+        @php
+          $routeFormateur = \Illuminate\Support\Facades\Route::has('formateur.register')
+              ? route('formateur.register')
+              : url('/formateur/register');
+        @endphp
+        
             @endauth
           @else
             <p class="text-sm text-gray-500 italic mt-6">Aucune section disponible dans ce module.</p>
           @endif
 
-          {{-- Évaluation finale (protégée) --}}
           @if($module->evaluation_id)
             <button type="button"
                     onclick="document.getElementById('evaluationModal').classList.remove('hidden')"
-                    class="mt-4 w-full text-center bg-orangeone hover:bg-orange-600 text-white font-semibold py-2 rounded">
+                    class="w-full mt-4 inline-flex items-center justify-center px-6 py-3 text-base font-varela font-semibold text-white bg-orangeone border-4 border-orangeone rounded-full transition duration-300 hover:bg-white hover:text-orangeone active:scale-95"
+                    aria-label="Ouvrir la fenêtre de lancement de l’évaluation">
+              <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
               Lancer l’évaluation
             </button>
           @endif
+
 
         </div>
       </div>
@@ -292,33 +386,55 @@
    MODAL ÉVALUATION
 ======================= --}}
 @if($module->evaluation_id)
-  <div id="evaluationModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center hidden">
-    <div class="bg-white p-6 rounded shadow-lg w-full max-w-md">
-      <h4 class="text-lg font-semibold mb-4 text-orange-600">Évaluation finale</h4>
+  <div id="evaluationModal"
+       class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center hidden"
+       role="dialog" aria-modal="true" aria-labelledby="evaluationTitle">
+    <div class="relative bg-white w-full max-w-lg rounded-[20px] shadow-xl p-8">
+
+      {{-- Bouton fermeture (croix) --}}
+      <button type="button"
+              onclick="document.getElementById('evaluationModal').classList.add('hidden')"
+              class="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-orangeone"
+              aria-label="Fermer le pop-up">
+        <span class="sr-only">Fermer</span>
+        ✕
+      </button>
+
+      {{-- Titre --}}
+      <h4 id="evaluationTitle" class="text-2xl font-raleway font-semibold mb-6 text-orangeone text-center">
+        Évaluation finale
+      </h4>
 
       @auth
-        <p class="text-sm text-gray-700 mb-4">
+        <p class="text-base text-gray-700 mb-6 text-center">
           Cette évaluation ne peut être réalisée <strong>qu’une seule fois</strong>.<br>
           Assurez-vous d’être prêt avant de commencer.
         </p>
-        <div class="flex justify-end space-x-2">
+
+        {{-- Boutons d’action --}}
+        <div class="flex flex-col sm:flex-row sm:justify-center gap-3">
           <a href="{{ route('evaluation.show', ['id' => $module->evaluation_id]) }}"
-             class="bg-orangeone hover:bg-orange-600 text-white font-semibold px-4 py-2 rounded">
+             class="btn-oneduc"
+             aria-label="Démarrer l’évaluation">
             Oui, je suis prêt
           </a>
+
           <button type="button"
                   onclick="document.getElementById('evaluationModal').classList.add('hidden')"
-                  class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold px-4 py-2 rounded">
+                  class="btn-oneduc bg-white text-orangeone border-orangeone hover:bg-orangeone hover:text-white"
+                  aria-label="Annuler et fermer la fenêtre">
             Annuler
           </button>
         </div>
       @else
-        <p class="text-sm text-gray-700 mb-4">
+        <p class="text-base text-gray-700 mb-6 text-center">
           Vous devez être connecté pour accéder à l’évaluation de ce module.
         </p>
-        <div class="flex justify-end">
+
+        <div class="flex justify-center">
           <a href="{{ route('connexion') }}"
-             class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-4 py-2 rounded">
+             class="btn-oneduc-blue"
+             aria-label="Aller à la page de connexion">
             Me connecter
           </a>
         </div>
@@ -326,5 +442,6 @@
     </div>
   </div>
 @endif
+
 
 @endsection

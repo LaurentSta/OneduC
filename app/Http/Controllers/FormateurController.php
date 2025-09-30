@@ -183,24 +183,57 @@ class FormateurController extends Controller
     public function storeStagiaire(Request $request)
     {
         $request->validate([
-            'prenom' => ['required', 'string', 'max:255'],
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
-            'password' => ['required', 'string', 'min:6', 'confirmed'],
+            'prenom'   => ['required','string','max:255'],
+            'name'     => ['required','string','max:255'],
+            'email'    => ['required','email','max:255'], // pas de unique ici
+            'password' => ['nullable','string','min:8','confirmed'],
+            'group_id' => ['nullable','integer','exists:groups,id'],
         ]);
 
-        User::create([
-            'prenom' => $request->prenom,
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => bcrypt($request->password),
-            'role' => 'stagiaire',
-            'formateur_id' => auth()->id(),
-            'code_acces' => CodeGeneratorService::generateUniqueAccessCode(),
-        ]);
+        $email  = strtolower(trim($request->email));
+        $prenom = $request->prenom;
+        $nom    = $request->name;
+        $gid    = $request->integer('group_id') ?: null;
 
-        return redirect()->route('formateur.stagiaires.index')->with('success', 'Stagiaire créé avec succès ✅');
+        $user = \App\Models\User::withTrashed()->where('email',$email)->first();
+
+        if ($user) {
+            if ($user->trashed()) { $user->restore(); } // soft-deleted → restore
+            if (!$user->formateur_id) { $user->formateur_id = auth()->id(); }
+            $user->prenom = $user->prenom ?: $prenom;
+            $user->name   = $user->name   ?: $nom;
+            if ($request->filled('password')) {
+                $user->password = \Illuminate\Support\Facades\Hash::make($request->password);
+            }
+            $user->save();
+        } else {
+            $user = \App\Models\User::create([
+                'prenom'       => $prenom,
+                'name'         => $nom,
+                'email'        => $email,
+                'password'     => $request->filled('password')
+                                    ? \Illuminate\Support\Facades\Hash::make($request->password)
+                                    : bcrypt(str()->password(12)),
+                'role'         => 'stagiaire',
+                'formateur_id' => auth()->id(),
+                'status'       => 1,
+                'code_acces'   => \App\Services\CodeGeneratorService::generateUniqueAccessCode(),
+            ]);
+        }
+
+        if ($gid) {
+            \App\Models\Group::findOrFail($gid)
+                ->users()
+                ->syncWithoutDetaching([$user->id]);
+        }
+
+        return redirect()->route('formateur.stagiaires.index')
+            ->with('success', $user->wasRecentlyCreated
+                ? 'Stagiaire créé et rattaché si groupe fourni.'
+                : 'Stagiaire existant réutilisé et rattaché si groupe fourni.');
     }
+
+
 
     public function editStagiaire($id)
     {
