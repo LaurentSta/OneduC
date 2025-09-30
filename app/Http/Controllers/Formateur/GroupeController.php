@@ -40,60 +40,50 @@ class GroupeController extends Controller
      * Enregistrer un groupe + stagiaires + modules.
      */
     public function store(Request $request)
-    {
-        $request->validate([
-            'nom'                   => ['required','string','max:150','unique:groups,name'],
-            'description'           => ['nullable','string','max:2000'],
-            'password'              => ['required','string','min:8'],
-            'modules'               => ['required','array','min:1'],
-            'modules.*'             => [Rule::exists('modules','id')->where('status', 1)],
-            'stagiaires'            => ['required','array','min:1'],
-            'stagiaires.*.email'    => ['required','email','distinct'],
-            'stagiaires.*.prenom'   => ['required','string','max:255'],
-            'stagiaires.*.nom'      => ['required','string','max:255'],
-        ]);
+{
+    // …validation…
 
-        // Création du groupe
+    \DB::transaction(function () use ($request) {
         $group = Group::create([
             'name'          => $request->nom,
             'description'   => $request->description,
             'instructor_id' => auth()->id(),
         ]);
 
-        // Ajout / rattachement des stagiaires
-        foreach ($request->stagiaires as $idx => $s) {
-            // ignore les blocs vides par prudence
-            if (empty($s['email']) && empty($s['prenom']) && empty($s['nom'])) {
-                continue;
-            }
+        foreach ($request->stagiaires as $s) {
+            if (empty($s['email']) && empty($s['prenom']) && empty($s['nom'])) continue;
 
-            $user = User::where('email', $s['email'])->first();
+            $email = strtolower(trim($s['email']));
+            $user  = User::withTrashed()->where('email', $email)->first();
 
-            if (!$user) {
-                $user = new User();
-                $user->prenom       = $s['prenom'];
-                $user->name         = $s['nom'];
-                $user->email        = $s['email'];
-                $user->password     = Hash::make($request->password); // mot de passe commun (première connexion)
-                $user->role         = 'stagiaire';
-                $user->formateur_id = auth()->id();
-                $user->code_acces   = CodeGeneratorService::generateUniqueAccessCode();
+            if ($user) {
+                if ($user->trashed()) $user->restore();
+                if (!$user->formateur_id) $user->formateur_id = auth()->id();
+                $user->prenom = $user->prenom ?: $s['prenom'];
+                $user->name   = $user->name   ?: $s['nom'];
                 $user->save();
+            } else {
+                $user = User::create([
+                    'prenom'       => $s['prenom'],
+                    'name'         => $s['nom'],
+                    'email'        => $email,
+                    'password'     => \Hash::make($request->password),
+                    'role'         => 'stagiaire',
+                    'formateur_id' => auth()->id(),
+                    'status'       => 1,
+                    'code_acces'   => CodeGeneratorService::generateUniqueAccessCode(),
+                ]);
             }
 
-            // Attache sans dupliquer
-            $group->students()->syncWithoutDetaching([
-                $user->id => ['role_in_group' => 'stagiaire']
-            ]);
+            $group->students()->syncWithoutDetaching([$user->id => ['role_in_group' => 'stagiaire']]);
         }
 
-        // Association des modules
         $group->modules()->sync($request->modules);
+    });
 
-        return redirect()
-            ->route('formateur.groupes.index')
-            ->with('success', 'Groupe et stagiaires enregistrés avec succès.');
-    }
+    return redirect()->route('formateur.groupes.index')->with('success', 'Groupe et stagiaires enregistrés avec succès.');
+}
+
 
     /**
      * Formulaire d’édition.
@@ -147,23 +137,34 @@ class GroupeController extends Controller
                     continue;
                 }
 
-                $user = User::where('email', $s['email'])->first();
+                $email = strtolower(trim($s['email'] ?? ''));
+                if ($email === '') { continue; }
 
-                if (!$user) {
-                    $user = new User();
-                    $user->prenom       = $s['prenom'] ?? null;
-                    $user->name         = $s['nom'] ?? null;
-                    $user->email        = $s['email'] ?? null;
-                    $user->password     = Hash::make(Str::random(12)); // temp
-                    $user->role         = 'stagiaire';
-                    $user->formateur_id = auth()->id();
-                    $user->code_acces   = CodeGeneratorService::generateUniqueAccessCode();
+                $user = User::withTrashed()->where('email', $email)->first();
+
+                if ($user) {
+                    if ($user->trashed()) { $user->restore(); }
+                    if (!$user->formateur_id) { $user->formateur_id = auth()->id(); }
+                    $user->prenom = $user->prenom ?: ($s['prenom'] ?? null);
+                    $user->name   = $user->name   ?: ($s['nom'] ?? null);
                     $user->save();
+                } else {
+                    $user = User::create([
+                        'prenom'       => $s['prenom'] ?? null,
+                        'name'         => $s['nom'] ?? null,
+                        'email'        => $email,
+                        'password'     => Hash::make(Str::random(12)),
+                        'role'         => 'stagiaire',
+                        'formateur_id' => auth()->id(),
+                        'status'       => 1,
+                        'code_acces'   => CodeGeneratorService::generateUniqueAccessCode(),
+                    ]);
                 }
 
                 $group->students()->syncWithoutDetaching([
                     $user->id => ['role_in_group' => 'stagiaire']
                 ]);
+
             }
         }
 
