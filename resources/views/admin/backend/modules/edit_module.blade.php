@@ -123,9 +123,30 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <x-oneduc.textarea label="Prérequis" name="prerequi" :value="old('prerequi', $module->prerequi)" />
                     <x-oneduc.textarea label="Description" name="description" :value="old('description', $module->description)" />
-<x-oneduc.textarea label="Objectifs" name="objectifs"
-  :value="old('objectifs', $module->objectifs)" class="md:col-span-2" />
-<p class="mt-2 text-xs text-gray-500">Un objectif par ligne.</p>
+
+                    
+        {{-- Objectifs pédagogiques --}}
+        <div class="md:col-span-2">
+            <h4 class="text-md font-semibold text-gray-700 mb-2">Objectifs pédagogiques</h4>
+            <div id="objectifs-container" class="space-y-3">
+                @php
+                    $objectifs = is_array($module->objectifs) 
+                        ? $module->objectifs 
+                        : (json_decode($module->objectifs, true) ?? preg_split("/\r\n|\n|\r/", $module->objectifs));
+                @endphp
+
+                @foreach ($objectifs as $objectif)
+                    <div class="flex items-center gap-3 objectif-item">
+                        <input type="text" name="objectifs[]" class="input flex-1" value="{{ $objectif }}" placeholder="Saisir un objectif" />
+                        <button type="button" class="remove-objectif text-red-600 hover:text-red-800">✕</button>
+                    </div>
+                @endforeach
+            </div>
+            <button type="button" id="add-objectif" class="mt-3 bg-gray-200 hover:bg-gray-300 text-sm px-4 py-1 rounded">
+                + Ajouter un objectif
+            </button>
+        </div>
+
             </div>
         </div>
 
@@ -166,6 +187,25 @@
         };
         reader.readAsDataURL(this.files[0]);
     });
+</script>
+<script>
+document.getElementById('add-objectif').addEventListener('click', function () {
+    const container = document.getElementById('objectifs-container');
+    const item = document.createElement('div');
+    item.classList.add('flex', 'items-center', 'gap-3', 'objectif-item');
+    item.innerHTML = `
+        <input type="text" name="objectifs[]" class="input flex-1" placeholder="Saisir un objectif" />
+        <button type="button" class="remove-objectif text-red-600 hover:text-red-800">✕</button>
+    `;
+    container.appendChild(item);
+});
+
+// suppression
+document.addEventListener('click', function (e) {
+    if (e.target.classList.contains('remove-objectif')) {
+        e.target.closest('.objectif-item').remove();
+    }
+});
 </script>
 
 <style>

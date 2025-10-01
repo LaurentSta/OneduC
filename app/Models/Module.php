@@ -15,6 +15,7 @@ class Module extends Model
     'module_video','label','duree','resources','certificat','prerequi',
     'bestseller','vedette','surevalue','status','evaluation_id'
     ];
+   
 
     // Catégorie principale
     public function category()
@@ -63,7 +64,10 @@ class Module extends Model
         return $q->where('status', 1);
     }
     // ✅ cast du statut
-    protected $casts = ['status' => 'boolean'];
+    protected $casts = [
+        'status'    => 'boolean',
+        'objectifs' => 'array',
+        ];
 
     /** Règle de visibilité uniforme */
     public function isVisibleTo(?\App\Models\User $user): bool
