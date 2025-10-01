@@ -21,7 +21,7 @@
             {{-- Image --}}
             <div class="col-span-12 md:col-span-4 flex justify-center md:justify-end">
                 <div class="w-full max-w-xs">
-                    {!! file_get_contents(public_path('images/svg/PointDInterrogation.svg')) !!}
+                    {!! file_get_contents(public_path('images/svg/ParcoursOneduc.svg')) !!}
                 </div>
             </div>
 

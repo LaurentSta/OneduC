@@ -96,6 +96,18 @@
                 <x-oneduc.textarea label="Description" name="description" />
             </div>
         </div>
+        <div>
+            <h4 class="text-md font-semibold text-gray-700 mb-2">Objectifs pédagogiques</h4>
+            <div id="objectifs-container" class="space-y-3">
+                <div class="flex items-center gap-3 objectif-item">
+                    <input type="text" name="objectifs[]" class="input flex-1" placeholder="Saisir un objectif" />
+                    <button type="button" class="remove-objectif text-red-600 hover:text-red-800">✕</button>
+                </div>
+            </div>
+            <button type="button" id="add-objectif" class="mt-3 bg-gray-200 hover:bg-gray-300 text-sm px-4 py-1 rounded">
+                + Ajouter un objectif
+            </button>
+        </div>
 
         {{-- 5. Options --}}
         <div>
@@ -138,6 +150,21 @@
 
     
 </script>
+document.addEventListener('click', function (e) {
+    if (e.target.id === 'add-objectif') {
+        const container = document.getElementById('objectifs-container');
+        const item = document.createElement('div');
+        item.classList.add('flex','items-center','gap-3','objectif-item');
+        item.innerHTML = `
+            <input type="text" name="objectifs[]" class="input flex-1" placeholder="Saisir un objectif" />
+            <button type="button" class="remove-objectif text-red-600 hover:text-red-800">✕</button>
+        `;
+        container.appendChild(item);
+    }
+    if (e.target.classList.contains('remove-objectif')) {
+        e.target.closest('.objectif-item').remove();
+    }
+});
 
 <style>
     .input {
