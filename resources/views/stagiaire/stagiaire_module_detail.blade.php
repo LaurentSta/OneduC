@@ -85,16 +85,21 @@
         </div>
 
         <div x-show="active==='objectifs'" x-cloak>
-  @if(!empty($module->objectifs))
-    <ul class="list-disc list-inside text-gray-800 text-base space-y-1 font-lisible">
-      @foreach(preg_split('/\r\n|\r|\n/', $module->objectifs) as $obj)
-        @if(trim($obj)!=='')<li>{{ $obj }}</li>@endif
-      @endforeach
-    </ul>
-  @else
-    <p class="italic text-gray-500">Aucun objectif spécifié pour ce module.</p>
-  @endif
-</div>
+          @if(!empty($module->objectifs) && is_array($module->objectifs))
+            <ul class="list-none space-y-1 font-lisible text-base">
+              @foreach($module->objectifs as $obj)
+                @if(!empty(trim($obj)))
+                  <li class="relative pl-5 text-gray-800">
+                    <span class="absolute left-0 top-2 w-2 h-2 bg-orangeone rounded-full"></span>
+                    {{ $obj }}
+                  </li>
+                @endif
+              @endforeach
+            </ul>
+          @else
+            <p class="italic text-gray-500">Aucun objectif spécifié pour ce module.</p>
+          @endif
+        </div>
 
 
         {{-- Prérequis --}}
