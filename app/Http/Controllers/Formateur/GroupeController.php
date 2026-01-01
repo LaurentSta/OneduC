@@ -106,19 +106,31 @@ class GroupeController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'nom'                   => ['required','string','max:150',"unique:groups,name,{$id}"],
-            'description'           => ['nullable','string','max:2000'],
-            'modules'               => ['required','array','min:1'],
-            'modules.*'             => [Rule::exists('modules','id')->where('status', 1)],
-            'stagiaires'            => ['nullable','array'],
-            'stagiaires.*.email'    => ['nullable','email','distinct'],
-            'stagiaires.*.prenom'   => ['nullable','string','max:255'],
-            'stagiaires.*.nom'      => ['nullable','string','max:255'],
+            'nom' => [
+                'required',
+                'string',
+                'max:150',
+                Rule::unique('groups', 'name')->ignore($id),
+            ],
+            'description' => ['nullable','string','max:2000'],
+
+            'modules' => ['required','array','min:1'],
+            'modules.*' => [Rule::exists('modules', 'id')->where('status', 1)],
+
+            'stagiaires' => ['nullable','array'],
+            'stagiaires.*.email' => ['nullable','email','distinct'],
+            'stagiaires.*.prenom' => ['nullable','string','max:255'],
+            'stagiaires.*.nom' => ['nullable','string','max:255'],
+
+            'remove_students' => ['nullable','array'],
+            'remove_students.*' => ['integer', Rule::exists('users', 'id')],
         ]);
+
 
         // Vérifie l’appartenance
         $group = Group::where('id', $id)
             ->where('instructor_id', auth()->id())
+            ->with('students')
             ->firstOrFail();
 
         // MAJ groupe
@@ -129,6 +141,19 @@ class GroupeController extends Controller
 
         // MAJ modules
         $group->modules()->sync($request->modules);
+        $removeIds = collect($request->input('remove_students', []))
+            ->map(fn($v) => (int) $v)
+            ->filter()
+            ->unique();
+
+        if ($removeIds->isNotEmpty()) {
+            $currentIds = $group->students->pluck('id')->map(fn($v) => (int) $v);
+            $safeDetach = $removeIds->intersect($currentIds);
+
+            if ($safeDetach->isNotEmpty()) {
+                $group->students()->detach($safeDetach->all());
+            }
+        }
 
         // Ajout éventuel de nouveaux stagiaires
         if ($request->filled('stagiaires')) {

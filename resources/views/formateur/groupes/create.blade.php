@@ -2,10 +2,9 @@
 
 @section('formateur')
 
-{{-- 🧩 CONTENEUR GLOBAL --}}
+{{--  CONTENEUR GLOBAL /home/laurents/Oneduc_Dev/resources/views/formateur/groupes/create.blade.php --}}
 
-
-   {{-- 🧩 EN-TÊTE DE PAGE FORMATEUR – Création d’un groupe --}}
+{{--  EN-TÊTE DE PAGE FORMATEUR – Création d’un groupe --}}
 <div class="bg-white rounded-[20px] shadow-md px-8 pt-4 w-full max-w-[1285px] mx-auto mb-6">
   <div class="grid grid-cols-12 gap-8 items-center">
 
@@ -19,8 +18,8 @@
         Créez un nouveau groupe en 3 étapes : nom, stagiaires et modules à associer.
       </x-typography>
 
-      {{-- 📍 Fil d’Ariane --}}
-      <nav class="text-sm font-varela text-gray-600 mt-4" aria-label="Fil d'Ariane">
+      {{-- Fil d’Ariane --}}
+      <nav class="text-base font-varela text-gray-600 mt-4" aria-label="Fil d'Ariane">
         <ol class="list-none p-0 inline-flex items-center space-x-1">
           <li class="flex items-center">
             <a href="{{ route('formateur.dashboard') }}" class="text-orangeone hover:underline flex items-center">
@@ -51,24 +50,30 @@
 </div>
 
 {{-- ✅ FORMULAIRE WIZARD --}}
-<div class="bg-white rounded-[20px] shadow-md px-8 py-10 w-full max-w-[1285px] mx-auto">
-  {{-- Étapes --}}
+<div class="bg-white rounded-[20px] shadow-md px-8 py-10 w-full max-w-[1285px] mx-auto
+            font-varela text-base text-gray-800">
+
+
+  {{-- Stepper --}}
+  @php $steps = ['Groupe','Stagiaires','Modules']; @endphp
   <nav class="mb-8" aria-label="Progression">
-    <ol class="flex justify-between items-center text-sm">
-      @php $steps = ['Groupe','Stagiaires','Modules']; @endphp
+    <ol class="grid grid-cols-1 sm:grid-cols-3 gap-3">
       @foreach($steps as $i => $label)
         <li>
           <button type="button"
-                  class="wizard-step px-4 py-2 rounded-full border transition"
+                  class="wizard-step w-full px-6 py-4 rounded-full border transition font-varela text-lg
+                         border-bleuone focus:outline-none focus:ring-2 focus:ring-bleuone focus:ring-offset-2"
                   data-step="{{ $i+1 }}"
                   aria-current="{{ $i===0 ? 'step' : 'false' }}">
-            {{ $label }}
+            Étape {{ $i+1 }} : {{ $label }}
           </button>
         </li>
       @endforeach
     </ol>
-    <div class="overflow-hidden h-2 mt-4 rounded bg-orange-200" aria-hidden="true">
-      <div id="progress-bar" class="h-2 bg-orange-500 w-1/3 transition-all duration-500"></div>
+
+    {{-- Barre de progression --}}
+    <div class="overflow-hidden h-2 mt-4 rounded bg-orangeone/15" aria-hidden="true">
+      <div id="progress-bar" class="h-2 bg-orangeone w-1/3 transition-all duration-500"></div>
     </div>
     <div id="progress-live" class="sr-only" aria-live="polite">Étape 1 sur 3</div>
   </nav>
@@ -79,20 +84,20 @@
     {{-- Étape 1 : Groupe --}}
     <fieldset id="step-1" class="step">
       <legend class="sr-only">Informations du groupe</legend>
-      <p class="text-sm text-gray-600 mb-6">Nommer le groupe et ajouter une description.</p>
+      <p class="text-base text-gray-600 mb-6">Nommer le groupe et ajouter une description.</p>
 
       <div class="mb-6">
-        <label for="nom" class="block mb-2 text-sm font-medium text-gray-900">Nom du groupe *</label>
+        <label for="nom" class="block mb-2 text-base font-medium text-gray-900">Nom du groupe *</label>
         <input id="nom" name="nom" type="text" required
-               class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-orange-500 focus:border-orange-500 block w-full p-2.5"
+               class="bg-gray-50 border border-gray-300 text-base rounded-lg focus:ring-orangeone focus:border-orangeone block w-full p-2.5"
                placeholder="Ex : Groupe Marketing 2025 - Niveau 1">
         <p class="text-xs text-gray-500 mt-1">Un nom clair facilite la recherche et le suivi.</p>
       </div>
 
       <div class="mb-6">
-        <label for="description" class="block mb-2 text-sm font-medium text-gray-900">Description</label>
+        <label for="description" class="block mb-2 text-base font-medium text-gray-900">Description</label>
         <textarea id="description" name="description" rows="3"
-                  class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-orange-500 focus:border-orange-500 block w-full p-2.5"
+                  class="bg-gray-50 border border-gray-300 text-base rounded-lg focus:ring-orangeone focus:border-orangeone block w-full p-2.5"
                   placeholder="Objectifs, public, période…"></textarea>
       </div>
     </fieldset>
@@ -100,12 +105,12 @@
     {{-- Étape 2 : Stagiaires --}}
     <fieldset id="step-2" class="step hidden">
       <legend class="sr-only">Stagiaires</legend>
-      <p class="text-sm text-gray-600 text-center mb-6">Définir un mot de passe commun puis ajouter les stagiaires.</p>
+      <p class="text-base text-gray-600 text-center mb-6">Définir un mot de passe commun puis ajouter les stagiaires.</p>
 
       <div class="mb-6">
-        <label for="password" class="block mb-2 text-sm font-medium text-gray-900">Mot de passe commun *</label>
+        <label for="password" class="block mb-2 text-base font-medium text-gray-900">Mot de passe commun *</label>
         <input id="password" name="password" type="password" required minlength="8" autocomplete="new-password"
-               class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-orange-500 focus:border-orange-500 block w-full p-2.5"
+               class="bg-gray-50 border border-gray-300 text-base rounded-lg focus:ring-orangeone focus:border-orangeone block w-full p-2.5"
                placeholder="Min. 8 caractères">
         <p class="text-xs text-gray-500 mt-1">Servira à la première connexion du groupe.</p>
       </div>
@@ -114,54 +119,57 @@
         {{-- ligne 0 --}}
         <div class="bg-gray-50 p-4 rounded relative stagiaire-row">
           <div class="flex justify-between items-start mb-2">
-            <span class="text-sm font-medium text-gray-700">Stagiaire 1</span>
+            <span class="text-base font-medium text-gray-700">Stagiaire 1</span>
             <button type="button" class="text-xs font-semibold text-red-700 bg-red-100 hover:bg-red-200 px-2 py-1 rounded-full"
                     onclick="removeStagiaire(this)">Supprimer</button>
           </div>
-          <div class="grid grid-cols-1 md:grid-cols-[1fr_1fr_2fr] gap-3">
-  <div>
-    <label for="stagiaires_0_prenom" class="sr-only">Prénom</label>
-    <input id="stagiaires_0_prenom" name="stagiaires[0][prenom]" type="text" placeholder="Prénom"
-           class="bg-white border border-gray-300 text-sm rounded-lg focus:ring-orange-500 focus:border-orange-500 w-full p-2.5">
-  </div>
-  <div>
-    <label for="stagiaires_0_nom" class="sr-only">Nom</label>
-    <input id="stagiaires_0_nom" name="stagiaires[0][nom]" type="text" placeholder="Nom"
-           class="bg-white border border-gray-300 text-sm rounded-lg focus:ring-orange-500 focus:border-orange-500 w-full p-2.5">
-  </div>
 
-  <div class="relative">
-    <label for="stagiaires_0_email" class="sr-only">Email</label>
-    <input id="stagiaires_0_email" name="stagiaires[0][email]" type="email" placeholder="Email"
-           class="bg-white border border-gray-300 text-sm rounded-lg focus:ring-orange-500 focus:border-orange-500 w-full p-2.5 pr-9">
-    <span class="absolute top-2 right-2 pointer-events-none" aria-hidden="true" title="Le code d’accès sera généré à la validation.">
-      {{-- Icône cadenas inline (style Lucide) --}}
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-           class="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="3" y="11" width="18" height="10" rx="2" ry="2"></rect>
-        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-        <circle cx="12" cy="16" r="1"></circle>
-      </svg>
-    </span>
-  </div>
-</div>
+          <div class="grid grid-cols-1 md:grid-cols-[1fr_1fr_2fr] gap-3">
+            <div>
+              <label for="stagiaires_0_prenom" class="sr-only">Prénom</label>
+              <input id="stagiaires_0_prenom" name="stagiaires[0][prenom]" type="text" placeholder="Prénom"
+                     class="bg-white border border-gray-300 text-base rounded-lg focus:ring-orangeone focus:border-orangeone w-full p-2.5">
+            </div>
+
+            <div>
+              <label for="stagiaires_0_nom" class="sr-only">Nom</label>
+              <input id="stagiaires_0_nom" name="stagiaires[0][nom]" type="text" placeholder="Nom"
+                     class="bg-white border border-gray-300 text-base rounded-lg focus:ring-orangeone focus:border-orangeone w-full p-2.5">
+            </div>
+
+            <div class="relative">
+              <label for="stagiaires_0_email" class="sr-only">Email</label>
+              <input id="stagiaires_0_email" name="stagiaires[0][email]" type="email" placeholder="Email"
+                     class="bg-white border border-gray-300 text-base rounded-lg focus:ring-orangeone focus:border-orangeone w-full p-2.5 pr-9">
+              <span class="absolute top-2 right-2 pointer-events-none" aria-hidden="true" title="Le code d’accès sera généré à la validation.">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                     class="w-5 h-5 text-orangeone" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="11" width="18" height="10" rx="2" ry="2"></rect>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                  <circle cx="12" cy="16" r="1"></circle>
+                </svg>
+              </span>
+            </div>
+          </div>
         </div>
       </div>
 
-      <button type="button" class="px-4 py-2 bg-gray-200 text-gray-900 rounded-lg hover:bg-gray-300 transition mt-2"
+      <button type="button"
+              class="px-4 py-2 bg-gray-200 text-gray-900 rounded-lg hover:bg-gray-300 transition mt-2"
               onclick="addStagiaire()">+ Ajouter un stagiaire</button>
     </fieldset>
 
     {{-- Étape 3 : Modules --}}
     <fieldset id="step-3" class="step hidden">
       <legend class="sr-only">Modules</legend>
-      <p class="text-sm text-gray-600 mb-4">Sélectionner les modules à associer.</p>
+      <p class="text-base text-gray-600 mb-4">Sélectionner les modules à associer.</p>
+
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
         @foreach ($modules as $module)
           @if (!empty($module->status) && (int)$module->status === 1)
             <label class="flex items-center space-x-2 bg-gray-50 border rounded px-4 py-2">
               <input type="checkbox" name="modules[]" value="{{ $module->id }}">
-              <span class="text-sm">{{ $module->module_title }}</span>
+              <span class="text-base">{{ $module->module_title }}</span>
             </label>
           @endif
         @endforeach
@@ -176,7 +184,7 @@
     </div>
 
     {{-- Zone erreurs client --}}
-    <div id="client-errors" class="mt-4 text-sm text-red-700" aria-live="polite"></div>
+    <div id="client-errors" class="mt-4 text-base text-red-700" aria-live="polite"></div>
   </form>
 </div>
 
@@ -194,23 +202,59 @@
   const stepButtons = document.querySelectorAll('.wizard-step');
   const errorsBox = document.getElementById('client-errors');
 
+  // Étapes validées (autorise retour en arrière uniquement si validée)
+  const completedSteps = new Set();
+
+  // Stepper : retour en arrière uniquement sur étapes validées
   stepButtons.forEach(btn => btn.addEventListener('click', () => {
     const target = parseInt(btn.dataset.step, 10);
-    if (validateStep(currentStep)) { currentStep = target; showStep(currentStep); }
+
+    if (target < currentStep) {
+      if (completedSteps.has(target)) {
+        currentStep = target;
+        showStep(currentStep);
+      }
+      return;
+    }
+
+    // Pas d'accès aux étapes futures via stepper
+    return;
   }));
+
+  function applyStepperStyles(step) {
+    stepButtons.forEach((b, i) => {
+      const s = i + 1;
+      const active = s === step;
+
+      // Styles : actif bleu plein, inactif blanc + texte bleu
+      b.classList.remove('bg-bleuone','text-white','bg-white','text-bleuone','opacity-60','shadow-md');
+      if (active) {
+        b.classList.add('bg-bleuone','text-white','shadow-md');
+        b.setAttribute('aria-current', 'step');
+      } else {
+        b.classList.add('bg-white','text-bleuone','opacity-60');
+        b.setAttribute('aria-current', 'false');
+      }
+
+      // Désactivation : seules les étapes validées en arrière sont cliquables
+      if (s < step && completedSteps.has(s)) {
+        b.disabled = false;
+        b.classList.remove('cursor-not-allowed');
+      } else if (s === step) {
+        b.disabled = false;
+        b.classList.remove('cursor-not-allowed');
+      } else {
+        b.disabled = true;
+        b.classList.add('cursor-not-allowed');
+      }
+    });
+  }
 
   function showStep(step) {
     document.querySelectorAll('.step').forEach(s => s.classList.add('hidden'));
     document.getElementById(`step-${step}`).classList.remove('hidden');
 
-    stepButtons.forEach((b, i) => {
-      const active = (i+1) === step;
-      b.classList.toggle('bg-orangeone', active);
-      b.classList.toggle('text-white', active);
-      b.classList.toggle('bg-orange-100', !active);
-      b.classList.toggle('text-orangeone', !active);
-      b.setAttribute('aria-current', active ? 'step' : 'false');
-    });
+    applyStepperStyles(step);
 
     progressBar.style.width = `${(step / TOTAL_STEPS) * 100}%`;
     progressLive.textContent = `Étape ${step} sur ${TOTAL_STEPS}`;
@@ -226,8 +270,12 @@
     let ok = true;
     const current = document.getElementById(`step-${step}`);
     const required = current.querySelectorAll('input[required], textarea[required], select[required]');
+
     required.forEach(el => {
-      if (!el.value || (el.minLength && el.value.length < el.minLength)) {
+      const value = (el.value || '').trim();
+      const tooShort = el.minLength && value.length < el.minLength;
+
+      if (!value || tooShort) {
         el.classList.add('border-red-500');
         ok = false;
       } else {
@@ -236,28 +284,40 @@
     });
 
     if (!ok) {
+      completedSteps.delete(step);
       errorsBox.textContent = 'Veuillez compléter les champs requis avant de continuer.';
+      return false;
     }
-    return ok;
+
+    completedSteps.add(step);
+    return true;
   }
 
   nextBtn.addEventListener('click', (e) => {
     e.preventDefault();
-    if (validateStep(currentStep)) { currentStep++; showStep(currentStep); }
+    if (validateStep(currentStep)) {
+      currentStep++;
+      showStep(currentStep);
+    }
   });
 
   prevBtn.addEventListener('click', (e) => {
     e.preventDefault();
-    currentStep--; showStep(currentStep);
+    // Retour en arrière autorisé uniquement si l'étape cible est déjà validée
+    const target = currentStep - 1;
+    if (target >= 1 && completedSteps.has(target)) {
+      currentStep--;
+      showStep(currentStep);
+    }
   });
 
-  function addStagiaire() {
+  window.addStagiaire = function () {
     const container = document.getElementById('stagiaires-container');
     const index = container.querySelectorAll('.stagiaire-row').length;
     const tpl = `
       <div class="bg-gray-50 p-4 rounded relative stagiaire-row">
         <div class="flex justify-between items-start mb-2">
-          <span class="text-sm font-medium text-gray-700">Stagiaire ${index+1}</span>
+          <span class="text-base font-medium text-gray-700">Stagiaire ${index+1}</span>
           <button type="button" class="text-xs font-semibold text-red-700 bg-red-100 hover:bg-red-200 px-2 py-1 rounded-full"
                   onclick="removeStagiaire(this)">Supprimer</button>
         </div>
@@ -265,40 +325,39 @@
           <div>
             <label for="stagiaires_${index}_prenom" class="sr-only">Prénom</label>
             <input id="stagiaires_${index}_prenom" name="stagiaires[${index}][prenom]" type="text" placeholder="Prénom"
-                   class="bg-white border border-gray-300 text-sm rounded-lg focus:ring-orange-500 focus:border-orange-500 w-full p-2.5">
+                   class="bg-white border border-gray-300 text-base rounded-lg focus:ring-orangeone focus:border-orangeone w-full p-2.5">
           </div>
           <div>
             <label for="stagiaires_${index}_nom" class="sr-only">Nom</label>
             <input id="stagiaires_${index}_nom" name="stagiaires[${index}][nom]" type="text" placeholder="Nom"
-                   class="bg-white border border-gray-300 text-sm rounded-lg focus:ring-orange-500 focus:border-orange-500 w-full p-2.5">
+                   class="bg-white border border-gray-300 text-base rounded-lg focus:ring-orangeone focus:border-orangeone w-full p-2.5">
           </div>
           <div>
             <label for="stagiaires_${index}_email" class="sr-only">Email</label>
             <input id="stagiaires_${index}_email" name="stagiaires[${index}][email]" type="email" placeholder="Email"
-                   class="bg-white border border-gray-300 text-sm rounded-lg focus:ring-orange-500 focus:border-orange-500 w-full p-2.5">
+                   class="bg-white border border-gray-300 text-base rounded-lg focus:ring-orangeone focus:border-orangeone w-full p-2.5">
           </div>
         </div>
       </div>`;
     container.insertAdjacentHTML('beforeend', tpl);
   }
 
-  function removeStagiaire(btn) {
+  window.removeStagiaire = function (btn) {
     const row = btn.closest('.stagiaire-row');
     const container = document.getElementById('stagiaires-container');
     if (container.querySelectorAll('.stagiaire-row').length <= 1) return;
     row.remove();
   }
 
-  form.addEventListener('submit', (e) => {
-    // supprime les lignes vides (tous champs vides)
+  form.addEventListener('submit', () => {
     document.querySelectorAll('.stagiaire-row').forEach(row => {
-      const vals = Array.from(row.querySelectorAll('input')).map(i => i.value.trim());
+      const vals = Array.from(row.querySelectorAll('input')).map(i => (i.value || '').trim());
       if (vals.every(v => v === '')) row.remove();
     });
   });
 
+  // Init
   showStep(currentStep);
 </script>
-@endsection
 
-    
+@endsection
