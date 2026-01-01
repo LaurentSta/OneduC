@@ -1,13 +1,16 @@
 <!-- NAVBAR AVEC SOUS-MENU CLIQUABLE -->
+ <!--/var/www/Oneduc_Prod/resources/views/frontend/body/header.blade.php-->
 <nav class="bg-white border-b shadow-sm">
     <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center">
 
       <!-- Logo -->
       <div class="flex items-center mb-4 md:mb-0">
         <a href="{{ route('index') }}">
-          <img src="/frontend/assets/img/front-pages/branding/LogoOneducPositionG.svg"
-               alt="Logo Onéduc"
-               class="h-[60px] w-auto">
+          <img
+              src="{{ asset('frontend/assets/img/front-pages/branding/LogoOneducPositionG.svg') }}"
+              alt="Logo Onéduc"
+              class="h-[72px] md:h-[84px] w-auto"
+            />
         </a>
       </div>
 
