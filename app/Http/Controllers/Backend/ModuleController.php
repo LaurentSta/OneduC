@@ -1,5 +1,5 @@
 <?php
-
+// /home/laurents/Oneduc_Dev/app/Http/Controllers/Backend/ModuleController.php
 namespace App\Http\Controllers\Backend;
 
 use App\Http\Controllers\Controller;
@@ -311,33 +311,63 @@ class ModuleController extends Controller
     }
 
     public function UpdateModuleSection(Request $request, $id)
-    {
-        $request->validate([
-            'section_title' => 'required|string|max:255',
-            'section_html'  => 'nullable|string',
-            'objectifs' => 'nullable|array',
-            
-            'methode'       => 'nullable|string',
-            'contexte'      => 'nullable|string',
-            'video_url'     => 'nullable|string|max:255',
-        ]);
+{
+    $request->validate([
+        'section_title' => ['required', 'string', 'max:255'],
+        'section_html'  => ['nullable', 'string', 'max:20000'],
+        'objectif'      => ['nullable', 'string', 'max:20000'],
+        'methode'       => ['nullable', 'string', 'max:20000'],
+        'contexte'      => ['nullable', 'string', 'max:20000'],
+        'video_url'     => ['nullable', 'string', 'max:255'],
+        // Bouton "Sauvegarder" (reste sur la page)
+        'stay'          => ['nullable', 'boolean'],
+    ]);
 
-        $section = ModuleSection::findOrFail($id);
+    $section = ModuleSection::findOrFail($id);
 
-        $videoPath = $request->input('video_url');
+    // Sécurisation HTML (Quill) : liste blanche minimale
+    // Autorise uniquement texte + mises en forme + listes.
+    $allowedTags = '<p><br><strong><em><u><ul><ol><li>';
 
-        $section->update([
-            'section_title' => $request->section_title,
-            'section_html'  => $request->section_html,
-            'objectif'      => $request->objectif,
-            'methode'       => $request->methode,
-            'contexte'      => $request->contexte,
-            'video_url'     => $videoPath,
-        ]);
+    $sectionHtml = strip_tags((string) $request->input('section_html', ''), $allowedTags);
+    $objectif    = strip_tags((string) $request->input('objectif', ''), $allowedTags);
+    $methode     = strip_tags((string) $request->input('methode', ''), $allowedTags);
+    $contexte    = strip_tags((string) $request->input('contexte', ''), $allowedTags);
 
-        return redirect()->route('admin.modules.lecture.add', $section->module_id)
-            ->with('success', 'Section mise à jour avec succès !');
+    // Normalisation simple (évite les contenus vides du type "<p><br></p>")
+    $normalize = function (string $html): ?string {
+        $html = trim($html);
+        if ($html === '') {
+            return null;
+        }
+
+        $plain = trim(strip_tags($html));
+        return $plain === '' ? null : $html;
+    };
+
+    $section->update([
+        'section_title' => $request->input('section_title'),
+        'section_html'  => $normalize($sectionHtml),
+        'objectif'      => $normalize($objectif),
+        'methode'       => $normalize($methode),
+        'contexte'      => $normalize($contexte),
+        'video_url'     => $request->input('video_url'),
+    ]);
+
+    // Si clic sur "Sauvegarder" : rester sur la page d'édition
+    if ($request->boolean('stay')) {
+        return redirect()
+            ->route('admin.sections.edit', $section->id)
+            ->with('success', 'Section sauvegardée.');
     }
+
+    // Sinon : comportement actuel
+    return redirect()
+        ->route('admin.modules.lecture.add', $section->module_id)
+        ->with('success', 'Section mise à jour avec succès !');
+}
+
+
 
     /**
      * 9. Vue Section (stagiaire ou formateur)

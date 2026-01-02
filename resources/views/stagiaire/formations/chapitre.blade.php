@@ -1,23 +1,63 @@
+<!-- /home/laurents/Oneduc_Dev/resources/views/stagiaire/formations/chapitre.blade.php -->
 @extends('stagiaire.formations.master_lecon_evaluation')
 @section('content')
+
 <main class="max-w-full mx-auto">
     <div class="bg-white rounded-[20px] shadow-md p-8 mb-6">
-        <h1 class="text-titre font-raleway text-bleuone">
+        <h1 class="text-2xl md:text-3xl font-raleway font-medium text-bleuone
+           leading-tight mt-0 mb-2">
             {{ $selectedSection->section_title }}
-        </h1>  
+        </h1>
+
+
     </div>
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {{-- Colonne gauche : Accordéon pédagogique --}}
-        <div x-data="{ openItem: 1 }" class="space-y-3">
+        <div x-data="{ openItem: null }" class="space-y-3">
             {{-- Contenu HTML de la section (dans la colonne gauche, avant l’accordéon) --}}
-        @if(!empty($selectedSection->section_html))
-        <div class="border rounded-md p-4 bg-white">
-            <h2 class="text-base font-varela text-orangeone mb-2">Questions de départ</h2>
-            <div class="prose max-w-none">
-            {!! $selectedSection->section_html !!}
-            </div>
-        </div>
-        @endif
+            @php
+                use Illuminate\Support\Str;
+
+                $rawQuestions = (string) ($selectedSection->section_html ?? '');
+                $rawQuestions = trim($rawQuestions);
+
+                // Détection simple : si ça ressemble à du HTML (Quill), on l'affiche tel quel
+                $isHtml = Str::contains($rawQuestions, ['<ul', '<ol', '<li', '<p', '<br', '</']);
+            @endphp
+
+            @if($rawQuestions !== '')
+                <div class="border rounded-md p-4 bg-white">
+                    <h2 class="text-base font-varela text-orangeone mb-2">Questions pour commencer</h2>
+
+                    @if($isHtml)
+                        {{-- HTML Quill --}}
+                        <div class="font-lisible text-[17px] text-gray-800 leading-relaxed
+                                    [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:space-y-1
+                                    [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:space-y-1
+                                    [&_li::marker]:text-orangeone">
+                            {!! $rawQuestions !!}
+                        </div>
+                    @else
+                        {{-- Ancien mode : 1 question par ligne --}}
+                        @php
+                            $questionsDepart = collect(preg_split("/\r\n|\n|\r/", $rawQuestions))
+                                ->map(fn($q) => trim($q))
+                                ->filter()
+                                ->values();
+                        @endphp
+
+                        @if($questionsDepart->isNotEmpty())
+                            <ul class="list-disc pl-6 space-y-1 font-lisible text-[17px] text-gray-800 leading-relaxed marker:text-orangeone">
+                                @foreach($questionsDepart as $q)
+                                    <li>{!! preg_replace('/\s\?$/', '&nbsp;?', e($q)) !!}</li>
+                                @endforeach
+                            </ul>
+                        @endif
+                    @endif
+                </div>
+            @endif
+
+
             {{-- Objectif pédagogique --}}
             @if($selectedSection->objectif)
             <div class="border rounded-md">
@@ -34,7 +74,14 @@
                 </button>
                 <div x-show="openItem === 1" x-collapse
                     class="overflow-hidden p-4 bg-white font-lisible text-[17px] text-gray-800 leading-relaxed">
-                    {{ $selectedSection->objectif }}     
+                    <div x-show="openItem === 1" x-collapse
+                    class="overflow-hidden p-4 bg-white font-lisible text-[17px] text-gray-800 leading-relaxed
+                            [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:space-y-1
+                            [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:space-y-1
+                            [&_li::marker]:text-orangeone">
+                    {!! $selectedSection->objectif !!}
+                </div>
+
                 </div>
             </div>
             @endif
@@ -53,7 +100,14 @@
                     </svg>
                 </button>
                 <div x-show="openItem === 2" x-collapse class="p-4 bg-white font-lisible text-[17px] text-gray-800 leading-relaxed">
-                    {{ $selectedSection->methode }}
+                    <div x-show="openItem === 2" x-collapse
+                        class="p-4 bg-white font-lisible text-[17px] text-gray-800 leading-relaxed
+                                [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:space-y-1
+                                [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:space-y-1
+                                [&_li::marker]:text-orangeone">
+                        {!! $selectedSection->methode !!}
+                    </div>
+
                 </div>
             </div>
             @endif
@@ -73,7 +127,14 @@
                     </svg>
                 </button>
                 <div x-show="openItem === 3" x-collapse class="p-4 bg-white font-lisible text-[17px] text-gray-800 leading-relaxed">
-                    {{ $selectedSection->contexte }}
+                    <div x-show="openItem === 3" x-collapse
+                        class="p-4 bg-white font-lisible text-[17px] text-gray-800 leading-relaxed
+                                [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:space-y-1
+                                [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:space-y-1
+                                [&_li::marker]:text-orangeone">
+                        {!! $selectedSection->contexte !!}
+                    </div>
+
                 </div>
             </div>
             @endif
@@ -81,7 +142,7 @@
         {{-- Colonne droite : Vidéo + bouton + leçons --}}
         <div class="space-y-6">
             @php
-                $isFullUrl = Str::startsWith($selectedSection->video_url, ['http', '/']);
+                $isFullUrl = \Illuminate\Support\Str::startsWith($selectedSection->video_url, ['http', '/']);
                 $videoPath = $isFullUrl ? $selectedSection->video_url : '/modules/scorm/02_videos/' . ltrim($selectedSection->video_url, '/');
                 $videoSrc = asset($videoPath);
                 $firstLecture = $selectedSection->lectures->first();
@@ -125,7 +186,6 @@
     </svg>
   </span>
 </div>
->
 
   {{-- Boutons regroupés à droite --}}
   <div class="flex items-center gap-2">

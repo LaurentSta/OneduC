@@ -30,7 +30,7 @@
         {{-- Bouton Confort+ sous le header --}}
 <div id="access-toolbar-anchor" class="access-anchor" aria-label="Outils d’accessibilité"></div>
 
-        <div class="mx-auto px-4 md:px-6 py-4">
+        <div class="mx-auto px-2 md:px-2 py-2">
             <div
               class="grid gap-6"
               :class="sidebarOpen
