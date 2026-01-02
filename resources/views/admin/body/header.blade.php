@@ -1,4 +1,4 @@
-
+<!-- /home/laurents/Oneduc_Dev/resources/views/admin/body/header.blade.php -->
 <header class="bg-white border-b border-gray-200 shadow-sm w-full z-50">
     <div class="flex items-center justify-between px-4 py-3 w-full">
 
