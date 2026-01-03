@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
-
+// /home/laurents/Oneduc_Dev/app/Http/Controllers/FormateurController.php
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -12,6 +12,8 @@ use App\Models\ScormResult;
 use App\Services\CodeGeneratorService;
 use App\Mail\FormateurWelcome;
 use App\Mail\NewFormateurNotification;
+use App\Models\Group;
+
 
 class FormateurController extends Controller
 {
@@ -148,32 +150,54 @@ class FormateurController extends Controller
     /* -------------------------------------------------------------------------
      | Stagiaires
      |-------------------------------------------------------------------------- */
-    public function indexStagiaires(Request $request)
-    {
-        $query = User::where('role', 'stagiaire');
+   public function indexStagiaires(Request $request)
+{
+    $formateurId = auth()->id();
 
-        $query->where(function ($q) {
-            $q->where('formateur_id', auth()->id())
-              ->orWhereHas('groupesStagiaire', function ($gq) {
-                  $gq->where('instructor_id', auth()->id());
-              });
+    // Liste des groupes du formateur (pour le filtre)
+    $groupes = Group::query()
+        ->where('instructor_id', $formateurId)
+        ->orderBy('name')
+        ->get(['id','name']);
+
+    $query = User::query()->where('role', 'stagiaire');
+
+    // Ne montrer que les stagiaires liés au formateur (directement ou via ses groupes)
+    $query->where(function ($q) use ($formateurId) {
+        $q->where('formateur_id', $formateurId)
+          ->orWhereHas('groupesStagiaire', function ($gq) use ($formateurId) {
+              $gq->where('instructor_id', $formateurId);
+          });
+    });
+
+    // Filtre par groupe sélectionné
+    if ($groupId = $request->input('group_id')) {
+        $query->whereHas('groupesStagiaire', function ($gq) use ($groupId) {
+            $gq->where('groups.id', $groupId);
         });
-
-        if ($search = $request->input('search')) {
-            $query->where(function ($q) use ($search) {
-                $q->where('prenom', 'like', "%$search%")
-                  ->orWhere('name', 'like', "%$search%")
-                  ->orWhere('email', 'like', "%$search%");
-            });
-        }
-
-        $stagiaires = $query
-            ->with('groupesStagiaire')
-            ->orderBy('name')
-            ->paginate(10);
-
-        return view('formateur.backend.stagiaires.all_stagiaires', compact('stagiaires'));
     }
+
+    // Recherche texte
+    if ($search = $request->input('search')) {
+        $query->where(function ($q) use ($search) {
+            $q->where('prenom', 'like', "%{$search}%")
+              ->orWhere('name', 'like', "%{$search}%")
+              ->orWhere('email', 'like', "%{$search}%");
+        });
+    }
+
+    $stagiaires = $query
+        ->with(['groupesStagiaire' => function ($q) use ($formateurId) {
+            // Optionnel mais recommandé : n’afficher que les groupes du formateur
+            $q->where('instructor_id', $formateurId)->orderBy('name');
+        }])
+        ->orderBy('name')
+        ->paginate(10)
+        ->withQueryString();
+
+    return view('formateur.backend.stagiaires.all_stagiaires', compact('stagiaires', 'groupes'));
+}
+
 
     public function createStagiaire()
     {

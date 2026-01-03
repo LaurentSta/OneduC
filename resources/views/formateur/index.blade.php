@@ -99,73 +99,176 @@
 
 </section>
 
+{{-- Suivi par groupe (réel) --}}
+<section aria-labelledby="groupes-title">
+  <div class="flex items-center justify-between mb-4">
+    <h2 id="groupes-title" class="text-xl font-semibold text-bleuone">Suivi par groupe</h2>
 
+    <a href="{{ route('formateur.progressions.groupes') }}"
+       class="text-sm font-varela text-orangeone hover:underline">
+      Voir la progression
+    </a>
+  </div>
 
+  <div class="space-y-4">
+    @forelse($groupesDashboard ?? [] as $g)
+      <article class="bg-white rounded-[20px] shadow-md p-6">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
 
-
-
-    {{-- Suivi par groupe --}}
-    <section aria-labelledby="groupes-title">
-      <h2 id="groupes-title" class="text-xl font-semibold text-bleuone mb-4">Suivi par groupe</h2>
-      <div class="space-y-4">
-        <article class="bg-white rounded-[20px] shadow-md p-6">
-          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-              <p class="text-lg font-semibold text-gray-800">Groupe A - Initiation numérique</p>
-              <p class="text-sm text-gray-500">8 stagiaires | 3 modules</p>
-            </div>
-            <div class="text-left md:text-right">
-              <p class="text-sm text-gray-600">Dernière activité : hier</p>
-              <p class="text-sm text-vertone font-semibold">Progression moyenne : 75%</p>
-            </div>
+          <div>
+            <p class="text-lg font-semibold text-gray-800">
+              {{ $g->name }}
+            </p>
+            <p class="text-sm text-gray-500">
+              {{ $g->stagiaires_count ?? 0 }} stagiaires
+              @if(isset($g->modules_count))
+                | {{ $g->modules_count }} modules
+              @endif
+            </p>
           </div>
-        </article>
-        {{-- ... autres groupes --}}
-      </div>
-    </section>
 
-    {{-- Suivi par module --}}
-    <section aria-labelledby="modules-title">
-      <h2 id="modules-title" class="text-xl font-semibold text-bleuone mb-4">Suivi par module</h2>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <article class="bg-white rounded-[20px] shadow-md p-6">
-          <p class="font-semibold text-gray-800">Module Excel - Tableaux croisés</p>
-          <p class="text-sm text-gray-500 mb-1">Utilisé par 3 groupes</p>
-          <p class="text-sm text-orangeone">Taux de réussite moyen : 82%</p>
-        </article>
-        {{-- ... autres modules --}}
-      </div>
-    </section>
+          <div class="text-left md:text-right">
+            <p class="text-sm text-gray-600">
+              Dernière activité :
+              <span class="font-semibold text-gray-800">
+                {{ $g->last_completed_at ? \Carbon\Carbon::parse($g->last_completed_at)->format('d/m/Y') : '—' }}
+              </span>
+            </p>
 
-    {{-- Stagiaires actifs récemment --}}
-    <section aria-labelledby="recent-stagiaires-title">
-      <h2 id="recent-stagiaires-title" class="text-xl font-semibold text-bleuone mb-4">Stagiaires actifs récemment</h2>
-      <div class="bg-white rounded-[20px] shadow-md">
-        <div class="overflow-x-auto rounded-[20px]">
-          <table class="min-w-full text-sm text-left text-gray-800">
-            <thead class="bg-gray-100 uppercase text-xs text-gray-600">
-              <tr>
-                <th scope="col" class="px-6 py-3">Prénom</th>
-                <th scope="col" class="px-6 py-3">Nom</th>
-                <th scope="col" class="px-6 py-3">Groupe</th>
-                <th scope="col" class="px-6 py-3">Progression</th>
-                <th scope="col" class="px-6 py-3">Dernière activité</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr class="border-t hover:bg-gray-50">
-                <td class="px-6 py-4">Lucie</td>
-                <td class="px-6 py-4">Moreau</td>
-                <td class="px-6 py-4">Groupe A</td>
-                <td class="px-6 py-4 text-vertone font-semibold">81%</td>
-                <td class="px-6 py-4 text-sm text-gray-500">Aujourd’hui</td>
-              </tr>
-              {{-- ... autres stagiaires --}}
-            </tbody>
-          </table>
+            <p class="text-sm font-semibold {{ ($g->taux_reussite ?? 0) < 50 ? 'text-red-600' : 'text-vertone' }}">
+              Taux de réussite : {{ $g->taux_reussite ?? 0 }} %
+            </p>
+          </div>
+
         </div>
+
+        <div class="mt-4 flex justify-end">
+          <a href="{{ route('formateur.progressions.stagiaires', ['group_id' => $g->id]) }}"
+             class="text-sm font-varela text-orangeone hover:underline">
+            Voir les stagiaires du groupe
+          </a>
+        </div>
+      </article>
+    @empty
+      <div class="bg-white rounded-[20px] shadow-md p-6 text-gray-600 font-lisible">
+        Aucun groupe trouvé.
       </div>
-    </section>
+    @endforelse
+  </div>
+</section>
+
+
+{{-- Suivi par module (réel) --}}
+<section aria-labelledby="modules-title">
+  <h2 id="modules-title" class="text-xl font-semibold text-bleuone mb-4">
+    Suivi par module
+  </h2>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    @forelse($modules ?? [] as $module)
+      @php
+        // $module->stagiaires a été ajouté dans ton FormateurDashboard()
+        $nbStagiaires = isset($module->stagiaires) ? $module->stagiaires->count() : 0;
+        $nbGroupes = $module->groups?->count() ?? 0;
+      @endphp
+
+      <article class="bg-white rounded-[20px] shadow-md p-6">
+        <p class="font-semibold text-gray-800">
+          {{ $module->module_title ?? 'Module' }}
+        </p>
+
+        <p class="text-sm text-gray-500 mb-2">
+          {{ $nbGroupes }} groupe(s) | {{ $nbStagiaires }} stagiaire(s)
+        </p>
+
+        <p class="text-sm text-gray-700">
+          Leçons : <span class="font-semibold">{{ $module->lectures_count ?? 0 }}</span>
+        </p>
+
+        <div class="mt-4">
+          <a href="{{ route('formateur.formations.detail', $module->id) }}"
+             class="text-sm font-varela text-orangeone hover:underline">
+            Voir le détail du module
+          </a>
+        </div>
+      </article>
+    @empty
+      <div class="bg-white rounded-[20px] shadow-md p-6 text-gray-600 font-lisible">
+        Aucun module associé à vos groupes.
+      </div>
+    @endforelse
+  </div>
+</section>
+
+
+{{-- Stagiaires actifs récemment (réel) --}}
+<section aria-labelledby="recent-stagiaires-title">
+  <div class="flex items-center justify-between mb-4">
+    <h2 id="recent-stagiaires-title" class="text-xl font-semibold text-bleuone">
+      Stagiaires actifs récemment
+    </h2>
+
+    <a href="{{ route('formateur.progressions.stagiaires') }}"
+       class="text-sm font-varela text-orangeone hover:underline">
+      Voir tous les stagiaires
+    </a>
+  </div>
+
+  <div class="bg-white rounded-[20px] shadow-md">
+    <div class="overflow-x-auto rounded-[20px]">
+      <table class="min-w-full text-sm text-left text-gray-800 font-lisible">
+        <thead class="bg-gray-100 uppercase text-xs text-gray-600 font-varela">
+          <tr>
+            <th scope="col" class="px-6 py-3">Stagiaire</th>
+            <th scope="col" class="px-6 py-3">Leçon</th>
+            <th scope="col" class="px-6 py-3">Module</th>
+            <th scope="col" class="px-6 py-3 text-center">Terminé le</th>
+            <th scope="col" class="px-6 py-3 text-right">Action</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          @forelse($recentProgressions ?? [] as $p)
+            <tr class="border-t hover:bg-gray-50">
+              <td class="px-6 py-4 font-medium">
+                {{ trim(($p->user->prenom ?? '').' '.($p->user->name ?? '')) ?: 'Inconnu' }}
+              </td>
+              <td class="px-6 py-4">
+                {{ $p->lecture->lecture_title ?? 'Leçon supprimée' }}
+              </td>
+              <td class="px-6 py-4 text-gray-700">
+                {{ $p->lecture->section->module->module_title ?? 'Module supprimé' }}
+              </td>
+              <td class="px-6 py-4 text-center text-gray-600">
+                {{ $p->completed_at ? \Carbon\Carbon::parse($p->completed_at)->format('d/m/Y à H:i') : '—' }}
+              </td>
+              <td class="px-6 py-4 text-right">
+                @if(!empty($p->user_id))
+                  <a href="{{ route('formateur.progressions.stagiaire', $p->user_id) }}"
+                     class="text-sm font-varela text-orangeone hover:underline">
+                    Voir
+                  </a>
+                @else
+                  —
+                @endif
+              </td>
+            </tr>
+          @empty
+            <tr>
+              <td colspan="5" class="px-6 py-6 text-center text-gray-500">
+                Aucune activité récente.
+              </td>
+            </tr>
+          @endforelse
+        </tbody>
+
+      </table>
+    </div>
+  </div>
+</section>
+
+
+
 
     {{-- Actions rapides --}}
     <section aria-labelledby="actions-rapides-title">

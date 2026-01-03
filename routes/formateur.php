@@ -6,9 +6,12 @@ use App\Http\Controllers\Formateur\GroupeController;
 use App\Http\Controllers\Formateur\ProgressionController;
 use App\Http\Controllers\Backend\ModuleController;
 
-Route::middleware(['auth', 'role:formateur'])->prefix('formateur')->name('formateur.')->group(function () {
+Route::middleware(['auth', 'role:formateur'])
+    ->prefix('formateur')
+    ->name('formateur.')
+    ->group(function () {
 
-    // 🖥️ Dashboard & profil
+    // 🖥️ Dashboard & profil formateur
     Route::get('/', [FormateurController::class, 'FormateurDashboard'])->name('dashboard');
     Route::get('/profile', [FormateurController::class, 'FormateurProfile'])->name('profile');
     Route::get('/parametre', [FormateurController::class, 'FormateurParametre'])->name('parametre');
@@ -24,35 +27,49 @@ Route::middleware(['auth', 'role:formateur'])->prefix('formateur')->name('format
     Route::put('/stagiaires/{id}', [FormateurController::class, 'updateStagiaire'])->name('stagiaires.update');
     Route::delete('/stagiaires/{id}', [FormateurController::class, 'destroyStagiaire'])->name('stagiaires.destroy');
 
-
-    // 🧑‍🤝‍🧑 Groupes (wizard)
+    // 🧑‍🤝‍🧑 Groupes
+    Route::get('/groupes', [GroupeController::class, 'index'])->name('groupes.index');
     Route::get('/groupes/create', [GroupeController::class, 'create'])->name('groupes.create');
     Route::post('/groupes', [GroupeController::class, 'store'])->name('groupes.store');
     Route::get('/groupes/{id}/edit', [GroupeController::class, 'edit'])->name('groupes.edit');
     Route::put('/groupes/{id}', [GroupeController::class, 'update'])->name('groupes.update');
     Route::delete('/groupes/{id}', [GroupeController::class, 'destroy'])->name('groupes.destroy');
 
-
-    // 📂 Groupes (liste)
-    Route::get('/groupes', [GroupeController::class, 'index'])->name('groupes.index');
-
     // 📈 Progression des stagiaires
-    Route::get('/progressions', [ProgressionController::class, 'index'])->name('progressions.index');
-    Route::post('/progression/complete', [ProgressionController::class, 'markCompleted'])->name('progression.complete');
+    Route::get('/progressions', function () {
+        return redirect()->route('formateur.progressions.groupes');
+    })->name('progressions.index');
 
-    // 📂 Mes formations
-Route::get('/formations', [FormateurController::class, 'mesModules'])->name('formations.index');
-Route::get('/formations/{module}/detail', [FormateurController::class, 'moduleDetail'])->name('formations.detail'); // +++
-Route::get('/formations/{module}/preview', [FormateurController::class, 'preview'])
-     ->name('formations.preview');
+    Route::get('/progressions/groupes', [ProgressionController::class, 'index'])
+        ->name('progressions.groupes')
+        ->defaults('view', 'groupes');
 
-// Lecture d’une SECTION (utilise resources/views/frontend/modules/section.blade.php)
-Route::get('/formations/{module}/section/{section}', [ModuleController::class, 'section'])
-    ->name('formations.section');
+    Route::get('/progressions/stagiaires', [ProgressionController::class, 'index'])
+        ->name('progressions.stagiaires')
+        ->defaults('view', 'stagiaires');
 
-// Lecture d’une LEÇON SCORM (utilise resources/views/frontend/modules/lecture.blade.php)
-Route::get('/formations/{module}/section/{section}/lesson/{lesson}', [ModuleController::class, 'lire'])
-    ->name('formations.lecture');
+    Route::get('/progressions/stagiaire/{user}', [ProgressionController::class, 'index'])
+        ->name('progressions.stagiaire')
+        ->defaults('view', 'stagiaire');
+        
+    Route::get('/progressions/modules', [ProgressionController::class, 'index'])
+    ->name('progressions.modules')
+    ->defaults('view', 'modules');
 
+
+    // ✅ IMPORTANT : route AJAX/SCORM
+    Route::post('/progression/complete', [ProgressionController::class, 'markCompleted'])
+        ->name('progression.complete');
+
+    // 📂 Formations
+    Route::get('/formations', [FormateurController::class, 'mesModules'])->name('formations.index');
+    Route::get('/formations/{module}/detail', [FormateurController::class, 'moduleDetail'])->name('formations.detail');
+    Route::get('/formations/{module}/preview', [FormateurController::class, 'preview'])->name('formations.preview');
+
+    Route::get('/formations/{module}/section/{section}', [ModuleController::class, 'section'])
+        ->name('formations.section');
+
+    Route::get('/formations/{module}/section/{section}/lesson/{lesson}', [ModuleController::class, 'lire'])
+        ->name('formations.lecture');
 
 });
