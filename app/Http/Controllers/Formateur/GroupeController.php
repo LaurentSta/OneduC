@@ -1,5 +1,5 @@
 <?php
-
+// /home/laurents/Oneduc_Dev/app/Http/Controllers/Formateur/GroupeController.php
 namespace App\Http\Controllers\Formateur;
 
 use App\Http\Controllers\Controller;

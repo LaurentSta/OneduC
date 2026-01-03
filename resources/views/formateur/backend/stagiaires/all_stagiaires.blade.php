@@ -1,3 +1,4 @@
+<!-- /home/laurents/Oneduc_Dev/resources/views/formateur/backend/stagiaires/all_stagiaires.blade.php -->
 @extends('formateur.dashboard')
 
 @section('formateur')
@@ -50,23 +51,79 @@
 
   {{-- 📋 CONTENU PRINCIPAL --}}
   <main class="space-y-8">
+    {{-- 📊 Synthèse --}}
+    <div class="flex flex-wrap items-center justify-between gap-4 px-6 pt-4 pb-2">
+      
+      <div class="flex flex-col gap-1">
+        <p class="text-sm text-gray-600 font-varela">
+          Nombre total de stagiaires :
+          <span class="text-gray-900 font-semibold">
+            {{ $stagiaires->total() }}
+          </span>
+        </p>
+
+        <p class="text-sm text-gray-600 font-varela">
+          Nombre de groupes :
+          <span class="text-gray-900 font-semibold">
+            {{ $groupes->count() }}
+          </span>
+        </p>
+      </div>
+
+      @if(request('group_id'))
+        <p class="text-sm text-gray-600 font-varela">
+          Groupe sélectionné :
+          <span class="text-orangeone font-semibold">
+            {{ optional($groupes->firstWhere('id', (int)request('group_id')))->name }}
+          </span>
+        </p>
+      @endif
+
+    </div>
 
     {{-- 🔎 Barre de recherche --}}
-    <form method="GET" class="flex flex-wrap items-center gap-3">
-      <input type="text"
-             name="search"
-             value="{{ request('search') }}"
-             placeholder="Recherche prénom, nom ou email"
-             class="w-full md:w-1/2 px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-orangeone focus:border-orangeone text-sm font-lisible">
+    <form method="GET" class="flex flex-wrap items-end gap-3">
+      <div class="w-full md:w-1/2">
+        <label for="search" class="sr-only">Recherche</label>
+        <input type="text"
+              id="search"
+              name="search"
+              value="{{ request('search') }}"
+              placeholder="Recherche prénom, nom ou email"
+              class="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-orangeone focus:border-orangeone text-sm font-lisible">
+      </div>
+
+      <div class="w-full md:w-[280px]">
+        <label for="group_id" class="sr-only">Groupe</label>
+        <select id="group_id"
+                name="group_id"
+                class="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-orangeone focus:border-orangeone text-sm font-lisible">
+          <option value="">Tous les groupes</option>
+          @foreach ($groupes as $groupe)
+            <option value="{{ $groupe->id }}" @selected((string)request('group_id') === (string)$groupe->id)>
+              {{ $groupe->name }}
+            </option>
+          @endforeach
+        </select>
+      </div>
+
       <button type="submit" class="btn-oneduc">
-        Rechercher
+        Filtrer
       </button>
+
+      @if(request()->filled('search') || request()->filled('group_id'))
+        <a href="{{ route('formateur.stagiaires.index') }}"
+          class="btn-oneduc bg-white text-gray-700 border border-gray-300 hover:border-orangeone hover:text-orangeone">
+          Réinitialiser
+        </a>
+      @endif
     </form>
+
 
     {{-- 📊 Tableau des stagiaires --}}
     <div class="overflow-x-auto bg-white shadow-md rounded-[20px]">
       <table class="min-w-full text-sm text-left text-gray-800 font-lisible">
-        <thead class="bg-gray-100 uppercase text-xs text-gray-600 font-varela">
+        <thead class="bg-gray-100 uppercase text-xs text-gray-600 font-varela sticky top-0 z-10">
           <tr>
             <th class="px-6 py-3">#</th>
             <th class="px-6 py-3">Prénom</th>
