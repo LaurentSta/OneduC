@@ -77,7 +77,7 @@
                        class="inline-flex items-center px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded hover:bg-blue-700">
                       <i class="ti ti-pencil mr-1"></i> Éditer
                     </a>
-                    <form action="{{ route('admin.evaluations.delete', $evaluation) }}" method="POST" onsubmit="return confirm('Supprimer ?')">
+                    <form action="{{ route('admin.evaluations.destroy', $evaluation) }}" method="POST" onsubmit="return confirm('Supprimer ?')">
                     @csrf
                     @method('DELETE')
                     <button type="submit" class="inline-flex items-center px-3 py-1.5 bg-red-600 text-white text-xs font-medium rounded hover:bg-red-700">
@@ -102,11 +102,7 @@
 
 <script>
   function copyToClipboard(text) { navigator.clipboard?.writeText(text); }
-  function confirmDelete(id) {
-    if (confirm("Supprimer cette évaluation ?")) {
-      window.location.href = "{{ route('admin.evaluations.delete', ':id') }}".replace(':id', id);
-    }
-  }
+  
   $(function () {
     const table = document.getElementById('evaluationTable');
     if (table) {
