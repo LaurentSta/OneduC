@@ -103,14 +103,19 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         ->names('referentiels');
 
     Route::prefix('referentiels/{referentiel}')->group(function () {
-        Route::resource('domaines', SkillDomainController::class)
-            ->except(['show'])
-            ->names('referentiels.domains');
 
-        Route::resource('competences', SkillController::class)
-            ->except(['show'])
-            ->names('referentiels.skills');
+    Route::resource('domaines', SkillDomainController::class)
+        ->parameters(['domaines' => 'domain'])
+        ->except(['show'])
+        ->names('referentiels.domains');
+
+    Route::resource('competences', SkillController::class)
+        ->parameters(['competences' => 'skill'])
+        ->except(['show'])
+        ->names('referentiels.skills');
+
     });
+
 
 
     // Retours
