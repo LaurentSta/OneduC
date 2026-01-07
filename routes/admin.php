@@ -23,7 +23,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::post('/update-user-status', [AdminController::class, 'UpdateUserStatus'])->name('update.user.status');
 
     Route::get('/stagiaires', [AdminController::class, 'AllStagiaires'])->name('stagiaires.index');
-    Route::delete('/stagiaires/{user}', [AdminController::class, 'DestroyStagiaire'])->name('stagiaires.destroy');
+    Route::delete('/stagiaires/{user}', [AdminController::class, 'DestroyStagiaire'])->name('stagiaires.destroy'); 
 
     // Catégories (idéalement à refactorer en PUT/DELETE)
     Route::controller(CategoryController::class)->group(function () {
