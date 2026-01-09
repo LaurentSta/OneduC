@@ -56,10 +56,18 @@
                 </ol>
             </nav>
 
-            <a href="{{ route('admin.modules.lecture.add', ['id' => $mlecture->module_id]) }}"
-               class="inline-flex items-center px-4 py-2 bg-orangeone text-white text-sm font-medium rounded-lg hover:opacity-90 transition">
-                Retour au module
-            </a>
+            <div class="flex items-center gap-2">
+                {{-- Banque de questions (quiz) --}}
+                <a href="{{ route('admin.quiz.questions.index', ['lecture' => $mlecture->id]) }}"
+                   class="inline-flex items-center px-4 py-2 bg-bleuone text-white text-sm font-medium rounded-lg hover:opacity-90 transition">
+                    Gérer le quiz
+                </a>
+
+                <a href="{{ route('admin.modules.lecture.add', ['id' => $mlecture->module_id]) }}"
+                   class="inline-flex items-center px-4 py-2 bg-orangeone text-white text-sm font-medium rounded-lg hover:opacity-90 transition">
+                    Retour au module
+                </a>
+            </div>
         </div>
 
         {{-- Titre page --}}
@@ -148,6 +156,49 @@
 
                 <p class="form-card-subtitle">
                     Ces valeurs servent à l’analyse de progression et au tableau de bord.
+                </p>
+            </div>
+
+            {{-- Quiz --}}
+            <div class="form-card">
+                <div class="form-card-title">Quiz de validation</div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="flex items-center gap-3">
+                        {{-- Checkbox : toujours envoyer 0 si décochée --}}
+                        <input type="hidden" name="quiz_enabled" value="0">
+                        <input
+                            type="checkbox"
+                            name="quiz_enabled"
+                            id="quiz_enabled"
+                            value="1"
+                            {{ old('quiz_enabled', (int)($mlecture->quiz_enabled ?? 0)) ? 'checked' : '' }}
+                            class="h-5 w-5 rounded border-gray-300 text-orangeone focus:ring-orangeone"
+                        >
+                        <label for="quiz_enabled" class="text-sm font-medium text-gray-800">
+                            Activer le quiz pour cette leçon
+                        </label>
+                    </div>
+
+                    <div>
+                        <label for="quiz_questions_per_attempt" class="block text-sm font-medium text-gray-700 mb-1">
+                            Questions diffusées (par tentative)
+                        </label>
+                        <input
+                            type="number"
+                            name="quiz_questions_per_attempt"
+                            id="quiz_questions_per_attempt"
+                            value="{{ old('quiz_questions_per_attempt', (int)($mlecture->quiz_questions_per_attempt ?? 0)) }}"
+                            min="0"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-orangeone focus:border-orangeone text-sm bg-white"
+                            placeholder="Ex : 5"
+                        >
+                    </div>
+                </div>
+
+                <p class="form-card-subtitle">
+                    Si le quiz est activé, l’apprenant recevra un tirage aléatoire de ce nombre de questions.
+                    Pense à alimenter la banque via “Gérer le quiz”.
                 </p>
             </div>
 

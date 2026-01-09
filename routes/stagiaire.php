@@ -4,37 +4,50 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\StagiaireController;
 use App\Http\Controllers\Backend\ModuleController;
+use App\Http\Controllers\Stagiaire\QuizController;
 
-Route::middleware(['auth', 'role:stagiaire', 'track.time'])->prefix('stagiaire')->name('stagiaire.')->group(function () {
+Route::middleware(['auth', 'role:stagiaire', 'track.time'])
+    ->prefix('stagiaire')
+    ->name('stagiaire.')
+    ->group(function () {
 
-    // 🖥️ Dashboard & profil
-    Route::get('/', [StagiaireController::class, 'StagiaireDashboard'])->name('dashboard');
-    Route::get('/profile', [UserController::class, 'UserProfile'])->name('profile');
-    Route::get('/parametre', [UserController::class, 'UserParametre'])->name('parametre');
-    Route::post('/profil/store', [UserController::class, 'UserProfilStore'])->name('profil.store');
-    Route::match(['get', 'post'], '/securite', [UserController::class, 'showUserSecurite'])->name('securite.show');
+        // Dashboard & profil
+        Route::get('/', [StagiaireController::class, 'StagiaireDashboard'])->name('dashboard');
+        Route::get('/profile', [UserController::class, 'UserProfile'])->name('profile');
+        Route::get('/parametre', [UserController::class, 'UserParametre'])->name('parametre');
+        Route::post('/profil/store', [UserController::class, 'UserProfilStore'])->name('profil.store');
+        Route::match(['get', 'post'], '/securite', [UserController::class, 'showUserSecurite'])->name('securite.show');
 
-    // 📚 Modules & résultats
-    Route::get('/modules', [StagiaireController::class, 'StagiaireModules'])->name('modules');
-    Route::get('/modules/{id}', [StagiaireController::class, 'StagiaireModuleDetail'])->name('module.detail');
-    Route::get('/resultats', [StagiaireController::class, 'StagiaireResultats'])->name('resultats');
+        // Modules & résultats
+        Route::get('/modules', [StagiaireController::class, 'StagiaireModules'])->name('modules');
+        Route::get('/modules/{id}', [StagiaireController::class, 'StagiaireModuleDetail'])->name('module.detail');
+        Route::get('/resultats', [StagiaireController::class, 'StagiaireResultats'])->name('resultats');
 
-    // Lecture d'une section d’un module
-    Route::get('/modules/{module}/sections/{section}', [ModuleController::class, 'section'])->name('module.section');
+        // Section d’un module
+        Route::get('/modules/{module}/sections/{section}', [ModuleController::class, 'section'])->name('module.section');
 
-    // Lecture d'une leçon
-    Route::get('/modules/{module}/sections/{section}/lessons/{lesson}', [ModuleController::class, 'lire'])->name('module.lecture');
-    
-    Route::get('/modules/{id}/progression-json', [UserController::class, 'getProgressionJson'])->name('module.progression.json');
+        // Leçon (unifier {lecture})
+        Route::get('/modules/{module}/sections/{section}/lessons/{lecture}', [ModuleController::class, 'lire'])
+            ->name('module.lecture');
 
-    Route::get('/progression/detailmodule', [StagiaireController::class, 'ProgressionDetailModule'])
-    ->name('stagiaire.progression.detailmodule');
-    
-    // Page de fin de module (félicitations + résumé)
-Route::get('/modules/{module}/fin', [ModuleController::class, 'finModule'])
-    ->name('module.fin');
+        // JSON progression
+        Route::get('/modules/{id}/progression-json', [UserController::class, 'getProgressionJson'])
+            ->name('module.progression.json');
 
+        // Détail progression (corriger le name)
+        Route::get('/progression/detailmodule', [StagiaireController::class, 'ProgressionDetailModule'])
+            ->name('progression.detailmodule');
 
+        // Fin de module
+        Route::get('/modules/{module}/fin', [ModuleController::class, 'finModule'])
+            ->name('module.fin');
 
+        // Quiz (signé)
+        Route::get('/modules/{module}/sections/{section}/lessons/{lecture}/quiz/start', [QuizController::class, 'start'])
+            ->name('quiz.start')
+            ->middleware('signed');
 
-});
+        Route::get('/quiz/{attempt}/question', [QuizController::class, 'showQuestion'])->name('quiz.question');
+        Route::post('/quiz/{attempt}/answer', [QuizController::class, 'answer'])->name('quiz.answer');
+        Route::get('/quiz/{attempt}/result', [QuizController::class, 'result'])->name('quiz.result');
+    });

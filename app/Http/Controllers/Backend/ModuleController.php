@@ -507,27 +507,32 @@ class ModuleController extends Controller
      * 12. Mise à jour d’une lecture (admin)
      */
     public function UpdateModuleLecture(Request $request)
-    {
-        $request->validate([
-            'id'            => 'required|exists:module_lectures,id',
-            'lecture_title' => 'required|string|max:255',
-            'scorm_path'    => 'nullable|string|max:255',
-            'slide_count'   => 'nullable|integer|min:0',
-            'question_count'=> 'nullable|integer|min:0',
-        ]);
+{
+    $request->validate([
+        'id'                         => 'required|exists:module_lectures,id',
+        'lecture_title'              => 'required|string|max:255',
+        'scorm_path'                 => 'nullable|string|max:255',
+        'slide_count'                => 'nullable|integer|min:0',
+        'question_count'             => 'nullable|integer|min:0',
+        'quiz_enabled'               => 'nullable|boolean',
+        'quiz_questions_per_attempt' => 'nullable|integer|min:0',
+    ]);
 
-        $lecture = ModuleLecture::findOrFail($request->id);
+    $lecture = ModuleLecture::findOrFail($request->id);
 
-        $lecture->update([
-            'lecture_title' => $request->lecture_title,
-            'scorm_path'    => $request->scorm_path,
-            'slide_count'   => $request->slide_count ?? 0,
-            'question_count'=> $request->question_count ?? 0,
-        ]);
+    $lecture->update([
+        'lecture_title'              => $request->lecture_title,
+        'scorm_path'                 => $request->scorm_path,
+        'slide_count'                => $request->input('slide_count', 0),
+        'question_count'             => $request->input('question_count', 0),
+        'quiz_enabled'               => (bool) $request->input('quiz_enabled', 0),
+        'quiz_questions_per_attempt' => (int) $request->input('quiz_questions_per_attempt', 0),
+    ]);
 
-        return redirect()->route('admin.modules.lecture.add', ['id' => $lecture->module_id])
-            ->with('success', 'La lecture a été mise à jour avec succès.');
-    }
+    return redirect()
+        ->route('admin.modules.lecture.add', ['id' => $lecture->module_id])
+        ->with('success', 'La lecture a été mise à jour avec succès.');
+}
 
     /**
      * 13. Suppression d’une lecture (admin)
