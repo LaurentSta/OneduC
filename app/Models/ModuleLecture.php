@@ -30,6 +30,15 @@ class ModuleLecture extends Model
         return $this->hasMany(LessonFeedback::class, 'lesson_id');
     }
 
+    // app/Models/ModuleLecture.php
+    public function quizQuestions()
+    {
+        return $this->hasMany(\App\Models\QuizQuestion::class, 'lecture_id');
+    }
 
+    public function quizAttempts()
+    {
+        return $this->hasMany(\App\Models\QuizAttempt::class, 'lecture_id');
+    }
 
 }
