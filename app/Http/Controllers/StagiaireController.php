@@ -29,10 +29,10 @@ class StagiaireController extends Controller
             ->get()
             ->groupBy('lecture_id');
 
-        // Statut par leçon (completed si answered >= question_count)
+        // Statut par leçon (completed si answered >= quiz_questions_per_attempt)
         $lessonStatuses = [];
         foreach ($module->sections->flatMap->lectures as $lecture) {
-            $expected = (int)($lecture->question_count ?? 0);
+            $expected = (int)($lecture->quiz_questions_per_attempt ?? 0);
             $answered = (int)($interactionsByLecture->get($lecture->id)?->count() ?? 0);
 
             if ($expected === 0) {
@@ -114,7 +114,7 @@ class StagiaireController extends Controller
         // Groupes + modules + formateur, avec leçons pour la progression
         $groupes = $user->groupesStagiaire()
             ->with([
-                'modules.sections.lectures:id,section_id,module_id,question_count',
+                'modules.sections.lectures:id,section_id,module_id,quiz_questions_per_attempt',
                 'instructor'
             ])
             ->get();
@@ -207,7 +207,7 @@ class StagiaireController extends Controller
         // Modules actifs + sections + leçons
         $modules = Module::whereIn('id', $moduleIds)
             ->active()
-            ->with(['sections.lectures:id,section_id,module_id,question_count'])
+            ->with(['sections.lectures:id,section_id,module_id,quiz_questions_per_attempt'])
             ->get();
 
         // Brancher progression pour la liste
@@ -318,7 +318,7 @@ class StagiaireController extends Controller
      * Calcule la progression par module et attache:
      * - progress (pour le carrousel)
      * - progression_percent, progression_status (pour la liste)
-     * Règle: completed si answered >= question_count.
+     * Règle: completed si answered >= quiz_questions_per_attempt.
      */
     private function attachProgressAttributes($modules, int $userId): void
     {
@@ -337,7 +337,7 @@ class StagiaireController extends Controller
             $started = false;
 
             foreach ($lectures as $lec) {
-                $expected = (int)($lec->question_count ?? 0);
+                $expected = (int)($lec->quiz_questions_per_attempt ?? 0);
                 $answered = (int)($answersPerLecture[$lec->id] ?? 0);
                 if ($answered > 0) {
                     $started = true;

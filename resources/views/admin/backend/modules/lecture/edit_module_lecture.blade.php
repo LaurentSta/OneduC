@@ -57,15 +57,14 @@
             </nav>
 
             <div class="flex items-center gap-2">
-                {{-- Banque de questions (quiz) --}}
-                <a href="{{ route('admin.quiz.questions.index', ['lecture' => $mlecture->id]) }}"
-                   class="inline-flex items-center px-4 py-2 bg-bleuone text-white text-sm font-medium rounded-lg hover:opacity-90 transition">
-                    Gérer le quiz
-                </a>
+                
 
-                <a href="{{ route('admin.modules.lecture.add', ['id' => $mlecture->module_id]) }}"
-                   class="inline-flex items-center px-4 py-2 bg-orangeone text-white text-sm font-medium rounded-lg hover:opacity-90 transition">
-                    Retour au module
+                <a
+                href="{{ route('admin.modules.lecture.add', ['id' => $mlecture->module_id]) }}"
+                class="inline-flex items-center gap-2 text-sm font-semibold text-orangeone hover:underline"
+                >
+                <span aria-hidden="true">←</span>
+                Retour au module
                 </a>
             </div>
         </div>
@@ -96,111 +95,98 @@
                 >
             </div>
 
-            {{-- Lien SCORM --}}
-            <div class="form-card">
-                <label for="scorm_path" class="form-card-title">
-                    Lien SCORM (nom du dossier)
-                </label>
-
-                <input
-                    type="text"
-                    name="scorm_path"
-                    id="scorm_path"
-                    value="{{ old('scorm_path', $mlecture->scorm_path) }}"
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-orangeone focus:border-orangeone text-sm bg-white"
-                    placeholder="Ex : TestLeconScorm"
-                >
-
-                <p class="form-card-subtitle">
-                    Ce champ permet de spécifier le dossier contenant la leçon SCORM.
-                    Exemple : <code>TestLeconScorm</code> affichera
-                    <code>/modules/scorm/TestLeconScorm/res/index.html</code>.
-                </p>
-            </div>
-
-            {{-- Slides + Questions --}}
-            <div class="form-card">
-                <div class="form-card-title">Indicateurs de contenu</div>
+            {{-- Lien SCORM + Indicateur diapositives (même carte, même ligne) --}}
+                <div class="form-card">
+                <div class="form-card-title">Contenu SCORM</div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label for="slide_count" class="block text-sm font-medium text-gray-700 mb-1">
-                            Nombre de diapositives
-                        </label>
-                        <input
-                            type="number"
-                            name="slide_count"
-                            id="slide_count"
-                            value="{{ old('slide_count', $mlecture->slide_count) }}"
-                            min="0"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-orangeone focus:border-orangeone text-sm bg-white"
-                            placeholder="Ex : 12"
-                        >
+                    <label for="scorm_path" class="block text-sm font-medium text-gray-700 mb-1">
+                        Lien SCORM (nom du dossier)
+                    </label>
+                    <input
+                        type="text"
+                        name="scorm_path"
+                        id="scorm_path"
+                        value="{{ old('scorm_path', $mlecture->scorm_path) }}"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-orangeone focus:border-orangeone text-sm bg-white"
+                        placeholder="Ex : TestLeconScorm"
+                    >
+                    <p class="form-card-subtitle">
+                        Exemple : <code>TestLeconScorm</code> affichera <code>/modules/scorm/TestLeconScorm/res/index.html</code>.
+                    </p>
                     </div>
 
                     <div>
-                        <label for="question_count" class="block text-sm font-medium text-gray-700 mb-1">
-                            Nombre de questions
-                        </label>
-                        <input
-                            type="number"
-                            name="question_count"
-                            id="question_count"
-                            value="{{ old('question_count', $mlecture->question_count) }}"
-                            min="0"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-orangeone focus:border-orangeone text-sm bg-white"
-                            placeholder="Ex : 5"
-                        >
+                    <label for="slide_count" class="block text-sm font-medium text-gray-700 mb-1">
+                        Nombre de diapositives
+                    </label>
+                    <input
+                        type="number"
+                        name="slide_count"
+                        id="slide_count"
+                        value="{{ old('slide_count', $mlecture->slide_count) }}"
+                        min="0"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-orangeone focus:border-orangeone text-sm bg-white"
+                        placeholder="Ex : 12"
+                    >
+                    <p class="form-card-subtitle">
+                        Indicateur utilisé pour l’analyse de progression et le tableau de bord.
+                    </p>
                     </div>
                 </div>
+                </div>
 
-                <p class="form-card-subtitle">
-                    Ces valeurs servent à l’analyse de progression et au tableau de bord.
-                </p>
-            </div>
+
+            
 
             {{-- Quiz --}}
-            <div class="form-card">
-                <div class="form-card-title">Quiz de validation</div>
+            {{-- Quiz --}}
+<div class="form-card">
+  <div class="flex items-center justify-between mb-3">
+    <div class="form-card-title">Quiz de validation</div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="flex items-center gap-3">
-                        {{-- Checkbox : toujours envoyer 0 si décochée --}}
-                        <input type="hidden" name="quiz_enabled" value="0">
-                        <input
-                            type="checkbox"
-                            name="quiz_enabled"
-                            id="quiz_enabled"
-                            value="1"
-                            {{ old('quiz_enabled', (int)($mlecture->quiz_enabled ?? 0)) ? 'checked' : '' }}
-                            class="h-5 w-5 rounded border-gray-300 text-orangeone focus:ring-orangeone"
-                        >
-                        <label for="quiz_enabled" class="text-sm font-medium text-gray-800">
-                            Activer le quiz pour cette leçon
-                        </label>
-                    </div>
+    {{-- Action contextuelle quiz --}}
+    <a href="{{ route('admin.quiz.questions.index', ['lecture' => $mlecture->id]) }}"
+   class="inline-flex items-center gap-2 px-5 py-2.5 bg-bleuone text-white text-sm font-semibold rounded-xl shadow-sm hover:opacity-90 transition">
+  Gérer le quiz
+</a>
+  </div>
 
-                    <div>
-                        <label for="quiz_questions_per_attempt" class="block text-sm font-medium text-gray-700 mb-1">
-                            Questions diffusées (par tentative)
-                        </label>
-                        <input
-                            type="number"
-                            name="quiz_questions_per_attempt"
-                            id="quiz_questions_per_attempt"
-                            value="{{ old('quiz_questions_per_attempt', (int)($mlecture->quiz_questions_per_attempt ?? 0)) }}"
-                            min="0"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-orangeone focus:border-orangeone text-sm bg-white"
-                            placeholder="Ex : 5"
-                        >
-                    </div>
-                </div>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class="flex items-center gap-3">
+      {{-- Checkbox : toujours envoyer 0 si décochée --}}
+      <input type="hidden" name="quiz_enabled" value="0">
+      <input type="checkbox"
+             name="quiz_enabled"
+             id="quiz_enabled"
+             value="1"
+             {{ old('quiz_enabled', (int)($mlecture->quiz_enabled ?? 0)) ? 'checked' : '' }}
+             class="h-5 w-5 rounded border-gray-300 text-orangeone focus:ring-orangeone">
+      <label for="quiz_enabled" class="text-sm font-medium text-gray-800">
+        Activer le quiz pour cette leçon
+      </label>
+    </div>
 
-                <p class="form-card-subtitle">
-                    Si le quiz est activé, l’apprenant recevra un tirage aléatoire de ce nombre de questions.
-                    Pense à alimenter la banque via “Gérer le quiz”.
-                </p>
-            </div>
+    <div>
+      <label for="quiz_questions_per_attempt" class="block text-sm font-medium text-gray-700 mb-1">
+        Questions diffusées (par tentative)
+      </label>
+      <input type="number"
+             name="quiz_questions_per_attempt"
+             id="quiz_questions_per_attempt"
+             value="{{ old('quiz_questions_per_attempt', (int)($mlecture->quiz_questions_per_attempt ?? 0)) }}"
+             min="0"
+             class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-orangeone focus:border-orangeone text-sm bg-white"
+             placeholder="Ex : 5">
+    </div>
+  </div>
+
+  <p class="form-card-subtitle">
+    Le quiz est rattaché à cette leçon. Gère la banque de questions depuis “Gérer le quiz”.
+  </p>
+</div>
+
 
             {{-- Actions --}}
             <div class="flex items-center justify-end gap-3 pt-2">

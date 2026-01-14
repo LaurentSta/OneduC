@@ -136,7 +136,7 @@
       labels: ['Questions par formation', 'Réponses enregistrées', 'Questions réessayées'],
       datasets: [{
         data: [
-          {{ $resultats->map(fn($r) => $r->lecture->module)->unique('id')->sum(fn($m) => $m->sections->flatMap->lectures->sum('question_count')) }},
+          {{ $resultats->map(fn($r) => $r->lecture->module)->unique('id')->sum(fn($m) => $m->sections->flatMap->lectures->sum('quiz_questions_per_attempt')) }},
           {{ $resultats->sum('answered_questions') }},
           {{ $reessayeCount }}
         ],

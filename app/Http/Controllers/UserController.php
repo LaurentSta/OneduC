@@ -202,7 +202,7 @@ class UserController extends Controller
                 'status' => $status,
                 'score' => $scoreValue,
                 'slides' => $lecture->slide_count ?? 0,
-                'questions' => $lecture->question_count ?? 0,
+                'questions' => $lecture->quiz_questions_per_attempt ?? 0,
             ];
         }
 

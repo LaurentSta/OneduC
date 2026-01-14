@@ -410,7 +410,7 @@ class FormateurController extends Controller
         $totalSections   = $module->sections->count();
         $totalLectures   = $module->sections->flatMap->lectures->count();
         $totalSlides     = $module->sections->flatMap->lectures->sum('slide_count');
-        $totalQuestions  = $module->sections->flatMap->lectures->sum('question_count');
+        $totalQuestions  = $module->sections->flatMap->lectures->sum('quiz_questions_per_attempt');
         $groupCount      = $module->groups->count();
         $stagiaires      = $module->groups->flatMap(fn($g) => $g->users)->unique('id')->values();
         $stagiaireCount  = $stagiaires->count();

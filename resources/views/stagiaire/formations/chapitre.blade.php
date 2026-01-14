@@ -210,7 +210,7 @@
             {{-- Bouton démarrer --}}
             @if($firstLecture)
             <div class="mt-4">
-                <a href="{{ route('stagiaire.module.lecture', ['module' => $module->id, 'section' => $selectedSection->id, 'lesson' => $firstLecture->id]) }}"
+                <a href="{{ route('stagiaire.module.lecture', ['module' => $module->id, 'section' => $selectedSection->id, 'lecture' => $firstLecture->id]) }}"
                 class="btn-oneduc flex items-center justify-center gap-2">
                     Commencer cette section
                 </a>

@@ -16,7 +16,12 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\ScormResult;
 use App\Models\ScormScore;
 use App\Models\Evaluation;
-use App\Models\ScormInteraction;
+use App\Models\QuizAttempt;
+use App\Models\QuizAttemptQuestion;
+use Illuminate\Support\Facades\DB;
+
+
+
 
 class ModuleController extends Controller
 {
@@ -32,7 +37,6 @@ class ModuleController extends Controller
             ? 'formateur.formations'
             : 'stagiaire.formations';
     }
-
     /**
      * 1. Liste des modules (admin)
      */
@@ -44,7 +48,7 @@ class ModuleController extends Controller
                 'category:id,category_name',
             ])
             ->withCount(['sections','lectures'])
-            ->withSum('lectures as questions_count', 'question_count')
+            ->withSum('lectures as quiz_questions_planned', 'quiz_questions_per_attempt')
             ->latest('id')
             ->get();
 
@@ -53,8 +57,8 @@ class ModuleController extends Controller
 
     public function toggleStatus(\App\Models\Module $module)
     {
-        $module->update(['status' => $module->status ? 0 : 1]);
-        return back()->with('success', $module->status ? 'Module désactivé' : 'Module activé');
+       $module->update(['status' => $module->status ? 0 : 1]);
+        return back()->with('success', $module->status ? 'Module activé' : 'Module désactivé');
     }
 
     /**
@@ -79,8 +83,8 @@ class ModuleController extends Controller
             'module_name'   => 'required|string|max:255',
             'module_title'  => 'required|string|max:255',
             'formateur_id'  => 'required|exists:users,id',
-            'category_id'   => 'required|integer',
-            'subcategory_id'=> 'nullable|integer',
+            'category_id'    => 'required|exists:categories,id',
+            'subcategory_id' => 'nullable|exists:subcategories,id',
             'certificat'    => 'required|in:1,0',
             'label'         => 'nullable|string|max:255',
             'duree'         => 'nullable|string|max:100',
@@ -170,6 +174,8 @@ class ModuleController extends Controller
             'formateur_id'  => 'required|exists:users,id',
             'objectifs'   => 'nullable|array',
             'objectifs.*' => 'nullable|string|max:255',
+            'module_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'header_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
         $imagePath = $module->module_image;
@@ -369,104 +375,7 @@ class ModuleController extends Controller
 
 
 
-    /**
-     * 9. Vue Section (stagiaire ou formateur)
-     */
-    public function section($id, $section_id)
-    {
-        $module  = Module::with('sections.lectures')->findOrFail($id);
-        if (! $module->isVisibleTo(\Illuminate\Support\Facades\Auth::user())) abort(404);
-        $section = $module->sections->firstWhere('id', $section_id);
-
-        if (!$section) {
-            abort(404, 'Section non trouvée');
-        }
-
-        // Stats lectures (robuste aux interaction_id vides)
-        $userId    = auth()->id();
-        $lectures  = $module->sections->flatMap->lectures;
-        $lectureIds= $lectures->pluck('id')->all();
-
-        $all = ScormInteraction::query()
-            ->where('user_id', $userId)
-            ->whereIn('lecture_id', $lectureIds)
-            ->orderBy('created_at')
-            ->get();
-
-        $byLecture = $all->groupBy('lecture_id');
-
-        $lectureStats = [];
-        foreach ($lectures as $lecture) {
-            $totalQuestions = (int) ($lecture->question_count ?? 0);
-            $rows = $byLecture->get($lecture->id, collect());
-
-            $groups = $rows->groupBy(function ($row) {
-                $key = trim((string) $row->interaction_id);
-                return $key !== '' ? $key : 'row_'.$row->id;
-            });
-
-            $answered = 0;
-            $correct  = 0;
-
-            foreach ($groups as $attempts) {
-                $latest = $attempts->last();
-                $answered++;
-                if ($latest && $latest->result === 'correct') {
-                    $correct++;
-                }
-            }
-
-            $answeredCapped = $totalQuestions > 0 ? min($answered, $totalQuestions) : $answered;
-            $correctCapped  = $totalQuestions > 0 ? min($correct,  $totalQuestions) : $correct;
-
-            $score = $totalQuestions > 0
-                ? (int) round(($correctCapped / $totalQuestions) * 100)
-                : ($answeredCapped > 0 ? 100 : null);
-
-            $status = 'not_started';
-            if ($answeredCapped === 0) {
-                $status = 'not_started';
-            } elseif ($totalQuestions > 0 && $answeredCapped < $totalQuestions) {
-                $status = 'incomplete';
-            } elseif ($score !== null && $score >= 50) {
-                $status = 'acquired';
-            } else {
-                $status = 'not_acquired';
-            }
-
-            $lectureStats[$lecture->id] = [
-                'lecture_id' => $lecture->id,
-                'status'     => $status,
-                'score'      => $score,
-                'answered'   => $answeredCapped,
-                'correct'    => $correctCapped,
-                'slides'     => (int) ($lecture->slide_count ?? 0),
-                'questions'  => $totalQuestions,
-            ];
-        }
-
-        // Statuts des sections
-        $sectionStatuses = [];
-        foreach ($module->sections as $sec) {
-            $total = $sec->lectures->count();
-            $ok = $sec->lectures->filter(function ($lec) use ($lectureStats) {
-                return in_array($lectureStats[$lec->id]['status'] ?? null, ['acquired','completed'], true);
-            })->count();
-
-            $sectionStatuses[$sec->id] = $ok === $total
-                ? 'completed'
-                : ($ok > 0 ? 'in_progress' : 'not_started');
-        }
-
-        $base = $this->viewBase();
-        return view("$base.chapitre", [
-            'module'          => $module,
-            'selectedSection' => $section,
-            'lectureStats'    => $lectureStats,
-            'sectionStatuses' => $sectionStatuses,
-            'selectedLecture' => null,
-        ]);
-    }
+   
 
     /**
      * 10. Sauvegarde d’une lecture (admin)
@@ -487,7 +396,7 @@ class ModuleController extends Controller
             'lecture_title' => $request->lecture_title,
             'position'      => $lastPosition + 1,
             'slide_count'   => 0,
-            'question_count'=> 0,
+            'quiz_questions_per_attempt'=> 0,
             'scorm_path'    => null,
         ]);
 
@@ -508,14 +417,13 @@ class ModuleController extends Controller
      */
     public function UpdateModuleLecture(Request $request)
 {
-    $request->validate([
-        'id'                         => 'required|exists:module_lectures,id',
-        'lecture_title'              => 'required|string|max:255',
-        'scorm_path'                 => 'nullable|string|max:255',
-        'slide_count'                => 'nullable|integer|min:0',
-        'question_count'             => 'nullable|integer|min:0',
-        'quiz_enabled'               => 'nullable|boolean',
-        'quiz_questions_per_attempt' => 'nullable|integer|min:0',
+        $request->validate([
+    'id' => 'required|exists:module_lectures,id',
+    'lecture_title' => 'required|string|max:255',
+    'scorm_path' => 'nullable|string|max:255',
+    'slide_count' => 'nullable|integer|min:0',
+    'quiz_enabled' => 'nullable|in:0,1',
+    'quiz_questions_per_attempt' => 'required_if:quiz_enabled,1|integer|min:1',
     ]);
 
     $lecture = ModuleLecture::findOrFail($request->id);
@@ -524,8 +432,7 @@ class ModuleController extends Controller
         'lecture_title'              => $request->lecture_title,
         'scorm_path'                 => $request->scorm_path,
         'slide_count'                => $request->input('slide_count', 0),
-        'question_count'             => $request->input('question_count', 0),
-        'quiz_enabled'               => (bool) $request->input('quiz_enabled', 0),
+        'quiz_enabled' => (bool) $request->input('quiz_enabled', 0),
         'quiz_questions_per_attempt' => (int) $request->input('quiz_questions_per_attempt', 0),
     ]);
 
@@ -560,6 +467,116 @@ class ModuleController extends Controller
             'alert-type' => 'success'
         ]);
     }
+    public function section(Request $request, Module $module, ModuleSection $section)
+{
+    // Sécurité : cohérence URL
+    abort_unless((int) $section->module_id === (int) $module->id, 404);
+
+    // Charger sections + lectures (sidebar)
+    $module->load([
+        'sections' => function ($q) {
+            $q->orderBy('id')
+              ->with(['lectures' => function ($qq) {
+                  $qq->orderBy('position');
+              }]);
+        },
+    ]);
+
+    // Toutes les leçons du module (pour buildLectureStats)
+    $lectures = $module->sections->flatMap(fn ($s) => $s->lectures);
+
+    // Stats sidebar (quiz si activé, sinon SCORM)
+    $lectureStats = $this->buildLectureStats($lectures, (int) auth()->id());
+
+    // Statut par section (optionnel)
+    $sectionStatuses = $module->sections->mapWithKeys(function ($sec) use ($lectureStats) {
+        $allCompleted = $sec->lectures->every(function ($lec) use ($lectureStats) {
+            $st = $lectureStats[$lec->id]['status'] ?? null;
+            return in_array($st, ['completed'], true);
+        });
+
+        return [$sec->id => $allCompleted ? 'completed' : 'in_progress'];
+    });
+
+    return view($this->viewBase() . '.chapitre', [
+        'module'          => $module,
+        'selectedSection' => $section, // requis par chapitre.blade.php
+        'section'         => $section, // compat éventuelle
+        'selectedLecture' => null,     // important : on n’est pas dans une leçon
+        'lectureStats'    => $lectureStats,
+        'sectionStatuses' => $sectionStatuses,
+        'formateur'       => $module->formateur ?? null,
+    ]);
+}
+
+public function lire(Request $request, Module $module, ModuleSection $section, ModuleLecture $lecture)
+{
+    // Sécurité : cohérence URL
+    abort_unless((int) $section->module_id === (int) $module->id, 404);
+    abort_unless((int) $lecture->module_id === (int) $module->id, 404);
+    abort_unless((int) $lecture->section_id === (int) $section->id, 404);
+
+    // Charger sections + lectures (sidebar + navigation)
+    $module->load([
+        'sections' => function ($q) {
+            $q->orderBy('id')
+              ->with(['lectures' => function ($qq) {
+                  $qq->orderBy('position');
+              }]);
+        },
+    ]);
+
+    // Toutes les leçons du module (pour buildLectureStats)
+    $lectures = $module->sections->flatMap(fn ($s) => $s->lectures);
+
+    // Stats sidebar (quiz si activé, sinon SCORM)
+    $lectureStats = $this->buildLectureStats($lectures, (int) auth()->id());
+
+    // Déterminer la prochaine leçon (navigation)
+    $nextLecture = null;
+
+    // 1) prochaine dans la section courante
+    $currentSectionLectures = $module->sections
+        ->firstWhere('id', $section->id)
+        ?->lectures ?? collect();
+
+    $idx = $currentSectionLectures->search(fn ($l) => (int) $l->id === (int) $lecture->id);
+    if ($idx !== false) {
+        $nextLecture = $currentSectionLectures->get($idx + 1);
+    }
+
+    // 2) sinon : première leçon de la section suivante
+    if (!$nextLecture) {
+        $nextSection = $module->sections
+            ->sortBy('id')
+            ->values()
+            ->firstWhere('id', '>', $section->id);
+
+        if ($nextSection) {
+            $nextLecture = $nextSection->lectures->sortBy('position')->first();
+        }
+    }
+
+    // Format attendu par le blade lecon.blade.php : tableau ['id' => .., 'section_id' => ..]
+    $nextLecturePayload = null;
+    if ($nextLecture) {
+        $nextLecturePayload = [
+            'id'         => (int) $nextLecture->id,
+            'section_id' => (int) $nextLecture->section_id,
+        ];
+    }
+
+    return view($this->viewBase() . '.lecon', [
+        'module'          => $module,
+        'section'         => $section,
+        'selectedSection' => $section, // utile si chapitre/lecon partagent la sidebar
+        'lecture'         => $lecture,
+        'selectedLecture' => $lecture, // requis par lecon.blade.php
+        'lectureStats'    => $lectureStats,
+        'nextLecture'     => $nextLecturePayload,
+        'formateur'       => $module->formateur ?? null,
+    ]);
+}
 
     /**
      * 14. Détail public d’un module (catalogue)
@@ -570,147 +587,128 @@ class ModuleController extends Controller
         if (! $module->isVisibleTo(\Illuminate\Support\Facades\Auth::user())) abort(404);
         return view('frontend.contenu.module_detail', compact('module'));
     }
-
-
-    /**
-     * 15. Vue Lecture (stagiaire ou formateur)
-     */
-    public function lire($module, $section, $lesson)
+    private function buildLectureStats($lectures, int $userId): array
     {
-        $module = Module::with('sections.lectures')->findOrFail($module);
-        if (! $module->isVisibleTo(\Illuminate\Support\Facades\Auth::user())) abort(404);
-        $sectionModel = $module->sections->firstWhere('id', $section);
-        if (!$sectionModel) abort(404, 'Section non trouvée');
-
-        $selectedLecture = $sectionModel->lectures->firstWhere('id', $lesson);
-        if (!$selectedLecture) abort(404, 'Leçon non trouvée');
-
-        // Next lecture
-        $lectures = $module->sections->flatMap->lectures;
-        $currentIndex = $lectures->search(fn($lec) => $lec->id === $selectedLecture->id);
-        $nextLecture  = $lectures->get($currentIndex + 1);
-
-        // Stats lectures
-        $userId     = auth()->id();
         $lectureIds = $lectures->pluck('id')->all();
 
-        $all = ScormInteraction::query()
+        // A) Quiz : dernière tentative par leçon
+        $attempts = QuizAttempt::query()
             ->where('user_id', $userId)
             ->whereIn('lecture_id', $lectureIds)
-            ->orderBy('created_at')
-            ->get();
+            ->orderByDesc('finished_at') // terminées d’abord (non null)
+            ->orderByDesc('id')
+            ->get()
+            ->groupBy('lecture_id')
+            ->map(fn($rows) => $rows->first());
 
-        $byLecture = $all->groupBy('lecture_id');
+        $attemptIds = $attempts->filter()->pluck('id')->all();
 
-        $lectureStats = [];
+        $attemptAgg = collect();
+        if (!empty($attemptIds)) {
+            $attemptAgg = QuizAttemptQuestion::query()
+                ->select([
+                    'attempt_id',
+                    DB::raw('COUNT(*) as total'),
+                    DB::raw('SUM(CASE WHEN answered_at IS NOT NULL THEN 1 ELSE 0 END) as answered'),
+                    DB::raw('SUM(CASE WHEN is_correct = 1 THEN 1 ELSE 0 END) as correct'),
+                ])
+                ->whereIn('attempt_id', $attemptIds)
+                ->groupBy('attempt_id')
+                ->get()
+                ->keyBy('attempt_id');
+        }
+
+        // B) SCORM “diapositives” : démarré / terminé
+        $scores = ScormScore::query()
+            ->where('user_id', $userId)
+            ->whereIn('lecture_id', $lectureIds)
+            ->get()
+            ->keyBy('lecture_id');
+
+        $started = ScormResult::query()
+            ->where('user_id', $userId)
+            ->whereIn('lecture_id', $lectureIds)
+            ->select('lecture_id', DB::raw('COUNT(*) as c'))
+            ->groupBy('lecture_id')
+            ->pluck('c', 'lecture_id');
+
+        $stats = [];
+
         foreach ($lectures as $lec) {
-            $totalQuestions = (int) ($lec->question_count ?? 0);
-            $rows = $byLecture->get($lec->id, collect());
 
-            $groups = $rows->groupBy(function ($row) {
-                $key = trim((string) $row->interaction_id);
-                return $key !== '' ? $key : 'row_'.$row->id;
-            });
+            // 1) Si quiz activé : la sidebar dépend du quiz
+            if ((bool) ($lec->quiz_enabled ?? false)) {
+                $attempt = $attempts->get($lec->id);
+                $planned = (int) ($lec->quiz_questions_per_attempt ?? 0);
 
-            $answered = 0;
-            $correct  = 0;
-
-            foreach ($groups as $attempts) {
-                $latest = $attempts->last();
-                $answered++;
-                if ($latest && $latest->result === 'correct') {
-                    $correct++;
+                if (!$attempt) {
+                    $stats[$lec->id] = [
+                        'status' => 'not_started',
+                        'quiz' => true,
+                        'questions_total' => $planned,
+                        'questions_answered' => 0,
+                        'questions_correct' => 0,
+                        'quiz_score' => null,
+                        'quiz_finished' => false,
+                        'slides' => (int)($lec->slide_count ?? 0),
+                        'session_time' => null,
+                    ];
+                    continue;
                 }
+
+                $agg = $attemptAgg->get($attempt->id);
+                $total    = (int)($agg->total ?? $attempt->total_questions ?? $planned ?? 0);
+                $answered = (int)($agg->answered ?? 0);
+                $correct  = (int)($agg->correct ?? 0);
+                $score    = ($total > 0) ? (int) round(($correct / $total) * 100) : null;
+                $finished = !is_null($attempt->finished_at);
+
+                // Statut sidebar (à adapter si tu as une autre règle que 50%)
+                if (!$finished) {
+                    $status = $answered > 0 ? 'in_progress' : 'not_started';
+                } else {
+                    $status = ($score !== null && $score >= 50) ? 'completed' : 'failed';
+                }
+
+                $stats[$lec->id] = [
+                    'status' => $status,
+                    'quiz' => true,
+                    'questions_total' => $total,
+                    'questions_answered' => $answered,
+                    'questions_correct' => $correct,
+                    'quiz_score' => $score,
+                    'quiz_finished' => $finished,
+                    'slides' => (int)($lec->slide_count ?? 0),
+                    'session_time' => null,
+                ];
+                continue;
             }
 
-            $answeredCapped = $totalQuestions > 0 ? min($answered, $totalQuestions) : $answered;
-            $correctCapped  = $totalQuestions > 0 ? min($correct,  $totalQuestions) : $correct;
+            // 2) Sinon : sidebar dépend du SCORM diapositives
+            $hasStarted = (int)($started[$lec->id] ?? 0) > 0;
+            $sc = $scores->get($lec->id);
 
-            $score = $totalQuestions > 0
-                ? (int) round(($correctCapped / $totalQuestions) * 100)
-                : ($answeredCapped > 0 ? 100 : null);
+            $lessonStatus = strtolower((string)($sc->lesson_status ?? ''));
+            $isCompleted = in_array($lessonStatus, ['completed', 'passed'], true) || (bool)($sc->is_completed ?? false);
 
-            $status = 'not_started';
-            if ($answeredCapped === 0) {
-                $status = 'not_started';
-            } elseif ($totalQuestions > 0 && $answeredCapped < $totalQuestions) {
-                $status = 'incomplete';
-            } elseif ($score !== null && $score >= 50) {
-                $status = 'acquired';
-            } else {
-                $status = 'not_acquired';
-            }
+            if (!$hasStarted) $status = 'not_started';
+            elseif ($isCompleted) $status = 'completed';
+            else $status = 'in_progress';
 
-            $lectureStats[$lec->id] = [
-                'lecture_id' => $lec->id,
-                'status'     => $status,
-                'score'      => $score,
-                'answered'   => $answeredCapped,
-                'correct'    => $correctCapped,
-                'slides'     => (int) ($lec->slide_count ?? 0),
-                'questions'  => $totalQuestions,
+            $stats[$lec->id] = [
+                'status' => $status,
+                'quiz' => false,
+                'questions_total' => 0,
+                'questions_answered' => 0,
+                'questions_correct' => 0,
+                'quiz_score' => null,
+                'quiz_finished' => false,
+                'slides' => (int)($lec->slide_count ?? 0),
+                'session_time' => $sc->session_time ?? null,
             ];
         }
 
-        // Statuts des sections
-        $sectionStatuses = [];
-        foreach ($module->sections as $sec) {
-            $total = $sec->lectures->count();
-            $acq = $sec->lectures->filter(function ($lec) use ($lectureStats) {
-                return ($lectureStats[$lec->id]['status'] ?? null) === 'acquired';
-            })->count();
-
-            $sectionStatuses[$sec->id] = $acq === $total
-                ? 'completed'
-                : ($acq > 0 ? 'in_progress' : 'not_started');
-        }
-
-        $base = $this->viewBase();
-        return view("$base.lecon", compact(
-            'module',
-            'selectedLecture',
-            'nextLecture',
-            'lectureStats',
-            'sectionStatuses'
-        ));
+        return $stats;
     }
 
-    /**
-     * 16. Page de fin de module (stagiaire)
-     */
-    public function finModule($moduleId)
-    {
-        $userId = auth()->id();
-        $module = Module::with('sections.lectures')->findOrFail($moduleId);
-        if (! $module->isVisibleTo(\Illuminate\Support\Facades\Auth::user())) abort(404);
-
-
-        $totalSections = $module->sections->count();
-        $totalLectures = $module->sections->flatMap->lectures->count();
-
-        $totalQuestionsPlanned = $module->sections
-            ->flatMap->lectures
-            ->sum(fn($lec) => (int)($lec->question_count ?? 0));
-
-        $questionsAnswered = 0;
-        foreach ($module->sections->flatMap->lectures as $lecture) {
-            $planned = (int)($lecture->question_count ?? 0);
-            if ($planned === 0) continue;
-
-            $distinctAnswered = ScormInteraction::where('user_id', $userId)
-                ->where('lecture_id', $lecture->id)
-                ->distinct('interaction_id')
-                ->count('interaction_id');
-
-            $questionsAnswered += min($distinctAnswered, $planned);
-        }
-
-        return view('stagiaire.fin_module', [
-            'module'                 => $module,
-            'totalSections'          => $totalSections,
-            'totalLectures'          => $totalLectures,
-            'totalQuestionsPlanned'  => $totalQuestionsPlanned,
-            'questionsAnswered'      => $questionsAnswered,
-        ]);
-    }
 }

@@ -79,8 +79,8 @@
               {{ $module->lectures_count ?? (method_exists($module, 'lectures') ? $module->lectures->count() : 0) }}
             </td>
 
-            <td class="px-4 py-3 text-center" title="Somme des question_count des leçons">
-              {{ (int)($module->questions_count ?? 0) }}
+            <td class="px-4 py-3 text-center" title="Somme des quiz_questions_per_attempt des leçons">
+              {{ (int)($module->quiz_questions_planned ?? 0) }}
             </td>
 
             <td class="px-4 py-3">
