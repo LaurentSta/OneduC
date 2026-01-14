@@ -1,243 +1,224 @@
 <?php
+// /home/laurents/Oneduc_Dev/app/Http/Controllers/Backend/QuizQuestionController.php
 
 namespace App\Http\Controllers\Backend;
 
 use App\Http\Controllers\Controller;
 use App\Models\ModuleLecture;
-use App\Models\QuizQuestion;
 use App\Models\QuizOption;
+use App\Models\QuizQuestion;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 class QuizQuestionController extends Controller
 {
+    /**
+     * Liste des questions d’une leçon.
+     */
     public function index(ModuleLecture $lecture)
     {
-        $questions = $lecture->quizQuestions()
+        $questions = QuizQuestion::query()
+            ->where('lecture_id', $lecture->id)
             ->withCount('options')
-            ->latest()
+            ->orderBy('created_at')
             ->get();
 
-        return view('admin.backend.quiz.questions.index', compact('lecture', 'questions'));
+        return view('admin.backend.quiz.questions.index', [
+            'lecture'   => $lecture,
+            'questions' => $questions,
+        ]);
     }
 
+    /**
+     * Formulaire de création d’une question.
+     */
     public function create(ModuleLecture $lecture)
     {
-        return view('admin.backend.quiz.questions.create', compact('lecture'));
+        return view('admin.backend.quiz.questions.create', [
+            'lecture' => $lecture,
+        ]);
     }
 
+    /**
+     * Enregistrement d’une nouvelle question + ses options.
+     */
     public function store(Request $request, ModuleLecture $lecture)
     {
-        $data = $request->validate([
-            'type'                    => 'required|in:single,multiple,boolean',
-            'question_text'           => 'required|string',
-            'image'                   => 'nullable|image|max:2048',
-            'image_alt'               => 'nullable|string|max:255',
-            'audio'                   => 'nullable|mimetypes:audio/mpeg,audio/mp4,audio/wav,audio/ogg|max:10240',
-            'audio_transcript'        => 'nullable|string',
-            'options'                 => 'required|array|min:2',
-            'options.*.text'          => 'required|string',
-            'options.*.is_correct'    => 'nullable|boolean',
-            'is_active'               => 'nullable|boolean',
-        ]);
+        $data = $this->validatePayload($request);
 
-        // Accessibilité : alt obligatoire si image
-        if ($request->hasFile('image') && empty($data['image_alt'])) {
-            return back()
-                ->withErrors(['image_alt' => 'Le texte alternatif est obligatoire si une image est fournie.'])
-                ->withInput();
-        }
+        DB::transaction(function () use ($lecture, $data) {
+            $question = QuizQuestion::create([
+                'lecture_id'    => $lecture->id,
+                'question_text' => $data['question_text'],
+                'type'          => $data['type'],
+                'is_active'     => $data['is_active'] ?? true,
+            ]);
 
-        // Règles de bonnes réponses selon type
-        $correctCount = collect($data['options'])
-            ->filter(fn ($o) => !empty($o['is_correct']))
-            ->count();
+            $options = $this->buildOptionsForType($data['type'], $data['options'] ?? null);
 
-        // single + boolean : exactement 1 bonne réponse
-        if (in_array($data['type'], ['single', 'boolean'], true) && $correctCount !== 1) {
-            return back()
-                ->withErrors(['options' => 'Pour ce type de question, il faut exactement 1 bonne réponse.'])
-                ->withInput();
-        }
+            $this->assertOptionsAreValidForType($data['type'], $options);
 
-        // multiple : au moins 1 bonne réponse
-        if ($data['type'] === 'multiple' && $correctCount < 1) {
-            return back()
-                ->withErrors(['options' => 'En choix multiple, il faut au moins 1 bonne réponse.'])
-                ->withInput();
-        }
-
-        DB::transaction(function () use ($request, $lecture, $data) {
-            $question = new QuizQuestion();
-            $question->lecture_id = $lecture->id;
-            $question->type = $data['type'];
-            $question->question_text = $data['question_text'];
-            $question->image_alt = $data['image_alt'] ?? null;
-            $question->audio_transcript = $data['audio_transcript'] ?? null;
-            $question->created_by = auth()->id();
-            $question->is_active = (bool) $request->input('is_active', 1);
-
-            if ($request->hasFile('image')) {
-                $question->image_path = $request->file('image')->store('quiz/images', 'public');
-            }
-
-            if ($request->hasFile('audio')) {
-                $question->audio_path = $request->file('audio')->store('quiz/audios', 'public');
-            }
-
-            $question->save();
-
-            foreach ($data['options'] as $i => $opt) {
-                QuizOption::create([
-                    'question_id' => $question->id,
-                    'option_text' => $opt['text'],
-                    'is_correct'  => !empty($opt['is_correct']),
-                    'position'    => $i + 1,
-                ]);
-            }
+            $this->replaceOptions($question->id, $options);
         });
 
         return redirect()
-            ->route('admin.quiz.questions.index', ['lecture' => $lecture->id])
-            ->with('success', 'Question ajoutée avec succès.');
+            ->route('admin.quiz.questions.index', $lecture)
+            ->with('success', 'Question créée avec succès.');
     }
 
+    /**
+     * Formulaire d’édition.
+     */
     public function edit(ModuleLecture $lecture, QuizQuestion $question)
     {
-        $this->assertQuestionBelongsToLecture($lecture, $question);
+        abort_unless($question->lecture_id === $lecture->id, 404);
 
+        // utile pour pré-remplir correctement l’édition
         $question->load(['options' => fn ($q) => $q->orderBy('position')]);
 
-        return view('admin.backend.quiz.questions.edit', compact('lecture', 'question'));
+        return view('admin.backend.quiz.questions.edit', [
+            'lecture'  => $lecture,
+            'question' => $question,
+        ]);
     }
 
+    /**
+     * Mise à jour de la question + ses options.
+     */
     public function update(Request $request, ModuleLecture $lecture, QuizQuestion $question)
     {
-        $this->assertQuestionBelongsToLecture($lecture, $question);
+        abort_unless($question->lecture_id === $lecture->id, 404);
 
-        $data = $request->validate([
-            'type'                    => 'required|in:single,multiple,boolean',
-            'question_text'           => 'required|string',
-            'image'                   => 'nullable|image|max:2048',
-            'image_alt'               => 'nullable|string|max:255',
-            'remove_image'            => 'nullable|boolean',
-            'audio'                   => 'nullable|mimetypes:audio/mpeg,audio/mp4,audio/wav,audio/ogg|max:10240',
-            'audio_transcript'        => 'nullable|string',
-            'remove_audio'            => 'nullable|boolean',
-            'options'                 => 'required|array|min:2',
-            'options.*.text'          => 'required|string',
-            'options.*.is_correct'    => 'nullable|boolean',
-            'is_active'               => 'nullable|boolean',
-        ]);
+        $data = $this->validatePayload($request);
 
-        // Accessibilité : alt obligatoire si image (nouvelle image OU image conservée)
-        $hasNewImage = $request->hasFile('image');
-        $keepsOldImage = !$hasNewImage && !((bool) $request->input('remove_image', 0)) && !empty($question->image_path);
+        DB::transaction(function () use ($question, $data) {
+            $question->update([
+                'question_text' => $data['question_text'],
+                'type'          => $data['type'],
+                'is_active'     => $data['is_active'] ?? $question->is_active,
+            ]);
 
-        if (($hasNewImage || $keepsOldImage) && empty($data['image_alt'])) {
-            return back()
-                ->withErrors(['image_alt' => 'Le texte alternatif est obligatoire si une image est fournie.'])
-                ->withInput();
-        }
+            $options = $this->buildOptionsForType($data['type'], $data['options'] ?? null);
 
-        // Règles de bonnes réponses selon type
-        $correctCount = collect($data['options'])
-            ->filter(fn ($o) => !empty($o['is_correct']))
-            ->count();
+            $this->assertOptionsAreValidForType($data['type'], $options);
 
-        if (in_array($data['type'], ['single', 'boolean'], true) && $correctCount !== 1) {
-            return back()
-                ->withErrors(['options' => 'Pour ce type de question, il faut exactement 1 bonne réponse.'])
-                ->withInput();
-        }
-
-        if ($data['type'] === 'multiple' && $correctCount < 1) {
-            return back()
-                ->withErrors(['options' => 'En choix multiple, il faut au moins 1 bonne réponse.'])
-                ->withInput();
-        }
-
-        DB::transaction(function () use ($request, $data, $question) {
-            $question->type = $data['type'];
-            $question->question_text = $data['question_text'];
-            $question->image_alt = $data['image_alt'] ?? null;
-            $question->audio_transcript = $data['audio_transcript'] ?? null;
-            $question->is_active = (bool) $request->input('is_active', 1);
-
-            // Image : suppression demandée
-            if ((bool) $request->input('remove_image', 0) && $question->image_path) {
-                Storage::disk('public')->delete($question->image_path);
-                $question->image_path = null;
-                $question->image_alt = null;
-            }
-
-            // Image : remplacement
-            if ($request->hasFile('image')) {
-                if ($question->image_path) {
-                    Storage::disk('public')->delete($question->image_path);
-                }
-                $question->image_path = $request->file('image')->store('quiz/images', 'public');
-            }
-
-            // Audio : suppression demandée
-            if ((bool) $request->input('remove_audio', 0) && $question->audio_path) {
-                Storage::disk('public')->delete($question->audio_path);
-                $question->audio_path = null;
-            }
-
-            // Audio : remplacement
-            if ($request->hasFile('audio')) {
-                if ($question->audio_path) {
-                    Storage::disk('public')->delete($question->audio_path);
-                }
-                $question->audio_path = $request->file('audio')->store('quiz/audios', 'public');
-            }
-
-            $question->save();
-
-            // Options : stratégie simple et fiable V1 = on supprime puis on recrée
-            $question->options()->delete();
-
-            foreach ($data['options'] as $i => $opt) {
-                QuizOption::create([
-                    'question_id' => $question->id,
-                    'option_text' => $opt['text'],
-                    'is_correct'  => !empty($opt['is_correct']),
-                    'position'    => $i + 1,
-                ]);
-            }
+            $this->replaceOptions($question->id, $options);
         });
 
         return redirect()
-            ->route('admin.quiz.questions.index', ['lecture' => $lecture->id])
-            ->with('success', 'Question mise à jour avec succès.');
+            ->route('admin.quiz.questions.index', $lecture)
+            ->with('success', 'Question mise à jour.');
     }
 
+    /**
+     * Suppression.
+     */
     public function destroy(ModuleLecture $lecture, QuizQuestion $question)
     {
-        $this->assertQuestionBelongsToLecture($lecture, $question);
+        abort_unless($question->lecture_id === $lecture->id, 404);
 
         DB::transaction(function () use ($question) {
-            if ($question->image_path) {
-                Storage::disk('public')->delete($question->image_path);
-            }
-            if ($question->audio_path) {
-                Storage::disk('public')->delete($question->audio_path);
-            }
-            $question->options()->delete();
+            QuizOption::where('question_id', $question->id)->delete();
             $question->delete();
         });
 
         return redirect()
-            ->route('admin.quiz.questions.index', ['lecture' => $lecture->id])
+            ->route('admin.quiz.questions.index', $lecture)
             ->with('success', 'Question supprimée.');
     }
 
-    private function assertQuestionBelongsToLecture(ModuleLecture $lecture, QuizQuestion $question): void
+    // ---------------------------------------------------------------------
+    // Helpers
+    // ---------------------------------------------------------------------
+
+    private function validatePayload(Request $request): array
     {
-        if ((int) $question->lecture_id !== (int) $lecture->id) {
-            abort(404);
+        // IMPORTANT : tes vues envoient options[*][text] + options[*][is_correct]
+        // On accepte aussi option_text pour compatibilité si besoin.
+        return $request->validate([
+            'question_text'        => ['required', 'string'],
+            'type'                 => ['required', 'in:boolean,single,multiple'],
+            'is_active'            => ['nullable', 'boolean'],
+
+            'options'              => ['nullable', 'array'],
+            'options.*.text'       => ['nullable', 'string'],
+            'options.*.option_text'=> ['nullable', 'string'],
+            'options.*.is_correct' => ['nullable'],
+        ]);
+    }
+
+    /**
+     * Retourne une liste d’options normalisées :
+     * [
+     *   ['text' => '...', 'is_correct' => 0|1],
+     *   ...
+     * ]
+     */
+    private function buildOptionsForType(string $type, ?array $rawOptions): array
+    {
+        if ($type === 'boolean') {
+            return [
+                ['text' => 'Vrai', 'is_correct' => 1],
+                ['text' => 'Faux', 'is_correct' => 0],
+            ];
+        }
+
+        $rawOptions = $rawOptions ?? [];
+
+        // Normaliser (text peut venir de text ou option_text)
+        $options = [];
+        foreach ($rawOptions as $o) {
+            $text = trim((string)($o['text'] ?? $o['option_text'] ?? ''));
+            if ($text === '') {
+                continue;
+            }
+            $options[] = [
+                'text'       => $text,
+                'is_correct' => (int)($o['is_correct'] ?? 0) === 1 ? 1 : 0,
+            ];
+        }
+
+        return array_values($options);
+    }
+
+    private function assertOptionsAreValidForType(string $type, array $options): void
+    {
+        if ($type === 'boolean') {
+            return; // on force Vrai/Faux
+        }
+
+        if (count($options) < 2) {
+            throw ValidationException::withMessages([
+                'options' => 'Ajoutez au moins 2 propositions de réponses.',
+            ]);
+        }
+
+        $correctCount = collect($options)->sum(fn ($o) => (int)$o['is_correct']);
+        if ($correctCount < 1) {
+            throw ValidationException::withMessages([
+                'options' => 'Indiquez au moins une bonne réponse.',
+            ]);
+        }
+
+        if ($type === 'single' && $correctCount !== 1) {
+            throw ValidationException::withMessages([
+                'options' => 'En choix unique, il doit y avoir exactement 1 bonne réponse.',
+            ]);
+        }
+    }
+
+    private function replaceOptions(int $questionId, array $options): void
+    {
+        QuizOption::where('question_id', $questionId)->delete();
+
+        foreach ($options as $i => $opt) {
+            QuizOption::create([
+                'question_id' => $questionId,
+                'option_text' => $opt['text'],
+                'is_correct'  => (int)$opt['is_correct'],
+                'position'    => $i + 1,
+            ]);
         }
     }
 }

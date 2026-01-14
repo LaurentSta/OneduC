@@ -84,6 +84,6 @@
     cssLinkModeClassName: 'btn-access'
   };
 </script>
-<script src="{{ asset('confortplus/js/toolbar.min.js') }}" defer></script>
+
 </body>
 </html>

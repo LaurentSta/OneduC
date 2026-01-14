@@ -1,73 +1,108 @@
 @extends('stagiaire.formations.master_lecon_evaluation')
+<!-- /home/laurents/Oneduc_Dev/resources/views/stagiaire/formations/lecon.blade.php -->
 
 @section('content')
 <meta name="csrf-token" content="{{ csrf_token() }}">
-@if (isset($selectedLecture))
-    <script>
-        window.currentLectureId = {{ $selectedLecture->id }};
-    </script>
-@endif
-    {{-- LECTURE SCORM --}}
-    <main class="flex-1 bg-white">
-        @if (isset($selectedLecture) && $selectedLecture->scorm_path)
-            {{-- CONTEXTE SCORM --}}
-            <script>
-                window.SCORM_CONTEXT = {
-                    lecture_id: {{ $selectedLecture->id }},
-                    
 
-                };
-            </script>
+@php
+    use Illuminate\Support\Facades\URL;
 
-            <iframe
-                title="Contenu de la leçon"
-                src="{{ asset('modules/scorm/00_Lecons/' . $selectedLecture->scorm_path . '/res/index.html') }}"
-                frameborder="0"
-                allowfullscreen
-                class="w-full"
-                style="height: calc(100vh - 64px); display: block;">
-            </iframe>
+    $lecture = $selectedLecture ?? null;
 
+    $moduleId  = $module->id ?? null;
+    $lectureId = $lecture?->id;
+    $sectionId = $lecture?->section_id;
 
-            
+    $nextUrl  = '#';
+    $finalUrl = $moduleId ? "/stagiaire/modules/{$moduleId}/fin" : '/stagiaire';
 
-            </div>
-        @endif
-
-    </main>
-   <script>
-    const currentLectureId = {{ $selectedLecture->id }};
-    const currentSectionId = {{ $selectedLecture->section_id }};
-    const nextLecture = @json($nextLecture);
-    const moduleId = {{ $module->id }};
-
-    let nextUrl = "#";
-    if (nextLecture) {
-        if (nextLecture.section_id === currentSectionId) {
-            nextUrl = `/stagiaire/modules/${moduleId}/sections/${nextLecture.section_id}/lessons/${nextLecture.id}`;
+    if (!empty($nextLecture) && $moduleId) {
+        if ((int) $nextLecture['section_id'] === (int) $sectionId) {
+            $nextUrl = "/stagiaire/modules/{$moduleId}/sections/{$nextLecture['section_id']}/lessons/{$nextLecture['id']}";
         } else {
-            nextUrl = `/stagiaire/modules/${moduleId}/sections/${nextLecture.section_id}`;
+            $nextUrl = "/stagiaire/modules/{$moduleId}/sections/{$nextLecture['section_id']}";
         }
     }
-    const finalUrl = `/stagiaire/modules/${moduleId}/fin`; // nouvelle page de fin
 
-    window.SCORM_CONTEXT = {
-        lecture_id: currentLectureId,
-        next_url: nextUrl,
-        goToNextLesson: function () {
-            if (this.next_url !== "#") {
-                window.location.href = this.next_url;
-            } else {
-                window.location.href = finalUrl; // redirige vers la page de félicitations
-            }
+    $quizStartUrl = null;
+    if ($lecture && $lecture->quiz_enabled && $moduleId && $sectionId) {
+        $quizStartUrl = URL::signedRoute('stagiaire.quiz.start', [
+            'module'  => $moduleId,
+            'section' => $sectionId,
+            'lecture' => $lecture->id,
+        ]);
+    }
+
+
+    $scormSrc = null;
+    if ($lecture && !empty($lecture->scorm_path)) {
+        $path = trim((string) $lecture->scorm_path);
+        if ($path !== '') {
+            $scormSrc = asset("modules/scorm/00_Lecons/{$path}/res/index.html");
         }
-    };
+    }
+
+@endphp
+
+@if ($lectureId)
+<script>
+  window.currentLectureId = @json($lectureId);
 </script>
+@endif
 
+<main class="flex-1 bg-white">
+  @if ($lecture && $scormSrc)
 
+    <script>
+      window.SCORM_CONTEXT = {
+        lecture_id: @json($lectureId),
+        module_id: @json($moduleId),
+        section_id: @json($sectionId),
 
+        next_url: @json($nextUrl),
+        final_url: @json($finalUrl),
 
+        goToNextLesson: function () {
+          if (this.next_url && this.next_url !== "#") {
+            window.location.href = this.next_url;
+            return;
+          }
+          window.location.href = this.final_url;
+        },
 
+        quiz_start_url: @json($quizStartUrl),
 
+        goToQuiz: function () {
+          if (!this.quiz_start_url) {
+            alert("Quiz non activé pour cette leçon.");
+            return;
+          }
+          window.location.href = this.quiz_start_url;
+        }
+      };
 
- @endsection
+      console.log('[SCORM_CONTEXT] quiz_start_url =', window.SCORM_CONTEXT.quiz_start_url);
+    </script>
+
+    
+
+    <iframe
+      title="Contenu de la leçon"
+      src="{{ $scormSrc }}"
+      frameborder="0"
+      allowfullscreen
+      class="w-full"
+      style="height: calc(100vh - 64px); display: block;">
+    </iframe>
+
+  @else
+    <div class="max-w-[900px] mx-auto px-6 py-10">
+      <div class="bg-white rounded-[20px] shadow-md p-8">
+        <h1 class="text-xl font-raleway text-bleuone font-semibold">Leçon indisponible</h1>
+        <p class="text-sm text-gray-600 mt-2">Aucun contenu SCORM n’est associé à cette leçon.</p>
+      </div>
+    </div>
+  @endif
+</main>
+
+@endsection

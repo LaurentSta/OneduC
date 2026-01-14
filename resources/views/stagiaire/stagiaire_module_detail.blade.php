@@ -152,7 +152,7 @@
               <div x-show="open === {{ $index }}" x-cloak class="p-4 bg-white text-sm text-gray-700">
                 @forelse ($section->lectures as $lecture)
                   <div class="flex items-center justify-between mb-2">
-                    <a href="{{ route('stagiaire.module.lecture', ['module' => $module->id, 'section' => $section->id, 'lesson' => $lecture->id]) }}"
+                    <a href="{{ route('stagiaire.module.lecture', ['module' => $module->id, 'section' => $section->id, 'lecture' => $lecture->id]) }}"
                        class="flex-1 pr-3 hover:underline font-medium text-gray-800">
                       {{ $lecture->lecture_title }}
                     </a>

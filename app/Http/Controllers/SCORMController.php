@@ -282,7 +282,7 @@ class SCORMController extends Controller
         $sc->questions_answered = $answered;
 
         $lecture = \App\Models\ModuleLecture::find($lectureId);
-        $expected = $lecture?->question_count ?? 0;
+        $expected = $lecture?->quiz_questions_per_attempt ?? 0;
         $eligible = ($expected === 0) || ($answered >= $expected);
         $passThreshold = 50;
 

@@ -33,7 +33,7 @@
             $totalLectures += $sec->lectures->count();
             foreach ($sec->lectures as $lecP) {
               // Comptage questions
-              $q = (int)($lecP->question_count ?? 0);
+              $q = (int)($lecP->quiz_questions_per_attempt ?? 0);
               $totalQuestions += $q;
               $ans = (int)($lectureStats[$lecP->id]['answered']
                     ?? $lectureStats[$lecP->id]['answers']
