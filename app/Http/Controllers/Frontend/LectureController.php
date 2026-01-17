@@ -45,13 +45,18 @@ class LectureController extends Controller
     {
         $lecture = \App\Models\ModuleLecture::findOrFail($id);
 
+        // Debug pour Debian : vérifiez que l'URL ne contient pas "home/laurents"
+        // dd(asset($lecture->scorm_path)); 
+
         if (!$lecture->scorm_path) {
-            abort(404, 'Aucun fichier SCORM défini pour cette lecture.');
+            abort(404, 'Contenu SCORM non trouvé.');
         }
 
-        return view('lectures.lecture_scorm', compact('lecture'));
+        return view('admin.backend.modules.lecture.lecture_scorm', [
+            'lecture' => $lecture,
+            'scormUrl' => asset($lecture->scorm_path)
+        ]);
     }
-
 
 
 }

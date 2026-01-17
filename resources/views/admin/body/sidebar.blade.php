@@ -55,6 +55,18 @@
                class="{{ $itemBase }} {{ request()->routeIs('admin.modules*') || request()->routeIs('admin.lectures.*') || request()->routeIs('admin.sections.*') ? $itemActive : $itemHover }}">
                 <span class="text-base font-medium">Modules</span>
             </a>
+            {{-- SCORM --}}
+            @php
+                // Lien robuste : si tu as la page index, on l’utilise, sinon on retombe sur la page test import
+                $scormMenuUrl =
+                    \Illuminate\Support\Facades\Route::has('admin.scorm.library.index') ? route('admin.scorm.library.index') :
+                    (\Illuminate\Support\Facades\Route::has('admin.scorm.library.test') ? route('admin.scorm.library.test') : url('/admin/scorm-library/test'));
+            @endphp
+
+            <a href="{{ $scormMenuUrl }}"
+            class="{{ $itemBase }} {{ request()->routeIs('admin.scorm.*') || request()->is('admin/scorm-library*') ? $itemActive : $itemHover }}">
+                <span class="text-base font-medium">SCORM</span>
+            </a>
 
             {{-- Formateurs --}}
             <a href="{{ route('admin.formateurs') }}"

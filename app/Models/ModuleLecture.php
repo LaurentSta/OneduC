@@ -4,6 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Models\ScormPackage;
+use App\Models\ScormPackageVersion;
 
 class ModuleLecture extends Model
 {
@@ -39,6 +42,23 @@ class ModuleLecture extends Model
     public function quizAttempts()
     {
         return $this->hasMany(\App\Models\QuizAttempt::class, 'lecture_id');
+    }
+    public function scormPackage(): BelongsTo
+    {
+        return $this->belongsTo(ScormPackage::class, 'scorm_package_id');
+    }
+
+    public function scormPackageVersion(): BelongsTo
+    {
+        return $this->belongsTo(ScormPackageVersion::class, 'scorm_package_version_id');
+    }
+    public function getScormIndexPathAttribute(): ?string
+    {
+        if ($this->use_active_scorm_version && $this->scormPackage?->activeVersion) {
+            return $this->scormPackage->activeVersion->index_path;
+        }
+
+        return $this->scormPackageVersion?->index_path;
     }
 
 }
