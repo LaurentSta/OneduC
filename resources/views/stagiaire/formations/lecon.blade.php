@@ -35,12 +35,26 @@
 
 
     $scormSrc = null;
-    if ($lecture && !empty($lecture->scorm_path)) {
-        $path = trim((string) $lecture->scorm_path);
-        if ($path !== '') {
-            $scormSrc = asset("modules/scorm/00_Lecons/{$path}/res/index.html");
+
+    if ($lecture) {
+
+        // 1) Nouveau système : bibliothèque SCORM (index_path calculé via accessor)
+        // Nécessite : ModuleLecture::getScormIndexPathAttribute()
+        $indexPath = $lecture->scorm_index_path ?? null;
+
+        if (!empty($indexPath)) {
+            $scormSrc = asset(ltrim($indexPath, '/'));
+        }
+
+        // 2) Fallback : ancien système (scorm_path)
+        if (!$scormSrc && !empty($lecture->scorm_path)) {
+            $path = trim((string) $lecture->scorm_path);
+            if ($path !== '') {
+                $scormSrc = asset("modules/scorm/00_Lecons/{$path}/res/index.html");
+            }
         }
     }
+
 
 @endphp
 

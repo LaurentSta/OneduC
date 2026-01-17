@@ -12,6 +12,8 @@ use App\Http\Controllers\Backend\SkillReferentialController;
 use App\Http\Controllers\Backend\SkillDomainController;
 use App\Http\Controllers\Backend\SkillController;
 use App\Http\Controllers\Backend\QuizQuestionController;
+use App\Http\Controllers\Backend\ScormLibraryController;
+
 
 Route::middleware(['auth', 'role:admin'])
     ->prefix('admin')
@@ -100,6 +102,7 @@ Route::middleware(['auth', 'role:admin'])
                 Route::get('/{evaluation}/edit', 'edit')->name('edit');
                 Route::put('/{evaluation}', 'update')->name('update');
                 Route::delete('/{evaluation}', 'destroy')->name('destroy');
+                
             });
 
         // Référentiels
@@ -132,6 +135,25 @@ Route::middleware(['auth', 'role:admin'])
         });
 
         // Retours
-        Route::get('/retours', [LessonFeedbackController::class, 'adminIndex'])->name('retours.index');
-        Route::delete('/retours/{id}', [LessonFeedbackController::class, 'destroy'])->name('retours.delete');
+        Route::get('/retours', [LessonFeedbackController::class, 'adminIndex'])
+            ->name('retours.index');
+
+        Route::delete('/retours/{id}', [LessonFeedbackController::class, 'destroy'])
+            ->name('retours.delete');
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | SCORM – Import (utilisé depuis l’édition de leçon)
+    |--------------------------------------------------------------------------
+    */
+    // routes/admin.php
+Route::prefix('scorm')->name('scorm.')->group(function () {
+    Route::post('/import-lecture', [ScormLibraryController::class, 'importForLecture'])->name('import');
+});
+
+
+        
+
+
     });

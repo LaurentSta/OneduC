@@ -3,203 +3,153 @@
 
 @push('styles')
     <style>
-        /* Cartes de formulaire (fond charte en transparence) */
-        .form-card {
-            background: rgba(0, 68, 97, 0.06); /* bleuone #004461 avec transparence */
-            border: 1px solid rgba(0, 68, 97, 0.14);
-            border-radius: 16px;
-            padding: 16px;
-        }
-        .form-card-title {
-            font-size: 1.05rem; /* ~text-lg */
-            font-weight: 700;
-            color: #004461; /* bleuone */
-            margin-bottom: 8px;
-        }
-        .form-card-subtitle {
-            font-size: 0.875rem;
-            color: rgba(0,0,0,0.55);
-            margin-top: 6px;
-            line-height: 1.35;
-        }
-        .page-title {
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: #004461;
-        }
+        .form-card { background: rgba(0, 68, 97, 0.04); border: 1px solid rgba(0, 68, 97, 0.1); border-radius: 20px; padding: 20px; }
+        .form-card-title { font-size: 1rem; font-weight: 800; color: #004461; display: flex; align-items: center; gap: 8px; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .page-title { font-size: 1.5rem; font-weight: 800; color: #004461; }
+        .btn-action { transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600; border-radius: 12px; border: none; cursor: pointer; }
+        .btn-action:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
     </style>
 @endpush
 
 @section('admin')
+<div class="max-w-4xl mx-auto mt-8 px-4">
+    <div class="bg-white p-8 rounded-3xl shadow-xl border border-gray-100">
 
-<div class="max-w-4xl mx-auto mt-10">
-
-    <div class="bg-white p-6 rounded-2xl shadow">
-
-        {{-- Navigation --}}
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-            <nav class="text-sm text-gray-600">
-                <ol class="list-reset flex flex-wrap">
-                    <li>
-                        <a href="{{ route('admin.dashboard') }}" class="text-orangeone hover:underline">
-                            Accueil
-                        </a>
-                    </li>
-                    <li><span class="mx-2">/</span></li>
-                    <li>
-                        <a href="{{ route('admin.modules.lecture.add', ['id' => $mlecture->module_id]) }}" class="text-orangeone hover:underline">
-                            Module
-                        </a>
-                    </li>
-                    <li><span class="mx-2">/</span></li>
-                    <li class="text-gray-800 font-semibold">Éditer la lecture</li>
-                </ol>
-            </nav>
-
-            <div class="flex items-center gap-2">
-                
-
-                <a
-                href="{{ route('admin.modules.lecture.add', ['id' => $mlecture->module_id]) }}"
-                class="inline-flex items-center gap-2 text-sm font-semibold text-orangeone hover:underline"
-                >
-                <span aria-hidden="true">←</span>
-                Retour au module
-                </a>
+        {{-- Top Bar --}}
+        <div class="flex items-center justify-between mb-8">
+            <div>
+                <h2 class="page-title text-2xl">Édition de la leçon</h2>
+                <p class="text-sm text-gray-500 font-medium">Configuration des contenus et validations</p>
             </div>
+            <a href="{{ route('admin.modules.lecture.add', ['id' => $mlecture->module_id]) }}" 
+               class="btn-action px-4 py-2 bg-gray-100 text-gray-600 text-sm hover:bg-gray-200">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+                Retour
+            </a>
         </div>
 
-        {{-- Titre page --}}
-        <div class="mb-6">
-            <h2 class="page-title">Modifier une leçon</h2>
-        </div>
+        {{-- Alertes --}}
+        @if(session('success'))
+            <div class="mb-6 p-4 rounded-xl bg-green-50 border border-green-100 text-green-700 text-sm flex items-center gap-3 font-semibold">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>
+                {{ session('success') }}
+            </div>
+        @endif
+        @if(session('error'))
+            <div class="mb-6 p-4 rounded-xl bg-red-50 border border-red-100 text-red-700 text-sm font-semibold">
+                {{ session('error') }}
+            </div>
+        @endif
 
-        <form method="POST" action="{{ route('admin.lectures.update') }}" enctype="multipart/form-data" class="space-y-6">
+        {{-- FORMULAIRE PRINCIPAL (Titre + Quiz) --}}
+        <form method="POST" action="{{ route('admin.lectures.update') }}" class="space-y-8" id="main-lecture-form">
             @csrf
             <input type="hidden" name="id" value="{{ $mlecture->id }}">
 
-            {{-- Titre de la lecture --}}
-            <div class="form-card">
-                <label for="lecture_title" class="form-card-title">
-                    Titre de la leçon
-                </label>
-
-                <input
-                    type="text"
-                    name="lecture_title"
-                    id="lecture_title"
-                    value="{{ old('lecture_title', $mlecture->lecture_title) }}"
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-orangeone focus:border-orangeone text-sm bg-white"
-                    placeholder="Titre de la leçon"
-                    required
-                >
+            {{-- 1. Titre --}}
+            <div class="space-y-2">
+                <label for="lecture_title" class="text-sm font-extrabold text-bleuone uppercase ml-1">Titre de la leçon</label>
+                <input type="text" name="lecture_title" id="lecture_title" value="{{ old('lecture_title', $mlecture->lecture_title) }}" 
+                       class="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-orangeone text-lg font-bold text-gray-800 shadow-inner" required>
             </div>
 
-            {{-- Lien SCORM + Indicateur diapositives (même carte, même ligne) --}}
-                <div class="form-card">
-                <div class="form-card-title">Contenu SCORM</div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                    <label for="scorm_path" class="block text-sm font-medium text-gray-700 mb-1">
-                        Lien SCORM (nom du dossier)
-                    </label>
-                    <input
-                        type="text"
-                        name="scorm_path"
-                        id="scorm_path"
-                        value="{{ old('scorm_path', $mlecture->scorm_path) }}"
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-orangeone focus:border-orangeone text-sm bg-white"
-                        placeholder="Ex : TestLeconScorm"
-                    >
-                    <p class="form-card-subtitle">
-                        Exemple : <code>TestLeconScorm</code> affichera <code>/modules/scorm/TestLeconScorm/res/index.html</code>.
-                    </p>
-                    </div>
-
-                    <div>
-                    <label for="slide_count" class="block text-sm font-medium text-gray-700 mb-1">
-                        Nombre de diapositives
-                    </label>
-                    <input
-                        type="number"
-                        name="slide_count"
-                        id="slide_count"
-                        value="{{ old('slide_count', $mlecture->slide_count) }}"
-                        min="0"
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-orangeone focus:border-orangeone text-sm bg-white"
-                        placeholder="Ex : 12"
-                    >
-                    <p class="form-card-subtitle">
-                        Indicateur utilisé pour l’analyse de progression et le tableau de bord.
-                    </p>
-                    </div>
-                </div>
+            {{-- 2. BLOC SCORM --}}
+            <div class="form-card">
+                <div class="form-card-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" /></svg>
+                    Module Interactif (SCORM)
                 </div>
 
+                {{-- On vérifie s'il y a un chemin valide (soit déjà en base, soit venant de l'import immédiat) --}}
+                @php $currentScormPath = session('new_scorm_path', $mlecture->scorm_path); @endphp
 
-            
+                @if($currentScormPath)
+                    <div class="flex items-center justify-between p-5 mb-5 bg-white rounded-2xl border border-gray-100 shadow-sm">
+                        <div class="flex items-center gap-4 text-left">
+                            <div class="w-12 h-12 flex items-center justify-center bg-blue-50 text-bleuone rounded-xl">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                            </div>
+                            <div>
+                                <div class="font-bold text-gray-900 line-clamp-1">Contenu prêt</div>
+                                <div class="text-[10px] text-gray-400 font-mono line-clamp-1">{{ $currentScormPath }}</div>
+                            </div>
+                        </div>
+                        <a href="{{ route('lecture.scorm', ['id' => $mlecture->id]) }}" target="_blank" 
+                           class="btn-action px-5 py-2.5 bg-bleuone text-white text-sm">
+                            Visualiser
+                        </a>
+                    </div>
+                @else
+                    <p class="text-xs text-gray-500 mb-5 italic text-center p-4 bg-white/50 rounded-xl border border-dashed border-gray-200">Aucun contenu SCORM lié.</p>
+                @endif
 
-            {{-- Quiz --}}
-            {{-- Quiz --}}
-<div class="form-card">
-  <div class="flex items-center justify-between mb-3">
-    <div class="form-card-title">Quiz de validation</div>
+                {{-- Zone d'import --}}
+                <div class="bg-white/50 p-5 rounded-2xl border border-dashed border-gray-200">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+                        <div>
+                            <input type="file" name="zip" accept=".zip" form="form-import-scorm" 
+                                   class="block w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200" required>
+                        </div>
+                        <div class="flex items-center justify-end">
+                            <button type="submit" form="form-import-scorm" class="btn-action px-6 py-2 bg-orangeone/10 text-orangeone text-xs border border-orangeone/20 uppercase tracking-widest hover:bg-orangeone hover:text-white">
+                                Importer ZIP
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-    {{-- Action contextuelle quiz --}}
-    <a href="{{ route('admin.quiz.questions.index', ['lecture' => $mlecture->id]) }}"
-   class="inline-flex items-center gap-2 px-5 py-2.5 bg-bleuone text-white text-sm font-semibold rounded-xl shadow-sm hover:opacity-90 transition">
-  Gérer le quiz
-</a>
-  </div>
+            {{-- 3. Quiz --}}
+            <div class="form-card">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="form-card-title mb-0 font-extrabold uppercase">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
+                        Validation Quiz
+                    </div>
+                    <a href="{{ route('admin.quiz.questions.index', ['lecture' => $mlecture->id]) }}" 
+                       class="btn-action px-4 py-2 bg-white border border-gray-200 text-gray-700 text-xs shadow-sm hover:bg-gray-50">
+                        Gérer les questions
+                    </a>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-white/50 p-5 rounded-2xl">
+                    <label class="flex items-center gap-4 cursor-pointer p-2">
+                        <input type="hidden" name="quiz_enabled" value="0">
+                        <input type="checkbox" name="quiz_enabled" id="quiz_enabled" value="1" {{ old('quiz_enabled', $mlecture->quiz_enabled) ? 'checked' : '' }} class="h-6 w-6 rounded-lg text-orangeone border-gray-300 focus:ring-orangeone">
+                        <div>
+                            <span class="block font-bold text-gray-800">Activer le quiz</span>
+                            <span class="text-xs text-gray-500">Obligatoire pour valider la leçon</span>
+                        </div>
+                    </label>
+                    <div class="flex flex-col justify-center">
+                        <label class="block text-[10px] font-black text-gray-400 uppercase mb-1 ml-1">Nb de questions par tentative</label>
+                        <input type="number" name="quiz_questions_per_attempt" value="{{ old('quiz_questions_per_attempt', $mlecture->quiz_questions_per_attempt) }}" 
+                               class="w-full px-4 py-2 bg-white border border-gray-200 rounded-xl font-bold focus:ring-2 focus:ring-orangeone">
+                    </div>
+                </div>
+            </div>
 
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-    <div class="flex items-center gap-3">
-      {{-- Checkbox : toujours envoyer 0 si décochée --}}
-      <input type="hidden" name="quiz_enabled" value="0">
-      <input type="checkbox"
-             name="quiz_enabled"
-             id="quiz_enabled"
-             value="1"
-             {{ old('quiz_enabled', (int)($mlecture->quiz_enabled ?? 0)) ? 'checked' : '' }}
-             class="h-5 w-5 rounded border-gray-300 text-orangeone focus:ring-orangeone">
-      <label for="quiz_enabled" class="text-sm font-medium text-gray-800">
-        Activer le quiz pour cette leçon
-      </label>
-    </div>
+            {{-- IMPORTANT : On stocke le chemin scorm_path ici pour le formulaire principal --}}
+            <input type="hidden" name="scorm_path" value="{{ $currentScormPath }}">
 
-    <div>
-      <label for="quiz_questions_per_attempt" class="block text-sm font-medium text-gray-700 mb-1">
-        Questions diffusées (par tentative)
-      </label>
-      <input type="number"
-             name="quiz_questions_per_attempt"
-             id="quiz_questions_per_attempt"
-             value="{{ old('quiz_questions_per_attempt', (int)($mlecture->quiz_questions_per_attempt ?? 0)) }}"
-             min="0"
-             class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-orangeone focus:border-orangeone text-sm bg-white"
-             placeholder="Ex : 5">
-    </div>
-  </div>
+            {{-- Footer Actions --}}
+            <div class="flex flex-col md:flex-row items-center justify-end gap-4 pt-6 border-t border-gray-100">
+                <button type="submit" name="save_action" value="stay" class="btn-action w-full md:w-auto px-8 py-4 bg-gray-100 text-gray-600 hover:bg-gray-200">
+                    Enregistrer
+                </button>
 
-  <p class="form-card-subtitle">
-    Le quiz est rattaché à cette leçon. Gère la banque de questions depuis “Gérer le quiz”.
-  </p>
-</div>
-
-
-            {{-- Actions --}}
-            <div class="flex items-center justify-end gap-3 pt-2">
-                <button
-                    type="submit"
-                    class="inline-flex items-center px-6 py-2 bg-orangeone text-white text-sm font-semibold rounded-lg hover:opacity-90 transition"
-                >
-                    Sauvegarder les modifications
+                <button type="submit" name="save_action" value="back" class="btn-action w-full md:w-auto px-10 py-4 bg-orangeone text-white shadow-lg shadow-orangeone/20 hover:opacity-90">
+                    Enregistrer et quitter
                 </button>
             </div>
-
         </form>
     </div>
 </div>
+
+{{-- FORMULAIRE D'IMPORT SCORM (Indépendant et situé HORS du form principal) --}}
+<form id="form-import-scorm" method="POST" action="{{ route('admin.scorm.import') }}" enctype="multipart/form-data" class="hidden">
+    @csrf
+    <input type="hidden" name="lecture_id" value="{{ $mlecture->id }}">
+</form>
 
 @endsection
