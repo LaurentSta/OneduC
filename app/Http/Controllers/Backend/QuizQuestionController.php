@@ -155,58 +155,84 @@ class QuizQuestionController extends Controller
      *   ...
      * ]
      */
-    private function buildOptionsForType(string $type, ?array $rawOptions): array
+   private function buildOptionsForType(string $type, ?array $rawOptions): array
     {
-        if ($type === 'boolean') {
-            return [
-                ['text' => 'Vrai', 'is_correct' => 1],
-                ['text' => 'Faux', 'is_correct' => 0],
-            ];
-        }
-
         $rawOptions = $rawOptions ?? [];
 
         // Normaliser (text peut venir de text ou option_text)
         $options = [];
         foreach ($rawOptions as $o) {
             $text = trim((string)($o['text'] ?? $o['option_text'] ?? ''));
-            if ($text === '') {
-                continue;
-            }
+            if ($text === '') continue;
+
             $options[] = [
                 'text'       => $text,
-                'is_correct' => (int)($o['is_correct'] ?? 0) === 1 ? 1 : 0,
+                'is_correct' => ((int)($o['is_correct'] ?? 0) === 1) ? 1 : 0,
+            ];
+        }
+
+        // Cas Vrai/Faux : on garde les libellés fixes, mais on respecte le choix utilisateur
+        if ($type === 'boolean') {
+            // Si rien n'est envoyé (cas anormal), fallback
+            if (count($options) < 2) {
+                return [
+                    ['text' => 'Vrai', 'is_correct' => 1],
+                    ['text' => 'Faux', 'is_correct' => 0],
+                ];
+            }
+
+            // On force les libellés, mais on conserve le "is_correct"
+            $vraiCorrect = (int)($options[0]['is_correct'] ?? 0) === 1 ? 1 : 0;
+            $fauxCorrect = (int)($options[1]['is_correct'] ?? 0) === 1 ? 1 : 0;
+
+            return [
+                ['text' => 'Vrai', 'is_correct' => $vraiCorrect],
+                ['text' => 'Faux', 'is_correct' => $fauxCorrect],
             ];
         }
 
         return array_values($options);
     }
 
-    private function assertOptionsAreValidForType(string $type, array $options): void
-    {
-        if ($type === 'boolean') {
-            return; // on force Vrai/Faux
-        }
 
-        if (count($options) < 2) {
+    private function assertOptionsAreValidForType(string $type, array $options): void
+{
+    if ($type === 'boolean') {
+        if (count($options) !== 2) {
             throw ValidationException::withMessages([
-                'options' => 'Ajoutez au moins 2 propositions de réponses.',
+                'options' => 'Le type Vrai/Faux doit contenir exactement 2 propositions.',
             ]);
         }
 
         $correctCount = collect($options)->sum(fn ($o) => (int)$o['is_correct']);
-        if ($correctCount < 1) {
+        if ($correctCount !== 1) {
             throw ValidationException::withMessages([
-                'options' => 'Indiquez au moins une bonne réponse.',
+                'options' => 'En Vrai/Faux, il doit y avoir exactement 1 bonne réponse.',
             ]);
         }
-
-        if ($type === 'single' && $correctCount !== 1) {
-            throw ValidationException::withMessages([
-                'options' => 'En choix unique, il doit y avoir exactement 1 bonne réponse.',
-            ]);
-        }
+        return;
     }
+
+    if (count($options) < 2) {
+        throw ValidationException::withMessages([
+            'options' => 'Ajoutez au moins 2 propositions de réponses.',
+        ]);
+    }
+
+    $correctCount = collect($options)->sum(fn ($o) => (int)$o['is_correct']);
+    if ($correctCount < 1) {
+        throw ValidationException::withMessages([
+            'options' => 'Indiquez au moins une bonne réponse.',
+        ]);
+    }
+
+    if ($type === 'single' && $correctCount !== 1) {
+        throw ValidationException::withMessages([
+            'options' => 'En choix unique, il doit y avoir exactement 1 bonne réponse.',
+        ]);
+    }
+}
+
 
     private function replaceOptions(int $questionId, array $options): void
     {

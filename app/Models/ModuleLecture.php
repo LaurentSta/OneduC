@@ -35,9 +35,13 @@ class ModuleLecture extends Model
 
     // app/Models/ModuleLecture.php
     public function quizQuestions()
-    {
-        return $this->hasMany(\App\Models\QuizQuestion::class, 'lecture_id');
-    }
+{
+    return $this->hasMany(
+        \App\Models\QuizQuestion::class,
+        'lecture_id'
+    );
+}
+
 
     public function quizAttempts()
     {

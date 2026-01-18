@@ -8,11 +8,11 @@
     use Illuminate\Support\Facades\URL;
 
     $lecture = $selectedLecture ?? null;
-
     $moduleId  = $module->id ?? null;
     $lectureId = $lecture?->id;
     $sectionId = $lecture?->section_id;
 
+    // Navigation
     $nextUrl  = '#';
     $finalUrl = $moduleId ? "/stagiaire/modules/{$moduleId}/fin" : '/stagiaire';
 
@@ -24,6 +24,7 @@
         }
     }
 
+    // Quiz
     $quizStartUrl = null;
     if ($lecture && $lecture->quiz_enabled && $moduleId && $sectionId) {
         $quizStartUrl = URL::signedRoute('stagiaire.quiz.start', [
@@ -33,29 +34,12 @@
         ]);
     }
 
-
+    // SOURCE SCORM : On utilise directement le chemin propre stocké par l'admin
     $scormSrc = null;
-
-    if ($lecture) {
-
-        // 1) Nouveau système : bibliothèque SCORM (index_path calculé via accessor)
-        // Nécessite : ModuleLecture::getScormIndexPathAttribute()
-        $indexPath = $lecture->scorm_index_path ?? null;
-
-        if (!empty($indexPath)) {
-            $scormSrc = asset(ltrim($indexPath, '/'));
-        }
-
-        // 2) Fallback : ancien système (scorm_path)
-        if (!$scormSrc && !empty($lecture->scorm_path)) {
-            $path = trim((string) $lecture->scorm_path);
-            if ($path !== '') {
-                $scormSrc = asset("modules/scorm/00_Lecons/{$path}/res/index.html");
-            }
-        }
+    if ($lecture && !empty($lecture->scorm_path)) {
+        // asset() s'occupe de générer l'URL absolue vers le dossier public
+        $scormSrc = asset($lecture->scorm_path);
     }
-
-
 @endphp
 
 @if ($lectureId)
@@ -100,14 +84,28 @@
 
     
 
-    <iframe
-      title="Contenu de la leçon"
-      src="{{ $scormSrc }}"
-      frameborder="0"
-      allowfullscreen
-      class="w-full"
-      style="height: calc(100vh - 64px); display: block;">
-    </iframe>
+    {{-- Remplacer l'iframe par ce bloc plus robuste --}}
+<div class="relative w-full bg-gray-100" style="height: calc(100vh - 64px);">
+    @if ($scormSrc)
+        <iframe
+          title="{{ $lecture->lecture_title }}"
+          src="{{ $scormSrc }}"
+          frameborder="0"
+          allowfullscreen
+          class="w-full h-full block">
+        </iframe>
+    @else
+        <div class="flex items-center justify-center h-full">
+            <div class="text-center p-8 bg-white rounded-2xl shadow-sm border border-gray-200">
+                <svg class="w-12 h-12 text-gray-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <h3 class="text-lg font-bold text-bleuone">Contenu non disponible</h3>
+                <p class="text-gray-500 text-sm">Le module interactif n'est pas encore configuré pour cette leçon.</p>
+            </div>
+        </div>
+    @endif
+</div>
 
   @else
     <div class="max-w-[900px] mx-auto px-6 py-10">
