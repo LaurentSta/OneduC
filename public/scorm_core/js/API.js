@@ -1,26 +1,30 @@
 function afficherBoutonSuivantDepuisIframe() {
     const wrapper = window.parent?.document.getElementById('next-lesson-wrapper');
     const bouton = window.parent?.document.getElementById('next-lesson-button');
-    const nextUrl = window.parent?.SCORM_CONTEXT?.next_url;
+    const texteBouton = window.parent?.document.getElementById('next-button-text');
+    const context = window.parent?.SCORM_CONTEXT;
 
-    if (wrapper) {
+    if (wrapper && bouton && context) {
+        // Affiche le conteneur (flex)
         wrapper.classList.remove('hidden');
-    }
-
-    if (bouton) {
-        bouton.classList.remove('opacity-0', 'pointer-events-none');
-        bouton.classList.add('opacity-100');
-        bouton.style.pointerEvents = 'auto'; // sécurité
+        
+        // Anime l'apparition du bouton
+        bouton.classList.remove('opacity-0');
         bouton.style.opacity = '1';
 
-        if (nextUrl) {
+        // Gestion dynamique du texte et de l'action
+        if (context.quiz_start_url) {
+            if (texteBouton) texteBouton.innerText = "Passer au Questionnaire";
             bouton.onclick = function () {
-                window.parent.location.href = nextUrl;
+                context.goToQuiz();
+            };
+        } else {
+            if (texteBouton) texteBouton.innerText = "Leçon suivante";
+            bouton.onclick = function () {
+                context.goToNextLesson();
             };
         }
     }
-
-    console.log("✅ Bouton 'leçon suivante' affiché depuis l'iframe SCORM");
 }
 
 var API = {

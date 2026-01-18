@@ -406,29 +406,39 @@ class ModuleController extends Controller
     /**
      * 11. Formulaire d’édition d’une lecture (admin)
      */
-  
 
-    public function EditLecture($id)
-    {
-        $mlecture = ModuleLecture::findOrFail($id);
 
-        // Charger le SCORM déjà lié à la leçon + ses versions
-        $mlecture->load([
-            'scormPackage.activeVersion',
-            'scormPackage.versions' => fn ($q) => $q->orderByDesc('id'),
-            'scormPackageVersion',
-        ]);
+public function EditLecture($id)
+{
+    // Leçon + compteur de questions du quiz
+    $mlecture = ModuleLecture::withCount([
+        // relation quizQuestions => quiz_questions.lecture_id
+        'quizQuestions as quiz_questions_count'
+    ])->findOrFail($id);
 
-        // OPTION A : liste des SCORM sélectionnables dans la leçon
-        $packages = ScormPackage::select('id', 'name', 'slug', 'active_version_id')
-            ->orderBy('name')
-            ->get();
+    // Charger le SCORM déjà lié à la leçon + ses versions
+    $mlecture->load([
+        'scormPackage.activeVersion',
+        'scormPackage.versions' => fn ($q) => $q->orderByDesc('id'),
+        'scormPackageVersion',
+    ]);
 
-        return view(
-            'admin.backend.modules.lecture.edit_module_lecture',
-            compact('mlecture', 'packages')
-        );
-    }
+    // Liste des SCORM sélectionnables
+    $packages = ScormPackage::select('id', 'name', 'slug', 'active_version_id')
+        ->orderBy('name')
+        ->get();
+
+    return view(
+        'admin.backend.modules.lecture.edit_module_lecture',
+        [
+            'mlecture'            => $mlecture,
+            'packages'            => $packages,
+            // optionnel si tu veux l’utiliser explicitement dans la vue
+            'quizQuestionsCount'  => $mlecture->quiz_questions_count,
+        ]
+    );
+}
+
 
 
 

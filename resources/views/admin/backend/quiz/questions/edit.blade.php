@@ -100,30 +100,59 @@
 
         <div class="space-y-3">
           <template x-for="(option, index) in options" :key="index">
-            <div class="flex items-center gap-4 p-4 rounded-xl border border-gray-200 bg-white shadow-sm">
-              <div class="flex items-center justify-center">
-                <input :type="currentType === 'multiple' ? 'checkbox' : 'radio'"
-                       :name="`options[${index}][is_correct]`"
-                       value="1"
-                       x-model="option.is_correct"
-                       class="h-6 w-6 text-orangeone border-gray-300 focus:ring-orangeone rounded-full">
-              </div>
+  <div class="flex items-center gap-4 p-4 rounded-xl border border-gray-200 bg-white shadow-sm">
 
-              <div class="flex-1">
-                <input type="text" :name="`options[${index}][text]`" x-model="option.text" required
-                       class="w-full border-0 border-b border-transparent focus:border-orangeone focus:ring-0 text-sm p-0 pb-1"
-                       :placeholder="'Option ' + (index + 1)">
-              </div>
+    {{-- Sélecteur bonne réponse --}}
+    <div class="flex items-center justify-center">
+      {{-- En single/boolean : radio group unique --}}
+      <template x-if="currentType !== 'multiple'">
+        <input
+          type="radio"
+          name="correct_choice_index"
+          :value="index"
+          :checked="option.is_correct"
+          @change="markCorrect(index)"
+          class="h-6 w-6 text-orangeone border-gray-300 focus:ring-orangeone rounded-full"
+        >
+      </template>
 
-              <button type="button" @click="removeOption(index)" x-show="canRemove()"
-                      class="text-red-400 hover:text-red-600 p-1">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                </svg>
-              </button>
-            </div>
-          </template>
+      {{-- En multiple : checkbox toggle --}}
+      <template x-if="currentType === 'multiple'">
+        <input
+          type="checkbox"
+          :checked="option.is_correct"
+          @change="toggleCorrect(index)"
+          class="h-6 w-6 text-orangeone border-gray-300 focus:ring-orangeone rounded"
+        >
+      </template>
+
+      {{-- Champs envoyés au serveur --}}
+      <input type="hidden" :name="`options[${index}][text]`" :value="option.text">
+      <input type="hidden" :name="`options[${index}][is_correct]`" :value="option.is_correct ? 1 : 0">
+    </div>
+
+    {{-- Texte option --}}
+    <div class="flex-1">
+      <input
+        type="text"
+        x-model="option.text"
+        :disabled="currentType === 'boolean'"
+        :required="currentType !== 'boolean'"
+        class="w-full border-0 border-b border-transparent focus:border-orangeone focus:ring-0 text-sm p-0 pb-1"
+        :placeholder="'Option ' + (index + 1)"
+      >
+    </div>
+
+    <button type="button" @click="removeOption(index)" x-show="canRemove()"
+            class="text-red-400 hover:text-red-600 p-1">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+      </svg>
+    </button>
+  </div>
+</template>
+
         </div>
 
         <p class="text-xs text-gray-500">
@@ -194,34 +223,85 @@ function quizEditManager() {
       )
     ),
 
+    init() {
+      // Sécurisation: si options vides, créer un état valide
+      if (!Array.isArray(this.options) || this.options.length === 0) {
+        this.changeType(this.currentType || 'single');
+      } else {
+        // Normalisation booleen: 2 options + 1 seule correcte
+        if (this.currentType === 'boolean') {
+          this.ensureBoolean();
+        }
+        if (this.currentType === 'single') {
+          this.ensureSingle();
+        }
+      }
+    },
+
+    // ---------- Helpers de cohérence ----------
+    ensureBoolean() {
+      // Force 2 options libellées, mais conserve le choix si possible
+      let vraiCorrect = !!(this.options[0]?.is_correct);
+      let fauxCorrect = !!(this.options[1]?.is_correct);
+
+      // Si aucune ou 2 bonnes réponses -> fallback: Vrai correct
+      const correctCount = (vraiCorrect ? 1 : 0) + (fauxCorrect ? 1 : 0);
+      if (correctCount !== 1) {
+        vraiCorrect = true;
+        fauxCorrect = false;
+      }
+
+      this.options = [
+        { text: 'Vrai', is_correct: vraiCorrect },
+        { text: 'Faux', is_correct: fauxCorrect },
+      ];
+    },
+
+    ensureSingle() {
+      let firstTrue = this.options.findIndex(o => !!o.is_correct);
+      if (firstTrue === -1) firstTrue = 0;
+      this.options = this.options.map((o, i) => ({ ...o, is_correct: i === firstTrue }));
+    },
+
+    // ---------- Actions UI ----------
     changeType(type) {
       this.currentType = type;
 
       if (type === 'boolean') {
-        // force 2 options
         this.options = [
           { text: 'Vrai', is_correct: true },
-          { text: 'Faux', is_correct: false }
+          { text: 'Faux', is_correct: false },
         ];
         return;
       }
 
-      // si on bascule depuis V/F vers autre type
+      // Si on bascule depuis V/F ou options insuffisantes
       if (this.options.length < 2 || this.options[0]?.text === 'Vrai') {
         this.options = [
           { text: '', is_correct: true },
           { text: '', is_correct: false },
           { text: '', is_correct: false },
-          { text: '', is_correct: false }
+          { text: '', is_correct: false },
         ];
       }
 
-      // en "single", on impose une seule bonne réponse côté interface
       if (type === 'single') {
-        let firstTrue = this.options.findIndex(o => o.is_correct);
-        if (firstTrue === -1) firstTrue = 0;
-        this.options = this.options.map((o, i) => ({ ...o, is_correct: i === firstTrue }));
+        this.ensureSingle();
       }
+    },
+
+    markCorrect(index) {
+      // single/boolean : une seule bonne réponse
+      this.options = this.options.map((o, i) => ({ ...o, is_correct: i === index }));
+      if (this.currentType === 'boolean') {
+        // garder les libellés propres
+        this.ensureBoolean();
+      }
+    },
+
+    toggleCorrect(index) {
+      // multiple : toggle
+      this.options[index].is_correct = !this.options[index].is_correct;
     },
 
     addOption() {
@@ -232,26 +312,19 @@ function quizEditManager() {
     removeOption(index) {
       if (this.currentType === 'boolean') return;
       if (this.options.length <= 2) return;
+
       this.options.splice(index, 1);
 
       if (this.currentType === 'single') {
-        // toujours 1 true
-        if (!this.options.some(o => o.is_correct)) this.options[0].is_correct = true;
-        // pas plus d'un true
-        let seen = false;
-        this.options.forEach(o => {
-          if (o.is_correct) {
-            if (!seen) seen = true;
-            else o.is_correct = false;
-          }
-        });
+        this.ensureSingle();
       }
     },
 
     canRemove() {
       return this.currentType !== 'boolean' && this.options.length > 2;
-    }
+    },
   }
 }
 </script>
+
 @endsection

@@ -63,11 +63,7 @@
                     (\Illuminate\Support\Facades\Route::has('admin.scorm.library.test') ? route('admin.scorm.library.test') : url('/admin/scorm-library/test'));
             @endphp
 
-            <a href="{{ $scormMenuUrl }}"
-            class="{{ $itemBase }} {{ request()->routeIs('admin.scorm.*') || request()->is('admin/scorm-library*') ? $itemActive : $itemHover }}">
-                <span class="text-base font-medium">SCORM</span>
-            </a>
-
+            
             {{-- Formateurs --}}
             <a href="{{ route('admin.formateurs') }}"
                class="{{ $itemBase }} {{ request()->routeIs('admin.formateurs*') ? $itemActive : $itemHover }}">

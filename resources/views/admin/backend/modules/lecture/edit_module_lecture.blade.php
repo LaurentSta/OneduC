@@ -122,9 +122,30 @@
                         </div>
                     </label>
                     <div class="flex flex-col justify-center">
-                        <label class="block text-[10px] font-black text-gray-400 uppercase mb-1 ml-1">Nb de questions par tentative</label>
-                        <input type="number" name="quiz_questions_per_attempt" value="{{ old('quiz_questions_per_attempt', $mlecture->quiz_questions_per_attempt) }}" 
-                               class="w-full px-4 py-2 bg-white border border-gray-200 rounded-xl font-bold focus:ring-2 focus:ring-orangeone">
+                        <div class="flex flex-col justify-center">
+                            <div class="flex items-center justify-between gap-3 mb-1">
+                                <label class="block text-[10px] font-black text-gray-400 uppercase ml-1">
+                                    Nb de questions par tentative
+                                </label>
+
+                                <span class="inline-flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-wider
+                                            bg-white border border-gray-200 rounded-full px-3 py-1 text-gray-600">
+                                    Questions créées :
+                                    <span class="text-bleuone">
+                                        {{ $quizQuestionsCount ?? ($mlecture->quiz_questions_count ?? 0) }}
+                                    </span>
+                                </span>
+                            </div>
+
+                            <input
+                                type="number"
+                                name="quiz_questions_per_attempt"
+                                value="{{ old('quiz_questions_per_attempt', $mlecture->quiz_questions_per_attempt) }}"
+                                min="0"
+                                class="w-full px-4 py-2 bg-white border border-gray-200 rounded-xl font-bold focus:ring-2 focus:ring-orangeone"
+                            >
+                        </div>
+
                     </div>
                 </div>
             </div>

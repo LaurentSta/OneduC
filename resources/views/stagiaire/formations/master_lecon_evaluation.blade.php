@@ -60,21 +60,26 @@
                     <div class="px-0 lg:px-0 py-0">
                         @yield('content')
                     </div>
+                    {{-- Dans master_lecon_evaluation.blade.php --}}
+{{-- On retire 'inset-x-0' et on utilise 'left-1/2' avec un transform --}}
+<div id="next-lesson-wrapper" 
+     class="hidden fixed bottom-10 z-50 pointer-events-none transition-all duration-300"
+     style="left: calc(50% + (var(--sidebar-offset, 0px) / 2)); transform: translateX(-50%);">
+    <button id="next-lesson-button"
+            type="button"
+            class="opacity-0 pointer-events-auto px-6 py-2.5 text-white bg-[#E94D2A] transition-all duration-300 flex items-center gap-2 hover:opacity-90 active:scale-95"
+            style="border-radius: 20px; font-weight: 400; font-size: 15px; border: none; box-shadow: none;">
+        <span id="next-button-text">Leçon suivante</span>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+        </svg>
+    </button>
+</div>
                 </main>
             </div>
         </div>
 
-        {{-- Bouton global "leçon suivante" (affiché par API.js depuis l’iframe) --}}
-        <div id="next-lesson-wrapper"
-             class="hidden fixed bottom-6 right-6 z-50"
-             aria-live="polite">
-            <button id="next-lesson-button"
-                    type="button"
-                    class="opacity-0 pointer-events-none px-4 py-2 rounded-[10px] shadow-md bg-[#004461] text-white hover:bg-[#00364d] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#E94D2A] transition"
-                    aria-label="Aller à la leçon suivante">
-                Leçon suivante
-            </button>
-        </div>
+        
     </div>
     <script>
   var hebergementDomaine = window.location.origin;
@@ -84,6 +89,41 @@
     cssLinkModeClassName: 'btn-access'
   };
 </script>
+{{-- ... reste de votre code master ... --}}
 
+    <script>
+    // Fonction pour calculer et appliquer le centrage sur la zone de contenu
+    function ajusterPositionBouton() {
+        const sidebar = document.getElementById('module-sidebar-wrapper');
+        const wrapper = document.getElementById('next-lesson-wrapper');
+        const main = document.querySelector('main');
+        
+        if (sidebar && wrapper && main) {
+            // On récupère la largeur de la sidebar si elle est visible
+            // Sinon on considère 0 si elle est masquée par AlpineJS
+            const isSidebarOpen = window.localStorage.getItem('sidebarOpen') !== 'false';
+            const sidebarWidth = isSidebarOpen ? sidebar.offsetWidth : 0;
+            
+            // On définit une variable CSS pour décaler le bouton vers la droite
+            // de la moitié de la largeur de la sidebar
+            document.documentElement.style.setProperty('--sidebar-offset', sidebarWidth + 'px');
+        }
+    }
+
+    // Écoute les événements AlpineJS de votre header/sidebar
+    window.addEventListener('toggle-sidebar', () => {
+        // Petit délai pour laisser le temps à l'animation de la sidebar de commencer
+        setTimeout(ajusterPositionBouton, 50);
+    });
+
+    // Ajustement lors du redimensionnement de la fenêtre ou du chargement
+    window.addEventListener('resize', ajusterPositionBouton);
+    window.addEventListener('load', ajusterPositionBouton);
+
+    // Exécution immédiate au cas où
+    document.addEventListener('DOMContentLoaded', ajusterPositionBouton);
+    </script>
+</body>
+</html>
 </body>
 </html>
