@@ -41,6 +41,17 @@
             </div>
         @endif
 
+        @if ($errors->any())
+            <div class="mb-6 p-4 rounded-xl bg-red-50 border border-red-100 text-red-700 text-sm font-semibold">
+                <div class="mb-2">Certaines informations sont incorrectes :</div>
+                <ul class="list-disc ml-5 space-y-1 font-normal">
+                    @foreach ($errors->all() as $message)
+                        <li>{{ $message }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
         {{-- FORMULAIRE PRINCIPAL (Titre + Quiz) --}}
         <form method="POST" action="{{ route('admin.lectures.update') }}" class="space-y-8" id="main-lecture-form">
             @csrf
@@ -61,7 +72,10 @@
                 </div>
 
                 {{-- On vérifie s'il y a un chemin valide (soit déjà en base, soit venant de l'import immédiat) --}}
-                @php $currentScormPath = session('new_scorm_path', $mlecture->scorm_path); @endphp
+                @php
+                    $currentScormPath = session('new_scorm_path', $mlecture->scorm_index_path ?? $mlecture->scorm_path);
+                @endphp
+
 
                 @if($currentScormPath)
                     <div class="flex items-center justify-between p-5 mb-5 bg-white rounded-2xl border border-gray-100 shadow-sm">

@@ -15,28 +15,77 @@
   h2 { @apply font-varela; }
 }
 
-/* 4) Composants */
 @layer components {
-  /* Player vidéo */
-  .video-js {
-    position: static !important;
-    width: auto !important;
-    height: auto !important;
+  /* Conteneur du bouton Confort+ */
+  .access-anchor {
+    @apply absolute;
+    z-index: 9999; /* au-dessus du header */
+    pointer-events: none; /* laisse passer les clics sauf sur le bouton */
+    right: 20px;
+    margin-top: -1px;
   }
 
-  /* Bouton Confort+ (link-mode) */
-  .btn-access{
-    @apply h-12 w-12 rounded-full border bg-white text-[#004461] shadow-md
+  /* Bouton Confort+ */
+  .btn-access {
+    @apply h-12 w-12 rounded-full border bg-white text-[#004461]
            flex items-center justify-center hover:bg-[#E94D2A] hover:text-white
            focus:outline-none focus:ring;
-    text-indent:-9999px; position:relative;
+    font-size: 0;
+    color: transparent;
+    position: relative;
+    pointer-events: auto;
+    border-radius: 0;
   }
-  /* Icône “view” en fond du bouton */
-  .btn-access::after{
-    content:""; position:absolute; width:24px; height:24px;
-    background: center / contain no-repeat url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' viewBox='0 0 24 24'><path d='M21 17v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2'/><path d='M21 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v2'/><circle cx='12' cy='12' r='1'/><path d='M18.944 12.33a1 1 0 0 0 0-.66 7.5 7.5 0 0 0-13.888 0 1 1 0 0 0 0 .66 7.5 7.5 0 0 0 13.888 0'/></svg>");
+
+  .btn-access::after {
+    content: "+";
+    color: #E94D2A;
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .btn-access:hover::after {
+    color: #fff;
+  }
+
+  /* Panneau Confort+ */
+  #accessibility-toolbar,
+  .accessibility-toolbar {
+    @apply fixed right-[60px];
+    transform: none !important;
+    max-height: calc(100vh - var(--access-top, 96px) - 16px);
+    overflow: auto;
+    z-index: 9998;
+    box-shadow: none;
+  }
+
+  @media (max-width: 768px) {
+    .access-anchor {
+      right: 16px;
+      top: auto;
+      bottom: 16px;
+    }
+    #accessibility-toolbar,
+    .accessibility-toolbar {
+      right: 16px !important;
+      top: auto !important;
+      bottom: 80px !important;
+    }
+    .btn-access {
+      writing-mode: initial;
+      transform: none;
+      width: 56px;
+      height: 56px;
+      padding: 12px;
+    }
   }
 }
+
 
 /* 5) Utilitaires optionnels */
 @layer utilities {

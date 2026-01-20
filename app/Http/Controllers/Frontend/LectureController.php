@@ -43,19 +43,19 @@ class LectureController extends Controller
     }
     public function showScorm($id)
     {
-        $lecture = \App\Models\ModuleLecture::findOrFail($id);
+        $lecture = \App\Models\ModuleLecture::with(['scormPackage.activeVersion', 'scormPackageVersion'])->findOrFail($id);
 
-        // Debug pour Debian : vérifiez que l'URL ne contient pas "home/laurents"
-        // dd(asset($lecture->scorm_path)); 
+        $path = $lecture->scorm_index_path ?: $lecture->scorm_path;
 
-        if (!$lecture->scorm_path) {
+        if (!$path) {
             abort(404, 'Contenu SCORM non trouvé.');
         }
 
         return view('admin.backend.modules.lecture.lecture_scorm', [
             'lecture' => $lecture,
-            'scormUrl' => asset($lecture->scorm_path)
+            'scormUrl' => asset($path),
         ]);
+
     }
 
 

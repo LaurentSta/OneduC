@@ -447,74 +447,87 @@ public function EditLecture($id)
      * 12. Mise à jour d’une lecture (admin)
      */
     public function UpdateModuleLecture(Request $request)
-    {
-            $request->validate([
-        'id' => 'required|exists:module_lectures,id',
-        'lecture_title' => 'required|string|max:255',
+        {
+            $validated = $request->validate([
+                'id' => 'required|exists:module_lectures,id',
+                'lecture_title' => 'required|string|max:255',
 
-        // Ancien champ conservé pour compat (mais on va le rendre secondaire)
-        'scorm_path' => 'nullable|string|max:255',
+                // Compat (ancien champ)
+                'scorm_path' => 'nullable|string|max:255',
 
-        // Nouveaux champs bibliothèque
-        'scorm_package_id' => 'nullable|exists:scorm_packages,id',
-        'use_active_scorm_version' => 'nullable|in:0,1',
-        'scorm_package_version_id' => 'nullable|exists:scorm_package_versions,id',
+                // Bibliothèque SCORM
+                'scorm_package_id' => 'nullable|exists:scorm_packages,id',
+                'use_active_scorm_version' => 'nullable|in:0,1',
+                'scorm_package_version_id' => 'nullable|exists:scorm_package_versions,id',
 
-        'slide_count' => 'nullable|integer|min:0',
-        'quiz_enabled' => 'nullable|in:0,1',
-        'quiz_questions_per_attempt' => 'required_if:quiz_enabled,1|integer|min:1',
-    ]);
+                // Indicateurs / quiz
+                'slide_count' => 'nullable|integer|min:0',
+                'quiz_enabled' => 'nullable|in:0,1',
+                'quiz_questions_per_attempt' => 'exclude_unless:quiz_enabled,1|required|integer|min:1',
+            ]);
 
-    $lecture = ModuleLecture::findOrFail($request->id);
-    $useActive = (bool) $request->input('use_active_scorm_version', 1);
+            $lecture = ModuleLecture::findOrFail($validated['id']);
 
-    // Si on ne suit pas la version active, une version doit être sélectionnée
-    if (!$useActive && !$request->filled('scorm_package_version_id')) {
-        return back()->withErrors([
-            'scorm_package_version_id' => 'Sélectionne une version SCORM (ou active “version active”).',
-        ])->withInput();
-    }
+            // IMPORTANT : éviter le piège (bool)"0" == true
+            $useActive = ($request->input('use_active_scorm_version', '1') === '1');
 
-    // Vérifier que la version appartient bien au package (évite incohérences)
-    if ($request->filled('scorm_package_id') && $request->filled('scorm_package_version_id')) {
-        $ver = ScormPackageVersion::find($request->scorm_package_version_id);
+            // Quiz : cohérence des valeurs
+            $quizEnabled = ($request->input('quiz_enabled', '0') === '1');
 
-        if (!$ver || (int)$ver->scorm_package_id !== (int)$request->scorm_package_id) {
-            return back()->withErrors([
-                'scorm_package_version_id' => 'La version sélectionnée ne correspond pas au SCORM choisi.',
-            ])->withInput();
-        }
-    }
-    $lecture->update([
-        'lecture_title' => $request->lecture_title,
+            // Si on ne suit pas la version active, une version doit être choisie
+            if (!$useActive && !$request->filled('scorm_package_version_id')) {
+                return back()
+                    ->withErrors([
+                        'scorm_package_version_id' => 'Sélectionne une version SCORM (ou active “version active”).',
+                    ])
+                    ->withInput();
+            }
 
-        // Ancien champ (on le garde pour l’instant)
-        'scorm_path' => $request->scorm_path,
+            // Vérifier que la version appartient bien au package
+            if ($request->filled('scorm_package_id') && $request->filled('scorm_package_version_id')) {
+                $ver = ScormPackageVersion::find($request->input('scorm_package_version_id'));
 
-        // Bibliothèque
-        'scorm_package_id' => $request->input('scorm_package_id'),
-        'use_active_scorm_version' => (bool) $request->input('use_active_scorm_version', 1),
-        'scorm_package_version_id' => $useActive ? null : $request->input('scorm_package_version_id'),
+                if (!$ver || (int) $ver->scorm_package_id !== (int) $request->input('scorm_package_id')) {
+                    return back()
+                        ->withErrors([
+                            'scorm_package_version_id' => 'La version sélectionnée ne correspond pas au SCORM choisi.',
+                        ])
+                        ->withInput();
+                }
+            }
 
-        'slide_count' => $request->input('slide_count', 0),
-        'quiz_enabled' => (bool) $request->input('quiz_enabled', 0),
-        'quiz_questions_per_attempt' => (int) $request->input('quiz_questions_per_attempt', 0),
-    ]);
+            $lecture->update([
+                'lecture_title' => $validated['lecture_title'],
 
+                // Compat (ancien champ)
+                'scorm_path' => $validated['scorm_path'] ?? null,
 
-    $action = $request->input('save_action', 'back');
+                // Bibliothèque
+                'scorm_package_id' => $request->input('scorm_package_id'),
+                'use_active_scorm_version' => $useActive,
+                'scorm_package_version_id' => $useActive ? null : $request->input('scorm_package_version_id'),
 
-        if ($action === 'stay') {
+                // Indicateurs / quiz
+                'slide_count' => (int) $request->input('slide_count', 0),
+                'quiz_enabled' => $quizEnabled,
+                'quiz_questions_per_attempt' => $quizEnabled
+                    ? (int) $request->input('quiz_questions_per_attempt')
+                    : 0,
+            ]);
+
+            $action = $request->input('save_action', 'back');
+
+            if ($action === 'stay') {
+                return redirect()
+                    ->back()
+                    ->with('success', 'La lecture a été mise à jour avec succès.');
+            }
+
             return redirect()
-                ->back()
+                ->route('admin.modules.lecture.add', ['id' => $lecture->module_id])
                 ->with('success', 'La lecture a été mise à jour avec succès.');
         }
 
-        return redirect()
-            ->route('admin.modules.lecture.add', ['id' => $lecture->module_id])
-            ->with('success', 'La lecture a été mise à jour avec succès.');
-
-}
 
     /**
      * 13. Suppression d’une lecture (admin)

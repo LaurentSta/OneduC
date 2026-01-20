@@ -161,30 +161,92 @@
       </div>
 
       {{-- Médias optionnels (pliable) --}}
-      <details class="bg-gray-50 rounded-2xl p-6 border border-gray-100">
-        <summary class="cursor-pointer text-sm font-bold text-gray-700 uppercase tracking-wider">
-          Médias & Accessibilité (optionnel)
-        </summary>
+<details class="bg-gray-50 rounded-2xl p-6 border border-gray-100">
+    <summary class="cursor-pointer text-sm font-bold text-gray-700 uppercase tracking-wider">
+        Médias & Accessibilité (optionnel)
+    </summary>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-6">
-          <div class="space-y-3">
-            <label class="block text-xs font-bold text-gray-500 italic">Image</label>
-            <input type="file" name="image" accept="image/*" class="text-sm w-full">
-            <input type="text" name="image_alt"
-                   value="{{ old('image_alt', $question->image_alt) }}"
-                   placeholder="Texte alternatif (obligatoire si image)"
-                   class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg focus:ring-orangeone focus:border-orangeone">
-          </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-6">
 
-          <div class="space-y-3">
+        {{-- IMAGE --}}
+        {{-- IMAGE --}}
+      <div class="space-y-4" x-data="{ preview: null }">
+          <label class="block text-xs font-bold text-gray-500 italic">Image</label>
+
+          {{-- Image existante --}}
+          @if(!empty($question->image_path))
+              <div>
+                  <p class="text-xs font-semibold text-gray-600 mb-2">Image actuelle</p>
+                  <img
+                      src="{{ asset('storage/'.$question->image_path) }}"
+                      alt="{{ $question->image_alt ?? '' }}"
+                      class="max-h-44 rounded-lg border border-gray-200 shadow-sm"
+                  >
+              </div>
+
+              
+          @endif
+
+          {{-- Upload nouvelle image --}}
+          <input type="file"
+                name="image"
+                accept="image/*"
+                class="text-sm w-full"
+                @change="preview = URL.createObjectURL($event.target.files[0])">
+
+          {{-- Aperçu nouvelle image --}}
+          <template x-if="preview">
+              <div>
+                  <p class="text-xs font-semibold text-gray-600 mb-2">Nouvelle image</p>
+                  <img :src="preview"
+                      class="max-h-44 rounded-lg border border-gray-200 shadow-sm">
+              </div>
+          </template>
+
+          {{-- Texte alternatif --}}
+          <input type="text"
+                name="image_alt"
+                value="{{ old('image_alt', $question->image_alt) }}"
+                placeholder="Texte alternatif (obligatoire si image)"
+                class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg focus:ring-orangeone focus:border-orangeone"
+                required>
+
+          <button type="submit"
+                name="remove_image"
+                value="1"
+                class="px-4 py-2 rounded-lg bg-red-600 text-white text-xs font-semibold hover:opacity-90"
+                onclick="return confirm('Supprimer l’image de cette question ?')">
+            Supprimer l’image
+        </button>
+
+      </div>
+
+
+        {{-- AUDIO --}}
+        <div class="space-y-4">
             <label class="block text-xs font-bold text-gray-500 italic">Audio</label>
+
+            @if(!empty($question->audio_path))
+                <div>
+                    <p class="text-xs font-semibold text-gray-600 mb-2">Audio actuel</p>
+                    <audio controls class="w-full">
+                        <source src="{{ asset('storage/'.$question->audio_path) }}">
+                        Votre navigateur ne supporte pas la lecture audio.
+                    </audio>
+                </div>
+            @endif
+
             <input type="file" name="audio" accept="audio/*" class="text-sm w-full">
-            <textarea name="audio_transcript" rows="2"
-                      placeholder="Transcription"
+
+            <textarea name="audio_transcript"
+                      rows="2"
+                      placeholder="Transcription audio"
                       class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg focus:ring-orangeone focus:border-orangeone">{{ old('audio_transcript', $question->audio_transcript) }}</textarea>
-          </div>
         </div>
-      </details>
+
+    </div>
+</details>
+
 
       {{-- Validation --}}
       <div class="flex items-center justify-between pt-6 border-t">

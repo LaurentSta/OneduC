@@ -20,11 +20,11 @@ public function importForLecture(ScormImportRequest $request, ScormImporter $imp
     
     try {
         $slug = \Illuminate\Support\Str::slug($lecture->lecture_title, '_');
-        $targetFolder = "modules/scorm/00_Lecons/{$slug}";
+        $targetFolder = "modules/scorm/00_Lecons/lecture_{$lecture->id}";
         $fullPath = public_path($targetFolder);
 
-        if (File::exists($fullPath)) {
-            File::cleanDirectory($fullPath);
+        if (\Illuminate\Support\Facades\File::exists($fullPath)) {
+            \Illuminate\Support\Facades\File::cleanDirectory($fullPath);
         }
 
         // On n'envoie plus de paramètre inject_api ici
@@ -36,6 +36,8 @@ public function importForLecture(ScormImportRequest $request, ScormImporter $imp
         $lecture->update([
             'scorm_path' => $result->relative_index_path,
             'scorm_package_id' => $result->package_id,
+            'scorm_package_version_id' => $result->version_id,
+            'use_active_scorm_version' => 1,
         ]);
 
         // ScormLibraryController.php
