@@ -6,6 +6,7 @@ use App\Http\Controllers\Formateur\GroupeController;
 use App\Http\Controllers\Formateur\ProgressionController;
 use App\Http\Controllers\Backend\ModuleController;
 
+
 Route::middleware(['auth', 'role:formateur'])
     ->prefix('formateur')
     ->name('formateur.')
@@ -71,5 +72,24 @@ Route::middleware(['auth', 'role:formateur'])
 
     Route::get('/formations/{module}/section/{section}/lesson/{lesson}', [ModuleController::class, 'lire'])
         ->name('formations.lecture');
+
+       
+
+    // Personnaliser les leçons d’un module pour un groupe
+    Route::get('/groupes/{group}/modules/{module}/lecons', [GroupeController::class, 'editModuleLessons'])
+        ->name('groupes.modules.lecons.edit');
+
+    Route::post('/groupes/{group}/modules/{module}/lecons/{lecture}/toggle', [GroupeController::class, 'toggleModuleLesson'])
+        ->name('groupes.modules.lecons.toggle');
+
+    Route::post('/groupes/{group}/modules/{module}/lecons/{lecture}/move-up', [GroupeController::class, 'moveModuleLessonUp'])
+        ->name('groupes.modules.lecons.move.up');
+
+    Route::post('/groupes/{group}/modules/{module}/lecons/{lecture}/move-down', [GroupeController::class, 'moveModuleLessonDown'])
+        ->name('groupes.modules.lecons.move.down');
+
+    Route::post('/groupes/{group}/modules/{module}/lecons/reset', [GroupeController::class, 'resetModuleLessons'])
+        ->name('groupes.modules.lecons.reset');
+
 
 });
