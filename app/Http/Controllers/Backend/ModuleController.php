@@ -373,9 +373,12 @@ class ModuleController extends Controller
         ->with('success', 'Section mise à jour avec succès !');
 }
 
+    /**
+     * 9. Vue Section (stagiaire ou formateur)
+     */
+    
 
 
-   
 
     /**
      * 10. Sauvegarde d’une lecture (admin)
@@ -555,42 +558,62 @@ public function EditLecture($id)
             'alert-type' => 'success'
         ]);
     }
-    public function section(Request $request, Module $module, ModuleSection $section)
-{
-    // Sécurité : cohérence URL
-    abort_unless((int) $section->module_id === (int) $module->id, 404);
 
-    // Charger sections + lectures (sidebar)
+    // ModuleController.php
+
+public function section(Request $request, Module $module, ModuleSection $section)
+{
+    $user = auth()->user();
+
+    // Sécurité : cohérence URL + visibilité
+    abort_unless((int) $section->module_id === (int) $module->id, 404);
+    abort_unless($module->isVisibleTo($user), 404);
+
+    // Charger sections + lectures (ordre admin)
     $module->load([
         'sections' => function ($q) {
             $q->orderBy('id')
               ->with(['lectures' => function ($qq) {
-                  $qq->orderBy('position');
+                  $qq->orderBy('position')->orderBy('id');
               }]);
         },
     ]);
 
-    // Toutes les leçons du module (pour buildLectureStats)
+    // Appliquer personnalisation formateur (groupe x module x leçon) si elle existe
+    $groupId = $this->resolveGroupIdForUserAndModule((int) $user->id, (int) $module->id);
+    $this->applyGroupLessonOverrides($module, $groupId);
+
+    // Re-récupérer la section après filtrage (au cas où elle existe mais sans leçons)
+    $section = $module->sections->firstWhere('id', (int) $section->id);
+    abort_unless($section, 404);
+
+    // Toutes les leçons visibles du module (pour buildLectureStats)
     $lectures = $module->sections->flatMap(fn ($s) => $s->lectures);
 
     // Stats sidebar (quiz si activé, sinon SCORM)
-    $lectureStats = $this->buildLectureStats($lectures, (int) auth()->id());
+    $lectureStats = $this->buildLectureStats($lectures, (int) $user->id);
 
-    // Statut par section (optionnel)
+    // Statut par section (sur le périmètre visible après filtrage)
     $sectionStatuses = $module->sections->mapWithKeys(function ($sec) use ($lectureStats) {
-        $allCompleted = $sec->lectures->every(function ($lec) use ($lectureStats) {
+        $total = $sec->lectures->count();
+
+        if ($total === 0) {
+            return [$sec->id => 'not_started'];
+        }
+
+        $ok = $sec->lectures->filter(function ($lec) use ($lectureStats) {
             $st = $lectureStats[$lec->id]['status'] ?? null;
             return in_array($st, ['completed'], true);
-        });
+        })->count();
 
-        return [$sec->id => $allCompleted ? 'completed' : 'in_progress'];
+        return [$sec->id => ($ok === $total ? 'completed' : ($ok > 0 ? 'in_progress' : 'not_started'))];
     });
 
     return view($this->viewBase() . '.chapitre', [
         'module'          => $module,
-        'selectedSection' => $section, // requis par chapitre.blade.php
+        'selectedSection' => $section,
         'section'         => $section, // compat éventuelle
-        'selectedLecture' => null,     // important : on n’est pas dans une leçon
+        'selectedLecture' => null,
         'lectureStats'    => $lectureStats,
         'sectionStatuses' => $sectionStatuses,
         'formateur'       => $module->formateur ?? null,
@@ -599,72 +622,104 @@ public function EditLecture($id)
 
 public function lire(Request $request, Module $module, ModuleSection $section, ModuleLecture $lecture)
 {
-    // Sécurité : cohérence URL
+    $user = auth()->user();
+
+    // Sécurité : cohérence URL + visibilité
     abort_unless((int) $section->module_id === (int) $module->id, 404);
     abort_unless((int) $lecture->module_id === (int) $module->id, 404);
     abort_unless((int) $lecture->section_id === (int) $section->id, 404);
-     $lecture->load(['scormPackage.activeVersion', 'scormPackageVersion']);
+    abort_unless($module->isVisibleTo($user), 404);
+
+    // Charger infos SCORM (si présent)
+    $lecture->load(['scormPackage.activeVersion', 'scormPackageVersion']);
+
     // Charger sections + lectures (sidebar + navigation)
     $module->load([
         'sections' => function ($q) {
             $q->orderBy('id')
               ->with(['lectures' => function ($qq) {
-                  $qq->orderBy('position');
+                  $qq->orderBy('position')->orderBy('id');
               }]);
         },
     ]);
 
-    // Toutes les leçons du module (pour buildLectureStats)
-    $lectures = $module->sections->flatMap(fn ($s) => $s->lectures);
+    // Appliquer personnalisation formateur (groupe x module x leçon) si elle existe
+    $groupId = $this->resolveGroupIdForUserAndModule((int) $user->id, (int) $module->id);
+    $this->applyGroupLessonOverrides($module, $groupId);
+
+    // Re-récupérer la section après filtrage
+    $section = $module->sections->firstWhere('id', (int) $section->id);
+    abort_unless($section, 404);
+
+    // Bloquer l’accès si la leçon est masquée par la personnalisation
+    $visibleIds = $module->sections->flatMap(fn ($s) => $s->lectures)->pluck('id')->all();
+    abort_unless(in_array((int) $lecture->id, $visibleIds, true), 404);
+
+    // Toutes les leçons visibles du module (pour buildLectureStats)
+    $lectures = $module->sections->flatMap(fn ($s) => $s->lectures)->values();
 
     // Stats sidebar (quiz si activé, sinon SCORM)
-    $lectureStats = $this->buildLectureStats($lectures, (int) auth()->id());
+    $lectureStats = $this->buildLectureStats($lectures, (int) $user->id);
 
-    // Déterminer la prochaine leçon (navigation)
+    // Déterminer la prochaine leçon (navigation) sur la liste visible et ordonnée
     $nextLecture = null;
 
     // 1) prochaine dans la section courante
-    $currentSectionLectures = $module->sections
-        ->firstWhere('id', $section->id)
-        ?->lectures ?? collect();
-
+    $currentSectionLectures = $section->lectures ?? collect();
     $idx = $currentSectionLectures->search(fn ($l) => (int) $l->id === (int) $lecture->id);
+
     if ($idx !== false) {
         $nextLecture = $currentSectionLectures->get($idx + 1);
     }
 
-    // 2) sinon : première leçon de la section suivante
+    // 2) sinon : première leçon de la section suivante (ordre sections par id)
     if (!$nextLecture) {
-        $nextSection = $module->sections
-            ->sortBy('id')
-            ->values()
-            ->firstWhere('id', '>', $section->id);
+        $sections = $module->sections->sortBy('id')->values();
+        $currentSectionIndex = $sections->search(fn ($s) => (int) $s->id === (int) $section->id);
 
-        if ($nextSection) {
-            $nextLecture = $nextSection->lectures->sortBy('position')->first();
+        if ($currentSectionIndex !== false) {
+            $nextSection = $sections->get($currentSectionIndex + 1);
+            if ($nextSection) {
+                $nextLecture = $nextSection->lectures->first();
+            }
         }
     }
 
-    // Format attendu par le blade lecon.blade.php : tableau ['id' => .., 'section_id' => ..]
-    $nextLecturePayload = null;
-    if ($nextLecture) {
-        $nextLecturePayload = [
-            'id'         => (int) $nextLecture->id,
-            'section_id' => (int) $nextLecture->section_id,
-        ];
-    }
+    // Format attendu par le blade : ['id' => .., 'section_id' => ..]
+    $nextLecturePayload = $nextLecture ? [
+        'id'         => (int) $nextLecture->id,
+        'section_id' => (int) $nextLecture->section_id,
+    ] : null;
+
+    // Statut par section (optionnel, sur périmètre visible)
+    $sectionStatuses = $module->sections->mapWithKeys(function ($sec) use ($lectureStats) {
+        $total = $sec->lectures->count();
+
+        if ($total === 0) {
+            return [$sec->id => 'not_started'];
+        }
+
+        $ok = $sec->lectures->filter(function ($lec) use ($lectureStats) {
+            $st = $lectureStats[$lec->id]['status'] ?? null;
+            return in_array($st, ['completed'], true);
+        })->count();
+
+        return [$sec->id => ($ok === $total ? 'completed' : ($ok > 0 ? 'in_progress' : 'not_started'))];
+    });
 
     return view($this->viewBase() . '.lecon', [
         'module'          => $module,
         'section'         => $section,
-        'selectedSection' => $section, // utile si chapitre/lecon partagent la sidebar
+        'selectedSection' => $section,
         'lecture'         => $lecture,
-        'selectedLecture' => $lecture, // requis par lecon.blade.php
+        'selectedLecture' => $lecture,
         'lectureStats'    => $lectureStats,
+        'sectionStatuses' => $sectionStatuses,
         'nextLecture'     => $nextLecturePayload,
         'formateur'       => $module->formateur ?? null,
     ]);
 }
+
 
     /**
      * 14. Détail public d’un module (catalogue)
@@ -675,6 +730,7 @@ public function lire(Request $request, Module $module, ModuleSection $section, M
         if (! $module->isVisibleTo(\Illuminate\Support\Facades\Auth::user())) abort(404);
         return view('frontend.contenu.module_detail', compact('module'));
     }
+
     private function buildLectureStats($lectures, int $userId): array
     {
         $lectureIds = $lectures->pluck('id')->all();
@@ -798,5 +854,92 @@ public function lire(Request $request, Module $module, ModuleSection $section, M
 
         return $stats;
     }
+
+
+
+
+    /**
+     * 15. Vue Lecture (stagiaire ou formateur)
+     */
+
+
+    /**
+     * 16. Page de fin de module (stagiaire)
+     */
+    public function finModule($moduleId)
+    {
+        $userId = auth()->id();
+        $module = Module::with('sections.lectures')->findOrFail($moduleId);
+        if (! $module->isVisibleTo(\Illuminate\Support\Facades\Auth::user())) abort(404);
+
+
+        $totalSections = $module->sections->count();
+        $totalLectures = $module->sections->flatMap->lectures->count();
+
+        $totalQuestionsPlanned = $module->sections
+            ->flatMap->lectures
+            ->sum(fn($lec) => (int)($lec->question_count ?? 0));
+
+        $questionsAnswered = 0;
+        foreach ($module->sections->flatMap->lectures as $lecture) {
+            $planned = (int)($lecture->question_count ?? 0);
+            if ($planned === 0) continue;
+
+            $distinctAnswered = ScormInteraction::where('user_id', $userId)
+                ->where('lecture_id', $lecture->id)
+                ->distinct('interaction_id')
+                ->count('interaction_id');
+
+            $questionsAnswered += min($distinctAnswered, $planned);
+        }
+
+        return view('stagiaire.fin_module', [
+            'module'                 => $module,
+            'totalSections'          => $totalSections,
+            'totalLectures'          => $totalLectures,
+            'totalQuestionsPlanned'  => $totalQuestionsPlanned,
+            'questionsAnswered'      => $questionsAnswered,
+        ]);
+    }
+    private function resolveGroupIdForUserAndModule(int $userId, int $moduleId): ?int
+    {
+        // 1) groupes où l’utilisateur est membre + module rattaché
+        $gid = DB::table('group_user')
+            ->join('group_module', 'group_module.group_id', '=', 'group_user.group_id')
+            ->where('group_user.user_id', $userId)
+            ->where('group_module.module_id', $moduleId)
+            ->value('group_user.group_id');
+
+        return $gid ? (int) $gid : null;
+    }
+
+    private function applyGroupLessonOverrides(Module $module, ?int $groupId): void
+    {
+        if (!$groupId) return;
+
+        $over = \App\Models\GroupModuleLecture::query()
+            ->where('group_id', $groupId)
+            ->where('module_id', $module->id)
+            ->get()
+            ->keyBy('lecture_id');
+
+        if ($over->isEmpty()) return;
+
+        // Filtrer + trier les leçons dans chaque section
+        $module->sections->each(function ($sec) use ($over) {
+            $sec->setRelation('lectures', $sec->lectures
+                ->filter(function ($lec) use ($over) {
+                    $row = $over->get($lec->id);
+                    return $row ? (bool) $row->is_enabled : true;
+                })
+                ->sortBy(function ($lec) use ($over) {
+                    $row = $over->get($lec->id);
+                    return $row ? (int) $row->position : (int) $lec->position;
+                })
+                ->values()
+            );
+        });
+    }
+
 
 }

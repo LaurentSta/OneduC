@@ -25,7 +25,6 @@ Route::middleware(['auth', 'role:admin'])
 
         Route::get('/formateurs', [AdminController::class, 'AllFormateur'])->name('formateurs');
         Route::delete('/formateurs/{user}', [AdminController::class, 'DestroyFormateur'])->name('formateurs.destroy');
-
         Route::post('/update-user-status', [AdminController::class, 'UpdateUserStatus'])->name('update.user.status');
 
         Route::get('/stagiaires', [AdminController::class, 'AllStagiaires'])->name('stagiaires.index');
