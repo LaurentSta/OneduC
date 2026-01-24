@@ -12,6 +12,10 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use App\Services\CodeGeneratorService;
 use Illuminate\Validation\Rule;
+use App\Models\GroupModuleLecture;
+use App\Models\ModuleSection;
+use App\Models\ModuleLecture;
+use Illuminate\Support\Facades\DB;
 
 class GroupeController extends Controller
 {
@@ -220,4 +224,165 @@ class GroupeController extends Controller
             ->route('formateur.groupes.index')
             ->with('success', 'Groupe supprimé avec succès.');
     }
+    private function ensureCustomization(Group $group, Module $module): void
+{
+    $exists = GroupModuleLecture::where('group_id', $group->id)
+        ->where('module_id', $module->id)
+        ->exists();
+
+    if ($exists) return;
+
+    // Ordre par défaut = sections par id, leçons par position
+    $lectures = ModuleLecture::query()
+        ->where('module_id', $module->id)
+        ->orderBy('section_id')
+        ->orderBy('position')
+        ->orderBy('id')
+        ->get(['id', 'section_id']);
+
+    $pos = 1;
+    foreach ($lectures as $lec) {
+        GroupModuleLecture::create([
+            'group_id'    => $group->id,
+            'module_id'   => $module->id,
+            'lecture_id'  => $lec->id,
+            'position'    => $pos++,
+            'is_enabled'  => true,
+        ]);
+    }
+}
+
+public function editModuleLessons($groupId, $moduleId)
+{
+    $group = Group::where('id', $groupId)
+        ->where('instructor_id', auth()->id())
+        ->firstOrFail();
+
+    $module = Module::where('id', $moduleId)->firstOrFail();
+
+    // sécurité : le module doit être associé au groupe
+    abort_unless($group->modules()->where('modules.id', $module->id)->exists(), 403);
+
+    $this->ensureCustomization($group, $module);
+
+    $rows = GroupModuleLecture::query()
+        ->where('group_id', $group->id)
+        ->where('module_id', $module->id)
+        ->orderBy('position')
+        ->get()
+        ->keyBy('lecture_id');
+
+    // Charger sections + leçons (pour affichage groupé)
+    $sections = ModuleSection::query()
+        ->where('module_id', $module->id)
+        ->orderBy('id')
+        ->with(['lectures' => function ($q) use ($rows) {
+            $q->orderBy('position')->orderBy('id');
+        }])
+        ->get();
+        // Appliquer l’ordre groupe (position) sur les leçons de chaque section
+    $sections->each(function ($sec) use ($rows) {
+        $sec->setRelation(
+            'lectures',
+            $sec->lectures
+                ->sortBy(function ($lec) use ($rows) {
+                    return (int) (($rows[$lec->id]->position ?? 999999));
+                })
+                ->values()
+        );
+    });
+
+    return view('formateur.groupes.module_lecons', compact('group', 'module', 'sections', 'rows'));
+}
+
+public function toggleModuleLesson($groupId, $moduleId, $lectureId)
+{
+    $group = Group::where('id', $groupId)->where('instructor_id', auth()->id())->firstOrFail();
+    $module = Module::findOrFail($moduleId);
+
+    abort_unless($group->modules()->where('modules.id', $module->id)->exists(), 403);
+
+    $this->ensureCustomization($group, $module);
+
+    $row = GroupModuleLecture::where('group_id', $group->id)
+        ->where('module_id', $module->id)
+        ->where('lecture_id', $lectureId)
+        ->firstOrFail();
+
+    $row->update(['is_enabled' => ! (bool) $row->is_enabled]);
+
+    return back()->with('success', 'Leçon mise à jour.');
+    }
+
+    public function moveModuleLessonUp($groupId, $moduleId, $lectureId)
+    {
+        return $this->moveModuleLesson($groupId, $moduleId, $lectureId, -1);
+    }
+
+    public function moveModuleLessonDown($groupId, $moduleId, $lectureId)
+    {
+        return $this->moveModuleLesson($groupId, $moduleId, $lectureId, +1);
+    }
+
+    private function moveModuleLesson($groupId, $moduleId, $lectureId, int $delta)
+{
+    $group = Group::where('id', $groupId)->where('instructor_id', auth()->id())->firstOrFail();
+    $module = Module::findOrFail($moduleId);
+
+    abort_unless($group->modules()->where('modules.id', $module->id)->exists(), 403);
+
+    $this->ensureCustomization($group, $module);
+
+    // Section de la leçon (pour limiter le déplacement)
+    $lecture = ModuleLecture::where('id', $lectureId)
+        ->where('module_id', $module->id)
+        ->firstOrFail();
+
+    $sectionId = (int) $lecture->section_id;
+
+    DB::transaction(function () use ($group, $module, $lectureId, $delta, $sectionId) {
+        $list = GroupModuleLecture::query()
+            ->join('module_lectures', 'module_lectures.id', '=', 'group_module_lectures.lecture_id')
+            ->where('group_module_lectures.group_id', $group->id)
+            ->where('group_module_lectures.module_id', $module->id)
+            ->where('module_lectures.section_id', $sectionId)
+            ->orderBy('group_module_lectures.position')
+            ->lockForUpdate()
+            ->get(['group_module_lectures.*'])
+            ->values();
+
+        $idx = $list->search(fn ($r) => (int) $r->lecture_id === (int) $lectureId);
+        if ($idx === false) return;
+
+        $swapIdx = $idx + $delta;
+        if ($swapIdx < 0 || $swapIdx >= $list->count()) return;
+
+        $a = $list[$idx];
+        $b = $list[$swapIdx];
+
+        $tmp = $a->position;
+        $a->position = $b->position;
+        $b->position = $tmp;
+
+        $a->save();
+        $b->save();
+    });
+
+    return back()->with('success', 'Ordre mis à jour.');
+}
+
+    public function resetModuleLessons($groupId, $moduleId)
+    {
+        $group = Group::where('id', $groupId)->where('instructor_id', auth()->id())->firstOrFail();
+        $module = Module::findOrFail($moduleId);
+
+        abort_unless($group->modules()->where('modules.id', $module->id)->exists(), 403);
+
+        GroupModuleLecture::where('group_id', $group->id)
+            ->where('module_id', $module->id)
+            ->delete();
+
+        return back()->with('success', 'Personnalisation réinitialisée.');
+    }
+
 }
