@@ -94,6 +94,27 @@
         @endforeach
       </div>
     </div>
+    @if($group->modules->count())
+      <div class="mb-8">
+        <p class="text-base font-medium text-gray-900 mb-3">Personnaliser les leçons</p>
+
+        <div class="space-y-2">
+          @foreach($group->modules as $m)
+            <div class="flex items-center justify-between bg-gray-50 border border-gray-300 rounded-lg px-4 py-3">
+              <div class="text-base text-gray-900 font-medium">{{ $m->module_title }}</div>
+
+              <a class="btn-oneduc-blue !px-4 !py-2 !border-2"
+                href="{{ route('formateur.groupes.modules.lecons.edit', ['group' => $group->id, 'module' => $m->id]) }}">
+                Personnaliser
+              </a>
+            </div>
+          @endforeach
+        </div>
+      </div>
+    @endif
+
+
+
 
     {{-- Stagiaires existants --}}
         <div class="mb-8">
