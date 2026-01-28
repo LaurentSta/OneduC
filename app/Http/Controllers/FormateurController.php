@@ -1,19 +1,20 @@
 <?php
 
 namespace App\Http\Controllers;
+
 // /home/laurents/Oneduc_Dev/app/Http/Controllers/FormateurController.php
+
+use App\Mail\FormateurWelcome;
+use App\Mail\NewFormateurNotification;
+use App\Models\Group;
+use App\Models\Module;
+use App\Models\ScormScore;
+use App\Models\User;
+use App\Services\CodeGeneratorService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
-use App\Models\User;
-use App\Models\Module;
-use App\Models\ScormResult;
-use App\Services\CodeGeneratorService;
-use App\Mail\FormateurWelcome;
-use App\Mail\NewFormateurNotification;
-use App\Models\Group;
-
 
 class FormateurController extends Controller
 {
@@ -24,47 +25,73 @@ class FormateurController extends Controller
     {
         $formateurId = auth()->id();
 
-        $groupCount = \App\Models\Group::where('instructor_id', $formateurId)->count();
+        $groupCount = Group::query()
+            ->where('instructor_id', $formateurId)
+            ->count();
 
-        $modulesUsed = \App\Models\Module::whereHas('groups', function ($q) use ($formateurId) {
-            $q->where('instructor_id', $formateurId);
-        })->distinct('modules.id')->count('modules.id');
-
-        $learnerCount = \App\Models\User::where('role', 'stagiaire')
-            ->whereHas('groupesStagiaire', function ($q) use ($formateurId) {
-                $q->where('instructor_id', $formateurId);
-            })->distinct('users.id')->count('users.id');
-
-        $avgScore = \App\Models\ScormScore::whereHas('lecture.module.groups', function ($q) use ($formateurId) {
-                $q->where('instructor_id', $formateurId);
-            })
-            ->whereHas('user', function ($q) use ($formateurId) {
-                $q->where('role', 'stagiaire')
-                ->whereHas('groupesStagiaire', function ($g) use ($formateurId) {
-                    $g->where('instructor_id', $formateurId);
-                });
-            })
-            ->avg('last_score');
-
-        $avgCompletion = $avgScore ? round($avgScore) : 0;
-
-        $modules = Module::withCount('lectures')
-            ->with(['groups.users' => function ($q) {
-                $q->where('role', 'stagiaire');
-            }])
+        $modulesUsed = Module::query()
             ->whereHas('groups', function ($q) use ($formateurId) {
                 $q->where('instructor_id', $formateurId);
             })
-            ->orWhere('formateur_id', $formateurId)
+            ->distinct('modules.id')
+            ->count('modules.id');
+
+        $learnerCount = User::query()
+            ->where('role', 'stagiaire')
+            ->whereHas('groupesStagiaire', function ($q) use ($formateurId) {
+                $q->where('instructor_id', $formateurId);
+            })
+            ->distinct('users.id')
+            ->count('users.id');
+
+        // Score moyen (ce n'est pas un taux d'achèvement)
+        $avgScore = ScormScore::query()
+            ->whereHas('lecture.module.groups', function ($q) use ($formateurId) {
+                $q->where('instructor_id', $formateurId);
+            })
+            ->whereHas('user', function ($q) {
+                $q->where('role', 'stagiaire');
+            })
+            ->avg('last_score');
+
+        $avgScoreRounded = $avgScore ? (int) round($avgScore) : 0;
+
+        // Modules visibles sur le dashboard (utilisés dans ses groupes OU créés/attribués au formateur)
+        $modules = Module::query()
+            ->withCount('lectures')
+            ->with([
+                'groups' => function ($q) use ($formateurId) {
+                    $q->where('instructor_id', $formateurId)
+                        ->with(['users' => function ($u) {
+                            $u->where('role', 'stagiaire');
+                        }]);
+                },
+            ])
+            ->where(function ($q) use ($formateurId) {
+                $q->whereHas('groups', function ($g) use ($formateurId) {
+                    $g->where('instructor_id', $formateurId);
+                })
+                ->orWhere('formateur_id', $formateurId);
+            })
+            ->orderByDesc('created_at')
             ->get()
             ->map(function ($module) {
-                $stagiaires = $module->groups->flatMap->users->where('role', 'stagiaire')->unique('id')->values();
+                $stagiaires = $module->groups
+                    ->flatMap(fn ($g) => $g->users)
+                    ->unique('id')
+                    ->values();
+
                 $module->stagiaires = $stagiaires;
+
                 return $module;
             });
 
         return view('formateur.index', compact(
-            'groupCount', 'modulesUsed', 'learnerCount', 'avgCompletion', 'modules'
+            'groupCount',
+            'modulesUsed',
+            'learnerCount',
+            'avgScoreRounded',
+            'modules'
         ));
     }
 
@@ -76,6 +103,7 @@ class FormateurController extends Controller
         Auth::guard('web')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+
         return redirect('/');
     }
 
@@ -86,6 +114,7 @@ class FormateurController extends Controller
     {
         $id = Auth::user()->id;
         $profileData = User::findOrFail($id);
+
         return view('formateur.profile_view', compact('profileData'));
     }
 
@@ -93,6 +122,7 @@ class FormateurController extends Controller
     {
         $id = Auth::user()->id;
         $profileData = User::findOrFail($id);
+
         return view('formateur.parametre', compact('profileData'));
     }
 
@@ -100,6 +130,15 @@ class FormateurController extends Controller
     {
         $id = Auth::user()->id;
         $user = User::findOrFail($id);
+
+        $request->validate([
+            'name'     => 'nullable|string|max:255',
+            'prenom'   => 'nullable|string|max:255',
+            'username' => 'nullable|string|max:255',
+            'email'    => 'nullable|email|max:255',
+            'phone'    => 'nullable|string|max:30',
+            'photo'    => 'nullable|image|max:2048',
+        ]);
 
         $user->name = $request->name;
         $user->prenom = $request->prenom;
@@ -115,7 +154,10 @@ class FormateurController extends Controller
         }
 
         $user->save();
-        return redirect()->route('formateur.parametre')->with('message', 'Profil mis à jour avec succès.');
+
+        return redirect()
+            ->route('formateur.parametre')
+            ->with('message', 'Profil mis à jour avec succès.');
     }
 
     /* -------------------------------------------------------------------------
@@ -124,6 +166,7 @@ class FormateurController extends Controller
     public function showFormateurSecurite()
     {
         $user = Auth::user();
+
         return view('formateur.securite', compact('user'));
     }
 
@@ -134,7 +177,7 @@ class FormateurController extends Controller
 
         $request->validate([
             'currentPassword' => 'required',
-            'newPassword' => 'required|min:8|confirmed',
+            'newPassword'     => 'required|min:8|confirmed',
         ]);
 
         if (!Hash::check($request->currentPassword, $user->password)) {
@@ -150,54 +193,52 @@ class FormateurController extends Controller
     /* -------------------------------------------------------------------------
      | Stagiaires
      |-------------------------------------------------------------------------- */
-   public function indexStagiaires(Request $request)
-{
-    $formateurId = auth()->id();
+    public function indexStagiaires(Request $request)
+    {
+        $formateurId = auth()->id();
 
-    // Liste des groupes du formateur (pour le filtre)
-    $groupes = Group::query()
-        ->where('instructor_id', $formateurId)
-        ->orderBy('name')
-        ->get(['id','name']);
+        // Liste des groupes du formateur (pour filtre)
+        $groupes = Group::query()
+            ->where('instructor_id', $formateurId)
+            ->orderBy('name')
+            ->get(['id', 'name']);
 
-    $query = User::query()->where('role', 'stagiaire');
+        $query = User::query()
+            ->where('role', 'stagiaire')
+            ->where(function ($q) use ($formateurId) {
+                $q->where('formateur_id', $formateurId)
+                    ->orWhereHas('groupesStagiaire', function ($gq) use ($formateurId) {
+                        $gq->where('instructor_id', $formateurId);
+                    });
+            });
 
-    // Ne montrer que les stagiaires liés au formateur (directement ou via ses groupes)
-    $query->where(function ($q) use ($formateurId) {
-        $q->where('formateur_id', $formateurId)
-          ->orWhereHas('groupesStagiaire', function ($gq) use ($formateurId) {
-              $gq->where('instructor_id', $formateurId);
-          });
-    });
+        // Filtre groupe (sécurisé sur le périmètre du formateur)
+        if ($groupId = $request->input('group_id')) {
+            $query->whereHas('groupesStagiaire', function ($gq) use ($groupId, $formateurId) {
+                $gq->where('groups.id', $groupId)
+                    ->where('instructor_id', $formateurId);
+            });
+        }
 
-    // Filtre par groupe sélectionné
-    if ($groupId = $request->input('group_id')) {
-        $query->whereHas('groupesStagiaire', function ($gq) use ($groupId) {
-            $gq->where('groups.id', $groupId);
-        });
+        // Recherche texte
+        if ($search = $request->input('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('prenom', 'like', "%{$search}%")
+                    ->orWhere('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        $stagiaires = $query
+            ->with(['groupesStagiaire' => function ($q) use ($formateurId) {
+                $q->where('instructor_id', $formateurId)->orderBy('name');
+            }])
+            ->orderBy('name')
+            ->paginate(10)
+            ->withQueryString();
+
+        return view('formateur.backend.stagiaires.all_stagiaires', compact('stagiaires', 'groupes'));
     }
-
-    // Recherche texte
-    if ($search = $request->input('search')) {
-        $query->where(function ($q) use ($search) {
-            $q->where('prenom', 'like', "%{$search}%")
-              ->orWhere('name', 'like', "%{$search}%")
-              ->orWhere('email', 'like', "%{$search}%");
-        });
-    }
-
-    $stagiaires = $query
-        ->with(['groupesStagiaire' => function ($q) use ($formateurId) {
-            // Optionnel mais recommandé : n’afficher que les groupes du formateur
-            $q->where('instructor_id', $formateurId)->orderBy('name');
-        }])
-        ->orderBy('name')
-        ->paginate(10)
-        ->withQueryString();
-
-    return view('formateur.backend.stagiaires.all_stagiaires', compact('stagiaires', 'groupes'));
-}
-
 
     public function createStagiaire()
     {
@@ -207,66 +248,93 @@ class FormateurController extends Controller
     public function storeStagiaire(Request $request)
     {
         $request->validate([
-            'prenom'   => ['required','string','max:255'],
-            'name'     => ['required','string','max:255'],
-            'email'    => ['required','email','max:255'], // pas de unique ici
-            'password' => ['nullable','string','min:8','confirmed'],
-            'group_id' => ['nullable','integer','exists:groups,id'],
+            'prenom'   => ['required', 'string', 'max:255'],
+            'name'     => ['required', 'string', 'max:255'],
+            'email'    => ['required', 'email', 'max:255'],
+            'password' => ['nullable', 'string', 'min:8', 'confirmed'],
+            'group_id' => ['nullable', 'integer', 'exists:groups,id'],
         ]);
 
-        $email  = strtolower(trim($request->email));
+        $formateurId = auth()->id();
+        $email = strtolower(trim($request->email));
         $prenom = $request->prenom;
-        $nom    = $request->name;
-        $gid    = $request->integer('group_id') ?: null;
+        $nom = $request->name;
+        $gid = $request->integer('group_id') ?: null;
 
-        $user = \App\Models\User::withTrashed()->where('email',$email)->first();
+        // Si un groupe est fourni, il doit appartenir au formateur
+        $group = null;
+        if ($gid) {
+            $group = Group::query()
+                ->where('id', $gid)
+                ->where('instructor_id', $formateurId)
+                ->firstOrFail();
+        }
+
+        // Réutilisation possible (y compris supprimé), mais seulement si le compte est bien un stagiaire
+        $user = User::withTrashed()->where('email', $email)->first();
+
+        if ($user && $user->role !== 'stagiaire') {
+            return back()
+                ->withErrors(['email' => 'Adresse déjà utilisée par un autre type de compte.'])
+                ->withInput();
+        }
 
         if ($user) {
-            if ($user->trashed()) { $user->restore(); } // soft-deleted → restore
-            if (!$user->formateur_id) { $user->formateur_id = auth()->id(); }
-            $user->prenom = $user->prenom ?: $prenom;
-            $user->name   = $user->name   ?: $nom;
-            if ($request->filled('password')) {
-                $user->password = \Illuminate\Support\Facades\Hash::make($request->password);
+            if ($user->trashed()) {
+                $user->restore();
             }
+
+            // On rattache au formateur si pas déjà défini
+            if (!$user->formateur_id) {
+                $user->formateur_id = $formateurId;
+            }
+
+            // On complète sans écraser inutilement
+            $user->prenom = $user->prenom ?: $prenom;
+            $user->name = $user->name ?: $nom;
+
+            if ($request->filled('password')) {
+                $user->password = Hash::make($request->password);
+            }
+
             $user->save();
         } else {
-            $user = \App\Models\User::create([
+            $user = User::create([
                 'prenom'       => $prenom,
                 'name'         => $nom,
                 'email'        => $email,
                 'password'     => $request->filled('password')
-                                    ? \Illuminate\Support\Facades\Hash::make($request->password)
-                                    : bcrypt(str()->password(12)),
+                    ? Hash::make($request->password)
+                    : bcrypt(str()->password(12)),
                 'role'         => 'stagiaire',
-                'formateur_id' => auth()->id(),
+                'formateur_id' => $formateurId,
                 'status'       => 1,
-                'code_acces'   => \App\Services\CodeGeneratorService::generateUniqueAccessCode(),
+                'code_acces'   => CodeGeneratorService::generateUniqueAccessCode(),
             ]);
         }
 
-        if ($gid) {
-            \App\Models\Group::findOrFail($gid)
-                ->users()
-                ->syncWithoutDetaching([$user->id]);
+        if ($group) {
+            $group->users()->syncWithoutDetaching([$user->id]);
         }
 
-        return redirect()->route('formateur.stagiaires.index')
+        return redirect()
+            ->route('formateur.stagiaires.index')
             ->with('success', $user->wasRecentlyCreated
-                ? 'Stagiaire créé et rattaché si groupe fourni.'
-                : 'Stagiaire existant réutilisé et rattaché si groupe fourni.');
+                ? 'Stagiaire créé et rattaché si un groupe a été fourni.'
+                : 'Stagiaire existant réutilisé et rattaché si un groupe a été fourni.');
     }
-
-
 
     public function editStagiaire($id)
     {
-        $stagiaire = User::where('role', 'stagiaire')
-            ->where(function ($query) {
-                $query->where('formateur_id', auth()->id())
-                      ->orWhereHas('groupesStagiaire', function ($q) {
-                          $q->where('instructor_id', auth()->id());
-                      });
+        $formateurId = auth()->id();
+
+        $stagiaire = User::query()
+            ->where('role', 'stagiaire')
+            ->where(function ($query) use ($formateurId) {
+                $query->where('formateur_id', $formateurId)
+                    ->orWhereHas('groupesStagiaire', function ($q) use ($formateurId) {
+                        $q->where('instructor_id', $formateurId);
+                    });
             })
             ->findOrFail($id);
 
@@ -275,19 +343,22 @@ class FormateurController extends Controller
 
     public function updateStagiaire(Request $request, $id)
     {
-        $stagiaire = User::where('role', 'stagiaire')
-            ->where(function ($query) {
-                $query->where('formateur_id', auth()->id())
-                      ->orWhereHas('groupesStagiaire', function ($q) {
-                          $q->where('instructor_id', auth()->id());
-                      });
+        $formateurId = auth()->id();
+
+        $stagiaire = User::query()
+            ->where('role', 'stagiaire')
+            ->where(function ($query) use ($formateurId) {
+                $query->where('formateur_id', $formateurId)
+                    ->orWhereHas('groupesStagiaire', function ($q) use ($formateurId) {
+                        $q->where('instructor_id', $formateurId);
+                    });
             })
             ->findOrFail($id);
 
         $request->validate([
-            'prenom' => 'required|string|max:255',
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $stagiaire->id,
+            'prenom'   => 'required|string|max:255',
+            'name'     => 'required|string|max:255',
+            'email'    => 'required|email|unique:users,email,' . $stagiaire->id,
             'password' => 'nullable|string|min:8',
         ]);
 
@@ -301,23 +372,30 @@ class FormateurController extends Controller
 
         $stagiaire->save();
 
-        return redirect()->route('formateur.stagiaires.index')->with('success', 'Stagiaire modifié avec succès ✅');
+        return redirect()
+            ->route('formateur.stagiaires.index')
+            ->with('success', 'Stagiaire modifié avec succès.');
     }
 
     public function destroyStagiaire($id)
     {
-        $stagiaire = User::where('role', 'stagiaire')
-            ->where(function ($query) {
-                $query->where('formateur_id', auth()->id())
-                      ->orWhereHas('groupesStagiaire', function ($q) {
-                          $q->where('instructor_id', auth()->id());
-                      });
+        $formateurId = auth()->id();
+
+        $stagiaire = User::query()
+            ->where('role', 'stagiaire')
+            ->where(function ($query) use ($formateurId) {
+                $query->where('formateur_id', $formateurId)
+                    ->orWhereHas('groupesStagiaire', function ($q) use ($formateurId) {
+                        $q->where('instructor_id', $formateurId);
+                    });
             })
             ->findOrFail($id);
 
         $stagiaire->delete();
 
-        return redirect()->route('formateur.stagiaires.index')->with('success', 'Stagiaire supprimé avec succès 🗑️');
+        return redirect()
+            ->route('formateur.stagiaires.index')
+            ->with('success', 'Stagiaire supprimé avec succès.');
     }
 
     /* -------------------------------------------------------------------------
@@ -330,12 +408,11 @@ class FormateurController extends Controller
 
     public function register(Request $request)
     {
-        // Honeypot
+        // Piège antispam
         if ($request->filled('website')) {
             return back()->withErrors(['form' => 'Envoi invalide.'])->withInput();
         }
 
-        // Validation + captcha
         $validated = $request->validate([
             'prenom'   => 'required|string|max:255',
             'name'     => 'required|string|max:255',
@@ -347,22 +424,19 @@ class FormateurController extends Controller
             'g-recaptcha-response' => 'required|captcha',
         ]);
 
-        // Création du formateur
         $formateur = User::create([
-            'prenom'  => $validated['prenom'],
-            'name'    => $validated['name'],
-            'email'   => $validated['email'],
-            'phone'   => $validated['phone'] ?? null,
-            'address' => $validated['address'] ?? null,
-            'societe' => $validated['societe'] ?? null,
-            'password'=> Hash::make($validated['password']),
-            'role'    => 'formateur',
+            'prenom'   => $validated['prenom'],
+            'name'     => $validated['name'],
+            'email'    => $validated['email'],
+            'phone'    => $validated['phone'] ?? null,
+            'address'  => $validated['address'] ?? null,
+            'societe'  => $validated['societe'] ?? null,
+            'password' => Hash::make($validated['password']),
+            'role'     => 'formateur',
         ]);
 
-        // Connexion
         Auth::login($formateur);
 
-        // Mails
         Mail::to($formateur->email)->send(new FormateurWelcome([
             'prenom' => $formateur->prenom,
             'nom'    => $formateur->name,
@@ -370,59 +444,105 @@ class FormateurController extends Controller
         ]));
 
         Mail::to('contact@oneduc.fr')->send(new NewFormateurNotification([
-            'prenom' => $formateur->prenom,
-            'nom'    => $formateur->name,
-            'email'  => $formateur->email,
-            'phone'  => $formateur->phone,
-            'societe'=> $formateur->societe,
+            'prenom'  => $formateur->prenom,
+            'nom'     => $formateur->name,
+            'email'   => $formateur->email,
+            'phone'   => $formateur->phone,
+            'societe' => $formateur->societe,
         ]));
 
-        return redirect()->route('formateur.dashboard')->with('success', 'Bienvenue sur Oneduc !');
+        return redirect()
+            ->route('formateur.dashboard')
+            ->with('success', 'Bienvenue sur Oneduc !');
     }
 
+    /* -------------------------------------------------------------------------
+     | Mes modules (index)
+     |-------------------------------------------------------------------------- */
     public function mesModules()
     {
         $formateurId = auth()->id();
 
-        $modules = \App\Models\Module::with(['groups' => function ($query) use ($formateurId) {
-            $query->where('instructor_id', $formateurId)
-                ->with(['users' => function ($q) {
-                    $q->where('role', 'stagiaire');
-                }]);
-        }, 'lectures'])->get();
+        $modules = Module::query()
+            ->where(function ($q) use ($formateurId) {
+                $q->whereHas('groups', function ($g) use ($formateurId) {
+                    $g->where('instructor_id', $formateurId);
+                })
+                ->orWhere('formateur_id', $formateurId);
+            })
+            ->with([
+                'groups' => function ($q) use ($formateurId) {
+                    $q->where('instructor_id', $formateurId)
+                        ->with(['users' => function ($u) {
+                            $u->where('role', 'stagiaire');
+                        }]);
+                },
+            ])
+            ->orderByDesc('created_at')
+            ->get();
 
         return view('formateur.formations.index', compact('modules'));
     }
 
-    public function moduleDetail(\App\Models\Module $module)
+    /* -------------------------------------------------------------------------
+     | Détail module (formateur)
+     |-------------------------------------------------------------------------- */
+    public function moduleDetail(Module $module)
     {
         $formateurId = auth()->id();
+
+        $isAllowed = ($module->formateur_id === $formateurId)
+            || $module->groups()->where('instructor_id', $formateurId)->exists();
+
+        abort_unless($isAllowed, 403);
 
         $module->load([
             'formateur',
             'sections.lectures',
             'groups' => function ($q) use ($formateurId) {
                 $q->where('instructor_id', $formateurId)
-                  ->with(['users' => fn($u) => $u->where('role', 'stagiaire')]);
+                    ->with(['users' => function ($u) {
+                        $u->where('role', 'stagiaire');
+                    }]);
             },
         ]);
 
-        $totalSections   = $module->sections->count();
-        $totalLectures   = $module->sections->flatMap->lectures->count();
-        $totalSlides     = $module->sections->flatMap->lectures->sum('slide_count');
-        $totalQuestions  = $module->sections->flatMap->lectures->sum('quiz_questions_per_attempt');
-        $groupCount      = $module->groups->count();
-        $stagiaires      = $module->groups->flatMap(fn($g) => $g->users)->unique('id')->values();
-        $stagiaireCount  = $stagiaires->count();
+        $totalSections = $module->sections->count();
+        $totalLectures = $module->sections->flatMap->lectures->count();
+        $totalSlides = (int) $module->sections->flatMap->lectures->sum('slide_count');
+        $totalQuestions = (int) $module->sections->flatMap->lectures->sum('quiz_questions_per_attempt');
+
+        $groupCount = $module->groups->count();
+        $stagiaires = $module->groups->flatMap(fn ($g) => $g->users)->unique('id')->values();
+        $stagiaireCount = $stagiaires->count();
 
         return view('formateur.formations.formateur_module_detail', compact(
-            'module','totalSections','totalLectures','totalSlides','totalQuestions','groupCount','stagiaires','stagiaireCount'
+            'module',
+            'totalSections',
+            'totalLectures',
+            'totalSlides',
+            'totalQuestions',
+            'groupCount',
+            'stagiaires',
+            'stagiaireCount'
         ));
     }
 
+    /* -------------------------------------------------------------------------
+     | Prévisualisation (mode test)
+     |-------------------------------------------------------------------------- */
     public function preview(Module $module)
     {
+        $formateurId = auth()->id();
+
+        // Sécuriser l'accès au module
+        $isAllowed = ($module->formateur_id === $formateurId)
+            || $module->groups()->where('instructor_id', $formateurId)->exists();
+
+        abort_unless($isAllowed, 403);
+
         $module->load('sections.lectures');
+
         $firstSection = $module->sections->first();
         $firstLecture = $firstSection?->lectures->first();
 
@@ -430,10 +550,11 @@ class FormateurController extends Controller
             return back()->with('error', 'Aucune leçon disponible à tester.');
         }
 
+        // Attention : cette route est côté stagiaire. À conserver seulement si c'est voulu.
         return redirect()->route('stagiaire.module.lecture', [
-            'module' => $module->id,
+            'module'  => $module->id,
             'section' => $firstSection->id,
-            'lesson' => $firstLecture->id
+            'lesson'  => $firstLecture->id,
         ]);
     }
 }

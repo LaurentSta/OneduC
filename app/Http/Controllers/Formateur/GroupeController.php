@@ -224,70 +224,106 @@ class GroupeController extends Controller
             ->route('formateur.groupes.index')
             ->with('success', 'Groupe supprimé avec succès.');
     }
-    private function ensureCustomization(Group $group, Module $module): void
+  private function ensureCustomization(Group $group, Module $module): void
 {
-    $exists = GroupModuleLecture::where('group_id', $group->id)
+    // Déjà initialisé ?
+    $exists = GroupModuleLecture::query()
+        ->where('group_id', $group->id)
         ->where('module_id', $module->id)
         ->exists();
 
-    if ($exists) return;
-
-    // Ordre par défaut = sections par id, leçons par position
-    $lectures = ModuleLecture::query()
-        ->where('module_id', $module->id)
-        ->orderBy('section_id')
-        ->orderBy('position')
-        ->orderBy('id')
-        ->get(['id', 'section_id']);
-
-    $pos = 1;
-    foreach ($lectures as $lec) {
-        GroupModuleLecture::create([
-            'group_id'    => $group->id,
-            'module_id'   => $module->id,
-            'lecture_id'  => $lec->id,
-            'position'    => $pos++,
-            'is_enabled'  => true,
-        ]);
+    if ($exists) {
+        return;
     }
+
+    DB::transaction(function () use ($group, $module) {
+
+        // Re-check sous verrou (évite double création en cas de clics concurrents)
+        $existsLocked = GroupModuleLecture::query()
+            ->where('group_id', $group->id)
+            ->where('module_id', $module->id)
+            ->lockForUpdate()
+            ->exists();
+
+        if ($existsLocked) {
+            return;
+        }
+
+        // Ordre par défaut : section puis position puis id
+        $lectures = ModuleLecture::query()
+            ->where('module_id', $module->id)
+            ->orderBy('section_id')
+            ->orderBy('position')
+            ->orderBy('id')
+            ->get(['id']);
+
+        if ($lectures->isEmpty()) {
+            return;
+        }
+
+        // Insertion en bloc (beaucoup plus performant que create() dans une boucle)
+        $pos = 1;
+        $payload = $lectures->map(function ($lec) use ($group, $module, &$pos) {
+            return [
+                'group_id'    => $group->id,
+                'module_id'   => $module->id,
+                'lecture_id'  => $lec->id,
+                'position'    => $pos++,
+                'is_enabled'  => true,
+                'created_at'  => now(),
+                'updated_at'  => now(),
+            ];
+        })->all();
+
+        GroupModuleLecture::query()->insert($payload);
+    });
 }
 
 public function editModuleLessons($groupId, $moduleId)
 {
-    $group = Group::where('id', $groupId)
-        ->where('instructor_id', auth()->id())
+    $formateurId = auth()->id();
+
+    $group = Group::query()
+        ->where('id', $groupId)
+        ->where('instructor_id', $formateurId)
         ->firstOrFail();
 
-    $module = Module::where('id', $moduleId)->firstOrFail();
+    $module = Module::query()->findOrFail($moduleId);
 
-    // sécurité : le module doit être associé au groupe
-    abort_unless($group->modules()->where('modules.id', $module->id)->exists(), 403);
+    // Sécurité : le module doit être associé au groupe
+    abort_unless(
+        $group->modules()->where('modules.id', $module->id)->exists(),
+        403
+    );
 
     $this->ensureCustomization($group, $module);
 
+    // Personnalisation (ordre + état)
     $rows = GroupModuleLecture::query()
         ->where('group_id', $group->id)
         ->where('module_id', $module->id)
         ->orderBy('position')
-        ->get()
+        ->get(['lecture_id', 'position', 'is_enabled'])
         ->keyBy('lecture_id');
 
-    // Charger sections + leçons (pour affichage groupé)
+    // Charger sections + leçons (affichage groupé)
     $sections = ModuleSection::query()
         ->where('module_id', $module->id)
         ->orderBy('id')
-        ->with(['lectures' => function ($q) use ($rows) {
-            $q->orderBy('position')->orderBy('id');
+        ->with(['lectures' => function ($q) use ($module) {
+            // ordre "natif" (sera remplacé par l'ordre du groupe ensuite)
+            $q->where('module_id', $module->id)
+              ->orderBy('position')
+              ->orderBy('id');
         }])
         ->get();
-        // Appliquer l’ordre groupe (position) sur les leçons de chaque section
+
+    // Appliquer l’ordre groupe (position) sur les leçons de chaque section
     $sections->each(function ($sec) use ($rows) {
         $sec->setRelation(
             'lectures',
             $sec->lectures
-                ->sortBy(function ($lec) use ($rows) {
-                    return (int) (($rows[$lec->id]->position ?? 999999));
-                })
+                ->sortBy(fn ($lec) => (int) ($rows[$lec->id]->position ?? 999999))
                 ->values()
         );
     });

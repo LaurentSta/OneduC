@@ -5,6 +5,8 @@ use App\Http\Controllers\FormateurController;
 use App\Http\Controllers\Formateur\GroupeController;
 use App\Http\Controllers\Formateur\ProgressionController;
 use App\Http\Controllers\Backend\ModuleController;
+use App\Http\Controllers\Stagiaire\QuizAttemptController;
+use App\Http\Controllers\Stagiaire\QuizController;
 
 
 Route::middleware(['auth', 'role:formateur'])
@@ -70,7 +72,7 @@ Route::middleware(['auth', 'role:formateur'])
     Route::get('/formations/{module}/section/{section}', [ModuleController::class, 'section'])
         ->name('formations.section');
 
-    Route::get('/formations/{module}/section/{section}/lesson/{lesson}', [ModuleController::class, 'lire'])
+    Route::get('/formations/{module}/section/{section}/lesson/{lecture}', [ModuleController::class, 'lire'])
         ->name('formations.lecture');
 
        
@@ -90,6 +92,39 @@ Route::middleware(['auth', 'role:formateur'])
 
     Route::post('/groupes/{group}/modules/{module}/lecons/reset', [GroupeController::class, 'resetModuleLessons'])
         ->name('groupes.modules.lecons.reset');
+
+        
+
+Route::get('/formations/{module}/section/{section}/lesson/{lecture}/quiz/demarrer', [QuizAttemptController::class, 'start'])
+  ->name('formations.quiz.start');
+
+Route::get('/formations/{module}/section/{section}/lesson/{lecture}/quiz/{attempt}', [QuizAttemptController::class, 'showQuestion'])
+  ->name('formations.quiz.question');
+
+Route::post('/formations/{module}/section/{section}/lesson/{lecture}/quiz/{attempt}/repondre', [QuizAttemptController::class, 'answer'])
+  ->name('formations.quiz.answer');
+
+Route::get('/formations/{module}/section/{section}/lesson/{lecture}/quiz/{attempt}/resultat', [QuizAttemptController::class, 'result'])
+  ->name('formations.quiz.result');
+
+  /*
+|--------------------------------------------------------------------------
+| Quiz DANS la leçon (mêmes écrans que stagiaire)
+|--------------------------------------------------------------------------
+*/
+Route::get('/formations/{module}/section/{section}/lesson/{lecture}/quiz/start', [QuizController::class, 'start'])
+    ->name('quiz.start')
+    ->middleware('signed');
+
+Route::prefix('/formations/{module}/section/{section}/lesson/{lecture}/quiz/{attempt}')
+    ->name('lesson.quiz.')
+    ->group(function () {
+        Route::get('/question', [QuizController::class, 'showQuestion'])->name('question');
+        Route::post('/answer', [QuizController::class, 'answer'])->name('answer');
+        Route::get('/result', [QuizController::class, 'result'])->name('result');
+        Route::post('/restart', [QuizController::class, 'restart'])->name('restart');
+    });
+
 
 
 });

@@ -1,155 +1,196 @@
+{{-- /home/laurents/Oneduc_Dev/resources/views/admin/admin_parametre.blade.php --}}
+
 @extends('admin.admin_dashboard')
 @section('admin')
 
-<!-- Content wrapper -->
+@php
+  $privacyUrl = \Illuminate\Support\Facades\Route::has('page.confidentialite')
+    ? route('page.confidentialite')
+    : url('/confidentialite');
+
+  $contactUrl = \Illuminate\Support\Facades\Route::has('contact')
+    ? route('contact')
+    : url('/contact');
+
+  $photoUrl = !empty($profileData->photo)
+    ? asset('upload/admin_images/'.$profileData->photo)
+    : asset('upload/admin_images/NoPhoto.png');
+@endphp
+
 <div class="content-wrapper">
-    <!-- Content -->
-    <div class="container-xxl flex-grow-1 container-p-y">
-        <div class="row">
-            <div class="col-md-12">
-                <div class="nav-align-top">
-                    <ul class="nav nav-pills flex-column flex-md-row mb-6 gap-2 gap-lg-0">
-                      <li class="nav-item">
-                        <a class="nav-link active" href="{{route('admin.parametre')}}"
-                          ><i class="ti-sm ti ti-users me-1_5"></i> Compte</a
-                        >
-                      </li>
-                      <li class="nav-item">
-                        <a class="nav-link" href="{{route('admin.securite')}}"
-                          ><i class="ti-sm ti ti-lock me-1_5"></i> Sécurité</a
-                        >
-                      </li>
-                      <li class="nav-item">
-                        <a class="nav-link" href="pages-account-settings-billing.html"
-                          ><i class="ti-sm ti ti-bookmark me-1_5"></i> Billing & Plans</a
-                        >
-                      </li>
-                      <li class="nav-item">
-                        <a class="nav-link" href="pages-account-settings-notifications.html"
-                          ><i class="ti-sm ti ti-bell me-1_5"></i> Notifications</a
-                        >
-                      </li>
-                      <li class="nav-item">
-                        <a class="nav-link" href="pages-account-settings-connections.html"
-                          ><i class="ti-sm ti ti-link me-1_5"></i> Connections</a
-                        >
-                      </li>
-                    </ul>
-                  </div>
+  <div class="container-xxl flex-grow-1 container-p-y">
 
-                <div class="card mb-6">
-                    <!-- Account -->
+    {{-- EN-TÊTE (toujours au-dessus car dans le flux Bootstrap) --}}
+    <div class="max-w-[1285px] mx-auto px-0 px-md-3 pt-2">
+      <div class="bg-white rounded-[20px] shadow-md px-8 py-4 mb-6">
+        <h1 class="text-titre font-raleway text-bleuone mb-2">Préférences</h1>
+        <p class="text-sous-titre font-varela text-orangeone">Mettre à jour mes informations</p>
 
-
-
-                    <div class="card-body">
-                        <form method="POST" action="{{ route('admin.profil.store') }}" enctype="multipart/form-data">
-                            @csrf
-                            <div class="d-flex align-items-start align-items-sm-center gap-6">
-                                <img
-                                    src="{{ (!empty($profileData->photo)) ? url('upload/admin_images/'.$profileData->photo) : url('upload/admin_images/NoPhoto.png') }}"
-                                    alt="user-avatar"
-                                    class="d-block w-px-100 h-px-100 rounded"
-                                    id="uploadedAvatar" />
-                                <div class="button-wrapper">
-                                    <label for="upload" class="btn btn-primary me-3 mb-4" tabindex="0">
-                                        <span class="d-none d-sm-block">Télécharger une nouvelle photo</span>
-                                        <i class="ti ti-upload d-block d-sm-none"></i>
-                                        <input
-                                            type="file"
-                                            id="upload"
-                                            name="photo"
-                                            class="form-control"
-                                            hidden
-                                            accept="image/png, image/jpeg" />
-                                    </label>
-                                    <button type="button" class="btn btn-label-secondary account-image-reset mb-4" id="resetImage">
-                                        <i class="ti ti-refresh-dot d-block d-sm-none"></i>
-                                        <span class="d-none d-sm-block">Reset</span>
-                                    </button>
-                                    <div>JPG ou PNG autorisés. Taille maximale de 800 Ko.</div>
-                                </div>
-                            </div>
-
-                            <div class="row pt-4">
-                                <div class="mb-4 col-md-6">
-                                    <label for="firstName" class="form-label">Prénom</label>
-                                    <input class="form-control" type="text" id="firstName" name="firstName" value="{{ $profileData->username }}" autofocus />
-                                </div>
-                                <div class="mb-4 col-md-6">
-                                    <label for="lastName" class="form-label">Nom</label>
-                                    <input class="form-control" type="text" name="lastName" id="lastName" value="{{ $profileData->name }}" />
-                                </div>
-                                <div class="mb-4 col-md-6">
-                                    <label for="email" class="form-label">E-mail</label>
-                                    <input class="form-control" type="text" id="email" name="email" value="{{ $profileData->email }}" placeholder="John@example.com" />
-                                </div>
-                                <div class="mb-4 col-md-6">
-                                    <label class="form-label" for="phoneNumber">Numéro de téléphone</label>
-                                    <input type="text" id="phoneNumber" name="phoneNumber" class="form-control" value="{{ $profileData->phone }}" placeholder="XX XX XX XX XX" />
-                                </div>
-                                <div class="mt-2">
-                                    <button type="submit" class="btn btn-primary me-3">Enregistrer les modifications</button>
-                                    <button type="reset" class="btn btn-label-secondary">Annuler</button>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                    <!-- /Account -->
-                </div>
-            </div>
+        <div class="text-sm text-gray-600 font-lisible mt-2">
+          Modifiez vos coordonnées et votre photo de profil.
         </div>
+
+        <p class="mt-3 text-sm text-gray-600 font-lisible">
+          Vos données sont utilisées pour la gestion de votre compte et l’administration de la plateforme.
+          <a href="{{ $privacyUrl }}" class="text-orangeone hover:underline">Politique de confidentialité</a>.
+          Pour exercer vos droits :
+          <a href="{{ $contactUrl }}" class="text-orangeone hover:underline">contact</a>.
+        </p>
+      </div>
     </div>
-    <!-- / Content -->
 
-    <div class="content-backdrop fade"></div>
+    {{-- CONTENU PRINCIPAL --}}
+    <div class="max-w-[1285px] mx-auto px-0 px-md-3 pb-4">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+        {{-- FORMULAIRE --}}
+        <div class="lg:col-span-2 bg-white rounded-[20px] shadow-md p-8">
+
+          @if ($errors->any())
+            <div class="mb-6 rounded-xl border border-red-200 bg-red-50 p-4">
+              <p class="text-sm font-semibold text-red-700">Le formulaire contient des erreurs.</p>
+              <ul class="mt-2 list-disc pl-5 text-sm text-red-700">
+                @foreach ($errors->all() as $error)
+                  <li>{{ $error }}</li>
+                @endforeach
+              </ul>
+            </div>
+          @endif
+
+          @if (session('message'))
+            <div class="mb-6 rounded-xl border border-green-200 bg-green-50 p-4">
+              <p class="text-sm font-semibold text-green-700">{{ session('message') }}</p>
+            </div>
+          @endif
+
+          <form method="POST" action="{{ route('admin.profil.store') }}" enctype="multipart/form-data" novalidate>
+            @csrf
+
+            {{-- Avatar --}}
+            <div class="flex flex-col items-center text-center mb-8">
+              <div class="relative group w-28 h-28">
+                <img id="avatar"
+                     src="{{ $photoUrl }}"
+                     alt="Photo de profil"
+                     class="w-full h-full object-cover rounded-full border-4 border-orangeone shadow-md">
+                <div class="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+                  <label for="avatar-upload" class="cursor-pointer text-white text-sm font-semibold">
+                    Modifier
+                    <input id="avatar-upload" type="file" name="photo" class="hidden" accept="image/png, image/jpeg">
+                  </label>
+                </div>
+              </div>
+
+              <p class="mt-3 text-xs text-gray-500">
+                Photo utilisée uniquement pour l’affichage du profil. JPG ou PNG, taille recommandée 800 Ko.
+              </p>
+            </div>
+
+            {{-- Champs --}}
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700" for="firstName">Prénom</label>
+                <input
+                  id="firstName"
+                  name="firstName"
+                  type="text"
+                  class="mt-2 w-full rounded-xl border-gray-300 focus:border-orangeone focus:ring-orangeone"
+                  value="{{ old('firstName', $profileData->prenom ?? $profileData->username ?? '') }}"
+                  autocomplete="given-name"
+                >
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700" for="lastName">Nom</label>
+                <input
+                  id="lastName"
+                  name="lastName"
+                  type="text"
+                  class="mt-2 w-full rounded-xl border-gray-300 focus:border-orangeone focus:ring-orangeone"
+                  value="{{ old('lastName', $profileData->name ?? '') }}"
+                  autocomplete="family-name"
+                >
+              </div>
+
+              <div class="sm:col-span-2">
+                <label class="block text-sm font-medium text-gray-700" for="email">Email</label>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  class="mt-2 w-full rounded-xl border-gray-300 focus:border-orangeone focus:ring-orangeone"
+                  value="{{ old('email', $profileData->email ?? '') }}"
+                  autocomplete="email"
+                  required
+                >
+              </div>
+
+              <div class="sm:col-span-2">
+                <label class="block text-sm font-medium text-gray-700" for="phoneNumber">Téléphone</label>
+                <input
+                  id="phoneNumber"
+                  name="phoneNumber"
+                  type="text"
+                  class="mt-2 w-full rounded-xl border-gray-300 focus:border-orangeone focus:ring-orangeone"
+                  value="{{ old('phoneNumber', $profileData->phoneNumber ?? ($profileData->phone ?? '')) }}"
+                  autocomplete="tel"
+                  placeholder="XX XX XX XX XX"
+                >
+              </div>
+
+            </div>
+
+            <div class="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
+              <button type="submit"
+                      class="inline-flex items-center justify-center px-6 py-2.5 rounded-xl text-sm font-semibold bg-orangeone text-white hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orangeone">
+                Enregistrer
+              </button>
+
+              <a href="{{ route('admin.profile') }}"
+                 class="inline-flex items-center justify-center px-6 py-2.5 rounded-xl text-sm font-semibold border border-gray-200 text-[#004461] hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orangeone">
+                Annuler
+              </a>
+            </div>
+
+          </form>
+        </div>
+
+        {{-- SIDEBAR --}}
+        <aside class="bg-white rounded-[20px] shadow-md p-6 h-fit" aria-label="Navigation Mon Espace">
+          <h3 class="text-lg font-semibold text-[#004461] mb-4">Mon Espace</h3>
+          <ul class="space-y-3 text-sm">
+            <li class="flex items-center space-x-2">
+              <span class="w-2.5 h-2.5 bg-orangeone rounded-full" aria-hidden="true"></span>
+              <a href="{{ route('admin.profile') }}" class="text-gray-700 hover:text-[#004461] font-medium">Profil</a>
+            </li>
+            <li class="flex items-center space-x-2">
+              <span class="w-2.5 h-2.5 bg-orangeone rounded-full" aria-hidden="true"></span>
+              <a href="{{ route('admin.parametre') }}" class="text-[#E94D2A] font-semibold" aria-current="page">Préférences</a>
+            </li>
+            <li class="flex items-center space-x-2">
+              <span class="w-2.5 h-2.5 bg-orangeone rounded-full" aria-hidden="true"></span>
+              <a href="{{ route('admin.securite') }}" class="text-gray-700 hover:text-[#004461] font-medium">Sécurité</a>
+            </li>
+          </ul>
+        </aside>
+
+      </div>
+    </div>
+
+  </div>
+  <div class="content-backdrop fade"></div>
 </div>
-<!-- Content wrapper -->
 
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
-<!-- Toastr JS -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
-
-    @if(session('message'))
-        <script>
-            $(document).ready(function() {
-                toastr.success('{{ session('message') }}', 'Succès', {
-                    "closeButton": true,
-                    "progressBar": true,
-                    "positionClass": "toast-top-right",
-                    "timeOut": "10000"
-                });
-            });
-        </script>
-    @endif
-
-    @if(session('error'))
-        <script>
-            $(document).ready(function() {
-                toastr.error('{{ session('error') }}', 'Erreur', {
-                    "closeButton": true,
-                    "progressBar": true,
-                    "positionClass": "toast-top-right",
-                    "timeOut": "10000"
-                });
-            });
-        </script>
-    @endif
-
-    <script type="text/javascript">
-        $(document).ready(function(){
-            $('#upload').change(function(e){
-                var reader = new FileReader();
-                reader.onload = function(e){
-                    $('#uploadedAvatar').attr('src', e.target.result);
-                }
-                reader.readAsDataURL(e.target.files[0]);
-            });
-
-            $('#resetImage').click(function() {
-                $('#uploadedAvatar').attr('src', '{{ url('upload/admin_images/NoPhoto.png') }}');
-                $('#upload').val('');
-            });
-        });
-    </script>
+@if (session('message'))
+<script>
+  window.addEventListener('DOMContentLoaded', () => {
+    const img = document.querySelector('img#avatar');
+    if (img) {
+      const currentSrc = img.src.split('?')[0];
+      img.src = `${currentSrc}?v=${Date.now()}`;
+    }
+  });
+</script>
+@endif
 @endsection

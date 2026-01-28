@@ -52,7 +52,61 @@ class AdminController extends Controller
             'email' => 'Email ou mot de passe incorrect.',
         ]);
     }
+    public function AdminParametre()
+{
+    $profileData = Auth::user();
+    return view('admin.admin_parametre', compact('profileData'));
+}
 
+public function AdminProfilStore(Request $request)
+{
+    $user = Auth::user();
+
+    $validated = $request->validate([
+        'firstName'    => ['nullable','string','max:255'],
+        'lastName'     => ['nullable','string','max:255'],
+        'email'        => ['required','email','max:255'],
+        'phoneNumber'  => ['nullable','string','max:50'],
+        'photo'        => ['nullable','image','mimes:jpg,jpeg,png','max:800'],
+    ]);
+
+    // Attention : chez toi "firstName" mappe sur username (historique) -> à clarifier.
+    // Ici je conserve ton mapping actuel :
+    $user->username = $validated['firstName'] ?? $user->username;
+    $user->name     = $validated['lastName']  ?? $user->name;
+    $user->email    = $validated['email'];
+    $user->phone    = $validated['phoneNumber'] ?? null;
+
+    if ($request->hasFile('photo')) {
+        $file = $request->file('photo');
+        $filename = time().'_'.$file->getClientOriginalName();
+        $file->move(public_path('upload/admin_images'), $filename);
+        $user->photo = $filename;
+    }
+
+    $user->save();
+
+    return back()->with('message', 'Modifications enregistrées.');
+}
+
+public function AdminSecurite()
+{
+    return view('admin.admin_securite');
+}
+
+public function AdminSecuriteUpdate(Request $request)
+{
+    $request->validate([
+        'currentPassword' => ['required', 'current_password'], // règle Laravel
+        'newPassword' => ['required', 'string', 'min:12', 'confirmed'],
+    ]);
+
+    $user = Auth::user();
+    $user->password = Hash::make($request->newPassword);
+    $user->save();
+
+    return back()->with('message', 'Mot de passe mis à jour.');
+}
     private function redirectUserByRole()
     {
         return match (Auth::user()->role) {

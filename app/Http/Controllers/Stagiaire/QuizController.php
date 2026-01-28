@@ -4,28 +4,28 @@
 namespace App\Http\Controllers\Stagiaire;
 
 use App\Http\Controllers\Controller;
+use App\Models\GroupModuleLecture;
 use App\Models\Module;
-use App\Models\ModuleSection;
 use App\Models\ModuleLecture;
+use App\Models\ModuleSection;
 use App\Models\QuizAttempt;
 use App\Models\QuizAttemptQuestion;
 use App\Models\QuizQuestion;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
-
-use App\Models\GroupModuleLecture;
 use App\Models\ScormResult;
 use App\Models\ScormScore;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\URL;
 
 class QuizController extends Controller
 {
     /**
      * Lance le quiz depuis une leçon (URL signée).
-     * - Reprend la dernière tentative non terminée (finished_at NULL) si elle existe.
-     * - Sinon crée une nouvelle tentative + tire les questions.
+     * - Stagiaire : reprend la dernière tentative non terminée (finished_at NULL), sauf si restart=1.
+     * - Formateur : rejoue sans limite => force toujours une nouvelle tentative.
      */
     public function start(Request $request, Module $module, ModuleSection $section, ModuleLecture $lecture)
     {
@@ -47,12 +47,21 @@ class QuizController extends Controller
             ]);
         }
 
-        // Si on vient de "Recommencer", on force une nouvelle tentative
-        $forceNew = (bool) $request->boolean('restart');
+        // Formateur : toujours une nouvelle tentative (rejouer sans limite)
+        $forceNew = $this->isFormateur() ? true : (bool) $request->boolean('restart');
+
+        // Formateur : éviter d’empiler des tentatives en cours
+        if ($this->isFormateur()) {
+            QuizAttempt::query()
+                ->where('user_id', auth()->id())
+                ->where('lecture_id', $lecture->id)
+                ->whereNull('finished_at')
+                ->update(['finished_at' => now()]);
+        }
 
         $attempt = null;
 
-        // Reprise uniquement si on ne force pas une nouvelle tentative
+        // Reprise (stagiaire uniquement)
         if (!$forceNew) {
             $attempt = QuizAttempt::query()
                 ->where('user_id', auth()->id())
@@ -92,79 +101,81 @@ class QuizController extends Controller
      * Affiche la question courante.
      */
     public function showQuestion(Module $module, ModuleSection $section, ModuleLecture $lecture, QuizAttempt $attempt)
-{
-    $this->assertLectureContext($module, $section, $lecture);
-    $this->assertAttemptContext($attempt, $lecture);
+    {
+        $this->assertLectureContext($module, $section, $lecture);
+        $this->assertAttemptContext($attempt, $lecture);
 
-    // Charger sections + lectures pour la sidebar
-    $module->load([
-        'sections' => function ($q) {
-            $q->orderBy('id')
-              ->with(['lectures' => function ($qq) {
-                  $qq->orderBy('position')->orderBy('id');
-              }]);
-        },
-    ]);
+        // Charger sections + lectures pour la sidebar
+        $module->load([
+            'sections' => function ($q) {
+                $q->orderBy('id')
+                    ->with(['lectures' => function ($qq) {
+                        $qq->orderBy('position')->orderBy('id');
+                    }]);
+            },
+        ]);
 
-    // Appliquer overrides groupe (ordre + masquage)
-    $groupId = $this->resolveGroupIdForUserAndModule((int) auth()->id(), (int) $module->id);
-    $this->applyGroupLessonOverrides($module, $groupId);
+        // Appliquer overrides groupe (ordre + masquage) :
+        // - stagiaire : groupe via pivot group_user/group_module
+        // - formateur : pas de groupe "utilisateur" => pas d’override côté quiz (on garde l’ordre natif)
+        $groupId = $this->isFormateur()
+            ? null
+            : $this->resolveGroupIdForUserAndModule((int) auth()->id(), (int) $module->id);
 
-    // Recaler la section depuis le module filtré
-    $section = $module->sections->firstWhere('id', (int) $section->id);
-    abort_unless($section, 404);
+        $this->applyGroupLessonOverrides($module, $groupId);
 
-    // Bloquer l’accès si la leçon est masquée par la personnalisation
-    $visibleIds = $module->sections->flatMap(fn ($s) => $s->lectures)->pluck('id')->all();
-    abort_unless(in_array((int) $lecture->id, $visibleIds, true), 404);
+        // Recaler la section depuis le module filtré
+        $section = $module->sections->firstWhere('id', (int) $section->id);
+        abort_unless($section, 404);
 
-    // Sidebar : stats + statuts sections
-    $lectures = $module->sections->flatMap(fn ($s) => $s->lectures)->values();
-    $lectureStats = $this->buildLectureStats($lectures, (int) auth()->id());
-    $sectionStatuses = $this->computeSectionStatuses($module, $lectureStats);
+        // Bloquer l’accès si la leçon est masquée par la personnalisation (stagiaire)
+        $visibleIds = $module->sections->flatMap(fn ($s) => $s->lectures)->pluck('id')->all();
+        abort_unless(in_array((int) $lecture->id, $visibleIds, true), 404);
 
-    // Si tentative déjà finie -> résultat
-    if (!is_null($attempt->finished_at)) {
-        return $this->redirectResult($module, $section, $lecture, $attempt);
+        // Sidebar : stats + statuts sections
+        $lectures = $module->sections->flatMap(fn ($s) => $s->lectures)->values();
+        $lectureStats = $this->buildLectureStats($lectures, (int) auth()->id());
+        $sectionStatuses = $this->computeSectionStatuses($module, $lectureStats);
+
+        // Si tentative déjà finie -> résultat
+        if (!is_null($attempt->finished_at)) {
+            return $this->redirectResult($module, $section, $lecture, $attempt);
+        }
+
+        $aq = $attempt->attemptQuestions()
+            ->with(['question.options' => fn ($q) => $q->orderBy('position')])
+            ->whereNull('answered_at')
+            ->orderBy('position')
+            ->first();
+
+        if (!$aq) {
+            $this->finalizeAttempt($attempt);
+            return $this->redirectResult($module, $section, $lecture, $attempt);
+        }
+
+        $question = $aq->question;
+
+        // Même vue stagiaire pour formateur (objectif : expérience identique)
+        return view('stagiaire.formations.quiz.question', [
+            'module'          => $module,
+            'section'         => $section,
+            'lecture'         => $lecture,
+            'selectedLecture' => $lecture,
+            'attempt'         => $attempt,
+            'aq'              => $aq,
+            'question'        => $question,
+
+            // Sidebar
+            'lectureStats'    => $lectureStats,
+            'sectionStatuses' => $sectionStatuses,
+
+            // Optionnel : utile si tu veux afficher “mode formateur”
+            'isFormateur'     => $this->isFormateur(),
+        ]);
     }
-
-    $aq = $attempt->attemptQuestions()
-        ->with(['question.options' => fn ($q) => $q->orderBy('position')])
-        ->whereNull('answered_at')
-        ->orderBy('position')
-        ->first();
-
-    if (!$aq) {
-        $this->finalizeAttempt($attempt);
-        return $this->redirectResult($module, $section, $lecture, $attempt);
-    }
-
-    $question = $aq->question;
-
-    return view('stagiaire.formations.quiz.question', [
-        'module'          => $module,
-        'section'         => $section,
-        'lecture'         => $lecture,
-        'selectedLecture' => $lecture,
-        'attempt'         => $attempt,
-        'aq'              => $aq,
-        'question'        => $question,
-
-        // Sidebar
-        'lectureStats'    => $lectureStats,
-        'sectionStatuses' => $sectionStatuses,
-    ]);
-}
-
 
     /**
      * Enregistre la réponse puis redirige vers la question suivante ou le résultat.
-     * Règles :
-     * - single/boolean : 1 radio obligatoire (name="answer")
-     * - multiple : au moins 1 case cochée (name="answers[]")
-     * Stockage :
-     * - answer_option_ids = JSON des ids sélectionnés
-     * - given_answer laissé à null
      */
     public function answer(Request $request, Module $module, ModuleSection $section, ModuleLecture $lecture, QuizAttempt $attempt)
     {
@@ -182,7 +193,6 @@ class QuizController extends Controller
             ->with(['options' => fn ($q) => $q->orderBy('position')])
             ->findOrFail($current->question_id);
 
-        // Normaliser selon le type
         $selectedIds = collect();
 
         if (in_array($question->type, ['single', 'boolean'], true)) {
@@ -247,96 +257,115 @@ class QuizController extends Controller
     }
 
     /**
- * Affiche le résultat final.
- */
+     * Affiche le résultat final.
+     */
     public function result(Module $module, ModuleSection $section, ModuleLecture $lecture, QuizAttempt $attempt)
-{
-    $this->assertLectureContext($module, $section, $lecture);
-    $this->assertAttemptContext($attempt, $lecture);
-
-    // Charger sections + lectures pour sidebar + next
-    $module->load([
-        'sections' => function ($q) {
-            $q->orderBy('id')
-              ->with(['lectures' => function ($qq) {
-                  $qq->orderBy('position')->orderBy('id');
-              }]);
-        },
-    ]);
-
-    // Appliquer overrides groupe
-    $groupId = $this->resolveGroupIdForUserAndModule((int) auth()->id(), (int) $module->id);
-    $this->applyGroupLessonOverrides($module, $groupId);
-
-    // Recaler la section depuis le module filtré
-    $section = $module->sections->firstWhere('id', (int) $section->id);
-    abort_unless($section, 404);
-
-    // Bloquer l’accès si le quiz est sur une leçon masquée
-    $visibleIds = $module->sections->flatMap(fn ($s) => $s->lectures)->pluck('id')->all();
-    abort_unless(in_array((int) $lecture->id, $visibleIds, true), 404);
-
-    // Sidebar
-    $lectures = $module->sections->flatMap(fn ($s) => $s->lectures)->values();
-    $lectureStats = $this->buildLectureStats($lectures, (int) auth()->id());
-    $sectionStatuses = $this->computeSectionStatuses($module, $lectureStats);
-
-    // Si tentative non finalisée mais plus de questions en attente, on renvoie à la question
-    if (is_null($attempt->finished_at)) {
-        $hasPending = $attempt->attemptQuestions()->whereNull('answered_at')->exists();
-
-        if ($hasPending) {
-            return $this->redirectQuestion($module, $section, $lecture, $attempt);
-        }
-
-        $this->finalizeAttempt($attempt);
-        $attempt->refresh();
-    }
-
-    $rows = $attempt->attemptQuestions()
-        ->with(['question.options' => fn ($q) => $q->orderBy('position')])
-        ->orderBy('position')
-        ->get();
-
-    $correctCount = $rows->where('is_correct', true)->count();
-
-    // Leçon suivante sur l’ordre visible/personnalisé
-    $currentIndex = $lectures->search(fn ($l) => (int) $l->id === (int) $lecture->id);
-    $nextLecture  = ($currentIndex !== false) ? $lectures->get($currentIndex + 1) : null;
-
-    if ($nextLecture) {
-        $nextUrl = url("/stagiaire/modules/{$module->id}/sections/{$nextLecture->section_id}/lessons/{$nextLecture->id}");
-    } else {
-        $nextUrl = url("/stagiaire/formations/{$module->id}/fin");
-    }
-
-    return view('stagiaire.formations.quiz.result', [
-        'module'          => $module,
-        'section'         => $section,
-        'lecture'         => $lecture,
-        'selectedLecture' => $lecture,
-        'attempt'         => $attempt,
-        'rows'            => $rows,
-        'correctCount'    => $correctCount,
-        'nextUrl'         => $nextUrl,
+    {
+        $this->assertLectureContext($module, $section, $lecture);
+        $this->assertAttemptContext($attempt, $lecture);
 
         // Sidebar
-        'lectureStats'    => $lectureStats,
-        'sectionStatuses' => $sectionStatuses,
-    ]);
-}
+        $module->load([
+            'sections' => function ($q) {
+                $q->orderBy('id')
+                    ->with(['lectures' => function ($qq) {
+                        $qq->orderBy('position')->orderBy('id');
+                    }]);
+            },
+        ]);
 
+        $groupId = $this->isFormateur()
+            ? null
+            : $this->resolveGroupIdForUserAndModule((int) auth()->id(), (int) $module->id);
 
+        $this->applyGroupLessonOverrides($module, $groupId);
 
+        $section = $module->sections->firstWhere('id', (int) $section->id);
+        abort_unless($section, 404);
+
+        $visibleIds = $module->sections->flatMap(fn ($s) => $s->lectures)->pluck('id')->all();
+        abort_unless(in_array((int) $lecture->id, $visibleIds, true), 404);
+
+        $lectures = $module->sections->flatMap(fn ($s) => $s->lectures)->values();
+        $lectureStats = $this->buildLectureStats($lectures, (int) auth()->id());
+        $sectionStatuses = $this->computeSectionStatuses($module, $lectureStats);
+
+        // Finaliser si besoin
+        if (is_null($attempt->finished_at)) {
+            $hasPending = $attempt->attemptQuestions()->whereNull('answered_at')->exists();
+
+            if ($hasPending) {
+                return $this->redirectQuestion($module, $section, $lecture, $attempt);
+            }
+
+            $this->finalizeAttempt($attempt);
+            $attempt->refresh();
+        }
+
+        $rows = $attempt->attemptQuestions()
+            ->with(['question.options' => fn ($q) => $q->orderBy('position')])
+            ->orderBy('position')
+            ->get();
+
+        $correctCount = $rows->where('is_correct', true)->count();
+
+        // Leçon suivante selon l’ordre visible
+        $currentIndex = $lectures->search(fn ($l) => (int) $l->id === (int) $lecture->id);
+        $nextLecture  = ($currentIndex !== false) ? $lectures->get($currentIndex + 1) : null;
+
+        // NextUrl : stagiaire vs formateur
+        if ($this->isFormateur()) {
+            if ($nextLecture) {
+                $nextUrl = route('formateur.formations.lecture', [
+                    'module'  => $module->id,
+                    'section' => $nextLecture->section_id,
+                    'lesson'  => $nextLecture->id,
+                ]);
+            } else {
+                // Fin “logique” formateur : retour détail module
+                $nextUrl = route('formateur.formations.detail', ['module' => $module->id]);
+            }
+        } else {
+            if ($nextLecture) {
+                $nextUrl = url("/stagiaire/modules/{$module->id}/sections/{$nextLecture->section_id}/lessons/{$nextLecture->id}");
+            } else {
+                $nextUrl = url("/stagiaire/formations/{$module->id}/fin");
+            }
+        }
+
+        return view('stagiaire.formations.quiz.result', [
+            'module'          => $module,
+            'section'         => $section,
+            'lecture'         => $lecture,
+            'selectedLecture' => $lecture,
+            'attempt'         => $attempt,
+            'rows'            => $rows,
+            'correctCount'    => $correctCount,
+            'nextUrl'         => $nextUrl,
+
+            'lectureStats'    => $lectureStats,
+            'sectionStatuses' => $sectionStatuses,
+
+            'isFormateur'     => $this->isFormateur(),
+        ]);
+    }
+
+    /**
+     * Recommencer : stagiaire (après fin) et formateur (toujours possible).
+     * => redirige vers start() avec restart=1 (URL signée).
+     */
     public function restart(Module $module, ModuleSection $section, ModuleLecture $lecture, QuizAttempt $attempt)
     {
         $this->assertLectureContext($module, $section, $lecture);
         $this->assertAttemptContext($attempt, $lecture);
 
-        abort_if(is_null($attempt->finished_at), 403);
+        // Stagiaire : on ne redémarre que si terminé
+        if (!$this->isFormateur()) {
+            abort_if(is_null($attempt->finished_at), 403);
+        }
 
         return redirect()->to(
-            \Illuminate\Support\Facades\URL::signedRoute('stagiaire.quiz.start', [
+            URL::signedRoute($this->routeName('quiz.start'), [
                 'module'  => $module->id,
                 'section' => $section->id,
                 'lecture' => $lecture->id,
@@ -417,7 +446,7 @@ class QuizController extends Controller
 
     private function redirectQuestion(Module $module, ModuleSection $section, ModuleLecture $lecture, QuizAttempt $attempt)
     {
-        return redirect()->route('stagiaire.lesson.quiz.question', [
+        return redirect()->route($this->routeName('lesson.quiz.question'), [
             'module'  => $module->id,
             'section' => $section->id,
             'lecture' => $lecture->id,
@@ -427,215 +456,220 @@ class QuizController extends Controller
 
     private function redirectResult(Module $module, ModuleSection $section, ModuleLecture $lecture, QuizAttempt $attempt)
     {
-        return redirect()->route('stagiaire.lesson.quiz.result', [
+        return redirect()->route($this->routeName('lesson.quiz.result'), [
             'module'  => $module->id,
             'section' => $section->id,
             'lecture' => $lecture->id,
             'attempt' => $attempt->id,
         ]);
     }
-    private function resolveGroupIdForUserAndModule(int $userId, int $moduleId): ?int
-{
-    $gid = DB::table('group_user')
-        ->join('group_module', 'group_module.group_id', '=', 'group_user.group_id')
-        ->where('group_user.user_id', $userId)
-        ->where('group_module.module_id', $moduleId)
-        ->value('group_user.group_id');
 
-    return $gid ? (int) $gid : null;
-}
+    /**
+     * Prefix routes : formateur vs stagiaire
+     */
+    private function routeName(string $suffix): string
+    {
+        // Exemples attendus :
+        // - quiz.start
+        // - lesson.quiz.question
+        // - lesson.quiz.result
+        $prefix = $this->isFormateur() ? 'formateur' : 'stagiaire';
+        $name = $prefix . '.' . $suffix;
 
-private function applyGroupLessonOverrides(Module $module, ?int $groupId): void
-{
-    if (!$groupId) return;
+        // Sécurité : si la route formateur n’existe pas encore, on retombe sur stagiaire
+        if (!Route::has($name)) {
+            $fallback = 'stagiaire.' . $suffix;
+            if (Route::has($fallback)) {
+                return $fallback;
+            }
+        }
 
-    $over = GroupModuleLecture::query()
-        ->where('group_id', $groupId)
-        ->where('module_id', $module->id)
-        ->get()
-        ->keyBy('lecture_id');
-
-    if ($over->isEmpty()) return;
-
-    $module->sections->each(function ($sec) use ($over) {
-        $sec->setRelation('lectures', $sec->lectures
-            ->filter(function ($lec) use ($over) {
-                $row = $over->get($lec->id);
-                return $row ? (bool) $row->is_enabled : true;
-            })
-            ->sortBy(function ($lec) use ($over) {
-                $row = $over->get($lec->id);
-                return $row ? (int) $row->position : (int) ($lec->position ?? 999999);
-            })
-            ->values()
-        );
-    });
-}
-
-/**
- * Reprend la même logique que ModuleController::buildLectureStats()
- * (quiz si activé, sinon statut “diapo” via SCORM).
- */
-private function buildLectureStats($lectures, int $userId): array
-{
-    $lectureIds = $lectures->pluck('id')->all();
-
-    $attempts = QuizAttempt::query()
-        ->where('user_id', $userId)
-        ->whereIn('lecture_id', $lectureIds)
-        ->orderByDesc('finished_at')
-        ->orderByDesc('id')
-        ->get()
-        ->groupBy('lecture_id')
-        ->map(fn($rows) => $rows->first());
-
-    $attemptIds = $attempts->filter()->pluck('id')->all();
-
-    $attemptAgg = collect();
-    if (!empty($attemptIds)) {
-        $attemptAgg = QuizAttemptQuestion::query()
-            ->select([
-                'attempt_id',
-                DB::raw('COUNT(*) as total'),
-                DB::raw('SUM(CASE WHEN answered_at IS NOT NULL THEN 1 ELSE 0 END) as answered'),
-                DB::raw('SUM(CASE WHEN is_correct = 1 THEN 1 ELSE 0 END) as correct'),
-            ])
-            ->whereIn('attempt_id', $attemptIds)
-            ->groupBy('attempt_id')
-            ->get()
-            ->keyBy('attempt_id');
+        return $name;
     }
 
-    $scores = ScormScore::query()
-        ->where('user_id', $userId)
-        ->whereIn('lecture_id', $lectureIds)
-        ->get()
-        ->keyBy('lecture_id');
+    private function isFormateur(): bool
+    {
+        return Auth::check() && Auth::user()->role === 'formateur';
+    }
 
-    $started = ScormResult::query()
-        ->where('user_id', $userId)
-        ->whereIn('lecture_id', $lectureIds)
-        ->select('lecture_id', DB::raw('COUNT(*) as c'))
-        ->groupBy('lecture_id')
-        ->pluck('c', 'lecture_id');
+    private function resolveGroupIdForUserAndModule(int $userId, int $moduleId): ?int
+    {
+        $gid = DB::table('group_user')
+            ->join('group_module', 'group_module.group_id', '=', 'group_user.group_id')
+            ->where('group_user.user_id', $userId)
+            ->where('group_module.module_id', $moduleId)
+            ->value('group_user.group_id');
 
-    $stats = [];
+        return $gid ? (int) $gid : null;
+    }
 
-    foreach ($lectures as $lec) {
+    private function applyGroupLessonOverrides(Module $module, ?int $groupId): void
+    {
+        if (!$groupId) return;
 
-        // Quiz activé => sidebar sur quiz
-        if ((bool) ($lec->quiz_enabled ?? false)) {
-            $attempt = $attempts->get($lec->id);
-            $planned = (int) ($lec->quiz_questions_per_attempt ?? 0);
+        $over = GroupModuleLecture::query()
+            ->where('group_id', $groupId)
+            ->where('module_id', $module->id)
+            ->get()
+            ->keyBy('lecture_id');
 
-            if (!$attempt) {
+        if ($over->isEmpty()) return;
+
+        $module->sections->each(function ($sec) use ($over) {
+            $sec->setRelation('lectures', $sec->lectures
+                ->filter(function ($lec) use ($over) {
+                    $row = $over->get($lec->id);
+                    return $row ? (bool) $row->is_enabled : true;
+                })
+                ->sortBy(function ($lec) use ($over) {
+                    $row = $over->get($lec->id);
+                    return $row ? (int) $row->position : (int) ($lec->position ?? 999999);
+                })
+                ->values()
+            );
+        });
+    }
+
+    /**
+     * Sidebar : stats par leçon (quiz si activé, sinon statut SCORM).
+     */
+    private function buildLectureStats($lectures, int $userId): array
+    {
+        $lectureIds = $lectures->pluck('id')->all();
+
+        $attempts = QuizAttempt::query()
+            ->where('user_id', $userId)
+            ->whereIn('lecture_id', $lectureIds)
+            ->orderByDesc('finished_at')
+            ->orderByDesc('id')
+            ->get()
+            ->groupBy('lecture_id')
+            ->map(fn ($rows) => $rows->first());
+
+        $attemptIds = $attempts->filter()->pluck('id')->all();
+
+        $attemptAgg = collect();
+        if (!empty($attemptIds)) {
+            $attemptAgg = QuizAttemptQuestion::query()
+                ->select([
+                    'attempt_id',
+                    DB::raw('COUNT(*) as total'),
+                    DB::raw('SUM(CASE WHEN answered_at IS NOT NULL THEN 1 ELSE 0 END) as answered'),
+                    DB::raw('SUM(CASE WHEN is_correct = 1 THEN 1 ELSE 0 END) as correct'),
+                ])
+                ->whereIn('attempt_id', $attemptIds)
+                ->groupBy('attempt_id')
+                ->get()
+                ->keyBy('attempt_id');
+        }
+
+        $scores = ScormScore::query()
+            ->where('user_id', $userId)
+            ->whereIn('lecture_id', $lectureIds)
+            ->get()
+            ->keyBy('lecture_id');
+
+        $started = ScormResult::query()
+            ->where('user_id', $userId)
+            ->whereIn('lecture_id', $lectureIds)
+            ->select('lecture_id', DB::raw('COUNT(*) as c'))
+            ->groupBy('lecture_id')
+            ->pluck('c', 'lecture_id');
+
+        $stats = [];
+
+        foreach ($lectures as $lec) {
+            // Quiz activé => sidebar sur quiz
+            if ((bool) ($lec->quiz_enabled ?? false)) {
+                $attempt  = $attempts->get($lec->id);
+                $planned  = (int) ($lec->quiz_questions_per_attempt ?? 0);
+
+                if (!$attempt) {
+                    $stats[$lec->id] = [
+                        'status'             => 'not_started',
+                        'quiz'               => true,
+                        'questions_total'    => $planned,
+                        'questions_answered' => 0,
+                        'questions_correct'  => 0,
+                        'quiz_score'         => null,
+                        'quiz_finished'      => false,
+                        'slides'             => (int) ($lec->slide_count ?? 0),
+                        'session_time'       => null,
+                    ];
+                    continue;
+                }
+
+                $agg      = $attemptAgg->get($attempt->id);
+                $total    = (int) ($agg->total ?? $attempt->total_questions ?? $planned ?? 0);
+                $answered = (int) ($agg->answered ?? 0);
+                $correct  = (int) ($agg->correct ?? 0);
+                $score    = ($total > 0) ? (int) round(($correct / $total) * 100) : null;
+                $finished = !is_null($attempt->finished_at);
+
+                if (!$finished) {
+                    $status = $answered > 0 ? 'in_progress' : 'not_started';
+                } else {
+                    $status = ($score !== null && $score >= 50) ? 'completed' : 'failed';
+                }
+
                 $stats[$lec->id] = [
-                    'status' => 'not_started',
-                    'quiz' => true,
-                    'questions_total' => $planned,
-                    'questions_answered' => 0,
-                    'questions_correct' => 0,
-                    'quiz_score' => null,
-                    'quiz_finished' => false,
-                    'slides' => (int)($lec->slide_count ?? 0),
-                    'session_time' => null,
+                    'status'             => $status,
+                    'quiz'               => true,
+                    'questions_total'    => $total,
+                    'questions_answered' => $answered,
+                    'questions_correct'  => $correct,
+                    'quiz_score'         => $score,
+                    'quiz_finished'      => $finished,
+                    'slides'             => (int) ($lec->slide_count ?? 0),
+                    'session_time'       => null,
                 ];
                 continue;
             }
 
-            $agg = $attemptAgg->get($attempt->id);
-            $total    = (int)($agg->total ?? $attempt->total_questions ?? $planned ?? 0);
-            $answered = (int)($agg->answered ?? 0);
-            $correct  = (int)($agg->correct ?? 0);
-            $score    = ($total > 0) ? (int) round(($correct / $total) * 100) : null;
-            $finished = !is_null($attempt->finished_at);
+            // Sinon : SCORM
+            $hasStarted  = (int) ($started[$lec->id] ?? 0) > 0;
+            $sc          = $scores->get($lec->id);
+            $lessonStatus = strtolower((string) ($sc->lesson_status ?? ''));
+            $isCompleted = in_array($lessonStatus, ['completed', 'passed'], true) || (bool) ($sc->is_completed ?? false);
 
-            if (!$finished) {
-                $status = $answered > 0 ? 'in_progress' : 'not_started';
-            } else {
-                $status = ($score !== null && $score >= 50) ? 'completed' : 'failed';
-            }
+            if (!$hasStarted) $status = 'not_started';
+            elseif ($isCompleted) $status = 'completed';
+            else $status = 'in_progress';
 
             $stats[$lec->id] = [
-                'status' => $status,
-                'quiz' => true,
-                'questions_total' => $total,
-                'questions_answered' => $answered,
-                'questions_correct' => $correct,
-                'quiz_score' => $score,
-                'quiz_finished' => $finished,
-                'slides' => (int)($lec->slide_count ?? 0),
-                'session_time' => null,
+                'status'             => $status,
+                'quiz'               => false,
+                'questions_total'    => 0,
+                'questions_answered' => 0,
+                'questions_correct'  => 0,
+                'quiz_score'         => null,
+                'quiz_finished'      => false,
+                'slides'             => (int) ($lec->slide_count ?? 0),
+                'session_time'       => $sc->session_time ?? null,
             ];
-            continue;
         }
 
-        // Sinon : SCORM
-        $hasStarted = (int)($started[$lec->id] ?? 0) > 0;
-        $sc = $scores->get($lec->id);
-
-        $lessonStatus = strtolower((string)($sc->lesson_status ?? ''));
-        $isCompleted = in_array($lessonStatus, ['completed', 'passed'], true) || (bool)($sc->is_completed ?? false);
-
-        if (!$hasStarted) $status = 'not_started';
-        elseif ($isCompleted) $status = 'completed';
-        else $status = 'in_progress';
-
-        $stats[$lec->id] = [
-            'status' => $status,
-            'quiz' => false,
-            'questions_total' => 0,
-            'questions_answered' => 0,
-            'questions_correct' => 0,
-            'quiz_score' => null,
-            'quiz_finished' => false,
-            'slides' => (int)($lec->slide_count ?? 0),
-            'session_time' => $sc->session_time ?? null,
-        ];
+        return $stats;
     }
 
-    return $stats;
-}
+    private function computeSectionStatuses(Module $module, array $lectureStats): array
+    {
+        $out = [];
 
-private function hydrateModuleForSidebar(Module $module): Module
-{
-    // charge sections/leçons + ordre
-    $module->load([
-        'sections' => function ($q) {
-            $q->orderBy('id')
-              ->with(['lectures' => function ($qq) {
-                  $qq->orderBy('position');
-              }]);
-        },
-    ]);
+        foreach ($module->sections as $sec) {
+            $total = $sec->lectures->count();
+            if ($total === 0) {
+                $out[$sec->id] = 'not_started';
+                continue;
+            }
 
-    // applique overrides groupe
-    $groupId = $this->resolveGroupIdForUserAndModule((int) auth()->id(), (int) $module->id);
-    $this->applyGroupLessonOverrides($module, $groupId);
+            $ok = $sec->lectures->filter(function ($lec) use ($lectureStats) {
+                return in_array($lectureStats[$lec->id]['status'] ?? null, ['completed'], true);
+            })->count();
 
-    return $module;
-}
-
-private function computeSectionStatuses(Module $module, array $lectureStats): array
-{
-    $out = [];
-
-    foreach ($module->sections as $sec) {
-        $total = $sec->lectures->count();
-        if ($total === 0) {
-            $out[$sec->id] = 'not_started';
-            continue;
+            $out[$sec->id] = ($ok === $total) ? 'completed' : ($ok > 0 ? 'in_progress' : 'not_started');
         }
 
-        $ok = $sec->lectures->filter(function ($lec) use ($lectureStats) {
-            return in_array($lectureStats[$lec->id]['status'] ?? null, ['completed'], true);
-        })->count();
-
-        $out[$sec->id] = ($ok === $total) ? 'completed' : ($ok > 0 ? 'in_progress' : 'not_started');
+        return $out;
     }
-
-    return $out;
-}
-
-
 }
