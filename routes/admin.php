@@ -22,6 +22,14 @@ Route::middleware(['auth', 'role:admin'])
 
         Route::get('/', [AdminController::class, 'AdminDashboard'])->name('dashboard');
         Route::get('/profile', [AdminController::class, 'AdminProfile'])->name('profile');
+        // Compte (Préférences)
+        Route::get('/parametre', [AdminController::class, 'AdminParametre'])->name('parametre');
+        Route::post('/profil/store', [AdminController::class, 'AdminProfilStore'])->name('profil.store');
+
+        // Sécurité
+        Route::get('/securite', [AdminController::class, 'AdminSecurite'])->name('securite');
+        Route::post('/securite', [AdminController::class, 'AdminSecuriteUpdate'])->name('securite.update');
+
 
         Route::get('/formateurs', [AdminController::class, 'AllFormateur'])->name('formateurs');
         Route::delete('/formateurs/{user}', [AdminController::class, 'DestroyFormateur'])->name('formateurs.destroy');

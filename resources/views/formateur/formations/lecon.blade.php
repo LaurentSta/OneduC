@@ -1,67 +1,142 @@
+{{-- resources/views/formateur/formations/lecon.blade.php --}}
+
 @extends('formateur.formations.master_lecon')
 
 @section('content')
 <meta name="csrf-token" content="{{ csrf_token() }}">
 
-@if (isset($selectedLecture))
-  <script>window.currentLectureId = {{ $selectedLecture->id }};</script>
+@php
+    $lecture   = $selectedLecture ?? ($lecture ?? null);
+    $moduleId  = (int) ($module->id ?? 0);
+    $lectureId = $lecture ? (int) $lecture->id : null;
+    $sectionId = $lecture ? (int) $lecture->section_id : null;
+
+    // Conserver le contexte (mode / group_id / include_hidden) dans la navigation
+    $contextQuery = $contextQuery ?? [];
+    $qs = '';
+    if (!empty($contextQuery) && is_array($contextQuery)) {
+        $qs = '?' . http_build_query($contextQuery);
+    }
+
+    // --- URL SCORM (robuste) ---
+    $scormUrl = null;
+    if ($lecture && !empty($lecture->scorm_path)) {
+        $p = (string) $lecture->scorm_path;
+
+        if (\Illuminate\Support\Str::startsWith($p, ['http://', 'https://'])) {
+            $scormUrl = $p;
+        } elseif (\Illuminate\Support\Str::startsWith($p, '/')) {
+            $scormUrl = url($p);
+        } else {
+            $scormUrl = asset($p);
+        }
+    }
+
+    // --- Navigation (avec contexte) ---
+    $finalUrl = $moduleId
+        ? route('formateur.formations.detail', ['module' => $moduleId]) . $qs
+        : route('formateur.dashboard');
+
+    $nextUrl = '#';
+    if (!empty($nextLecture) && $moduleId) {
+        $nextSectionId = (int) ($nextLecture['section_id'] ?? 0);
+        $nextId        = (int) ($nextLecture['id'] ?? 0);
+
+        if ($nextSectionId && $nextId) {
+            if ($sectionId && $nextSectionId === $sectionId) {
+                $nextUrl = route('formateur.formations.lecture', [
+                    'module'  => $moduleId,
+                    'section' => $nextSectionId,
+                    'lecture' => $nextId,
+                ]) . $qs;
+            } else {
+                $nextUrl = route('formateur.formations.section', [
+                    'module'  => $moduleId,
+                    'section' => $nextSectionId,
+                ]) . $qs;
+            }
+        }
+    }
+
+    // --- Quiz (optionnel) ---
+    $quizStartUrl = null;
+    if ($lecture && !empty($lecture->quiz_enabled) && $moduleId && $sectionId && $lectureId) {
+        if (\Illuminate\Support\Facades\Route::has('formateur.quiz.start')) {
+            $quizStartUrl = \Illuminate\Support\Facades\URL::signedRoute('formateur.quiz.start', [
+                'module'  => $moduleId,
+                'section' => $sectionId,
+                'lecture' => $lectureId, // IMPORTANT : votre route demande {lecture}
+            ]) . $qs;
+        }
+    }
+@endphp
+
+@if ($lectureId)
+  <script>window.currentLectureId = {{ $lectureId }};</script>
 @endif
 
-<main class="flex-1 bg-white">
-  @if (isset($selectedLecture) && $selectedLecture->scorm_path)
-    @php
-      $p = (string) ($selectedLecture->scorm_path ?? '');
-      $isExternal = \Illuminate\Support\Str::startsWith($p, ['http://','https://','/']);
-      $scormUrl = $isExternal
-        ? $p
-        : asset('modules/scorm/00_Lecons/' . ltrim($p,'/') . '/res/index.html');
-    @endphp
+<div class="flex min-h-[calc(100vh-64px)] bg-white">
 
-    <iframe
-      title="Contenu de la leçon"
-      src="{{ $scormUrl }}"
-      frameborder="0"
-      allowfullscreen
-      class="w-full"
-      style="height: calc(100vh - 64px); display: block;">
-    </iframe>
-  @else
-    <div class="p-6">
-      <p class="text-gray-700">Aucun contenu SCORM défini pour cette leçon.</p>
-    </div>
-  @endif
-</main>
+  {{-- Sidebar (si votre master_lecon ne l’inclut pas déjà) --}}
+  {{-- Décommente si nécessaire :
+  @include('formateur.formations.body_formations.sidebar', [
+      'module'          => $module,
+      'selectedSection' => $selectedSection ?? $section ?? null,
+      'selectedLecture' => $lecture,
+      'lectureStats'    => $lectureStats ?? [],
+      'sectionStatuses' => $sectionStatuses ?? [],
+      'contextQuery'    => $contextQuery,
+  ])
+  --}}
+
+  <main class="flex-1 bg-white">
+    @if ($lecture && $scormUrl)
+      <iframe
+        title="Contenu de la leçon"
+        src="{{ $scormUrl }}"
+        frameborder="0"
+        allowfullscreen
+        class="w-full"
+        style="height: calc(100vh - 64px); display: block;">
+      </iframe>
+    @else
+      <div class="p-6">
+        <p class="text-gray-700">Aucun contenu SCORM défini pour cette leçon.</p>
+      </div>
+    @endif
+  </main>
+</div>
 
 <script>
-  const moduleId        = {{ $module->id }};
-  const currentLectureId= {{ $selectedLecture->id ?? 'null' }};
-  const currentSectionId= {{ $selectedLecture->section_id ?? 'null' }};
-  const nextLecture     = @json($nextLecture);
-
-  const routes = {
-    lectureTpl : "{{ route('formateur.formations.lecture', ['module'=>'__m__','section'=>'__s__','lesson'=>'__l__']) }}",
-    sectionTpl : "{{ route('formateur.formations.section', ['module'=>'__m__','section'=>'__s__']) }}",
-    detail     : "{{ route('formateur.formations.detail', ['module'=>$module->id]) }}",
-  };
-  function fill(tpl, m, s, l='') {
-    return tpl.replace('__m__', m).replace('__s__', s).replace('__l__', l);
-  }
-
-  let nextUrl = "#";
-  if (nextLecture) {
-    if (Number(nextLecture.section_id) === Number(currentSectionId)) {
-      nextUrl = fill(routes.lectureTpl, moduleId, nextLecture.section_id, nextLecture.id);
-    } else {
-      nextUrl = fill(routes.sectionTpl, moduleId, nextLecture.section_id);
-    }
-  }
-  const finalUrl = routes.detail;
+  const finalUrl = @json($finalUrl);
 
   window.SCORM_CONTEXT = {
-    lecture_id: currentLectureId,
-    next_url: nextUrl,
+    lecture_id: @json($lectureId),
+    module_id: @json($moduleId),
+    section_id: @json($sectionId),
+
+    // Navigation (déjà avec ?mode=...&group_id=...&include_hidden=...)
+    next_url: @json($nextUrl),
+
+    // Quiz (si présent, déjà avec le contexte)
+    quiz_start_url: @json($quizStartUrl),
+
+    goToQuiz: function () {
+      if (!this.quiz_start_url) return;
+      window.location.href = this.quiz_start_url;
+    },
+
+    // Règle : quiz prioritaire ; sinon suite ; sinon détail
     goToNextLesson: function () {
-      window.location.href = (this.next_url && this.next_url !== "#") ? this.next_url : finalUrl;
+      if (this.quiz_start_url) {
+        window.location.href = this.quiz_start_url;
+        return;
+      }
+      if (this.next_url && this.next_url !== "#") {
+        window.location.href = this.next_url;
+        return;
+      }
+      window.location.href = finalUrl;
     }
   };
 </script>

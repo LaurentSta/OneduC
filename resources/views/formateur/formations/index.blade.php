@@ -88,39 +88,75 @@
                 <td class="px-4 py-3 font-medium">{{ $module->module_title }}</td>
                 <td class="px-4 py-3">{{ $module->created_at->format('d/m/Y') }}</td>
                 <td class="px-4 py-3">
-  @if($groupes->count() > 0)
-    <span class="inline-flex items-center px-2 py-1 text-green-700 bg-green-100 rounded-full text-xs font-medium">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-      </svg>
-      Utilisé
-    </span>
-  @elseif($module->status == 1)
-    <span class="inline-flex items-center px-2 py-1 text-blue-700 bg-blue-100 rounded-full text-xs font-medium">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-      </svg>
-      Non utilisé
-    </span>
-  @else
-    <span class="inline-flex items-center px-2 py-1 text-red-700 bg-red-100 rounded-full text-xs font-medium">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-      </svg>
-      Indisponible
-    </span>
-  @endif
-</td>
+                  @if($groupes->count() > 0)
+                    <span class="inline-flex items-center px-2 py-1 text-green-700 bg-green-100 rounded-full text-xs font-medium">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                      </svg>
+                      Utilisé
+                    </span>
+                  @elseif($module->status == 1)
+                    <span class="inline-flex items-center px-2 py-1 text-blue-700 bg-blue-100 rounded-full text-xs font-medium">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                      </svg>
+                      Non utilisé
+                    </span>
+                  @else
+                    <span class="inline-flex items-center px-2 py-1 text-red-700 bg-red-100 rounded-full text-xs font-medium">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                      Indisponible
+                    </span>
+                  @endif
+                </td>
 
                 <td class="px-4 py-3">{{ $groupes->count() }}</td>
                 <td class="px-4 py-3">{{ $stagiaires->count() }}</td>
                 <td class="px-4 py-3 text-right">
-                @if($statut === 'indisponible')
-                  <span class="text-gray-400 line-through text-sm cursor-not-allowed select-none">Voir</span>
-                @else
-                  <a href="{{ route('formateur.formations.detail', $module->id) }}" class="text-orangeone hover:underline text-sm">Voir</a>
-                @endif
-              </td>
+  @if($statut === 'indisponible')
+    <span class="text-gray-400 line-through text-sm cursor-not-allowed select-none">Voir</span>
+  @else
+    <div class="inline-flex items-center gap-3">
+      <a href="{{ route('formateur.formations.detail', $module->id) }}"
+         class="text-orangeone hover:underline text-sm">
+        Voir
+      </a>
+
+      {{-- Cheminement pédagogique : par groupe --}}
+      @if($groupes->count() === 1)
+        @php $g = $groupes->first(); @endphp
+        <a href="{{ route('formateur.groupes.modules.lecons.edit', ['group' => $g->id, 'module' => $module->id]) }}"
+           class="text-bleuone hover:underline text-sm">
+          Cheminement
+        </a>
+      @elseif($groupes->count() > 1)
+        <div class="relative group">
+          <button type="button"
+                  class="text-bleuone hover:underline text-sm">
+            Cheminement
+          </button>
+
+          <div class="hidden group-hover:block absolute right-0 mt-2 w-64 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden z-10">
+            <div class="px-4 py-2 text-xs font-varela text-gray-500 bg-gray-50">
+              Choisir un groupe
+            </div>
+            <div class="max-h-64 overflow-auto">
+              @foreach($groupes as $g)
+                <a href="{{ route('formateur.groupes.modules.lecons.edit', ['group' => $g->id, 'module' => $module->id]) }}"
+                   class="block px-4 py-2 text-sm text-gray-800 hover:bg-gray-50">
+                  {{ $g->name ?? ('Groupe #'.$g->id) }}
+                </a>
+              @endforeach
+            </div>
+          </div>
+        </div>
+      @endif
+    </div>
+  @endif
+</td>
+
 
 
 

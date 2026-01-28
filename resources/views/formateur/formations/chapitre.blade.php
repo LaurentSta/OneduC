@@ -103,10 +103,15 @@
       {{-- Bouton tester --}}
       @if($firstLecture)
         <div class="mt-4">
-          <a href="{{ route('formateur.formations.lecture', ['module' => $module->id, 'section' => $selectedSection->id, 'lesson' => $firstLecture->id]) }}"
-             class="btn-oneduc flex items-center justify-center gap-2">
-            Tester cette section
-          </a>
+          <a href="{{ route('formateur.formations.lecture', [
+      'module'  => $module->id,
+      'section' => $selectedSection->id,
+      'lecture' => $firstLecture->id
+]) }}"
+   class="btn-oneduc flex items-center justify-center gap-2">
+  Tester cette section
+</a>
+
         </div>
       @endif
     </div>

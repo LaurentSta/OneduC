@@ -19,9 +19,16 @@
 
   <ul class="space-y-4">
     @foreach ($module->sections as $sIndex => $section)
-      @php
-        $isActiveSection = optional($selectedLecture)->section_id === $section->id
-                          || (request()->route('section') == $section->id);
+      
+        @php
+          $routeSection = request()->route('section');
+          $routeSectionId = is_object($routeSection) ? (int) $routeSection->id : (int) $routeSection;
+
+          $isActiveSection =
+              (int) (optional($selectedLecture)->section_id ?? 0) === (int) $section->id
+              || $routeSectionId === (int) $section->id;
+        @endphp
+@php
 
         // progression section
         $totalL = $section->lectures->count();
@@ -61,6 +68,15 @@
               {{ $section->section_title }}
             </a>
           </div>
+          @php
+            $totalLectures = $section->lectures->count();
+            $doneLectures = $section->lectures->filter(function ($lec) use ($lectureStats) {
+                $st = $lectureStats[$lec->id]['status'] ?? 'not_started';
+                return in_array($st, ['acquired', 'completed'], true);
+            })->count();
+
+            $percent = $totalLectures > 0 ? (int) round(($doneLectures / $totalLectures) * 100) : 0;
+          @endphp
 
           {{-- barre de progression --}}
           <div class="mt-2 w-full bg-gray-100 h-1.5 rounded"
@@ -84,7 +100,9 @@
   $lessonDone = in_array($stat, ['acquired','completed']);
 @endphp
 
-<a href="{{ route('formateur.formations.lecture', ['module' => $module->id, 'section' => $section->id, 'lesson' => $lec->id]) }}"
+<a href="{{ route('formateur.formations.lecture', ['module' => $module->id, 'section' => $section->id, 'lecture' => $lec->id]) }}"
+
+
    class="block px-3 py-2 rounded-lg text-sm font-varela transition
           {{ $isActiveLesson ? 'bg-orangeone/10 border border-orangeone text-bleuone'
                              : 'hover:bg-gray-100 text-gray-800 border border-transparent' }}

@@ -3,95 +3,145 @@
 
 @section('content')
 
-{{-- 🧩 EN-TÊTE DE PAGE STAGIAIRE – Profil --}}
-<div class="bg-white rounded-[20px] shadow-md px-8 pt-4 w-full max-w-[1285px] mx-auto mb-6">
-    <div class="grid grid-cols-12 gap-6 items-start">
-        <div class="col-span-12">
-            <x-typography variant="titre">Profil stagiaire</x-typography>
-            <x-typography variant="sous-titre" class="font-varela text-sous-titre text-orangeone">
-                Vos informations personnelles
-            </x-typography>
-            <x-typography>
-                Consultez et modifiez vos informations de contact, votre mot de passe et vos préférences.
-            </x-typography>
+{{-- /resources/views/stagiaire/stagiaire_profile_view.blade.php --}}
 
-            {{-- 📍 Fil d’Ariane --}}
-            <nav class="text-sm font-varela text-gray-600 mt-2 mb-6" aria-label="Fil d'Ariane">
-                <ol class="list-none p-0 inline-flex items-center space-x-1">
-                    <li class="flex items-center">
-                        <a href="{{ route('stagiaire.dashboard') }}" class="text-orangeone hover:underline flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M3 9.75L12 3l9 6.75V19a2 2 0 01-2 2h-4a1 1 0 01-1-1v-5H10v5a1 1 0 01-1 1H5a2 2 0 01-2-2V9.75z"/>
-                            </svg>
-                        </a>
-                        <span class="mx-2 text-gray-400">/</span>
-                    </li>
-                    <li class="text-gray-400">Mon profil</li>
-                </ol>
-            </nav>
-        </div>
+@php
+  $privacyUrl = \Illuminate\Support\Facades\Route::has('page.confidentialite')
+    ? route('page.confidentialite')
+    : url('/confidentialite');
+
+  $contactUrl = \Illuminate\Support\Facades\Route::has('contact')
+    ? route('contact')
+    : url('/contact');
+
+  $email = $profileData->email;
+  $adresse = $profileData->address ?: null;
+  $telephone = $profileData->phone ?: null;
+
+  $siteTimeSeconds = (int) ($totalSiteTime ?? 0);
+  $tempsSite = gmdate('H\h i\m s\s', max(0, $siteTimeSeconds));
+@endphp
+
+{{-- EN-TÊTE DE PAGE --}}
+<div class="bg-white rounded-[20px] shadow-md px-8 pt-4 w-full max-w-[1285px] mx-auto mb-6">
+  <div class="grid grid-cols-12 gap-6 items-start">
+    <div class="col-span-12">
+      <x-typography variant="titre">Mon profil</x-typography>
+      <x-typography variant="sous-titre" class="font-varela text-sous-titre text-orangeone">
+        Informations essentielles
+      </x-typography>
+      <x-typography>
+        Consultez vos informations et accédez aux réglages (préférences et sécurité).
+      </x-typography>
+
+      {{-- Mention RGPD (courte) --}}
+      <p class="mt-2 text-sm text-gray-600">
+        Vos données sont utilisées pour la gestion de votre compte et le suivi pédagogique.
+        <a href="{{ $privacyUrl }}" class="text-orangeone hover:underline">Politique de confidentialité</a>.
+        Pour exercer vos droits, contactez-nous via
+        <a href="{{ $contactUrl }}" class="text-orangeone hover:underline">le formulaire de contact</a>.
+      </p>
+
+      {{-- Fil d’Ariane --}}
+      <nav class="text-sm font-varela text-gray-600 mt-2 mb-6" aria-label="Fil d'Ariane">
+        <ol class="list-none p-0 inline-flex items-center space-x-1">
+          <li class="flex items-center">
+            <a href="{{ route('stagiaire.dashboard') }}" class="text-orangeone hover:underline flex items-center" aria-label="Retour au tableau de bord">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M3 9.75L12 3l9 6.75V19a2 2 0 01-2 2h-4a1 1 0 01-1-1v-5H10v5a1 1 0 01-1 1H5a2 2 0 01-2-2V9.75z"/>
+              </svg>
+            </a>
+            <span class="mx-2 text-gray-400">/</span>
+          </li>
+          <li class="text-gray-400">Mon profil</li>
+        </ol>
+      </nav>
     </div>
+  </div>
 </div>
 
+{{-- CONTENU PRINCIPAL --}}
+<div class="w-full max-w-[1285px] mx-auto px-0">
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
 
-{{-- 📄 CONTENU PRINCIPAL – Aligné comme l’en-tête --}}
+    {{-- COLONNE PRINCIPALE --}}
+    <div class="lg:col-span-2">
+      <section class="bg-white rounded-[20px] shadow-md p-8 w-full" aria-labelledby="profil-identite">
 
+        <div class="flex flex-col items-center text-center mb-8">
+          <div class="relative group w-28 h-28">
+            <img
+              src="{{ !empty($profileData->photo) ? asset('upload/user_images/'.$profileData->photo) : asset('upload/admin_images/NoPhoto.png') }}"
+              alt="Photo de profil"
+              class="w-full h-full object-cover rounded-full border-4 border-orangeone shadow-md"
+            >
+          </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-        <!-- Bloc Infos Profil -->
-        <div class="lg:col-span-2">
-            <div class="bg-white rounded-[20px] shadow-md p-8 w-full">
-                <div class="flex flex-col items-center text-center mb-6">
-                    <div class="relative group w-28 h-28">
-                        <img src="{{ !empty($profileData->photo) ? asset('upload/user_images/'.$profileData->photo) : asset('upload/admin_images/NoPhoto.png') }}"
-                             alt="Avatar"
-                             class="w-full h-full object-cover rounded-full border-4 border-orangeone shadow-md">
-                    </div>
-                    <h4 class="text-xl font-semibold mt-4">{{ $profileData->prenom }} {{ $profileData->name }}</h4>
-                    <p class="text-gray-500 text-sm">Stagiaire</p>
-                </div>
-
-                <div class="flex justify-center">
-                    <div class="grid gap-y-2 text-sm">
-                        @php $infos = [
-                            'Email' => $profileData->email,
-                            'Adresse' => $profileData->address ?? 'Non renseignée',
-                            'Date de début' => 'À renseigner',
-                            'Temps sur le site' => gmdate('H\h i\m s\s', $totalSiteTime ?? 0),
-                            'Code d’accès' => 'À renseigner'
-                        ]; @endphp
-
-                        @foreach ($infos as $label => $value)
-                            <div class="grid grid-cols-[140px_auto] gap-x-4">
-                                <div class="text-right text-gray-700 font-medium">{{ $label }}</div>
-                                <div class="text-left text-gray-500">{{ $value }}</div>
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
-            </div>
+          <h2 id="profil-identite" class="text-xl font-semibold mt-4">
+            {{ $profileData->prenom }} {{ $profileData->name }}
+          </h2>
+          <p class="text-gray-500 text-sm">Stagiaire</p>
         </div>
 
-        <!-- Sidebar Navigation -->
-        <aside class="bg-white rounded-[20px] shadow-md p-6 h-fit">
-            <h3 class="text-lg font-semibold text-[#004461] mb-4">Mon Espace</h3>
-            <ul class="space-y-3 text-sm">
-                <li class="flex items-center space-x-2">
-                    <span class="w-2.5 h-2.5 bg-orangeone rounded-full"></span>
-                    <a href="{{ route('stagiaire.profile') }}" class="text-[#E94D2A] font-semibold">Profil</a>
-                </li>
-                <li class="flex items-center space-x-2">
-                    <span class="w-2.5 h-2.5 bg-orangeone rounded-full"></span>
-                    <a href="{{ route('stagiaire.parametre') }}" class="text-gray-700 hover:text-[#004461] font-medium">Préférences</a>
-                </li>
-                <li class="flex items-center space-x-2">
-                    <span class="w-2.5 h-2.5 bg-orangeone rounded-full"></span>
-                    <a href="{{ route('stagiaire.securite.show') }}" class="text-gray-700 hover:text-[#004461] font-medium">Sécurité</a>
-                </li>
-            </ul>
-        </aside>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div class="rounded-xl border border-gray-100 p-4">
+            <p class="text-xs font-semibold text-gray-500">Email</p>
+            <p class="mt-1 text-sm text-gray-700 break-words">{{ $email }}</p>
+          </div>
+
+          <div class="rounded-xl border border-gray-100 p-4">
+            <p class="text-xs font-semibold text-gray-500">Temps sur le site</p>
+            <p class="mt-1 text-sm text-gray-700">{{ $tempsSite }}</p>
+          </div>
+
+          {{-- Adresse (affichée seulement si renseignée) --}}
+          <div class="rounded-xl border border-gray-100 p-4">
+            <p class="text-xs font-semibold text-gray-500">Adresse</p>
+            <p class="mt-1 text-sm text-gray-700">{{ $adresse ?: 'Non renseignée' }}</p>
+          </div>
+
+          {{-- Téléphone --}}
+          <div class="rounded-xl border border-gray-100 p-4">
+            <p class="text-xs font-semibold text-gray-500">Téléphone</p>
+            <p class="mt-1 text-sm text-gray-700">{{ $telephone ?: 'Non renseigné' }}</p>
+          </div>
+        </div>
+
+        <div class="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
+          <a href="{{ route('stagiaire.parametre') }}"
+             class="inline-flex items-center justify-center px-5 py-2.5 rounded-xl text-sm font-semibold bg-orangeone text-white hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orangeone">
+            Modifier mes informations
+          </a>
+          <a href="{{ route('stagiaire.securite.show') }}"
+             class="inline-flex items-center justify-center px-5 py-2.5 rounded-xl text-sm font-semibold border border-gray-200 text-[#004461] hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orangeone">
+            Modifier mon mot de passe
+          </a>
+        </div>
+
+      </section>
     </div>
 
+    {{-- SIDEBAR --}}
+    <aside class="bg-white rounded-[20px] shadow-md p-6 h-fit" aria-label="Navigation Mon Espace">
+      <h3 class="text-lg font-semibold text-[#004461] mb-4">Mon Espace</h3>
+      <ul class="space-y-3 text-sm">
+        <li class="flex items-center space-x-2">
+          <span class="w-2.5 h-2.5 bg-orangeone rounded-full" aria-hidden="true"></span>
+          <a href="{{ route('stagiaire.profile') }}" class="text-[#E94D2A] font-semibold" aria-current="page">Profil</a>
+        </li>
+        <li class="flex items-center space-x-2">
+          <span class="w-2.5 h-2.5 bg-orangeone rounded-full" aria-hidden="true"></span>
+          <a href="{{ route('stagiaire.parametre') }}" class="text-gray-700 hover:text-[#004461] font-medium">Préférences</a>
+        </li>
+        <li class="flex items-center space-x-2">
+          <span class="w-2.5 h-2.5 bg-orangeone rounded-full" aria-hidden="true"></span>
+          <a href="{{ route('stagiaire.securite.show') }}" class="text-gray-700 hover:text-[#004461] font-medium">Sécurité</a>
+        </li>
+      </ul>
+    </aside>
+
+  </div>
+</div>
 
 @endsection

@@ -3,113 +3,179 @@
 
 @section('content')
 
-{{-- 🧩 EN-TÊTE DE PAGE STAGIAIRE – Préférences --}}
+{{-- /resources/views/stagiaire/stagiaire_parametre.blade.php --}}
+
+@php
+  $privacyUrl = \Illuminate\Support\Facades\Route::has('page.confidentialite')
+    ? route('page.confidentialite')
+    : url('/confidentialite');
+
+  $contactUrl = \Illuminate\Support\Facades\Route::has('contact')
+    ? route('contact')
+    : url('/contact');
+
+  $phoneValue = old('phoneNumber', $profileData->phoneNumber ?? ($profileData->phone ?? ''));
+@endphp
+
 <div class="bg-white rounded-[20px] shadow-md px-8 pt-4 w-full max-w-[1285px] mx-auto mb-6">
   <div class="grid grid-cols-12 gap-6 items-start">
     <div class="col-span-12">
       <x-typography variant="titre">Préférences</x-typography>
       <x-typography variant="sous-titre" class="font-varela text-sous-titre text-orangeone">
-        Modifier vos informations personnelles
+        Modifier mes informations
       </x-typography>
-      <x-typography>
-        Vous pouvez ici changer vos coordonnées personnelles et votre photo de profil.
-      </x-typography>
+      <x-typography>Modifiez votre photo et vos coordonnées.</x-typography>
 
-      {{-- 📍 Fil d’Ariane --}}
+      {{-- Mention RGPD (courte) --}}
+      <p class="mt-2 text-sm text-gray-600">
+        Seules les données nécessaires à la gestion du compte sont demandées.
+        <a href="{{ $privacyUrl }}" class="text-orangeone hover:underline">Politique de confidentialité</a>.
+        Pour exercer vos droits :
+        <a href="{{ $contactUrl }}" class="text-orangeone hover:underline">contact</a>.
+      </p>
+
       <nav class="text-sm font-varela text-gray-600 mt-2 mb-6" aria-label="Fil d'Ariane">
         <ol class="list-none p-0 inline-flex items-center space-x-1">
           <li class="flex items-center">
-            <a href="{{ route('stagiaire.dashboard') }}" class="text-orangeone hover:underline flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <a href="{{ route('stagiaire.dashboard') }}" class="text-orangeone hover:underline flex items-center" aria-label="Retour au tableau de bord">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M3 9.75L12 3l9 6.75V19a2 2 0 01-2 2h-4a1 1 0 01-1-1v-5H10v5a1 1 0 01-1 1H5a2 2 0 01-2-2V9.75z"/>
               </svg>
             </a>
             <span class="mx-2 text-gray-400">/</span>
           </li>
-          <li class="text-gray-400">Mes préférences</li>
+          <li class="text-gray-400">Préférences</li>
         </ol>
       </nav>
     </div>
   </div>
 </div>
 
-{{-- 📄 CONTENU PRINCIPAL – aligné avec l’en-tête --}}
-
-
+<div class="w-full max-w-[1285px] mx-auto px-0">
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-    <!-- Formulaire préférences -->
+
     <div class="lg:col-span-2">
       <div class="bg-white rounded-[20px] shadow-md p-8 w-full">
-        <form method="POST" action="{{ route('stagiaire.profil.store') }}" enctype="multipart/form-data">
+        <form method="POST" action="{{ route('stagiaire.profil.store') }}" enctype="multipart/form-data" novalidate>
           @csrf
 
-          <!-- Avatar -->
-          <div class="flex justify-center mb-6">
-            <div class="relative group w-28 h-28">
-              <img src="{{ !empty($profileData->photo) ? asset('upload/user_images/'.$profileData->photo) : asset('upload/NoPhoto.png') }}"
-                   alt="Avatar"
-                   class="w-full h-full object-cover rounded-full border-4 border-orangeone shadow-md">
-              <div class="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
-                <label for="avatar-upload" class="cursor-pointer text-white text-xl">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M3 7h2l.4-1.2A2 2 0 017.2 4h9.6a2 2 0 011.8 1.8L19 7h2a2 2 0 012 2v10a2 2 0 01-2 2H3a2 2 0 01-2-2V9a2 2 0 012-2z"/>
-                    <circle cx="12" cy="13" r="3"/>
-                  </svg>
-                  <input id="avatar-upload" type="file" name="photo" class="hidden" accept="image/*">
-                </label>
-              </div>
+          @if ($errors->any())
+            <div class="mb-6 rounded-xl border border-red-200 bg-red-50 p-4">
+              <p class="text-sm font-semibold text-red-700">Le formulaire contient des erreurs.</p>
+              <ul class="mt-2 list-disc pl-5 text-sm text-red-700">
+                @foreach ($errors->all() as $error)
+                  <li>{{ $error }}</li>
+                @endforeach
+              </ul>
+            </div>
+          @endif
+
+          {{-- Photo --}}
+          <div class="flex flex-col items-center text-center mb-8">
+            <div class="relative w-28 h-28">
+              <img
+                src="{{ !empty($profileData->photo) ? asset('upload/user_images/'.$profileData->photo) : asset('upload/admin_images/NoPhoto.png') }}"
+                alt="Photo de profil"
+                class="w-full h-full object-cover rounded-full border-4 border-orangeone shadow-md"
+              >
+            </div>
+
+            <div class="mt-4 w-full max-w-sm">
+              <label for="photo" class="block text-sm font-semibold text-[#004461]">Changer la photo</label>
+              <p class="text-xs text-gray-500 mt-1">Utilisée uniquement pour l’affichage du profil.</p>
+              <input
+                id="photo"
+                name="photo"
+                type="file"
+                accept="image/*"
+                class="mt-3 block w-full text-sm text-gray-700
+                       file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0
+                       file:text-sm file:font-semibold file:bg-gray-100 file:text-[#004461]
+                       hover:file:bg-gray-200"
+              >
             </div>
           </div>
 
-          <!-- Champs -->
-          <div class="flex justify-center">
-            <div class="grid gap-y-4 text-sm w-full max-w-md">
-              @php $fields = [
-                'prenom' => ['Prénom', 'text'],
-                'name' => ['Nom', 'text'],
-                'email' => ['Email', 'email'],
-                'phoneNumber' => ['Téléphone', 'text'],
-                'address' => ['Adresse', 'text']
-              ]; @endphp
+          {{-- Champs (minimisés) --}}
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div>
+              <label for="prenom" class="block text-sm font-medium text-gray-700">Prénom</label>
+              <input id="prenom" type="text" name="prenom"
+                     value="{{ old('prenom', $profileData->prenom ?? '') }}"
+                     class="mt-2 w-full rounded-xl border-gray-300 focus:border-orangeone focus:ring-orangeone"
+                     autocomplete="given-name">
+            </div>
 
-              @foreach ($fields as $name => [$label, $type])
-                <div class="grid grid-cols-[140px_auto] gap-x-4 items-center">
-                  <label class="text-right text-gray-700 font-medium">{{ $label }}</label>
-                  <input type="{{ $type }}" name="{{ $name }}" class="w-full rounded-lg border-gray-300"
-                         value="{{ old($name, $profileData->{$name} ?? '') }}">
-                </div>
-              @endforeach
+            <div>
+              <label for="name" class="block text-sm font-medium text-gray-700">Nom</label>
+              <input id="name" type="text" name="name"
+                     value="{{ old('name', $profileData->name ?? '') }}"
+                     class="mt-2 w-full rounded-xl border-gray-300 focus:border-orangeone focus:ring-orangeone"
+                     autocomplete="family-name">
+            </div>
+
+            <div class="sm:col-span-2">
+              <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+              <input id="email" type="email" name="email"
+                     value="{{ old('email', $profileData->email ?? '') }}"
+                     class="mt-2 w-full rounded-xl border-gray-300 focus:border-orangeone focus:ring-orangeone"
+                     autocomplete="email">
+            </div>
+
+            <div>
+              <label for="phoneNumber" class="block text-sm font-medium text-gray-700">Téléphone</label>
+              <input id="phoneNumber" type="text" name="phoneNumber"
+                     value="{{ $phoneValue }}"
+                     class="mt-2 w-full rounded-xl border-gray-300 focus:border-orangeone focus:ring-orangeone"
+                     autocomplete="tel">
+            </div>
+
+            <div>
+              <label for="address" class="block text-sm font-medium text-gray-700">Adresse</label>
+              <input id="address" type="text" name="address"
+                     value="{{ old('address', $profileData->address ?? '') }}"
+                     class="mt-2 w-full rounded-xl border-gray-300 focus:border-orangeone focus:ring-orangeone"
+                     autocomplete="street-address">
             </div>
           </div>
 
-          <div class="mt-6 text-center">
-            <button type="submit" class="btn-oneduc">Enregistrer les modifications</button>
+          <div class="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
+            <button type="submit"
+                    class="inline-flex items-center justify-center px-6 py-2.5 rounded-xl text-sm font-semibold bg-orangeone text-white hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orangeone">
+              Enregistrer
+            </button>
+
+            <a href="{{ route('stagiaire.profile') }}"
+               class="inline-flex items-center justify-center px-6 py-2.5 rounded-xl text-sm font-semibold border border-gray-200 text-[#004461] hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orangeone">
+              Annuler
+            </a>
           </div>
+
         </form>
       </div>
     </div>
 
-    <!-- Sidebar -->
-    <aside class="bg-white rounded-[20px] shadow-md p-6 h-fit">
+    {{-- SIDEBAR --}}
+    <aside class="bg-white rounded-[20px] shadow-md p-6 h-fit" aria-label="Navigation Mon Espace">
       <h3 class="text-lg font-semibold text-[#004461] mb-4">Mon Espace</h3>
       <ul class="space-y-3 text-sm">
         <li class="flex items-center space-x-2">
-          <span class="w-2.5 h-2.5 bg-orangeone rounded-full"></span>
+          <span class="w-2.5 h-2.5 bg-orangeone rounded-full" aria-hidden="true"></span>
           <a href="{{ route('stagiaire.profile') }}" class="text-gray-700 hover:text-[#004461] font-medium">Profil</a>
         </li>
         <li class="flex items-center space-x-2">
-          <span class="w-2.5 h-2.5 bg-orangeone rounded-full"></span>
-          <a href="{{ route('stagiaire.parametre') }}" class="text-[#E94D2A] font-semibold">Préférences</a>
+          <span class="w-2.5 h-2.5 bg-orangeone rounded-full" aria-hidden="true"></span>
+          <a href="{{ route('stagiaire.parametre') }}" class="text-[#E94D2A] font-semibold" aria-current="page">Préférences</a>
         </li>
         <li class="flex items-center space-x-2">
-          <span class="w-2.5 h-2.5 bg-orangeone rounded-full"></span>
+          <span class="w-2.5 h-2.5 bg-orangeone rounded-full" aria-hidden="true"></span>
           <a href="{{ route('stagiaire.securite.show') }}" class="text-gray-700 hover:text-[#004461] font-medium">Sécurité</a>
         </li>
       </ul>
     </aside>
-  </div>
 
+  </div>
+</div>
 
 @endsection
