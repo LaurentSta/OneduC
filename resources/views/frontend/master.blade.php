@@ -51,7 +51,13 @@
     <!--======================================
             END HEADER AREA
     ======================================-->
-     @yield('home')
+     <main
+        id="page-transition"
+        class="opacity-0 transition-opacity duration-500 ease-out"
+    >
+        @yield('home')
+    </main>
+
     <!-- ================================
              END FOOTER AREA
     ================================= -->
@@ -79,6 +85,18 @@
   };
 </script>
 <script src="{{ asset('confortplus/js/toolbar.min.js') }}" defer></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const page = document.getElementById('page-transition');
+    if (page) {
+        requestAnimationFrame(() => {
+            page.classList.remove('opacity-0');
+            page.classList.add('opacity-100');
+        });
+    }
+});
+</script>
+
 @stack('scripts')
 </body>
 </html>
