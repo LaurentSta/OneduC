@@ -1,119 +1,158 @@
 @extends('admin.admin_dashboard')
 @section('admin')
-<div class="max-w-[1248px] mx-auto px-4">
-    <div class="bg-white rounded-[20px] shadow-md p-8 my-10 w-full">
-        <div class="grid grid-cols-12 gap-6 items-center">
 
-            {{-- Colonne texte --}}
-            <div class="col-span-12 md:col-span-9">
-                <x-typography variant="titre">Sous-catégories</x-typography>
-                <x-typography variant="sous-titre" class="font-varela text-sous-titre text-orangeone">
-                    …pour détailler chaque grande thématique
-                </x-typography>
-                <div class="prose-oneduc">
-                    Les <strong>sous-catégories</strong> permettent de découper chaque grande thématique en sujets plus spécifiques.
-                    Par exemple, la catégorie <em>Bureautique</em> pourra être déclinée en sous-catégories comme <strong>Word</strong>, <strong>Excel</strong> ou <strong>PowerPoint</strong>.
-                </div>
-            </div>
+<div class="w-full px-6 lg:px-8">
+    <div class="bg-white rounded-[20px] shadow-soft p-6 my-6 w-full border border-gray-100">
 
-            {{-- Colonne image --}}
-            <div class="col-span-12 md:col-span-3 flex justify-center md:justify-end">
-                <div class="w-full max-w-xs">
-                    {!! file_get_contents(public_path('images/svg/PointDInterrogation.svg')) !!}
-                </div>
-            </div>
-
-        </div>
-    </div>
-</div>
-
-
-<div class="max-w-7xl mx-auto p-4">
-
-    <div class="bg-white shadow rounded-lg">
-        <!-- Header -->
-        <div class="flex items-center justify-between px-6 py-4 border-b">
-            <h2 class="text-xl font-semibold text-gray-800">Toutes les sous-catégories</h2>
-            <a href="{{ route('admin.subcategories.add') }}"
-               class="inline-flex items-center px-4 py-2 bg-orangeone text-white text-sm font-medium rounded hover:bg-orange-600">
-                <i class="ti ti-plus mr-1"></i> Ajouter une sous-catégorie
-            </a>
+        {{-- En-tête minimal (sans banderole) --}}
+        <div class="flex flex-col gap-2 border-b border-gray-100 pb-4 mb-4">
+            <h1 class="text-[20px] font-varela text-bleuone">Sous-catégories</h1>
+            <p class="text-sm text-gray-600">
+                Détaillez chaque thématique en sous-catégories plus précises.
+            </p>
         </div>
 
-        <!-- Tableau -->
-        <div class="overflow-x-auto p-4">
-            <table id="subcategoryTable" class="w-full text-sm text-left text-gray-700">
-                <thead class="text-xs text-gray-600 uppercase bg-gray-100">
+        {{-- Actions --}}
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <div class="text-sm text-gray-600">
+                Total : <span class="font-semibold text-gray-900">{{ $subcategories->count() }}</span>
+            </div>
+
+            <div class="flex flex-wrap gap-2">
+                <a href="{{ route('admin.categories.all') }}"
+                   class="inline-flex items-center gap-2 px-4 py-2 border border-bleuone/20 text-bleuone text-sm font-varela rounded-lg
+                          hover:bg-bleuone hover:text-white transition cursor-pointer">
+                    <i class="ti ti-arrow-left"></i>
+                    Retour aux catégories
+                </a>
+
+                <a href="{{ route('admin.subcategories.add') }}"
+                   class="inline-flex items-center gap-2 px-4 py-2 bg-orangeone text-white text-sm font-varela rounded-lg
+                          hover:bg-orangeone-hover transition cursor-pointer">
+                    <i class="ti ti-plus"></i>
+                    Ajouter une sous-catégorie
+                </a>
+            </div>
+        </div>
+
+        {{-- Tableau (utilise le style global table-oneduc + DataTables) --}}
+        <div class="overflow-x-auto">
+            <table id="subcategoryTable" class="table-oneduc w-full text-sm text-left text-gray-700">
+                <thead class="text-xs uppercase">
                     <tr>
                         <th class="px-4 py-3">#</th>
-                        <th class="px-4 py-3">Catégorie parente</th>
+                        {{-- Tu avais dit : nom avant catégorie parente --}}
                         <th class="px-4 py-3">Nom</th>
+                        <th class="px-4 py-3">Catégorie parente</th>
                         <th class="px-4 py-3">Description</th>
                         <th class="px-4 py-3">Image</th>
-                        <th class="px-4 py-3 text-center w-48">Actions</th>
+                        <th class="px-4 py-3 text-right">Actions</th>
                     </tr>
                 </thead>
+
+                <tfoot class="text-xs uppercase">
+                    <tr>
+                        <th class="px-4 py-3">#</th>
+                        <th class="px-4 py-3">Nom</th>
+                        <th class="px-4 py-3">Catégorie parente</th>
+                        <th class="px-4 py-3">Description</th>
+                        <th class="px-4 py-3">Image</th>
+                        <th class="px-4 py-3 text-right">Actions</th>
+                    </tr>
+                </tfoot>
+
                 <tbody>
                     @forelse ($subcategories as $key => $subcategory)
-                        <tr class="border-b hover:bg-gray-50">
-                            <td class="px-4 py-3">{{ $key + 1 }}</td>
-                            <td class="px-4 py-3">{{ $subcategory->category->category_name ?? 'Catégorie supprimée' }}</td>
-                            <td class="px-4 py-3">{{ $subcategory->subcategory_name }}</td>
-                            <td class="px-4 py-3">
+                        <tr class="border-b border-gray-100 transition">
+                            <td class="px-4 py-3 whitespace-nowrap">{{ $key + 1 }}</td>
+
+                            <td class="px-4 py-3 font-medium text-gray-900">
+                                {{ $subcategory->subcategory_name }}
+                            </td>
+
+                            <td class="px-4 py-3 text-gray-700">
+                                {{ $subcategory->category->category_name ?? 'Catégorie supprimée' }}
+                            </td>
+
+                            <td class="px-4 py-3 max-w-[520px] truncate text-gray-600"
+                                title="{{ $subcategory->subcategory_description }}">
                                 {{ $subcategory->subcategory_description
-                                    ? \Illuminate\Support\Str::limit($subcategory->subcategory_description, 50)
+                                    ? \Illuminate\Support\Str::limit($subcategory->subcategory_description, 80)
                                     : '-' }}
                             </td>
+
                             <td class="px-4 py-3">
                                 <img src="{{ $subcategory->subcategory_image
                                     ? asset('storage/' . $subcategory->subcategory_image)
                                     : asset('upload/subcategory_images/NoImage.png') }}"
-                                     alt="Image sous-catégorie"
-                                     class="h-10 w-10 rounded-full object-cover">
+                                     alt="Image sous-catégorie {{ $subcategory->subcategory_name }}"
+                                     class="h-10 w-10 rounded-full object-cover border border-gray-200">
                             </td>
-                            <td class="px-4 py-3 text-center w-48">
-                                <div class="flex justify-center gap-2">
+
+                            <td class="px-4 py-3 text-right">
+                                <div class="inline-flex items-center gap-2">
                                     <a href="{{ route('admin.subcategories.edit', $subcategory->id) }}"
-                                       class="inline-flex items-center px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded hover:bg-blue-700 transition">
-                                        <i class="ti ti-pencil mr-1"></i> Éditer
+                                       class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-bleuone/20 text-bleuone
+                                              hover:bg-bleuone hover:text-white transition text-xs font-varela cursor-pointer">
+                                        <i class="ti ti-pencil"></i>
+                                        Éditer
                                     </a>
-                                    <button onclick="confirmDelete({{ $subcategory->id }})"
-                                            class="inline-flex items-center px-3 py-1.5 bg-red-600 text-white text-xs font-medium rounded hover:bg-red-700 transition">
-                                        <i class="ti ti-trash mr-1"></i> Supprimer
+
+                                    <button type="button"
+                                            onclick="confirmDelete({{ $subcategory->id }})"
+                                            class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-red-200 text-red-700
+                                                   hover:bg-red-600 hover:text-white transition text-xs font-varela cursor-pointer">
+                                        <i class="ti ti-trash"></i>
+                                        Supprimer
                                     </button>
                                 </div>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-4 py-3 text-center text-gray-500">Aucune sous-catégorie trouvée.</td>
+                            <td colspan="6" class="px-4 py-6 text-center text-gray-500">
+                                Aucune sous-catégorie trouvée.
+                            </td>
                         </tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
+
     </div>
 </div>
 
-<!-- Suppression -->
+{{-- Suppression --}}
 <script>
     function confirmDelete(id) {
         if (confirm('Êtes-vous sûr de vouloir supprimer cette sous-catégorie ? Cette action est irréversible.')) {
             window.location.href = "{{ url('/admin/sous-categories/delete/') }}/" + id;
         }
     }
+
+    $(document).ready(function () {
+        $('#subcategoryTable').DataTable({
+            language: { url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/fr-FR.json' },
+            order: [[1, 'asc']],
+            columnDefs: [
+                { targets: 0, orderable: false },
+                { targets: 4, orderable: false }, // image
+                { targets: 5, orderable: false }  // actions
+            ]
+        });
+    });
 </script>
 
-<!-- Toastify -->
+{{-- Toastify --}}
 @if(session('success'))
 <script>
     window.addEventListener('DOMContentLoaded', () => {
         Toastify({
-            text: "{{ session('success') }}",
+            text: @json(session('success')),
             duration: 4000,
             gravity: "top",
             position: "right",
-            backgroundColor: "#28a745",
+            backgroundColor: "#01c69c",
             close: true
         }).showToast();
     });

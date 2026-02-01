@@ -551,10 +551,10 @@ class FormateurController extends Controller
         }
 
         // Attention : cette route est côté stagiaire. À conserver seulement si c'est voulu.
-        return redirect()->route('stagiaire.module.lecture', [
+        return redirect()->route('formateur.formations.lecture', [
             'module'  => $module->id,
             'section' => $firstSection->id,
-            'lesson'  => $firstLecture->id,
+            'lecture' => $firstLecture->id,
         ]);
     }
 }

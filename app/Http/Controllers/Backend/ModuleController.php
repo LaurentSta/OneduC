@@ -22,6 +22,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use App\Models\LectureObjective;
+use App\Models\Competency;
+
 
 class ModuleController extends Controller
 {
@@ -402,26 +405,47 @@ class ModuleController extends Controller
      */
     public function EditLecture($id)
     {
-        $mlecture = ModuleLecture::withCount([
-            'quizQuestions as quiz_questions_count',
-        ])->findOrFail($id);
+        // 1) Leçon + compteurs + objectifs + compétences des objectifs
+        $mlecture = ModuleLecture::query()
+            ->withCount([
+                'quizQuestions as quiz_questions_count',
+            ])
+            ->with([
+                'objectives' => function ($q) {
+                    $q->orderBy('position')->orderBy('id')
+                    ->with(['competencies' => function ($qq) {
+                        $qq->orderBy('pivot_position')->orderBy('label');
+                    }]);
+                },
+            ])
+            ->findOrFail($id);
 
+        // 2) SCORM packages/versions
         $mlecture->load([
             'scormPackage.activeVersion',
             'scormPackage.versions' => fn ($q) => $q->orderByDesc('id'),
             'scormPackageVersion',
         ]);
 
+        // 3) Liste des packages SCORM (sélection)
         $packages = ScormPackage::select('id', 'name', 'slug', 'active_version_id')
             ->orderBy('name')
             ->get();
 
+        // 4) Liste des compétences actives (pour le select multiple par objectif)
+        $competencies = \App\Models\Competency::query()
+            ->where('is_active', 1)
+            ->orderBy('label')
+            ->get(['id', 'code', 'label']);
+
         return view('admin.backend.modules.lecture.edit_module_lecture', [
             'mlecture'           => $mlecture,
             'packages'           => $packages,
+            'competencies'       => $competencies,
             'quizQuestionsCount' => $mlecture->quiz_questions_count,
         ]);
     }
+
 
     /**
      * 12) Mise à jour d’une lecture (admin)
@@ -441,6 +465,14 @@ class ModuleController extends Controller
             'slide_count'                => 'nullable|integer|min:0',
             'quiz_enabled'               => 'nullable|in:0,1',
             'quiz_questions_per_attempt' => 'exclude_unless:quiz_enabled,1|required|integer|min:1',
+
+            // --- OBJECTIFS DE LECON (NOUVEAU) ---
+            'objectives'                 => ['nullable', 'array'],
+            'objectives.*.id'            => ['nullable', 'integer', 'exists:lecture_objectives,id'],
+            'objectives.*.title'         => ['nullable', 'string', 'max:255'],
+            'objectives.*.description'   => ['nullable', 'string'],
+            'objectives.*.position'      => ['nullable', 'integer', 'min:1'],
+            'objectives.*._delete'       => ['nullable', 'boolean'],
         ]);
 
         $lecture = ModuleLecture::findOrFail($validated['id']);
@@ -465,18 +497,25 @@ class ModuleController extends Controller
             }
         }
 
-        $lecture->update([
-            'lecture_title'              => $validated['lecture_title'],
-            'scorm_path'                 => $validated['scorm_path'] ?? null,
+        // Transaction: cohérence leçon + objectifs
+        DB::transaction(function () use ($lecture, $validated, $request, $useActive, $quizEnabled) {
 
-            'scorm_package_id'           => $request->input('scorm_package_id'),
-            'use_active_scorm_version'   => $useActive,
-            'scorm_package_version_id'   => $useActive ? null : $request->input('scorm_package_version_id'),
+            $lecture->update([
+                'lecture_title'              => $validated['lecture_title'],
+                'scorm_path'                 => $validated['scorm_path'] ?? null,
 
-            'slide_count'                => (int) $request->input('slide_count', 0),
-            'quiz_enabled'               => $quizEnabled,
-            'quiz_questions_per_attempt' => $quizEnabled ? (int) $request->input('quiz_questions_per_attempt') : 0,
-        ]);
+                'scorm_package_id'           => $request->input('scorm_package_id'),
+                'use_active_scorm_version'   => $useActive,
+                'scorm_package_version_id'   => $useActive ? null : $request->input('scorm_package_version_id'),
+
+                'slide_count'                => (int) $request->input('slide_count', 0),
+                'quiz_enabled'               => $quizEnabled,
+                'quiz_questions_per_attempt' => $quizEnabled ? (int) $request->input('quiz_questions_per_attempt') : 0,
+            ]);
+
+            // Synchronisation des objectifs (si présent dans le formulaire)
+            $this->syncLectureObjectives($lecture, $request->input('objectives', []));
+        });
 
         $action = $request->input('save_action', 'back');
 
@@ -488,6 +527,11 @@ class ModuleController extends Controller
             ->route('admin.modules.lecture.add', ['id' => $lecture->module_id])
             ->with('success', 'La lecture a été mise à jour avec succès.');
     }
+
+
+
+
+
 
     /**
      * 13) Suppression d’une lecture (admin)
@@ -520,6 +564,9 @@ class ModuleController extends Controller
     /**
      * 9) Vue Section (stagiaire ou formateur)
      */
+    /**
+     * 9) Vue Section (stagiaire ou formateur)
+     */
     public function section(Request $request, Module $module, ModuleSection $section)
     {
         $user = auth()->user();
@@ -530,15 +577,22 @@ class ModuleController extends Controller
         $module->load([
             'sections' => function ($q) {
                 $q->orderBy('id')
-                    ->with(['lectures' => function ($qq) {
-                        $qq->orderBy('position')->orderBy('id');
-                    }]);
+                ->with(['lectures' => function ($qq) {
+                    $qq->orderBy('position')
+                        ->orderBy('id')
+                        ->with(['objectives' => function ($oq) {
+                            $oq->orderBy('position')->orderBy('id');
+                        }]);
+                }]);
             },
         ]);
 
         $mode          = (string) $request->query('mode', 'groupe'); // 'groupe' | 'officiel'
         $isStaff       = in_array($user->role ?? null, ['formateur', 'admin'], true);
         $includeHidden = $request->boolean('include_hidden') && $isStaff;
+
+        // ✅ Mode anonyme (lecture seule, pas de progression/statuts)
+        $anonymous = $request->boolean('anonymous');
 
         $groupId = $this->resolveGroupIdForContext($request, $user, (int) $module->id);
 
@@ -551,27 +605,37 @@ class ModuleController extends Controller
 
         $lectures = $module->sections->flatMap(fn ($s) => $s->lectures)->values();
 
-        $lectureStats = $this->buildLectureStats($lectures, (int) $user->id);
+        // ✅ En anonyme : pas de calcul de progression/statuts
+        $lectureStats = $anonymous ? [] : $this->buildLectureStats($lectures, (int) $user->id);
 
-        $sectionStatuses = $module->sections->mapWithKeys(function ($sec) use ($lectureStats) {
-            $total = $sec->lectures->count();
-            if ($total === 0) return [$sec->id => 'not_started'];
+        $sectionStatuses = $anonymous
+            ? collect()
+            : $module->sections->mapWithKeys(function ($sec) use ($lectureStats) {
+                $total = $sec->lectures->count();
+                if ($total === 0) return [$sec->id => 'not_started'];
 
-            $ok = $sec->lectures->filter(function ($lec) use ($lectureStats) {
-                $st = $lectureStats[$lec->id]['status'] ?? null;
-                return $st === 'completed';
-            })->count();
+                $ok = $sec->lectures->filter(function ($lec) use ($lectureStats) {
+                    $st = $lectureStats[$lec->id]['status'] ?? null;
+                    return $st === 'completed';
+                })->count();
 
-            return [$sec->id => ($ok === $total ? 'completed' : ($ok > 0 ? 'in_progress' : 'not_started'))];
-        });
+                return [$sec->id => ($ok === $total ? 'completed' : ($ok > 0 ? 'in_progress' : 'not_started'))];
+            });
 
+        // ✅ Propagation du contexte + du mode anonyme
         $contextQuery = array_filter([
             'mode'           => $mode,
             'group_id'       => ($mode !== 'officiel' ? ($groupId ?: null) : null),
             'include_hidden' => ($includeHidden ? 1 : null),
+            'anonymous'      => ($anonymous ? 1 : null),
         ]);
 
-        return view($this->viewBase() . '.chapitre', [
+        // ✅ Si formateur + anonymous, on rend une vue "stagiaire" adaptée
+        $view = ($anonymous && ($user->role ?? null) === 'formateur')
+            ? 'formateur.formations.anonyme.chapitre'
+            : ($this->viewBase() . '.chapitre');
+
+        return view($view, [
             'module'          => $module,
             'selectedSection' => $section,
             'section'         => $section,
@@ -583,8 +647,11 @@ class ModuleController extends Controller
             'mode'            => $mode,
             'groupId'         => $groupId,
             'includeHidden'   => $includeHidden,
+            'anonymous'       => $anonymous,
         ]);
+
     }
+
 
     /**
      * 15) Vue Lecture (stagiaire ou formateur)
@@ -603,15 +670,18 @@ class ModuleController extends Controller
         $module->load([
             'sections' => function ($q) {
                 $q->orderBy('id')
-                    ->with(['lectures' => function ($qq) {
-                        $qq->orderBy('position')->orderBy('id');
-                    }]);
+                ->with(['lectures' => function ($qq) {
+                    $qq->orderBy('position')->orderBy('id');
+                }]);
             },
         ]);
 
         $mode          = (string) $request->query('mode', 'groupe');
         $isStaff       = in_array($user->role ?? null, ['formateur', 'admin'], true);
         $includeHidden = $request->boolean('include_hidden') && $isStaff;
+
+        // ✅ Mode anonyme (lecture seule, pas de progression/statuts)
+        $anonymous = $request->boolean('anonymous');
 
         $groupId = $this->resolveGroupIdForContext($request, $user, (int) $module->id);
 
@@ -635,7 +705,9 @@ class ModuleController extends Controller
         }
 
         $lectures = $module->sections->flatMap(fn ($s) => $s->lectures)->values();
-        $lectureStats = $this->buildLectureStats($lectures, (int) $user->id);
+
+        // ✅ En anonyme : pas de calcul de progression/statuts
+        $lectureStats = $anonymous ? [] : $this->buildLectureStats($lectures, (int) $user->id);
 
         $nextLecture = null;
 
@@ -662,25 +734,34 @@ class ModuleController extends Controller
             'section_id' => (int) $nextLecture->section_id,
         ] : null;
 
-        $sectionStatuses = $module->sections->mapWithKeys(function ($sec) use ($lectureStats) {
-            $total = $sec->lectures->count();
-            if ($total === 0) return [$sec->id => 'not_started'];
+        $sectionStatuses = $anonymous
+            ? collect()
+            : $module->sections->mapWithKeys(function ($sec) use ($lectureStats) {
+                $total = $sec->lectures->count();
+                if ($total === 0) return [$sec->id => 'not_started'];
 
-            $ok = $sec->lectures->filter(function ($lec) use ($lectureStats) {
-                $st = $lectureStats[$lec->id]['status'] ?? null;
-                return $st === 'completed';
-            })->count();
+                $ok = $sec->lectures->filter(function ($lec) use ($lectureStats) {
+                    $st = $lectureStats[$lec->id]['status'] ?? null;
+                    return $st === 'completed';
+                })->count();
 
-            return [$sec->id => ($ok === $total ? 'completed' : ($ok > 0 ? 'in_progress' : 'not_started'))];
-        });
+                return [$sec->id => ($ok === $total ? 'completed' : ($ok > 0 ? 'in_progress' : 'not_started'))];
+            });
 
+        // ✅ Propagation du contexte + du mode anonyme
         $contextQuery = array_filter([
             'mode'           => $mode,
             'group_id'       => ($mode !== 'officiel' ? ($groupId ?: null) : null),
             'include_hidden' => ($includeHidden ? 1 : null),
+            'anonymous'      => ($anonymous ? 1 : null),
         ]);
 
-        return view($this->viewBase() . '.lecon', [
+        // ✅ Si formateur + anonymous, on rend une vue "stagiaire" adaptée
+        $view = ($anonymous && ($user->role ?? null) === 'formateur')
+            ? 'formateur.formations.anonyme.lecon'
+            : ($this->viewBase() . '.lecon');
+
+        return view($view, [
             'module'          => $module,
             'section'         => $section,
             'selectedSection' => $section,
@@ -694,149 +775,152 @@ class ModuleController extends Controller
             'mode'            => $mode,
             'groupId'         => $groupId,
             'includeHidden'   => $includeHidden,
+            'anonymous'       => $anonymous,
         ]);
+
     }
 
-    /**
-     * 14) Détail public d’un module (catalogue)
-     */
-    public function show($id)
-    {
-        $module = Module::with('sections.lectures')->findOrFail($id);
 
-        if (!$module->isVisibleTo(auth()->user())) {
-            abort(404);
+        /**
+         * 14) Détail public d’un module (catalogue)
+         */
+        public function show($id)
+        {
+            $module = Module::with('sections.lectures')->findOrFail($id);
+
+            if (!$module->isVisibleTo(auth()->user())) {
+                abort(404);
+            }
+
+            return view('frontend.contenu.module_detail', compact('module'));
         }
 
-        return view('frontend.contenu.module_detail', compact('module'));
-    }
+        private function buildLectureStats($lectures, int $userId): array
+        {
+            $lectureIds = $lectures->pluck('id')->all();
 
-    private function buildLectureStats($lectures, int $userId): array
-    {
-        $lectureIds = $lectures->pluck('id')->all();
-
-        // A) Quiz : dernière tentative par leçon
-        $attempts = QuizAttempt::query()
-            ->where('user_id', $userId)
-            ->whereIn('lecture_id', $lectureIds)
-            ->orderByDesc('finished_at')
-            ->orderByDesc('id')
-            ->get()
-            ->groupBy('lecture_id')
-            ->map(fn ($rows) => $rows->first());
-
-        $attemptIds = $attempts->filter()->pluck('id')->all();
-
-        $attemptAgg = collect();
-        if (!empty($attemptIds)) {
-            $attemptAgg = QuizAttemptQuestion::query()
-                ->select([
-                    'attempt_id',
-                    DB::raw('COUNT(*) as total'),
-                    DB::raw('SUM(CASE WHEN answered_at IS NOT NULL THEN 1 ELSE 0 END) as answered'),
-                    DB::raw('SUM(CASE WHEN is_correct = 1 THEN 1 ELSE 0 END) as correct'),
-                ])
-                ->whereIn('attempt_id', $attemptIds)
-                ->groupBy('attempt_id')
+            // A) Quiz : dernière tentative par leçon
+            $attempts = QuizAttempt::query()
+                ->where('user_id', $userId)
+                ->whereIn('lecture_id', $lectureIds)
+                ->orderByDesc('finished_at')
+                ->orderByDesc('id')
                 ->get()
-                ->keyBy('attempt_id');
-        }
+                ->groupBy('lecture_id')
+                ->map(fn ($rows) => $rows->first());
 
-        // B) SCORM : démarré / terminé
-        $scores = ScormScore::query()
-            ->where('user_id', $userId)
-            ->whereIn('lecture_id', $lectureIds)
-            ->get()
-            ->keyBy('lecture_id');
+            $attemptIds = $attempts->filter()->pluck('id')->all();
 
-        $started = ScormResult::query()
-            ->where('user_id', $userId)
-            ->whereIn('lecture_id', $lectureIds)
-            ->select('lecture_id', DB::raw('COUNT(*) as c'))
-            ->groupBy('lecture_id')
-            ->pluck('c', 'lecture_id');
+            $attemptAgg = collect();
+            if (!empty($attemptIds)) {
+                $attemptAgg = QuizAttemptQuestion::query()
+                    ->select([
+                        'attempt_id',
+                        DB::raw('COUNT(*) as total'),
+                        DB::raw('SUM(CASE WHEN answered_at IS NOT NULL THEN 1 ELSE 0 END) as answered'),
+                        DB::raw('SUM(CASE WHEN is_correct = 1 THEN 1 ELSE 0 END) as correct'),
+                    ])
+                    ->whereIn('attempt_id', $attemptIds)
+                    ->groupBy('attempt_id')
+                    ->get()
+                    ->keyBy('attempt_id');
+            }
 
-        $stats = [];
+            // B) SCORM : démarré / terminé
+            $scores = ScormScore::query()
+                ->where('user_id', $userId)
+                ->whereIn('lecture_id', $lectureIds)
+                ->get()
+                ->keyBy('lecture_id');
 
-        foreach ($lectures as $lec) {
+            $started = ScormResult::query()
+                ->where('user_id', $userId)
+                ->whereIn('lecture_id', $lectureIds)
+                ->select('lecture_id', DB::raw('COUNT(*) as c'))
+                ->groupBy('lecture_id')
+                ->pluck('c', 'lecture_id');
 
-            // 1) Si quiz activé : la sidebar dépend du quiz
-            if ((bool) ($lec->quiz_enabled ?? false)) {
-                $attempt = $attempts->get($lec->id);
-                $planned = (int) ($lec->quiz_questions_per_attempt ?? 0);
+            $stats = [];
 
-                if (!$attempt) {
+            foreach ($lectures as $lec) {
+
+                // 1) Si quiz activé : la sidebar dépend du quiz
+                if ((bool) ($lec->quiz_enabled ?? false)) {
+                    $attempt = $attempts->get($lec->id);
+                    $planned = (int) ($lec->quiz_questions_per_attempt ?? 0);
+
+                    if (!$attempt) {
+                        $stats[$lec->id] = [
+                            'status'            => 'not_started',
+                            'quiz'              => true,
+                            'questions_total'   => $planned,
+                            'questions_answered'=> 0,
+                            'questions_correct' => 0,
+                            'quiz_score'        => null,
+                            'quiz_finished'     => false,
+                            'slides'            => (int) ($lec->slide_count ?? 0),
+                            'session_time'      => null,
+                        ];
+                        continue;
+                    }
+
+                    $agg      = $attemptAgg->get($attempt->id);
+                    $total    = (int) ($agg->total ?? $attempt->total_questions ?? $planned ?? 0);
+                    $answered = (int) ($agg->answered ?? 0);
+                    $correct  = (int) ($agg->correct ?? 0);
+                    $score    = ($total > 0) ? (int) round(($correct / $total) * 100) : null;
+                    $finished = !is_null($attempt->finished_at);
+
+                    if (!$finished) {
+                        $status = $answered > 0 ? 'in_progress' : 'not_started';
+                    } else {
+                        $status = ($score !== null && $score >= 50) ? 'completed' : 'failed';
+                    }
+
                     $stats[$lec->id] = [
-                        'status'            => 'not_started',
+                        'status'            => $status,
                         'quiz'              => true,
-                        'questions_total'   => $planned,
-                        'questions_answered'=> 0,
-                        'questions_correct' => 0,
-                        'quiz_score'        => null,
-                        'quiz_finished'     => false,
+                        'questions_total'   => $total,
+                        'questions_answered'=> $answered,
+                        'questions_correct' => $correct,
+                        'quiz_score'        => $score,
+                        'quiz_finished'     => $finished,
                         'slides'            => (int) ($lec->slide_count ?? 0),
                         'session_time'      => null,
                     ];
                     continue;
                 }
 
-                $agg      = $attemptAgg->get($attempt->id);
-                $total    = (int) ($agg->total ?? $attempt->total_questions ?? $planned ?? 0);
-                $answered = (int) ($agg->answered ?? 0);
-                $correct  = (int) ($agg->correct ?? 0);
-                $score    = ($total > 0) ? (int) round(($correct / $total) * 100) : null;
-                $finished = !is_null($attempt->finished_at);
+                // 2) Sinon : sidebar dépend du SCORM
+                $hasStarted  = (int) ($started[$lec->id] ?? 0) > 0;
+                $sc          = $scores->get($lec->id);
+                $lessonStatus= strtolower((string) ($sc->lesson_status ?? ''));
 
-                if (!$finished) {
-                    $status = $answered > 0 ? 'in_progress' : 'not_started';
+                $isCompleted = in_array($lessonStatus, ['completed', 'passed'], true) || (bool) ($sc->is_completed ?? false);
+
+                if (!$hasStarted) {
+                    $status = 'not_started';
+                } elseif ($isCompleted) {
+                    $status = 'completed';
                 } else {
-                    $status = ($score !== null && $score >= 50) ? 'completed' : 'failed';
+                    $status = 'in_progress';
                 }
 
                 $stats[$lec->id] = [
                     'status'            => $status,
-                    'quiz'              => true,
-                    'questions_total'   => $total,
-                    'questions_answered'=> $answered,
-                    'questions_correct' => $correct,
-                    'quiz_score'        => $score,
-                    'quiz_finished'     => $finished,
+                    'quiz'              => false,
+                    'questions_total'   => 0,
+                    'questions_answered'=> 0,
+                    'questions_correct' => 0,
+                    'quiz_score'        => null,
+                    'quiz_finished'     => false,
                     'slides'            => (int) ($lec->slide_count ?? 0),
-                    'session_time'      => null,
+                    'session_time'      => $sc->session_time ?? null,
                 ];
-                continue;
             }
 
-            // 2) Sinon : sidebar dépend du SCORM
-            $hasStarted  = (int) ($started[$lec->id] ?? 0) > 0;
-            $sc          = $scores->get($lec->id);
-            $lessonStatus= strtolower((string) ($sc->lesson_status ?? ''));
-
-            $isCompleted = in_array($lessonStatus, ['completed', 'passed'], true) || (bool) ($sc->is_completed ?? false);
-
-            if (!$hasStarted) {
-                $status = 'not_started';
-            } elseif ($isCompleted) {
-                $status = 'completed';
-            } else {
-                $status = 'in_progress';
-            }
-
-            $stats[$lec->id] = [
-                'status'            => $status,
-                'quiz'              => false,
-                'questions_total'   => 0,
-                'questions_answered'=> 0,
-                'questions_correct' => 0,
-                'quiz_score'        => null,
-                'quiz_finished'     => false,
-                'slides'            => (int) ($lec->slide_count ?? 0),
-                'session_time'      => $sc->session_time ?? null,
-            ];
+            return $stats;
         }
-
-        return $stats;
-    }
 
     /**
      * 16) Page de fin de module (stagiaire)
@@ -949,4 +1033,68 @@ class ModuleController extends Controller
             $sec->setRelation('lectures', $lectures);
         });
     }
+    private function syncLectureObjectives(ModuleLecture $lecture, array $rows = []): void
+{
+    $rows = collect($rows)
+        ->map(function ($r) {
+            return [
+                'id'          => isset($r['id']) ? (int) $r['id'] : null,
+                'title'       => isset($r['title']) ? trim((string) $r['title']) : '',
+                'description' => isset($r['description']) ? trim((string) $r['description']) : null,
+                'position'    => isset($r['position']) && (int)$r['position'] > 0 ? (int) $r['position'] : null,
+                '_delete'     => !empty($r['_delete']),
+            ];
+        })
+        // On garde les lignes utiles : suppression OU titre non vide
+        ->filter(fn ($r) => $r['_delete'] || $r['title'] !== '')
+        ->values();
+
+    // Sécurité : on ne modifie que les objectifs appartenant à cette leçon
+    $existingIds = $lecture->objectives()->pluck('id')->all();
+
+    $autoPos = 1;
+
+    foreach ($rows as $row) {
+
+        // Suppression
+        if ($row['_delete'] === true) {
+            if ($row['id'] && in_array($row['id'], $existingIds, true)) {
+                $lecture->objectives()->whereKey($row['id'])->delete();
+            }
+            continue;
+        }
+
+        // Position automatique si absente
+        $pos = $row['position'] ?? $autoPos;
+
+        // Mise à jour
+        if ($row['id'] && in_array($row['id'], $existingIds, true)) {
+            $lecture->objectives()->whereKey($row['id'])->update([
+                'title'       => $row['title'],
+                'description' => $row['description'],
+                'position'    => $pos,
+            ]);
+        } else {
+            // Création
+            $lecture->objectives()->create([
+                'title'       => $row['title'],
+                'description' => $row['description'],
+                'position'    => $pos,
+            ]);
+        }
+
+        $autoPos++;
+    }
+
+    // Normalisation finale des positions : 1..n sans trous
+    $ordered = $lecture->objectives()->orderBy('position')->orderBy('id')->get();
+    $i = 1;
+    foreach ($ordered as $obj) {
+        if ((int) $obj->position !== $i) {
+            $obj->update(['position' => $i]);
+        }
+        $i++;
+    }
+}
+
 }

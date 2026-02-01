@@ -1,252 +1,567 @@
+{{-- /home/laurents/Oneduc_Dev/resources/views/formateur/groupes/edit.blade.php --}}
 @extends('formateur.dashboard')
 
 @section('formateur')
 
 @php
-    $selectedModuleIds = $group->modules->pluck('id')->toArray();
+  $selectedModuleIds = $group->modules->pluck('id')->toArray();
+
+  $sortedSelected = $group->modules
+    ->sortBy(fn($m) => (int) ($m->pivot->position ?? 999999))
+    ->values()
+    ->map(fn($m, $i) => [
+      'id'       => (int) $m->id,
+      'title'    => $m->module_title,
+      'position' => (int) ($m->pivot->position ?? ($i + 1)),
+      'persisted'=> true,
+      'manage_url' => route('formateur.groupes.modules.lecons.edit', [
+        'group'  => $group->id,
+        'module' => $m->id,
+      ]),
+    ]);
 @endphp
 
-<div class="w-full max-w-[1285px] mx-auto space-y-6 font-varela">
-    
-    {{-- EN-TÊTE --}}
-    <div class="bg-white rounded-[20px] shadow-sm border border-bleuone/10 px-8 py-6">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-                <x-typography variant="titre" class="!mb-1 text-bleuone">Modifier le groupe</x-typography>
-                <div class="flex items-center gap-2 mt-1">
-                    <span class="px-3 py-1 bg-bleuone text-white text-xs font-bold rounded-full">{{ $group->name }}</span>
-                    <span class="px-3 py-1 bg-vertone/10 text-vertone text-xs font-bold rounded-full border border-vertone/20">{{ $group->students->count() }} Stagiaires</span>
-                </div>
-            </div>
-            
-            <nav class="text-sm font-medium" aria-label="Fil d'Ariane">
-                <ol class="flex items-center space-x-2 text-gray-400">
-                    <li><a href="{{ route('formateur.dashboard') }}" class="hover:text-orangeone transition-colors text-xs uppercase tracking-widest">Dashboard</a></li>
-                    <li><span class="text-gray-300">/</span></li>
-                    <li><a href="{{ route('formateur.groupes.index') }}" class="hover:text-orangeone transition-colors text-xs uppercase tracking-widest">Groupes</a></li>
-                    <li><span class="text-gray-300">/</span></li>
-                    <li class="text-bleuone text-xs uppercase tracking-widest font-bold">Édition</li>
-                </ol>
-            </nav>
+
+<div class="max-w-[1285px] mx-auto px-8">
+
+  {{-- EN-TÊTE --}}
+  <header class="bg-white rounded-[20px] shadow-md px-8 pt-4 pb-6 w-full mb-6">
+    <div class="grid grid-cols-12 gap-6 items-center">
+
+      <div class="col-span-12 md:col-span-9">
+        <p class="font-raleway text-titre text-bleuone leading-tight mb-2">
+          Mes groupes de formation
+        </p>
+        <p class="font-varela text-sous-titre text-orangeone leading-snug mb-3">
+          Modifier un groupe sans changer vos repères.
+        </p>
+        <p class="font-lisible text-lg text-gray-800 leading-loose mb-4">
+          Vous pouvez ajuster la configuration, le parcours (modules) et la liste des stagiaires.
+        </p>
+
+        {{-- Pastilles --}}
+        <div class="flex flex-wrap items-center gap-2 mb-3">
+          <span class="px-3 py-1 bg-bleuone text-white text-xs font-bold rounded-full">
+            {{ $group->name }}
+          </span>
+          <span class="px-3 py-1 bg-vertone/10 text-vertone text-xs font-bold rounded-full border border-vertone/20">
+            {{ $group->students->count() }} stagiaire{{ $group->students->count() > 1 ? 's' : '' }}
+          </span>
+          <span class="px-3 py-1 bg-orangeone/10 text-orangeone text-xs font-bold rounded-full border border-orangeone/20">
+            {{ count($selectedModuleIds) }} module{{ count($selectedModuleIds) > 1 ? 's' : '' }} actif{{ count($selectedModuleIds) > 1 ? 's' : '' }}
+          </span>
         </div>
+
+        {{-- Fil d’Ariane --}}
+        <nav class="text-sm font-varela text-gray-600 mt-2" aria-label="Fil d'Ariane">
+          <ol class="inline-flex items-center space-x-1">
+            <li class="flex items-center">
+              <a href="{{ route('formateur.dashboard') }}" class="text-orangeone hover:underline flex items-center">
+                <span class="sr-only">Accueil</span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1"
+                     fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M3 9.75L12 3l9 6.75V19a2 2 0 01-2 2h-4a1 1 0 01-1-1v-5H10v5a1 1 0 01-1 1H5a2 2 0 01-2-2V9.75z"/>
+                </svg>
+              </a>
+              <span class="mx-2 text-gray-400" aria-hidden="true">/</span>
+            </li>
+            <li class="flex items-center">
+              <a href="{{ route('formateur.groupes.index') }}" class="hover:underline text-bleuone">Mes groupes</a>
+              <span class="mx-2 text-gray-400" aria-hidden="true">/</span>
+            </li>
+            <li class="text-gray-400">Modifier</li>
+          </ol>
+        </nav>
+      </div>
+
+      <div class="col-span-12 md:col-span-3 flex justify-center md:justify-end">
+        <img src="{{ asset('images/svg/Groupes.svg') }}"
+             alt="Illustration des groupes de formation"
+             class="max-w-[256px] h-auto">
+      </div>
+
     </div>
+  </header>
 
-    <form method="POST" action="{{ route('formateur.groupes.update', $group->id) }}" class="grid grid-cols-12 gap-6">
-        @csrf
-        @method('PUT')
+  {{-- CONTENU --}}
+  <main
+  x-data="groupEdit()"
+  data-next-index="{{ max(0, (int) $group->students->count()) }}"
+  data-selected-modules='@json($sortedSelected)'
+  class="space-y-6"
+>
 
-        {{-- COLONNE PRINCIPALE (Gauche) --}}
-        <div class="col-span-12 lg:col-span-8 space-y-6">
-            
-            {{-- 1. INFORMATIONS --}}
-            <div class="bg-white rounded-[20px] shadow-sm border border-gray-100 p-8">
-                <div class="flex items-center gap-3 mb-6 border-b border-gray-50 pb-4">
-                    <div class="w-10 h-10 rounded-lg bg-orangeone/10 flex items-center justify-center text-orangeone font-bold">1</div>
-                    <h2 class="text-xl font-bold text-bleuone">Configuration Générale</h2>
-                </div>
-                
-                <div class="space-y-5">
-                    <div>
-                        <label for="nom" class="block mb-2 text-sm font-bold text-gray-700 uppercase tracking-wider">Nom du groupe <span class="text-orangeone">*</span></label>
-                        <input id="nom" type="text" name="nom" value="{{ old('nom', $group->name) }}" required
-                               class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-orangeone focus:border-orangeone outline-none transition-all">
-                    </div>
-                    <div>
-                        <label for="description" class="block mb-2 text-sm font-bold text-gray-700 uppercase tracking-wider">Description / Objectifs</label>
-                        <textarea id="description" name="description" rows="3" 
-                                  class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-orangeone focus:border-orangeone outline-none transition-all"
-                                  placeholder="Ex: Formation Excel débutant - Session Printemps">{{ old('description', $group->description) }}</textarea>
-                    </div>
-                </div>
-            </div>
+    <form method="POST" action="{{ route('formateur.groupes.update', $group->id) }}" class="space-y-6">
+      @csrf
+      @method('PUT')
+      {{-- Onglets --}}
+      <div class="bg-white rounded-[20px] shadow-md p-6">
+        <div class="border-b border-gray-100">
+          <nav class="-mb-px flex gap-6" aria-label="Onglets">
+            <button type="button"
+                    @click="activeTab='general'"
+                    :class="activeTab==='general' ? 'border-orangeone text-orangeone' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-200'"
+                    class="whitespace-nowrap border-b-2 px-1 pb-3 font-varela font-semibold">
+              Configuration générale
+            </button>
 
-            {{-- 2. PARCOURS (Avec les encoches vertes dynamiques) --}}
-            <div class="bg-white rounded-[20px] shadow-sm border border-gray-100 p-8">
-                <div class="flex items-center justify-between mb-2">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-lg bg-vertone/10 flex items-center justify-center text-vertone font-bold">2</div>
-                        <h2 class="text-xl font-bold text-bleuone">Parcours de Formation</h2>
-                    </div>
-                </div>
-                <p class="text-sm text-gray-500 mb-6 italic">Cliquez sur les modules pour les activer. Une encoche verte confirme la sélection.</p>
+            <button type="button"
+                    @click="activeTab='parcours'"
+                    :class="activeTab==='parcours' ? 'border-orangeone text-orangeone' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-200'"
+                    class="whitespace-nowrap border-b-2 px-1 pb-3 font-varela font-semibold">
+              Parcours de formation
+            </button>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    @foreach($modules as $module)
-                        @php $checked = in_array($module->id, $selectedModuleIds); @endphp
-                        <label class="relative group cursor-pointer">
-                            <input type="checkbox" name="modules[]" value="{{ $module->id }}" class="sr-only peer" {{ $checked ? 'checked' : '' }}>
-                            <div class="h-full p-4 rounded-xl border-2 transition-all duration-200
-                                peer-checked:border-vertone peer-checked:bg-vertone/[0.03] border-gray-100 bg-white group-hover:border-gray-200">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors
-                                            peer-checked:bg-vertone border-gray-300 peer-checked:border-vertone">
-                                            <svg class="w-4 h-4 text-white transform scale-0 peer-checked:scale-100 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M5 13l4 4L19 7"/>
-                                            </svg>
-                                        </div>
-                                        <span class="font-bold text-gray-700 peer-checked:text-vertone">{{ $module->module_title }}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </label>
-                    @endforeach
-                </div>
-
-                @if($group->modules->count() > 0)
-                    <div class="mt-8 p-5 bg-bleuone/[0.03] rounded-2xl border border-bleuone/10">
-                        <h4 class="font-bold text-bleuone mb-4 flex items-center gap-2 text-sm uppercase tracking-wider">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                            Personnalisation des leçons
-                        </h4>
-                        <div class="grid grid-cols-1 gap-2">
-                            @foreach($group->modules as $m)
-                                <div class="flex items-center justify-between bg-white p-3 rounded-xl shadow-sm border border-gray-100">
-                                    <span class="text-sm font-medium text-gray-600">{{ $m->module_title }}</span>
-                                    <a href="{{ route('formateur.groupes.modules.lecons.edit', ['group' => $group->id, 'module' => $m->id]) }}" 
-                                       class="px-4 py-1.5 bg-white border-2 border-bleuone text-bleuone text-xs font-bold rounded-lg hover:bg-bleuone hover:text-white transition-all">
-                                        Gérer les leçons
-                                    </a>
-                                </div>
-                            @endforeach
-                        </div>
-                    </div>
-                @endif
-            </div>
-
-            {{-- 3. STAGIAIRES (Version Compacte En Ligne) --}}
-            <div class="bg-white rounded-[20px] shadow-sm border border-gray-100 p-8">
-                <div class="flex items-center gap-3 mb-6 border-b border-gray-50 pb-4">
-                    <div class="w-10 h-10 rounded-lg bg-orangeone/10 flex items-center justify-center text-orangeone font-bold">3</div>
-                    <h2 class="text-xl font-bold text-bleuone">Liste des Stagiaires</h2>
-                </div>
-
-                <div class="hidden md:grid grid-cols-12 gap-4 px-4 mb-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                    <div class="col-span-4">Nom & Prénom</div>
-                    <div class="col-span-6">Email</div>
-                    <div class="col-span-2 text-right">Action</div>
-                </div>
-
-                <div class="space-y-1 mb-8">
-                    @forelse ($group->students as $stagiaire)
-                        <div class="student-row grid grid-cols-1 md:grid-cols-12 items-center gap-4 p-2 px-4 bg-gray-50 rounded-lg border border-gray-100 transition-all hover:bg-white hover:shadow-sm">
-                            <div class="col-span-4 flex items-center gap-3">
-                                <div class="w-7 h-7 shrink-0 rounded-full bg-bleuone text-white flex items-center justify-center text-[10px] font-bold uppercase">
-                                    {{ substr($stagiaire->prenom, 0, 1) }}{{ substr($stagiaire->name, 0, 1) }}
-                                </div>
-                                <span class="font-bold text-gray-800 text-sm truncate">{{ $stagiaire->prenom }} {{ $stagiaire->name }}</span>
-                            </div>
-                            <div class="col-span-6">
-                                <span class="text-sm text-gray-500 font-medium truncate italic">{{ $stagiaire->email }}</span>
-                            </div>
-                            <div class="col-span-2 text-right">
-                                <button type="button" onclick="markStudentForRemoval(this)" data-student-id="{{ $stagiaire->id }}" data-student-name="{{ $stagiaire->prenom }} {{ $stagiaire->name }}"
-                                        class="p-1.5 text-gray-300 hover:text-orangeone transition-colors">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                </button>
-                            </div>
-                        </div>
-                    @empty
-                        <p class="text-center py-6 text-gray-400 italic bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 text-sm">Aucun stagiaire enregistré.</p>
-                    @endforelse
-                </div>
-
-                <div id="remove-students-hidden"></div>
-                
-                <div class="p-6 bg-gray-50 border-2 border-dashed border-gray-200 rounded-[20px]">
-                    <div id="nouveaux-stagiaires-container" class="space-y-3"></div>
-                    <button type="button" onclick="ajouterStagiaire()" class="mt-4 flex items-center gap-2 text-sm font-bold text-orangeone hover:underline">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        Inscrire un nouveau stagiaire
-                    </button>
-                </div>
-            </div>
+            <button type="button"
+                    @click="activeTab='stagiaires'"
+                    :class="activeTab==='stagiaires' ? 'border-orangeone text-orangeone' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-200'"
+                    class="whitespace-nowrap border-b-2 px-1 pb-3 font-varela font-semibold">
+              Liste des stagiaires
+            </button>
+          </nav>
         </div>
 
-        {{-- COLONNE RÉCAP (Droite - Sticky) --}}
-        {{-- COLONNE RÉCAP (Droite - Sticky) --}}
-        <div class="col-span-12 lg:col-span-4">
-            <div class="sticky top-6 space-y-4">
-                <div class="bg-bleuone rounded-[20px] p-8 shadow-xl text-white">
-                    <h3 class="text-lg font-bold mb-6 flex items-center gap-2 text-vertone">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-                        Résumé
-                    </h3>
-                    
-                    <div class="space-y-4 text-sm mb-8">
-                        <div class="flex justify-between border-b border-white/10 pb-2">
-                            <span class="opacity-70 text-xs uppercase font-bold tracking-widest">Modules</span>
-                            <span id="recap-modules" class="font-bold text-vertone">{{ count($selectedModuleIds) }} actif(s)</span>
-                        </div>
-                        <div id="recap-removals-box" class="hidden">
-                            <span class="text-orangeone text-[10px] uppercase font-bold italic">À retirer à l'enregistrement :</span>
-                            <ul id="recap-removals-list" class="mt-1 text-xs text-orangeone/80 list-disc list-inside"></ul>
-                        </div>
-                    </div>
+        {{-- ONGLET 1 : Configuration générale --}}
+        <section x-show="activeTab==='general'" x-cloak class="pt-6">
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <tbody class="divide-y divide-gray-100">
+                <tr>
+                  <th class="py-4 pr-4 text-left align-top w-[260px] text-bleuone font-bold">
+                    Nom du groupe <span class="text-orangeone">*</span>
+                  </th>
+                  <td class="py-4">
+                    <input id="nom" type="text" name="nom" value="{{ old('nom', $group->name) }}" required
+                      class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-orangeone focus:border-orangeone">
+                    <p class="text-xs text-gray-500 mt-1">Nom visible par vous et vos stagiaires.</p>
+                  </td>
+                </tr>
 
-                    <button type="submit" class="w-full bg-orangeone hover:bg-white hover:text-orangeone text-white py-4 rounded-xl font-bold transition-all shadow-lg active:scale-95 uppercase tracking-widest text-xs">
-                        Mettre à jour le groupe
-                    </button>
-                    
-                    <a href="{{ route('formateur.groupes.index') }}" class="block text-center mt-4 text-[10px] uppercase font-bold opacity-60 hover:opacity-100 transition-opacity tracking-widest">
-                        Annuler les modifications
-                    </a>
-                </div>
+                <tr>
+                  <th class="py-4 pr-4 text-left align-top text-bleuone font-bold">
+                    Description
+                  </th>
+                  <td class="py-4">
+                    <textarea id="description" name="description" rows="4"
+                      class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-orangeone focus:border-orangeone"
+                      placeholder="Objectifs du groupe, public, période…">{{ old('description', $group->description) }}</textarea>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
 
-                <div class="bg-white rounded-[20px] p-6 border border-gray-100 shadow-sm">
-                    <h4 class="text-xs font-bold text-bleuone mb-2 uppercase tracking-widest">💡 Conseil</h4>
-                    <p class="text-xs text-gray-500 leading-relaxed italic">
-                        La personnalisation des leçons permet d'ajuster le contenu en fonction de la progression réelle de vos stagiaires.
-                    </p>
-                </div>
+        {{-- ONGLET 2 : Parcours de formation (ajout + ordre global) --}}
+        <section x-show="activeTab==='parcours'" x-cloak class="pt-6">
+
+         
+
+          {{-- Ajouter un module --}}
+          <div class="bg-gray-50 border border-gray-100 rounded-[16px] p-4 mb-6">
+            <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+              <div class="min-w-0">
+                <p class="font-varela font-semibold text-bleuone">Ajouter un module au groupe</p>
+                <p class="text-xs text-gray-500 font-lisible">
+                  Sélectionnez un module dans la liste, puis cliquez sur “Ajouter”.
+                </p>
+              </div>
+
+              <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                <select x-model="newModuleId"
+                        class="w-full sm:w-[380px] bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm
+                              focus:ring-orangeone focus:border-orangeone">
+                  <option value="">— Sélectionner un module —</option>
+                  @foreach($modules as $m)
+                    <option value="{{ $m->id }}">{{ $m->module_title }}</option>
+                  @endforeach
+                </select>
+
+                <button type="button"
+                        class="btn-oneduc"
+                        :disabled="!newModuleId"
+                        @click="addModuleFromSelect()">
+                  Ajouter
+                </button>
+              </div>
             </div>
+
+            <div x-show="addError" x-cloak class="mt-3 text-xs text-orangeone font-bold">
+              <span x-text="addError"></span>
+            </div>
+          </div>
+
+          {{-- Tableau des modules sélectionnés (ordre global) --}}
+          <div class="flex items-center justify-between gap-3 mb-3">
+            <p class="font-lisible text-gray-700">Ordre pédagogique du parcours (global au groupe).</p>
+            <div class="text-sm font-bold text-bleuone">
+              Modules actifs : <span class="text-orangeone" x-text="modulesSelected.length"></span>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto border border-gray-100 rounded-[16px]">
+            <table class="min-w-[900px] w-full text-sm">
+              <thead class="bg-gray-50">
+                <tr class="text-left text-xs uppercase tracking-widest text-gray-500">
+                  <th class="py-3 px-4 w-[90px]">Ordre</th>
+                  <th class="py-3 px-4">Module</th>
+                  <th class="py-3 px-4 text-right w-[420px]">Actions</th>
+                </tr>
+              </thead>
+
+              <tbody class="bg-white">
+                <template x-for="(m, idx) in modulesSelected" :key="m.id">
+                  <tr class="border-t border-gray-100">
+                    <td class="py-3 px-4">
+                      <span class="inline-flex items-center justify-center w-9 h-9 rounded-full bg-bleuone/10 text-bleuone font-bold">
+                        <span x-text="m.position"></span>
+                      </span>
+
+                      {{-- Champs envoyés au contrôleur --}}
+                      <input type="hidden" name="modules[]" :value="m.id">
+                      <input type="hidden" :name="'module_positions['+m.id+']'" :value="m.position">
+                    </td>
+
+                    <td class="py-3 px-4">
+                      <div class="font-bold text-bleuone" x-text="m.title"></div>
+                      <p class="text-xs text-gray-500" x-show="!m.persisted" x-cloak>
+                        Ajouté — enregistrez pour gérer les leçons
+                      </p>
+                    </td>
+
+                    <td class="py-3 px-4 text-right">
+                      <div class="inline-flex items-center gap-2 flex-wrap justify-end">
+
+                        <!-- Gérer les leçons -->
+                        <template x-if="m.persisted">
+                          <a
+                            :href="m.manage_url"
+                            class="inline-flex items-center justify-center px-4 py-2 rounded-lg
+                                  border-2 border-bleuone text-bleuone font-bold text-xs
+                                  hover:bg-bleuone hover:text-white transition"
+                          >
+                            Gérer les leçons
+                          </a>
+                        </template>
+
+
+                        <!-- Monter -->
+                        <button type="button"
+                          class="px-3 py-2 rounded-lg border-2 border-bleuone text-bleuone font-bold text-xs
+                                hover:bg-bleuone hover:text-white transition disabled:opacity-40 disabled:cursor-not-allowed"
+                          :disabled="idx === 0"
+                          @click="moveModule(m.id, -1)">
+                          Monter
+                        </button>
+
+                        <!-- Descendre -->
+                        <button type="button"
+                          class="px-3 py-2 rounded-lg border-2 border-bleuone text-bleuone font-bold text-xs
+                                hover:bg-bleuone hover:text-white transition disabled:opacity-40 disabled:cursor-not-allowed"
+                          :disabled="idx === modulesSelected.length - 1"
+                          @click="moveModule(m.id, +1)">
+                          Descendre
+                        </button>
+
+                        <!-- Retirer -->
+                        <button type="button"
+                          class="px-3 py-2 rounded-lg border-2 border-orangeone text-orangeone font-bold text-xs
+                                hover:bg-orangeone hover:text-white transition"
+                          @click="removeModule(m.id)">
+                          Retirer
+                        </button>
+
+                      </div>
+                    </td>
+
+                  </tr>
+                </template>
+
+                <tr x-show="modulesSelected.length === 0">
+                  <td colspan="3" class="py-8 px-4 text-center text-gray-400 italic">
+                    Aucun module n’est associé au groupe.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p class="text-xs text-gray-500 mt-3 font-lisible">
+            L’ordre est enregistré au clic sur “Mettre à jour le groupe”.
+          </p>
+        </section>
+
+
+        {{-- ONGLET 3 : Stagiaires --}}
+        <section x-show="activeTab==='stagiaires'" x-cloak class="pt-6">
+          <div id="remove-students-hidden"></div>
+
+          <div class="flex items-start justify-between gap-4 mb-4">
+            <p class="font-lisible text-gray-700">
+              Retirez un stagiaire du groupe ou ajoutez-en de nouveaux.
+            </p>
+
+            <div id="removed-recap" class="hidden text-xs text-orangeone font-bold">
+              Stagiaires à retirer à l’enregistrement :
+              <ul id="removed-recap-list" class="mt-2 list-disc list-inside font-lisible text-orangeone/80"></ul>
+            </div>
+          </div>
+
+          {{-- Table stagiaires existants --}}
+          <div class="overflow-x-auto border border-gray-100 rounded-[16px] mb-6">
+            <table class="min-w-[820px] w-full text-sm">
+              <thead class="bg-gray-50">
+                <tr class="text-left text-xs uppercase tracking-widest text-gray-500">
+                  <th class="py-3 px-4">Nom</th>
+                  <th class="py-3 px-4">Prénom</th>
+                  <th class="py-3 px-4">Email</th>
+                  <th class="py-3 px-4 text-right w-[140px]">Action</th>
+                </tr>
+              </thead>
+
+              <tbody class="bg-white">
+                @forelse($group->students as $stagiaire)
+                  <tr class="border-t border-gray-100" data-student-row="{{ $stagiaire->id }}">
+                    <td class="py-3 px-4 font-bold text-bleuone">{{ $stagiaire->name }}</td>
+                    <td class="py-3 px-4 text-gray-700">{{ $stagiaire->prenom }}</td>
+                    <td class="py-3 px-4 text-gray-600">{{ $stagiaire->email }}</td>
+                    <td class="py-3 px-4 text-right">
+                      <button type="button"
+                              @click="toggleRemove({{ $stagiaire->id }}, '{{ addslashes($stagiaire->prenom.' '.$stagiaire->name) }}')"
+                              class="text-orangeone font-bold text-xs hover:underline">
+                        Retirer
+                      </button>
+                    </td>
+                  </tr>
+                @empty
+                  <tr>
+                    <td colspan="4" class="py-6 px-4 text-center text-gray-400 italic">
+                      Aucun stagiaire enregistré.
+                    </td>
+                  </tr>
+                @endforelse
+              </tbody>
+            </table>
+          </div>
+
+          {{-- Table nouveaux stagiaires --}}
+          <div class="bg-gray-50 border border-dashed border-gray-200 rounded-[20px] p-6">
+            <div class="flex items-center justify-between gap-4 mb-3">
+              <div>
+                <p class="font-bold text-bleuone">Ajouter des stagiaires</p>
+                <p class="text-xs text-gray-500 font-lisible">Ils seront créés à l’enregistrement.</p>
+              </div>
+              <button type="button"
+                      @click="addStudentRow()"
+                      class="btn-oneduc">
+                + Ajouter une ligne
+              </button>
+            </div>
+
+            <div class="overflow-x-auto bg-white rounded-[16px] border border-gray-100">
+              <table class="min-w-[820px] w-full text-sm">
+                <thead class="bg-gray-50">
+                  <tr class="text-left text-xs uppercase tracking-widest text-gray-500">
+                    <th class="py-3 px-4">Prénom</th>
+                    <th class="py-3 px-4">Nom</th>
+                    <th class="py-3 px-4">Email</th>
+                    <th class="py-3 px-4 text-right w-[140px]">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="new-students-tbody" class="bg-white">
+                  {{-- lignes ajoutées en JS --}}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      {{-- Barre d’actions --}}
+      <div class="bg-white rounded-[20px] shadow-md p-6 flex flex-col md:flex-row items-center justify-between gap-4">
+        <a href="{{ route('formateur.groupes.index') }}"
+           class="text-bleuone font-bold hover:underline">
+          Retour à mes groupes
+        </a>
+
+        <div class="flex items-center gap-3">
+          <a href="{{ route('formateur.groupes.index') }}"
+             class="btn-oneduc bg-white border-bleuone text-bleuone hover:bg-bleuone hover:text-white">
+            Annuler
+          </a>
+
+          <button type="submit" class="btn-oneduc">
+            Mettre à jour le groupe
+          </button>
         </div>
+      </div>
+
     </form>
+
+  </main>
 </div>
 
+<style>
+  [x-cloak] { display: none !important; }
+</style>
+
 <script>
-    function ajouterStagiaire() {
-        const container = document.getElementById('nouveaux-stagiaires-container');
-        const index = container.querySelectorAll('.stagiaire-bloc').length;
-        const html = `
-            <div class="stagiaire-bloc grid grid-cols-1 md:grid-cols-3 gap-3 p-4 bg-white rounded-xl border border-gray-200 relative animate-fadeIn shadow-sm">
-                <input type="text" name="stagiaires[${index}][prenom]" placeholder="Prénom" class="w-full text-xs bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-orangeone" required>
-                <input type="text" name="stagiaires[${index}][nom]" placeholder="Nom" class="w-full text-xs bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-orangeone" required>
-                <input type="email" name="stagiaires[${index}][email]" placeholder="Email" class="w-full text-xs bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-orangeone" required>
-                <button type="button" onclick="this.closest('.stagiaire-bloc').remove()" class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-[10px] shadow-sm">✕</button>
-            </div>`;
-        container.insertAdjacentHTML('beforeend', html);
-    }
+document.addEventListener('alpine:init', () => {
+  Alpine.data('groupEdit', () => ({
+    activeTab: 'general',
 
-    function markStudentForRemoval(btn) {
-        const id = btn.getAttribute('data-student-id');
-        const name = btn.getAttribute('data-student-name');
-        if (!confirm(`Retirer ${name} du groupe ?`)) return;
+    // Stagiaires
+    removed: [],
+    nextNewStudentIndex: 0,
 
-        const hiddenWrap = document.getElementById('remove-students-hidden');
-        if (!hiddenWrap.querySelector(`input[value="${id}"]`)) {
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = 'remove_students[]';
-            input.value = id;
-            hiddenWrap.appendChild(input);
-        }
+    // Modules (parcours)
+    newModuleId: '',
+    addError: '',
+    modulesSelected: [],
 
-        const recapBox = document.getElementById('recap-removals-box');
-        const recapList = document.getElementById('recap-removals-list');
-        recapBox.classList.remove('hidden');
+    init() {
+      this.nextNewStudentIndex = parseInt(this.$el.dataset.nextIndex || '0', 10);
+
+      let parsed = [];
+      try {
+        parsed = JSON.parse(this.$el.dataset.selectedModules || '[]');
+        if (!Array.isArray(parsed)) parsed = [];
+      } catch (e) {
+        parsed = [];
+      }
+
+      this.modulesSelected = parsed.map((m) => ({
+        id: parseInt(m.id, 10),
+        title: String(m.title ?? '').trim() || `Module #${m.id}`,
+        position: parseInt(m.position ?? 0, 10) || 0,
+        persisted: m.persisted === false ? false : true,
+        manage_url: String(m.manage_url ?? '')
+      }));
+
+      this.normalizePositions();
+    },
+
+    // ----- Modules : ajout / retrait / ordre -----
+    addModuleFromSelect() {
+      this.addError = '';
+
+      const id = parseInt(this.newModuleId || '0', 10);
+      if (!id) return;
+
+      if (this.modulesSelected.some(m => parseInt(m.id, 10) === id)) {
+        this.addError = 'Ce module est déjà dans le parcours.';
+        this.newModuleId = '';
+        return;
+      }
+
+      const sel = this.$el.querySelector('select[x-model="newModuleId"]');
+      const opt = sel ? sel.querySelector(`option[value="${id}"]`) : null;
+      const title = opt ? opt.textContent.trim() : `Module #${id}`;
+
+      this.modulesSelected.push({
+        id,
+        title,
+        position: this.modulesSelected.length + 1,
+        persisted: false,
+        manage_url: '' // normal : pas encore en base
+      });
+
+      this.newModuleId = '';
+      this.normalizePositions();
+    },
+
+    removeModule(id) {
+      const n = parseInt(id, 10);
+      this.modulesSelected = this.modulesSelected.filter(m => parseInt(m.id, 10) !== n);
+      this.normalizePositions();
+    },
+
+    moveModule(id, delta) {
+      const n = parseInt(id, 10);
+      const idx = this.modulesSelected.findIndex(m => parseInt(m.id, 10) === n);
+      if (idx < 0) return;
+
+      const swap = idx + delta;
+      if (swap < 0 || swap >= this.modulesSelected.length) return;
+
+      [this.modulesSelected[idx], this.modulesSelected[swap]] = [this.modulesSelected[swap], this.modulesSelected[idx]];
+      this.normalizePositions();
+    },
+
+    normalizePositions() {
+      this.modulesSelected = this.modulesSelected.map((m, i) => ({
+        ...m,
+        position: i + 1
+      }));
+    },
+
+    // ----- Stagiaires : retirer / ajouter -----
+    toggleRemove(id, name) {
+      const n = parseInt(id, 10);
+      if (!n) return;
+      if (this.removed.includes(n)) return;
+
+      this.removed.push(n);
+
+      const row = document.querySelector(`[data-student-row='${n}']`);
+      if (row) row.classList.add('hidden');
+
+      const recap = document.getElementById('removed-recap');
+      if (recap) recap.classList.remove('hidden');
+
+      const ul = document.getElementById('removed-recap-list');
+      if (ul) {
         const li = document.createElement('li');
         li.textContent = name;
-        recapList.appendChild(li);
+        ul.appendChild(li);
+      }
 
-        const row = btn.closest('.student-row');
-        row.style.display = 'none';
+      const hiddenWrap = document.getElementById('remove-students-hidden');
+      if (hiddenWrap && !hiddenWrap.querySelector(`input[value='${n}']`)) {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'remove_students[]';
+        input.value = n;
+        hiddenWrap.appendChild(input);
+      }
+    },
+
+    addStudentRow() {
+      const container = document.getElementById('new-students-tbody');
+      if (!container) return;
+
+      const i = this.nextNewStudentIndex++;
+      const tr = document.createElement('tr');
+      tr.className = 'border-t border-gray-100';
+
+      tr.innerHTML = `
+        <td class='py-3 pr-3'>
+          <input required name='stagiaires[${i}][prenom]' type='text' placeholder='Prénom'
+            class='w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-orangeone focus:border-orangeone'>
+        </td>
+        <td class='py-3 pr-3'>
+          <input required name='stagiaires[${i}][nom]' type='text' placeholder='Nom'
+            class='w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-orangeone focus:border-orangeone'>
+        </td>
+        <td class='py-3 pr-3'>
+          <input required name='stagiaires[${i}][email]' type='email' placeholder='Email'
+            class='w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-orangeone focus:border-orangeone'>
+        </td>
+        <td class='py-3 text-right'>
+          <button type='button'
+            class='text-orangeone font-bold text-sm hover:underline'
+            aria-label='Retirer la ligne'
+            onclick="this.closest('tr').remove()">
+            Retirer
+          </button>
+        </td>
+      `;
+
+      container.appendChild(tr);
     }
+  }));
+});
 </script>
-
-<style>
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    .animate-fadeIn { animation: fadeIn 0.3s ease-out forwards; }
-</style>
 
 @endsection

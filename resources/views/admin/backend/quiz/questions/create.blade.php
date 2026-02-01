@@ -149,36 +149,75 @@
           </p>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+            {{-- Colonne gauche : Illustration --}}
             <div class="space-y-3">
-              <label class="block text-xs font-bold text-gray-500 italic">Illustration (Image)</label>
+              <label class="block text-xs font-bold text-gray-500 italic">
+                Illustration (Image)
+              </label>
+
               <div x-data="{ preview: null }" class="mt-3">
-  <input type="file" name="image" accept="image/*"
-         @change="preview = $event.target.files?.[0] ? URL.createObjectURL($event.target.files[0]) : null"
-         class="text-sm w-full ...">
+                <input
+                  type="file"
+                  name="image"
+                  accept="image/*"
+                  @change="preview = $event.target.files?.[0] ? URL.createObjectURL($event.target.files[0]) : null"
+                  class="text-sm w-full
+                        file:mr-4 file:py-2 file:px-4
+                        file:rounded-full file:border-0
+                        file:text-sm file:font-semibold
+                        file:bg-bleuone file:text-white
+                        hover:file:opacity-90"
+                >
 
-  <template x-if="preview">
-    <img :src="preview" alt="" class="mt-3 max-h-40 rounded-lg border border-gray-200 shadow-sm">
-  </template>
-</div>
+                <template x-if="preview">
+                  <img
+                    :src="preview"
+                    alt=""
+                    class="mt-3 max-h-40 rounded-lg border border-gray-200 shadow-sm object-contain"
+                  >
+                </template>
+              </div>
 
-              <input type="file" name="image" accept="image/*"
-                     class="text-sm w-full file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-bleuone file:text-white hover:file:opacity-90">
-
-              <input type="text" name="image_alt" value="{{ old('image_alt') }}"
-                     placeholder="Description alternative (obligatoire si image)"
-                     class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg focus:ring-orangeone focus:border-orangeone">
+              <input
+                type="text"
+                name="image_alt"
+                value="{{ old('image_alt') }}"
+                placeholder="Description alternative (obligatoire si image)"
+                class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg
+                      focus:ring-orangeone focus:border-orangeone"
+              >
             </div>
 
+            {{-- Colonne droite : Support audio --}}
             <div class="space-y-3">
-              <label class="block text-xs font-bold text-gray-500 italic">Support Audio</label>
-              <input type="file" name="audio" accept="audio/*"
-                     class="text-sm w-full file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-gray-800 file:text-white hover:file:opacity-90">
+              <label class="block text-xs font-bold text-gray-500 italic">
+                Support Audio
+              </label>
 
-              <textarea name="audio_transcript" rows="2"
-                        placeholder="Transcription (recommandée)"
-                        class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg focus:ring-orangeone focus:border-orangeone">{{ old('audio_transcript') }}</textarea>
+              <input
+                type="file"
+                name="audio"
+                accept="audio/*"
+                class="text-sm w-full
+                      file:mr-4 file:py-2 file:px-4
+                      file:rounded-full file:border-0
+                      file:text-sm file:font-semibold
+                      file:bg-gray-800 file:text-white
+                      hover:file:opacity-90"
+              >
+
+              <textarea
+                name="audio_transcript"
+                rows="2"
+                placeholder="Transcription (recommandée)"
+                class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg
+                      focus:ring-orangeone focus:border-orangeone"
+              >{{ old('audio_transcript') }}</textarea>
             </div>
+
           </div>
+
         </div>
       </div>
 

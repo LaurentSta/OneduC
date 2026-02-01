@@ -22,7 +22,9 @@ class ScormImportRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'lecture_id' => ['required', 'integer', 'exists:module_lectures,id'],
+            'zip'        => ['required', 'file', 'mimes:zip', 'max:512000'], // 500 Mo
         ];
     }
+
 }

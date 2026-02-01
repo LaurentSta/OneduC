@@ -1,5 +1,5 @@
 <?php
-
+// /home/laurents/Oneduc_Dev/app/Http/Controllers/Backend/GroupeController.php
 namespace App\Http\Controllers\Backend;
 
 use App\Http\Controllers\Controller;

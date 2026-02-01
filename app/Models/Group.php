@@ -28,7 +28,9 @@ class Group extends Model
 
     public function modules()
     {
-        return $this->belongsToMany(Module::class, 'group_module');
+        return $this->belongsToMany(Module::class, 'group_module')
+        ->withPivot('position')
+        ->orderBy('group_module.position');
     }
     public function users()
     {

@@ -1,0 +1,90 @@
+/* =========================================
+   TABLES ADMIN – ONEDUC
+   Compatible DataTables + Tailwind 4
+   ========================================= */
+
+/* ===== En-tête & pied ===== */
+.table-oneduc thead th,
+.table-oneduc tfoot th {
+  background-color: #004461 !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+.table-oneduc.dataTable tbody tr.odd  { background-color: rgba(0, 68, 97, 0.06) !important; }
+.table-oneduc.dataTable tbody tr.even { background-color: rgba(0, 68, 97, 0.02) !important; }
+
+
+/* Supprime le gradient DataTables */
+table.dataTable thead th,
+table.dataTable tfoot th {
+  background-image: none !important;
+}
+
+/* ===== Zébrage classique (Excel) ===== */
+.table-oneduc.dataTable tbody tr.odd {
+  background-color: rgba(0, 68, 97, 0.06);
+}
+
+.table-oneduc.dataTable tbody tr.even {
+  background-color: rgba(0, 68, 97, 0.02);
+}
+
+/* ===== Hover ===== */
+.table-oneduc.dataTable tbody tr:hover {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+/* ===== Bordures ===== */
+.table-oneduc.dataTable tbody td {
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+/* ===== Alignements utiles ===== */
+.table-oneduc th,
+.table-oneduc td {
+  vertical-align: middle;
+}
+/* =========================================
+   TRANSITIONS DOUCES – TABLES ADMIN
+   ========================================= */
+
+/* Lignes du tableau */
+.table-oneduc.dataTable tbody tr {
+  transition:
+    background-color 160ms ease-out,
+    box-shadow 160ms ease-out,
+    transform 120ms ease-out;
+}
+
+/* Hover ligne (déjà existant, on adoucit) */
+.table-oneduc.dataTable tbody tr:hover {
+  box-shadow: inset 0 0 0 9999px rgba(0, 0, 0, 0.03);
+}
+
+/* Liens et boutons dans les tableaux */
+.table-oneduc a,
+.table-oneduc button {
+  transition:
+    color 150ms ease-out,
+    background-color 150ms ease-out,
+    border-color 150ms ease-out,
+    box-shadow 150ms ease-out,
+    transform 120ms ease-out;
+}
+
+/* Petit feedback au clic (très léger) */
+.table-oneduc a:active,
+.table-oneduc button:active {
+  transform: scale(0.97);
+}
+
+/* Icônes dans les actions */
+.table-oneduc i {
+  transition: transform 150ms ease-out;
+}
+
+.table-oneduc a:hover i,
+.table-oneduc button:hover i {
+  transform: translateX(1px);
+}

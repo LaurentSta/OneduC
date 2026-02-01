@@ -10,10 +10,40 @@
     {{-- AlpineJS + collapse --}}
     <script src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.13.5/dist/cdn.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.5/dist/cdn.min.js" defer></script>
+    <style>
+    /* ================================
+    Bouton d’alerte pédagogique
+    ================================ */
 
-  
+    /* Animation de pulsation douce */
+    @keyframes oneduc-pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(233, 77, 42, 0.55);
+    }
+    70% {
+        box-shadow: 0 0 0 14px rgba(233, 77, 42, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(233, 77, 42, 0);
+    }
+    }
+
+    /* Classe appliquée au bouton */
+    .oneduc-btn-alert {
+    animation: oneduc-pulse 1.8s infinite;
+    }
+
+    /* Respect des préférences d’accessibilité */
+    @media (prefers-reduced-motion: reduce) {
+    .oneduc-btn-alert {
+        animation: none;
+    }
+    }
+    </style>
+
 </head>
 <body class="bg-white text-gray-900">
+ 
     <div
         x-data="{ sidebarOpen: true }"
         x-init="
@@ -29,7 +59,6 @@
         @endif
         {{-- Bouton Confort+ sous le header --}}
 <div id="access-toolbar-anchor" class="access-anchor" aria-label="Outils d’accessibilité"></div>
-
         <div class="mx-auto px-2 md:px-2 py-2">
             <div
               class="grid gap-6"
@@ -55,7 +84,6 @@
                         ])
                     </aside>
                 @endif
-
                 <main class="min-w-0">
                     <div class="px-0 lg:px-0 py-0">
                         @yield('content')
@@ -66,9 +94,13 @@
      class="hidden fixed bottom-10 z-50 pointer-events-none transition-all duration-300"
      style="left: calc(50% + (var(--sidebar-offset, 0px) / 2)); transform: translateX(-50%);">
     <button id="next-lesson-button"
-            type="button"
-            class="opacity-0 pointer-events-auto px-6 py-2.5 text-white bg-[#E94D2A] transition-all duration-300 flex items-center gap-2 hover:opacity-90 active:scale-95"
-            style="border-radius: 20px; font-weight: 400; font-size: 15px; border: none; box-shadow: none;">
+        type="button"
+        class="opacity-0 pointer-events-auto cursor-pointer oneduc-btn-alert
+               px-6 py-2.5 text-white bg-[#E94D2A]
+               rounded-full
+               transition-all duration-300 flex items-center gap-2
+               hover:opacity-90 active:scale-95">
+
         <span id="next-button-text">Leçon suivante</span>
         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
@@ -123,7 +155,5 @@
     // Exécution immédiate au cas où
     document.addEventListener('DOMContentLoaded', ajusterPositionBouton);
     </script>
-</body>
-</html>
 </body>
 </html>

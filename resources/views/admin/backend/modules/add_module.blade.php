@@ -1,184 +1,286 @@
 @extends('admin.admin_dashboard')
 @section('admin')
 
-<div class="max-w-6xl mx-auto px-6 py-10 bg-white rounded-2xl shadow-md">
-    <h2 class="text-3xl font-bold text-gray-800 mb-10">Ajouter un nouveau module</h2>
+<div class="w-full px-6 lg:px-8">
+  <div class="form-oneduc-card p-6 my-6 w-full">
 
-    <form method="POST" action="{{ route('admin.modules.store') }}" enctype="multipart/form-data" class="space-y-12">
-        @csrf
+    {{-- En-tête minimal --}}
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-gray-100 pb-4 mb-6">
+      <div>
+        <h1 class="form-oneduc-title">Ajouter un module</h1>
+        <p class="form-oneduc-subtitle">Créer un module, définir sa catégorisation, ses médias et ses options.</p>
+      </div>
 
-        {{-- 1. Informations générales --}}
-        <div>
-            <h3 class="text-lg font-semibold text-gray-700 mb-4">1. Informations générales</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <x-oneduc.input label="Nom technique" name="module_name" required />
-                <x-oneduc.input label="Titre affiché" name="module_title" required />
-                <x-oneduc.input label="Slug" name="module_name_slug" />
-                <x-oneduc.input label="Vidéo locale (MP4)" name="module_video" placeholder="ex: intro_module1.mp4 ou dossier/nom.mp4" />
+      <div class="flex flex-wrap gap-2">
+        <a href="{{ route('admin.modules') }}"
+           class="btn-oneduc-sm btn-oneduc-sm--outline">
+          <i class="ti ti-arrow-left"></i>
+          Retour
+        </a>
 
-                <x-oneduc.input label="Label (prix, etc.)" name="label" />
-                <x-oneduc.input label="Durée" name="duree" placeholder="Ex : 2h, 3 jours" />
-            </div>
+        <button type="submit" form="formAddModule"
+                class="btn-oneduc-sm btn-oneduc-sm--primary">
+          <i class="ti ti-check"></i>
+          Enregistrer
+        </button>
+      </div>
+    </div>
+
+    {{-- Erreurs --}}
+    @if ($errors->any())
+      <div class="mb-6 p-4 rounded-lg border border-red-200 bg-red-50 text-red-800 text-sm">
+        <ul class="list-disc list-inside">
+          @foreach ($errors->all() as $error)
+            <li>{{ $error }}</li>
+          @endforeach
+        </ul>
+      </div>
+    @endif
+
+    <form id="formAddModule" method="POST" action="{{ route('admin.modules.store') }}" enctype="multipart/form-data" class="space-y-6">
+      @csrf
+
+      {{-- 1. Informations générales --}}
+      <section class="form-oneduc-section">
+        <h2 class="form-oneduc-section-title">1. Informations générales</h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label class="form-oneduc-label">Nom technique <span class="text-red-600">*</span></label>
+            <input name="module_name" value="{{ old('module_name') }}" required
+                   class="form-oneduc-input" placeholder="Ex : word_debutant_01">
+          </div>
+
+          <div>
+            <label class="form-oneduc-label">Titre affiché <span class="text-red-600">*</span></label>
+            <input name="module_title" value="{{ old('module_title') }}" required
+                   class="form-oneduc-input" placeholder="Ex : Word – Débuter">
+          </div>
+
+          <div>
+            <label class="form-oneduc-label">Slug</label>
+            <input name="module_name_slug" value="{{ old('module_name_slug') }}"
+                   class="form-oneduc-input" placeholder="Ex : word-debuter">
+          </div>
+
+          <div>
+            <label class="form-oneduc-label">Vidéo locale (MP4)</label>
+            <input name="module_video" value="{{ old('module_video') }}"
+                   class="form-oneduc-input" placeholder="Ex : intro.mp4 ou dossier/intro.mp4">
+          </div>
+
+          <div>
+            <label class="form-oneduc-label">Label</label>
+            <input name="label" value="{{ old('label') }}"
+                   class="form-oneduc-input" placeholder="Ex : Gratuit / Premium">
+          </div>
+
+          <div>
+            <label class="form-oneduc-label">Durée</label>
+            <input name="duree" value="{{ old('duree') }}"
+                   class="form-oneduc-input" placeholder="Ex : 2h, 3 jours">
+          </div>
+        </div>
+      </section>
+
+      {{-- 2. Catégorisation --}}
+      <section class="form-oneduc-section form-oneduc-section--alt">
+        <h2 class="form-oneduc-section-title">2. Catégorisation</h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label class="form-oneduc-label">Catégorie <span class="text-red-600">*</span></label>
+            <select name="category_id" required class="form-oneduc-select">
+              <option value="">-- Choisir une catégorie --</option>
+              @foreach ($categories as $cat)
+                <option value="{{ $cat->id }}" @selected(old('category_id') == $cat->id)>{{ $cat->category_name }}</option>
+              @endforeach
+            </select>
+          </div>
+
+          <div>
+            <label class="form-oneduc-label">Sous-catégorie <span class="text-red-600">*</span></label>
+            <select name="subcategory_id" required class="form-oneduc-select">
+              <option value="">-- Choisir une sous-catégorie --</option>
+              @foreach ($subcategories as $sub)
+                <option value="{{ $sub->id }}" @selected(old('subcategory_id') == $sub->id)>{{ $sub->subcategory_name }}</option>
+              @endforeach
+            </select>
+            <div class="form-oneduc-help">Rendu obligatoire pour éviter l’erreur “champ vide”.</div>
+          </div>
+
+          <div>
+            <label class="form-oneduc-label">Évaluation (optionnelle)</label>
+            <select name="evaluation_id" class="form-oneduc-select">
+              <option value="">-- Aucune --</option>
+              @foreach ($evaluations as $eval)
+                <option value="{{ $eval->id }}" @selected(old('evaluation_id') == $eval->id)>{{ $eval->titre }}</option>
+              @endforeach
+            </select>
+          </div>
+
+          <div>
+            <label class="form-oneduc-label">Formateur <span class="text-red-600">*</span></label>
+            <select name="formateur_id" required class="form-oneduc-select">
+              <option value="">-- Choisir un formateur --</option>
+              @foreach ($formateurs as $f)
+                <option value="{{ $f->id }}" @selected(old('formateur_id') == $f->id)>{{ $f->name }}</option>
+              @endforeach
+            </select>
+          </div>
+
+          <div>
+            <label class="form-oneduc-label">Certificat <span class="text-red-600">*</span></label>
+            <select name="certificat" required class="form-oneduc-select">
+              <option value="">-- Avec certificat ? --</option>
+              <option value="1" @selected(old('certificat') === "1")>Oui</option>
+              <option value="0" @selected(old('certificat') === "0")>Non</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      {{-- 3. Ressources & images --}}
+      <section class="form-oneduc-section">
+        <h2 class="form-oneduc-section-title">3. Ressources & images</h2>
+
+        <div class="grid grid-cols-1 gap-6">
+          <div>
+            <label class="form-oneduc-label">Ressources (URL ou chemin)</label>
+            <input name="resources" value="{{ old('resources') }}"
+                   class="form-oneduc-input" placeholder="Ex : https://... ou storage/...">
+          </div>
         </div>
 
-        {{-- 2. Catégorisation --}}
-        <div>
-            <h3 class="text-lg font-semibold text-gray-700 mb-4">2. Catégorisation</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label for="category_id" class="block text-sm font-medium text-gray-700 mb-1">Catégorie</label>
-                    <select name="category_id" id="category_id" required class="input">
-                        <option value="">-- Choisir une catégorie --</option>
-                        @foreach ($categories as $cat)
-                            <option value="{{ $cat->id }}">{{ $cat->category_name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <div>
-                    <label for="subcategory_id" class="block text-sm font-medium text-gray-700 mb-1">Sous-catégorie</label>
-                    <select name="subcategory_id" id="subcategory_id" class="input">
-                        <option value="">-- Choisir une sous-catégorie --</option>
-                        @foreach ($subcategories as $sub)
-                            <option value="{{ $sub->id }}">{{ $sub->subcategory_name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <div>
-                    <label for="evaluation_id" class="block text-sm font-medium text-gray-700 mb-1">Évaluation finale (optionnelle)</label>
-                    <select name="evaluation_id" id="evaluation_id" class="input">
-                        <option value="">-- Aucune évaluation --</option>
-                        @foreach ($evaluations as $eval)
-                            <option value="{{ $eval->id }}" {{ old('evaluation_id') == $eval->id ? 'selected' : '' }}>{{ $eval->titre }}</option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <div>
-                    <label for="formateur_id" class="block text-sm font-medium text-gray-700 mb-1">Formateur</label>
-                    <select name="formateur_id" id="formateur_id" required class="input">
-                        <option value="">-- Choisir un formateur --</option>
-                        @foreach ($formateurs as $f)
-                            <option value="{{ $f->id }}">{{ $f->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <div>
-                    <label for="certificat" class="block text-sm font-medium text-gray-700 mb-1">Certificat</label>
-                    <select name="certificat" id="certificat" required class="input">
-                        <option value="">-- Avec certificat ? --</option>
-                        <option value="1">Oui</option>
-                        <option value="0">Non</option>
-                    </select>
-                </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+          <div>
+            <label class="form-oneduc-label">Image d’en-tête</label>
+            <input id="header_image" type="file" name="header_image" accept="image/*,.svg,.svg+xml"
+                   class="form-oneduc-file">
+            <div class="mt-3">
+              <img id="showHeaderImage" src="{{ asset('upload/module_images/NoImage.png') }}"
+                   alt="Aperçu image d’en-tête" class="w-40 h-40 object-cover rounded-lg border border-gray-200">
             </div>
+          </div>
+
+          <div>
+            <label class="form-oneduc-label">Image principale</label>
+            <input id="module_image" type="file" name="module_image" accept="image/*,.svg,.svg+xml"
+                   class="form-oneduc-file">
+            <div class="mt-3">
+              <img id="showImage" src="{{ asset('upload/module_images/NoImage.png') }}"
+                   alt="Aperçu image principale" class="w-40 h-40 object-cover rounded-lg border border-gray-200">
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {{-- 4. Contenu pédagogique --}}
+      <section class="form-oneduc-section">
+        <h2 class="form-oneduc-section-title">4. Contenu pédagogique</h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label class="form-oneduc-label">Prérequis</label>
+            <textarea name="prerequi" rows="5" class="form-oneduc-textarea"
+                      placeholder="Ex : savoir utiliser la souris...">{{ old('prerequi') }}</textarea>
+          </div>
+
+          <div>
+            <label class="form-oneduc-label">Description</label>
+            <textarea name="description" rows="5" class="form-oneduc-textarea"
+                      placeholder="Décrire le module...">{{ old('description') }}</textarea>
+          </div>
         </div>
 
-        {{-- 3. Ressources & images --}}
-        <div>
-            <h3 class="text-lg font-semibold text-gray-700 mb-4">3. Ressources & images</h3>
-            <div class="grid grid-cols-1 md:grid-cols-1 gap-6">
-                <x-oneduc.input label="Ressources (URL ou chemin)" name="resources" class="w-full" />
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-                <x-oneduc.file label="Image d’en-tête" name="header_image" preview="showHeaderImage" />
-                <x-oneduc.file label="Image principale" name="module_image" preview="showImage" />
-            </div>
-        </div>
+        <div class="mt-6">
+          <label class="form-oneduc-label">Objectifs pédagogiques</label>
 
-        {{-- 4. Contenu pédagogique --}}
-        <div>
-            <h3 class="text-lg font-semibold text-gray-700 mb-4">4. Contenu pédagogique</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <x-oneduc.textarea label="Prérequis" name="prerequi" />
-                <x-oneduc.textarea label="Description" name="description" />
+          <div id="objectifs-container" class="space-y-3">
+            <div class="flex items-center gap-3 objectif-item">
+              <input type="text" name="objectifs[]" class="form-oneduc-input" placeholder="Saisir un objectif">
+              <button type="button" class="btn-remove-objectif btn-oneduc-sm btn-oneduc-sm--outline" aria-label="Supprimer">
+                <i class="ti ti-x"></i>
+              </button>
             </div>
-        </div>
-        <div>
-            <h4 class="text-md font-semibold text-gray-700 mb-2">Objectifs pédagogiques</h4>
-            <div id="objectifs-container" class="space-y-3">
-                <div class="flex items-center gap-3 objectif-item">
-                    <input type="text" name="objectifs[]" class="input flex-1" placeholder="Saisir un objectif" />
-                    <button type="button" class="remove-objectif text-red-600 hover:text-red-800">✕</button>
-                </div>
-            </div>
-            <button type="button" id="add-objectif" class="mt-3 bg-gray-200 hover:bg-gray-300 text-sm px-4 py-1 rounded">
-                + Ajouter un objectif
-            </button>
-        </div>
+          </div>
 
-        {{-- 5. Options --}}
-        <div>
-            <h3 class="text-lg font-semibold text-gray-700 mb-4">5. Options</h3>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <x-oneduc.checkbox label="Bestseller" name="bestseller" />
-                <x-oneduc.checkbox label="Vedette" name="vedette" />
-                <x-oneduc.checkbox label="Valeur ajoutée" name="surevalue" />
-                <x-oneduc.checkbox label="Actif" name="status" />
-            </div>
+          <button type="button" id="add-objectif" class="btn-oneduc-sm btn-oneduc-sm--outline mt-3">
+            <i class="ti ti-plus"></i> Ajouter un objectif
+          </button>
         </div>
+      </section>
 
-        {{-- Bouton --}}
-        <div class="text-right pt-6">
-            <button type="submit" class="bg-orangeone hover:bg-orange-600 text-white font-medium px-6 py-2 rounded shadow">
-                <i class="ti ti-check mr-2"></i> Enregistrer
-            </button>
+      {{-- 5. Options --}}
+      <section class="form-oneduc-section form-oneduc-section--alt">
+        <h2 class="form-oneduc-section-title">5. Options</h2>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+          <label class="inline-flex items-center gap-2">
+            <input type="checkbox" name="bestseller" value="1" @checked(old('bestseller'))>
+            Bestseller
+          </label>
+
+          <label class="inline-flex items-center gap-2">
+            <input type="checkbox" name="vedette" value="1" @checked(old('vedette'))>
+            Vedette
+          </label>
+
+          <label class="inline-flex items-center gap-2">
+            <input type="checkbox" name="surevalue" value="1" @checked(old('surevalue'))>
+            Valeur ajoutée
+          </label>
+
+          <label class="inline-flex items-center gap-2">
+            <input type="checkbox" name="status" value="1" @checked(old('status'))>
+            Actif
+          </label>
         </div>
+      </section>
+
     </form>
+  </div>
 </div>
 
 <script>
-    const previews = [
-        { input: 'header_image', img: 'showHeaderImage' },
-        { input: 'module_image', img: 'showImage' },
-    ];
-    previews.forEach(({ input, img }) => {
-        const inputElem = document.getElementById(input);
-        const imgElem = document.getElementById(img);
-        if (inputElem && imgElem) {
-            inputElem.addEventListener('change', function (e) {
-                const reader = new FileReader();
-                reader.onload = function (e) {
-                    imgElem.src = e.target.result;
-                };
-                reader.readAsDataURL(this.files[0]);
-            });
-        }
+  // Prévisualisation images
+  function bindPreview(inputId, imgId) {
+    const input = document.getElementById(inputId);
+    const img = document.getElementById(imgId);
+    if (!input || !img) return;
+
+    input.addEventListener('change', function() {
+      if (!this.files || !this.files[0]) return;
+      const reader = new FileReader();
+      reader.onload = (e) => img.src = e.target.result;
+      reader.readAsDataURL(this.files[0]);
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    bindPreview('header_image', 'showHeaderImage');
+    bindPreview('module_image', 'showImage');
+
+    // Objectifs dynamiques
+    document.getElementById('add-objectif')?.addEventListener('click', () => {
+      const container = document.getElementById('objectifs-container');
+      const item = document.createElement('div');
+      item.className = 'flex items-center gap-3 objectif-item';
+      item.innerHTML = `
+        <input type="text" name="objectifs[]" class="form-oneduc-input" placeholder="Saisir un objectif">
+        <button type="button" class="btn-remove-objectif btn-oneduc-sm btn-oneduc-sm--outline" aria-label="Supprimer">
+          <i class="ti ti-x"></i>
+        </button>
+      `;
+      container.appendChild(item);
     });
 
-    
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('.btn-remove-objectif');
+      if (!btn) return;
+      btn.closest('.objectif-item')?.remove();
+    });
+  });
 </script>
-document.addEventListener('click', function (e) {
-    if (e.target.id === 'add-objectif') {
-        const container = document.getElementById('objectifs-container');
-        const item = document.createElement('div');
-        item.classList.add('flex','items-center','gap-3','objectif-item');
-        item.innerHTML = `
-            <input type="text" name="objectifs[]" class="input flex-1" placeholder="Saisir un objectif" />
-            <button type="button" class="remove-objectif text-red-600 hover:text-red-800">✕</button>
-        `;
-        container.appendChild(item);
-    }
-    if (e.target.classList.contains('remove-objectif')) {
-        e.target.closest('.objectif-item').remove();
-    }
-});
-
-<style>
-    .input {
-        @apply mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-orangeone focus:border-orangeone text-sm;
-    }
-    .input-textarea {
-        @apply mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-orangeone focus:border-orangeone text-sm;
-    }
-    .checkbox {
-        @apply rounded text-orangeone focus:ring-orangeone;
-    }
-    .file {
-        @apply file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:bg-orangeone file:text-white hover:file:bg-orange-600 cursor-pointer;
-    }
-</style>
 
 @endsection

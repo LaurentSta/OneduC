@@ -8,6 +8,8 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
 use ZipArchive;
 use RuntimeException;
+use DOMDocument;
+use Illuminate\Support\Str;
 
 class ScormImporter
 {
@@ -21,12 +23,11 @@ class ScormImporter
             throw new RuntimeException('Impossible d\'ouvrir le ZIP.');
         }
 
-        if (!$zip->extractTo($basePath)) {
-            $status = method_exists($zip, 'getStatusString') ? $zip->getStatusString() : 'Extraction impossible';
+        try {
+            $this->safeExtract($zip, $basePath);
+        } finally {
             $zip->close();
-            throw new RuntimeException('Échec de décompression : ' . $status);
         }
-        $zip->close();
 
         $relativeIndex = $this->findIndexPath($basePath);
         if (!$relativeIndex) {
@@ -78,10 +79,51 @@ class ScormImporter
 
     private function findIndexPath(string $basePath): ?string
     {
+        // 1) Chercher imsmanifest.xml (même s’il est dans un sous-dossier)
+        $manifest = collect(File::allFiles($basePath))
+            ->first(fn($f) => strtolower($f->getFilename()) === 'imsmanifest.xml');
+
+        if (!$manifest) {
+            return null;
+        }
+
+        $manifestDir = $manifest->getPathname();
+        $manifestXml = File::get($manifestDir);
+
+        // 2) Lire le href du manifest (resource href)
+        $dom = new DOMDocument();
+        $dom->preserveWhiteSpace = false;
+
+        // évite les warnings XML en production
+        libxml_use_internal_errors(true);
+        $dom->loadXML($manifestXml);
+        libxml_clear_errors();
+
+        $resources = $dom->getElementsByTagName('resource');
+
+        foreach ($resources as $res) {
+            if ($res->hasAttribute('href')) {
+                $href = ltrim($res->getAttribute('href'), '/');
+
+                // Le href est relatif au dossier du manifest
+                $abs = dirname($manifestDir) . DIRECTORY_SEPARATOR . $href;
+
+                if (File::exists($abs)) {
+                    // Retourner un chemin relatif à $basePath
+                    $rel = str_replace($basePath . DIRECTORY_SEPARATOR, '', $abs);
+                    return str_replace('\\', '/', $rel);
+                }
+            }
+        }
+
+        // 3) Solution de repli (cas simples)
         if (File::exists($basePath . '/res/index.html')) return 'res/index.html';
+        if (File::exists($basePath . '/index_lms.html')) return 'index_lms.html';
         if (File::exists($basePath . '/index.html')) return 'index.html';
+
         return null;
     }
+
 
     private function injectApiScript(string $indexPath): void
     {
@@ -92,4 +134,43 @@ class ScormImporter
             File::put($indexPath, $html);
         }
     }
+    private function safeExtract(ZipArchive $zip, string $basePath): void
+{
+    for ($i = 0; $i < $zip->numFiles; $i++) {
+        $name = $zip->getNameIndex($i);
+
+        if ($name === false) continue;
+
+        // Normalisation
+        $name = str_replace('\\', '/', $name);
+
+        // Refuser chemins absolus et traversée de dossiers
+        if (str_starts_with($name, '/') || str_contains($name, '../')) {
+            throw new RuntimeException('ZIP invalide : chemin non autorisé détecté.');
+        }
+
+        $dest = $basePath . DIRECTORY_SEPARATOR . $name;
+
+        // Répertoires
+        if (str_ends_with($name, '/')) {
+            File::ensureDirectoryExists($dest);
+            continue;
+        }
+
+        // Assurer le dossier parent
+        File::ensureDirectoryExists(dirname($dest));
+
+        // Écrire le fichier
+        $stream = $zip->getStream($name);
+        if ($stream === false) {
+            throw new RuntimeException('Extraction impossible : ' . $name);
+        }
+
+        $contents = stream_get_contents($stream);
+        fclose($stream);
+
+        File::put($dest, $contents);
+    }
+}
+
 }

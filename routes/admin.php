@@ -13,7 +13,8 @@ use App\Http\Controllers\Backend\SkillDomainController;
 use App\Http\Controllers\Backend\SkillController;
 use App\Http\Controllers\Backend\QuizQuestionController;
 use App\Http\Controllers\Backend\ScormLibraryController;
-
+use App\Http\Controllers\Backend\CompetencyController;
+use App\Http\Controllers\Backend\BadgeController;
 
 Route::middleware(['auth', 'role:admin'])
     ->prefix('admin')
@@ -155,12 +156,28 @@ Route::middleware(['auth', 'role:admin'])
     |--------------------------------------------------------------------------
     */
     // routes/admin.php
-Route::prefix('scorm')->name('scorm.')->group(function () {
-    Route::post('/import-lecture', [ScormLibraryController::class, 'importForLecture'])->name('import');
+    Route::prefix('scorm')->name('scorm.')->group(function () {
+        Route::post('/import-lecture', [ScormLibraryController::class, 'importForLecture'])->name('import');
+    });
+
+    // Compétences
+    Route::prefix('competences')->name('competencies.')->group(function () {
+    Route::get('/', [CompetencyController::class, 'index'])->name('index');
+    Route::post('/', [CompetencyController::class, 'store'])->name('store');
+    Route::post('/{competency}/toggle', [CompetencyController::class, 'toggle'])->name('toggle');
+    Route::delete('/{competency}', [CompetencyController::class, 'destroy'])->name('destroy');
 });
 
 
-        
+    // Badges (liste + création + édition)
+    Route::get('/badges', [BadgeController::class, 'index'])->name('badges.index');
+    Route::get('/badges/create', [BadgeController::class, 'create'])->name('badges.create');
+    Route::post('/badges', [BadgeController::class, 'store'])->name('badges.store');
+
+    Route::get('/badges/{badge}/edit', [BadgeController::class, 'edit'])->name('badges.edit');
+    Route::post('/badges/{badge}', [BadgeController::class, 'update'])->name('badges.update');
+    Route::delete('/badges/{badge}', [BadgeController::class, 'destroy'])
+    ->name('badges.destroy');
 
 
     });
