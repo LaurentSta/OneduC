@@ -64,5 +64,12 @@ class ModuleLecture extends Model
 
         return $this->scormPackageVersion?->index_path;
     }
-
+    /**
+     * Objectifs pédagogiques de la leçon
+     */
+    public function objectives()
+    {
+        return $this->hasMany(LectureObjective::class, 'lecture_id')
+                    ->orderBy('position');
+    }
 }

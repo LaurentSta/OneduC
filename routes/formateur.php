@@ -5,7 +5,7 @@ use App\Http\Controllers\FormateurController;
 use App\Http\Controllers\Formateur\GroupeController;
 use App\Http\Controllers\Formateur\ProgressionController;
 use App\Http\Controllers\Backend\ModuleController;
-use App\Http\Controllers\Stagiaire\QuizAttemptController;
+// use App\Http\Controllers\Stagiaire\QuizAttemptController;
 use App\Http\Controllers\Stagiaire\QuizController;
 
 
@@ -95,17 +95,17 @@ Route::middleware(['auth', 'role:formateur'])
 
         
 
-Route::get('/formations/{module}/section/{section}/lesson/{lecture}/quiz/demarrer', [QuizAttemptController::class, 'start'])
-  ->name('formations.quiz.start');
+    // Route::get('/formations/{module}/section/{section}/lesson/{lecture}/quiz/demarrer', [QuizAttemptController::class, 'start'])
+    // ->name('formations.quiz.start');
 
-Route::get('/formations/{module}/section/{section}/lesson/{lecture}/quiz/{attempt}', [QuizAttemptController::class, 'showQuestion'])
-  ->name('formations.quiz.question');
+    // Route::get('/formations/{module}/section/{section}/lesson/{lecture}/quiz/{attempt}', [QuizAttemptController::class, 'showQuestion'])
+    // ->name('formations.quiz.question');
 
-Route::post('/formations/{module}/section/{section}/lesson/{lecture}/quiz/{attempt}/repondre', [QuizAttemptController::class, 'answer'])
-  ->name('formations.quiz.answer');
+    // Route::post('/formations/{module}/section/{section}/lesson/{lecture}/quiz/{attempt}/repondre', [QuizAttemptController::class, 'answer'])
+    // ->name('formations.quiz.answer');
 
-Route::get('/formations/{module}/section/{section}/lesson/{lecture}/quiz/{attempt}/resultat', [QuizAttemptController::class, 'result'])
-  ->name('formations.quiz.result');
+    // Route::get('/formations/{module}/section/{section}/lesson/{lecture}/quiz/{attempt}/resultat', [QuizAttemptController::class, 'result'])
+    // ->name('formations.quiz.result');
 
   /*
 |--------------------------------------------------------------------------

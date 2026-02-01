@@ -1,0 +1,127 @@
+/* =========================================
+   FORMS ADMIN – ONEDUC (Tailwind 4 + Vite)
+   ========================================= */
+
+.form-oneduc-card{
+  background:#fff;
+  border:1px solid rgba(0,0,0,.06);
+  border-radius:20px;
+  box-shadow:0 10px 30px -10px rgba(0, 68, 97, .10);
+}
+
+.form-oneduc-section{
+  border:1px solid rgba(0,0,0,.06);
+  border-radius:16px;
+  padding:18px;
+  background:rgba(0, 68, 97, 0.04);
+}
+
+.form-oneduc-section--alt{
+  background:rgba(233, 77, 42, 0.04);
+}
+
+.form-oneduc-title{
+  color:#004461;
+  font-weight:800;
+  font-size:20px;
+}
+
+.form-oneduc-subtitle{
+  color:rgba(0,0,0,.55);
+  font-size:14px;
+  line-height:1.4;
+}
+
+.form-oneduc-section-title{
+  color:#004461;
+  font-weight:800;
+  font-size:16px;
+  margin-bottom:12px;
+}
+
+/* Champs */
+.form-oneduc-label{
+  display:block;
+  font-size:14px;
+  font-weight:600;
+  color:#374151;
+  margin-bottom:6px;
+}
+
+.form-oneduc-input,
+.form-oneduc-select,
+.form-oneduc-textarea{
+  width:100%;
+  border:1px solid rgba(0,0,0,.16);
+  border-radius:10px;
+  padding:10px 12px;
+  font-size:14px;
+  background:#fff;
+  outline:none;
+  transition: box-shadow .25s ease, border-color .25s ease, transform .25s ease;
+}
+
+.form-oneduc-input:focus,
+.form-oneduc-select:focus,
+.form-oneduc-textarea:focus{
+  border-color:#E94D2A;
+  box-shadow:0 0 0 4px rgba(233, 77, 42, .18);
+}
+
+.form-oneduc-help{
+  font-size:12px;
+  color:rgba(0,0,0,.55);
+  margin-top:6px;
+}
+
+/* Upload */
+.form-oneduc-file{
+  width:100%;
+  font-size:14px;
+}
+
+.form-oneduc-file::file-selector-button{
+  background:#E94D2A;
+  color:#fff;
+  border:0;
+  padding:10px 12px;
+  border-radius:10px;
+  margin-right:12px;
+  cursor:pointer;
+}
+.form-oneduc-file::file-selector-button:hover{
+  background:#c43d1f;
+}
+
+/* Boutons */
+.btn-oneduc-sm{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:10px 14px;
+  border-radius:10px;
+  font-size:13px;
+  font-weight:600;
+  cursor:pointer;
+  transition: transform .25s ease, box-shadow .25s ease, background-color .25s ease, color .25s ease, border-color .25s ease;
+}
+.btn-oneduc-sm:active{ transform:scale(.98); }
+
+.btn-oneduc-sm--primary{
+  background:#E94D2A;
+  color:#fff;
+  border:1px solid #E94D2A;
+}
+.btn-oneduc-sm--primary:hover{
+  background:#c43d1f;
+  border-color:#c43d1f;
+}
+
+.btn-oneduc-sm--outline{
+  background:#fff;
+  color:#004461;
+  border:1px solid rgba(0, 68, 97, .25);
+}
+.btn-oneduc-sm--outline:hover{
+  background:rgba(0, 68, 97, .06);
+}

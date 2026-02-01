@@ -82,7 +82,23 @@ class GroupeController extends Controller
             $group->students()->syncWithoutDetaching([$user->id => ['role_in_group' => 'stagiaire']]);
         }
 
-        $group->modules()->sync($request->modules);
+        $moduleIds = collect($request->input('modules', []))
+            ->map(fn($v) => (int) $v)
+            ->filter()
+            ->unique()
+            ->values();
+
+        $positions = $request->input('module_positions', []);
+        $sync = [];
+
+        // normalisation : 1..N selon l’ordre reçu
+        $pos = 1;
+        foreach ($moduleIds as $mid) {
+            $sync[$mid] = ['position' => $pos++];
+        }
+
+        $group->modules()->sync($sync);
+
     });
 
     return redirect()->route('formateur.groupes.index')->with('success', 'Groupe et stagiaires enregistrés avec succès.');

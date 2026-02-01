@@ -260,7 +260,11 @@ class SCORMController extends Controller
             }
         }
 
-        return response()->json(['success' => true]);
+        return response()->json([
+            'success' => true,
+            'lesson_status' => $lessonStatus, // valeur interne Onéduc : completed / in_progress / failed...
+            'scorm_lesson_status' => $scormLessonStatus, // valeur SCORM reçue : passed / completed / incomplete...
+        ]);
     }
 
     private function recomputeMonotoneStatus(int $userId, int $lectureId): void

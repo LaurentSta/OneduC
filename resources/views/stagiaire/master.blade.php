@@ -70,6 +70,7 @@
 
 </head>
 <body x-data="{ sidebarOpen: true }" class="bg-gray-100 text-gray-900 font-sans">
+
     {{-- HEADER --}}
     @include('stagiaire.body_dashboard.header')
       <!-- Conteneur link-mode Confort+ (ne mets PAS de <button> ici) -->

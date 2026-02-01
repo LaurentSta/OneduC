@@ -1,45 +1,68 @@
-/* 1) Tailwind en premier */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* 1) Tailwind en premier (Tailwind v4) */
+@import "tailwindcss";
 
-/* 2) Polices: idéalement via <link> dans <head> ou en local
-   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-   <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;700&family=Varela+Round&display=swap" rel="stylesheet">
-*/
+@import "admin-tables.css";
+@import "admin-forms.css";
 
-/* 3) Styles base (titres, paragraphes) */
-@layer base {
-  p { @apply font-lisible; }
-  h1 { @apply font-raleway text-4xl md:text-5xl font-bold text-gray-900 mb-6; }
-  h2 { @apply font-varela; }
+/* Plugins Tailwind (v4) */
+@plugin "@tailwindcss/forms";
+
+/* Charger la config Tailwind (v4) */
+@config "../../tailwind.config.js";
+
+/* =========================
+   Confort+ (utilitaires)
+   ========================= */
+
+/* Remarque : en Tailwind v4, @utility génère une vraie classe utilitaire.
+   On évite @apply avec des valeurs arbitraires complexes quand c’est possible. */
+
+@utility access-anchor {
+  position: absolute;
+  z-index: 9999; /* au-dessus du header */
+  pointer-events: none; /* laisse passer les clics sauf sur le bouton */
+  right: 20px;
+  margin-top: -1px;
+
+  @media (max-width: 768px) {
+    right: 16px;
+    top: auto;
+    bottom: 16px;
+  }
 }
 
-@layer components {
-  /* Conteneur du bouton Confort+ */
-  .access-anchor {
-    @apply absolute;
-    z-index: 9999; /* au-dessus du header */
-    pointer-events: none; /* laisse passer les clics sauf sur le bouton */
-    right: 20px;
-    margin-top: -1px;
-  }
-
-  /* Bouton Confort+ */
+@layer utilities {
   .btn-access {
-    @apply h-12 w-12 rounded-full border bg-white text-[#004461]
-           flex items-center justify-center hover:bg-[#E94D2A] hover:text-white
-           focus:outline-none focus:ring;
+    height: 3rem;
+    width: 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: #fff;
+    border: 1px solid currentColor;
+    color: #004461;
+
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(233, 77, 42, 0.35);
+
+    pointer-events: auto;
+    position: relative;
+
+    border-radius: 0;
+
     font-size: 0;
     color: transparent;
-    position: relative;
-    pointer-events: auto;
-    border-radius: 0;
+  }
+
+  .btn-access:hover {
+    background: #E94D2A;
+    color: #fff;
   }
 
   .btn-access::after {
     content: "+";
-    color: #E94D2A;
+    color: #e94d2a;
     font-size: 20px;
     font-weight: 700;
     line-height: 1;
@@ -53,29 +76,7 @@
     color: #fff;
   }
 
-  /* Panneau Confort+ */
-  #accessibility-toolbar,
-  .accessibility-toolbar {
-    @apply fixed right-[60px];
-    transform: none !important;
-    max-height: calc(100vh - var(--access-top, 96px) - 16px);
-    overflow: auto;
-    z-index: 9998;
-    box-shadow: none;
-  }
-
   @media (max-width: 768px) {
-    .access-anchor {
-      right: 16px;
-      top: auto;
-      bottom: 16px;
-    }
-    #accessibility-toolbar,
-    .accessibility-toolbar {
-      right: 16px !important;
-      top: auto !important;
-      bottom: 80px !important;
-    }
     .btn-access {
       writing-mode: initial;
       transform: none;
@@ -86,8 +87,68 @@
   }
 }
 
-
-/* 5) Utilitaires optionnels */
-@layer utilities {
-  .z-access { z-index: 9999; } /* au besoin pour survoler des iframes */
+.btn-access:hover {
+  background: #E94D2A;
+  color: #fff;
 }
+
+.btn-access::after {
+  content: "+";
+  color: #e94d2a;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.btn-access:hover::after {
+  color: #fff;
+}
+
+@media (max-width: 768px) {
+  .btn-access {
+    writing-mode: initial;
+    transform: none;
+    width: 56px;
+    height: 56px;
+    padding: 12px;
+  }
+}
+
+@utility accessibility-toolbar {
+  position: fixed;
+  right: 60px;
+  transform: none !important;
+  max-height: calc(100vh - var(--access-top, 96px) - 16px);
+  overflow: auto;
+  z-index: 9998;
+  box-shadow: none;
+
+  @media (max-width: 768px) {
+    right: 16px !important;
+    top: auto !important;
+    bottom: 80px !important;
+  }
+}
+
+@utility z-access {
+  z-index: 9999; /* au besoin pour survoler des iframes */
+}
+
+/* =========================
+   Base typographique
+   ========================= */
+
+@layer base {
+  p { @apply font-lisible; }
+  h1 { @apply font-raleway text-4xl md:text-5xl font-bold text-gray-900 mb-6; }
+  h2 { @apply font-varela; }
+}
+
+@layer components {
+  /* Panneau Confort+ (à compléter) */
+}
+
