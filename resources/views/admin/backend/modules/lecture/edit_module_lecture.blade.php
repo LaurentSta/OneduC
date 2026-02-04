@@ -3,8 +3,9 @@
 
 @section('admin')
 @php
-  $currentScormPath = session('new_scorm_path', $mlecture->scorm_index_path ?? $mlecture->scorm_path);
+  $currentScormPath = $mlecture->scorm_launch_path;
 @endphp
+
 
 <div class="w-full px-6 lg:px-8">
   <div class="max-w-[1100px] mx-auto my-6">
@@ -24,10 +25,9 @@
         </a>
       </div>
 
-      {{-- Alertes --}}
-      @if(session('success'))
+      @if(session('success_scorm_v2'))
         <div class="mb-6 rounded-xl border border-green-100 bg-green-50 p-4 text-sm text-green-800">
-          {{ session('success') }}
+          {{ session('success_scorm_v2') }}
         </div>
       @endif
 
@@ -84,7 +84,7 @@
       <form method="POST" action="{{ route('admin.lectures.update') }}" class="space-y-6" id="main-lecture-form">
         @csrf
         <input type="hidden" name="id" value="{{ $mlecture->id }}">
-        <input type="hidden" name="scorm_path" value="{{ $currentScormPath }}">
+        <
 
         {{-- Panel 1: Contenu (titre + SCORM) --}}
         <section id="tab-contenu" class="tab-panel" role="tabpanel" aria-labelledby="tab-contenu">
@@ -117,12 +117,22 @@
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 bg-white rounded-2xl border border-gray-100">
                   <div class="min-w-0">
                     <div class="font-semibold text-gray-900">Contenu prêt</div>
-                    <div class="text-[11px] text-gray-500 font-mono break-all">{{ $currentScormPath }}</div>
+                    <div class="text-[11px] text-gray-500 font-mono break-all">
+                      {{ $mlecture->scorm_launch_path ? ('storage/' . $mlecture->scorm_launch_path) : 'Aucun SCORM importé (V2)' }}
+                    </div>
+
                   </div>
-                  <a href="{{ route('lecture.scorm', ['id' => $mlecture->id]) }}" target="_blank"
-                     class="btn-admin px-5 py-2 bg-bleuone text-white hover:opacity-90">
-                    Visualiser
-                  </a>
+                  @if(!empty($mlecture->scorm_launch_path))
+                    <a href="{{ route('admin.lectures.scormv2.preview', ['lecture' => $mlecture->id]) }}" target="_blank"
+                      class="btn-admin px-5 py-2 bg-bleuone text-white hover:opacity-90">
+                      Visualiser
+                    </a>
+                  @else
+                    <span class="text-xs text-gray-500">
+                      Aucun SCORM importé (V2)
+                    </span>
+                  @endif
+
                 </div>
               @else
                 <div class="rounded-xl border border-dashed border-gray-200 bg-white/60 p-4 text-sm text-gray-600">
@@ -133,11 +143,11 @@
               <div class="mt-4 rounded-2xl border border-dashed border-gray-200 bg-white/40 p-4">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3 items-center">
                   <div>
-                    <input type="file" name="zip" accept=".zip" form="form-import-scorm"
-                           class="block w-full text-sm text-gray-600
-                                  file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0
-                                  file:bg-orangeone file:text-white hover:file:bg-orangeone-hover transition"
-                           required>
+                    <input type="file" name="scorm_zip" accept=".zip" form="form-import-scorm"
+                        class="block w-full text-sm text-gray-600
+                                file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0
+                                file:bg-orangeone file:text-white hover:file:bg-orangeone-hover transition"
+                        required>
                   </div>
                   <div class="flex md:justify-end">
                     <button type="submit" form="form-import-scorm"
@@ -320,10 +330,14 @@
 </div>
 
 {{-- Form import SCORM (indépendant) --}}
-<form id="form-import-scorm" method="POST" action="{{ route('admin.scorm.import') }}" enctype="multipart/form-data" class="hidden">
+<form id="form-import-scorm"
+      method="POST"
+      action="{{ route('admin.lectures.scormv2.upload', ['lecture' => $mlecture->id]) }}"
+      enctype="multipart/form-data"
+      class="hidden">
   @csrf
-  <input type="hidden" name="lecture_id" value="{{ $mlecture->id }}">
 </form>
+
 
 {{-- Onglets + transitions douces --}}
 <script>

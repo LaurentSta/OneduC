@@ -67,6 +67,7 @@ Route::get('/lecture/{id}', [\App\Http\Controllers\Frontend\LectureController::c
 
 
 
+
 // ----------------------------------------------------------
 // 🔐 Authentification
 // ----------------------------------------------------------
@@ -105,10 +106,11 @@ require __DIR__.'/formateur.php';
 require __DIR__.'/stagiaire.php';
 
 // ----------------------------------------------------------
-// SCORM
 // ----------------------------------------------------------
-// Gestion des appels SCORM (progression, scores...)
-require __DIR__.'/scorm.php';
+// 🟣 Scorm
+// ----------------------------------------------------------
+// Routes accessibles aux scorm V2
+require __DIR__.'/scorm_v2.php';
 
 // ----------------------------------------------------------
 // Api
