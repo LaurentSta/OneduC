@@ -256,12 +256,35 @@ class QuizQuestionController extends Controller
         $rawOptions = $rawOptions ?? [];
 
         // Boolean : 2 options fixes Vrai/Faux (en base)
+        // Boolean : 2 options fixes Vrai/Faux, mais on respecte le choix envoyé par la vue
         if ($type === 'boolean') {
+            $rawOptions = $rawOptions ?? [];
+
+            // Valeurs par défaut
+            $vraiCorrect = 1;
+            $fauxCorrect = 0;
+
+            // Si la vue a envoyé des is_correct, on les récupère (par index ou par libellé)
+            if (isset($rawOptions[0]) || isset($rawOptions[1])) {
+                $v = $rawOptions[0]['is_correct'] ?? null;
+                $f = $rawOptions[1]['is_correct'] ?? null;
+
+                if ($v !== null) $vraiCorrect = (int) (((string)$v === '1') || $v === 1 || $v === true);
+                if ($f !== null) $fauxCorrect = (int) (((string)$f === '1') || $f === 1 || $f === true);
+            }
+
+            // Sécurité : exactement 1 bonne réponse
+            if (($vraiCorrect + $fauxCorrect) !== 1) {
+                $vraiCorrect = 1;
+                $fauxCorrect = 0;
+            }
+
             return [
-                ['text' => 'Vrai',  'is_correct' => 1],
-                ['text' => 'Faux',  'is_correct' => 0],
+                ['text' => 'Vrai', 'is_correct' => $vraiCorrect],
+                ['text' => 'Faux', 'is_correct' => $fauxCorrect],
             ];
         }
+
 
         // Single / Multiple : normalisation des champs
         $options = [];
@@ -292,8 +315,22 @@ class QuizQuestionController extends Controller
     private function assertOptionsAreValidForType(string $type, array $options): void
     {
         if ($type === 'boolean') {
-            return; // fixe
-        }
+    if (count($options) !== 2) {
+        throw ValidationException::withMessages([
+            'options' => 'Une question Vrai/Faux doit contenir exactement 2 propositions.',
+        ]);
+    }
+
+    $correctCount = collect($options)->where('is_correct', 1)->count();
+    if ($correctCount !== 1) {
+        throw ValidationException::withMessages([
+            'options' => 'Une question Vrai/Faux doit avoir exactement 1 bonne réponse.',
+        ]);
+    }
+
+    return;
+}
+
 
         if (count($options) < 2) {
             throw ValidationException::withMessages([
