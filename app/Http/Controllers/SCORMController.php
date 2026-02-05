@@ -6,13 +6,15 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use App\Models\ScormResult;
 use App\Models\ScormScore;
-use App\Models\ScormInteraction;
+use App\Models\ModuleLecture;
 
 class SCORMController extends Controller
 {
+    /**
+     * Sauvegarde la progression envoyée par l'API SCORM 1.2 (JS).
+     */
     public function saveProgress(Request $request)
     {
         $userId     = Auth::id();
@@ -20,110 +22,109 @@ class SCORMController extends Controller
         $scormKey   = (string) $request->input('scorm_key');
         $scormValue = $request->input('scorm_value');
 
+        // Validation de base
         if (!$userId || !$lectureId || $scormKey === '') {
-            Log::warning('SCORM contexte incomplet', compact('userId','lectureId','scormKey'));
-            return response()->json(['error' => 'missing'], 400);
-        }
-        if (is_null($scormValue)) {
-            Log::warning('SCORM valeur nulle', compact('userId','lectureId','scormKey'));
-            return response()->json(['error' => 'null'], 400);
+            return response()->json(['error' => 'Incomplet'], 400);
         }
 
-        // 1) Trace brute
+        // 1) Enregistrement de la trace brute (audit log)
         ScormResult::updateOrCreate(
             ['user_id' => $userId, 'lecture_id' => $lectureId, 'scorm_key' => $scormKey],
             ['scorm_value' => (string) $scormValue]
         );
 
-    
+        // 2) Initialisation de l'état consolidé
+        $sc = ScormScore::firstOrCreate(
+            ['user_id' => $userId, 'lecture_id' => $lectureId],
+            ['lesson_status' => 'not_started', 'attempts_count' => 1]
+        );
 
-        // 3) Temps de session HH:MM:SS
-        if ($scormKey === 'cmi.core.session_time') {
-            $parts = explode(':', (string) $scormValue);
-            if (count($parts) === 3) {
-                [$h, $m, $s] = array_map('intval', $parts);
-                $duration = ($h * 3600) + ($m * 60) + $s;
+        // 3) Traitement logique par clé SCORM
+        switch ($scormKey) {
+            
+            // Gestion du Score
+            case 'cmi.core.score.raw':
+                $score = (int) $scormValue;
+                $sc->last_score = $score;
+                if (is_null($sc->first_score)) $sc->first_score = $score;
+                if ($score > ($sc->best_score ?? -1)) $sc->best_score = $score;
+                break;
 
-                $sc = ScormScore::firstOrNew(['user_id' => $userId, 'lecture_id' => $lectureId]);
-
-                $last = (int) ($sc->last_session_time ?? 0);
-                $delta = $duration - $last;
-
-                // On ne cumule que si le temps avance (évite doublons/reset SCORM)
-                if ($delta > 0 && $delta < 24 * 3600) {
-                    $sc->session_time = (int) ($sc->session_time ?? 0) + $delta;
-                    $sc->last_session_time = $duration;
-                } else {
-                    // si reset ou incohérence, on remet juste last_session_time
-                    $sc->last_session_time = $duration;
+            // Gestion du Statut (Passed / Completed)
+            case 'cmi.core.lesson_status':
+                $status = strtolower((string)$scormValue);
+                // On ne rétrograde jamais un statut "completed"
+                if (!in_array($sc->lesson_status, ['completed', 'passed'])) {
+                    $sc->lesson_status = $status;
+                    if (in_array($status, ['completed', 'passed'])) {
+                        $sc->is_completed = true;
+                    }
                 }
+                break;
 
-                $sc->last_attempt_at = now(); // utile comme "dernière activité"
-                $sc->save();
-            }
+            // Gestion du Temps (Format HH:MM:SS ou HH:MM:SS.s)
+            case 'cmi.core.session_time':
+                $this->handleSessionTime($sc, (string)$scormValue);
+                break;
         }
 
+        $sc->last_attempt_at = now();
+        $sc->save();
 
-        
-
-        // 5) Upgrade-only si le SCO envoie "completed/passed"
-        if ($scormKey === 'cmi.core.lesson_status') {
-            $val = strtolower((string) $scormValue);
-            if (in_array($val, ['completed','passed'], true)) {
-                $sc = ScormScore::firstOrNew(['user_id' => $userId, 'lecture_id' => $lectureId]);
-                if ($sc->lesson_status !== 'completed') {
-                    $sc->lesson_status = 'completed';
-                    $sc->is_completed  = true;
-                    $sc->save();
-                }
-            }
-        }
+        // 4) Recalcul optionnel de la complétion interne (ex: si score >= 50)
+        $this->recomputeMonotoneStatus($sc);
 
         return response()->json([
-            'success' => true,
-            'lesson_status' => $lessonStatus, // valeur interne Onéduc : completed / in_progress / failed...
-            'scorm_lesson_status' => $scormLessonStatus, // valeur SCORM reçue : passed / completed / incomplete...
+            'success'             => true,
+            'lesson_status'       => $sc->is_completed ? 'completed' : 'in_progress', // Statut interne Oneduc
+            'scorm_lesson_status' => $sc->lesson_status, // Statut SCORM d'origine (pour API.js)
         ]);
     }
 
-    private function recomputeMonotoneStatus(int $userId, int $lectureId): void
+    /**
+     * Calcule le temps cumulé en gérant les deltas de session.
+     */
+    private function handleSessionTime(ScormScore $sc, string $scormValue)
     {
-        $sc = ScormScore::firstOrNew(['user_id' => $userId, 'lecture_id' => $lectureId]);
+        // On ignore les centièmes de secondes potentiels
+        $cleanTime = explode('.', $scormValue)[0];
+        $parts = explode(':', $cleanTime);
+        
+        if (count($parts) === 3) {
+            [$h, $m, $s] = array_map('intval', $parts);
+            $durationSeconds = ($h * 3600) + ($m * 60) + $s;
 
-        $score = $sc->last_score ?? (int) ScormResult::where('user_id',$userId)
-            ->where('lecture_id',$lectureId)
-            ->where('scorm_key','cmi.core.score.raw')
-            ->value('scorm_value');
+            $lastSessionTime = (int) $sc->last_session_time;
+            $delta = $durationSeconds - $lastSessionTime;
 
-        // décompte par ID de question distinct en base interactions
-        $answered = (int) DB::table('scorm_interactions')
-            ->where('user_id',$userId)
-            ->where('lecture_id',$lectureId)
-            ->selectRaw("COUNT(DISTINCT SUBSTRING_INDEX(interaction_id,'_',1)) as c")
-            ->value('c');
-
-        $sc->questions_answered = $answered;
-
-        $lecture = \App\Models\ModuleLecture::find($lectureId);
-        $expected = $lecture?->quiz_questions_per_attempt ?? 0;
-        $eligible = ($expected === 0) || ($answered >= $expected);
-        $passThreshold = 50;
-
-        $prev = $sc->lesson_status;
-        $next = $prev;
-
-        if ($prev !== 'completed') {
-            if ($eligible && $score >= $passThreshold) {
-                $next = 'completed';
-            } elseif ($eligible) {
-                $next = 'failed';
-            } else {
-                $next = 'incomplete';
+            // On cumule uniquement si le temps est positif (nouvelle donnée)
+            if ($delta > 0) {
+                $sc->session_time = (int)$sc->session_time + $delta;
+                $sc->last_session_time = $durationSeconds;
+            } else if ($durationSeconds < $lastSessionTime) {
+                // Si le player a reset son compteur interne, on met juste à jour le repère
+                $sc->last_session_time = $durationSeconds;
             }
         }
+    }
 
-        $sc->lesson_status = $next;
-        $sc->is_completed  = ($next === 'completed');
-        $sc->save();
+    /**
+     * Force la complétion si les conditions métier sont remplies.
+     */
+    private function recomputeMonotoneStatus(ScormScore $sc): void
+    {
+        if ($sc->is_completed) return;
+
+        $lecture = ModuleLecture::find($sc->lecture_id);
+        if (!$lecture) return;
+
+        // Seuil de réussite par défaut à 50% ou selon vos besoins
+        $passThreshold = 50;
+        
+        if ($sc->best_score >= $passThreshold) {
+            $sc->lesson_status = 'completed';
+            $sc->is_completed = true;
+            $sc->save();
+        }
     }
 }

@@ -447,7 +447,7 @@ class ModuleController extends Controller
     }
 
 
-    /**
+ /**
      * 12) Mise à jour d’une lecture (admin)
      */
     public function UpdateModuleLecture(Request $request)
@@ -456,6 +456,7 @@ class ModuleController extends Controller
             'id'                         => 'required|exists:module_lectures,id',
             'lecture_title'              => 'required|string|max:255',
 
+            // Autoriser explicitement la persistance du chemin
             'scorm_path'                 => 'nullable|string|max:255',
 
             'scorm_package_id'           => 'nullable|exists:scorm_packages,id',
@@ -466,7 +467,7 @@ class ModuleController extends Controller
             'quiz_enabled'               => 'nullable|in:0,1',
             'quiz_questions_per_attempt' => 'exclude_unless:quiz_enabled,1|required|integer|min:1',
 
-            // --- OBJECTIFS DE LECON (NOUVEAU) ---
+            // --- OBJECTIFS DE LECON ---
             'objectives'                 => ['nullable', 'array'],
             'objectives.*.id'            => ['nullable', 'integer', 'exists:lecture_objectives,id'],
             'objectives.*.title'         => ['nullable', 'string', 'max:255'],
@@ -477,10 +478,11 @@ class ModuleController extends Controller
 
         $lecture = ModuleLecture::findOrFail($validated['id']);
 
-        // Important : éviter (bool)"0" == true
+        // Cast des booléens
         $useActive   = ($request->input('use_active_scorm_version', '1') === '1');
         $quizEnabled = ($request->input('quiz_enabled', '0') === '1');
 
+        // Validation logique SCORM si versioning activé
         if (!$useActive && !$request->filled('scorm_package_version_id')) {
             return back()
                 ->withErrors(['scorm_package_version_id' => 'Sélectionne une version SCORM (ou active “version active”).'])
@@ -500,9 +502,13 @@ class ModuleController extends Controller
         // Transaction: cohérence leçon + objectifs
         DB::transaction(function () use ($lecture, $validated, $request, $useActive, $quizEnabled) {
 
+            // Logique de persistance du chemin : 
+            // On prend la valeur validée, si nulle on garde l'ancienne en base
+            $finalScormPath = $validated['scorm_path'] ?? $lecture->scorm_path;
+
             $lecture->update([
                 'lecture_title'              => $validated['lecture_title'],
-                'scorm_path'                 => $validated['scorm_path'] ?? null,
+                'scorm_path'                 => $finalScormPath,
 
                 'scorm_package_id'           => $request->input('scorm_package_id'),
                 'use_active_scorm_version'   => $useActive,
@@ -513,7 +519,7 @@ class ModuleController extends Controller
                 'quiz_questions_per_attempt' => $quizEnabled ? (int) $request->input('quiz_questions_per_attempt') : 0,
             ]);
 
-            // Synchronisation des objectifs (si présent dans le formulaire)
+            // Synchronisation des objectifs
             $this->syncLectureObjectives($lecture, $request->input('objectives', []));
         });
 
@@ -527,7 +533,6 @@ class ModuleController extends Controller
             ->route('admin.modules.lecture.add', ['id' => $lecture->module_id])
             ->with('success', 'La lecture a été mise à jour avec succès.');
     }
-
 
 
 
@@ -654,131 +659,131 @@ class ModuleController extends Controller
 
 
     /**
-     * 15) Vue Lecture (stagiaire ou formateur)
-     */
-    public function lire(Request $request, Module $module, ModuleSection $section, ModuleLecture $lecture)
-    {
-        $user = auth()->user();
+ * 15) Vue Lecture (stagiaire ou formateur)
+ * Modifiée pour forcer le passage par la page de garde (objectifs) à chaque changement de chapitre.
+ */
+public function lire(Request $request, Module $module, ModuleSection $section, ModuleLecture $lecture)
+{
+    $user = auth()->user();
 
-        abort_unless((int) $section->module_id === (int) $module->id, 404);
-        abort_unless((int) $lecture->module_id === (int) $module->id, 404);
-        abort_unless((int) $lecture->section_id === (int) $section->id, 404);
-        abort_unless($module->isVisibleTo($user), 404);
+    // Vérifications de sécurité et de contexte
+    abort_unless((int) $section->module_id === (int) $module->id, 404);
+    abort_unless((int) $lecture->module_id === (int) $module->id, 404);
+    abort_unless((int) $lecture->section_id === (int) $section->id, 404);
+    abort_unless($module->isVisibleTo($user), 404);
 
-        $lecture->load(['scormPackage.activeVersion', 'scormPackageVersion']);
+    $lecture->load(['scormPackage.activeVersion', 'scormPackageVersion']);
 
-        $module->load([
-            'sections' => function ($q) {
-                $q->orderBy('id')
-                ->with(['lectures' => function ($qq) {
-                    $qq->orderBy('position')->orderBy('id');
-                }]);
-            },
-        ]);
+    $module->load([
+        'sections' => function ($q) {
+            $q->orderBy('id')
+            ->with(['lectures' => function ($qq) {
+                $qq->orderBy('position')->orderBy('id');
+            }]);
+        },
+    ]);
 
-        $mode          = (string) $request->query('mode', 'groupe');
-        $isStaff       = in_array($user->role ?? null, ['formateur', 'admin'], true);
-        $includeHidden = $request->boolean('include_hidden') && $isStaff;
+    $mode          = (string) $request->query('mode', 'groupe');
+    $isStaff       = in_array($user->role ?? null, ['formateur', 'admin'], true);
+    $includeHidden = $request->boolean('include_hidden') && $isStaff;
+    $anonymous     = $request->boolean('anonymous');
 
-        // ✅ Mode anonyme (lecture seule, pas de progression/statuts)
-        $anonymous = $request->boolean('anonymous');
+    $groupId = $this->resolveGroupIdForContext($request, $user, (int) $module->id);
 
-        $groupId = $this->resolveGroupIdForContext($request, $user, (int) $module->id);
-
-        if ($mode !== 'officiel') {
-            $this->applyGroupLessonOverrides($module, $groupId, !$includeHidden);
-        }
-
-        $section = $module->sections->firstWhere('id', (int) $section->id);
-        abort_unless($section, 404);
-
-        $visibleIds = $module->sections
-            ->flatMap(fn ($s) => $s->lectures)
-            ->pluck('id')
-            ->map(fn ($id) => (int) $id)
-            ->all();
-
-        if (!in_array((int) $lecture->id, $visibleIds, true)) {
-            if ($mode !== 'officiel' && !($isStaff && $includeHidden)) {
-                abort(404);
-            }
-        }
-
-        $lectures = $module->sections->flatMap(fn ($s) => $s->lectures)->values();
-
-        // ✅ En anonyme : pas de calcul de progression/statuts
-        $lectureStats = $anonymous ? [] : $this->buildLectureStats($lectures, (int) $user->id);
-
-        $nextLecture = null;
-
-        $currentSectionLectures = $section->lectures ?? collect();
-        $idx = $currentSectionLectures->search(fn ($l) => (int) $l->id === (int) $lecture->id);
-        if ($idx !== false) {
-            $nextLecture = $currentSectionLectures->get($idx + 1);
-        }
-
-        if (!$nextLecture) {
-            $sections = $module->sections->sortBy('id')->values();
-            $currentSectionIndex = $sections->search(fn ($s) => (int) $s->id === (int) $section->id);
-
-            if ($currentSectionIndex !== false) {
-                $nextSection = $sections->get($currentSectionIndex + 1);
-                if ($nextSection) {
-                    $nextLecture = $nextSection->lectures->first();
-                }
-            }
-        }
-
-        $nextLecturePayload = $nextLecture ? [
-            'id'         => (int) $nextLecture->id,
-            'section_id' => (int) $nextLecture->section_id,
-        ] : null;
-
-        $sectionStatuses = $anonymous
-            ? collect()
-            : $module->sections->mapWithKeys(function ($sec) use ($lectureStats) {
-                $total = $sec->lectures->count();
-                if ($total === 0) return [$sec->id => 'not_started'];
-
-                $ok = $sec->lectures->filter(function ($lec) use ($lectureStats) {
-                    $st = $lectureStats[$lec->id]['status'] ?? null;
-                    return $st === 'completed';
-                })->count();
-
-                return [$sec->id => ($ok === $total ? 'completed' : ($ok > 0 ? 'in_progress' : 'not_started'))];
-            });
-
-        // ✅ Propagation du contexte + du mode anonyme
-        $contextQuery = array_filter([
-            'mode'           => $mode,
-            'group_id'       => ($mode !== 'officiel' ? ($groupId ?: null) : null),
-            'include_hidden' => ($includeHidden ? 1 : null),
-            'anonymous'      => ($anonymous ? 1 : null),
-        ]);
-
-        // ✅ Si formateur + anonymous, on rend une vue "stagiaire" adaptée
-        $view = ($anonymous && ($user->role ?? null) === 'formateur')
-            ? 'formateur.formations.anonyme.lecon'
-            : ($this->viewBase() . '.lecon');
-
-        return view($view, [
-            'module'          => $module,
-            'section'         => $section,
-            'selectedSection' => $section,
-            'lecture'         => $lecture,
-            'selectedLecture' => $lecture,
-            'lectureStats'    => $lectureStats,
-            'sectionStatuses' => $sectionStatuses,
-            'nextLecture'     => $nextLecturePayload,
-            'formateur'       => $module->formateur ?? null,
-            'contextQuery'    => $contextQuery,
-            'mode'            => $mode,
-            'groupId'         => $groupId,
-            'includeHidden'   => $includeHidden,
-            'anonymous'       => $anonymous,
-        ]);
-
+    if ($mode !== 'officiel') {
+        $this->applyGroupLessonOverrides($module, $groupId, !$includeHidden);
     }
+
+    $section = $module->sections->firstWhere('id', (int) $section->id);
+    abort_unless($section, 404);
+
+    $visibleIds = $module->sections->flatMap(fn ($s) => $s->lectures)->pluck('id')->map(fn ($id) => (int) $id)->all();
+
+    if (!in_array((int) $lecture->id, $visibleIds, true)) {
+        if ($mode !== 'officiel' && !($isStaff && $includeHidden)) {
+            abort(404);
+        }
+    }
+
+    $lectures = $module->sections->flatMap(fn ($s) => $s->lectures)->values();
+    $lectureStats = $anonymous ? [] : $this->buildLectureStats($lectures, (int) $user->id);
+
+    // --- LOGIQUE DE NAVIGATION PÉDAGOGIQUE MODIFIÉE ---
+
+    $nextLecturePayload = null;
+    $currentSectionLectures = $section->lectures ?? collect();
+    $idx = $currentSectionLectures->search(fn ($l) => (int) $l->id === (int) $lecture->id);
+
+    // 1. Vérifier s'il reste une leçon dans le chapitre actuel
+    if ($idx !== false && isset($currentSectionLectures[$idx + 1])) {
+        $nextLec = $currentSectionLectures[$idx + 1];
+        $nextLecturePayload = [
+            'type'       => 'lecture',
+            'id'         => (int) $nextLec->id,
+            'section_id' => (int) $nextLec->section_id,
+            'url'        => route('stagiaire.module.lecture', [$module->id, $section->id, $nextLec->id])
+        ];
+    } else {
+        // 2. Sinon, chercher le chapitre (section) suivant pour afficher les objectifs
+        $sections = $module->sections->sortBy('id')->values();
+        $currentSectionIndex = $sections->search(fn ($s) => (int) $s->id === (int) $section->id);
+
+        if ($currentSectionIndex !== false && isset($sections[$currentSectionIndex + 1])) {
+            $nextSection = $sections[$currentSectionIndex + 1];
+            $nextLecturePayload = [
+                'type'       => 'section',
+                'id'         => (int) $nextSection->id,
+                'url'        => route('stagiaire.module.section', [$module->id, $nextSection->id])
+            ];
+        } else {
+            // 3. Fin du module complet
+            $nextLecturePayload = [
+                'type' => 'fin',
+                'url'  => route('stagiaire.module.detail', $module->id)
+            ];
+        }
+    }
+
+    // Calcul des statuts pour la sidebar
+    $sectionStatuses = $anonymous
+        ? collect()
+        : $module->sections->mapWithKeys(function ($sec) use ($lectureStats) {
+            $total = $sec->lectures->count();
+            if ($total === 0) return [$sec->id => 'not_started'];
+            $ok = $sec->lectures->filter(function ($lec) use ($lectureStats) {
+                return ($lectureStats[$lec->id]['status'] ?? null) === 'completed';
+            })->count();
+            return [$sec->id => ($ok === $total ? 'completed' : ($ok > 0 ? 'in_progress' : 'not_started'))];
+        });
+
+    $contextQuery = array_filter([
+        'mode'           => $mode,
+        'group_id'       => ($mode !== 'officiel' ? ($groupId ?: null) : null),
+        'include_hidden' => ($includeHidden ? 1 : null),
+        'anonymous'      => ($anonymous ? 1 : null),
+    ]);
+
+    $view = ($anonymous && ($user->role ?? null) === 'formateur')
+        ? 'formateur.formations.anonyme.lecon'
+        : ($this->viewBase() . '.lecon');
+
+    return view($view, [
+        'module'          => $module,
+        'section'         => $section,
+        'selectedSection' => $section,
+        'lecture'         => $lecture,
+        'selectedLecture' => $lecture,
+        'lectureStats'    => $lectureStats,
+        'sectionStatuses' => $sectionStatuses,
+        'nextLecture'     => $nextLecturePayload, // Contient maintenant l'URL vers la section ou la leçon
+        'formateur'       => $module->formateur ?? null,
+        'contextQuery'    => $contextQuery,
+        'mode'            => $mode,
+        'groupId'         => $groupId,
+        'includeHidden'   => $includeHidden,
+        'anonymous'       => $anonymous,
+    ]);
+}
 
 
         /**
