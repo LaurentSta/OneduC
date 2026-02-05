@@ -105,13 +105,9 @@ require __DIR__.'/formateur.php';
 // Routes accessibles aux stagiaires
 require __DIR__.'/stagiaire.php';
 
-// ----------------------------------------------------------
-// ----------------------------------------------------------
-// 🟣 Scorm
-// ----------------------------------------------------------
-// Routes accessibles aux scorm V2
-require __DIR__.'/scorm_v2.php';
-
+// routes/web.php
+// ... après les autres imports de routes
+require __DIR__.'/scorm.php';
 // ----------------------------------------------------------
 // Api
 // ----------------------------------------------------------

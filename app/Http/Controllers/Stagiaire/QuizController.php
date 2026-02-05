@@ -309,27 +309,50 @@ class QuizController extends Controller
 
         $correctCount = $rows->where('is_correct', true)->count();
 
-        // Leçon suivante selon l’ordre visible
-        $currentIndex = $lectures->search(fn ($l) => (int) $l->id === (int) $lecture->id);
-        $nextLecture  = ($currentIndex !== false) ? $lectures->get($currentIndex + 1) : null;
+        // --- NOUVELLE LOGIQUE DE NAVIGATION PÉDAGOGIQUE ---
+        
+        // 1. Détecter la position de la leçon dans la section actuelle
+        $sectionLectures = $section->lectures->sortBy('position')->values();
+        $currentIndexInSec = $sectionLectures->search(fn($l) => (int)$l->id === (int)$lecture->id);
+        $isLastInSection = ($currentIndexInSec === $sectionLectures->count() - 1);
 
-        // NextUrl : stagiaire vs formateur
+        $nextUrl = '#';
+
         if ($this->isFormateur()) {
-            if ($nextLecture) {
+            // Logique formateur (inchangée)
+            $allModuleLectures = $lectures;
+            $globalIdx = $allModuleLectures->search(fn ($l) => (int) $l->id === (int) $lecture->id);
+            $nextLec = ($globalIdx !== false) ? $allModuleLectures->get($globalIdx + 1) : null;
+            
+            if ($nextLec) {
                 $nextUrl = route('formateur.formations.lecture', [
                     'module'  => $module->id,
-                    'section' => $nextLecture->section_id,
-                    'lesson'  => $nextLecture->id,
+                    'section' => $nextLec->section_id,
+                    'lesson'  => $nextLec->id,
                 ]);
             } else {
-                // Fin “logique” formateur : retour détail module
                 $nextUrl = route('formateur.formations.detail', ['module' => $module->id]);
             }
         } else {
-            if ($nextLecture) {
-                $nextUrl = url("/stagiaire/modules/{$module->id}/sections/{$nextLecture->section_id}/lessons/{$nextLecture->id}");
+            // Logique Stagiaire : Chapitre par Chapitre
+            if (!$isLastInSection) {
+                // Il reste des leçons dans le chapitre actuel
+                $nextLec = $sectionLectures->get($currentIndexInSec + 1);
+                $nextUrl = url("/stagiaire/modules/{$module->id}/sections/{$section->id}/lessons/{$nextLec->id}");
             } else {
-                $nextUrl = url("/stagiaire/formations/{$module->id}/fin");
+                // C'est la dernière leçon du chapitre -> On cherche la SECTION suivante
+                $nextSection = $module->sections->where('id', '>', $section->id)->sortBy('id')->first();
+                
+                if ($nextSection) {
+                    // Redirection vers la page de garde du chapitre suivant (Objectifs)
+                    $nextUrl = route('stagiaire.module.section', [
+                        'module'  => $module->id,
+                        'section' => $nextSection->id
+                    ]);
+                } else {
+                    // Fin du module complet
+                    $nextUrl = url("/stagiaire/formations/{$module->id}/fin");
+                }
             }
         }
 
@@ -342,10 +365,8 @@ class QuizController extends Controller
             'rows'            => $rows,
             'correctCount'    => $correctCount,
             'nextUrl'         => $nextUrl,
-
             'lectureStats'    => $lectureStats,
             'sectionStatuses' => $sectionStatuses,
-
             'isFormateur'     => $this->isFormateur(),
         ]);
     }

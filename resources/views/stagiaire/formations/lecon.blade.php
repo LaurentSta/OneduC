@@ -1,5 +1,5 @@
+{{-- /home/laurents/Oneduc_Dev/resources/views/stagiaire/formations/lecon.blade.php --}}
 @extends('stagiaire.formations.master_lecon_evaluation')
-<!-- /home/laurents/Oneduc_Dev/resources/views/stagiaire/formations/lecon.blade.php -->
 
 @section('content')
 <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -12,19 +12,22 @@
     $lectureId = $lecture?->id;
     $sectionId = $lecture?->section_id;
 
-    // Navigation
-    $nextUrl  = '#';
-    $finalUrl = $moduleId ? "/stagiaire/modules/{$moduleId}/fin" : '/stagiaire';
+    // 1. Récupération du statut réel pour savoir si on affiche le bouton au chargement
+    $st = $lectureStats[$lectureId] ?? [];
+    $currentStatus = strtolower((string)($st['status'] ?? 'not_started'));
+    $isAlreadyDone = in_array($currentStatus, ['completed', 'passed']);
 
-    if (!empty($nextLecture) && $moduleId) {
-        if ((int) $nextLecture['section_id'] === (int) $sectionId) {
-            $nextUrl = "/stagiaire/modules/{$moduleId}/sections/{$nextLecture['section_id']}/lessons/{$nextLecture['id']}";
-        } else {
-            $nextUrl = "/stagiaire/modules/{$moduleId}/sections/{$nextLecture['section_id']}";
-        }
+    // 2. Détermination de l'URL suivante (Leçon suivante, Section suivante ou Fin)
+    $nextUrl = '#';
+    
+    // On utilise l'URL calculée par la nouvelle logique du contrôleur
+    if (!empty($nextLecture['url'])) {
+        $nextUrl = $nextLecture['url'];
+    } elseif ($moduleId) {
+        $nextUrl = route('stagiaire.module.detail', $moduleId);
     }
 
-    // Quiz
+    // 3. Génération de l'URL du Quiz (Signée pour la sécurité)
     $quizStartUrl = null;
     if ($lecture && $lecture->quiz_enabled && $moduleId && $sectionId) {
         $quizStartUrl = URL::signedRoute('stagiaire.quiz.start', [
@@ -34,87 +37,78 @@
         ]);
     }
 
-    // SOURCE SCORM : On utilise directement le chemin propre stocké par l'admin
-    $scormSrc = null;
-    if ($lecture && !empty($lecture->scorm_path)) {
-        // asset() s'occupe de générer l'URL absolue vers le dossier public
-        $scormSrc = asset($lecture->scorm_path);
-    }
+    // 4. Source du contenu SCORM
+    $scormSrc = $lecture && $lecture->scorm_path ? asset($lecture->scorm_path) : null;
 @endphp
 
-@if ($lectureId)
 <script>
-  window.currentLectureId = @json($lectureId);
-</script>
-@endif
-
-<main class="flex-1 bg-white">
-  @if ($lecture && $scormSrc)
-
-    <script>
-      window.SCORM_CONTEXT = {
+    window.SCORM_CONTEXT = {
         lecture_id: @json($lectureId),
-        module_id: @json($moduleId),
-        section_id: @json($sectionId),
-
+        user_id: @json(auth()->id()),
         next_url: @json($nextUrl),
-        final_url: @json($finalUrl),
-
-        goToNextLesson: function () {
-          if (this.next_url && this.next_url !== "#") {
-            window.location.href = this.next_url;
-            return;
-          }
-          window.location.href = this.final_url;
-        },
-
         quiz_start_url: @json($quizStartUrl),
+        is_already_done: @json($isAlreadyDone),
+        debug: true
+    };
 
-        goToQuiz: function () {
-          if (!this.quiz_start_url) {
-            alert("Quiz non activé pour cette leçon.");
-            return;
-          }
-          window.location.href = this.quiz_start_url;
+    // Fonctions de redirection appelées par l'API.js
+    window.goToQuiz = function() {
+        if (window.SCORM_CONTEXT.quiz_start_url) {
+            window.location.href = window.SCORM_CONTEXT.quiz_start_url;
         }
-      };
+    };
 
-      console.log('[SCORM_CONTEXT] quiz_start_url =', window.SCORM_CONTEXT.quiz_start_url);
-    </script>
+    window.goToNextLesson = function() {
+        window.location.href = window.SCORM_CONTEXT.next_url;
+    };
 
-    
+    console.log("Oneduc : Contexte stagiaire prêt", window.SCORM_CONTEXT);
+</script>
 
-    {{-- Remplacer l'iframe par ce bloc plus robuste --}}
-<div class="relative w-full bg-gray-100" style="height: calc(100vh - 64px);">
-    @if ($scormSrc)
-        <iframe
-          title="{{ $lecture->lecture_title }}"
-          src="{{ $scormSrc }}"
-          frameborder="0"
-          allowfullscreen
-          class="w-full h-full block">
-        </iframe>
-    @else
-        <div class="flex items-center justify-center h-full">
-            <div class="text-center p-8 bg-white rounded-2xl shadow-sm border border-gray-200">
-                <svg class="w-12 h-12 text-gray-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-                <h3 class="text-lg font-bold text-bleuone">Contenu non disponible</h3>
-                <p class="text-gray-500 text-sm">Le module interactif n'est pas encore configuré pour cette leçon.</p>
+<main class="w-full h-full">
+    <div class="relative w-full bg-gray-100" style="height: calc(100vh - 64px);">
+        @if ($scormSrc)
+            {{-- L'iframe qui charge le module interactif --}}
+            <iframe
+                id="scorm-iframe"
+                title="{{ $lecture->lecture_title }}"
+                src="{{ $scormSrc }}"
+                frameborder="0"
+                allowfullscreen
+                class="w-full h-full block">
+            </iframe>
+
+            {{-- 
+                BOUTON SUIVANT DYNAMIQUE 
+                'hidden' est supprimé si la leçon est déjà finie en base.
+                Sinon, API.js le fera apparaître lors du signal 'completed'.
+            --}}
+            <div id="next-lesson-wrapper" class="{{ $isAlreadyDone ? '' : 'hidden' }} absolute bottom-10 left-1/2 -translate-x-1/2 z-50">
+                <button id="next-lesson-button" 
+                   class="oneduc-btn-alert flex items-center gap-3 px-8 py-4 bg-orangeone text-white rounded-full font-bold shadow-2xl hover:scale-105 transition-all">
+                    <span id="next-button-text">
+                        {{ $lecture->quiz_enabled ? 'Passer au questionnaire' : 'Continuer' }}
+                    </span>
+                    <i class="ti ti-arrow-right text-xl"></i>
+                </button>
             </div>
-        </div>
-    @endif
-</div>
-
-  @else
-    <div class="max-w-[900px] mx-auto px-6 py-10">
-      <div class="bg-white rounded-[20px] shadow-md p-8">
-        <h1 class="text-xl font-raleway text-bleuone font-semibold">Leçon indisponible</h1>
-        <p class="text-sm text-gray-600 mt-2">Aucun contenu SCORM n’est associé à cette leçon.</p>
-      </div>
+        @else
+            <div class="flex items-center justify-center h-full">
+                <div class="max-w-md w-full bg-white rounded-[24px] shadow-sm border border-gray-100 p-10 text-center">
+                    <div class="w-16 h-16 bg-orange-50 text-orange-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i class="ti ti-alert-triangle text-3xl"></i>
+                    </div>
+                    <h1 class="text-xl font-bold text-bleuone mb-2">Contenu non disponible</h1>
+                    <p class="text-gray-500 text-sm leading-relaxed">
+                        Le module interactif (SCORM) pour la leçon <strong>"{{ $lecture->lecture_title ?? 'Sans titre' }}"</strong> n'a pas encore été configuré.
+                    </p>
+                    <a href="{{ route('stagiaire.dashboard') }}" class="mt-8 inline-flex text-orangeone font-bold hover:underline">
+                        Retour au tableau de bord
+                    </a>
+                </div>
+            </div>
+        @endif
     </div>
-  @endif
 </main>
 
 @endsection

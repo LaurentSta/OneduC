@@ -33,18 +33,18 @@ public function importForLecture(ScormImportRequest $request, ScormImporter $imp
             targetPath: $targetFolder
         );
 
-        $lecture->update([
-            'scorm_path' => $result->relative_index_path,
-            'scorm_package_id' => $result->package_id,
-            'scorm_package_version_id' => $result->version_id,
-            'use_active_scorm_version' => 1,
-        ]);
-
         // ScormLibraryController.php
-        return back()->with([
-            'success' => "Contenu SCORM mis à jour avec succès.",
-            'new_scorm_path' => $result->relative_index_path // On passe le nouveau chemin en session
-        ]);
+
+$lecture->update([
+    'scorm_path' => $result->relative_index_path, // ex: modules/scorm/.../index_lms.html
+    'scorm_package_id' => $result->package_id,
+    'scorm_package_version_id' => $result->version_id,
+]);
+
+return back()->with([
+    'success_scorm_v2' => "Contenu SCORM mis à jour avec succès.",
+    'new_scorm_path' => $result->relative_index_path 
+]);
 
     } catch (Throwable $e) {
         return back()->with('error', 'Erreur : ' . $e->getMessage());
