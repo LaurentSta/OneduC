@@ -11,13 +11,15 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        // Déclaration des middlewares aliasés
+        
+        // 👇 AJOUTE CETTE PARTIE 👇
         $middleware->alias([
-            'role' => \App\Http\Middleware\Role::class,
-            'track.time' => \App\Http\Middleware\TrackSessionTime::class, // ✅ alias proprement défini
+            'role' => \App\Http\Middleware\Role::class, // (Tu dois sûrement déjà avoir celui-ci)
+            'track.time' => \App\Http\Middleware\TrackSessionTime::class, // (Et celui-ci vu tes logs)
+            'force.password.change' => \App\Http\Middleware\ForcePasswordChange::class, // ✅ C'est celui-ci qui manque !
         ]);
+        // 👆 FIN DE L'AJOUT 👆
 
-        // ❌ NE PAS utiliser append() ici pour ce middleware, car il empêche handle() d'être exécuté
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

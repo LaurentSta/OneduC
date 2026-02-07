@@ -63,78 +63,89 @@
     </a>
   </div>
 
-  {{-- TABLEAU DES MODULES --}}
+
+  {{-- LISTE DES MODULES (CARTES) --}}
   <main class="space-y-6">
-    <div class="overflow-x-auto bg-white shadow-md rounded-[20px]">
-      <table class="min-w-full text-sm text-left text-gray-800 font-lisible">
+    
+    @forelse($modules as $m)
+        <div class="bg-white rounded-[20px] shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
+            <div class="p-6">
+                <div class="flex flex-col md:flex-row justify-between items-start gap-6">
+                    
+                    {{-- 1. Info Module --}}
+                    <div class="flex-1">
+                        <div class="flex items-center gap-3 mb-2">
+                            <span class="px-2 py-1 bg-blue-50 text-bleuone text-xs font-bold rounded uppercase tracking-wider">Module</span>
+                            <h3 class="text-xl font-bold text-gray-900">{{ $m->module_title }}</h3>
+                        </div>
+                        <div class="flex items-center gap-6 text-sm text-gray-500 mt-4">
+                            <div class="flex items-center gap-2">
+                                <svg class="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                                <span><strong>{{ $m->stagiaires_count }}</strong> stagiaires inscrits</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <svg class="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                <span><strong>{{ $m->start_rate }}%</strong> ont démarré</span>
+                            </div>
+                        </div>
+                    </div>
 
-        <thead class="bg-gray-100 text-xs text-gray-600 uppercase font-varela">
-          <tr>
-            <th class="px-6 py-3">Module</th>
-            <th class="px-6 py-3 text-center">Groupes</th>
-            <th class="px-6 py-3 text-center">Stagiaires</th>
-            <th class="px-6 py-3 text-center">Leçons</th>
-            <th class="px-6 py-3 text-center">Score moyen</th>
-            <th class="px-6 py-3 text-right">Action</th>
-          </tr>
-        </thead>
+                    {{-- 2. Score Moyen --}}
+                    <div class="text-center px-6 border-l border-gray-100">
+                        <span class="block text-sm text-gray-400 font-varela mb-1">Score Moyen</span>
+                        <span class="text-3xl font-black {{ $m->avg_score < 50 ? 'text-red-500' : 'text-green-500' }}">
+                            {{ $m->avg_score }}%
+                        </span>
+                    </div>
 
-        <tbody>
-          @forelse($modules as $m)
-            @php
-              $score = (int) ($m->avg_score ?? 0);
-            @endphp
+                    {{-- 3. Action --}}
+                    <div>
+                        <a href="{{ route('formateur.formations.detail', $m->id) }}" class="btn-oneduc">
+                            Voir le détail
+                        </a>
+                    </div>
+                </div>
 
-            <tr class="border-t hover:bg-gray-50">
+                {{-- 4. ZONE D'ALERTE : TOP 3 ERREURS --}}
+                @if(count($m->top_failed) > 0)
+                    <div class="mt-6 pt-6 border-t border-dashed border-gray-200">
+                        <h4 class="text-sm font-bold text-red-500 uppercase tracking-wide mb-3 flex items-center gap-2">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                            Difficultés rencontrées (Top 3 erreurs)
+                        </h4>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            @foreach($m->top_failed as $q)
+                                <div class="bg-red-50 rounded-lg p-3 border border-red-100">
+                                    <div class="flex justify-between items-start mb-2">
+                                        <span class="text-xs font-bold text-red-800 bg-red-200 px-2 py-0.5 rounded">
+                                            {{ $q->fail_rate }}% d'échec
+                                        </span>
+                                        <span class="text-[10px] text-red-400 font-bold uppercase">{{ $q->failures }} erreurs</span>
+                                    </div>
+                                    <p class="text-sm text-gray-800 font-medium line-clamp-2" title="{{ $q->question_text }}">
+                                        {{ $q->question_text }}
+                                    </p>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @else
+                    <div class="mt-6 pt-6 border-t border-dashed border-gray-200">
+                        <p class="text-sm text-gray-400 italic flex items-center gap-2">
+                            <svg class="w-5 h-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                            Aucune difficulté majeure détectée sur les quiz de ce module.
+                        </p>
+                    </div>
+                @endif
 
-              {{-- Module --}}
-              <td class="px-6 py-4 font-medium text-gray-900">
-                {{ $m->module_title ?? 'Module' }}
-              </td>
+            </div>
+        </div>
+    @empty
+        <div class="text-center py-12 bg-white rounded-2xl border border-dashed border-gray-300">
+            <p class="text-gray-500">Aucun module associé à vos groupes pour le moment.</p>
+        </div>
+    @endforelse
 
-              {{-- Groupes --}}
-              <td class="px-6 py-4 text-center">
-                {{ (int) ($m->groupes_count ?? 0) }}
-              </td>
-
-              {{-- Stagiaires --}}
-              <td class="px-6 py-4 text-center">
-                {{ (int) ($m->stagiaires_count ?? 0) }}
-              </td>
-
-              {{-- Leçons --}}
-              <td class="px-6 py-4 text-center">
-                {{ (int) ($m->lectures_count ?? 0) }}
-              </td>
-
-              {{-- Score moyen --}}
-              <td class="px-6 py-4 text-center">
-                <span class="font-semibold {{ $score < 50 ? 'text-red-600' : 'text-vertone' }}">
-                  {{ $score }} %
-                </span>
-              </td>
-
-              {{-- Action --}}
-              <td class="px-6 py-4 text-right">
-                <a href="{{ route('formateur.formations.detail', $m->id) }}"
-                   class="text-orangeone hover:underline text-sm font-semibold">
-                  Voir le détail
-                </a>
-              </td>
-
-            </tr>
-          @empty
-            <tr>
-              <td colspan="6" class="px-6 py-6 text-center text-gray-500">
-                Aucun module associé à vos groupes.
-              </td>
-            </tr>
-          @endforelse
-        </tbody>
-
-      </table>
-    </div>
   </main>
-
 </div>
 @endsection

@@ -102,61 +102,104 @@
       </div>
     </fieldset>
 
-    {{-- Étape 2 : Stagiaires --}}
+
+    {{-- Étape 2 : Stagiaires & Accès --}}
     <fieldset id="step-2" class="step hidden">
       <legend class="sr-only">Stagiaires</legend>
-      <p class="text-base text-gray-600 text-center mb-6">Définir un mot de passe commun puis ajouter les stagiaires.</p>
-
-      <div class="mb-6">
-        <label for="password" class="block mb-2 text-base font-medium text-gray-900">Mot de passe commun *</label>
-        <input id="password" name="password" type="password" required minlength="8" autocomplete="new-password"
-               class="bg-gray-50 border border-gray-300 text-base rounded-lg focus:ring-orangeone focus:border-orangeone block w-full p-2.5"
-               placeholder="Min. 8 caractères">
-        <p class="text-xs text-gray-500 mt-1">Servira à la première connexion du groupe.</p>
-      </div>
-
-      <div id="stagiaires-container" class="space-y-4">
-        {{-- ligne 0 --}}
-        <div class="bg-gray-50 p-4 rounded relative stagiaire-row">
-          <div class="flex justify-between items-start mb-2">
-            <span class="text-base font-medium text-gray-700">Stagiaire 1</span>
-            <button type="button" class="text-xs font-semibold text-red-700 bg-red-100 hover:bg-red-200 px-2 py-1 rounded-full"
-                    onclick="removeStagiaire(this)">Supprimer</button>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-[1fr_1fr_2fr] gap-3">
+      
+      {{-- A. LISTE DES STAGIAIRES --}}
+      <div class="mb-8">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
             <div>
-              <label for="stagiaires_0_prenom" class="sr-only">Prénom</label>
-              <input id="stagiaires_0_prenom" name="stagiaires[0][prenom]" type="text" placeholder="Prénom"
-                     class="bg-white border border-gray-300 text-base rounded-lg focus:ring-orangeone focus:border-orangeone w-full p-2.5">
+                <h3 class="text-xl font-bold text-bleuone font-raleway">Ajouter vos stagiaires</h3>
+                <p class="text-sm text-gray-600 font-lisible mt-1">
+                    Renseignez les informations de vos apprenants.
+                </p>
             </div>
+            <button type="button"
+                class="px-4 py-2 bg-bleuone/10 text-bleuone border border-bleuone/20 font-bold rounded-lg hover:bg-bleuone hover:text-white transition flex items-center justify-center gap-2 text-sm"
+                onclick="addStagiaire()">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+                Ajouter un stagiaire
+            </button>
+        </div>
 
-            <div>
-              <label for="stagiaires_0_nom" class="sr-only">Nom</label>
-              <input id="stagiaires_0_nom" name="stagiaires[0][nom]" type="text" placeholder="Nom"
-                     class="bg-white border border-gray-300 text-base rounded-lg focus:ring-orangeone focus:border-orangeone w-full p-2.5">
-            </div>
+        <div id="stagiaires-container" class="space-y-3">
+            {{-- Ligne 0 (Initiale) --}}
+            <div class="bg-white border border-gray-200 p-4 rounded-[12px] shadow-sm relative stagiaire-row group hover:border-orangeone/50 transition">
+                <div class="grid grid-cols-1 md:grid-cols-[1fr_1fr_2fr_auto] gap-4 items-start">
+                    
+                    {{-- Prénom --}}
+                    <div>
+                        <label for="stagiaires_0_prenom" class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Prénom</label>
+                        <input id="stagiaires_0_prenom" name="stagiaires[0][prenom]" type="text" placeholder="Ex: Thomas" required
+                            class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-orangeone focus:border-orangeone w-full p-2.5">
+                    </div>
 
-            <div class="relative">
-              <label for="stagiaires_0_email" class="sr-only">Email</label>
-              <input id="stagiaires_0_email" name="stagiaires[0][email]" type="email" placeholder="Email"
-                     class="bg-white border border-gray-300 text-base rounded-lg focus:ring-orangeone focus:border-orangeone w-full p-2.5 pr-9">
-              <span class="absolute top-2 right-2 pointer-events-none" aria-hidden="true" title="Le code d’accès sera généré à la validation.">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-                     class="w-5 h-5 text-orangeone" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="3" y="11" width="18" height="10" rx="2" ry="2"></rect>
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                  <circle cx="12" cy="16" r="1"></circle>
-                </svg>
-              </span>
+                    {{-- Nom --}}
+                    <div>
+                        <label for="stagiaires_0_nom" class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Nom</label>
+                        <input id="stagiaires_0_nom" name="stagiaires[0][nom]" type="text" placeholder="Ex: Dupont" required
+                            class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-orangeone focus:border-orangeone w-full p-2.5">
+                    </div>
+
+                    {{-- Email --}}
+                    <div>
+                        <label for="stagiaires_0_email" class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Email professionnel</label>
+                        <input id="stagiaires_0_email" name="stagiaires[0][email]" type="email" placeholder="thomas.dupont@entrepise.com" required
+                            class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-orangeone focus:border-orangeone w-full p-2.5">
+                    </div>
+
+                    {{-- Actions --}}
+                    <div class="flex items-end h-full pb-[3px]">
+                         <button type="button" class="text-gray-300 hover:text-red-600 transition p-2 rounded-full hover:bg-red-50"
+                                onclick="removeStagiaire(this)" title="Supprimer la ligne">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
             </div>
-          </div>
         </div>
       </div>
 
-      <button type="button"
-              class="px-4 py-2 bg-gray-200 text-gray-900 rounded-lg hover:bg-gray-300 transition mt-2"
-              onclick="addStagiaire()">+ Ajouter un stagiaire</button>
+      <hr class="border-gray-100 my-8">
+
+      {{-- B. MOT DE PASSE PROVISOIRE --}}
+      <div class="bg-orangeone/5 border border-orangeone/20 rounded-[16px] p-6 flex flex-col md:flex-row gap-6 items-start">
+        {{-- Icône clé --}}
+        <div class="hidden md:flex flex-shrink-0 pt-1">
+            <div class="w-12 h-12 rounded-full bg-white text-orangeone flex items-center justify-center shadow-sm border border-orangeone/20">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                </svg>
+            </div>
+        </div>
+        
+        <div class="flex-grow w-full">
+            <h4 class="text-lg font-bold text-gray-800 font-raleway mb-2">Code d'accès provisoire du groupe</h4>
+            <div class="text-sm text-gray-600 mb-4 font-lisible space-y-1">
+                <p>Ce code servira <strong>uniquement à la première connexion</strong>.</p>
+                <p class="text-xs text-gray-500">Note : Vos stagiaires devront obligatoirement choisir leur propre mot de passe ensuite (RGPD).</p>
+            </div>
+
+            <div class="w-full max-w-md">
+                <label for="password" class="sr-only">Mot de passe commun</label>
+                <div class="relative flex items-center">
+                    <input id="password" name="password" type="text" required minlength="8" autocomplete="off"
+                        class="bg-white border border-gray-300 text-gray-900 text-base rounded-l-lg focus:ring-orangeone focus:border-orangeone block w-full pl-4 py-3 font-mono tracking-wide"
+                        placeholder="Ex: Formation2026!">
+                    
+                    <button type="button" onclick="generatePassword()" 
+                            class="bg-gray-100 border border-l-0 border-gray-300 text-gray-600 hover:bg-gray-200 hover:text-gray-800 font-bold py-3 px-4 rounded-r-lg transition text-sm whitespace-nowrap">
+                        🎲 Générer
+                    </button>
+                </div>
+                <p class="text-[10px] text-gray-400 mt-2 italic">Minimum 8 caractères.</p>
+            </div>
+        </div>
+      </div>
     </fieldset>
 
     {{-- Étape 3 : Modules --}}
@@ -188,7 +231,6 @@
   </form>
 </div>
 
-{{-- JS --}}
 <script>
   let currentStep = 1;
   const TOTAL_STEPS = 3;
@@ -205,7 +247,8 @@
   // Étapes validées (autorise retour en arrière uniquement si validée)
   const completedSteps = new Set();
 
-  // Stepper : retour en arrière uniquement sur étapes validées
+  // --- LOGIQUE STEPPER (Inchangée) ---
+
   stepButtons.forEach(btn => btn.addEventListener('click', () => {
     const target = parseInt(btn.dataset.step, 10);
 
@@ -216,8 +259,6 @@
       }
       return;
     }
-
-    // Pas d'accès aux étapes futures via stepper
     return;
   }));
 
@@ -226,7 +267,6 @@
       const s = i + 1;
       const active = s === step;
 
-      // Styles : actif bleu plein, inactif blanc + texte bleu
       b.classList.remove('bg-bleuone','text-white','bg-white','text-bleuone','opacity-60','shadow-md');
       if (active) {
         b.classList.add('bg-bleuone','text-white','shadow-md');
@@ -236,7 +276,6 @@
         b.setAttribute('aria-current', 'false');
       }
 
-      // Désactivation : seules les étapes validées en arrière sont cliquables
       if (s < step && completedSteps.has(s)) {
         b.disabled = false;
         b.classList.remove('cursor-not-allowed');
@@ -303,7 +342,6 @@
 
   prevBtn.addEventListener('click', (e) => {
     e.preventDefault();
-    // Retour en arrière autorisé uniquement si l'étape cible est déjà validée
     const target = currentStep - 1;
     if (target >= 1 && completedSteps.has(target)) {
       currentStep--;
@@ -311,47 +349,83 @@
     }
   });
 
+
+  // --- GESTION DES STAGIAIRES & PASSWORD (MODIFIÉ) ---
+
+  // Ajout dynamique avec le nouveau design HTML
   window.addStagiaire = function () {
     const container = document.getElementById('stagiaires-container');
-    const index = container.querySelectorAll('.stagiaire-row').length;
+    const rows = container.querySelectorAll('.stagiaire-row');
+    const index = rows.length; // Calcule le bon index pour le tableau PHP
+
     const tpl = `
-      <div class="bg-gray-50 p-4 rounded relative stagiaire-row">
-        <div class="flex justify-between items-start mb-2">
-          <span class="text-base font-medium text-gray-700">Stagiaire ${index+1}</span>
-          <button type="button" class="text-xs font-semibold text-red-700 bg-red-100 hover:bg-red-200 px-2 py-1 rounded-full"
-                  onclick="removeStagiaire(this)">Supprimer</button>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-[1fr_1fr_2fr] gap-3">
-          <div>
-            <label for="stagiaires_${index}_prenom" class="sr-only">Prénom</label>
-            <input id="stagiaires_${index}_prenom" name="stagiaires[${index}][prenom]" type="text" placeholder="Prénom"
-                   class="bg-white border border-gray-300 text-base rounded-lg focus:ring-orangeone focus:border-orangeone w-full p-2.5">
-          </div>
-          <div>
-            <label for="stagiaires_${index}_nom" class="sr-only">Nom</label>
-            <input id="stagiaires_${index}_nom" name="stagiaires[${index}][nom]" type="text" placeholder="Nom"
-                   class="bg-white border border-gray-300 text-base rounded-lg focus:ring-orangeone focus:border-orangeone w-full p-2.5">
-          </div>
-          <div>
-            <label for="stagiaires_${index}_email" class="sr-only">Email</label>
-            <input id="stagiaires_${index}_email" name="stagiaires[${index}][email]" type="email" placeholder="Email"
-                   class="bg-white border border-gray-300 text-base rounded-lg focus:ring-orangeone focus:border-orangeone w-full p-2.5">
-          </div>
+      <div class="bg-white border border-gray-200 p-4 rounded-[12px] shadow-sm relative stagiaire-row group hover:border-orangeone/50 transition mt-3 animate-fade-in-down">
+        <div class="grid grid-cols-1 md:grid-cols-[1fr_1fr_2fr_auto] gap-4 items-start">
+            
+            <div>
+                <label for="stagiaires_${index}_prenom" class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Prénom</label>
+                <input id="stagiaires_${index}_prenom" name="stagiaires[${index}][prenom]" type="text" placeholder="Prénom" required
+                    class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-orangeone focus:border-orangeone w-full p-2.5">
+            </div>
+
+            <div>
+                <label for="stagiaires_${index}_nom" class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Nom</label>
+                <input id="stagiaires_${index}_nom" name="stagiaires[${index}][nom]" type="text" placeholder="Nom" required
+                    class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-orangeone focus:border-orangeone w-full p-2.5">
+            </div>
+
+            <div>
+                <label for="stagiaires_${index}_email" class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Email professionnel</label>
+                <input id="stagiaires_${index}_email" name="stagiaires[${index}][email]" type="email" placeholder="Email" required
+                    class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-orangeone focus:border-orangeone w-full p-2.5">
+            </div>
+
+            <div class="flex items-end h-full pb-[3px]">
+                <button type="button" class="text-gray-300 hover:text-red-600 transition p-2 rounded-full hover:bg-red-50"
+                        onclick="removeStagiaire(this)" title="Supprimer la ligne">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                </button>
+            </div>
         </div>
       </div>`;
+    
     container.insertAdjacentHTML('beforeend', tpl);
   }
 
+  // Suppression d'une ligne (avec sécurité min 1 ligne)
   window.removeStagiaire = function (btn) {
     const row = btn.closest('.stagiaire-row');
     const container = document.getElementById('stagiaires-container');
-    if (container.querySelectorAll('.stagiaire-row').length <= 1) return;
+    
+    if (container.querySelectorAll('.stagiaire-row').length <= 1) {
+        alert("Le groupe doit contenir au moins un stagiaire.");
+        return;
+    }
     row.remove();
   }
 
+  // Générateur de mot de passe (Nouveau)
+  window.generatePassword = function() {
+      const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%&*";
+      const length = 8;
+      let password = "";
+      for (let i = 0, n = chars.length; i < length; ++i) {
+          password += chars.charAt(Math.floor(Math.random() * n));
+      }
+      const pwdInput = document.getElementById('password');
+      if (pwdInput) {
+        pwdInput.value = password;
+        pwdInput.classList.remove('border-red-500'); // Retire l'erreur rouge si elle était là
+      }
+  }
+
+  // Nettoyage avant soumission (supprime les lignes vides)
   form.addEventListener('submit', () => {
     document.querySelectorAll('.stagiaire-row').forEach(row => {
       const vals = Array.from(row.querySelectorAll('input')).map(i => (i.value || '').trim());
+      // Si tous les champs de la ligne sont vides, on la vire pour pas polluer le POST
       if (vals.every(v => v === '')) row.remove();
     });
   });

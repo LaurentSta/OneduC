@@ -1,245 +1,348 @@
 @extends('stagiaire.master')
 
 @section('content')
-
-{{-- Wrapper unique --}}
-<div class="max-w-[1285px] mx-auto px-8">
-
-  {{-- 🧩 EN-TÊTE DE PAGE STAGIAIRE – Résultats et progression --}}
-  <header class="bg-white rounded-[20px] shadow-md px-8 pt-4 pb-6 w-full mb-6">
-    <div class="grid grid-cols-12 gap-6 items-center">
-
-      {{-- Texte (9) --}}
-      <div class="col-span-12 md:col-span-8">
-        <p class="font-raleway text-titre text-bleuone leading-tight mb-4">Mes résultats</p>
-        <p class="font-varela text-sous-titre text-orangeone leading-snug mb-3">
-          Suivi de ma progression et de mes scores
-        </p>
-        <p class="font-lisible text-lg text-gray-800 leading-loose mb-6">
-          Consultez vos scores, le temps passé, vos bonnes réponses et vos résultats aux évaluations.
-        </p>
-
-        {{-- Fil d’Ariane --}}
-        <nav class="text-sm font-varela text-gray-600 mt-2" aria-label="Fil d'Ariane">
-          <ol class="inline-flex items-center space-x-1">
-            <li class="flex items-center">
-              <a href="{{ route('stagiaire.dashboard') }}" class="text-orangeone hover:underline flex items-center">
-                <span class="sr-only">Accueil</span>
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M3 9.75L12 3l9 6.75V19a2 2 0 01-2 2h-4a1 1 0 01-1-1v-5H10v5a1 1 0 01-1 1H5a2 2 0 01-2-2V9.75z"/>
-                </svg>
-              </a>
-              <span class="mx-2 text-gray-400" aria-hidden="true">/</span>
-            </li>
-            <li class="text-gray-400">Mes résultats</li>
-          </ol>
-        </nav>
-      </div>
-
-      {{-- Image (3) --}}
-      <div class="col-span-12 md:col-span-4 flex justify-center md:justify-end">
-        <img src="{{ asset('images/svg/Resultats.svg') }}"
-             alt="Illustration des résultats et de la progression"
-             class="max-w-[400px] h-auto">
-      </div>
-
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    
+    {{-- 1. EN-TÊTE --}}
+    <div class="flex items-center gap-4 mb-8">
+        <div class="p-3 bg-bleuone/10 rounded-xl text-bleuone">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 12h4l3 8l4 -16l3 8h4" /></svg>
+        </div>
+        <div>
+            <h1 class="text-2xl font-raleway font-bold text-bleuone">Mes Résultats & Statistiques</h1>
+            <p class="text-sm text-gray-500">Analyse détaillée de votre progression et historique des réponses.</p>
+        </div>
     </div>
-  </header>
 
-  {{-- 📊 CONTENU PRINCIPAL --}}
-  <main class="space-y-8">
+    {{-- 2. CARTES KPI (Engagement, Vidéo, Latence) --}}
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        {{-- Engagement --}}
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+            <div class="flex items-center gap-3 mb-2">
+                <div class="p-2 bg-blue-50 text-bleuone rounded-lg">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                </div>
+                <span class="text-[10px] font-bold uppercase text-gray-400">Temps Total</span>
+            </div>
+            <p class="text-xl font-bold text-gray-900">{{ gmdate("H\h i", $engagementTotal ?? 0) }}</p>
+        </div>
 
-    {{-- 3 graphiques en haut --}}
-    <section aria-labelledby="charts-top">
-      <h2 id="charts-top" class="sr-only">Tableaux de bord</h2>
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <article class="bg-white rounded-[20px] shadow-md px-8 pt-6 pb-6">
-          <h3 class="text-lg font-semibold text-gray-800 mb-4">Questions</h3>
-          <div class="h-[260px]"><canvas id="globalChart"></canvas></div>
-        </article>
+        {{-- Vidéos --}}
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+            <div class="flex items-center gap-3 mb-2">
+                <div class="p-2 bg-orange-50 text-orangeone rounded-lg">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                </div>
+                <span class="text-[10px] font-bold uppercase text-gray-400">Vidéos Vues</span>
+            </div>
+            <p class="text-xl font-bold text-gray-900">{{ gmdate("H\h i", $videoStats->total_watch_time ?? 0) }}</p>
+        </div>
 
-        <article class="bg-white rounded-[20px] shadow-md px-8 pt-6 pb-6">
-          <h3 class="text-lg font-semibold text-gray-800 mb-4">Slides</h3>
-          <div class="h-[260px]"><canvas id="slideChart"></canvas></div>
-        </article>
+        {{-- Réflexion --}}
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+            <div class="flex items-center gap-3 mb-2">
+                <div class="p-2 bg-purple-50 text-purple-600 rounded-lg">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
+                </div>
+                <span class="text-[10px] font-bold uppercase text-gray-400">Réflexion / Quest.</span>
+            </div>
+            <p class="text-xl font-bold text-gray-900">{{ $averageLatencyTime ?? 0 }} s</p>
+        </div>
 
-        <article class="bg-white rounded-[20px] shadow-md px-8 pt-6 pb-6 relative">
-          <h3 class="text-lg font-semibold text-gray-800 mb-4">Répartition des réponses</h3>
-          <div class="h-[260px]"><canvas id="donutChart"></canvas></div>
-          <div id="donutCenterText" class="absolute inset-0 flex items-center justify-center text-xl font-bold text-gray-800 pointer-events-none"></div>
-        </article>
-      </div>
-    </section>
+        {{-- Persévérance --}}
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+            <div class="flex items-center gap-3 mb-2">
+                <div class="p-2 bg-green-50 text-green-600 rounded-lg">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                </div>
+                <span class="text-[10px] font-bold uppercase text-gray-400">Réessais</span>
+            </div>
+            <p class="text-xl font-bold text-gray-900">{{ $reessayeCount ?? 0 }}</p>
+        </div>
+    </div>
 
-    {{-- Temps et comportement --}}
-    <section aria-labelledby="temps-comportement">
-      <h2 id="temps-comportement" class="text-xl font-semibold text-gray-800 mb-4">Temps et comportement</h2>
+    {{-- 3. ANALYSE GLOBALE (GRAPHIQUE + TABLEAU) --}}
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
+        
+        {{-- A. Graphique Circulaire (Donut) --}}
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center">
+            <h3 class="text-sm font-bold text-gray-700 mb-6 w-full text-left">Répartition des Réponses</h3>
+            
+            @php
+                // Calcul pour le graphique CSS
+                $rate = $tauxBonnesReponses ?? 0; // 0 à 100
+                $wrongRate = 100 - $rate;
+            @endphp
 
-      <div class="bg-white rounded-[20px] shadow-md px-8 pt-6 pb-6 mb-6 text-center">
-        <p class="text-md text-gray-700 font-semibold">Temps total passé sur la plateforme</p>
-        <p class="text-2xl text-bleuone font-bold">
-          {{ gmdate('H\h i\m s\s', $totalSiteTime ?? 0) }}
-        </p>
-      </div>
+            <div class="relative w-48 h-48 rounded-full mb-4"
+                 style="background: conic-gradient(#22c55e {{ $rate }}%, #f87171 0);">
+                {{-- Cercle intérieur pour faire l'effet Donut --}}
+                <div class="absolute inset-0 m-auto w-36 h-36 bg-white rounded-full flex flex-col items-center justify-center shadow-inner">
+                    <span class="text-3xl font-black text-gray-800">{{ $rate }}%</span>
+                    <span class="text-[10px] uppercase font-bold text-gray-400">De réussite</span>
+                </div>
+            </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <article class="bg-white rounded-[20px] shadow-md px-8 pt-6 pb-6">
-          <h3 class="text-lg font-semibold text-gray-800 mb-4">Temps moyen par activité</h3>
-          <ul class="space-y-2 text-sm text-gray-700">
-            <li>Temps total leçons : <strong>{{ gmdate('H\h i\m s\s', $totalScormTime ?? 0) }}</strong></li>
-            <li>Temps de réponse questions : <strong>{{ gmdate('H\h i\m s\s', $totalLatencyTime ?? 0) }}</strong></li>
-            <li>Engagement SCORM total : <strong>{{ gmdate('H\h i\m s\s', $engagementTotal ?? 0) }}</strong></li>
-            <li>Temps moyen par question : <strong>{{ gmdate('i\m s\s', $averageLatencyTime ?? 0) }}</strong></li>
-          </ul>
-        </article>
+            <div class="flex gap-6 w-full justify-center mt-2">
+                <div class="flex items-center gap-2">
+                    <span class="w-3 h-3 rounded-full bg-green-500"></span>
+                    <div class="flex flex-col">
+                        <span class="text-xs font-bold text-gray-700">Correct</span>
+                        <span class="text-[10px] text-gray-400">Bonnes réponses</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="w-3 h-3 rounded-full bg-red-400"></span>
+                    <div class="flex flex-col">
+                        <span class="text-xs font-bold text-gray-700">Erreur</span>
+                        <span class="text-[10px] text-gray-400">À revoir</span>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-        <article class="bg-white rounded-[20px] shadow-md px-8 pt-6 pb-6">
-          <h3 class="text-lg font-semibold text-gray-800 mb-4">Statistiques vidéo</h3>
-          <ul class="space-y-2 text-sm text-gray-700">
-            <li>Temps total vidéos : <strong>{{ gmdate('H\h i\m s\s', $videoStats['totalVideoWatchTime'] ?? 0) }}</strong></li>
-            <li>Segments visionnés : <strong>{{ $videoStats['totalVideoSegments'] ?? 0 }}</strong></li>
-            <li>Relectures : <strong>{{ $videoStats['totalVideoReplays'] ?? 0 }}</strong></li>
-          </ul>
-        </article>
-      </div>
-    </section>
+        {{-- B. Suivi Détaillé (Droit à l'erreur) --}}
+        <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
+            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                <h3 class="text-sm font-bold text-gray-700">Suivi des questions & Tentatives</h3>
+                <span class="text-[10px] font-semibold text-gray-500 bg-gray-200 px-2 py-1 rounded">
+                    {{ $consolidatedQuestions->count() }} questions traitées
+                </span>
+            </div>
+            
+            <div class="overflow-y-auto custom-scrollbar flex-1 max-h-[350px]">
+                @if(isset($consolidatedQuestions) && $consolidatedQuestions->count() > 0)
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-gray-50 sticky top-0 z-10 text-[10px] uppercase text-gray-400 font-bold tracking-wider">
+                            <tr>
+                                <th class="px-6 py-3">Question</th>
+                                <th class="px-4 py-3 text-center" title="Nombre de tentatives">Essais</th>
+                                <th class="px-4 py-3 text-center">1<sup>er</sup> Résultat</th>
+                                <th class="px-4 py-3 text-center">Statut Final</th>
+                                <th class="px-4 py-3 text-right">Dernier essai</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            @foreach($consolidatedQuestions as $q)
+                                <tr class="hover:bg-gray-50/80 transition-colors group">
+                                    {{-- Question --}}
+                                    <td class="px-6 py-3">
+                                        <p class="text-sm font-medium text-gray-800 line-clamp-2" title="{{ $q->question_text }}">
+                                            {{ $q->question_text }}
+                                        </p>
+                                        <p class="text-[10px] text-gray-400 mt-0.5 group-hover:text-bleuone transition-colors">
+                                            {{ $q->module_title }}
+                                        </p>
+                                    </td>
 
-    {{-- Évaluations --}}
-    <section aria-labelledby="evaluations">
-      <h2 id="evaluations" class="text-xl font-semibold text-gray-800 mb-4">Résultats des évaluations</h2>
+                                    {{-- Compteur Tentatives --}}
+                                    <td class="px-4 py-3 text-center">
+                                        <span class="inline-flex items-center justify-center w-6 h-6 rounded-full text-[11px] font-bold 
+                                            {{ $q->attempts_count > 1 ? 'bg-orange-100 text-orange-600' : 'bg-gray-100 text-gray-500' }}">
+                                            {{ $q->attempts_count }}
+                                        </span>
+                                    </td>
 
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <article class="bg-white rounded-[20px] shadow-md px-8 pt-6 pb-6">
-          <h3 class="text-lg font-semibold text-gray-800 mb-4">Scores des évaluations</h3>
-          <div class="h-[260px]"><canvas id="evaluationChart"></canvas></div>
-        </article>
+                                    {{-- 1er Résultat (Mémoire) --}}
+                                    <td class="px-4 py-3 text-center">
+                                        @if($q->first_result)
+                                            <span class="text-green-500 text-xs font-bold" title="Du premier coup !">Correct</span>
+                                        @else
+                                            <span class="text-red-400 text-xs font-bold" title="Erreur au démarrage">Erreur</span>
+                                        @endif
+                                    </td>
 
-        <article class="bg-white rounded-[20px] shadow-md px-8 pt-6 pb-6">
-          <h3 class="text-lg font-semibold text-gray-800 mb-4">Répartition des réponses</h3>
-          <div class="h-[260px]"><canvas id="evaluationDonut"></canvas></div>
-        </article>
-      </div>
-    </section>
+                                    {{-- Statut Final (Sanctuarisé) --}}
+                                    <td class="px-4 py-3 text-center">
+                                        @if($q->final_status)
+                                            <span class="inline-flex items-center px-2 py-1 rounded text-[10px] font-bold bg-green-50 text-green-600 border border-green-100">
+                                                <svg class="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                                                Acquis
+                                            </span>
+                                        @else
+                                            <span class="inline-flex items-center px-2 py-1 rounded text-[10px] font-bold bg-red-50 text-red-600 border border-red-100">
+                                                À revoir
+                                            </span>
+                                        @endif
+                                    </td>
 
-  </main>
+                                    {{-- Date --}}
+                                    <td class="px-4 py-3 text-right text-xs text-gray-400 tabular-nums">
+                                        {{ \Carbon\Carbon::parse($q->last_date)->format('d/m H:i') }}
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                @else
+                    <div class="flex flex-col items-center justify-center h-48 text-gray-400">
+                        <p class="text-sm">Aucune donnée disponible.</p>
+                    </div>
+                @endif
+            </div>
+        </div>
+    </div>
+
+    {{-- 4. DÉTAIL PAR MODULE (ACCORDÉONS) --}}
+    <div class="space-y-6">
+        <h2 class="text-lg font-raleway font-bold text-gray-800 mb-4 px-1">Détail des scores par module</h2>
+
+        {{-- On groupe par titre de module --}}
+        @forelse ($resultats->groupBy(fn($item) => $item->lecture->module->module_title ?? 'Autre') as $moduleTitle => $scores)
+            @php
+                // --- CORRECTION DU CALCUL GLOBAL ---
+                
+                // 1. On regroupe par Leçon unique (lecture_id) pour ne pas compter les doublons (SCORM + Quiz)
+                $uniqueLessons = $scores->groupBy('lecture_id');
+
+                // 2. Pour chaque leçon, on calcule le MEILLEUR score obtenu (Max)
+                $bestScoresPerLesson = $uniqueLessons->map(function ($attempts) {
+                    return $attempts->max(function ($s) {
+                        if ($s instanceof \App\Models\QuizAttempt) {
+                            // C'est un Quiz Natif : le score est déjà en %
+                            return $s->score; 
+                        } else {
+                            // C'est un SCORM : on calcule le %
+                            $total = $s->total_questions ?? 0;
+                            $correct = ($s->correct_score / 10) ?? 0;
+                            return $total > 0 ? round(($correct / $total) * 100) : 0;
+                        }
+                    });
+                });
+
+                // 3. La progression du module est la MOYENNE des meilleures notes
+                $modulePercent = $bestScoresPerLesson->isNotEmpty() ? round($bestScoresPerLesson->avg()) : 0;
+                
+                $isModuleSuccess = $modulePercent >= 75;
+            @endphp
+
+            <div x-data="{ open: false }" class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden transition-all duration-300 hover:shadow-md">
+                
+                {{-- EN-TÊTE ACCORDÉON --}}
+                <button @click="open = !open" class="w-full px-6 py-5 flex flex-col md:flex-row md:items-center justify-between gap-4 group hover:bg-gray-50/50 transition-colors">
+                    <div class="flex items-center gap-4 text-left">
+                        <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm border-2
+                                    {{ $isModuleSuccess ? 'bg-green-50 text-green-600 border-green-200' : 'bg-orange-50 text-orangeone border-orange-200' }}">
+                            {{ $modulePercent }}%
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-bold text-bleuone group-hover:text-orangeone transition-colors">
+                                {{ $moduleTitle }}
+                            </h2>
+                            <p class="text-xs text-gray-400 font-medium">
+                                {{ $scores->count() }} leçon(s) terminée(s)
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-6">
+                        <div class="hidden md:block w-32">
+                            <div class="flex justify-between text-[10px] text-gray-400 mb-1 font-bold">
+                                <span>Progression</span>
+                                <span>{{ $modulePercent }}%</span>
+                            </div>
+                            <div class="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+                                <div class="h-full rounded-full {{ $isModuleSuccess ? 'bg-green-500' : 'bg-orangeone' }}" style="width: {{ $modulePercent }}%"></div>
+                            </div>
+                        </div>
+                        <svg :class="{'rotate-180': open}" class="w-6 h-6 text-gray-300 group-hover:text-bleuone transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                    </div>
+                </button>
+
+                {{-- CONTENU DÉTAILLÉ --}}
+                <div x-show="open" x-collapse>
+                    <div class="border-t border-gray-100 bg-gray-50/30">
+                        @foreach ($scores as $score)
+                            @php
+                                // --- NORMALISATION DES DONNÉES (SCORM vs NATIF) ---
+                                $isNative = $score instanceof \App\Models\QuizAttempt;
+
+                                if ($isNative) {
+                                    // Données Quiz Natif
+                                    $totalQ = $score->total_questions;
+                                    $scorePercent = $score->score; // Déjà stocké en %
+                                    $correct = round(($scorePercent / 100) * $totalQ);
+                                    $answered = $totalQ; 
+                                    $time = gmdate("H:i:s", $score->total_time_seconds);
+                                    $typeLabel = "Quiz";
+                                } else {
+                                    // Données SCORM
+                                    $totalQ = $score->total_questions ?? 0;
+                                    $correct = ($score->correct_score / 10) ?? 0;
+                                    $answered = $score->answered_questions ?? 0;
+                                    $scorePercent = $totalQ > 0 ? round(($correct / $totalQ) * 100) : 0;
+                                    $time = $score->formatted_session_time ?? gmdate("H:i:s", $score->session_time ?? 0);
+                                    $typeLabel = "Interactif";
+                                }
+
+                                $wrong = $answered - $correct;
+                                $statusClass = $scorePercent >= 50 ? 'text-green-600 bg-green-50 border-green-200' : 'text-red-600 bg-red-50 border-red-200';
+                            @endphp
+
+                            <div class="px-6 py-4 border-b border-gray-100 last:border-0 hover:bg-white transition-colors">
+                                <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+                                    {{-- Titre --}}
+                                    <div class="md:col-span-5 flex items-start gap-3">
+                                        <div class="mt-1">
+                                            @if($scorePercent >= 50)
+                                                <svg class="w-5 h-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                            @else
+                                                <svg class="w-5 h-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                            @endif
+                                        </div>
+                                        <div>
+                                            <h3 class="text-sm font-bold text-gray-800">{{ $score->lecture->lecture_title ?? 'Leçon inconnue' }}</h3>
+                                            <span class="text-[11px] text-gray-400 uppercase tracking-wider font-semibold">
+                                                {{ $typeLabel }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    
+                                    {{-- Barre de progression --}}
+                                    <div class="md:col-span-4">
+                                        <div class="flex items-center gap-3 mb-1">
+                                            <span class="text-xs font-bold w-8 text-right">{{ $scorePercent }}%</span>
+                                            <div class="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                                <div class="h-full rounded-full {{ $scorePercent >= 50 ? 'bg-green-500' : 'bg-red-400' }}" style="width: {{ $scorePercent }}%"></div>
+                                            </div>
+                                        </div>
+                                        <div class="flex gap-4 text-[11px] text-gray-500 pl-11">
+                                            <span class="flex items-center gap-1" title="Bonnes réponses"><span class="w-2 h-2 rounded-full bg-green-500"></span> {{ $correct }}</span>
+                                            <span class="flex items-center gap-1" title="Erreurs"><span class="w-2 h-2 rounded-full bg-red-400"></span> {{ $wrong }}</span>
+                                            <span class="text-gray-300">/</span><span>{{ $totalQ }} total</span>
+                                        </div>
+                                    </div>
+
+                                    {{-- Temps et Statut --}}
+                                    <div class="md:col-span-3 flex items-center justify-between md:justify-end gap-4">
+                                        <div class="text-right">
+                                            <div class="flex items-center gap-1 text-gray-500 text-xs font-medium">
+                                                <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                                {{ $time }}
+                                            </div>
+                                        </div>
+                                        <span class="px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wide border {{ $statusClass }}">
+                                            {{ $scorePercent >= 50 ? 'Validé' : 'Échec' }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+        @empty
+            <div class="text-center py-16 bg-white rounded-2xl border border-dashed border-gray-300">
+                <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">
+                    <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+                </div>
+                <h3 class="text-lg font-bold text-gray-900">Aucun résultat enregistré</h3>
+                <a href="{{ route('stagiaire.modules') }}" class="inline-flex mt-6 items-center px-4 py-2 bg-bleuone text-white rounded-lg text-sm font-semibold hover:bg-opacity-90 transition">
+                    Aller aux modules
+                </a>
+            </div>
+        @endforelse
+    </div>
 </div>
 
-{{-- Chart.js CDN --}}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<script>
-  // Graphique questions
-  new Chart(document.getElementById('globalChart'), {
-    type: 'bar',
-    data: {
-      labels: ['Questions par formation', 'Réponses enregistrées', 'Questions réessayées'],
-      datasets: [{
-        data: [
-          {{ $resultats->map(fn($r) => $r->lecture->module)->unique('id')->sum(fn($m) => $m->sections->flatMap->lectures->sum('quiz_questions_per_attempt')) }},
-          {{ $resultats->sum('answered_questions') }},
-          {{ $reessayeCount }}
-        ],
-        borderWidth: 1,
-        borderRadius: 5
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: { y: { beginAtZero: true } }
-    }
-  });
-
-  // Graphique slides
-  new Chart(document.getElementById('slideChart'), {
-    type: 'bar',
-    data: {
-      labels: ['Slides à visionner', 'Slides visionnées'],
-      datasets: [{
-        data: [
-          {{ $resultats->sum(fn($r) => $r->lecture->slide_count ?? 0) }},
-          {{ $resultats->filter(fn($r) => $r->lesson_status === 'completed')->sum(fn($r) => $r->lecture->slide_count ?? 0) }}
-        ],
-        borderWidth: 1,
-        borderRadius: 5
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: { y: { beginAtZero: true } }
-    }
-  });
-
-  // Donut réponses globales
-  const correct = {{ (int) ($resultats->sum('correct_score') / 10) }};
-  const total = {{ (int) $resultats->sum('answered_questions') }};
-  const incorrect = Math.max(total - correct, 0);
-  const taux = total > 0 ? Math.round((correct / total) * 100) : 0;
-
-  new Chart(document.getElementById('donutChart'), {
-    type: 'doughnut',
-    data: {
-      labels: ['Bonnes réponses', 'Mauvaises réponses'],
-      datasets: [{ data: [correct, incorrect], borderWidth: 1 }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      cutout: '70%',
-      plugins: {
-        legend: { position: 'bottom' },
-        tooltip: { callbacks: { label: ctx => `${ctx.label}: ${ctx.raw} réponses` } }
-      }
-    }
-  });
-  document.getElementById('donutCenterText').textContent = `${taux}%`;
-
-  // Scores évaluations
-  new Chart(document.getElementById('evaluationChart'), {
-    type: 'bar',
-    data: {
-      labels: ['Score moyen', 'Score max', 'Taux de réussite'],
-      datasets: [{
-        data: [
-          {{ round($averageEvaluationScore ?? 0, 1) }},
-          {{ round($bestEvaluationScore ?? 0, 1) }},
-          {{ round($tauxReussiteEvaluation ?? 0, 1) }}
-        ],
-        borderWidth: 1,
-        borderRadius: 5
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: { y: { beginAtZero: true, ticks: { stepSize: 10 } } }
-    }
-  });
-
-  // Donut évaluations
-  new Chart(document.getElementById('evaluationDonut'), {
-    type: 'doughnut',
-    data: {
-      labels: ['Évaluations réussies', 'Échecs ou incomplètes'],
-      datasets: [{
-        data: [
-          {{ (int)($totalSuccessEvaluations ?? 0) }},
-          {{ (int)(($totalEvaluationsDone ?? 0) - ($totalSuccessEvaluations ?? 0)) }}
-        ],
-        borderWidth: 1
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      cutout: '70%',
-      plugins: { legend: { position: 'bottom' } }
-    }
-  });
-</script>
+<script src="//unpkg.com/alpinejs" defer></script>
 @endsection

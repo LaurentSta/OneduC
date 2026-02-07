@@ -1,4 +1,4 @@
-/* 1) Tailwind en premier (Tailwind v4) */
+/* 1) Architecture Tailwind v4 */
 @import "tailwindcss";
 
 @import "admin-tables.css";
@@ -11,16 +11,58 @@
 @config "../../tailwind.config.js";
 
 /* =========================
+   Base & Typography
+   ========================= */
+@layer base {
+  /* Suppression globale des ombres sur les éléments interactifs si nécessaire */
+  *, ::before, ::after {
+    --tw-shadow: 0 0 #0000 !important;
+    --tw-shadow-colored: 0 0 #0000 !important;
+    box-shadow: none !important;
+  }
+
+  /* Pointeur de main sur tous les boutons */
+  button, 
+  [type='button'], 
+  [type='reset'], 
+  [type='submit'] {
+    cursor: pointer;
+  }
+
+  p { @apply font-lisible; }
+  h1 { @apply font-raleway text-4xl md:text-5xl font-bold text-gray-900 mb-6; }
+  h2 { @apply font-varela; }
+}
+
+/* =========================
+   Composants Oneduc
+   ========================= */
+@layer components {
+  .btn-oneduc {
+    @apply inline-flex items-center justify-center px-8 py-3 text-lg font-varela 
+           text-white bg-orangeone border-4 border-orangeone rounded-full 
+           transition-all duration-300 hover:bg-white hover:text-orangeone 
+           focus:outline-none focus:ring-4 focus:ring-orange-200 
+           active:scale-95;
+    /* Ombre explicitement supprimée */
+  }
+
+  .btn-oneduc-blue {
+    @apply inline-flex items-center justify-center px-6 py-2 text-base font-varela 
+           text-white bg-bleuone border-4 border-bleuone rounded-full 
+           transition-all duration-300 hover:bg-white hover:text-bleuone 
+           focus:outline-none focus:ring-4 focus:ring-blue-100;
+  }
+}
+
+/* =========================
    Confort+ (utilitaires)
    ========================= */
 
-/* Remarque : en Tailwind v4, @utility génère une vraie classe utilitaire.
-   On évite @apply avec des valeurs arbitraires complexes quand c’est possible. */
-
 @utility access-anchor {
   position: absolute;
-  z-index: 9999; /* au-dessus du header */
-  pointer-events: none; /* laisse passer les clics sauf sur le bouton */
+  z-index: 9999;
+  pointer-events: none;
   right: 20px;
   margin-top: -1px;
 
@@ -31,93 +73,6 @@
   }
 }
 
-@layer utilities {
-  .btn-access {
-    height: 3rem;
-    width: 3rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    background: #fff;
-    border: 1px solid currentColor;
-    color: #004461;
-
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(233, 77, 42, 0.35);
-
-    pointer-events: auto;
-    position: relative;
-
-    border-radius: 0;
-
-    font-size: 0;
-    color: transparent;
-  }
-
-  .btn-access:hover {
-    background: #E94D2A;
-    color: #fff;
-  }
-
-  .btn-access::after {
-    content: "+";
-    color: #e94d2a;
-    font-size: 20px;
-    font-weight: 700;
-    line-height: 1;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-  }
-
-  .btn-access:hover::after {
-    color: #fff;
-  }
-
-  @media (max-width: 768px) {
-    .btn-access {
-      writing-mode: initial;
-      transform: none;
-      width: 56px;
-      height: 56px;
-      padding: 12px;
-    }
-  }
-}
-
-.btn-access:hover {
-  background: #E94D2A;
-  color: #fff;
-}
-
-.btn-access::after {
-  content: "+";
-  color: #e94d2a;
-  font-size: 20px;
-  font-weight: 700;
-  line-height: 1;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-}
-
-.btn-access:hover::after {
-  color: #fff;
-}
-
-@media (max-width: 768px) {
-  .btn-access {
-    writing-mode: initial;
-    transform: none;
-    width: 56px;
-    height: 56px;
-    padding: 12px;
-  }
-}
-
 @utility accessibility-toolbar {
   position: fixed;
   right: 60px;
@@ -125,7 +80,7 @@
   max-height: calc(100vh - var(--access-top, 96px) - 16px);
   overflow: auto;
   z-index: 9998;
-  box-shadow: none;
+  box-shadow: none !important;
 
   @media (max-width: 768px) {
     right: 16px !important;
@@ -135,20 +90,45 @@
 }
 
 @utility z-access {
-  z-index: 9999; /* au besoin pour survoler des iframes */
+  z-index: 9999;
 }
 
-/* =========================
-   Base typographique
-   ========================= */
+@layer utilities {
+  .btn-access {
+    height: 3rem;
+    width: 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    border: 1px solid #004461;
+    color: transparent;
+    font-size: 0;
+    position: relative;
+    pointer-events: auto;
+    transition: all 0.3s ease;
+    box-shadow: none !important; /* Suppression de l'ombre orange d'origine */
 
-@layer base {
-  p { @apply font-lisible; }
-  h1 { @apply font-raleway text-4xl md:text-5xl font-bold text-gray-900 mb-6; }
-  h2 { @apply font-varela; }
+    &::after {
+      content: "+";
+      color: #E94D2A;
+      font-size: 24px;
+      font-weight: 700;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    &:hover {
+      background: #E94D2A;
+      border-color: #E94D2A;
+      &::after { color: #fff; }
+    }
+
+    @media (max-width: 768px) {
+      width: 56px;
+      height: 56px;
+    }
+  }
 }
-
-@layer components {
-  /* Panneau Confort+ (à compléter) */
-}
-

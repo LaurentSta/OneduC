@@ -6,24 +6,19 @@ use Illuminate\Database\Eloquent\Model;
 
 class QuizAttempt extends Model
 {
-    protected $fillable = [
-        'user_id',
-        'lecture_id',
-        'started_at',
-        'finished_at',
-        'total_questions',
-        'score',
-        'percent',
-        'passed',
-        'total_time_seconds',
-    ];
+    protected $guarded = []; // Plus simple que fillable pour le dev
 
     protected $casts = [
         'started_at'  => 'datetime',
         'finished_at' => 'datetime',
         'passed'      => 'boolean',
+        'score'       => 'integer',
+        'percent'     => 'integer',
     ];
 
+    /**
+     * Les réponses données spécifiquement lors de CETTE tentative.
+     */
     public function attemptQuestions()
     {
         return $this->hasMany(QuizAttemptQuestion::class, 'attempt_id');
@@ -38,6 +33,4 @@ class QuizAttempt extends Model
     {
         return $this->belongsTo(User::class, 'user_id');
     }
-
-    
 }

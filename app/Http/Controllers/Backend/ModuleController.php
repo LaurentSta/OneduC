@@ -658,9 +658,9 @@ class ModuleController extends Controller
     }
 
 
-    /**
+/**
  * 15) Vue Lecture (stagiaire ou formateur)
- * Modifiée pour forcer le passage par la page de garde (objectifs) à chaque changement de chapitre.
+ * Modifiée pour charger les données d'inspection (Quiz & Réponses) pour le formateur.
  */
 public function lire(Request $request, Module $module, ModuleSection $section, ModuleLecture $lecture)
 {
@@ -708,7 +708,7 @@ public function lire(Request $request, Module $module, ModuleSection $section, M
     $lectures = $module->sections->flatMap(fn ($s) => $s->lectures)->values();
     $lectureStats = $anonymous ? [] : $this->buildLectureStats($lectures, (int) $user->id);
 
-    // --- LOGIQUE DE NAVIGATION PÉDAGOGIQUE MODIFIÉE ---
+    // --- LOGIQUE DE NAVIGATION PÉDAGOGIQUE ---
 
     $nextLecturePayload = null;
     $currentSectionLectures = $section->lectures ?? collect();
@@ -724,7 +724,7 @@ public function lire(Request $request, Module $module, ModuleSection $section, M
             'url'        => route('stagiaire.module.lecture', [$module->id, $section->id, $nextLec->id])
         ];
     } else {
-        // 2. Sinon, chercher le chapitre (section) suivant pour afficher les objectifs
+        // 2. Sinon, chercher le chapitre (section) suivant
         $sections = $module->sections->sortBy('id')->values();
         $currentSectionIndex = $sections->search(fn ($s) => (int) $s->id === (int) $section->id);
 
@@ -760,13 +760,26 @@ public function lire(Request $request, Module $module, ModuleSection $section, M
         'mode'           => $mode,
         'group_id'       => ($mode !== 'officiel' ? ($groupId ?: null) : null),
         'include_hidden' => ($includeHidden ? 1 : null),
-        'anonymous'      => ($anonymous ? 1 : null),
+        'anonymous'      => $anonymous,
     ]);
+
+    // --- 🛠️ NOUVEAU : DONNÉES D'INSPECTION (FORMATEUR) ---
+    $quizData = null;
+    
+    // Si staff, on charge les questions et les réponses pour l'affichage "Inspecteur"
+    if ($isStaff && $lecture->quiz_enabled) {
+        // Note: Assure-toi que la relation 'quizQuestions' et 'answers' existent dans tes modèles
+        $quizData = $lecture->quizQuestions()
+            ->with('answers') 
+            ->orderBy('id')
+            ->get();
+    }
+    // -----------------------------------------------------
 
     $view = ($anonymous && ($user->role ?? null) === 'formateur')
         ? 'formateur.formations.anonyme.lecon'
         : ($this->viewBase() . '.lecon');
-
+    
     return view($view, [
         'module'          => $module,
         'section'         => $section,
@@ -775,15 +788,19 @@ public function lire(Request $request, Module $module, ModuleSection $section, M
         'selectedLecture' => $lecture,
         'lectureStats'    => $lectureStats,
         'sectionStatuses' => $sectionStatuses,
-        'nextLecture'     => $nextLecturePayload, // Contient maintenant l'URL vers la section ou la leçon
+        'nextLecture'     => $nextLecturePayload,
         'formateur'       => $module->formateur ?? null,
         'contextQuery'    => $contextQuery,
         'mode'            => $mode,
         'groupId'         => $groupId,
         'includeHidden'   => $includeHidden,
         'anonymous'       => $anonymous,
+        
+        // Nouvelle variable passée à la vue
+        'quizData'        => $quizData,
     ]);
 }
+
 
 
         /**

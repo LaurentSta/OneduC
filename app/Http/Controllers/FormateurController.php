@@ -15,6 +15,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use App\Models\ModuleLecture;
+
 
 class FormateurController extends Controller
 {
@@ -527,7 +529,24 @@ class FormateurController extends Controller
             'stagiaireCount'
         ));
     }
+public function updateQuizCount(Request $request, $lectureId)
+{
+    $lecture = ModuleLecture::findOrFail($lectureId);
 
+    // Validation : on doit envoyer un nombre, et il ne peut pas dépasser le total dispo
+    $totalQuestionsInBank = $lecture->quizQuestions()->count();
+
+    $validated = $request->validate([
+        'questions_count' => 'required|integer|min:1|max:' . ($totalQuestionsInBank > 0 ? $totalQuestionsInBank : 1),
+    ]);
+
+    // Mise à jour
+    $lecture->update([
+        'quiz_questions_per_attempt' => $validated['questions_count']
+    ]);
+
+    return back()->with('success', 'Le nombre de questions a été mis à jour.');
+}
     /* -------------------------------------------------------------------------
      | Prévisualisation (mode test)
      |-------------------------------------------------------------------------- */

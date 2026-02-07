@@ -72,7 +72,33 @@
               @endif
             @endforeach
           </fieldset>
+            {{-- DANS LE FORMULAIRE, AVANT LE BOUTON SUBMIT --}}
+              <input type="hidden" name="time_spent" id="time_spent_input" value="0">
 
+              {{-- OPTIONNEL : Affichage discret du temps pour le stagiaire --}}
+              <div class="mt-4 text-right">
+                  <span class="text-xs text-gray-400 font-mono" id="timer_display">00:00</span>
+              </div>
+
+              {{-- A LA FIN DU FICHIER (AVANT @endsection) --}}
+              <script>
+                  document.addEventListener('DOMContentLoaded', function() {
+                      let seconds = 0;
+                      const input = document.getElementById('time_spent_input');
+                      const display = document.getElementById('timer_display');
+
+                      // Incrémente le compteur chaque seconde
+                      setInterval(() => {
+                          seconds++;
+                          input.value = seconds;
+                          
+                          // Formatage MM:SS pour l'affichage
+                          const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+                          const s = (seconds % 60).toString().padStart(2, '0');
+                          if(display) display.textContent = `${m}:${s}`;
+                      }, 1000);
+                  });
+              </script>
           <div class="flex justify-end pt-6">
             <button type="submit"
               class="inline-flex items-center px-8 py-3 bg-orangeone text-white font-semibold rounded-full hover:opacity-90 transition cursor-pointer">

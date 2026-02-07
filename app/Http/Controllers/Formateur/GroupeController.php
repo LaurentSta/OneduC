@@ -123,6 +123,9 @@ class GroupeController extends Controller
     /**
      * Mettre à jour un groupe + rattachements.
      */
+    /**
+     * Mettre à jour un groupe + rattachements.
+     */
     public function update(Request $request, $id)
     {
         $request->validate([
@@ -136,6 +139,9 @@ class GroupeController extends Controller
 
             'modules' => ['required','array','min:1'],
             'modules.*' => [Rule::exists('modules', 'id')->where('status', 1)],
+            
+            // On valide que positions est un tableau (optionnel mais propre)
+            'module_positions' => ['nullable', 'array'],
 
             'stagiaires' => ['nullable','array'],
             'stagiaires.*.email' => ['nullable','email','distinct'],
@@ -153,14 +159,32 @@ class GroupeController extends Controller
             ->with('students')
             ->firstOrFail();
 
-        // MAJ groupe
+        // 1. MAJ infos groupe
         $group->update([
             'name'        => $request->nom,
             'description' => $request->description,
         ]);
 
-        // MAJ modules
-        $group->modules()->sync($request->modules);
+        // 2. MAJ modules AVEC POSITIONS (CORRECTION ICI)
+        // On récupère les IDs et les positions envoyés par le formulaire
+        $moduleIds = $request->input('modules', []);
+        $positions = $request->input('module_positions', []);
+        
+        $syncData = [];
+        
+        // On construit le tableau de synchronisation
+        foreach ($moduleIds as $moduleId) {
+            // Si une position est envoyée pour ce module, on l'utilise, sinon on met 0
+            $position = isset($positions[$moduleId]) ? (int)$positions[$moduleId] : 0;
+            
+            $syncData[$moduleId] = ['position' => $position];
+        }
+
+        // On synchronise en passant les données pivot (position)
+        $group->modules()->sync($syncData);
+
+
+        // 3. Gestion des stagiaires (Suppression)
         $removeIds = collect($request->input('remove_students', []))
             ->map(fn($v) => (int) $v)
             ->filter()
@@ -175,7 +199,7 @@ class GroupeController extends Controller
             }
         }
 
-        // Ajout éventuel de nouveaux stagiaires
+        // 4. Gestion des stagiaires (Ajout / Modif)
         if ($request->filled('stagiaires')) {
             foreach ($request->stagiaires as $s) {
                 if (empty($s['email']) && empty($s['prenom']) && empty($s['nom'])) {

@@ -93,19 +93,11 @@ Route::middleware(['auth', 'role:formateur'])
     Route::post('/groupes/{group}/modules/{module}/lecons/reset', [GroupeController::class, 'resetModuleLessons'])
         ->name('groupes.modules.lecons.reset');
 
-        
+        // Dans le groupe middleware(['auth', 'role:formateur']) ...
 
-    // Route::get('/formations/{module}/section/{section}/lesson/{lecture}/quiz/demarrer', [QuizAttemptController::class, 'start'])
-    // ->name('formations.quiz.start');
-
-    // Route::get('/formations/{module}/section/{section}/lesson/{lecture}/quiz/{attempt}', [QuizAttemptController::class, 'showQuestion'])
-    // ->name('formations.quiz.question');
-
-    // Route::post('/formations/{module}/section/{section}/lesson/{lecture}/quiz/{attempt}/repondre', [QuizAttemptController::class, 'answer'])
-    // ->name('formations.quiz.answer');
-
-    // Route::get('/formations/{module}/section/{section}/lesson/{lecture}/quiz/{attempt}/resultat', [QuizAttemptController::class, 'result'])
-    // ->name('formations.quiz.result');
+// Route pour modifier le nombre de questions du quiz (Ajax ou Post classique)
+Route::post('/formations/lecture/{lecture}/update-quiz-count', [FormateurController::class, 'updateQuizCount'])
+        ->name('lecture.update_quiz_count');
 
   /*
 |--------------------------------------------------------------------------

@@ -244,7 +244,10 @@
                         'Accept': 'application/json'
                     },
                     body: JSON.stringify({
+                        // On envoie l'ID de la leçon si elle existe, sinon null
                         lecture_id: {{ $selectedSection->lectures->first()?->id ?? 'null' }},
+                        // AJOUT : On envoie toujours l'ID de la section pour sécuriser le tracking
+                        section_id: {{ $selectedSection->id }},
                         segment_start: startTime,
                         segment_end: endTime,
                         watch_time: duration
@@ -263,6 +266,8 @@
 
                 const data = {
                     lecture_id: {{ $selectedSection->lectures->first()?->id ?? 'null' }},
+                    // AJOUT ICI AUSSI
+                    section_id: {{ $selectedSection->id }},
                     segment_start: startTime,
                     segment_end: endTime,
                     watch_time: duration

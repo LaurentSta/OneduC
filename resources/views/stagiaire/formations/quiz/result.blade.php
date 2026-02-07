@@ -55,27 +55,65 @@
       <h2 class="text-base font-semibold text-gray-900">Détail des réponses</h2>
       <p class="text-sm text-gray-600 mt-1">Pour chaque question, seul le statut est affiché.</p>
 
-      <div class="mt-4 space-y-3">
+      <div class="mt-4 space-y-4">
         @foreach($rows as $row)
-          <div class="p-4 rounded-2xl border
-                      {{ $row->is_correct ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50' }}">
-            <div class="flex items-start justify-between gap-4">
-              <div class="min-w-0">
-                <p class="text-sm font-semibold text-gray-900 break-words">
-                  Q{{ (int)$row->position }}. {{ $row->question->question_text }}
-                </p>
-              </div>
+            <div class="p-5 rounded-2xl border transition-all
+                        {{ $row->is_correct ? 'border-green-200 bg-green-50/50' : 'border-red-200 bg-red-50/50' }}">
+                
+                {{-- En-tête question --}}
+                <div class="flex items-start justify-between gap-4 mb-3">
+                    <p class="text-[15px] font-bold text-gray-800">
+                        Q{{ $row->position }}. {{ $row->question->question_text }}
+                    </p>
+                    <span class="shrink-0 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide
+                                {{ $row->is_correct ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }}">
+                        {{ $row->is_correct ? 'Correct' : 'Erreur' }}
+                    </span>
+                </div>
 
-              <div class="shrink-0">
-                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold
-                            {{ $row->is_correct ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
-                  {{ $row->is_correct ? 'Correct' : 'Incorrect' }}
-                </span>
-              </div>
+                {{-- Analyse des réponses (Feedback détaillé) --}}
+                <div class="space-y-2 pl-4 border-l-2 {{ $row->is_correct ? 'border-green-200' : 'border-red-200' }}">
+                    @php
+                        // Décodage des réponses données par le stagiaire (JSON stocké en base)
+                        $givenIds = json_decode($row->answer_option_ids ?? '[]', true) ?? [];
+                        if (!is_array($givenIds)) $givenIds = [(int)$givenIds]; 
+                    @endphp
+
+                    @foreach($row->question->options as $opt)
+                        @php
+                            $isSelected = in_array($opt->id, $givenIds);
+                            $isExpected = (bool)$opt->is_correct;
+                        @endphp
+
+                        {{-- On affiche uniquement si c'est la réponse choisie ou la réponse attendue --}}
+                        @if($isSelected || $isExpected)
+                            <div class="flex items-center gap-2 text-sm">
+                                {{-- Icône d'état --}}
+                                @if($isSelected && $isExpected)
+                                    <i class="ti ti-circle-check-filled text-green-600 text-lg"></i> {{-- Bon choix --}}
+                                @elseif($isSelected && !$isExpected)
+                                    <i class="ti ti-circle-x-filled text-red-500 text-lg"></i> {{-- Mauvais choix --}}
+                                @elseif(!$isSelected && $isExpected)
+                                    <i class="ti ti-arrow-right text-bleuone text-lg"></i> {{-- Correction --}}
+                                @endif
+
+                                <span class="{{ $isSelected ? 'font-semibold' : 'text-gray-500 italic' }}">
+                                    {{ $opt->option_text }}
+                                </span>
+
+                                {{-- Label explicite --}}
+                                @if(!$isSelected && $isExpected)
+                                    <span class="text-xs text-bleuone font-bold ml-auto">(Solution)</span>
+                                @elseif($isSelected && !$isExpected)
+                                    <span class="text-xs text-red-500 font-bold ml-auto">(Votre réponse)</span>
+                                @endif
+                            </div>
+                        @endif
+                    @endforeach
+                </div>
             </div>
-          </div>
         @endforeach
-      </div>
+    </div>
     </div>
 
     {{-- Actions --}}
@@ -83,8 +121,9 @@
       <form method="POST"
             action="{{ route('stagiaire.lesson.quiz.restart', ['module'=>$module->id,'section'=>$section->id,'lecture'=>$lecture->id,'attempt'=>$attempt->id]) }}">
         @csrf
+        {{-- AJOUT DE cursor-pointer ICI --}}
         <button type="submit"
-                class="inline-flex items-center justify-center px-6 py-3 bg-white border border-gray-200 text-gray-800 font-semibold rounded-xl hover:bg-gray-50 transition">
+                class="inline-flex items-center justify-center px-6 py-3 bg-white border border-gray-200 text-gray-800 font-semibold rounded-xl hover:bg-gray-50 transition cursor-pointer">
           Recommencer le quiz
         </button>
       </form>

@@ -87,6 +87,7 @@ class QuizController extends Controller
                         'attempt_id'  => $attempt->id,
                         'question_id' => $q->id,
                         'position'    => $i + 1,
+                        'time_seconds'=> 0, // Initialisation
                     ]);
                 }
 
@@ -115,29 +116,22 @@ class QuizController extends Controller
             },
         ]);
 
-        // Appliquer overrides groupe (ordre + masquage) :
-        // - stagiaire : groupe via pivot group_user/group_module
-        // - formateur : pas de groupe "utilisateur" => pas d’override côté quiz (on garde l’ordre natif)
         $groupId = $this->isFormateur()
             ? null
             : $this->resolveGroupIdForUserAndModule((int) auth()->id(), (int) $module->id);
 
         $this->applyGroupLessonOverrides($module, $groupId);
 
-        // Recaler la section depuis le module filtré
         $section = $module->sections->firstWhere('id', (int) $section->id);
         abort_unless($section, 404);
 
-        // Bloquer l’accès si la leçon est masquée par la personnalisation (stagiaire)
         $visibleIds = $module->sections->flatMap(fn ($s) => $s->lectures)->pluck('id')->all();
         abort_unless(in_array((int) $lecture->id, $visibleIds, true), 404);
 
-        // Sidebar : stats + statuts sections
         $lectures = $module->sections->flatMap(fn ($s) => $s->lectures)->values();
         $lectureStats = $this->buildLectureStats($lectures, (int) auth()->id());
         $sectionStatuses = $this->computeSectionStatuses($module, $lectureStats);
 
-        // Si tentative déjà finie -> résultat
         if (!is_null($attempt->finished_at)) {
             return $this->redirectResult($module, $section, $lecture, $attempt);
         }
@@ -155,7 +149,11 @@ class QuizController extends Controller
 
         $question = $aq->question;
 
-        // Même vue stagiaire pour formateur (objectif : expérience identique)
+        // --- 🟢 AJOUT : CHRONOMÈTRE DÉMARRÉ ---
+        // On stocke l'heure précise d'affichage de la question pour calculer la durée ensuite
+        session()->put("quiz_timer_{$attempt->id}_{$question->id}", now());
+        // -------------------------------------
+
         return view('stagiaire.formations.quiz.question', [
             'module'          => $module,
             'section'         => $section,
@@ -164,12 +162,8 @@ class QuizController extends Controller
             'attempt'         => $attempt,
             'aq'              => $aq,
             'question'        => $question,
-
-            // Sidebar
             'lectureStats'    => $lectureStats,
             'sectionStatuses' => $sectionStatuses,
-
-            // Optionnel : utile si tu veux afficher “mode formateur”
             'isFormateur'     => $this->isFormateur(),
         ]);
     }
@@ -220,7 +214,6 @@ class QuizController extends Controller
             abort(422, 'Type de question non pris en charge.');
         }
 
-        // Correction stricte : ensemble exact
         $correctIds = $question->options
             ->where('is_correct', true)
             ->pluck('id')
@@ -231,9 +224,29 @@ class QuizController extends Controller
             $selectedIds->diff($correctIds)->isEmpty()
             && $correctIds->diff($selectedIds)->isEmpty();
 
+        // --- 🟢 CORRECTION DU CALCUL DU TEMPS (Timer) ---
+        $sessionKey = "quiz_timer_{$attempt->id}_{$question->id}";
+        $startTime = session()->get($sessionKey);
+        $duration = 0;
+
+        if ($startTime) {
+            // On utilise abs() pour forcer un nombre positif même si l'horloge dérive
+            $duration = (int) abs(now()->diffInSeconds($startTime));
+            session()->forget($sessionKey); // Nettoyage
+        } else {
+            // Fallback (si la session a expiré ou F5)
+            $lastActivity = $attempt->updated_at ?? $attempt->started_at;
+            // Là aussi, on sécurise avec abs()
+            $duration = (int) abs(now()->diffInSeconds($lastActivity));
+            // On plafonne à 5min (300s) pour éviter les valeurs folles
+            if ($duration > 300) $duration = 300; 
+        }
+        // ------------------------------------------
+
         $updateAttemptQuestion = [
-            'is_correct'  => (int) $isCorrect,
-            'answered_at' => now(),
+            'is_correct'   => (int) $isCorrect,
+            'answered_at'  => now(),
+            'time_seconds' => $duration, // Sera toujours >= 0 maintenant
         ];
 
         if ($this->attemptQuestionHasColumn('answer_option_ids')) {
@@ -245,6 +258,9 @@ class QuizController extends Controller
         }
 
         $current->update($updateAttemptQuestion);
+        
+        // On touche aussi le updated_at de la tentative pour le fallback de la question suivante
+        $attempt->touch();
 
         $hasPending = $attempt->attemptQuestions()->whereNull('answered_at')->exists();
         if ($hasPending) {
@@ -256,14 +272,13 @@ class QuizController extends Controller
         return $this->redirectResult($module, $section, $lecture, $attempt);
     }
 
-    /**
-     * Affiche le résultat final.
-     */
+    // ... (Méthode result() inchangée) ...
     public function result(Module $module, ModuleSection $section, ModuleLecture $lecture, QuizAttempt $attempt)
     {
+        // (Copier le contenu de votre méthode result() existante ici, elle ne change pas)
         $this->assertLectureContext($module, $section, $lecture);
         $this->assertAttemptContext($attempt, $lecture);
-
+        // ... chargements ...
         // Sidebar
         $module->load([
             'sections' => function ($q) {
@@ -371,16 +386,12 @@ class QuizController extends Controller
         ]);
     }
 
-    /**
-     * Recommencer : stagiaire (après fin) et formateur (toujours possible).
-     * => redirige vers start() avec restart=1 (URL signée).
-     */
+    // ... (Restart, Assertions inchangés) ...
     public function restart(Module $module, ModuleSection $section, ModuleLecture $lecture, QuizAttempt $attempt)
     {
         $this->assertLectureContext($module, $section, $lecture);
         $this->assertAttemptContext($attempt, $lecture);
 
-        // Stagiaire : on ne redémarre que si terminé
         if (!$this->isFormateur()) {
             abort_if(is_null($attempt->finished_at), 403);
         }
@@ -395,18 +406,12 @@ class QuizController extends Controller
         );
     }
 
-    /**
-     * Sécurité : module/section/lecture cohérents.
-     */
     private function assertLectureContext(Module $module, ModuleSection $section, ModuleLecture $lecture): void
     {
         abort_unless((int) $lecture->module_id === (int) $module->id, 404);
         abort_unless((int) $lecture->section_id === (int) $section->id, 404);
     }
 
-    /**
-     * Sécurité : tentative appartient à l'utilisateur et à la leçon.
-     */
     private function assertAttemptContext(QuizAttempt $attempt, ModuleLecture $lecture): void
     {
         abort_if((int) $attempt->user_id !== (int) auth()->id(), 403);
@@ -414,7 +419,7 @@ class QuizController extends Controller
     }
 
     /**
-     * Finalise la tentative.
+     * Finalise la tentative et calcule le temps TOTAL.
      */
     private function finalizeAttempt(QuizAttempt $attempt): void
     {
@@ -423,35 +428,35 @@ class QuizController extends Controller
 
         $percent = (int) round(($correct / $total) * 100);
 
-        $payload = [
-            'score'       => $percent,
-            'percent'     => $percent,
-            'passed'      => $percent >= 50 ? 1 : 0,
-            'finished_at' => now(),
-        ];
+        // --- 🟢 AJOUT : SOMME DES TEMPS ---
+        // On additionne le temps de toutes les questions pour avoir le temps total de la tentative
+        $totalTime = $attempt->attemptQuestions()->sum('time_seconds');
+        // ----------------------------------
 
-        if ($this->attemptHasColumn('total_time_seconds') && is_null($attempt->total_time_seconds)) {
-            $payload['total_time_seconds'] = 0;
-        }
+        $payload = [
+            'score'              => $percent,
+            'percent'            => $percent,
+            'passed'             => $percent >= 50 ? 1 : 0,
+            'finished_at'        => now(),
+            'total_time_seconds' => (int) $totalTime, // Sauvegarde du total
+        ];
 
         $attempt->forceFill($payload)->save();
     }
 
-    /**
-     * Payload de création compatible avec ta table quiz_attempts.
-     */
+    // ... (Reste des méthodes privées : attemptCreatePayload, attemptHasColumn, etc. inchangées) ...
     private function attemptCreatePayload(ModuleLecture $lecture): array
     {
         return [
-            'user_id'            => auth()->id(),
-            'lecture_id'         => $lecture->id,
-            'started_at'         => now(),
-            'finished_at'        => null,
-            'total_questions'    => (int) $lecture->quiz_questions_per_attempt,
-            'score'              => 0,
-            'percent'            => 0,
-            'passed'             => 0,
-            'total_time_seconds' => 0,
+            'user_id'              => auth()->id(),
+            'lecture_id'           => $lecture->id,
+            'started_at'           => now(),
+            'finished_at'          => null,
+            'total_questions'      => (int) $lecture->quiz_questions_per_attempt,
+            'score'                => 0,
+            'percent'              => 0,
+            'passed'               => 0,
+            'total_time_seconds'   => 0,
         ];
     }
 
@@ -485,26 +490,17 @@ class QuizController extends Controller
         ]);
     }
 
-    /**
-     * Prefix routes : formateur vs stagiaire
-     */
     private function routeName(string $suffix): string
     {
-        // Exemples attendus :
-        // - quiz.start
-        // - lesson.quiz.question
-        // - lesson.quiz.result
         $prefix = $this->isFormateur() ? 'formateur' : 'stagiaire';
         $name = $prefix . '.' . $suffix;
 
-        // Sécurité : si la route formateur n’existe pas encore, on retombe sur stagiaire
         if (!Route::has($name)) {
             $fallback = 'stagiaire.' . $suffix;
             if (Route::has($fallback)) {
                 return $fallback;
             }
         }
-
         return $name;
     }
 
@@ -520,20 +516,17 @@ class QuizController extends Controller
             ->where('group_user.user_id', $userId)
             ->where('group_module.module_id', $moduleId)
             ->value('group_user.group_id');
-
         return $gid ? (int) $gid : null;
     }
 
     private function applyGroupLessonOverrides(Module $module, ?int $groupId): void
     {
         if (!$groupId) return;
-
         $over = GroupModuleLecture::query()
             ->where('group_id', $groupId)
             ->where('module_id', $module->id)
             ->get()
             ->keyBy('lecture_id');
-
         if ($over->isEmpty()) return;
 
         $module->sections->each(function ($sec) use ($over) {
@@ -551,11 +544,10 @@ class QuizController extends Controller
         });
     }
 
-    /**
-     * Sidebar : stats par leçon (quiz si activé, sinon statut SCORM).
-     */
     private function buildLectureStats($lectures, int $userId): array
     {
+        // (Copiez votre méthode buildLectureStats existante ici, elle ne change pas pour le timer)
+        // ... Code existant ...
         $lectureIds = $lectures->pluck('id')->all();
 
         $attempts = QuizAttempt::query()
@@ -600,10 +592,9 @@ class QuizController extends Controller
         $stats = [];
 
         foreach ($lectures as $lec) {
-            // Quiz activé => sidebar sur quiz
             if ((bool) ($lec->quiz_enabled ?? false)) {
-                $attempt  = $attempts->get($lec->id);
-                $planned  = (int) ($lec->quiz_questions_per_attempt ?? 0);
+                $attempt = $attempts->get($lec->id);
+                $planned = (int) ($lec->quiz_questions_per_attempt ?? 0);
 
                 if (!$attempt) {
                     $stats[$lec->id] = [
@@ -648,10 +639,10 @@ class QuizController extends Controller
             }
 
             // Sinon : SCORM
-            $hasStarted  = (int) ($started[$lec->id] ?? 0) > 0;
-            $sc          = $scores->get($lec->id);
+            $hasStarted   = (int) ($started[$lec->id] ?? 0) > 0;
+            $sc           = $scores->get($lec->id);
             $lessonStatus = strtolower((string) ($sc->lesson_status ?? ''));
-            $isCompleted = in_array($lessonStatus, ['completed', 'passed'], true) || (bool) ($sc->is_completed ?? false);
+            $isCompleted  = in_array($lessonStatus, ['completed', 'passed'], true) || (bool) ($sc->is_completed ?? false);
 
             if (!$hasStarted) $status = 'not_started';
             elseif ($isCompleted) $status = 'completed';
@@ -676,21 +667,17 @@ class QuizController extends Controller
     private function computeSectionStatuses(Module $module, array $lectureStats): array
     {
         $out = [];
-
         foreach ($module->sections as $sec) {
             $total = $sec->lectures->count();
             if ($total === 0) {
                 $out[$sec->id] = 'not_started';
                 continue;
             }
-
             $ok = $sec->lectures->filter(function ($lec) use ($lectureStats) {
                 return in_array($lectureStats[$lec->id]['status'] ?? null, ['completed'], true);
             })->count();
-
             $out[$sec->id] = ($ok === $total) ? 'completed' : ($ok > 0 ? 'in_progress' : 'not_started');
         }
-
         return $out;
     }
 }

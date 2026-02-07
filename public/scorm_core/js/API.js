@@ -31,7 +31,14 @@
     const wrapper = window.parent?.document.getElementById("next-lesson-wrapper");
     const bouton = window.parent?.document.getElementById("next-lesson-button");
     const texteBouton = window.parent?.document.getElementById("next-button-text");
-
+    if (wrapper && bouton) {
+        wrapper.classList.remove("hidden");
+        
+        // CORRECTION : Forcer l'opacité et le curseur
+        bouton.style.opacity = "1";
+        bouton.style.pointerEvents = "auto"; // Réactive le clic et le curseur
+        bouton.style.cursor = "pointer";    // Force l'affichage de la main
+    }
     if (!wrapper || !bouton || !context) {
       return;
     }

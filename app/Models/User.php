@@ -19,7 +19,6 @@ class User extends Authenticatable
         'password',
         'remember_token',
     ];
-
     // ✅ Casts de champs
     protected function casts(): array
     {
@@ -27,6 +26,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'status' => 'boolean',
+            'password_changed_at' => 'datetime', // <--- AJOUTER CETTE LIGNE
         ];
     }
     protected function email(): Attribute
@@ -91,6 +91,11 @@ class User extends Authenticatable
     public function getStatutAttribute()
     {
         return $this->status ? 'Actif' : 'Inactif';
+    }
+    // ✅ Helper pour savoir si l'utilisateur doit changer son mot de passe
+    public function getMustChangePasswordAttribute(): bool
+    {
+        return is_null($this->password_changed_at);
     }
     // Ce stagiaire appartient à un formateur
     public function formateur()
