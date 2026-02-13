@@ -29,6 +29,18 @@ Route::view('/conditions-utilisation', 'frontend.contenu.conditions-utilisation'
 Route::view('/confidentialite', 'frontend.contenu.confidentialite')->name('confidentialite');
 Route::view('/cookies', 'frontend.contenu.cookies')->name('cookies');
 
+
+// Route pour le Hub de connexion (Version corrigée)
+Route::get('/connexion-choix', function () {
+    // Si le fichier est dans resources/views/frontend/contenu/
+    return view('frontend.contenu.login-hub'); 
+})->name('login.selection');
+
+// Tes routes existantes restent inchangées, elles seront ciblées par les boutons du Hub
+Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
+Route::get('/stagiaire/connexion', [StagiaireController::class, 'showCodeForm'])->name('stagiaire.code.form');
+
+
 // ----------------------------------------------------------
 // 🧠 Catégories & sous-catégories
 // ----------------------------------------------------------
