@@ -1,160 +1,138 @@
 {{-- /home/laurents/Oneduc_Dev/resources/views/admin/backend/modules/modules.blade.php --}}
-
 @extends('admin.admin_dashboard')
 @section('admin')
 
 <div class="w-full px-6 lg:px-8">
-  <div class="bg-white rounded-[20px] shadow-soft p-6 my-6 w-full border border-gray-100">
+  <div class="bg-white rounded-lg shadow-sm p-5 my-6 w-full border border-gray-300">
 
-    {{-- En-tête minimal (sans banderole) --}}
-    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-gray-100 pb-4 mb-6">
+    {{-- En-tête Administratif --}}
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between border-b-2 border-bleuone pb-3 mb-4">
       <div>
-        <h1 class="text-[20px] font-varela text-bleuone">Modules</h1>
-        <p class="text-sm text-gray-600">
-          Créer, organiser et gérer les modules (sections, leçons, quiz).
-        </p>
+        <h1 class="text-lg font-bold text-bleuone uppercase tracking-tight">Catalogue des Modules</h1>
+        <p class="text-gray-500 text-[11px] italic">Gestion administrative de l'offre de formation</p>
       </div>
 
       <div class="flex flex-wrap gap-2">
         <a href="{{ route('admin.modules.add') }}"
-           class="inline-flex items-center gap-2 px-4 py-2 bg-orangeone text-white text-sm font-varela rounded-lg hover:bg-orangeone-hover transition cursor-pointer">
+           class="inline-flex items-center gap-2 px-3 py-1.5 bg-orangeone text-white text-[11px] font-bold uppercase rounded hover:bg-orangeone-hover transition shadow-sm">
           <i class="ti ti-plus"></i>
-          Ajouter un module
+          Nouveau module
         </a>
       </div>
     </div>
 
-    {{-- Tableau --}}
-    <div class="overflow-x-auto">
-      <table id="tableModules" class="table-oneduc w-full text-sm text-left text-gray-700">
-        <thead class="text-xs uppercase">
+    {{-- Tableau de Gestion --}}
+    <div class="overflow-x-auto border border-gray-300 rounded-sm">
+      <table id="tableModules" class="w-full text-left border-collapse">
+        {{-- En-tête --}}
+        <thead class="bg-gray-200 text-[10px] uppercase font-bold text-gray-700 tracking-wide">
           <tr>
-            <th class="px-4 py-3">#</th>
-            <th class="px-4 py-3">Nom</th>
-            <th class="px-4 py-3">Catégorie</th>
-            <th class="px-4 py-3">Formateur</th>
-            <th class="px-4 py-3 text-center">Sections</th>
-            <th class="px-4 py-3 text-center">Leçons</th>
-            <th class="px-4 py-3 text-center">Questions</th>
-            <th class="px-4 py-3">Image</th>
-            <th class="px-4 py-3 text-center">Actif</th>
-            <th class="px-4 py-3 text-right">Actions</th>
+            <th class="px-2 py-2 border-r border-gray-300 w-8 text-center">#</th>
+            <th class="px-3 py-2 border-r border-gray-300">Désignation</th>
+            <th class="px-3 py-2 border-r border-gray-300 w-32">Catégorie</th>
+            <th class="px-3 py-2 border-r border-gray-300 w-32">Formateur</th>
+            <th class="px-2 py-2 border-r border-gray-300 text-center w-16">Sect.</th>
+            <th class="px-2 py-2 border-r border-gray-300 text-center w-16">Leç.</th>
+            <th class="px-2 py-2 border-r border-gray-300 text-center w-16">Quiz</th>
+            <th class="px-2 py-2 border-r border-gray-300 text-center w-16">Img</th>
+            <th class="px-2 py-2 border-r border-gray-300 text-center w-16">État</th>
+            <th class="px-3 py-2 text-right w-48">Actions</th>
           </tr>
         </thead>
 
-        <tfoot class="text-xs uppercase">
-          <tr>
-            <th class="px-4 py-3">#</th>
-            <th class="px-4 py-3">Nom</th>
-            <th class="px-4 py-3">Catégorie</th>
-            <th class="px-4 py-3">Formateur</th>
-            <th class="px-4 py-3 text-center">Sections</th>
-            <th class="px-4 py-3 text-center">Leçons</th>
-            <th class="px-4 py-3 text-center">Questions</th>
-            <th class="px-4 py-3">Image</th>
-            <th class="px-4 py-3 text-center">Actif</th>
-            <th class="px-4 py-3 text-right">Actions</th>
-          </tr>
-        </tfoot>
-
-        <tbody>
+        <tbody class="text-[11px] text-gray-700">
           @forelse ($modules as $key => $module)
-            <tr class="border-b border-gray-100">
+            <tr class="border-b border-gray-200 transition-colors">
 
-              <td class="px-4 py-3 whitespace-nowrap">{{ $key + 1 }}</td>
+              {{-- Index --}}
+              <td class="px-2 py-1.5 border-r border-gray-200 text-center font-mono text-gray-400">
+                {{ $key + 1 }}
+              </td>
 
-              <td class="px-4 py-3">
-                <div class="font-medium text-gray-900">{{ $module->module_name }}</div>
-                <div class="text-gray-600 text-xs line-clamp-2" title="{{ $module->description }}">
-                  {{ \Illuminate\Support\Str::limit($module->description, 110) }}
+              {{-- Nom --}}
+              <td class="px-3 py-1.5 border-r border-gray-200">
+                <div class="font-bold text-bleuone truncate max-w-[250px]" title="{{ $module->module_name }}">
+                    {{ $module->module_name }}
                 </div>
+                <div class="text-[9px] text-gray-400 italic">ID: {{ $module->id }}</div>
               </td>
 
-              <td class="px-4 py-3">
-                {{ optional($module->category)->category_name ?? '—' }}
+              {{-- Catégorie --}}
+              <td class="px-3 py-1.5 border-r border-gray-200">
+                <span class="px-1.5 py-0.5 bg-white border border-gray-300 rounded text-[9px] font-bold uppercase text-gray-600 shadow-sm">
+                    {{ optional($module->category)->category_name ?? '—' }}
+                </span>
               </td>
 
-              <td class="px-4 py-3">
+              {{-- Formateur --}}
+              <td class="px-3 py-1.5 border-r border-gray-200 font-medium text-gray-600 truncate">
                 {{ optional($module->formateur)->name ?? '—' }}
               </td>
 
-              <td class="px-4 py-3 text-center">
-                {{ $module->sections_count ?? ($module->relationLoaded('sections') ? $module->sections->count() : 0) }}
+              {{-- Stats --}}
+              <td class="px-2 py-1.5 border-r border-gray-200 text-center font-bold text-bleuone">
+                {{ $module->sections_count ?? 0 }}
               </td>
 
-              <td class="px-4 py-3 text-center">
-                {{ $module->lectures_count ?? (method_exists($module, 'lectures') && $module->relationLoaded('lectures') ? $module->lectures->count() : ($module->lectures_count ?? 0)) }}
+              <td class="px-2 py-1.5 border-r border-gray-200 text-center font-bold text-orangeone">
+                {{ $module->lectures_count ?? 0 }}
               </td>
 
-              <td class="px-4 py-3 text-center" title="Somme des questions planifiées (quiz)">
+              <td class="px-2 py-1.5 border-r border-gray-200 text-center font-bold text-vertone">
                 {{ (int)($module->quiz_questions_planned ?? 0) }}
               </td>
 
-              <td class="px-4 py-3">
-                <img src="{{ $module->module_image ? asset('storage/'.$module->module_image) : asset('upload/module_images/NoImage.png') }}"
-                     alt="Image du module {{ $module->module_name }}"
-                     class="h-10 w-10 rounded-full object-cover border border-gray-200"
-                     loading="lazy">
+              {{-- Image --}}
+              <td class="px-2 py-1.5 border-r border-gray-200 text-center">
+                <div class="flex justify-center">
+                    <img src="{{ $module->module_image ? asset('storage/'.$module->module_image) : asset('upload/module_images/NoImage.png') }}"
+                         class="h-6 w-6 rounded-sm border border-gray-300 object-cover bg-white"
+                         loading="lazy">
+                </div>
               </td>
 
-              {{-- Actif --}}
-              <td class="px-4 py-3 text-center">
-                <form action="{{ route('admin.modules.toggle-status', $module->id) }}" method="POST">
+              {{-- Toggle Actif --}}
+              <td class="px-2 py-1.5 border-r border-gray-200 text-center">
+                <form action="{{ route('admin.modules.toggle-status', $module->id) }}" method="POST" class="flex justify-center">
                   @csrf
                   @method('PATCH')
-
                   <button type="submit"
-                          class="inline-flex items-center justify-start w-12 h-6 rounded-full transition cursor-pointer
-                                 {{ $module->status ? 'bg-vertone' : 'bg-gray-300' }}"
-                          aria-label="{{ $module->status ? 'Désactiver' : 'Activer' }} le module">
-                    <span class="sr-only">Basculer statut</span>
-                    <span class="h-5 w-5 bg-white rounded-full shadow transform transition
-                                 {{ $module->status ? 'translate-x-6' : 'translate-x-0' }}"></span>
+                          class="relative inline-flex items-center h-4 w-8 rounded-full transition-colors focus:outline-none
+                                 {{ $module->status ? 'bg-vertone' : 'bg-gray-300' }}">
+                    <span class="inline-block h-3 w-3 transform bg-white rounded-full transition-transform shadow-sm
+                                 {{ $module->status ? 'translate-x-4' : 'translate-x-1' }}"></span>
                   </button>
                 </form>
               </td>
 
-              {{-- Actions (menu) --}}
-              <td class="px-4 py-3 text-right relative">
-                <div class="inline-block text-left">
+              {{-- Actions --}}
+              <td class="px-3 py-1.5 text-right">
+                <div class="flex items-center justify-end gap-1">
+                  
+                  {{-- Config --}}
+                  <a href="{{ route('admin.modules.edit', $module->id) }}"
+                     class="group flex items-center gap-1 px-2 py-1 bg-white border border-gray-300 text-gray-600 rounded-sm hover:border-bleuone hover:text-bleuone transition text-[9px] font-bold uppercase shadow-sm"
+                     title="Configuration">
+                    <i class="ti ti-settings text-xs"></i>
+                    <span class="hidden xl:inline">Config</span>
+                  </a>
 
-                  <button type="button"
-                          class="inline-flex items-center justify-center w-9 h-9 rounded-full border border-bleuone/20 text-bleuone
-                                 hover:bg-bleuone hover:text-white transition cursor-pointer"
-                          aria-haspopup="true"
-                          aria-expanded="false"
-                          data-menu-trigger="menu-{{ $module->id }}">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M4 7h16M4 12h16M4 17h16"/>
-                    </svg>
-                    <span class="sr-only">Ouvrir le menu</span>
-                  </button>
+                  {{-- Contenu --}}
+                  <a href="{{ route('admin.modules.lecture.add', $module->id) }}"
+                     class="group flex items-center gap-1 px-2 py-1 bg-white border border-gray-300 text-gray-600 rounded-sm hover:bg-orangeone hover:border-orangeone hover:text-white transition text-[9px] font-bold uppercase shadow-sm"
+                     title="Contenu Pédagogique">
+                    <i class="ti ti-stack-2 text-xs"></i>
+                    <span class="hidden xl:inline">Contenu</span>
+                  </a>
 
-                  <div id="menu-{{ $module->id }}"
-                       class="hidden absolute right-0 z-20 mt-2 w-48 origin-top-right rounded-lg bg-white shadow-lg ring-1 ring-black/5 overflow-hidden">
-                    <div class="py-1">
-
-                      <a href="{{ route('admin.modules.edit', $module->id) }}"
-                         class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition cursor-pointer">
-                        Éditer
-                      </a>
-
-                      <a href="{{ route('admin.modules.lecture.add', $module->id) }}"
-                         class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition cursor-pointer">
-                        Contenu
-                      </a>
-
-                      <form action="{{ route('admin.modules.delete', ['id' => $module->id]) }}"
-                            method="GET"
-                            class="delete-module-form">
-                        <button type="submit"
-                                class="w-full text-left px-4 py-2 text-sm text-orangeone hover:bg-orangeone/10 transition cursor-pointer">
-                          Supprimer
-                        </button>
-                      </form>
-
-                    </div>
-                  </div>
+                  {{-- Supprimer --}}
+                  <form action="{{ route('admin.modules.delete', ['id' => $module->id]) }}" method="GET" class="delete-module-form">
+                    <button type="submit" 
+                            class="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-sm transition"
+                            title="Supprimer">
+                      <i class="ti ti-trash text-xs"></i>
+                    </button>
+                  </form>
 
                 </div>
               </td>
@@ -162,7 +140,9 @@
             </tr>
           @empty
             <tr>
-              <td colspan="10" class="px-4 py-6 text-center text-gray-500">Aucun module trouvé.</td>
+              <td colspan="10" class="px-4 py-8 text-center text-gray-400 italic bg-gray-50 text-xs">
+                  Aucun module trouvé dans le catalogue.
+              </td>
             </tr>
           @endforelse
         </tbody>
@@ -172,69 +152,55 @@
   </div>
 </div>
 
-{{-- Toastr --}}
+{{-- Styles CSS pour forcer l'alternance --}}
+<style>
+    /* Force l'alternance des lignes (Gris 100) même avec DataTables */
+    #tableModules tbody tr:nth-child(even) {
+        background-color: #f3f4f6 !important; /* Tailwind gray-100 */
+    }
+    
+    /* Force le blanc sur les lignes impaires */
+    #tableModules tbody tr:nth-child(odd) {
+        background-color: #ffffff !important;
+    }
+
+    /* Effet de survol orangé léger */
+    #tableModules tbody tr:hover {
+        background-color: rgba(233, 77, 42, 0.08) !important; /* Orangeone tint */
+    }
+
+    /* Ajustements DataTables pour éviter les doubles bordures */
+    table.dataTable { border-collapse: collapse !important; }
+    table.dataTable thead th, table.dataTable thead td { border-bottom: 1px solid #d1d5db !important; }
+    table.dataTable.no-footer { border-bottom: 1px solid #d1d5db !important; }
+</style>
+
+{{-- Scripts --}}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
-@if(session('success'))
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    toastr.success(@json(session('success')), 'Succès', { closeButton:true, progressBar:true, timeOut:5000 });
-  });
-</script>
-@endif
-@if(session('error'))
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    toastr.error(@json(session('error')), 'Erreur', { closeButton:true, progressBar:true, timeOut:5000 });
-  });
-</script>
-@endif
 
-{{-- DataTables --}}
 <script>
   document.addEventListener('DOMContentLoaded', () => {
     $('#tableModules').DataTable({
       language: { url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/fr-FR.json' },
-      order: [[1,'asc']],
+      order: [[1,'asc']], 
       columnDefs: [
-        { targets: [0,7,8,9], orderable: false },   // #, Image, Actif, Actions
-        { targets: [4,5,6,8], className: 'dt-center' },
+        { targets: [0,7,8,9], orderable: false }, 
+        { targets: [4,5,6,7,8], className: 'dt-center' },
         { targets: [9], className: 'dt-right' }
       ],
-      pageLength: 25
+      pageLength: 25,
+      autoWidth: false,
+      dom: '<"flex justify-between items-center mb-2 text-xs"f>rt<"flex justify-between items-center mt-2 text-xs"ip>'
     });
-  });
-</script>
 
-{{-- Menu Actions (avec fermeture douce via CSS global) --}}
-<script>
-  document.addEventListener('click', function(e) {
-    const openMenus = document.querySelectorAll('[id^="menu-"]:not(.hidden)');
-    const trigger = e.target.closest('[data-menu-trigger]');
-    const menu = e.target.closest('[id^="menu-"]');
+    @if(session('success')) toastr.success(@json(session('success'))); @endif
+    @if(session('error')) toastr.error(@json(session('error'))); @endif
 
-    if (!trigger && !menu) {
-      openMenus.forEach(m => m.classList.add('hidden'));
-      return;
-    }
-
-    if (trigger) {
-      const id = trigger.getAttribute('data-menu-trigger');
-      const el = document.getElementById(id);
-      openMenus.forEach(m => { if (m !== el) m.classList.add('hidden'); });
-      el.classList.toggle('hidden');
-      trigger.setAttribute('aria-expanded', el.classList.contains('hidden') ? 'false' : 'true');
-    }
-  });
-</script>
-
-{{-- Confirmation suppression --}}
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.delete-module-form').forEach(form => {
       form.addEventListener('submit', function(e) {
         e.preventDefault();
-        if (confirm("Êtes-vous sûr de vouloir supprimer ce module ? Cette action est irréversible.")) {
+        if (confirm("Action irréversible : Voulez-vous supprimer ce module ?")) {
           this.submit();
         }
       });

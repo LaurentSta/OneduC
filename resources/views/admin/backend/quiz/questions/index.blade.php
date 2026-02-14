@@ -1,117 +1,170 @@
+{{-- /home/laurents/Oneduc_Dev/resources/views/admin/backend/quiz/index.blade.php --}}
 @extends('admin.admin_dashboard')
 
 @section('admin')
-<div class="max-w-[1248px] mx-auto px-4">
-  <div class="bg-white rounded-[20px] shadow-md p-8 my-10 w-full">
+<div class="w-full px-6 lg:px-8 font-sans">
 
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-      <div>
-        <h1 class="text-xl font-raleway text-bleuone font-semibold">Quiz – Banque de questions</h1>
-        <p class="text-sm text-gray-600 mt-1">
-          Leçon : <span class="font-semibold text-gray-900">{{ $lecture->lecture_title }}</span>
-        </p>
-      </div>
-
-      <div class="flex items-center gap-2">
-        <a href="{{ route('admin.quiz.questions.create', ['lecture' => $lecture->id]) }}"
-           class="inline-flex items-center px-4 py-2 bg-orangeone text-white text-sm font-semibold rounded-lg hover:opacity-90 transition">
-          Ajouter une question
-        </a>
-
-        <a href="{{ route('admin.lectures.edit', ['id' => $lecture->id]) }}"
-           class="inline-flex items-center px-4 py-2 bg-bleuone text-white text-sm font-semibold rounded-lg hover:opacity-90 transition">
-          Retour à la leçon
-        </a>
-      </div>
-    </div>
-
-    @if(session('success'))
-      <div class="mb-4 p-3 bg-green-50 border border-green-200 text-green-800 rounded">
-        {{ session('success') }}
-      </div>
-    @endif
-
-    @if($errors->any())
-      <div class="mb-4 p-3 bg-red-50 border border-red-200 text-red-800 rounded">
-        <ul class="list-disc list-inside text-sm">
-          @foreach($errors->all() as $error)
-            <li>{{ $error }}</li>
-          @endforeach
-        </ul>
-      </div>
-    @endif
-
-    <div class="overflow-x-auto">
-      <table class="min-w-full text-sm">
-        <thead>
-          <tr class="text-left border-b">
-            <th class="py-3 pr-4">Question</th>
-            <th class="py-3 pr-4">Type</th>
-            <th class="py-3 pr-4">Options</th>
-            <th class="py-3 pr-4">Active</th>
-            <th class="py-3 pr-4 text-right">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          @forelse($questions as $q)
-            <tr class="border-b align-top">
-              <td class="py-3 pr-4">
-                <div class="font-medium text-gray-900">
-                  {{ \Illuminate\Support\Str::limit($q->question_text, 120) }}
-                </div>
-                <div class="text-xs text-gray-500 mt-1">
-                  ID: {{ $q->id }}
-                </div>
-              </td>
-              <td class="py-3 pr-4">
-                @php
-                  $label = match($q->type) {
-                    'single' => 'Choix unique',
-                    'multiple' => 'Choix multiple',
-                    'boolean' => 'Vrai / Faux',
-                    default => $q->type
-                  };
-                @endphp
-                <span class="inline-flex px-2 py-1 rounded bg-gray-100 text-gray-800">
-                  {{ $label }}
-                </span>
-              </td>
-              <td class="py-3 pr-4">
-                {{ $q->options_count }}
-              </td>
-              <td class="py-3 pr-4">
-                {!! $q->is_active ? '<span class="text-green-700 font-semibold">Oui</span>' : '<span class="text-gray-500">Non</span>' !!}
-              </td>
-              <td class="py-3 pr-0 text-right whitespace-nowrap">
-                <a href="{{ route('admin.quiz.questions.edit', ['lecture' => $lecture->id, 'question' => $q->id]) }}"
-                   class="inline-flex items-center px-3 py-2 bg-bleuone text-white text-xs font-semibold rounded-lg hover:opacity-90 transition">
-                  Modifier
+    {{-- Fil d'Ariane --}}
+    <nav class="flex mb-4 text-xs font-semibold uppercase tracking-wider text-gray-400" aria-label="Breadcrumb">
+        <ol class="inline-flex items-center space-x-2">
+            <li>
+                <a href="{{ route('admin.modules') }}" class="hover:text-orangeone flex items-center">
+                    <i class="ti ti-folders mr-1 text-sm"></i> Modules
                 </a>
+            </li>
+            <li>
+                <a href="{{ route('admin.modules.lecture.add', ['id' => $lecture->module_id]) }}" class="hover:text-orangeone flex items-center">
+                    <i class="ti ti-chevron-right mx-1"></i> Structure
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('admin.lectures.edit', ['id' => $lecture->id]) }}" class="hover:text-orangeone flex items-center">
+                    <i class="ti ti-chevron-right mx-1"></i> Édition Leçon
+                </a>
+            </li>
+            <li class="flex items-center">
+                <i class="ti ti-chevron-right mx-1"></i>
+                <span class="text-bleuone">Banque de Questions</span>
+            </li>
+        </ol>
+    </nav>
 
-                <form action="{{ route('admin.quiz.questions.destroy', ['lecture' => $lecture->id, 'question' => $q->id]) }}"
-                      method="POST"
-                      class="inline-block"
-                      onsubmit="return confirm('Supprimer cette question ?');">
-                  @csrf
-                  @method('DELETE')
-                  <button type="submit"
-                          class="inline-flex items-center px-3 py-2 bg-red-600 text-white text-xs font-semibold rounded-lg hover:opacity-90 transition">
-                    Supprimer
-                  </button>
-                </form>
-              </td>
-            </tr>
-          @empty
-            <tr>
-              <td colspan="5" class="py-8 text-center text-gray-600">
-                Aucune question pour cette leçon. Clique sur “Ajouter une question”.
-              </td>
-            </tr>
-          @endforelse
-        </tbody>
-      </table>
+    {{-- En-tête Administratif --}}
+    <div class="flex flex-col md:flex-row md:items-end md:justify-between border-b-2 border-bleuone pb-3 mb-6 gap-4">
+        <div>
+            <h1 class="text-xl font-bold text-bleuone uppercase tracking-tight">Gestion des Quiz</h1>
+            <p class="text-gray-500 text-[10px] italic">Banque de questions pour : <span class="font-bold text-gray-700">{{ $lecture->lecture_title }}</span></p>
+        </div>
+
+        <div class="flex gap-2">
+            <a href="{{ route('admin.lectures.edit', ['id' => $lecture->id]) }}"
+               class="px-3 py-1.5 bg-gray-100 text-gray-600 text-[11px] font-bold uppercase rounded border border-gray-300 hover:bg-gray-200 transition flex items-center gap-1">
+                <i class="ti ti-arrow-back-up"></i> Retour Leçon
+            </a>
+            <a href="{{ route('admin.quiz.questions.create', ['lecture' => $lecture->id]) }}"
+               class="px-4 py-1.5 bg-orangeone text-white text-[11px] font-bold uppercase rounded shadow-sm hover:bg-orangeone-hover transition flex items-center gap-1">
+                <i class="ti ti-plus"></i> Ajouter une question
+            </a>
+        </div>
     </div>
 
-  </div>
+    {{-- Alertes --}}
+    @if(session('success'))
+        <div class="mb-4 rounded-sm border-l-4 border-green-500 bg-green-50 p-3 text-xs text-green-800 font-medium shadow-sm">
+            <i class="ti ti-check mr-1"></i> {{ session('success') }}
+        </div>
+    @endif
+    @if($errors->any())
+        <div class="mb-4 rounded-sm border-l-4 border-red-500 bg-red-50 p-3 text-xs text-red-800 font-medium shadow-sm">
+            <ul class="list-disc list-inside">
+                @foreach($errors->all() as $error) <li>{{ $error }}</li> @endforeach
+            </ul>
+        </div>
+    @endif
+
+    {{-- Tableau de Gestion (Style Data Grid) --}}
+    <div class="bg-white border border-gray-300 rounded shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead class="bg-gray-200 text-[10px] uppercase font-bold text-gray-700 tracking-wide">
+                    <tr>
+                        <th class="px-3 py-2 border-r border-gray-300 w-12 text-center">ID</th>
+                        <th class="px-3 py-2 border-r border-gray-300">Énoncé de la question</th>
+                        <th class="px-3 py-2 border-r border-gray-300 w-32 text-center">Type</th>
+                        <th class="px-3 py-2 border-r border-gray-300 w-20 text-center">Options</th>
+                        <th class="px-3 py-2 border-r border-gray-300 w-20 text-center">État</th>
+                        <th class="px-3 py-2 text-right w-40">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="text-[11px] text-gray-700">
+                    @forelse($questions as $q)
+                        <tr class="border-b border-gray-200 even:bg-gray-50 hover:bg-orangeone/5 transition-colors">
+                            {{-- ID --}}
+                            <td class="px-3 py-1.5 border-r border-gray-200 text-center font-mono text-gray-500">
+                                {{ $q->id }}
+                            </td>
+
+                            {{-- Question --}}
+                            <td class="px-3 py-1.5 border-r border-gray-200 font-medium text-bleuone">
+                                {{ \Illuminate\Support\Str::limit($q->question_text, 100) }}
+                            </td>
+
+                            {{-- Type --}}
+                            <td class="px-3 py-1.5 border-r border-gray-200 text-center">
+                                @php
+                                    $badgeClass = match($q->type) {
+                                        'single' => 'bg-blue-100 text-blue-800 border-blue-200',
+                                        'multiple' => 'bg-purple-100 text-purple-800 border-purple-200',
+                                        'boolean' => 'bg-gray-100 text-gray-800 border-gray-200',
+                                        default => 'bg-gray-100 text-gray-800 border-gray-200'
+                                    };
+                                    $label = match($q->type) {
+                                        'single' => 'Choix Unique',
+                                        'multiple' => 'Choix Multiple',
+                                        'boolean' => 'Vrai / Faux',
+                                        default => $q->type
+                                    };
+                                @endphp
+                                <span class="px-2 py-0.5 rounded border {{ $badgeClass }} text-[9px] font-bold uppercase">
+                                    {{ $label }}
+                                </span>
+                            </td>
+
+                            {{-- Nb Options --}}
+                            <td class="px-3 py-1.5 border-r border-gray-200 text-center font-mono">
+                                {{ $q->options_count }}
+                            </td>
+
+                            {{-- État --}}
+                            <td class="px-3 py-1.5 border-r border-gray-200 text-center">
+                                @if($q->is_active)
+                                    <span class="inline-flex items-center gap-1 text-green-700 font-bold text-[10px] uppercase">
+                                        <i class="ti ti-check"></i> Actif
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center gap-1 text-gray-400 font-bold text-[10px] uppercase">
+                                        <i class="ti ti-x"></i> Inactif
+                                    </span>
+                                @endif
+                            </td>
+
+                            {{-- Actions --}}
+                            <td class="px-3 py-1.5 text-right">
+                                <div class="flex items-center justify-end gap-2">
+                                    <a href="{{ route('admin.quiz.questions.edit', ['lecture' => $lecture->id, 'question' => $q->id]) }}"
+                                       class="group flex items-center gap-1 px-2 py-1 bg-white border border-gray-300 text-bleuone rounded-sm hover:border-bleuone hover:bg-bleuone hover:text-white transition text-[9px] font-bold uppercase shadow-sm"
+                                       title="Modifier">
+                                        <i class="ti ti-pencil"></i> <span class="hidden md:inline">Éditer</span>
+                                    </a>
+
+                                    <form action="{{ route('admin.quiz.questions.destroy', ['lecture' => $lecture->id, 'question' => $q->id]) }}"
+                                          method="POST"
+                                          class="inline-block"
+                                          onsubmit="return confirm('Attention : Cette action est irréversible. Supprimer la question ?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit"
+                                                class="group flex items-center gap-1 px-2 py-1 bg-white border border-gray-300 text-red-600 rounded-sm hover:border-red-600 hover:bg-red-600 hover:text-white transition text-[9px] font-bold uppercase shadow-sm"
+                                                title="Supprimer">
+                                            <i class="ti ti-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="6" class="px-4 py-8 text-center text-gray-400 italic bg-gray-50 text-xs border-b border-gray-200">
+                                <div class="flex flex-col items-center gap-2">
+                                    <i class="ti ti-folder-off text-2xl text-gray-300"></i>
+                                    <span>Aucune question enregistrée pour le moment.</span>
+                                </div>
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 @endsection
