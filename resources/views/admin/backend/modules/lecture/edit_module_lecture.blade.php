@@ -97,20 +97,43 @@
         <section id="tab-contenu" class="tab-panel" role="tabpanel" aria-labelledby="tab-contenu">
           <div class="space-y-6">
 
-            {{-- Titre --}}
-            <div>
-              <label for="lecture_title" class="block text-sm font-extrabold text-bleuone uppercase mb-2">
-                Titre de la leçon
-              </label>
-              <input
-                type="text"
-                name="lecture_title"
-                id="lecture_title"
-                value="{{ old('lecture_title', $mlecture->lecture_title) }}"
-                class="w-full px-5 py-4 rounded-2xl bg-gray-50 border border-gray-200 text-gray-900 font-semibold
-                       focus:outline-none focus:ring-2 focus:ring-orangeone/40 focus:border-orangeone transition"
-                required
-              >
+        
+            {{-- Titre et Durée --}}
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                
+                {{-- Colonne 1 : Titre (prend 75% de la largeur) --}}
+                <div class="md:col-span-3">
+                    <label for="lecture_title" class="block text-sm font-extrabold text-bleuone uppercase mb-2">
+                        Titre de la leçon
+                    </label>
+                    <input
+                        type="text"
+                        name="lecture_title"
+                        id="lecture_title"
+                        value="{{ old('lecture_title', $mlecture->lecture_title) }}"
+                        class="w-full px-5 py-4 rounded-2xl bg-gray-50 border border-gray-200 text-gray-900 font-semibold
+                              focus:outline-none focus:ring-2 focus:ring-orangeone/40 focus:border-orangeone transition"
+                        required
+                    >
+                </div>
+
+                {{-- Colonne 2 : Durée (prend 25% de la largeur) --}}
+                <div class="md:col-span-1">
+                    <label for="duration" class="block text-sm font-extrabold text-bleuone uppercase mb-2">
+                        <i class="ti ti-clock"></i> Durée (min)
+                    </label>
+                    <input
+                        type="number"
+                        name="duration"
+                        id="duration"
+                        value="{{ old('duration', $mlecture->duration) }}"
+                        min="0"
+                        placeholder="Ex: 10"
+                        class="w-full px-5 py-4 rounded-2xl bg-gray-50 border border-gray-200 text-gray-900 font-semibold
+                              focus:outline-none focus:ring-2 focus:ring-orangeone/40 focus:border-orangeone transition text-center"
+                    >
+                </div>
+
             </div>
 
             {{-- BLOC SCORM --}}

@@ -450,11 +450,16 @@ class ModuleController extends Controller
  /**
      * 12) Mise à jour d’une lecture (admin)
      */
+    /**
+     * 12) Mise à jour d’une lecture (admin)
+     */
     public function UpdateModuleLecture(Request $request)
     {
         $validated = $request->validate([
             'id'                         => 'required|exists:module_lectures,id',
             'lecture_title'              => 'required|string|max:255',
+            // AJOUT : Validation de la durée (entier, positif ou nul)
+            'duration'                   => 'nullable|integer|min:0',
 
             // Autoriser explicitement la persistance du chemin
             'scorm_path'                 => 'nullable|string|max:255',
@@ -502,12 +507,14 @@ class ModuleController extends Controller
         // Transaction: cohérence leçon + objectifs
         DB::transaction(function () use ($lecture, $validated, $request, $useActive, $quizEnabled) {
 
-            // Logique de persistance du chemin : 
-            // On prend la valeur validée, si nulle on garde l'ancienne en base
+            // Logique de persistance du chemin
             $finalScormPath = $validated['scorm_path'] ?? $lecture->scorm_path;
 
             $lecture->update([
                 'lecture_title'              => $validated['lecture_title'],
+                // AJOUT : Sauvegarde de la durée
+                'duration'                   => $request->input('duration'),
+                
                 'scorm_path'                 => $finalScormPath,
 
                 'scorm_package_id'           => $request->input('scorm_package_id'),

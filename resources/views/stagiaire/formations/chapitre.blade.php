@@ -1,222 +1,194 @@
-<!-- /home/laurents/Oneduc_Dev/resources/views/stagiaire/formations/chapitre.blade.php -->
 @extends('stagiaire.formations.master_lecon_evaluation')
+
 @section('content')
 
-<main class="max-w-full mx-auto">
-    <div class="bg-white rounded-[20px] shadow-md p-8 mb-6">
-        <h1 class="text-2xl md:text-3xl font-raleway font-medium text-bleuone leading-tight mt-0 mb-2">
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    
+    {{-- EN-TÊTE DE CHAPITRE --}}
+    <div class="mb-8 border-b border-gray-100 pb-6">
+        <span class="inline-block py-1 px-3 rounded-lg bg-bleuone/10 text-bleuone text-[10px] font-black uppercase tracking-widest mb-3">
+            Chapitre en cours
+        </span>
+        <h1 class="text-3xl md:text-4xl font-extrabold text-bleuone leading-tight">
             {{ $selectedSection->section_title }}
         </h1>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
-        {{-- Colonne gauche : Accordéons (fermés par défaut) --}}
-        <div x-data="{ openItem: 1 }" class="space-y-3">
+        {{-- COLONNE GAUCHE : CONTENU PÉDAGOGIQUE (7/12) --}}
+        {{-- x-data configuré pour être ouvert par défaut (true) --}}
+        <div class="lg:col-span-7 space-y-6" x-data="{ openObjectives: true, openQuestions: true }">
+            
             @php
                 use Illuminate\Support\Str;
-
-                // Questions de départ (section_html)
+                // Analyse du contenu HTML des questions
                 $rawQuestions = trim((string) ($selectedSection->section_html ?? ''));
                 $isHtml = Str::contains($rawQuestions, ['<ul', '<ol', '<li', '<p', '<br', '</']);
 
-                // Objectifs issus des leçons
+                // Récupération des objectifs
                 $lecturesWithObjectives = ($selectedSection->lectures ?? collect())
                     ->filter(fn($lec) => ($lec->objectives ?? collect())->isNotEmpty());
+                
+                $hasObjectives = $lecturesWithObjectives->isNotEmpty() || !empty($selectedSection->objectif);
+                $hasQuestions = $rawQuestions !== '';
             @endphp
 
-            {{-- Accordéon 1 : Objectifs (liste des titres uniquement, sans description) --}}
-            @if($lecturesWithObjectives->isNotEmpty() || !empty($selectedSection->objectif))
-                <div class="border rounded-md">
-                    <button
-                        type="button"
-                        @click="openItem = openItem === 1 ? null : 1"
-                        class="w-full flex items-center justify-between px-4 py-3 text-left font-varela text-bleuone bg-gray-100 hover:bg-gray-200"
-                        :aria-expanded="openItem === 1"
-                        aria-controls="panel-objectifs"
-                    >
-                        <span>Objectifs</span>
-                        <svg x-show="openItem !== 1" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transition-transform duration-200" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                            <path fill-rule="evenodd" d="M6 8l4 4 4-4" clip-rule="evenodd" />
-                        </svg>
-                        <svg x-show="openItem === 1" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transform rotate-180 transition-transform duration-200" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                            <path fill-rule="evenodd" d="M6 8l4 4 4-4" clip-rule="evenodd" />
-                        </svg>
+            {{-- BLOC 1 : OBJECTIFS (Cible) --}}
+            @if($hasObjectives)
+                <div class="bg-white rounded-2xl border transition-all duration-300 overflow-hidden"
+                     :class="openObjectives ? 'border-orangeone shadow-lg shadow-orange-100' : 'border-gray-100 shadow-sm'">
+                    
+                    <button type="button" @click="openObjectives = !openObjectives"
+                            class="w-full flex items-center justify-between p-5 text-left group">
+                        <div class="flex items-center gap-4">
+                            {{-- Icône Cible (Target) au lieu de l'éclair --}}
+                            <div class="size-10 rounded-full flex items-center justify-center transition-colors"
+                                 :class="openObjectives ? 'bg-orangeone text-white' : 'bg-orange-50 text-orangeone group-hover:bg-orangeone group-hover:text-white'">
+                                <svg class="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /> 
+                                    {{-- Alternative icône cible pure : d="M12 2a10 10 0 100 20 10 10 0 000-20zM12 6a6 6 0 100 12 6 6 0 000-12zM12 10a2 2 0 100 4 2 2 0 000-4z" --}}
+                                </svg>
+                            </div>
+                            <span class="text-lg font-bold text-bleuone">Objectifs du chapitre</span>
+                        </div>
+                        <div class="size-8 rounded-full border border-gray-100 flex items-center justify-center text-gray-400 transition-transform duration-300"
+                             :class="openObjectives ? 'rotate-180 bg-gray-50 text-bleuone' : 'rotate-0'">
+                            <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                        </div>
                     </button>
 
-                    <div
-                        id="panel-objectifs"
-                        x-show="openItem === 1"
-                        x-collapse
-                        class="overflow-hidden p-4 bg-white font-lisible text-[17px] text-gray-800 leading-relaxed"
-                    >
-                        @if($lecturesWithObjectives->isNotEmpty())
-                            <div class="space-y-4">
-                                @foreach($lecturesWithObjectives as $lec)
-                                    <div class="rounded-xl border border-gray-200 bg-gray-50 p-4">
-                                        <div class="font-semibold text-bleuone">
-                                            {{ $lec->lecture_title }}
+                    <div x-show="openObjectives" x-collapse>
+                        <div class="p-5 pt-0 text-gray-600 leading-relaxed">
+                            @if($lecturesWithObjectives->isNotEmpty())
+                                <div class="space-y-6">
+                                    @foreach($lecturesWithObjectives as $lec)
+                                        <div class="pl-4 border-l-2 border-orange-100">
+                                            <h4 class="font-bold text-bleuone text-sm uppercase tracking-wide mb-2">
+                                                {{ $lec->lecture_title }}
+                                            </h4>
+                                            <ul class="space-y-2">
+                                                @foreach($lec->objectives as $obj)
+                                                    <li class="flex items-start gap-3 text-sm md:text-base">
+                                                        <svg class="size-5 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+                                                        <span>{{ $obj->title }}</span>
+                                                    </li>
+                                                @endforeach
+                                            </ul>
                                         </div>
-
-                                        {{-- Liste : titres uniquement --}}
-                                        <ul class="mt-2 list-disc pl-6 space-y-1 marker:text-orangeone">
-                                            @foreach($lec->objectives as $obj)
-                                                <li class="font-medium">
-                                                    {{ $obj->title }}
-                                                </li>
-                                            @endforeach
-                                        </ul>
-                                    </div>
-                                @endforeach
-                            </div>
-                        @elseif(!empty($selectedSection->objectif))
-                            {{-- Fallback : ancien champ objectif de section --}}
-                            <div class="font-lisible text-[17px] text-gray-800 leading-relaxed
-                                        [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:space-y-1
-                                        [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:space-y-1
-                                        [&_li::marker]:text-orangeone">
-                                {!! $selectedSection->objectif !!}
-                            </div>
-                        @endif
+                                    @endforeach
+                                </div>
+                            @elseif(!empty($selectedSection->objectif))
+                                <div class="prose prose-orange prose-sm max-w-none">
+                                    {!! $selectedSection->objectif !!}
+                                </div>
+                            @endif
+                        </div>
                     </div>
                 </div>
             @endif
 
-            {{-- Accordéon 2 : Questions pour commencer (plus de bloc hors accordéon) --}}
-            <div class="border rounded-md">
-                <button
-                    type="button"
-                    @click="openItem = openItem === 2 ? null : 2"
-                    class="w-full flex items-center justify-between px-4 py-3 text-left font-varela text-bleuone bg-gray-100 hover:bg-gray-200"
-                    :aria-expanded="openItem === 2"
-                    aria-controls="panel-questions"
-                >
-                    <span>Questions pour commencer</span>
-                    <svg x-show="openItem !== 2" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transition-transform duration-200" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                        <path fill-rule="evenodd" d="M6 8l4 4 4-4" clip-rule="evenodd" />
-                    </svg>
-                    <svg x-show="openItem === 2" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transform rotate-180 transition-transform duration-200" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                        <path fill-rule="evenodd" d="M6 8l4 4 4-4" clip-rule="evenodd" />
-                    </svg>
+            {{-- BLOC 2 : QUESTIONS DE RÉFLEXION --}}
+            <div class="bg-white rounded-2xl border transition-all duration-300 overflow-hidden"
+                 :class="openQuestions ? 'border-orangeone shadow-lg shadow-orange-100' : 'border-gray-100 shadow-sm'">
+                
+                <button type="button" @click="openQuestions = !openQuestions"
+                        class="w-full flex items-center justify-between p-5 text-left group">
+                    <div class="flex items-center gap-4">
+                        <div class="size-10 rounded-full flex items-center justify-center transition-colors"
+                             :class="openQuestions ? 'bg-orangeone text-white' : 'bg-blue-50 text-bleuone group-hover:bg-bleuone group-hover:text-white'">
+                            <svg class="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        </div>
+                        {{-- Nouveau titre Pédagogique --}}
+                        <span class="text-lg font-bold text-bleuone">Les questions que l'on se pose souvent</span>
+                    </div>
+                    <div class="size-8 rounded-full border border-gray-100 flex items-center justify-center text-gray-400 transition-transform duration-300"
+                         :class="openQuestions ? 'rotate-180 bg-gray-50 text-bleuone' : 'rotate-0'">
+                        <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                    </div>
                 </button>
 
-                <div
-                    id="panel-questions"
-                    x-show="openItem === 2"
-                    x-collapse
-                    class="overflow-hidden p-4 bg-white font-lisible text-[17px] text-gray-800 leading-relaxed
-                           [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:space-y-1
-                           [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:space-y-1
-                           [&_li::marker]:text-orangeone"
-                >
-                    @if($rawQuestions !== '')
-                        @if($isHtml)
-                            {!! $rawQuestions !!}
-                        @else
-                            @php
-                                $questionsDepart = collect(preg_split("/\r\n|\n|\r/", $rawQuestions))
-                                    ->map(fn($q) => trim($q))
-                                    ->filter()
-                                    ->values();
-                            @endphp
-
-                            @if($questionsDepart->isNotEmpty())
-                                <ul class="list-disc pl-6 space-y-1 marker:text-orangeone">
+                <div x-show="openQuestions" x-collapse>
+                    <div class="p-5 pt-0 text-gray-600 leading-relaxed">
+                        @if($hasQuestions)
+                            @if($isHtml)
+                                <div class="prose prose-blue prose-sm max-w-none">
+                                    {!! $rawQuestions !!}
+                                </div>
+                            @else
+                                @php
+                                    $questionsDepart = collect(preg_split("/\r\n|\n|\r/", $rawQuestions))->map(fn($q) => trim($q))->filter();
+                                @endphp
+                                <ul class="space-y-3">
                                     @foreach($questionsDepart as $q)
-                                        <li>{!! preg_replace('/\s\?$/', '&nbsp;?', e($q)) !!}</li>
+                                        <li class="flex items-start gap-3 text-sm md:text-base bg-gray-50 p-3 rounded-lg border border-gray-100">
+                                            <span class="font-bold text-orangeone">?</span>
+                                            <span>{!! preg_replace('/\s\?$/', '&nbsp;?', e($q)) !!}</span>
+                                        </li>
                                     @endforeach
                                 </ul>
                             @endif
+                        @else
+                            <p class="text-sm italic text-gray-400">Aucune question fréquente pour ce chapitre.</p>
                         @endif
-                    @else
-                        <p class="text-sm text-gray-600">
-                            Aucune question n’est renseignée pour le moment.
-                        </p>
-                    @endif
+                    </div>
                 </div>
             </div>
+
         </div>
 
-        {{-- Colonne droite : Vidéo + bouton + leçons --}}
-        <div class="space-y-6">
-            @php
-                $isFullUrl = \Illuminate\Support\Str::startsWith($selectedSection->video_url, ['http', '/']);
-                $videoPath = $isFullUrl ? $selectedSection->video_url : '/modules/scorm/02_videos/' . ltrim($selectedSection->video_url, '/');
-                $videoSrc = asset($videoPath);
-                $firstLecture = $selectedSection->lectures->first();
-            @endphp
+        {{-- COLONNE DROITE : VIDÉO & ACTIONS (5/12) --}}
+        <div class="lg:col-span-5 lg:sticky lg:top-8 space-y-6">
+            
+            <div class="bg-white rounded-[24px] shadow-2xl shadow-gray-200/50 border border-gray-100 overflow-hidden p-2">
+                
+                {{-- Conteneur Vidéo --}}
+                <div class="relative w-full rounded-2xl overflow-hidden bg-black shadow-inner group aspect-video">
+                    @php
+                        $isFullUrl = \Illuminate\Support\Str::startsWith($selectedSection->video_url, ['http', '/']);
+                        $videoPath = $isFullUrl ? $selectedSection->video_url : '/modules/scorm/02_videos/' . ltrim($selectedSection->video_url, '/');
+                        $videoSrc = asset($videoPath);
+                    @endphp
+                    
+                    <video id="formation-video"
+                           class="w-full h-full object-cover"
+                           controls preload="metadata" playsinline crossorigin="anonymous">
+                        <source src="{{ $videoSrc }}" type="video/mp4">
+                        Votre navigateur ne supporte pas la vidéo.
+                    </video>
+                </div>
 
-            <div class="w-full"></div>
-
-            {{-- Vidéo pédagogique --}}
-            <div class="relative w-full rounded-[16px] overflow-hidden shadow-md" style="aspect-ratio:16/9">
-                <video id="formation-video"
-                       class="block w-full h-auto"
-                       controls preload="metadata" playsinline crossorigin="anonymous"
-                       aria-label="Vidéo pédagogique">
-                    <source src="{{ $videoSrc }}" type="video/mp4">
-                </video>
+                {{-- Bouton Principal (Sans les contrôles de vitesse) --}}
+                @php $firstLecture = $selectedSection->lectures->first(); @endphp
+                @if($firstLecture)
+                    <div class="p-4">
+                        <a href="{{ route('stagiaire.module.lecture', ['module' => $module->id, 'section' => $selectedSection->id, 'lecture' => $firstLecture->id]) }}"
+                           class="flex items-center justify-center w-full py-4 rounded-xl bg-orangeone text-white font-black text-lg hover:bg-orange-600 transition-all shadow-lg shadow-orange-100 hover:-translate-y-0.5 group">
+                            <span>Commencer le chapitre</span>
+                            <svg class="ml-2 size-5 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+                        </a>
+                    </div>
+                @endif
             </div>
 
-            {{-- Contrôles natifs étendus --}}
-            <div class="mt-3 w-full flex items-center justify-between text-sm">
-                {{-- Bloc vitesse à gauche --}}
-                <div class="relative inline-block">
-                    <select id="rate-select"
-                            class="w-48 pr-10 rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-[#004461] appearance-none
-                                   focus:outline-none focus:ring-2 focus:ring-[#E94D2A] focus:border-[#E94D2A]"
-                            style="min-width: 11rem;">
-                        <option value="0.5">0.5×</option>
-                        <option value="0.75">0.75×</option>
-                        <option value="1" selected>1×</option>
-                        <option value="1.25">1.25×</option>
-                        <option value="1.5">1.5×</option>
-                        <option value="1.75">1.75×</option>
-                        <option value="2">2×</option>
-                    </select>
-
-                    {{-- Chevron custom --}}
-                    <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#004461" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M6 9l6 6 6-6"></path>
-                        </svg>
-                    </span>
-                </div>
-
-                {{-- Boutons regroupés à droite --}}
-                <div class="flex items-center gap-2">
-                    <button id="back-10" type="button"
-                            class="rounded-md bg-[#004461] px-4 py-2 text-white font-semibold
-                                   hover:bg-[#00364d] focus:outline-none focus:ring-2 focus:ring-[#E94D2A]">
-                        −10 s
-                    </button>
-
-                    <button id="fwd-10" type="button"
-                            class="rounded-md bg-[#E94D2A] px-4 py-2 text-white font-semibold
-                                   hover:bg-[#cc4120] focus:outline-none focus:ring-2 focus:ring-[#004461]">
-                        +10 s
-                    </button>
+            {{-- Info contextuelle (Raccourcis Clavier) --}}
+            <div class="bg-blue-50/50 rounded-2xl p-4 border border-blue-100/50 flex items-start gap-3">
+                <svg class="size-6 text-bleuone mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <div class="text-sm text-bleuone/80">
+                    <span class="font-bold block text-bleuone">Le saviez-vous ?</span>
+                    Vous pouvez contrôler la vidéo avec votre clavier : <kbd class="font-mono bg-white px-1 rounded border">Espace</kbd> pour pause, <kbd class="font-mono bg-white px-1 rounded border">←</kbd> / <kbd class="font-mono bg-white px-1 rounded border">→</kbd> pour naviguer.
                 </div>
             </div>
-
-            {{-- Bouton démarrer --}}
-            @if($firstLecture)
-                <div class="mt-4">
-                    <a href="{{ route('stagiaire.module.lecture', ['module' => $module->id, 'section' => $selectedSection->id, 'lecture' => $firstLecture->id]) }}"
-                       class="btn-oneduc flex items-center justify-center gap-2">
-                        Commencer cette section
-                    </a>
-                </div>
-            @endif
         </div>
     </div>
 
+    {{-- SCRIPTS JS (Tracking & Player Logic simplifié) --}}
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const el = document.getElementById('formation-video');
             if (!el) return;
 
-            // --- Tracking lecture ---
+            // --- Tracking lecture (Conservé pour les stats) ---
             let startTime = 0, trackingInProgress = false;
 
             const getCurrent = () => Math.floor(el.currentTime || 0);
@@ -244,9 +216,7 @@
                         'Accept': 'application/json'
                     },
                     body: JSON.stringify({
-                        // On envoie l'ID de la leçon si elle existe, sinon null
                         lecture_id: {{ $selectedSection->lectures->first()?->id ?? 'null' }},
-                        // AJOUT : On envoie toujours l'ID de la section pour sécuriser le tracking
                         section_id: {{ $selectedSection->id }},
                         segment_start: startTime,
                         segment_end: endTime,
@@ -255,10 +225,12 @@
                 }).finally(() => { startTime = endTime; trackingInProgress = false; });
             }
 
+            // Envoi périodique
             setInterval(() => {
                 if (!el.paused && !trackingInProgress) trackSegment();
             }, 10000);
 
+            // Envoi si on quitte la page
             window.addEventListener('beforeunload', function () {
                 const endTime  = getCurrent();
                 const duration = endTime - startTime;
@@ -266,7 +238,6 @@
 
                 const data = {
                     lecture_id: {{ $selectedSection->lectures->first()?->id ?? 'null' }},
-                    // AJOUT ICI AUSSI
                     section_id: {{ $selectedSection->id }},
                     segment_start: startTime,
                     segment_end: endTime,
@@ -276,46 +247,22 @@
                 navigator.sendBeacon('{{ route('api.video.segment') }}', blob);
             });
 
-            // --- Contrôles natifs étendus ---
-            const rateSelect = document.getElementById('rate-select');
-            const back10 = document.getElementById('back-10');
-            const fwd10  = document.getElementById('fwd-10');
-
-            const savedRate = parseFloat(localStorage.getItem('video_rate') || '1');
-            if (!isNaN(savedRate)) {
-                el.playbackRate = savedRate;
-                if (rateSelect) rateSelect.value = String(savedRate);
-            }
-
-            rateSelect?.addEventListener('change', () => {
-                const r = parseFloat(rateSelect.value || '1');
-                el.playbackRate = isNaN(r) ? 1 : r;
-                localStorage.setItem('video_rate', String(el.playbackRate));
-            });
-
-            back10?.addEventListener('click', () => { el.currentTime = Math.max(0, el.currentTime - 10); });
-            fwd10?.addEventListener('click',  () => { el.currentTime = el.currentTime + 10; });
-
+            // Raccourcis clavier Natifs (Toujours utile)
             document.addEventListener('keydown', (e) => {
                 const tag = (document.activeElement?.tagName || '').toUpperCase();
-                if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+                if (['INPUT', 'TEXTAREA', 'SELECT'].includes(tag)) return;
 
-                if (e.key === '[') {
-                    el.playbackRate = Math.max(0.25, Math.round((el.playbackRate - 0.25)*100)/100);
-                    if (rateSelect) rateSelect.value = String(el.playbackRate);
-                    localStorage.setItem('video_rate', String(el.playbackRate));
-                } else if (e.key === ']') {
-                    el.playbackRate = Math.min(4, Math.round((el.playbackRate + 0.25)*100)/100);
-                    if (rateSelect) rateSelect.value = String(el.playbackRate);
-                    localStorage.setItem('video_rate', String(el.playbackRate));
-                } else if (e.key === 'ArrowLeft') {
+                if (e.key === 'ArrowLeft') {
                     el.currentTime = Math.max(0, el.currentTime - 5);
+                    // e.preventDefault(); // Optionnel : on laisse le comportement natif si focus
                 } else if (e.key === 'ArrowRight') {
                     el.currentTime = el.currentTime + 5;
+                } else if (e.key === ' ') {
+                    if(el.paused) el.play(); else el.pause();
+                    e.preventDefault();
                 }
             });
         });
     </script>
-
 </main>
 @endsection

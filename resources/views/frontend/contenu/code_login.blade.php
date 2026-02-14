@@ -1,59 +1,81 @@
 @extends('frontend.master')
-@section('title', "Code d'accès stagiaire - Oneduc.fr")
-@section('description', "Connexion sécurisée pour les stagiaires via un code fourni par le formateur.")
+@section('title', "Accès Stagiaire - Oneduc.fr")
 @section('home')
-<div class="container mx-auto px-4 pt-8 pb-8">
-  <div class="bg-white rounded-[20px] shadow-md px-8 py-0 my-10 w-full">
+
+{{-- RECOUPÉRATION DE TA BANDEROLE --}}
+<div class="container mx-auto px-4 pt-8 pb-2">
+  <div class="bg-white rounded-[20px] shadow-md px-8 py-0 mb-4 w-full max-w-[1285px] mx-auto">
     <div class="grid grid-cols-12 gap-6 items-center">
-      <div class="col-span-12 md:col-span-8">
-        <x-typography variant="titre">Code d’accès stagiaire</x-typography>
+      <div class="col-span-12 md:col-span-8 py-8">
+        <x-typography variant="titre">Espace Stagiaire</x-typography>
         <x-typography variant="sous-titre" class="font-varela text-sous-titre text-orangeone">
-          Accéder à votre espace de formation
+          Accéder à votre formation
         </x-typography>
-        <div class="prose-oneduc font-lisible">
-          <p>Renseignez le code d’accès transmis par votre formateur pour rejoindre votre parcours de formation personnalisé sur Oneduc.</p>
-          <p>Ce code est composé de 6 caractères alphanumériques uniques, à saisir ci-dessous.</p>
-        </div>
+        <x-typography>
+          Choisissez la méthode de connexion qui vous convient le mieux pour retrouver vos cours.
+        </x-typography>
       </div>
       <div class="col-span-12 md:col-span-4 flex justify-center md:justify-end">
         <div class="w-full max-w-xs">
-          <img src="{{ asset('frontend/assets/img/illustrations/AssociationOneduc.svg') }}" alt="Code d'accès" class="w-full h-auto">
+          <img src="{{ asset('frontend/assets/img/illustrations/Stagiaires.svg') }}" alt="Illustration Stagiaire" class="w-full h-auto">
         </div>
       </div>
     </div>
   </div>
+</div>
 
-  <x-oneduc.breadcrumb :items="[['label' => 'Accueil', 'url' => route('index')], ['label' => 'Code d\'accès']]" />
+<div class="container mx-auto px-4 pb-12">
+  <div class="max-w-[1285px] mx-auto">
+    <div class="flex flex-col md:flex-row items-stretch gap-8 relative mt-6">
+      
+      {{-- OPTION 1 : LE CODE (Icône Clé) --}}
+      <div class="flex-1 bg-white rounded-3xl shadow-sm border-b-8 border-orangeone p-8 text-center flex flex-col items-center">
+        <div class="w-16 h-16 bg-orange-50 rounded-full flex items-center justify-center mb-6">
+          <svg class="w-8 h-8 text-orangeone" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+          </svg>
+        </div>
+        <h2 class="text-xl font-bold text-bleuone mb-2">J'ai un code d'accès</h2>
+        <p class="text-sm text-gray-400 mb-8">Saisissez les 6 caractères fournis par votre formateur.</p>
 
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-4">
-    <div class="lg:col-span-2">
-      <div class="bg-white rounded-[20px] shadow-md p-8 w-full">
-        <h2 class="text-lg font-semibold mb-4">Connexion</h2>
-
-        @if ($errors->any())
-          <div class="mb-4 text-red-600 text-sm">
-            {{ $errors->first() }}
-          </div>
-        @endif
-
-        <form method="POST" action="{{ route('stagiaire.code.login') }}">
+        <form method="POST" action="{{ route('stagiaire.code.login') }}" class="w-full mt-auto">
           @csrf
+          <input type="text" name="code_acces" maxlength="6" required placeholder="CODE12"
+                 class="w-full bg-gray-50 border-gray-200 border rounded-xl py-4 text-center text-2xl font-bold tracking-widest text-orangeone focus:ring-2 focus:ring-orangeone mb-4 uppercase">
+          <button type="submit" class="w-full bg-orangeone text-white font-bold py-4 rounded-xl hover:bg-orange-600 shadow-md transition">
+            Valider mon code
+          </button>
+        </form>
+      </div>
 
-          <label class="block mb-2 text-sm font-medium text-gray-700">Code d'accès</label>
-          <input type="text" name="code_acces" maxlength="6" required autofocus
-                class="input w-full uppercase text-center tracking-widest">
+      {{-- Séparateur visuel OU --}}
+      <div class="flex items-center justify-center">
+        <span class="bg-gray-200 text-gray-500 text-xs font-bold px-3 py-1 rounded-full">OU</span>
+      </div>
 
-          <button type="submit"
-                  class="mt-6 w-full bg-orangeone hover:bg-orange-600 text-white py-2 px-4 rounded transition">
+      {{-- OPTION 2 : IDENTIFIANTS (Icône Profil) --}}
+      <div class="flex-1 bg-white rounded-3xl shadow-sm border-b-8 border-bleuone p-8 text-center flex flex-col items-center">
+        <div class="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-6">
+          <svg class="w-8 h-8 text-bleuone" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+          </svg>
+        </div>
+        <h2 class="text-xl font-bold text-bleuone mb-2">J'ai un compte</h2>
+        <p class="text-sm text-gray-400 mb-8">Connectez-vous avec votre email et votre mot de passe.</p>
+
+        <form method="POST" action="{{ route('login.process') }}" class="w-full mt-auto space-y-3">
+          @csrf
+          <input type="email" name="email" required placeholder="Votre adresse email"
+                 class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 focus:ring-2 focus:ring-bleuone">
+          <input type="password" name="password" required placeholder="Votre mot de passe"
+                 class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 focus:ring-2 focus:ring-bleuone">
+          <button type="submit" class="w-full bg-bleuone text-white font-bold py-4 rounded-xl hover:bg-[#00334a] shadow-md transition">
             Se connecter
           </button>
         </form>
-
-        <p class="mt-6 text-sm text-gray-500">Assurez-vous d’utiliser un code valide. Contactez votre formateur en cas de souci.</p>
       </div>
-    </div>
 
-    <!-- Menu latéral désactivé ici -->
+    </div>
   </div>
 </div>
 @endsection

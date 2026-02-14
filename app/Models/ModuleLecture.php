@@ -14,6 +14,12 @@ class ModuleLecture extends Model
 
     protected $guarded = [];
 
+    protected $casts = [
+        'duration' => 'integer',
+        'quiz_enabled' => 'boolean',
+        'use_active_scorm_version' => 'boolean',
+    ];
+
     public function section()
     {
         return $this->belongsTo(ModuleSection::class, 'section_id');
@@ -23,6 +29,7 @@ class ModuleLecture extends Model
     {
         return $this->belongsTo(Module::class, 'module_id');
     }
+
     public function progressions()
     {
         return $this->hasMany(Progression::class, 'lecture_id');
@@ -33,20 +40,16 @@ class ModuleLecture extends Model
         return $this->hasMany(LessonFeedback::class, 'lesson_id');
     }
 
-    // app/Models/ModuleLecture.php
     public function quizQuestions()
-{
-    return $this->hasMany(
-        \App\Models\QuizQuestion::class,
-        'lecture_id'
-    );
-}
-
+    {
+        return $this->hasMany(\App\Models\QuizQuestion::class, 'lecture_id');
+    }
 
     public function quizAttempts()
     {
         return $this->hasMany(\App\Models\QuizAttempt::class, 'lecture_id');
     }
+
     public function scormPackage(): BelongsTo
     {
         return $this->belongsTo(ScormPackage::class, 'scorm_package_id');
@@ -56,6 +59,7 @@ class ModuleLecture extends Model
     {
         return $this->belongsTo(ScormPackageVersion::class, 'scorm_package_version_id');
     }
+
     public function getScormIndexPathAttribute(): ?string
     {
         if ($this->use_active_scorm_version && $this->scormPackage?->activeVersion) {
@@ -64,12 +68,12 @@ class ModuleLecture extends Model
 
         return $this->scormPackageVersion?->index_path;
     }
-    /**
-     * Objectifs pédagogiques de la leçon
-     */
+
     public function objectives()
     {
         return $this->hasMany(LectureObjective::class, 'lecture_id')
                     ->orderBy('position');
     }
+
+    // J'AI SUPPRIMÉ LES FONCTIONS DE CALCUL ICI CAR ELLES N'ONT RIEN A FAIRE DANS LA LEÇON
 }
