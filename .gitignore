@@ -13,13 +13,17 @@ Homestead.json
 .phpactor.json
 
 ############################################
-# Node / Vite
+# Node / Vite / Front
 ############################################
 /node_modules/
 npm-debug.log
 yarn-error.log
 /.vite
 /.vite-inspect
+
+# Builds générés
+/public/build/
+public/hot
 
 ############################################
 # Cache / Logs / Storage
@@ -32,24 +36,24 @@ storage/*.key
 /storage/pail
 
 ############################################
-# SCORM (lourd)
+# SCORM (lourd / local)
 ############################################
 /public/modules/scorm/*
 /resources/scorm/
 
 ############################################
-# PUBLIC : dépôt léger (deny all + allowlist)
+# PUBLIC : stratégie "deny all" puis allowlist
 ############################################
-# On ignore tout ce qui est dans public par défaut
+# On ignore TOUT le contenu de public par défaut
 /public/*
 
-# Essentiels Laravel
+# On autorise les essentiels Laravel
 !/public/index.php
 !/public/.htaccess
 !/public/robots.txt
 !/public/favicon.ico
 
-# Statique utile (si tu veux les versionner)
+# On autorise les dossiers statiques utiles (non générés)
 !/public/fonts/
 !/public/fonts/**
 !/public/images/
@@ -61,12 +65,18 @@ storage/*.key
 !/public/scorm_core/
 !/public/scorm_core/**
 
+# Assets backend/frontend :
+# (Garde-les UNIQUEMENT si ce sont des fichiers statiques livrés, pas des artefacts de build)
+!/public/backend/
+!/public/backend/**
+!/public/frontend/
+!/public/frontend/**
+
 ############################################
-# PUBLIC : exclusions explicites (toujours)
+# PUBLIC : exclusions explicites (sensibles / générés)
 ############################################
-/public/build/
-/public/hot
-/public/storage/
-/public/upload/
-/public/phpmyadmin
-/public/test.php
+public/storage/
+public/upload/
+public/build/
+public/phpmyadmin
+public/test.php
