@@ -34,6 +34,7 @@
                 <thead class="text-xs uppercase">
                     <tr>
                         <th class="px-4 py-3">Code</th>
+                        <th class="px-4 py-3">Image</th>
                         <th class="px-4 py-3">Badge</th>
                         <th class="px-4 py-3">Utilisation</th>
                         <th class="px-4 py-3">Statut</th>
@@ -49,6 +50,18 @@
 
                     <tr class="border-b border-gray-100 align-top transition">
                         <td class="px-4 py-3 font-mono text-xs text-gray-600">{{ $b->code ?? '-' }}</td>
+
+                        <td class="px-4 py-3">
+                            @if(!empty($b->image_path))
+                                <div class="h-14 w-14 rounded-xl border border-gray-200 bg-white flex items-center justify-center p-2">
+                                    <img src="{{ asset('storage/'.$b->image_path) }}"
+                                         alt="Badge {{ $b->label }}"
+                                         class="max-h-full max-w-full object-contain">
+                                </div>
+                            @else
+                                <span class="text-xs text-gray-400 italic">Aucune</span>
+                            @endif
+                        </td>
 
                         <td class="px-4 py-3 font-semibold text-gray-900">{{ $b->label }}</td>
 
@@ -112,7 +125,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="5" class="px-4 py-6 text-center text-gray-500">
+                        <td colspan="6" class="px-4 py-6 text-center text-gray-500">
                             Aucun badge pour le moment.
                         </td>
                     </tr>

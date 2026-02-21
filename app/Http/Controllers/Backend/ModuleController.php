@@ -815,13 +815,23 @@ public function lire(Request $request, Module $module, ModuleSection $section, M
          */
         public function show($id)
         {
-            $module = Module::with('sections.lectures')->findOrFail($id);
+            $module = Module::with('sections.lectures.objectives')->findOrFail($id);
 
             if (!$module->isVisibleTo(auth()->user())) {
                 abort(404);
             }
 
-            return view('frontend.contenu.module_detail', compact('module'));
+            $lessonObjectives = $module->sections
+                ->flatMap->lectures
+                ->flatMap(function ($lecture) {
+                    return $lecture->objectives->pluck('title');
+                })
+                ->map(fn ($title) => trim((string) $title))
+                ->filter()
+                ->unique()
+                ->values();
+
+            return view('frontend.contenu.module_detail', compact('module', 'lessonObjectives'));
         }
 
         private function buildLectureStats($lectures, int $userId): array

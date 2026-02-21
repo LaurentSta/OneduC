@@ -27,7 +27,7 @@
             </div>
         @endif
 
-        <form method="POST" action="{{ route('admin.badges.store') }}" class="space-y-6">
+        <form method="POST" action="{{ route('admin.badges.store') }}" enctype="multipart/form-data" class="space-y-6">
             @csrf
 
             <div>
@@ -35,6 +35,20 @@
                 <input type="text" name="label" value="{{ old('label') }}"
                        class="mt-2 w-full px-5 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-orangeone text-lg font-bold text-gray-800 shadow-inner"
                        required>
+            </div>
+
+            <div>
+                <label class="block text-sm font-extrabold text-bleuone uppercase ml-1">Image du badge</label>
+                <input type="file"
+                       name="image"
+                       accept=".svg,image/svg+xml"
+                       class="mt-2 w-full px-4 py-3 bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-orangeone text-sm text-gray-700">
+                <p class="text-xs text-gray-500 mt-2">
+                    Format obligatoire : SVG. Dimension recommandée : 200x200.
+                </p>
+                @error('image')
+                    <p class="text-sm text-red-600 mt-2">{{ $message }}</p>
+                @enderror
             </div>
 
             <div class="bg-gray-50 rounded-2xl p-5">

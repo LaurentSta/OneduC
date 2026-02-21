@@ -500,7 +500,7 @@ class FormateurController extends Controller
 
         $module->load([
             'formateur',
-            'sections.lectures',
+            'sections.lectures.objectives',
             'groups' => function ($q) use ($formateurId) {
                 $q->where('instructor_id', $formateurId)
                     ->with(['users' => function ($u) {
@@ -518,6 +518,17 @@ class FormateurController extends Controller
         $stagiaires = $module->groups->flatMap(fn ($g) => $g->users)->unique('id')->values();
         $stagiaireCount = $stagiaires->count();
 
+        // Objectifs pédagogiques issus des leçons (agrégés et sans doublon)
+        $lessonObjectives = $module->sections
+            ->flatMap->lectures
+            ->flatMap(function ($lecture) {
+                return $lecture->objectives->pluck('title');
+            })
+            ->map(fn ($title) => trim((string) $title))
+            ->filter()
+            ->unique()
+            ->values();
+
         return view('formateur.formations.formateur_module_detail', compact(
             'module',
             'totalSections',
@@ -526,7 +537,8 @@ class FormateurController extends Controller
             'totalQuestions',
             'groupCount',
             'stagiaires',
-            'stagiaireCount'
+            'stagiaireCount',
+            'lessonObjectives'
         ));
     }
 public function updateQuizCount(Request $request, $lectureId)

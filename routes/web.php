@@ -38,7 +38,7 @@ Route::get('/connexion-choix', function () {
 
 // Tes routes existantes restent inchangées, elles seront ciblées par les boutons du Hub
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
-Route::get('/stagiaire/connexion', [StagiaireController::class, 'showCodeForm'])->name('stagiaire.code.form');
+Route::get('/stagiaire/connexion', [\App\Http\Controllers\UserController::class, 'showCodeLoginForm'])->name('stagiaire.code.form');
 
 
 // ----------------------------------------------------------
@@ -168,7 +168,7 @@ Route::post('/inscription-formateur', [\App\Http\Controllers\FormateurController
 
 // Connexion via code d’accès (stagiaire)
 // Connexion d'un stagiaire via un code d'accès fourni par le formateur
-Route::get('/stagiaire/connexion-code', [\App\Http\Controllers\UserController::class, 'showCodeLoginForm'])->name('stagiaire.code.form');
+Route::get('/stagiaire/connexion-code', [\App\Http\Controllers\UserController::class, 'showCodeLoginForm'])->name('stagiaire.code.form.legacy');
 Route::post('/stagiaire/connexion-code', [\App\Http\Controllers\UserController::class, 'loginByCode'])->name('stagiaire.code.login');
 
 // Formulaire de contact

@@ -24,7 +24,7 @@ class StagiaireController extends Controller
         $user = auth()->user();
 
         // Module actif + formateur + sections + leçons
-        $module = Module::with(['formateur', 'sections.lectures'])
+        $module = Module::with(['formateur', 'sections.lectures.objectives'])
             ->active()
             ->findOrFail($id);
 
@@ -82,11 +82,23 @@ class StagiaireController extends Controller
         $completedLectures = collect($lessonStatuses)->filter(fn ($s) => $s === 'completed')->count();
         $progression = $totalLectures > 0 ? (int) round(($completedLectures / $totalLectures) * 100) : 0;
 
+        // Objectifs pédagogiques issus des leçons (agrégés et sans doublon)
+        $lessonObjectives = $module->sections
+            ->flatMap->lectures
+            ->flatMap(function ($lecture) {
+                return $lecture->objectives->pluck('title');
+            })
+            ->map(fn ($title) => trim((string) $title))
+            ->filter()
+            ->unique()
+            ->values();
+
         return view('stagiaire.stagiaire_module_detail', compact(
             'module',
             'lessonStatuses',
             'sectionProgress',
-            'progression'
+            'progression',
+            'lessonObjectives'
         ));
     }
 

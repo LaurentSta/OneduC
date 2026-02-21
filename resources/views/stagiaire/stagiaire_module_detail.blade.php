@@ -5,6 +5,7 @@
 {{-- Initialisation et Récupération des données critiques --}}
 @php 
     $firstSection = $module->sections->first(); 
+    $lessonObjectives = collect($lessonObjectives ?? []);
 @endphp
 
 <div x-data="{ 
@@ -63,7 +64,7 @@
                 {{-- Onglet Objectifs --}}
                 <div x-show="activeTab === 'objectifs'" x-cloak>
                     <ul class="space-y-3">
-                        @forelse($module->objectifs ?? [] as $obj)
+                        @forelse($lessonObjectives as $obj)
                             <li class="flex items-start gap-3">
                                 <svg class="size-5 text-orangeone mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
@@ -71,7 +72,7 @@
                                 <span class="text-gray-700 font-medium text-sm md:text-base">{{ $obj }}</span>
                             </li>
                         @empty
-                            <p class="italic text-gray-500">Les objectifs sont détaillés dans le programme ci-dessous.</p>
+                            <p class="italic text-gray-500">Aucun objectif de leçon n'est encore disponible.</p>
                         @endforelse
                     </ul>
                 </div>

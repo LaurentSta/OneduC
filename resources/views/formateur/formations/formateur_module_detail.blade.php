@@ -3,6 +3,10 @@
 
 @section('formateur')
 
+@php
+  $lessonObjectives = collect($lessonObjectives ?? []);
+@endphp
+
 <style>[x-cloak]{display:none!important}</style>
 
 {{-- Mode "stagiaire anonyme" : pas de progression, pas de statuts --}}
@@ -87,7 +91,7 @@
 
         <div x-show="activeTab === 'objectifs'" x-cloak>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            @forelse($module->objectifs ?? [] as $obj)
+            @forelse($lessonObjectives as $obj)
               <div class="flex items-start gap-3 p-4 rounded-xl bg-gray-50 border border-gray-100">
                 <svg class="size-5 text-green-500 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
@@ -95,7 +99,7 @@
                 <span class="text-gray-700 font-medium">{{ $obj }}</span>
               </div>
             @empty
-              <p class="italic text-gray-500">Consultez le programme pour voir les détails.</p>
+              <p class="italic text-gray-500">Aucun objectif de leçon n'est encore disponible.</p>
             @endforelse
           </div>
         </div>

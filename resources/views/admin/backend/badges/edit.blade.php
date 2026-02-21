@@ -65,7 +65,7 @@
             $selectedIds = is_array($selectedIds) ? $selectedIds : [];
         @endphp
 
-        <form method="POST" action="{{ route('admin.badges.update', $badge->id) }}" class="space-y-8">
+        <form method="POST" action="{{ route('admin.badges.update', $badge->id) }}" enctype="multipart/form-data" class="space-y-8">
             @csrf
 
             {{-- 1) Infos badge --}}
@@ -104,6 +104,45 @@
                             </div>
                         </label>
                     </div>
+                </div>
+
+                <div class="mt-6 bg-white/50 p-5 rounded-2xl">
+                    <label class="block text-sm font-extrabold text-bleuone uppercase ml-1">Image du badge</label>
+
+                    @if(!empty($badge->image_path))
+                        <div class="mt-3 flex items-center gap-4">
+                            <div class="h-20 w-20 rounded-xl border border-gray-200 bg-white flex items-center justify-center p-2">
+                                <img src="{{ asset('storage/'.$badge->image_path) }}"
+                                     alt="Badge {{ $badge->label }}"
+                                     class="max-h-full max-w-full object-contain">
+                            </div>
+                            <span class="text-xs text-gray-500">Image actuelle</span>
+                        </div>
+                    @endif
+
+                    <input type="file"
+                           name="image"
+                           accept=".svg,image/svg+xml"
+                           class="mt-3 w-full px-4 py-3 bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-orangeone text-sm text-gray-700">
+
+                    <p class="text-xs text-gray-500 mt-2">
+                        Format obligatoire : SVG. Dimension recommandée : 200x200.
+                    </p>
+
+                    @if(!empty($badge->image_path))
+                        <label class="mt-3 inline-flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox"
+                                   name="remove_image"
+                                   value="1"
+                                   {{ old('remove_image') ? 'checked' : '' }}
+                                   class="h-4 w-4 rounded border-gray-300 text-orangeone focus:ring-orangeone">
+                            <span class="text-sm text-gray-700">Supprimer l’image actuelle</span>
+                        </label>
+                    @endif
+
+                    @error('image')
+                        <p class="text-sm text-red-600 mt-2">{{ $message }}</p>
+                    @enderror
                 </div>
             </div>
 

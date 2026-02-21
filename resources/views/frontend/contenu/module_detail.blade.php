@@ -31,6 +31,10 @@
   </div>
 @endif
 
+@php
+  $lessonObjectives = collect($lessonObjectives ?? []);
+@endphp
+
 {{-- =======================
    BLOC INTRO + VIDÉO
 ======================= --}}
@@ -90,10 +94,11 @@
           {{-- Objectifs --}}
           <div x-show="active === 'objectifs'" x-transition x-cloak>
             <ul class="list-disc list-inside text-gray-800 text-base space-y-1 font-lisible">
-              <li>Comprendre les principes de base du module</li>
-              <li>Appliquer les méthodes dans un contexte réel</li>
-              <li>Développer des compétences ciblées</li>
-              <li>S'autoévaluer en fin de parcours</li>
+              @forelse($lessonObjectives as $obj)
+                <li>{{ $obj }}</li>
+              @empty
+                <li class="list-none italic text-gray-500">Aucun objectif de leçon n'est encore disponible.</li>
+              @endforelse
             </ul>
           </div>
 

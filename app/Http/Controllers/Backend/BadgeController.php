@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Badge;
 use App\Models\Competency;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 
 class BadgeController extends Controller
 {
@@ -41,16 +43,17 @@ class BadgeController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'label' => 'required|string|max:255',
-            'is_active' => 'nullable|in:0,1',
-            'competency_ids' => 'nullable|array',
-            'competency_ids.*' => 'integer|exists:competencies,id',
-        ]);
+        $validated = $this->validateBadgePayload($request);
+
+        $imagePath = null;
+        if ($request->hasFile('image')) {
+            $imagePath = $request->file('image')->store('badges', 'public');
+        }
 
         $badge = Badge::create([
             'label' => $validated['label'],
             'is_active' => ($request->input('is_active', '0') === '1'),
+            'image_path' => $imagePath,
         ]);
 
         $ids = $request->input('competency_ids', []);
@@ -63,7 +66,6 @@ class BadgeController extends Controller
         return redirect()->route('admin.badges.edit', $badge)->with('success', 'Badge créé.');
     }
 
-    
     public function edit($id)
     {
         $badge = Badge::with('competencies')->findOrFail($id);
@@ -80,17 +82,26 @@ class BadgeController extends Controller
     {
         $badge = Badge::findOrFail($id);
 
-        $validated = $request->validate([
-            'label' => 'required|string|max:255',
-            'is_active' => 'nullable|in:0,1',
-            'competency_ids' => 'nullable|array',
-            'competency_ids.*' => 'integer|exists:competencies,id',
-        ]);
+        $validated = $this->validateBadgePayload($request);
 
-        $badge->update([
+        $updates = [
             'label' => $validated['label'],
             'is_active' => ($request->input('is_active', '0') === '1'),
-        ]);
+        ];
+
+        if ($request->hasFile('image')) {
+            if (!empty($badge->image_path)) {
+                Storage::disk('public')->delete($badge->image_path);
+            }
+            $updates['image_path'] = $request->file('image')->store('badges', 'public');
+        } elseif ($request->boolean('remove_image')) {
+            if (!empty($badge->image_path)) {
+                Storage::disk('public')->delete($badge->image_path);
+            }
+            $updates['image_path'] = null;
+        }
+
+        $badge->update($updates);
 
         // Pivot badge_competency(position)
         $ids = $request->input('competency_ids', []);
@@ -104,16 +115,66 @@ class BadgeController extends Controller
 
         return back()->with('success', 'Badge mis à jour.');
     }
+
     public function destroy(Badge $badge)
-{
-    if ($badge->competencies()->exists()) {
-        return back()->withErrors(
-            "Suppression impossible : ce badge est associé à une ou plusieurs compétences."
-        );
+    {
+        if ($badge->competencies()->exists()) {
+            return back()->withErrors(
+                "Suppression impossible : ce badge est associé à une ou plusieurs compétences."
+            );
+        }
+
+        if (!empty($badge->image_path)) {
+            Storage::disk('public')->delete($badge->image_path);
+        }
+
+        $badge->delete();
+
+        return back()->with('success', 'Badge supprimé.');
     }
 
-    $badge->delete();
+    private function validateBadgePayload(Request $request): array
+    {
+        $validator = Validator::make($request->all(), [
+            'label' => 'required|string|max:255',
+            'is_active' => 'nullable|in:0,1',
+            'competency_ids' => 'nullable|array',
+            'competency_ids.*' => 'integer|exists:competencies,id',
+            'image' => 'nullable|file|mimes:svg|max:1024',
+            'remove_image' => 'nullable|boolean',
+        ]);
 
-    return back()->with('success', 'Badge supprimé.');
-}
+        $validator->after(function ($validator) use ($request) {
+            if (!$request->hasFile('image')) {
+                return;
+            }
+
+            if (!$this->isValidSvg($request->file('image')->getRealPath())) {
+                $validator->errors()->add('image', "Le fichier doit être un SVG valide.");
+            }
+        });
+
+        return $validator->validate();
+    }
+
+    private function isValidSvg(string $filePath): bool
+    {
+        $contents = @file_get_contents($filePath);
+        if ($contents === false || stripos($contents, '<svg') === false) {
+            return false;
+        }
+
+        $dom = new \DOMDocument();
+        $previous = libxml_use_internal_errors(true);
+        $loaded = $dom->loadXML($contents);
+        libxml_clear_errors();
+        libxml_use_internal_errors($previous);
+
+        if (!$loaded) {
+            return false;
+        }
+
+        $svg = $dom->documentElement;
+        return $svg && strtolower($svg->tagName) === 'svg';
+    }
 }

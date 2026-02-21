@@ -27,7 +27,7 @@ class MFormationsController extends Controller
 
     public function show($id)
     {
-        $module = Module::with('sections.lectures')->findOrFail($id);
+        $module = Module::with('sections.lectures.objectives')->findOrFail($id);
 
         $userId = auth()->id();
         $lectures = $module->sections->flatMap->lectures;
@@ -47,8 +47,26 @@ class MFormationsController extends Controller
             $sectionProgress[$section->id] = ['completed' => $c, 'total' => $t];
         }
 
+        // Objectifs pédagogiques issus des leçons (agrégés et sans doublon)
+        $lessonObjectives = $module->sections
+            ->flatMap->lectures
+            ->flatMap(function ($lecture) {
+                return $lecture->objectives->pluck('title');
+            })
+            ->map(fn ($title) => trim((string) $title))
+            ->filter()
+            ->unique()
+            ->values();
+
         $guestView = auth()->guest(); // ← ajoute ça
-        return view('frontend.contenu.module_detail', compact('module','lessonStatuses','progression','sectionProgress','guestView'));
+        return view('frontend.contenu.module_detail', compact(
+            'module',
+            'lessonStatuses',
+            'progression',
+            'sectionProgress',
+            'guestView',
+            'lessonObjectives'
+        ));
     }
 
 

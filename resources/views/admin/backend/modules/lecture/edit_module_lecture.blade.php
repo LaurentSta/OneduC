@@ -271,15 +271,6 @@
         setTab(localStorage.getItem('oneduc_lecture_tab') || 'tab-contenu');
     })();
 
-    // JS Objectifs (Simplifié)
-    document.getElementById('add-objective')?.addEventListener('click', () => {
-        const list = document.getElementById('objectives-list');
-        const i = list.querySelectorAll('[data-row]').length;
-        // ... (Logique identique à avant mais avec le nouveau HTML compact) ...
-        // Note: Pour garder le code court ici, je n'ai pas remis tout le JS de génération de ligne 
-        // mais il faudrait adapter le template string au nouveau design compact ci-dessus.
-        alert('Fonctionnalité JS à reconnecter avec le nouveau template HTML'); 
-    });
 </script>
 
 {{-- Réintégration du JS Objectifs complet --}}
