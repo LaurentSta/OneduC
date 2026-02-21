@@ -1,44 +1,72 @@
+############################################
+# Laravel / PHP
+############################################
 /vendor/
-node_modules/
-npm-debug.log
-yarn-error.log
-
-# Laravel 4 specific
-bootstrap/compiled.php
-app/storage/
-
-# Laravel 5 & Lumen specific
-public/storage
-public/hot
-
-# Laravel 5 & Lumen specific with changed public path
-public_html/storage
-public_html/hot
-
-# Environnement et fichiers sensibles
-storage/*.key
-.env
-.env.backup
-.env.production
+/.env
+.env.*
+auth.json
 Homestead.yaml
 Homestead.json
 /.vagrant
 .phpunit.result.cache
-.phpactor.json
-auth.json
-
-# Cache compilé / build
-/public/build
-/storage/pail
-
-# Ignorer SCORM local (important pour ne pas pousser les ressources lourdes)
-public/modules/scorm/*
-/storage/framework/*
-/storage/logs/*
-/storage/debugbar/*
 /.phpunit.cache
-/resources/scorm/
+.phpactor.json
 
+############################################
+# Node / Vite
+############################################
+/node_modules/
+npm-debug.log
+yarn-error.log
 /.vite
 /.vite-inspect
 
+############################################
+# Cache / Logs / Storage
+############################################
+/bootstrap/cache/
+/storage/framework/
+/storage/logs/
+/storage/debugbar/
+storage/*.key
+/storage/pail
+
+############################################
+# SCORM (lourd)
+############################################
+/public/modules/scorm/*
+/resources/scorm/
+
+############################################
+# PUBLIC : dépôt léger (deny all + allowlist)
+############################################
+# On ignore tout ce qui est dans public par défaut
+/public/*
+
+# Essentiels Laravel
+!/public/index.php
+!/public/.htaccess
+!/public/robots.txt
+!/public/favicon.ico
+
+# Statique utile (si tu veux les versionner)
+!/public/fonts/
+!/public/fonts/**
+!/public/images/
+!/public/images/**
+!/public/docs/
+!/public/docs/**
+!/public/confortplus/
+!/public/confortplus/**
+!/public/scorm_core/
+!/public/scorm_core/**
+
+############################################
+# PUBLIC : exclusions explicites (toujours)
+############################################
+/public/build/
+/public/hot
+/public/storage/
+/public/upload/
+/public/phpmyadmin
+/public/test.php

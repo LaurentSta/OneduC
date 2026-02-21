@@ -15,4 +15,9 @@ export default defineConfig({
             refresh: true,
         }),
     ],
+    resolve: {
+        alias: {
+            '~': '/node_modules/',
+        },
+    },
 });
