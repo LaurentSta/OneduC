@@ -35,7 +35,7 @@
                 </div>
                 <span class="text-[10px] font-bold uppercase text-gray-400">Vidéos Vues</span>
             </div>
-            <p class="text-xl font-bold text-gray-900">{{ gmdate("H\h i", $videoStats->total_watch_time ?? 0) }}</p>
+            <p class="text-xl font-bold text-gray-900">{{ gmdate("H\h i", $videoStats->watch_time ?? 0) }}</p>
         </div>
 
         {{-- Réflexion --}}
@@ -188,35 +188,35 @@
         <h2 class="text-lg font-raleway font-bold text-gray-800 mb-4 px-1">Détail des scores par module</h2>
 
         {{-- On groupe par titre de module --}}
-        @forelse ($resultats->groupBy(fn($item) => $item->lecture->module->module_title ?? 'Autre') as $moduleTitle => $scores)
+        @forelse ($resultats->groupBy(fn($item) => $item->module_title ?? 'Autre') as $moduleTitle => $scores)
             @php
-                // --- CORRECTION DU CALCUL GLOBAL ---
-                
-                // 1. On regroupe par Leçon unique (lecture_id) pour ne pas compter les doublons (SCORM + Quiz)
-                $uniqueLessons = $scores->groupBy('lecture_id');
-
-                // 2. Pour chaque leçon, on calcule le MEILLEUR score obtenu (Max)
-                $bestScoresPerLesson = $uniqueLessons->map(function ($attempts) {
-                    return $attempts->max(function ($s) {
-                        if ($s instanceof \App\Models\QuizAttempt) {
-                            // C'est un Quiz Natif : le score est déjà en %
-                            return $s->score; 
-                        } else {
-                            // C'est un SCORM : on calcule le %
-                            $total = $s->total_questions ?? 0;
-                            $correct = ($s->correct_score / 10) ?? 0;
-                            return $total > 0 ? round(($correct / $total) * 100) : 0;
-                        }
-                    });
-                });
-
-                // 3. La progression du module est la MOYENNE des meilleures notes
-                $modulePercent = $bestScoresPerLesson->isNotEmpty() ? round($bestScoresPerLesson->avg()) : 0;
-                
+                $totalLessons = $scores->count();
+                $completedLessons = $scores->where('status_key', 'completed')->count();
+                $modulePercent = $totalLessons > 0 ? (int) round(($completedLessons / $totalLessons) * 100) : 0;
                 $isModuleSuccess = $modulePercent >= 75;
+
+                $moduleStartAt = $scores->pluck('started_at')
+                    ->filter()
+                    ->map(function ($dt) {
+                        return $dt instanceof \DateTimeInterface
+                            ? \Illuminate\Support\Carbon::instance($dt)
+                            : \Illuminate\Support\Carbon::parse($dt);
+                    })
+                    ->sortBy(fn ($dt) => $dt->getTimestamp())
+                    ->first();
+
+                $moduleEndAt = $scores->pluck('ended_at')
+                    ->filter()
+                    ->map(function ($dt) {
+                        return $dt instanceof \DateTimeInterface
+                            ? \Illuminate\Support\Carbon::instance($dt)
+                            : \Illuminate\Support\Carbon::parse($dt);
+                    })
+                    ->sortByDesc(fn ($dt) => $dt->getTimestamp())
+                    ->first();
             @endphp
 
-            <div x-data="{ open: false }" class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden transition-all duration-300 hover:shadow-md">
+            <div x-data="{ open: false, datesOpen: false }" class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden transition-all duration-300 hover:shadow-md">
                 
                 {{-- EN-TÊTE ACCORDÉON --}}
                 <button @click="open = !open" class="w-full px-6 py-5 flex flex-col md:flex-row md:items-center justify-between gap-4 group hover:bg-gray-50/50 transition-colors">
@@ -230,7 +230,7 @@
                                 {{ $moduleTitle }}
                             </h2>
                             <p class="text-xs text-gray-400 font-medium">
-                                {{ $scores->count() }} leçon(s) terminée(s)
+                                {{ $completedLessons }} / {{ $totalLessons }} leçon(s) validée(s)
                             </p>
                         </div>
                     </div>
@@ -244,55 +244,87 @@
                                 <div class="h-full rounded-full {{ $isModuleSuccess ? 'bg-green-500' : 'bg-orangeone' }}" style="width: {{ $modulePercent }}%"></div>
                             </div>
                         </div>
+                        <span
+                            role="button"
+                            tabindex="0"
+                            title="Voir début/fin"
+                            class="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-gray-200 text-gray-400 hover:text-bleuone hover:border-bleuone/40 bg-white"
+                            @click.stop.prevent="datesOpen = true"
+                            @keydown.enter.stop.prevent="datesOpen = true"
+                            @keydown.space.stop.prevent="datesOpen = true"
+                        >
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3M4 11h16M5 5h14a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1z" />
+                            </svg>
+                        </span>
                         <svg :class="{'rotate-180': open}" class="w-6 h-6 text-gray-300 group-hover:text-bleuone transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
                     </div>
                 </button>
+
+                {{-- MODALE: Date de début / date de fin du module --}}
+                <template x-teleport="body">
+                    <div
+                        x-show="datesOpen"
+                        x-cloak
+                        class="fixed inset-0 flex items-center justify-center p-4"
+                        style="z-index: 99999;"
+                        aria-modal="true"
+                        role="dialog"
+                    >
+                        <div class="absolute inset-0 bg-black/40" @click="datesOpen = false"></div>
+
+                        <div class="relative w-full max-w-md bg-white rounded-2xl shadow-xl border border-gray-100 p-6" @click.stop>
+                            <div class="flex items-start justify-between gap-4 mb-4">
+                                <div>
+                                    <h3 class="text-sm font-bold text-bleuone">Période du module</h3>
+                                    <p class="text-xs text-gray-500 mt-1">{{ $moduleTitle }}</p>
+                                </div>
+                                <button type="button" class="text-gray-400 hover:text-gray-600" @click="datesOpen = false">
+                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <div class="space-y-3">
+                                <div class="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
+                                    <p class="text-[11px] uppercase tracking-wide text-gray-400 font-semibold">Date de début</p>
+                                    <p class="text-sm font-bold text-gray-800 mt-1">
+                                        {{ $moduleStartAt ? $moduleStartAt->format('d/m/Y H:i') : '-' }}
+                                    </p>
+                                </div>
+                                <div class="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
+                                    <p class="text-[11px] uppercase tracking-wide text-gray-400 font-semibold">Date de fin</p>
+                                    <p class="text-sm font-bold text-gray-800 mt-1">
+                                        {{ $moduleEndAt ? $moduleEndAt->format('d/m/Y H:i') : 'En cours' }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
 
                 {{-- CONTENU DÉTAILLÉ --}}
                 <div x-show="open" x-collapse>
                     <div class="border-t border-gray-100 bg-gray-50/30">
                         @foreach ($scores as $score)
-                            @php
-                                // --- NORMALISATION DES DONNÉES (SCORM vs NATIF) ---
-                                $isNative = $score instanceof \App\Models\QuizAttempt;
-
-                                if ($isNative) {
-                                    // Données Quiz Natif
-                                    $totalQ = $score->total_questions;
-                                    $scorePercent = $score->score; // Déjà stocké en %
-                                    $correct = round(($scorePercent / 100) * $totalQ);
-                                    $answered = $totalQ; 
-                                    $time = gmdate("H:i:s", $score->total_time_seconds);
-                                    $typeLabel = "Quiz";
-                                } else {
-                                    // Données SCORM
-                                    $totalQ = $score->total_questions ?? 0;
-                                    $correct = ($score->correct_score / 10) ?? 0;
-                                    $answered = $score->answered_questions ?? 0;
-                                    $scorePercent = $totalQ > 0 ? round(($correct / $totalQ) * 100) : 0;
-                                    $time = $score->formatted_session_time ?? gmdate("H:i:s", $score->session_time ?? 0);
-                                    $typeLabel = "Interactif";
-                                }
-
-                                $wrong = $answered - $correct;
-                                $statusClass = $scorePercent >= 50 ? 'text-green-600 bg-green-50 border-green-200' : 'text-red-600 bg-red-50 border-red-200';
-                            @endphp
-
                             <div class="px-6 py-4 border-b border-gray-100 last:border-0 hover:bg-white transition-colors">
                                 <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
                                     {{-- Titre --}}
                                     <div class="md:col-span-5 flex items-start gap-3">
                                         <div class="mt-1">
-                                            @if($scorePercent >= 50)
+                                            @if($score->status_key === 'completed')
                                                 <svg class="w-5 h-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                            @else
+                                            @elseif($score->status_key === 'failed')
                                                 <svg class="w-5 h-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                            @else
+                                                <svg class="w-5 h-5 text-orangeone" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M12 6v2m0 8v2m6-6h-2M8 12H6" /></svg>
                                             @endif
                                         </div>
                                         <div>
-                                            <h3 class="text-sm font-bold text-gray-800">{{ $score->lecture->lecture_title ?? 'Leçon inconnue' }}</h3>
+                                            <h3 class="text-sm font-bold text-gray-800">{{ $score->lecture_title ?? 'Leçon inconnue' }}</h3>
                                             <span class="text-[11px] text-gray-400 uppercase tracking-wider font-semibold">
-                                                {{ $typeLabel }}
+                                                {{ $score->source_label }}
                                             </span>
                                         </div>
                                     </div>
@@ -300,15 +332,15 @@
                                     {{-- Barre de progression --}}
                                     <div class="md:col-span-4">
                                         <div class="flex items-center gap-3 mb-1">
-                                            <span class="text-xs font-bold w-8 text-right">{{ $scorePercent }}%</span>
+                                            <span class="text-xs font-bold w-8 text-right">{{ $score->score_percent }}%</span>
                                             <div class="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-                                                <div class="h-full rounded-full {{ $scorePercent >= 50 ? 'bg-green-500' : 'bg-red-400' }}" style="width: {{ $scorePercent }}%"></div>
+                                                <div class="h-full rounded-full {{ $score->bar_class }}" style="width: {{ $score->score_percent }}%"></div>
                                             </div>
                                         </div>
                                         <div class="flex gap-4 text-[11px] text-gray-500 pl-11">
-                                            <span class="flex items-center gap-1" title="Bonnes réponses"><span class="w-2 h-2 rounded-full bg-green-500"></span> {{ $correct }}</span>
-                                            <span class="flex items-center gap-1" title="Erreurs"><span class="w-2 h-2 rounded-full bg-red-400"></span> {{ $wrong }}</span>
-                                            <span class="text-gray-300">/</span><span>{{ $totalQ }} total</span>
+                                            <span class="flex items-center gap-1" title="Bonnes réponses"><span class="w-2 h-2 rounded-full bg-green-500"></span> {{ $score->correct_answers }}</span>
+                                            <span class="flex items-center gap-1" title="Erreurs"><span class="w-2 h-2 rounded-full bg-red-400"></span> {{ $score->wrong_answers }}</span>
+                                            <span class="text-gray-300">/</span><span>{{ $score->total_questions }} total</span>
                                         </div>
                                     </div>
 
@@ -317,11 +349,11 @@
                                         <div class="text-right">
                                             <div class="flex items-center gap-1 text-gray-500 text-xs font-medium">
                                                 <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                                {{ $time }}
+                                                {{ $score->time }}
                                             </div>
                                         </div>
-                                        <span class="px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wide border {{ $statusClass }}">
-                                            {{ $scorePercent >= 50 ? 'Validé' : 'Échec' }}
+                                        <span class="px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wide border {{ $score->status_class }}">
+                                            {{ $score->status_label }}
                                         </span>
                                     </div>
                                 </div>

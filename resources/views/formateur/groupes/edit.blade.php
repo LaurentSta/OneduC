@@ -189,9 +189,21 @@
         <div class="bg-gray-50 border border-gray-200 rounded-[16px] p-6">
              <div class="flex items-center justify-between mb-4">
                 <h4 class="font-bold text-bleuone">Ajouter de nouveaux stagiaires</h4>
-                <button type="button" @click="addStudentRow()" class="btn-oneduc text-sm py-2 px-4">
-                    + Ajouter une ligne
-                </button>
+                <div class="flex items-center gap-2">
+                    <button type="button"
+                            class="w-10 h-10 inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 hover:text-bleuone hover:border-bleuone/30 transition"
+                            onclick="openCsvModalEdit()"
+                            aria-label="Importer des stagiaires par CSV"
+                            title="Importer un lot CSV">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                        </svg>
+                    </button>
+
+                    <button type="button" @click="addStudentRow()" class="btn-oneduc text-sm py-2 px-4">
+                        + Ajouter une ligne
+                    </button>
+                </div>
             </div>
             
             <table class="w-full" x-show="nextNewStudentIndex > 0">
@@ -204,6 +216,47 @@
             </p>
         </div>
       </section>
+
+      {{-- Modale import CSV (discrète, sans sortir du wizard) --}}
+      <div id="csv-modal-edit" class="fixed inset-0 z-[80] hidden items-center justify-center bg-black/40 p-4">
+        <div class="w-full max-w-xl rounded-2xl border border-gray-200 bg-white shadow-2xl">
+          <div class="flex items-center justify-between border-b border-gray-100 px-5 py-4">
+            <h4 class="font-bold text-bleuone">Import de stagiaires (CSV)</h4>
+            <button type="button" class="text-gray-400 hover:text-gray-700" onclick="closeCsvModalEdit()" aria-label="Fermer">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <div class="px-5 py-4 space-y-4">
+            <p class="text-sm text-gray-600">
+              Format attendu: colonnes <span class="font-bold">prenom</span>, <span class="font-bold">nom</span>, <span class="font-bold">email</span>.
+            </p>
+            <p class="text-xs text-gray-500 bg-gray-50 border border-gray-100 rounded-lg px-3 py-2">
+              Exemple d’en-tête: <code>prenom;nom;email</code> (ou séparateur virgule).
+            </p>
+
+            <input id="csv-file-edit" type="file" accept=".csv,text/csv"
+                   class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm">
+
+            <div id="csv-feedback-edit" class="hidden rounded-lg px-3 py-2 text-sm"></div>
+          </div>
+
+          <div class="flex items-center justify-end gap-2 border-t border-gray-100 px-5 py-4">
+            <button type="button"
+                    class="px-3 py-2 text-sm rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50"
+                    onclick="closeCsvModalEdit()">
+              Fermer
+            </button>
+            <button type="button"
+                    id="csv-import-confirm-edit"
+                    class="px-3 py-2 text-sm rounded-lg bg-bleuone text-white hover:opacity-90">
+              Importer
+            </button>
+          </div>
+        </div>
+      </div>
 
 
       {{-- SECTION 3 : Parcours / Modules (TABLEAU RESTAURÉ) --}}
@@ -360,6 +413,11 @@ document.addEventListener('alpine:init', () => {
       }));
 
       this.normalizePositions();
+
+      window.addEventListener('oneduc:csv-import-edit', (event) => {
+        const rows = event?.detail?.rows || [];
+        this.addStudentsFromCsv(rows);
+      });
     },
 
     // --- MODULES ---
@@ -431,23 +489,40 @@ document.addEventListener('alpine:init', () => {
       }
     },
 
-    addStudentRow() {
+    addStudentsFromCsv(rows = []) {
+      if (!Array.isArray(rows) || rows.length === 0) return;
+      rows.forEach((row) => this.addStudentRow(row));
+    },
+
+    addStudentRow(data = {}) {
       const container = document.getElementById('new-students-tbody');
       if (!container) return;
+
+      const escapeHtml = (value) => String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+
+      const prenom = escapeHtml(data.prenom || '');
+      const nom = escapeHtml(data.nom || '');
+      const email = escapeHtml(data.email || '');
+
       const i = this.nextNewStudentIndex++;
       const tr = document.createElement('tr');
       tr.className = 'border-t border-gray-100 flex flex-col sm:table-row bg-gray-50 sm:bg-transparent p-4 sm:p-0 rounded-lg mb-2 sm:mb-0';
       tr.innerHTML = `
         <td class='py-2 sm:py-3 pr-3 w-full sm:w-auto block sm:table-cell'>
-          <input required name='stagiaires[${i}][prenom]' type='text' placeholder='Prénom'
+          <input required name='stagiaires[${i}][prenom]' type='text' placeholder='Prénom' value='${prenom}'
             class='w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-orangeone focus:border-orangeone'>
         </td>
         <td class='py-2 sm:py-3 pr-3 w-full sm:w-auto block sm:table-cell'>
-          <input required name='stagiaires[${i}][nom]' type='text' placeholder='Nom'
+          <input required name='stagiaires[${i}][nom]' type='text' placeholder='Nom' value='${nom}'
             class='w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-orangeone focus:border-orangeone'>
         </td>
         <td class='py-2 sm:py-3 pr-3 w-full sm:w-auto block sm:table-cell'>
-          <input required name='stagiaires[${i}][email]' type='email' placeholder='Email'
+          <input required name='stagiaires[${i}][email]' type='email' placeholder='Email' value='${email}'
             class='w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-orangeone focus:border-orangeone'>
         </td>
         <td class='py-2 sm:py-3 text-right block sm:table-cell'>
@@ -460,6 +535,221 @@ document.addEventListener('alpine:init', () => {
     }
   }));
 });
+</script>
+
+<script>
+(function () {
+  function showCsvFeedbackEdit(message, type = 'info') {
+    const box = document.getElementById('csv-feedback-edit');
+    if (!box) return;
+    box.classList.remove('hidden', 'bg-red-50', 'text-red-700', 'border', 'border-red-100', 'bg-green-50', 'text-green-700', 'border-green-100', 'bg-gray-50', 'text-gray-700', 'border-gray-100');
+    if (type === 'error') {
+      box.classList.add('bg-red-50', 'text-red-700', 'border', 'border-red-100');
+    } else if (type === 'success') {
+      box.classList.add('bg-green-50', 'text-green-700', 'border', 'border-green-100');
+    } else {
+      box.classList.add('bg-gray-50', 'text-gray-700', 'border', 'border-gray-100');
+    }
+    box.textContent = message;
+  }
+
+  window.openCsvModalEdit = function () {
+    const modal = document.getElementById('csv-modal-edit');
+    if (!modal) return;
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+  };
+
+  window.closeCsvModalEdit = function () {
+    const modal = document.getElementById('csv-modal-edit');
+    const input = document.getElementById('csv-file-edit');
+    const box = document.getElementById('csv-feedback-edit');
+    if (modal) {
+      modal.classList.remove('flex');
+      modal.classList.add('hidden');
+    }
+    if (input) input.value = '';
+    if (box) {
+      box.classList.add('hidden');
+      box.textContent = '';
+    }
+  };
+
+  function normalizeCsvHeaderEdit(header) {
+    return (header || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/\s+/g, '')
+      .trim();
+  }
+
+  function detectDelimiterEdit(text) {
+    const sample = (text || '').split(/\r?\n/).slice(0, 3).join('\n');
+    const semicolonCount = (sample.match(/;/g) || []).length;
+    const commaCount = (sample.match(/,/g) || []).length;
+    return semicolonCount >= commaCount ? ';' : ',';
+  }
+
+  function parseCsvLineEdit(line, delimiter) {
+    const out = [];
+    let current = '';
+    let inQuotes = false;
+
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+
+      if (ch === '"') {
+        if (inQuotes && line[i + 1] === '"') {
+          current += '"';
+          i++;
+        } else {
+          inQuotes = !inQuotes;
+        }
+        continue;
+      }
+
+      if (ch === delimiter && !inQuotes) {
+        out.push(current.trim());
+        current = '';
+        continue;
+      }
+
+      current += ch;
+    }
+
+    out.push(current.trim());
+    return out;
+  }
+
+  function extractStudentsFromCsvEdit(text) {
+    const delimiter = detectDelimiterEdit(text);
+    const lines = (text || '').split(/\r?\n/).filter(l => l.trim() !== '');
+    if (lines.length === 0) {
+      return { students: [], skipped: 0 };
+    }
+
+    const rows = lines.map(line => parseCsvLineEdit(line, delimiter));
+    const first = rows[0].map(normalizeCsvHeaderEdit);
+
+    const emailAliases = ['email', 'e-mail', 'mail', 'courriel'];
+    const prenomAliases = ['prenom', 'firstname', 'first_name', 'givenname', 'given_name'];
+    const nomAliases = ['nom', 'name', 'lastname', 'last_name', 'surname', 'familyname'];
+
+    const emailIdx = first.findIndex(h => emailAliases.includes(h));
+    const prenomIdx = first.findIndex(h => prenomAliases.includes(h));
+    const nomIdx = first.findIndex(h => nomAliases.includes(h));
+    const hasHeader = emailIdx !== -1 || prenomIdx !== -1 || nomIdx !== -1;
+
+    const startAt = hasHeader ? 1 : 0;
+    const mapIdx = {
+      prenom: prenomIdx !== -1 ? prenomIdx : 0,
+      nom: nomIdx !== -1 ? nomIdx : 1,
+      email: emailIdx !== -1 ? emailIdx : 2,
+    };
+
+    const students = [];
+    let skipped = 0;
+
+    for (let i = startAt; i < rows.length; i++) {
+      const cols = rows[i];
+      const prenom = (cols[mapIdx.prenom] || '').trim();
+      const nom = (cols[mapIdx.nom] || '').trim();
+      const email = (cols[mapIdx.email] || '').trim().toLowerCase();
+
+      if (!prenom && !nom && !email) continue;
+      if (!prenom || !nom || !email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        skipped++;
+        continue;
+      }
+
+      students.push({ prenom, nom, email });
+    }
+
+    return { students, skipped };
+  }
+
+  function collectExistingEmailsEdit() {
+    const fromNewRows = Array.from(document.querySelectorAll('#new-students-tbody input[name$="[email]"]'))
+      .map((i) => (i.value || '').trim().toLowerCase())
+      .filter(Boolean);
+
+    const fromCurrentGroup = Array.from(document.querySelectorAll('tr[data-student-row] td:nth-child(2)'))
+      .map((cell) => (cell.textContent || '').trim().toLowerCase())
+      .filter(Boolean);
+
+    return new Set([...fromNewRows, ...fromCurrentGroup]);
+  }
+
+  function dispatchCsvStudentsToEdit(students) {
+    window.dispatchEvent(new CustomEvent('oneduc:csv-import-edit', {
+      detail: { rows: students },
+    }));
+  }
+
+  const importBtn = document.getElementById('csv-import-confirm-edit');
+  if (importBtn) {
+    importBtn.addEventListener('click', () => {
+      const input = document.getElementById('csv-file-edit');
+      const file = input?.files?.[0];
+
+      if (!file) {
+        showCsvFeedbackEdit('Sélectionnez un fichier CSV.', 'error');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        const text = String(reader.result || '');
+        const { students, skipped } = extractStudentsFromCsvEdit(text);
+
+        if (!students.length) {
+          showCsvFeedbackEdit('Aucun stagiaire valide trouvé dans le fichier.', 'error');
+          return;
+        }
+
+        const existing = collectExistingEmailsEdit();
+        const uniqueStudents = [];
+        let duplicates = 0;
+
+        students.forEach((student) => {
+          if (existing.has(student.email)) {
+            duplicates++;
+            return;
+          }
+          existing.add(student.email);
+          uniqueStudents.push(student);
+        });
+
+        if (uniqueStudents.length > 0) {
+          dispatchCsvStudentsToEdit(uniqueStudents);
+        }
+
+        showCsvFeedbackEdit(`Import terminé: ${uniqueStudents.length} ajouté(s), ${duplicates} doublon(s), ${skipped} ligne(s) ignorée(s).`, 'success');
+      };
+      reader.onerror = () => showCsvFeedbackEdit('Lecture du fichier impossible.', 'error');
+      reader.readAsText(file);
+    });
+  }
+
+  const modal = document.getElementById('csv-modal-edit');
+  if (modal) {
+    modal.addEventListener('click', (event) => {
+      if (event.target === modal) {
+        closeCsvModalEdit();
+      }
+    });
+  }
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      const modalEl = document.getElementById('csv-modal-edit');
+      if (modalEl && modalEl.classList.contains('flex')) {
+        closeCsvModalEdit();
+      }
+    }
+  });
+})();
 </script>
 
 @endsection

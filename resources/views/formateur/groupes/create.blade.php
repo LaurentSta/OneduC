@@ -116,12 +116,24 @@
                     Renseignez les informations de vos apprenants.
                 </p>
             </div>
-            <button type="button"
-                class="px-4 py-2 bg-bleuone/10 text-bleuone border border-bleuone/20 font-bold rounded-lg hover:bg-bleuone hover:text-white transition flex items-center justify-center gap-2 text-sm"
-                onclick="addStagiaire()">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
-                Ajouter un stagiaire
-            </button>
+            <div class="flex items-center gap-2">
+                <button type="button"
+                    class="w-10 h-10 inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 hover:text-bleuone hover:border-bleuone/30 transition"
+                    onclick="openCsvModalCreate()"
+                    aria-label="Importer des stagiaires par CSV"
+                    title="Importer un lot CSV">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                    </svg>
+                </button>
+
+                <button type="button"
+                    class="px-4 py-2 bg-bleuone/10 text-bleuone border border-bleuone/20 font-bold rounded-lg hover:bg-bleuone hover:text-white transition flex items-center justify-center gap-2 text-sm"
+                    onclick="addStagiaire()">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+                    Ajouter un stagiaire
+                </button>
+            </div>
         </div>
 
         <div id="stagiaires-container" class="space-y-3">
@@ -201,6 +213,47 @@
         </div>
       </div>
     </fieldset>
+
+    {{-- Modale import CSV (discrète, dans le wizard) --}}
+    <div id="csv-modal-create" class="fixed inset-0 z-[80] hidden items-center justify-center bg-black/40 p-4">
+      <div class="w-full max-w-xl rounded-2xl border border-gray-200 bg-white shadow-2xl">
+        <div class="flex items-center justify-between border-b border-gray-100 px-5 py-4">
+          <h4 class="font-bold text-bleuone">Import de stagiaires (CSV)</h4>
+          <button type="button" class="text-gray-400 hover:text-gray-700" onclick="closeCsvModalCreate()" aria-label="Fermer">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div class="px-5 py-4 space-y-4">
+          <p class="text-sm text-gray-600">
+            Format attendu: colonnes <span class="font-bold">prenom</span>, <span class="font-bold">nom</span>, <span class="font-bold">email</span>.
+          </p>
+          <p class="text-xs text-gray-500 bg-gray-50 border border-gray-100 rounded-lg px-3 py-2">
+            Exemple d’en-tête: <code>prenom;nom;email</code> (ou séparateur virgule).
+          </p>
+
+          <input id="csv-file-create" type="file" accept=".csv,text/csv"
+                 class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm">
+
+          <div id="csv-feedback-create" class="hidden rounded-lg px-3 py-2 text-sm"></div>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 border-t border-gray-100 px-5 py-4">
+          <button type="button"
+                  class="px-3 py-2 text-sm rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50"
+                  onclick="closeCsvModalCreate()">
+            Fermer
+          </button>
+          <button type="button"
+                  id="csv-import-confirm-create"
+                  class="px-3 py-2 text-sm rounded-lg bg-bleuone text-white hover:opacity-90">
+            Importer
+          </button>
+        </div>
+      </div>
+    </div>
 
     {{-- Étape 3 : Modules --}}
     <fieldset id="step-3" class="step hidden">
@@ -352,8 +405,27 @@
 
   // --- GESTION DES STAGIAIRES & PASSWORD (MODIFIÉ) ---
 
+  function fillStagiaireRow(row, data) {
+    const prenomInput = row.querySelector('input[name$="[prenom]"]');
+    const nomInput = row.querySelector('input[name$="[nom]"]');
+    const emailInput = row.querySelector('input[name$="[email]"]');
+
+    if (prenomInput) prenomInput.value = data.prenom || '';
+    if (nomInput) nomInput.value = data.nom || '';
+    if (emailInput) emailInput.value = data.email || '';
+  }
+
+  function findEmptyStagiaireRow() {
+    const rows = Array.from(document.querySelectorAll('#stagiaires-container .stagiaire-row'));
+    return rows.find((row) => {
+      const values = Array.from(row.querySelectorAll('input[name$="[prenom]"], input[name$="[nom]"], input[name$="[email]"]'))
+        .map((i) => (i.value || '').trim());
+      return values.every(v => v === '');
+    }) || null;
+  }
+
   // Ajout dynamique avec le nouveau design HTML
-  window.addStagiaire = function () {
+  window.addStagiaire = function (data = null) {
     const container = document.getElementById('stagiaires-container');
     const rows = container.querySelectorAll('.stagiaire-row');
     const index = rows.length; // Calcule le bon index pour le tableau PHP
@@ -392,6 +464,11 @@
       </div>`;
     
     container.insertAdjacentHTML('beforeend', tpl);
+
+    if (data && (data.prenom || data.nom || data.email)) {
+      const inserted = container.lastElementChild;
+      if (inserted) fillStagiaireRow(inserted, data);
+    }
   }
 
   // Suppression d'une ligne (avec sécurité min 1 ligne)
@@ -405,6 +482,212 @@
     }
     row.remove();
   }
+
+  function showCsvFeedbackCreate(message, type = 'info') {
+    const box = document.getElementById('csv-feedback-create');
+    if (!box) return;
+    box.classList.remove('hidden', 'bg-red-50', 'text-red-700', 'border', 'border-red-100', 'bg-green-50', 'text-green-700', 'border-green-100', 'bg-gray-50', 'text-gray-700', 'border-gray-100');
+    if (type === 'error') {
+      box.classList.add('bg-red-50', 'text-red-700', 'border', 'border-red-100');
+    } else if (type === 'success') {
+      box.classList.add('bg-green-50', 'text-green-700', 'border', 'border-green-100');
+    } else {
+      box.classList.add('bg-gray-50', 'text-gray-700', 'border', 'border-gray-100');
+    }
+    box.textContent = message;
+  }
+
+  window.openCsvModalCreate = function () {
+    const modal = document.getElementById('csv-modal-create');
+    if (!modal) return;
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+  };
+
+  window.closeCsvModalCreate = function () {
+    const modal = document.getElementById('csv-modal-create');
+    const input = document.getElementById('csv-file-create');
+    const box = document.getElementById('csv-feedback-create');
+    if (modal) {
+      modal.classList.remove('flex');
+      modal.classList.add('hidden');
+    }
+    if (input) input.value = '';
+    if (box) {
+      box.classList.add('hidden');
+      box.textContent = '';
+    }
+  };
+
+  function normalizeCsvHeaderCreate(header) {
+    return (header || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/\s+/g, '')
+      .trim();
+  }
+
+  function detectDelimiterCreate(text) {
+    const sample = (text || '').split(/\r?\n/).slice(0, 3).join('\n');
+    const semicolonCount = (sample.match(/;/g) || []).length;
+    const commaCount = (sample.match(/,/g) || []).length;
+    return semicolonCount >= commaCount ? ';' : ',';
+  }
+
+  function parseCsvLineCreate(line, delimiter) {
+    const out = [];
+    let current = '';
+    let inQuotes = false;
+
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+
+      if (ch === '"') {
+        if (inQuotes && line[i + 1] === '"') {
+          current += '"';
+          i++;
+        } else {
+          inQuotes = !inQuotes;
+        }
+        continue;
+      }
+
+      if (ch === delimiter && !inQuotes) {
+        out.push(current.trim());
+        current = '';
+        continue;
+      }
+
+      current += ch;
+    }
+
+    out.push(current.trim());
+    return out;
+  }
+
+  function extractStudentsFromCsvCreate(text) {
+    const delimiter = detectDelimiterCreate(text);
+    const lines = (text || '').split(/\r?\n/).filter(l => l.trim() !== '');
+    if (lines.length === 0) {
+      return { students: [], skipped: 0 };
+    }
+
+    const rows = lines.map(line => parseCsvLineCreate(line, delimiter));
+    const first = rows[0].map(normalizeCsvHeaderCreate);
+
+    const emailAliases = ['email', 'e-mail', 'mail', 'courriel'];
+    const prenomAliases = ['prenom', 'firstname', 'first_name', 'givenname', 'given_name'];
+    const nomAliases = ['nom', 'name', 'lastname', 'last_name', 'surname', 'familyname'];
+
+    const emailIdx = first.findIndex(h => emailAliases.includes(h));
+    const prenomIdx = first.findIndex(h => prenomAliases.includes(h));
+    const nomIdx = first.findIndex(h => nomAliases.includes(h));
+    const hasHeader = emailIdx !== -1 || prenomIdx !== -1 || nomIdx !== -1;
+
+    const startAt = hasHeader ? 1 : 0;
+    const mapIdx = {
+      prenom: prenomIdx !== -1 ? prenomIdx : 0,
+      nom: nomIdx !== -1 ? nomIdx : 1,
+      email: emailIdx !== -1 ? emailIdx : 2,
+    };
+
+    const students = [];
+    let skipped = 0;
+
+    for (let i = startAt; i < rows.length; i++) {
+      const cols = rows[i];
+      const prenom = (cols[mapIdx.prenom] || '').trim();
+      const nom = (cols[mapIdx.nom] || '').trim();
+      const email = (cols[mapIdx.email] || '').trim().toLowerCase();
+
+      if (!prenom && !nom && !email) continue;
+      if (!prenom || !nom || !email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        skipped++;
+        continue;
+      }
+
+      students.push({ prenom, nom, email });
+    }
+
+    return { students, skipped };
+  }
+
+  function addStudentsFromCsvCreate(students) {
+    const existingEmails = new Set(
+      Array.from(document.querySelectorAll('#stagiaires-container input[name$="[email]"]'))
+        .map((i) => (i.value || '').trim().toLowerCase())
+        .filter(Boolean)
+    );
+
+    let added = 0;
+    let duplicates = 0;
+
+    students.forEach((student) => {
+      if (existingEmails.has(student.email)) {
+        duplicates++;
+        return;
+      }
+
+      const emptyRow = findEmptyStagiaireRow();
+      if (emptyRow) {
+        fillStagiaireRow(emptyRow, student);
+      } else {
+        addStagiaire(student);
+      }
+      existingEmails.add(student.email);
+      added++;
+    });
+
+    return { added, duplicates };
+  }
+
+  const csvImportBtnCreate = document.getElementById('csv-import-confirm-create');
+  if (csvImportBtnCreate) {
+    csvImportBtnCreate.addEventListener('click', () => {
+      const input = document.getElementById('csv-file-create');
+      const file = input?.files?.[0];
+
+      if (!file) {
+        showCsvFeedbackCreate('Sélectionnez un fichier CSV.', 'error');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        const text = String(reader.result || '');
+        const { students, skipped } = extractStudentsFromCsvCreate(text);
+
+        if (!students.length) {
+          showCsvFeedbackCreate('Aucun stagiaire valide trouvé dans le fichier.', 'error');
+          return;
+        }
+
+        const { added, duplicates } = addStudentsFromCsvCreate(students);
+        showCsvFeedbackCreate(`Import terminé: ${added} ajouté(s), ${duplicates} doublon(s), ${skipped} ligne(s) ignorée(s).`, 'success');
+      };
+      reader.onerror = () => showCsvFeedbackCreate('Lecture du fichier impossible.', 'error');
+      reader.readAsText(file);
+    });
+  }
+
+  const csvModalCreate = document.getElementById('csv-modal-create');
+  if (csvModalCreate) {
+    csvModalCreate.addEventListener('click', (event) => {
+      if (event.target === csvModalCreate) {
+        closeCsvModalCreate();
+      }
+    });
+  }
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      const modal = document.getElementById('csv-modal-create');
+      if (modal && modal.classList.contains('flex')) {
+        closeCsvModalCreate();
+      }
+    }
+  });
 
   // Générateur de mot de passe (Nouveau)
   window.generatePassword = function() {

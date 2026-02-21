@@ -15,6 +15,8 @@ use App\Models\QuizAttemptQuestion;
 use Illuminate\Support\Facades\DB;
 use App\Models\User;
 use App\Models\QuizAttempt;            
+use App\Models\ModuleLecture;
+use App\Models\Progression;
 
 class StagiaireController extends Controller
 {
@@ -311,23 +313,315 @@ class StagiaireController extends Controller
         $reessayeCount = $consolidatedQuestions->where('attempts_count', '>', 1)->count();
 
 
-        // --- 4. RÉSULTATS DÉTAILLÉS PAR MODULE (FUSION SCORM + QUIZ NATIFS) ---
-        // C'est ici que j'ai ajouté la fusion pour que le détail s'affiche
-        
-        // A. Récupérer le SCORM
-        $scormResults = ScormScore::with('lecture.module')
+        // --- 4. RÉSULTATS DÉTAILLÉS PAR MODULE (CONSOLIDÉS PAR LEÇON) ---
+        // Objectif: 1 seule ligne par leçon, même si SCORM + Quiz coexistent.
+        $scormResults = ScormScore::query()
             ->where('user_id', $userId)
-            ->get();
+            ->get()
+            ->keyBy('lecture_id');
 
-        // B. Récupérer les Quiz Natifs (Terminés uniquement)
-        $nativeResults = QuizAttempt::with('lecture.module')
+        $nativeAttempts = QuizAttempt::query()
             ->where('user_id', $userId)
-            ->whereNotNull('finished_at') // Seulement ceux finis
             ->orderByDesc('finished_at')
+            ->orderByDesc('started_at')
+            ->orderByDesc('id')
             ->get();
 
-        // C. Fusionner les deux collections
-        $resultats = $scormResults->concat($nativeResults);
+        $latestQuizAttempts = $nativeAttempts
+            ->groupBy('lecture_id')
+            ->map(function ($rows) {
+                return $rows->sortByDesc(function ($a) {
+                    return $a->finished_at?->timestamp
+                        ?? $a->started_at?->timestamp
+                        ?? $a->created_at?->timestamp
+                        ?? 0;
+                })->first();
+            });
+
+        $bestFinishedQuizAttempts = $nativeAttempts
+            ->filter(fn ($a) => !is_null($a->finished_at))
+            ->groupBy('lecture_id')
+            ->map(function ($rows) {
+                return $rows->sortBy([
+                    ['score', 'desc'],
+                    ['finished_at', 'desc'],
+                    ['id', 'desc'],
+                ])->first();
+            });
+
+        $attemptAgg = collect();
+        $attemptIds = $nativeAttempts->pluck('id')->all();
+        if (!empty($attemptIds)) {
+            $attemptAgg = QuizAttemptQuestion::query()
+                ->select([
+                    'attempt_id',
+                    DB::raw('COUNT(*) as total'),
+                    DB::raw('SUM(CASE WHEN answered_at IS NOT NULL THEN 1 ELSE 0 END) as answered'),
+                    DB::raw('SUM(CASE WHEN is_correct = 1 THEN 1 ELSE 0 END) as correct'),
+                ])
+                ->whereIn('attempt_id', $attemptIds)
+                ->groupBy('attempt_id')
+                ->get()
+                ->keyBy('attempt_id');
+        }
+
+        $scormAgg = ScormInteraction::query()
+            ->where('user_id', $userId)
+            ->whereIn('result', ['correct', 'wrong'])
+            ->select([
+                'lecture_id',
+                DB::raw('COUNT(*) as total'),
+                DB::raw("SUM(CASE WHEN result = 'correct' THEN 1 ELSE 0 END) as correct"),
+            ])
+            ->groupBy('lecture_id')
+            ->get()
+            ->keyBy('lecture_id');
+
+        $videoByLecture = VideoSegmentTracking::query()
+            ->where('user_id', $userId)
+            ->select('lecture_id', DB::raw('SUM(total_watch_time) as watch_time'))
+            ->groupBy('lecture_id')
+            ->pluck('watch_time', 'lecture_id');
+
+        $videoBoundsByLecture = VideoSegmentTracking::query()
+            ->where('user_id', $userId)
+            ->select([
+                'lecture_id',
+                DB::raw('MIN(created_at) as first_seen_at'),
+                DB::raw('MAX(updated_at) as last_seen_at'),
+            ])
+            ->groupBy('lecture_id')
+            ->get()
+            ->keyBy('lecture_id');
+
+        $progressionsByLecture = Progression::query()
+            ->where('user_id', $userId)
+            ->select('lecture_id', DB::raw('MAX(completed_at) as completed_at'))
+            ->groupBy('lecture_id')
+            ->pluck('completed_at', 'lecture_id');
+
+        $lectureIds = collect()
+            ->merge($scormResults->keys())
+            ->merge($latestQuizAttempts->keys())
+            ->merge($videoByLecture->keys())
+            ->merge($videoBoundsByLecture->keys())
+            ->merge($progressionsByLecture->keys())
+            ->unique()
+            ->values();
+
+        $lecturesById = ModuleLecture::query()
+            ->with('module:id,module_title')
+            ->whereIn('id', $lectureIds)
+            ->get()
+            ->keyBy('id');
+
+        $resultats = $lectureIds->map(function ($lectureId) use (
+            $lecturesById,
+            $scormResults,
+            $latestQuizAttempts,
+            $bestFinishedQuizAttempts,
+            $attemptAgg,
+            $scormAgg,
+            $videoByLecture,
+            $videoBoundsByLecture,
+            $progressionsByLecture
+        ) {
+            $lecture = $lecturesById->get($lectureId);
+            if (!$lecture) {
+                return null;
+            }
+
+            $sc = $scormResults->get($lectureId);
+            $latestQuiz = $latestQuizAttempts->get($lectureId);
+            $bestQuiz = $bestFinishedQuizAttempts->get($lectureId);
+            $displayQuiz = $bestQuiz ?? $latestQuiz;
+            $quizStats = $displayQuiz ? $attemptAgg->get($displayQuiz->id) : null;
+            $scormStats = $scormAgg->get($lectureId);
+            $videoBounds = $videoBoundsByLecture->get($lectureId);
+
+            $scormTotal = (int) ($scormStats->total ?? 0);
+            $scormCorrect = (int) ($scormStats->correct ?? 0);
+            $scormAnswered = $scormTotal;
+
+            $scormScore = null;
+            if (!is_null($sc?->last_score)) {
+                $scormScore = (int) $sc->last_score;
+            } elseif (!is_null($sc?->best_score)) {
+                $scormScore = (int) $sc->best_score;
+            } elseif ($scormTotal > 0) {
+                $scormScore = (int) round(($scormCorrect / max(1, $scormTotal)) * 100);
+            }
+
+            $quizTotal = (int) ($quizStats->total ?? ($displayQuiz->total_questions ?? 0));
+            $quizAnswered = (int) ($quizStats->answered ?? 0);
+            $quizCorrect = (int) ($quizStats->correct ?? 0);
+
+            if ($quizAnswered === 0 && !is_null($displayQuiz?->finished_at) && $quizTotal > 0) {
+                $quizAnswered = $quizTotal;
+            }
+
+            $quizScore = null;
+            if (!is_null($displayQuiz?->percent)) {
+                $quizScore = (int) $displayQuiz->percent;
+            } elseif (!is_null($displayQuiz?->score)) {
+                $quizScore = (int) $displayQuiz->score;
+            } elseif ($quizTotal > 0) {
+                $quizScore = (int) round(($quizCorrect / max(1, $quizTotal)) * 100);
+            }
+
+            $scormTime = (int) ($sc?->session_time ?? 0);
+            $quizTime = (int) ($displayQuiz?->total_time_seconds ?? 0);
+            $videoTime = (int) ($videoByLecture[$lectureId] ?? 0);
+            $totalTime = $scormTime + $quizTime + $videoTime;
+
+            $lessonStatus = strtolower((string) ($sc?->lesson_status ?? ''));
+            $scormCompleted = in_array($lessonStatus, ['completed', 'passed'], true) || (bool) ($sc?->is_completed ?? false);
+            $hasScormActivity = $scormTotal > 0
+                || $scormTime > 0
+                || !is_null($sc?->last_score)
+                || !is_null($sc?->last_attempt_at)
+                || in_array($lessonStatus, ['incomplete', 'browsed', 'in_progress', 'failed'], true);
+
+            $hasQuizActivity = !is_null($displayQuiz)
+                && (
+                    $quizAnswered > 0
+                    || $quizTime > 0
+                    || !is_null($displayQuiz->started_at)
+                    || !is_null($displayQuiz->finished_at)
+                );
+
+            $hasVideoActivity = $videoTime > 0 || !is_null($videoBounds?->first_seen_at);
+            $hasProgression = !empty($progressionsByLecture[$lectureId]);
+
+            $useQuizMetrics = $hasQuizActivity || (!is_null($displayQuiz) && (bool) ($lecture->quiz_enabled ?? false));
+
+            $scorePercent = $useQuizMetrics ? $quizScore : $scormScore;
+            $totalQ = $useQuizMetrics ? $quizTotal : $scormTotal;
+            $answered = $useQuizMetrics ? $quizAnswered : $scormAnswered;
+            $correct = $useQuizMetrics ? $quizCorrect : $scormCorrect;
+
+            if ($totalQ <= 0 && $useQuizMetrics) {
+                $totalQ = (int) ($lecture->quiz_questions_per_attempt ?? 0);
+            }
+            if ($totalQ <= 0 && !$useQuizMetrics) {
+                $totalQ = (int) ($lecture->question_count ?? 0);
+            }
+
+            $correct = max(0, $correct);
+            $answered = max(0, max($answered, $correct));
+            if ($totalQ > 0) {
+                $answered = min($answered, $totalQ);
+                $correct = min($correct, $answered);
+            }
+            $wrong = max(0, $answered - $correct);
+
+            if ($useQuizMetrics && !is_null($displayQuiz?->finished_at)) {
+                $statusKey = ($scorePercent ?? 0) >= 50 ? 'completed' : 'failed';
+            } elseif ($scormCompleted || $hasProgression) {
+                $statusKey = 'completed';
+            } elseif ($hasQuizActivity || $hasScormActivity || $hasVideoActivity) {
+                $statusKey = 'in_progress';
+            } else {
+                $statusKey = 'not_started';
+            }
+
+            if (is_null($scorePercent)) {
+                if ($statusKey === 'completed') {
+                    $scorePercent = $totalQ > 0
+                        ? (int) round(($correct / max(1, $totalQ)) * 100)
+                        : 100;
+                } elseif ($totalQ > 0) {
+                    $scorePercent = (int) round(($correct / max(1, $totalQ)) * 100);
+                } else {
+                    $scorePercent = 0;
+                }
+            }
+
+            $scorePercent = (int) max(0, min(100, $scorePercent));
+
+            $statusLabel = match ($statusKey) {
+                'completed' => 'Validé',
+                'failed' => 'Échec',
+                'in_progress' => 'En cours',
+                default => 'Non commencé',
+            };
+
+            $statusClass = match ($statusKey) {
+                'completed' => 'text-green-600 bg-green-50 border-green-200',
+                'failed' => 'text-red-600 bg-red-50 border-red-200',
+                'in_progress' => 'text-orangeone bg-orange-50 border-orange-200',
+                default => 'text-gray-500 bg-gray-50 border-gray-200',
+            };
+
+            $barClass = match ($statusKey) {
+                'completed' => 'bg-green-500',
+                'failed' => 'bg-red-400',
+                'in_progress' => 'bg-orangeone',
+                default => 'bg-gray-300',
+            };
+
+            $sourceLabel = 'Interactif';
+            if ($hasQuizActivity && ($hasScormActivity || $hasVideoActivity)) {
+                $sourceLabel = 'Interactif + Quiz';
+            } elseif ($hasQuizActivity || (bool) ($lecture->quiz_enabled ?? false)) {
+                $sourceLabel = 'Quiz';
+            }
+
+            $progressCompletedAt = !empty($progressionsByLecture[$lectureId])
+                ? \Illuminate\Support\Carbon::parse($progressionsByLecture[$lectureId])
+                : null;
+
+            $startedAt = collect([
+                $displayQuiz?->started_at,
+                $displayQuiz?->created_at,
+                $sc?->created_at,
+                !is_null($videoBounds?->first_seen_at)
+                    ? \Illuminate\Support\Carbon::parse($videoBounds->first_seen_at)
+                    : null,
+            ])->filter()->sortBy(function ($dt) {
+                return $dt instanceof \DateTimeInterface ? $dt->getTimestamp() : strtotime((string) $dt);
+            })->first();
+
+            $endedAt = collect([
+                $progressCompletedAt,
+                $displayQuiz?->finished_at,
+                $latestQuiz?->finished_at,
+                $latestQuiz?->updated_at,
+                $sc?->last_attempt_at,
+                $sc?->updated_at,
+                !is_null($videoBounds?->last_seen_at)
+                    ? \Illuminate\Support\Carbon::parse($videoBounds->last_seen_at)
+                    : null,
+            ])->filter()->sortByDesc(function ($dt) {
+                return $dt instanceof \DateTimeInterface ? $dt->getTimestamp() : strtotime((string) $dt);
+            })->first();
+
+            return (object) [
+                'lecture_id' => (int) $lecture->id,
+                'lecture_title' => $lecture->lecture_title ?? 'Leçon inconnue',
+                'module_title' => $lecture->module->module_title ?? 'Module inconnu',
+                'source_label' => $sourceLabel,
+                'score_percent' => $scorePercent,
+                'total_questions' => $totalQ,
+                'answered_questions' => $answered,
+                'correct_answers' => $correct,
+                'wrong_answers' => $wrong,
+                'time' => gmdate('H:i:s', max(0, (int) $totalTime)),
+                'status_key' => $statusKey,
+                'status_label' => $statusLabel,
+                'status_class' => $statusClass,
+                'bar_class' => $barClass,
+                'started_at' => $startedAt,
+                'ended_at' => $endedAt,
+                'completed_at' => $progressionsByLecture[$lectureId] ?? null,
+            ];
+        })
+        ->filter()
+        ->sortBy([
+            ['module_title', 'asc'],
+            ['lecture_title', 'asc'],
+        ])
+        ->values();
 
         $totalSiteTime = (int) ($user->total_site_time ?? 0);
         $videoStats = $videoStatsObj;
