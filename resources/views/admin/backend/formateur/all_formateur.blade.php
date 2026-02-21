@@ -1,42 +1,22 @@
 @extends('admin.admin_dashboard')
 @section('admin')
 
-<!-- En-tête explicative -->
-<div class="max-w-[1248px] mx-auto px-4">
-    <div class="bg-white rounded-[20px] shadow-md p-8 my-10 w-full">
-        <div class="grid grid-cols-12 gap-6 items-center">
-            <div class="col-span-12 md:col-span-9">
-                <x-typography variant="titre">Gestion des formateurs</x-typography>
-                <x-typography variant="sous-titre" class="font-varela text-sous-titre text-orangeone">
-                    …pour piloter l’encadrement pédagogique
-                </x-typography>
-                <div class="prose-oneduc">
-                    Les <strong>formateurs</strong> accompagnent les stagiaires dans leurs parcours de formation.
-                    Depuis ce tableau, vous pouvez activer/désactiver un compte, accéder aux stagiaires et ajouter de nouveaux profils.
-                </div>
+<div class="w-full px-6 lg:px-8">
+    <div class="bg-white rounded-[20px] shadow-soft p-6 my-6 w-full border border-gray-100">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-gray-100 pb-4 mb-4">
+            <div>
+                <h1 class="text-[20px] font-varela text-bleuone">Formateurs</h1>
+                <p class="text-sm text-gray-600">Gestion des comptes formateurs, activation et suivi des stagiaires.</p>
             </div>
-            <div class="col-span-12 md:col-span-3 flex justify-center md:justify-end">
-                <div class="w-full max-w-xs">
-                    {!! file_get_contents(public_path('images/svg/PointDInterrogation.svg')) !!}
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Carte tableau -->
-<div class="max-w-[1248px] mx-auto px-4">
-    <div class="bg-white rounded-[20px] shadow-md p-8 w-full">
-        <div class="flex items-center justify-between px-2 py-4 border-b">
-            <h2 class="text-xl font-semibold text-gray-800">Tous les formateurs</h2>
-            <a href="{{ route('formateur.inscription.form') }}" class="inline-flex items-center px-4 py-2 bg-orangeone text-white text-sm font-medium rounded hover:bg-orange-600">
-                <i class="ti ti-plus mr-1"></i> Ajouter un formateur
+            <a href="{{ route('formateur.inscription.form') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-orangeone text-white text-sm font-varela rounded-lg hover:bg-orangeone-hover transition cursor-pointer">
+                <i class="ti ti-plus"></i>
+                Ajouter un formateur
             </a>
         </div>
 
-        <div class="overflow-x-auto mt-4">
-            <table id="tableFormateurs" class="w-full text-sm text-left text-gray-700">
-                <thead class="text-xs text-gray-600 uppercase bg-gray-100">
+        <div class="overflow-x-auto">
+            <table id="tableFormateurs" class="table-oneduc w-full text-sm text-left text-gray-700">
+                <thead class="text-xs uppercase">
                     <tr>
                         <th class="px-4 py-3">#</th>
                         <th class="px-4 py-3">Nom</th>
@@ -51,55 +31,35 @@
                 </thead>
                 <tbody>
                     @foreach ($allFormateur as $key => $item)
-                        <tr class="border-b hover:bg-gray-50">
+                        <tr class="border-b border-gray-100 transition">
                             <td class="px-4 py-3">{{ $key + 1 }}</td>
-                            <td class="px-4 py-3">{{ $item->name }}</td>
+                            <td class="px-4 py-3 font-medium text-gray-900">{{ $item->name }}</td>
                             <td class="px-4 py-3">{{ $item->username }}</td>
                             <td class="px-4 py-3">{{ $item->email }}</td>
                             <td class="px-4 py-3">{{ $item->phone }}</td>
                             <td class="px-4 py-3">
-                                <span class="text-blue-600 font-semibold">
+                                <span class="inline-flex items-center px-2 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold">
                                     {{ $item->stagiaires_count }} stagiaires
                                 </span>
                             </td>
                             <td class="px-4 py-3">
                                 @if ($item->status == 1)
-                                    <span class="inline-block px-3 py-1 text-sm text-white bg-green-600 rounded">Actif</span>
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full bg-green-50 text-green-700 text-xs font-bold">Actif</span>
                                 @else
-                                    <span class="inline-block px-3 py-1 text-sm text-white bg-red-600 rounded">Inactif</span>
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full bg-gray-100 text-gray-600 text-xs font-bold">Inactif</span>
                                 @endif
                             </td>
                             <td class="px-4 py-3 text-center">
                                 <div class="relative inline-block">
-                                    <input
-                                        type="checkbox"
-                                        class="peer sr-only opacity-0 status-toggle"
-                                        id="toggle-{{ $item->id }}"
-                                        data-user-id="{{ $item->id }}"
-                                        {{ $item->status ? 'checked' : '' }}
-                                    />
-                                    <label
-                                        for="toggle-{{ $item->id }}"
-                                        class="relative flex h-6 w-11 cursor-pointer items-center rounded-full bg-gray-400 px-0.5 transition-colors
-                                               before:h-5 before:w-5 before:rounded-full before:bg-white before:shadow before:transition-transform
-                                               before:duration-300 peer-checked:bg-green-500
-                                               peer-checked:before:translate-x-full
-                                               peer-focus-visible:outline
-                                               peer-focus-visible:outline-offset-2
-                                               peer-focus-visible:outline-gray-400
-                                               peer-checked:peer-focus-visible:outline-green-500">
+                                    <input type="checkbox" class="peer sr-only opacity-0 status-toggle" id="toggle-{{ $item->id }}" data-user-id="{{ $item->id }}" {{ $item->status ? 'checked' : '' }} />
+                                    <label for="toggle-{{ $item->id }}" class="relative flex h-6 w-11 cursor-pointer items-center rounded-full bg-gray-400 px-0.5 transition-colors before:h-5 before:w-5 before:rounded-full before:bg-white before:shadow before:transition-transform before:duration-300 peer-checked:bg-green-500 peer-checked:before:translate-x-full">
                                         <span class="sr-only">Activer ou désactiver</span>
                                     </label>
                                 </div>
                             </td>
                             <td class="px-4 py-3 text-center">
-                                <button
-                                    type="button"
-                                    class="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded bg-red-600 text-white hover:bg-red-700 btn-delete"
-                                    data-user-id="{{ $item->id }}"
-                                    data-user-name="{{ $item->name }}"
-                                    aria-haspopup="dialog"
-                                >
+                                <button type="button" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-red-200 text-red-700 hover:bg-red-600 hover:text-white transition text-xs font-varela cursor-pointer btn-delete" data-user-id="{{ $item->id }}" data-user-name="{{ $item->name }}" aria-haspopup="dialog">
+                                    <i class="ti ti-trash"></i>
                                     Supprimer
                                 </button>
                             </td>
@@ -111,7 +71,6 @@
     </div>
 </div>
 
-<!-- Modale de confirmation -->
 <div id="confirmModal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
   <div class="absolute inset-0 bg-black/40" data-modal-dismiss></div>
   <div class="relative mx-auto mt-24 w-full max-w-md rounded-[16px] bg-white shadow-lg">
@@ -129,30 +88,25 @@
   </div>
 </div>
 
-<!-- Formulaire de suppression -->
 <form id="deleteForm" method="POST" class="hidden">
   @csrf
   @method('DELETE')
 </form>
 
-<!-- DataTables -->
 <script>
     $(document).ready(function () {
         $('#tableFormateurs').DataTable({
-            language: {
-                url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/fr-FR.json'
-            },
+            language: { url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/fr-FR.json' },
             order: [[1, 'asc']],
             columnDefs: [
                 { targets: 0, orderable: false },
-                { targets: -1, orderable: false }, // Supprimer
-                { targets: -2, orderable: false }  // Activer
+                { targets: -1, orderable: false },
+                { targets: -2, orderable: false }
             ]
         });
     });
 </script>
 
-<!-- Switch AJAX -->
 <script>
     $(document).ready(function(){
         $('.status-toggle').on('change', function(){
@@ -168,9 +122,7 @@
                     is_checked: isChecked,
                     _token: "{{ csrf_token() }}"
                 },
-                success: function(response){
-                    toastr.success(response.message);
-                },
+                success: function(response){ toastr.success(response.message); },
                 error: function(){
                     toastr.error("Une erreur est survenue lors de la mise à jour du statut.");
                     toggle.prop('checked', !isChecked);
@@ -180,7 +132,6 @@
     });
 </script>
 
-<!-- Suppression: ouverture modale + submit -->
 <script>
   (function(){
     const modal = document.getElementById('confirmModal');
@@ -189,11 +140,10 @@
     const form = document.getElementById('deleteForm');
 
     const routeTemplate = "{{ route('admin.formateurs.destroy', ['user' => '__ID__']) }}";
-    let pendingId = null;
 
     document.querySelectorAll('.btn-delete').forEach(btn => {
       btn.addEventListener('click', () => {
-        pendingId = btn.dataset.userId;
+        const pendingId = btn.dataset.userId;
         nameSpan.textContent = btn.dataset.userName || '';
         form.setAttribute('action', routeTemplate.replace('__ID__', pendingId));
         modal.classList.remove('hidden');
@@ -213,18 +163,13 @@
   })();
 </script>
 
-<!-- Toastr -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
 
 @if(session('success'))
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-        toastr.success('{{ session('success') }}', 'Succès', {
-            closeButton: true,
-            progressBar: true,
-            timeOut: 5000
-        });
+        toastr.success('{{ session('success') }}', 'Succès', { closeButton: true, progressBar: true, timeOut: 5000 });
     });
 </script>
 @endif
@@ -232,11 +177,7 @@
 @if(session('error'))
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-        toastr.error('{{ session('error') }}', 'Erreur', {
-            closeButton: true,
-            progressBar: true,
-            timeOut: 5000
-        });
+        toastr.error('{{ session('error') }}', 'Erreur', { closeButton: true, progressBar: true, timeOut: 5000 });
     });
 </script>
 @endif

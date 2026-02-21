@@ -2,13 +2,13 @@
 @extends('admin.admin_dashboard')
 
 @section('admin')
-<div class="max-w-6xl mx-auto mt-8 px-4">
-    <div class="bg-white p-8 rounded-3xl shadow-xl border border-gray-100">
+<div class="w-full px-6 lg:px-8">
+    <div class="bg-white rounded-[20px] shadow-soft p-6 my-6 w-full border border-gray-100">
 
-        <div class="flex items-center justify-between mb-8">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-gray-100 pb-4 mb-4">
             <div>
-                <h2 class="text-2xl font-extrabold text-bleuone">Compétences</h2>
-                <p class="text-sm text-gray-500 font-medium">Gérer la liste des compétences (activation, ajout).</p>
+                <h1 class="text-[20px] font-varela text-bleuone">Compétences</h1>
+                <p class="text-sm text-gray-600">Gérer la liste des compétences, leur statut et leurs utilisations.</p>
             </div>
         </div>
 
@@ -29,10 +29,9 @@
             </div>
         @endif
 
-        {{-- Création --}}
-        <form method="POST" action="{{ route('admin.competencies.store') }}" class="mb-8">
+        <form method="POST" action="{{ route('admin.competencies.store') }}" class="mb-6">
             @csrf
-            <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end bg-gray-50 p-5 rounded-2xl">
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end bg-gray-50 p-5 rounded-2xl border border-gray-100">
                 <div class="md:col-span-3">
                     <label class="block text-xs font-extrabold text-bleuone uppercase ml-1">Code</label>
                     <input type="text" name="code" value="{{ old('code') }}"
@@ -49,145 +48,128 @@
 
                 <div class="md:col-span-2 flex md:justify-end">
                     <button type="submit"
-                            class="w-full md:w-auto px-6 py-3 rounded-xl bg-orangeone text-white font-semibold hover:opacity-90">
+                            class="w-full md:w-auto inline-flex items-center justify-center gap-2 px-4 py-3 bg-orangeone text-white text-sm font-varela rounded-lg hover:bg-orangeone-hover transition cursor-pointer">
+                        <i class="ti ti-plus"></i>
                         Ajouter
                     </button>
                 </div>
             </div>
         </form>
 
-        {{-- Tableau --}}
         <div class="overflow-x-auto">
-            <table class="w-full text-sm">
-                <thead>
-                    <tr class="text-left text-gray-500 border-b">
-                        <th class="py-3 pr-4">Code</th>
-                        <th class="py-3 pr-4">Libellé</th>
-                        <th class="py-3 pr-4">Utilisation</th>
-                        <th class="py-3 pr-4">Statut</th>
-                        <th class="py-3 pr-4 text-right">Action</th>
+            <table class="table-oneduc w-full text-sm text-left text-gray-700">
+                <thead class="text-xs uppercase">
+                    <tr>
+                        <th class="px-4 py-3">Code</th>
+                        <th class="px-4 py-3">Libellé</th>
+                        <th class="px-4 py-3">Utilisation</th>
+                        <th class="px-4 py-3">Statut</th>
+                        <th class="px-4 py-3 text-right">Action</th>
                     </tr>
                 </thead>
                 <tbody>
-@forelse($competencies as $c)
-    @php
-        $isUsed = $c->objectives()->exists() || $c->badges()->exists();
-    @endphp
+                    @forelse($competencies as $c)
+                        @php
+                            $isUsed = $c->objectives()->exists() || $c->badges()->exists();
+                        @endphp
 
+                        <tr class="border-b border-gray-100 align-top transition">
+                            <td class="px-4 py-3 font-mono text-xs text-gray-700">{{ $c->code ?? '-' }}</td>
 
-    <tr class="border-b">
-        <td class="py-4 pr-4 font-mono text-xs text-gray-700">
-            {{ $c->code ?? '-' }}
-        </td>
+                            <td class="px-4 py-3 font-semibold text-gray-900">
+                                {{ $c->label }}
+                                @if($isUsed)
+                                    <span class="ml-2 inline-flex items-center px-2 py-1 rounded-full bg-amber-50 text-amber-700 text-xs font-bold">
+                                        Utilisée
+                                    </span>
+                                @endif
+                            </td>
 
-        <td class="py-4 pr-4 font-semibold text-gray-900">
-            {{ $c->label }}
-            @if($isUsed)
-                <span class="ml-2 inline-flex items-center px-2 py-1 rounded-full bg-amber-50 text-amber-700 text-xs font-bold">
-                    Utilisée
-                </span>
-            @endif
-        </td>
-        <td class="py-4 pr-4 text-xs text-gray-700">
-    <div class="space-y-1">
-        <div>
-            <span class="font-semibold">Objectifs :</span>
-            <span class="ml-1">{{ $c->objectives_count }}</span>
+                            <td class="px-4 py-3 text-xs text-gray-700">
+                                <div class="space-y-2">
+                                    <div>
+                                        <span class="font-semibold">Objectifs :</span>
+                                        <span class="ml-1">{{ $c->objectives_count }}</span>
+                                        @if($c->objectives_count > 0)
+                                            <div class="mt-1 text-gray-600">
+                                                @foreach($c->objectives as $o)
+                                                    <div class="truncate">- {{ $o->title }}</div>
+                                                @endforeach
+                                                @if($c->objectives_count > $c->objectives->count())
+                                                    <div class="mt-1">
+                                                        <a class="text-bleuone font-semibold hover:underline"
+                                                           href="{{ route('admin.lecture-objectives.index', ['competency' => $c->id]) }}">Voir tout</a>
+                                                    </div>
+                                                @endif
+                                            </div>
+                                        @endif
+                                    </div>
 
-            @if($c->objectives_count > 0)
-                <div class="mt-1 text-gray-600">
-                    @foreach($c->objectives as $o)
-                        <div class="truncate">- {{ $o->title }}</div>
-                    @endforeach
+                                    <div class="pt-2 border-t border-gray-100">
+                                        <span class="font-semibold">Badges :</span>
+                                        <span class="ml-1">{{ $c->badges_count }}</span>
+                                        @if($c->badges_count > 0)
+                                            <div class="mt-1 text-gray-600">
+                                                @foreach($c->badges as $b)
+                                                    <div class="truncate">- {{ $b->label }}</div>
+                                                @endforeach
+                                                @if($c->badges_count > $c->badges->count())
+                                                    <div class="mt-1">
+                                                        <a class="text-bleuone font-semibold hover:underline"
+                                                           href="{{ route('admin.badges.index', ['competency' => $c->id]) }}">Voir tout</a>
+                                                    </div>
+                                                @endif
+                                            </div>
+                                        @endif
+                                    </div>
+                                </div>
+                            </td>
 
-                    @if($c->objectives_count > $c->objectives->count())
-                        <div class="mt-1">
-                            <a class="text-bleuone font-semibold hover:underline"
-                               href="{{ route('admin.lecture-objectives.index', ['competency' => $c->id]) }}">
-                                Voir tout
-                            </a>
-                        </div>
-                    @endif
-                </div>
-            @endif
-        </div>
+                            <td class="px-4 py-3">
+                                @if($c->is_active)
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full bg-green-50 text-green-700 text-xs font-bold">Active</span>
+                                @else
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full bg-gray-100 text-gray-600 text-xs font-bold">Inactive</span>
+                                @endif
+                            </td>
 
-        <div class="pt-1 border-t border-gray-100">
-            <span class="font-semibold">Badges :</span>
-            <span class="ml-1">{{ $c->badges_count }}</span>
+                            <td class="px-4 py-3 text-right">
+                                <div class="inline-flex items-center gap-2">
+                                    <form method="POST" action="{{ route('admin.competencies.toggle', $c->id) }}" class="inline">
+                                        @csrf
+                                        <button type="submit"
+                                                class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-bleuone/20 text-bleuone hover:bg-bleuone hover:text-white transition text-xs font-varela cursor-pointer">
+                                            <i class="ti ti-refresh"></i>
+                                            {{ $c->is_active ? 'Désactiver' : 'Activer' }}
+                                        </button>
+                                    </form>
 
-            @if($c->badges_count > 0)
-                <div class="mt-1 text-gray-600">
-                    @foreach($c->badges as $b)
-                        <div class="truncate">- {{ $b->label }}
-</div>
-                    @endforeach
-
-                    @if($c->badges_count > $c->badges->count())
-                        <div class="mt-1">
-                            <a class="text-bleuone font-semibold hover:underline"
-                               href="{{ route('admin.badges.index', ['competency' => $c->id]) }}">
-                                Voir tout
-                            </a>
-                        </div>
-                    @endif
-                </div>
-            @endif
-        </div>
-    </div>
-</td>
-
-        <td class="py-4 pr-4">
-            @if($c->is_active)
-                <span class="inline-flex items-center px-3 py-1 rounded-full bg-green-50 text-green-700 text-xs font-bold">
-                    Active
-                </span>
-            @else
-                <span class="inline-flex items-center px-3 py-1 rounded-full bg-gray-100 text-gray-600 text-xs font-bold">
-                    Inactive
-                </span>
-            @endif
-        </td>
-
-        <td class="py-4 pr-4 text-right space-x-2">
-            {{-- Activer / Désactiver --}}
-            <form method="POST" action="{{ route('admin.competencies.toggle', $c->id) }}" class="inline">
-                @csrf
-                <button type="submit"
-                        class="px-4 py-2 rounded-xl bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200">
-                    {{ $c->is_active ? 'Désactiver' : 'Activer' }}
-                </button>
-            </form>
-
-            {{-- Supprimer (bloqué si utilisé) --}}
-            <form method="POST"
-                  action="{{ route('admin.competencies.destroy', $c->id) }}"
-                  class="inline"
-                  onsubmit="return confirm('Supprimer définitivement cette compétence ?');">
-                @csrf
-                @method('DELETE')
-
-                <button type="submit"
-                        class="px-4 py-2 rounded-xl font-semibold
-                               {{ $isUsed
-                                    ? 'bg-red-50 text-red-300 cursor-not-allowed'
-                                    : 'bg-red-100 text-red-700 hover:bg-red-200' }}"
-                        {{ $isUsed ? 'disabled aria-disabled=true' : '' }}
-                        title="{{ $isUsed ? 'Suppression impossible : compétence déjà utilisée' : 'Supprimer' }}">
-                    Supprimer
-                </button>
-            </form>
-        </td>
-    </tr>
-@empty
-    <tr>
-        <td colspan="4" class="py-10 text-center text-gray-500">
-            Aucune compétence pour le moment.
-        </td>
-    </tr>
-@endforelse
-</tbody>
-
+                                    <form method="POST" action="{{ route('admin.competencies.destroy', $c->id) }}"
+                                          class="inline" onsubmit="return confirm('Supprimer définitivement cette compétence ?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit"
+                                                class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-varela
+                                                       {{ $isUsed
+                                                            ? 'border-red-200 bg-red-50 text-red-300 cursor-not-allowed'
+                                                            : 'border-red-200 text-red-700 hover:bg-red-600 hover:text-white transition cursor-pointer' }}"
+                                                {{ $isUsed ? 'disabled aria-disabled=true' : '' }}
+                                                title="{{ $isUsed ? 'Suppression impossible : compétence déjà utilisée' : 'Supprimer' }}">
+                                            <i class="ti ti-trash"></i>
+                                            Supprimer
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="5" class="px-4 py-6 text-center text-gray-500">
+                                Aucune compétence pour le moment.
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
             </table>
         </div>
 

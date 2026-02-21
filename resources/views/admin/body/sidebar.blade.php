@@ -1,7 +1,8 @@
 {{-- /home/laurents/Oneduc_Dev/resources/views/admin/body/sidebar.blade.php --}}
 
 @php
-    $headerHeight = '4rem'; // 64px
+    $headerHeight = '4rem'; // 64px (aligné sur le header fixed h-16)
+    $sidebarWidth = '10rem'; // 160px
 @endphp
 
 <aside
@@ -12,8 +13,8 @@
     x-transition:leave="transition transform duration-300"
     x-transition:leave-start="translate-x-0"
     x-transition:leave-end="-translate-x-full"
-    class="fixed left-0 z-40 hidden lg:flex flex-col w-40 bg-[#004461] text-white shadow-lg"
-    style="top: {{ $headerHeight }}; height: calc(100vh - {{ $headerHeight }});"
+    class="fixed left-0 z-40 hidden lg:flex flex-col bg-[#004461] text-white shadow-lg"
+    style="top: {{ $headerHeight }}; height: calc(100vh - {{ $headerHeight }}); width: {{ $sidebarWidth }};"
     aria-label="Navigation administrateur"
 >
     <div class="flex-1 overflow-y-auto">

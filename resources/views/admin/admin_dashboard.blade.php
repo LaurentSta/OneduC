@@ -18,6 +18,37 @@
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
 
+    <style>
+        :root {
+            --admin-header-height: 4rem; /* 64px */
+            --admin-sidebar-width: 10rem; /* 160px */
+        }
+
+        .admin-shell {
+            padding-top: var(--admin-header-height);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            transition: margin-left 0.3s ease;
+        }
+
+        @media (min-width: 1024px) {
+            .admin-shell {
+                margin-left: var(--admin-sidebar-width);
+            }
+
+            .admin-shell.sidebar-closed {
+                margin-left: 0;
+            }
+        }
+
+        @media (max-width: 1023.98px) {
+            .admin-shell {
+                margin-left: 0 !important;
+            }
+        }
+    </style>
+
     @stack('styles')
 </head>
 
@@ -31,8 +62,8 @@
 
     {{-- ZONE CONTENU + FOOTER (prend tout l’espace restant) --}}
     <div
-        class="min-h-[calc(100vh-64px)] flex flex-col"
-        :class="sidebarOpen ? 'ml-40' : 'ml-0'"
+        class="admin-shell"
+        :class="{ 'sidebar-closed': !sidebarOpen }"
     >
         {{-- CONTENU --}}
         <main class="flex-1 p-6">

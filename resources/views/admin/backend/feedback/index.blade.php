@@ -1,107 +1,91 @@
 @extends('admin.admin_dashboard')
 
 @section('admin')
-<div class="p-6 max-w-7xl mx-auto">
+<div class="w-full px-6 lg:px-8" x-data="{ openModal: false, selectedFeedback: null, generatedResponse: '', submitResponse(){ this.openModal = false; } }">
+    <div class="bg-white rounded-[20px] shadow-soft p-6 my-6 w-full border border-gray-100">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-gray-100 pb-4 mb-4">
+            <div>
+                <h1 class="text-[20px] font-varela text-bleuone">Retours stagiaires</h1>
+                <p class="text-sm text-gray-600">Commentaires, avis et notes sur les leçons suivies.</p>
+            </div>
+        </div>
 
-    <h1 class="text-2xl font-bold text-gray-800 mb-6">Commentaires des stagiaires</h1>
-
-    @if ($feedbacks->count())
-        <div class="overflow-x-auto bg-white rounded shadow">
-            <table class="min-w-full text-sm text-left border border-gray-200">
-                <thead class="bg-gray-100 text-gray-700 uppercase text-xs">
-                    <tr>
-                        <th class="px-4 py-3 border-b">Date</th>
-                        <th class="px-4 py-3 border-b">Auteur</th>
-                        <th class="px-4 py-3 border-b">Leçon</th>
-                        <th class="px-4 py-3 border-b">Type</th>
-                        <th class="px-4 py-3 border-b">Note</th>
-                        <th class="px-4 py-3 border-b">Commentaire</th>
-
-                    </tr>
-                </thead>
-                <tbody class="text-gray-700">
-                    @foreach ($feedbacks as $feedback)
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-4 py-3 border-b">{{ $feedback->created_at->format('d/m/Y H:i') }}</td>
-                            <td class="px-4 py-3 border-b">{{ $feedback->user->name }}</td>
-                            <td class="px-4 py-3 border-b">
-                                {{ $feedback->lesson->lecture_title ?? '—' }}
-                            </td>
-                            <td class="px-4 py-3 border-b">
-                                @if($feedback->type)
-                                    <span class="inline-block px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">
-                                        {{ ucfirst($feedback->type) }}
-                                    </span>
-                                @else
-                                    <span class="text-gray-400 italic">Non précisé</span>
-                                @endif
-                            </td>
-                            <td class="px-4 py-3 border-b">
-                                @if($feedback->rating)
-                                    <span class="text-yellow-500">{{ $feedback->rating }} ★</span>
-                                @else
-                                    <span class="text-gray-400 italic">—</span>
-                                @endif
-                            </td>
-                            <td class="px-4 py-3 border-b">
-                                {{ Str::limit($feedback->comment, 100) }}
-                            </td>
-                            <td>
-                            <button
-                                @click="openModal = true; selectedFeedback = {{ $feedback->toJson() }}"
-                                class="text-sm text-blue-600 hover:underline">
-                                Répondre
-                            </button>
-                            <form action="{{ route('admin.retours.delete', $feedback->id) }}" method="POST" onsubmit="return confirm('Supprimer ce commentaire ?');" class="inline">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="text-sm text-red-600 hover:underline ml-3">
-                                    Supprimer
-                                </button>
-                            </form>
-
-                            </td>
+        @if ($feedbacks->count())
+            <div class="overflow-x-auto">
+                <table class="table-oneduc w-full text-sm text-left text-gray-700">
+                    <thead class="text-xs uppercase">
+                        <tr>
+                            <th class="px-4 py-3">Date</th>
+                            <th class="px-4 py-3">Auteur</th>
+                            <th class="px-4 py-3">Leçon</th>
+                            <th class="px-4 py-3">Type</th>
+                            <th class="px-4 py-3">Note</th>
+                            <th class="px-4 py-3">Commentaire</th>
+                            <th class="px-4 py-3 text-right">Actions</th>
                         </tr>
-                    @endforeach
-                    <!-- Modal unique -->
+                    </thead>
+                    <tbody>
+                        @foreach ($feedbacks as $feedback)
+                            <tr class="border-b border-gray-100 transition">
+                                <td class="px-4 py-3">{{ $feedback->created_at->format('d/m/Y H:i') }}</td>
+                                <td class="px-4 py-3 font-medium text-gray-900">{{ $feedback->user->name }}</td>
+                                <td class="px-4 py-3">{{ $feedback->lesson->lecture_title ?? '—' }}</td>
+                                <td class="px-4 py-3">
+                                    @if($feedback->type)
+                                        <span class="inline-flex items-center px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800 font-semibold">{{ ucfirst($feedback->type) }}</span>
+                                    @else
+                                        <span class="text-gray-400 italic">Non précisé</span>
+                                    @endif
+                                </td>
+                                <td class="px-4 py-3">
+                                    @if($feedback->rating)
+                                        <span class="text-yellow-600 font-semibold">{{ $feedback->rating }} ★</span>
+                                    @else
+                                        <span class="text-gray-400 italic">—</span>
+                                    @endif
+                                </td>
+                                <td class="px-4 py-3">{{ Str::limit($feedback->comment, 100) }}</td>
+                                <td class="px-4 py-3 text-right">
+                                    <button @click="openModal = true; selectedFeedback = {{ $feedback->toJson() }}" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-bleuone/20 text-bleuone hover:bg-bleuone hover:text-white transition text-xs font-varela cursor-pointer">
+                                        <i class="ti ti-message"></i>
+                                        Répondre
+                                    </button>
+                                    <form action="{{ route('admin.retours.delete', $feedback->id) }}" method="POST" onsubmit="return confirm('Supprimer ce commentaire ?');" class="inline">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-red-200 text-red-700 hover:bg-red-600 hover:text-white transition text-xs font-varela cursor-pointer ml-2">
+                                            <i class="ti ti-trash"></i>
+                                            Supprimer
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+
             <div x-show="openModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" style="display: none;">
                 <div class="bg-white rounded-lg p-6 w-full max-w-xl" @click.away="openModal = false">
                     <h3 class="text-lg font-semibold mb-2">Répondre au retour</h3>
 
                     <template x-if="selectedFeedback">
-                        <p class="text-sm text-gray-700 mb-4">
-                            "<span x-text="selectedFeedback.comment"></span>"
-                        </p>
+                        <p class="text-sm text-gray-700 mb-4">"<span x-text="selectedFeedback.comment"></span>"</p>
                     </template>
 
-                    <textarea
-                        class="w-full border p-2 rounded mb-4"
-                        x-model="generatedResponse"
-                        placeholder="Rédigez votre réponse ici..."
-                        rows="4"></textarea>
+                    <textarea class="w-full border p-2 rounded mb-4" x-model="generatedResponse" placeholder="Rédigez votre réponse ici..." rows="4"></textarea>
 
                     <div class="flex justify-between">
                         <button class="px-4 py-2 bg-gray-200 rounded" @click="openModal = false">Annuler</button>
-                        <button
-                            class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-                            @click="submitResponse()">
-                            Envoyer
-                        </button>
+                        <button class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700" @click="submitResponse()">Envoyer</button>
                     </div>
                 </div>
             </div>
-                </tbody>
-            </table>
-        </div>
 
-
-        <!-- Pagination -->
-        <div class="mt-6">
-            {{ $feedbacks->links() }}
-        </div>
-    @else
-        <p class="text-gray-600">Aucun commentaire pour le moment.</p>
-    @endif
-
+            <div class="mt-6">{{ $feedbacks->links() }}</div>
+        @else
+            <p class="text-gray-600">Aucun commentaire pour le moment.</p>
+        @endif
+    </div>
 </div>
 @endsection

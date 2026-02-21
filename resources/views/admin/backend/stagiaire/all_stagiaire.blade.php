@@ -1,93 +1,55 @@
 @extends('admin.admin_dashboard')
 @section('admin')
 
-<div class="max-w-[1248px] mx-auto px-4">
-    <div class="bg-white rounded-[20px] shadow-md p-8 my-10 w-full">
-        <div class="grid grid-cols-12 gap-6 items-center">
-            <div class="col-span-12 md:col-span-9">
-                <x-typography variant="titre">Gestion des stagiaires</x-typography>
-                <x-typography variant="sous-titre" class="font-varela text-sous-titre text-orangeone">
-                    …pour suivre les apprenants et leurs parcours de formation
-                </x-typography>
-                <div class="prose-oneduc">
-                    Vous pouvez consulter les <strong>stagiaires</strong>, réinitialiser leur parcours en cas de problème technique, et gérer l’activation des comptes.
-                </div>
+<div class="w-full px-6 lg:px-8">
+    <div class="bg-white rounded-[20px] shadow-soft p-6 my-6 w-full border border-gray-100">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-gray-100 pb-4 mb-4">
+            <div>
+                <h1 class="text-[20px] font-varela text-bleuone">Stagiaires</h1>
+                <p class="text-sm text-gray-600">Suivi des apprenants, activation des comptes et réinitialisation des progressions.</p>
             </div>
         </div>
-    </div>
-</div>
 
-<div class="max-w-[1248px] mx-auto px-4">
-    <div class="bg-white rounded-[20px] shadow-md p-8 w-full">
-        <div class="flex items-center justify-between px-2 py-4 border-b">
-            <h2 class="text-xl font-semibold text-gray-800">Tous les stagiaires</h2>
-        </div>
-
-        <div class="overflow-x-auto mt-4">
-            <table id="tableStagiaires" class="w-full text-sm text-left text-gray-700">
-                <thead class="text-xs text-gray-600 uppercase bg-gray-100">
+        <div class="overflow-x-auto">
+            <table id="tableStagiaires" class="table-oneduc w-full text-sm text-left text-gray-700">
+                <thead class="text-xs uppercase">
                     <tr>
                         <th class="px-4 py-3">#</th>
                         <th class="px-4 py-3">Nom</th>
                         <th class="px-4 py-3">Email</th>
                         <th class="px-4 py-3">Formateur</th>
-                        {{-- AJOUT : Colonne Reset --}}
-                        <th class="px-4 py-3 text-center">Progression</th> 
+                        <th class="px-4 py-3 text-center">Progression</th>
                         <th class="px-4 py-3 text-center">Activer</th>
                         <th class="px-4 py-3 text-center">Supprimer</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach ($allStagiaires as $key => $stagiaire)
-                        <tr class="border-b hover:bg-gray-50">
+                        <tr class="border-b border-gray-100 transition">
                             <td class="px-4 py-3">{{ $key + 1 }}</td>
                             <td class="px-4 py-3">
-                                <div class="font-semibold">{{ $stagiaire->name }}</div>
+                                <div class="font-semibold text-gray-900">{{ $stagiaire->name }}</div>
                                 <div class="text-xs text-gray-500">{{ $stagiaire->username }}</div>
                             </td>
                             <td class="px-4 py-3">{{ $stagiaire->email }}</td>
-                            <td class="px-4 py-3">
-                                {{ $stagiaire->formateur?->name ?? '—' }}
-                            </td>
-                            
-                            {{-- AJOUT : Bouton Reset --}}
+                            <td class="px-4 py-3">{{ $stagiaire->formateur?->name ?? '—' }}</td>
                             <td class="px-4 py-3 text-center">
-                                <button 
-                                    type="button" 
-                                    class="inline-flex items-center px-3 py-1.5 text-xs font-bold rounded bg-orange-100 text-orange-700 hover:bg-orange-200 border border-orange-200 transition btn-reset"
-                                    data-user-id="{{ $stagiaire->id }}"
-                                    data-user-name="{{ $stagiaire->name }}"
-                                    title="Réinitialiser toute la progression (Quiz, SCORM, Vidéos)">
-                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                <button type="button" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-orange-200 text-orange-700 hover:bg-orangeone hover:text-white hover:border-orangeone transition text-xs font-varela cursor-pointer btn-reset" data-user-id="{{ $stagiaire->id }}" data-user-name="{{ $stagiaire->name }}" title="Réinitialiser toute la progression (Quiz, SCORM, Vidéos)">
+                                    <i class="ti ti-refresh"></i>
                                     Reset
                                 </button>
                             </td>
-
                             <td class="px-4 py-3 text-center">
                                 <div class="relative inline-block">
-                                    <input
-                                        type="checkbox"
-                                        class="peer sr-only opacity-0 status-toggle"
-                                        id="toggle-{{ $stagiaire->id }}"
-                                        data-user-id="{{ $stagiaire->id }}"
-                                        {{ $stagiaire->status ? 'checked' : '' }}
-                                    />
-                                    <label
-                                        for="toggle-{{ $stagiaire->id }}"
-                                        class="relative flex h-6 w-11 cursor-pointer items-center rounded-full bg-gray-400 px-0.5 transition-colors
-                                               before:h-5 before:w-5 before:rounded-full before:bg-white before:shadow before:transition-transform
-                                               before:duration-300 peer-checked:bg-green-500
-                                               peer-checked:before:translate-x-full">
+                                    <input type="checkbox" class="peer sr-only opacity-0 status-toggle" id="toggle-{{ $stagiaire->id }}" data-user-id="{{ $stagiaire->id }}" {{ $stagiaire->status ? 'checked' : '' }} />
+                                    <label for="toggle-{{ $stagiaire->id }}" class="relative flex h-6 w-11 cursor-pointer items-center rounded-full bg-gray-400 px-0.5 transition-colors before:h-5 before:w-5 before:rounded-full before:bg-white before:shadow before:transition-transform before:duration-300 peer-checked:bg-green-500 peer-checked:before:translate-x-full">
                                         <span class="sr-only">Toggle stagiaire</span>
                                     </label>
                                 </div>
                             </td>
                             <td class="px-4 py-3 text-center">
-                                <button
-                                    type="button"
-                                    class="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded bg-red-600 text-white hover:bg-red-700 btn-delete"
-                                    data-user-id="{{ $stagiaire->id }}"
-                                    data-user-name="{{ $stagiaire->name }}">
+                                <button type="button" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-red-200 text-red-700 hover:bg-red-600 hover:text-white transition text-xs font-varela cursor-pointer btn-delete" data-user-id="{{ $stagiaire->id }}" data-user-name="{{ $stagiaire->name }}">
+                                    <i class="ti ti-trash"></i>
                                     Supprimer
                                 </button>
                             </td>
@@ -99,7 +61,6 @@
     </div>
 </div>
 
-{{-- MODALE SUPPRESSION (Existante) --}}
 <div id="confirmModal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true">
   <div class="absolute inset-0 bg-black/40" data-modal-dismiss></div>
   <div class="relative mx-auto mt-24 w-full max-w-md rounded-[16px] bg-white shadow-lg">
@@ -114,13 +75,12 @@
   </div>
 </div>
 
-{{-- AJOUT : MODALE RESET PROGRESSION --}}
 <div id="resetModal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true">
     <div class="absolute inset-0 bg-black/40" data-reset-dismiss></div>
     <div class="relative mx-auto mt-24 w-full max-w-md rounded-[16px] bg-white shadow-lg border-t-4 border-orangeone">
       <div class="p-6">
         <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
-            <svg class="w-6 h-6 text-orangeone" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+            <i class="ti ti-alert-triangle text-orangeone"></i>
             Réinitialiser la progression ?
         </h3>
         <p class="mt-2 text-sm text-gray-700">
@@ -130,7 +90,6 @@
         </p>
         <div class="mt-6 flex justify-end gap-3">
           <button type="button" class="px-4 py-2 rounded border hover:bg-gray-50" data-reset-dismiss>Annuler</button>
-          {{-- Formulaire caché dans la modale --}}
           <form id="resetForm" method="POST" action="">
               @csrf
               <button type="submit" class="px-4 py-2 rounded bg-orangeone text-white hover:bg-orange-600 font-semibold shadow-sm">
@@ -140,11 +99,10 @@
         </div>
       </div>
     </div>
-  </div>
+</div>
 
 <form id="deleteForm" method="POST" class="hidden">@csrf @method('DELETE')</form>
 
-{{-- SCRIPTS --}}
 <script>
     $(document).ready(function () {
         $('#tableStagiaires').DataTable({
@@ -154,11 +112,10 @@
                 { targets: 0, orderable: false },
                 { targets: -1, orderable: false },
                 { targets: -2, orderable: false },
-                { targets: -3, orderable: false } // Reset column
+                { targets: -3, orderable: false }
             ]
         });
 
-        // --- GESTION SUPPRESSION ---
         const modal = document.getElementById('confirmModal');
         const nameSpan = document.getElementById('modalUserName');
         const confirmBtn = document.getElementById('confirmDeleteBtn');
@@ -166,8 +123,8 @@
         const deleteRouteTemplate = "{{ route('admin.stagiaires.destroy', ['user' => '__ID__']) }}";
 
         $(document).on('click', '.btn-delete', function() {
-            let id = $(this).data('user-id');
-            let name = $(this).data('user-name');
+            const id = $(this).data('user-id');
+            const name = $(this).data('user-name');
             nameSpan.textContent = name;
             deleteForm.action = deleteRouteTemplate.replace('__ID__', id);
             modal.classList.remove('hidden');
@@ -176,25 +133,21 @@
         $('[data-modal-dismiss]').on('click', () => modal.classList.add('hidden'));
         confirmBtn.addEventListener('click', () => deleteForm.submit());
 
-        // --- AJOUT : GESTION RESET ---
         const resetModal = document.getElementById('resetModal');
         const resetNameSpan = document.getElementById('modalResetUserName');
         const resetForm = document.getElementById('resetForm');
-        // Attention : créez cette route ensuite
         const resetRouteTemplate = "{{ url('admin/stagiaires') }}/" + "__ID__" + "/reset-progression";
 
         $(document).on('click', '.btn-reset', function() {
-            let id = $(this).data('user-id');
-            let name = $(this).data('user-name');
+            const id = $(this).data('user-id');
+            const name = $(this).data('user-name');
             resetNameSpan.textContent = name;
-            // On construit l'URL : /admin/stagiaires/{id}/reset-progression
             resetForm.action = resetRouteTemplate.replace('__ID__', id);
             resetModal.classList.remove('hidden');
         });
 
         $('[data-reset-dismiss]').on('click', () => resetModal.classList.add('hidden'));
 
-        // Switch Status (AJAX) - inchangé
         $('.status-toggle').on('change', function(){
             const toggle = $(this);
             $.ajax({

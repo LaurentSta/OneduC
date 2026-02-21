@@ -37,8 +37,12 @@
         </button>
 
         <!-- User dropdown -->
-        <div x-data="{ open: false }" class="relative" @mouseenter="open = true" @mouseleave="open = false">
-          <button class="flex items-center gap-2 focus:outline-none">
+        <div x-data="{ open: false }" class="relative" @click.outside="open = false" @keydown.escape.window="open = false">
+          <button type="button"
+                  @click="open = !open"
+                  class="flex items-center gap-2 focus:outline-none"
+                  :aria-expanded="open.toString()"
+                  aria-haspopup="menu">
             <img src="{{ !empty($profileData->photo) ? asset('upload/formateur_images/' . $profileData->photo) . '?v=' . time() : asset('upload/NoPhoto.png') }}"
      alt="avatar"
      class="w-[50px] h-[50px] rounded-full border border-gray-300 cursor-pointer" />
@@ -48,7 +52,6 @@
           <div x-show="open"
                x-transition
                class="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded shadow-md z-20"
-               @click.away="open = false"
                style="display: none;">
             <div class="p-4 border-b">
               <p class="text-sm font-semibold">{{ Auth::user()->username }}</p>
@@ -72,7 +75,6 @@
       </div>
     </div>
   </header>
-
 
 
 
