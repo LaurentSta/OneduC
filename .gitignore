@@ -34,6 +34,7 @@ yarn-error.log
 ############################################
 
 /bootstrap/cache/
+/storage/
 /storage/*
 !/storage/app
 !/storage/app/public
