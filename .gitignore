@@ -1,8 +1,11 @@
 ############################################
-# Laravel / PHP
+# ==============================
+# LARAVEL / PHP
+# ==============================
 ############################################
+
 /vendor/
-/.env
+.env
 .env.*
 auth.json
 Homestead.yaml
@@ -13,47 +16,59 @@ Homestead.json
 .phpactor.json
 
 ############################################
-# Node / Vite / Front
+# ==============================
+# NODE / VITE
+# ==============================
 ############################################
+
 /node_modules/
 npm-debug.log
 yarn-error.log
 /.vite
 /.vite-inspect
 
-# Builds générés
-/public/build/
-public/hot
+############################################
+# ==============================
+# CACHE / STORAGE / LOGS
+# ==============================
+############################################
 
-############################################
-# Cache / Logs / Storage
-############################################
 /bootstrap/cache/
-/storage/framework/
-/storage/logs/
-/storage/debugbar/
+/storage/*
+!/storage/app
+!/storage/app/public
+!/storage/framework
+!/storage/framework/cache
+!/storage/framework/sessions
+!/storage/framework/views
+!/storage/logs/.gitignore
 storage/*.key
-/storage/pail
 
 ############################################
-# SCORM (lourd / local)
+# ==============================
+# SCORM (lourd)
+# ==============================
 ############################################
+
 /public/modules/scorm/*
 /resources/scorm/
 
 ############################################
-# PUBLIC : stratégie "deny all" puis allowlist
+# ==============================
+# PUBLIC : dépôt léger
+# ==============================
 ############################################
-# On ignore TOUT le contenu de public par défaut
+
+# On ignore TOUT le dossier public
 /public/*
 
-# On autorise les essentiels Laravel
+# === Fichiers indispensables Laravel ===
 !/public/index.php
 !/public/.htaccess
 !/public/robots.txt
 !/public/favicon.ico
 
-# On autorise les dossiers statiques utiles (non générés)
+# === Ressources statiques utiles (non générées) ===
 !/public/fonts/
 !/public/fonts/**
 !/public/images/
@@ -65,18 +80,21 @@ storage/*.key
 !/public/scorm_core/
 !/public/scorm_core/**
 
-# Assets backend/frontend :
-# (Garde-les UNIQUEMENT si ce sont des fichiers statiques livrés, pas des artefacts de build)
+# === Si ces dossiers contiennent uniquement du statique livré ===
 !/public/backend/
 !/public/backend/**
 !/public/frontend/
 !/public/frontend/**
 
 ############################################
-# PUBLIC : exclusions explicites (sensibles / générés)
+# ==============================
+# EXCLUSIONS DEFINITIVES (sécurité)
+# ==============================
 ############################################
-public/storage/
-public/upload/
-public/build/
-public/phpmyadmin
-public/test.php
+
+/public/build/
+/public/hot
+/public/storage/
+/public/upload/
+/public/phpmyadmin
+/public/test.php
