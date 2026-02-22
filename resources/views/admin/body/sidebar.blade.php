@@ -37,6 +37,16 @@
                 <span class="text-base font-medium">Tableau de bord</span>
             </a>
 
+            <a href="{{ route('admin.pilotage.index') }}"
+               class="{{ $itemBase }} {{ request()->routeIs('admin.pilotage.index') || request()->routeIs('admin.pilotage.tasks.*') || request()->routeIs('admin.pilotage.projects.*') || request()->routeIs('admin.pilotage.notifications.*') ? $itemActive : $itemHover }}">
+                <span class="text-base font-medium">Pilotage</span>
+            </a>
+
+            <a href="{{ route('admin.pilotage.journal') }}"
+               class="{{ $itemBase }} {{ request()->routeIs('admin.pilotage.journal') ? $itemActive : $itemHover }}">
+                <span class="text-base font-medium">Journal</span>
+            </a>
+
             <hr class="border-white/20 border-t w-3/4 mx-auto">
 
             <a href="{{ route('admin.categories.all') }}"

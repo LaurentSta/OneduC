@@ -1,4 +1,10 @@
 <!-- /home/laurents/Oneduc_Dev/resources/views/admin/body/header.blade.php -->
+@php
+  $adminUser = Auth::user();
+  $hasNotificationsTable = \Illuminate\Support\Facades\Schema::hasTable('notifications');
+  $unreadCount = $hasNotificationsTable ? ($adminUser?->unreadNotifications()->count() ?? 0) : 0;
+  $latestNotifications = $hasNotificationsTable ? ($adminUser?->notifications()->latest()->limit(8)->get() ?? collect()) : collect();
+@endphp
 <header class="fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-200 shadow-sm z-50">
     <div class="flex h-16 items-center justify-between px-4 w-full">
 
@@ -21,14 +27,64 @@
 
       <div class="flex items-center gap-4">
 
-        <!-- Notifications avec icône Heroicons -->
-        <div class="relative">
-          <button class="text-gray-600 hover:text-orangeone relative">
+        <!-- Notifications -->
+        <div x-data="{ openNotif: false }"
+             class="relative"
+             @click.outside="openNotif = false"
+             @keydown.escape.window="openNotif = false">
+          <button @click="openNotif = !openNotif"
+                  class="text-gray-600 hover:text-orangeone relative"
+                  :aria-expanded="openNotif.toString()"
+                  aria-haspopup="menu">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-[34px] h-[34px]">
               <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.099A3.001 3.001 0 0112 18a3.001 3.001 0 01-2.857-0.901M6 8c0-3.314 2.239-6 5-6s5 2.686 5 6c0 5.25 2 6 2 6H4s2-0.75 2-6z" />
             </svg>
-            <span class="absolute top-[10px] right-0 translate-x-1/2 bg-red-600 text-white text-xs px-1.5 py-0.5 rounded-full">3</span>
+            @if($unreadCount > 0)
+              <span class="absolute top-[8px] right-0 translate-x-1/2 bg-red-600 text-white text-xs px-1.5 py-0.5 rounded-full">
+                {{ $unreadCount > 99 ? '99+' : $unreadCount }}
+              </span>
+            @endif
           </button>
+
+          <div x-show="openNotif"
+               x-transition
+               class="absolute right-0 mt-2 w-96 bg-white border border-gray-200 rounded-lg shadow-lg z-30"
+               style="display: none;">
+            <div class="flex items-center justify-between px-4 py-3 border-b">
+              <p class="text-sm font-semibold text-gray-800">Notifications</p>
+              <div class="flex items-center gap-2">
+                <a href="{{ route('admin.pilotage.notifications.index') }}" class="text-xs text-blue-700 hover:underline">Centre</a>
+                <form method="POST" action="{{ route('admin.pilotage.notifications.read-all') }}">
+                  @csrf
+                  <button type="submit" class="text-xs text-gray-600 hover:text-orangeone">Tout lire</button>
+                </form>
+              </div>
+            </div>
+            <div class="max-h-96 overflow-y-auto">
+              @forelse($latestNotifications as $notification)
+                @php
+                  $notificationUrl = data_get($notification->data, 'url', route('admin.pilotage.notifications.index'));
+                  $title = data_get($notification->data, 'title', 'Notification');
+                  $message = data_get($notification->data, 'message', '');
+                @endphp
+                <div class="px-4 py-3 border-b border-gray-100 {{ $notification->read_at ? 'bg-white' : 'bg-blue-50/40' }}">
+                  <a href="{{ $notificationUrl }}" class="block">
+                    <p class="text-sm font-semibold text-gray-900">{{ $title }}</p>
+                    <p class="mt-1 text-xs text-gray-600">{{ \Illuminate\Support\Str::limit($message, 90) }}</p>
+                    <p class="mt-1 text-[11px] text-gray-400">{{ $notification->created_at?->diffForHumans() }}</p>
+                  </a>
+                  @if(is_null($notification->read_at))
+                    <form method="POST" action="{{ route('admin.pilotage.notifications.read', $notification->id) }}" class="mt-2">
+                      @csrf
+                      <button type="submit" class="text-xs text-blue-700 hover:underline">Marquer comme lu</button>
+                    </form>
+                  @endif
+                </div>
+              @empty
+                <p class="px-4 py-6 text-sm text-gray-500">Aucune notification.</p>
+              @endforelse
+            </div>
+          </div>
         </div>
 
         <!-- Fullscreen button (non-fonctionnel pour l'instant) -->

@@ -81,16 +81,6 @@
                 </div>
               @endforeach
             </div>
-          @elseif(!empty($selectedSection->objectif))
-            {{-- Fallback : ancien champ "objectif" de section si aucune leçon n'a d'objectifs --}}
-            <div class="
-              [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:space-y-1
-              [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:space-y-1
-              [&_li::marker]:text-orangeone
-              [&_p]:my-2
-            ">
-              {!! $selectedSection->objectif !!}
-            </div>
           @else
             <div class="text-sm text-gray-600">
               Aucun objectif n’est renseigné pour le moment.

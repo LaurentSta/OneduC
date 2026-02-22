@@ -124,5 +124,19 @@ class User extends Authenticatable
         return $this->hasMany(LessonFeedback::class);
     }
 
+    public function pilotageAssignedTasks()
+    {
+        return $this->hasMany(PilotTask::class, 'responsible_id');
+    }
+
+    public function pilotageCreatedProjects()
+    {
+        return $this->hasMany(PilotProject::class, 'created_by');
+    }
+
+    public function pilotageNotificationPreference()
+    {
+        return $this->hasOne(PilotNotificationPreference::class, 'user_id');
+    }
 
 }

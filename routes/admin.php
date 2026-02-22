@@ -15,8 +15,9 @@ use App\Http\Controllers\Backend\QuizQuestionController;
 use App\Http\Controllers\Backend\ScormLibraryController;
 use App\Http\Controllers\Backend\CompetencyController;
 use App\Http\Controllers\Backend\BadgeController;
+use App\Http\Controllers\Backend\PilotageController;
 
-Route::middleware(['auth', 'role:admin'])
+Route::middleware(['auth', 'role:admin', 'admin.activity'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
@@ -148,6 +149,28 @@ Route::middleware(['auth', 'role:admin'])
 
         Route::delete('/retours/{id}', [LessonFeedbackController::class, 'destroy'])
             ->name('retours.delete');
+
+        // Pilotage (projets/taches + journal + notifications)
+        Route::prefix('pilotage')->name('pilotage.')->group(function () {
+            Route::get('/', [PilotageController::class, 'index'])->name('index');
+            Route::post('/projects', [PilotageController::class, 'storeProject'])->name('projects.store');
+            Route::put('/projects/{project}', [PilotageController::class, 'updateProject'])->name('projects.update');
+            Route::delete('/projects/{project}', [PilotageController::class, 'destroyProject'])->name('projects.destroy');
+
+            Route::post('/tasks', [PilotageController::class, 'storeTask'])->name('tasks.store');
+            Route::get('/tasks/{task}/edit', [PilotageController::class, 'editTask'])->name('tasks.edit');
+            Route::put('/tasks/{task}', [PilotageController::class, 'updateTask'])->name('tasks.update');
+            Route::delete('/tasks/{task}', [PilotageController::class, 'destroyTask'])->name('tasks.destroy');
+            Route::post('/tasks/{task}/move', [PilotageController::class, 'moveTask'])->name('tasks.move');
+            Route::post('/tasks/{task}/comments', [PilotageController::class, 'storeComment'])->name('tasks.comments.store');
+
+            Route::get('/journal', [PilotageController::class, 'journal'])->name('journal');
+
+            Route::get('/notifications', [PilotageController::class, 'notifications'])->name('notifications.index');
+            Route::post('/notifications/read-all', [PilotageController::class, 'markAllNotificationsRead'])->name('notifications.read-all');
+            Route::post('/notifications/{notificationId}/read', [PilotageController::class, 'markNotificationRead'])->name('notifications.read');
+            Route::post('/preferences', [PilotageController::class, 'updatePreferences'])->name('preferences.update');
+        });
 
 
         /*

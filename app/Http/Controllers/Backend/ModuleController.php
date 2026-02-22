@@ -18,6 +18,7 @@ use App\Models\ScormResult;
 use App\Models\ScormScore;
 use App\Models\SubCategory;
 use App\Models\User;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -329,10 +330,8 @@ class ModuleController extends Controller
         $request->validate([
             'section_title' => ['required', 'string', 'max:255'],
             'section_html'  => ['nullable', 'string', 'max:20000'],
-            'objectif'      => ['nullable', 'string', 'max:20000'],
-            'methode'       => ['nullable', 'string', 'max:20000'],
-            'contexte'      => ['nullable', 'string', 'max:20000'],
             'video_url'     => ['nullable', 'string', 'max:255'],
+            'video_file'    => ['nullable', 'file', 'mimes:mp4,m4v,mov,avi,webm', 'max:307200'],
             'stay'          => ['nullable', 'boolean'],
         ]);
 
@@ -342,9 +341,6 @@ class ModuleController extends Controller
         $allowedTags = '<p><br><strong><em><u><ul><ol><li>';
 
         $sectionHtml = strip_tags((string) $request->input('section_html', ''), $allowedTags);
-        $objectif    = strip_tags((string) $request->input('objectif', ''), $allowedTags);
-        $methode     = strip_tags((string) $request->input('methode', ''), $allowedTags);
-        $contexte    = strip_tags((string) $request->input('contexte', ''), $allowedTags);
 
         $normalize = function (string $html): ?string {
             $html = trim($html);
@@ -354,13 +350,17 @@ class ModuleController extends Controller
             return $plain === '' ? null : $html;
         };
 
+        $videoUrl = trim((string) $request->input('video_url', ''));
+        $videoUrl = $videoUrl === '' ? null : $videoUrl;
+
+        if ($request->hasFile('video_file')) {
+            $videoUrl = $this->storeSectionVideo($section, $request->file('video_file'));
+        }
+
         $section->update([
             'section_title' => $request->input('section_title'),
             'section_html'  => $normalize($sectionHtml),
-            'objectif'      => $normalize($objectif),
-            'methode'       => $normalize($methode),
-            'contexte'      => $normalize($contexte),
-            'video_url'     => $request->input('video_url'),
+            'video_url'     => $videoUrl,
         ]);
 
         if ($request->boolean('stay')) {
@@ -372,6 +372,58 @@ class ModuleController extends Controller
         return redirect()
             ->route('admin.modules.lecture.add', $section->module_id)
             ->with('success', 'Section mise à jour avec succès !');
+    }
+
+    private function storeSectionVideo(ModuleSection $section, UploadedFile $video): string
+    {
+        $videosBase = trim((string) config('learning_assets.videos_base', 'modules/videos'), '/');
+        $relativeFolder = 'sections/section_' . $section->id;
+        $storageFolder = $videosBase . '/' . $relativeFolder;
+        $disk = Storage::disk('public');
+
+        if (!$disk->exists($storageFolder)) {
+            $disk->makeDirectory($storageFolder);
+        }
+
+        $oldVideo = trim((string) $section->video_url);
+        $oldCandidates = [];
+        if ($oldVideo !== '') {
+            $normalizedOld = ltrim($oldVideo, '/');
+
+            if (Str::startsWith($oldVideo, $relativeFolder . '/')) {
+                $oldCandidates[] = $videosBase . '/' . $oldVideo;
+            }
+            if (Str::startsWith($normalizedOld, 'storage/')) {
+                $oldCandidates[] = Str::after($normalizedOld, 'storage/');
+            }
+            if (Str::startsWith($normalizedOld, $videosBase . '/')) {
+                $oldCandidates[] = $normalizedOld;
+            }
+            if (Str::startsWith($normalizedOld, 'media/storage/')) {
+                $oldCandidates[] = Str::after($normalizedOld, 'media/storage/');
+            }
+        }
+
+        foreach (array_unique($oldCandidates) as $oldPath) {
+            if ($disk->exists($oldPath)) {
+                $disk->delete($oldPath);
+            }
+        }
+
+        $baseName = Str::slug(pathinfo((string) $video->getClientOriginalName(), PATHINFO_FILENAME));
+        if ($baseName === '') {
+            $baseName = 'section-video';
+        }
+
+        $extension = strtolower((string) $video->getClientOriginalExtension());
+        if ($extension === '') {
+            $extension = 'mp4';
+        }
+
+        $fileName = now()->format('Ymd_His') . '_' . Str::random(6) . '_' . $baseName . '.' . $extension;
+        $disk->putFileAs($storageFolder, $video, $fileName);
+
+        return route('media.storage', ['path' => $storageFolder . '/' . $fileName], false);
     }
 
     /**

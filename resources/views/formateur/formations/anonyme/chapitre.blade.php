@@ -38,7 +38,7 @@
     <div x-data="{ openItem: 1 }" class="space-y-3">
 
       {{-- Accordéon 1 : Objectifs --}}
-      @if($lecturesWithObjectives->isNotEmpty() || !empty($selectedSection->objectif))
+      @if($lecturesWithObjectives->isNotEmpty())
         <div class="border rounded-md">
           <button
             type="button"
@@ -77,13 +77,6 @@
                     </ul>
                   </div>
                 @endforeach
-              </div>
-            @elseif(!empty($selectedSection->objectif))
-              <div class="font-lisible text-[17px] text-gray-800 leading-relaxed
-                          [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:space-y-1
-                          [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:space-y-1
-                          [&_li::marker]:text-orangeone">
-                {!! $selectedSection->objectif !!}
               </div>
             @endif
           </div>

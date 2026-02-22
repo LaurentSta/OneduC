@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Backend\ModuleController;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\Backend\StagiaireController;
 
@@ -35,6 +36,21 @@ Route::get('/connexion-choix', function () {
     // Si le fichier est dans resources/views/frontend/contenu/
     return view('frontend.contenu.login-hub'); 
 })->name('login.selection');
+
+// Diffusion d'un média stocké sur le disque Laravel "public" (storage/app/public)
+Route::get('/media/storage/{path}', function (string $path) {
+    $path = ltrim($path, '/');
+    if ($path === '' || str_contains($path, '..') || str_contains($path, "\0")) {
+        abort(404);
+    }
+
+    $disk = Storage::disk('public');
+    if (!$disk->exists($path)) {
+        abort(404);
+    }
+
+    return response()->file($disk->path($path));
+})->where('path', '.*')->name('media.storage');
 
 // Tes routes existantes restent inchangées, elles seront ciblées par les boutons du Hub
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');

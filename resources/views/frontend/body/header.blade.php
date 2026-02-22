@@ -1,6 +1,6 @@
 <!-- NAVBAR AVEC SOUS-MENU CLIQUABLE -->
  <!--/var/www/Oneduc_Prod/resources/views/frontend/body/header.blade.php-->
-<nav class="bg-white border-b shadow-sm">
+<nav class="bg-white border-b shadow-sm" style="border-color: #e7eef3;">
     <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center">
 
       <!-- Logo -->

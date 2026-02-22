@@ -30,7 +30,7 @@
                 $lecturesWithObjectives = ($selectedSection->lectures ?? collect())
                     ->filter(fn($lec) => ($lec->objectives ?? collect())->isNotEmpty());
                 
-                $hasObjectives = $lecturesWithObjectives->isNotEmpty() || !empty($selectedSection->objectif);
+                $hasObjectives = $lecturesWithObjectives->isNotEmpty();
                 $hasQuestions = $rawQuestions !== '';
             @endphp
 
@@ -77,10 +77,6 @@
                                             </ul>
                                         </div>
                                     @endforeach
-                                </div>
-                            @elseif(!empty($selectedSection->objectif))
-                                <div class="prose prose-orange prose-sm max-w-none">
-                                    {!! $selectedSection->objectif !!}
                                 </div>
                             @endif
                         </div>

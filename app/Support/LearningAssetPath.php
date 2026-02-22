@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class LearningAssetPath
@@ -60,7 +61,28 @@ class LearningAssetPath
             return null;
         }
 
-        if (Str::startsWith($raw, ['http://', 'https://', '/'])) {
+        if (Str::startsWith($raw, ['http://', 'https://'])) {
+            return $raw;
+        }
+
+        if (Str::startsWith($raw, '/')) {
+            // Compatibilité : si /storage/... n'est pas publié dans public/storage
+            // mais existe sur le disque Laravel "public", on passe par la route media.
+            $normalized = ltrim($raw, '/');
+            if (Str::startsWith($normalized, 'storage/')) {
+                $relative = Str::after($normalized, 'storage/');
+                $existsOnDisk = false;
+                try {
+                    $existsOnDisk = Storage::disk('public')->exists($relative);
+                } catch (\Throwable) {
+                    $existsOnDisk = false;
+                }
+
+                if (!self::existsInPublic($normalized) && $existsOnDisk) {
+                    return route('media.storage', ['path' => $relative], false);
+                }
+            }
+
             return $raw;
         }
 
@@ -72,6 +94,11 @@ class LearningAssetPath
     private static function resolveVideoRelativePath(string $relative): string
     {
         $relative = ltrim($relative, '/');
+
+        // Cas déjà qualifié (ex: modules/videos/sections/...)
+        if (self::existsInPublic($relative)) {
+            return $relative;
+        }
 
         $base = trim((string) config('learning_assets.videos_base', 'modules/videos'), '/');
         $primary = $base . '/' . $relative;

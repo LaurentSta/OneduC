@@ -44,7 +44,7 @@
             </div>
         @endif
 
-        <form method="POST" action="{{ route('admin.sections.update', $section->id) }}" class="space-y-6">
+        <form method="POST" action="{{ route('admin.sections.update', $section->id) }}" enctype="multipart/form-data" class="space-y-6">
             @csrf
 
             {{-- Titre --}}
@@ -92,77 +92,61 @@
                 @enderror
             </div>
 
-
-            {{-- Objectifs pédagogiques (Quill -> objectif) --}}
-            <div class="form-card">
-                <label for="editor-objectif" class="form-card-title">
-                    Objectifs pédagogiques
-                </label>
-
-                <input type="hidden" name="objectif" id="objectif"
-                    value="{{ old('objectif', $section->objectif) }}">
-
-                <div id="editor-objectif" class="quill-box w-full border border-gray-300 rounded bg-white"></div>
-
-                @error('objectif')
-                    <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-                @enderror
-            </div>
-
-
-            {{-- Méthode pédagogique (Quill -> methode) --}}
-            <div class="form-card">
-                <label for="editor-methode" class="form-card-title">
-                    Méthode pédagogique
-                </label>
-
-                <input type="hidden" name="methode" id="methode"
-                    value="{{ old('methode', $section->methode) }}">
-
-                <div id="editor-methode" class="quill-box w-full border border-gray-300 rounded bg-white"></div>
-
-                @error('methode')
-                    <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-                @enderror
-            </div>
-
-
-            {{-- Contexte pédagogique (Quill -> contexte) --}}
-            <div class="form-card">
-                <label for="editor-contexte" class="form-card-title">
-                    Contexte pédagogique
-                </label>
-
-                <input type="hidden" name="contexte" id="contexte"
-                    value="{{ old('contexte', $section->contexte) }}">
-
-                <div id="editor-contexte" class="quill-box w-full border border-gray-300 rounded bg-white"></div>
-
-                @error('contexte')
-                    <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-                @enderror
-            </div>
-
-
            {{-- Vidéo pédagogique --}}
             <div class="form-card">
-                <label for="video_url" class="form-card-title">
-                    Nom du fichier vidéo (MP4)
+                <label for="video_file" class="form-card-title">
+                    Intégration vidéo de la section
                 </label>
 
+                @php
+                    $currentRawVideo = old('video_url', $section->video_url);
+                    $currentVideoSrc = \App\Support\LearningAssetPath::resolveSectionVideoUrl($currentRawVideo);
+                @endphp
+
+                <input
+                    type="file"
+                    name="video_file"
+                    id="video_file"
+                    accept=".mp4,.m4v,.mov,.avi,.webm,video/mp4,video/webm,video/quicktime,video/x-msvideo"
+                    class="w-full px-3 py-2 border border-gray-300 rounded shadow-sm focus:ring-orangeone focus:border-orangeone text-sm bg-white"
+                >
+
+                <p class="form-card-subtitle">
+                    Dépose ton fichier ici pour l’importer sans FTP (formats : mp4, m4v, mov, avi, webm).
+                </p>
+
+                @error('video_file')
+                    <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                @enderror
+
+                @if($currentVideoSrc)
+                    <div class="mt-4 rounded-lg border border-gray-200 bg-white p-3">
+                        <p class="text-sm font-semibold text-gray-700 mb-2">Vidéo actuellement associée</p>
+                        <video class="w-full max-h-72 rounded border border-gray-200" controls preload="metadata">
+                            <source src="{{ $currentVideoSrc }}" type="video/mp4">
+                            Votre navigateur ne supporte pas la lecture de vidéos.
+                        </video>
+                        <p class="text-xs text-gray-500 mt-2 break-all">
+                            Source : {{ $currentRawVideo }}
+                        </p>
+                    </div>
+                @endif
+
+                <label for="video_url" class="form-card-title mt-4 block">
+                    Chemin ou URL vidéo (optionnel)
+                </label>
                 <input
                     type="text"
                     name="video_url"
                     id="video_url"
                     value="{{ old('video_url', $section->video_url) }}"
                     class="w-full px-4 py-2 border border-gray-300 rounded shadow-sm focus:ring-orangeone focus:border-orangeone text-sm bg-white"
-                    placeholder="Exemple : VideoTest.mp4"
+                    placeholder="Exemple : /storage/modules/videos/sections/section_{{ $section->id }}/ma-video.mp4"
                     autocomplete="off"
                 >
 
                 <p class="form-card-subtitle">
-                    La vidéo sera chargée depuis :
-                    <code>/modules/videos/[nom].mp4</code>
+                    URL complète ou chemin web. Si un fichier est importé ci-dessus, ce champ est remplacé automatiquement.
                 </p>
 
                 @error('video_url')
@@ -211,7 +195,7 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const fields = ['section_html','objectif','methode','contexte'];
+            const fields = ['section_html'];
 
             const toolbar = [
                 ['bold', 'italic', 'underline'],

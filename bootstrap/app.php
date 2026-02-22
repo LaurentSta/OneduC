@@ -17,6 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => \App\Http\Middleware\Role::class, // (Tu dois sûrement déjà avoir celui-ci)
             'track.time' => \App\Http\Middleware\TrackSessionTime::class, // (Et celui-ci vu tes logs)
             'force.password.change' => \App\Http\Middleware\ForcePasswordChange::class, // ✅ C'est celui-ci qui manque !
+            'admin.activity' => \App\Http\Middleware\RecordAdminActivity::class,
         ]);
         // 👆 FIN DE L'AJOUT 👆
 

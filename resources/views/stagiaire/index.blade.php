@@ -4,6 +4,14 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+@php
+  $currentStagiaire = auth()->user();
+  $stagiaireDisplayName = trim((string) (($currentStagiaire->prenom ?? '') . ' ' . ($currentStagiaire->name ?? '')));
+  if ($stagiaireDisplayName === '') {
+      $stagiaireDisplayName = 'Stagiaire';
+  }
+@endphp
+
 {{-- Wrapper global --}}
 <div class="max-w-[1285px] mx-auto px-8 py-8">
 
@@ -36,10 +44,13 @@
         </nav>
       </div>
 
-      <div class="col-span-12 md:col-span-4 flex justify-center md:justify-end">
+      <div class="col-span-12 md:col-span-4 flex flex-col items-center md:items-end">
         <img src="{{ asset('images/svg/TableauDeBordStagiaire.svg') }}"
              alt="Illustration tableau de bord stagiaire"
              class="max-w-[400px] h-auto">
+        <p class="mt-2 font-varela text-sm text-gray-600 md:text-right no-underline border-0">
+          Espace personnel de <span class="font-bold text-bleuone">{{ $stagiaireDisplayName }}</span>
+        </p>
       </div>
     </div>
   </header>
