@@ -222,10 +222,7 @@
     <aside class="space-y-6">
       @php
         $raw = (string) ($selectedSection->video_url ?? '');
-        $isFullUrl = \Illuminate\Support\Str::startsWith($raw, ['http://','https://']);
-        $isAbsolutePath = \Illuminate\Support\Str::startsWith($raw, ['/']);
-        $videoPath = $raw !== '' ? ($isFullUrl || $isAbsolutePath ? $raw : '/modules/scorm/02_videos/' . ltrim($raw, '/')) : null;
-        $videoSrc = $isFullUrl ? $videoPath : ($videoPath ? asset($videoPath) : null);
+        $videoSrc = \App\Support\LearningAssetPath::resolveSectionVideoUrl($raw);
         $firstLecture = $selectedSection->lectures->first();
       @endphp
 

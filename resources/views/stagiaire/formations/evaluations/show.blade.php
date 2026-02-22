@@ -3,8 +3,8 @@
 
 @section('content')
 @php
-  $folder = trim((string)($evaluation->scorm_path ?? ''), '/');                 // ex: Branchement_Evaluation_v1.2
-  $rel    = $folder !== '' ? "modules/scorm/01_evaluations/{$folder}/res/index.html" : null;
+  $folder = trim((string) ($evaluation->scorm_path ?? ''), '/');
+  $rel    = \App\Support\LearningAssetPath::resolveEvaluationIndexRelativePath($folder);
   $abs    = $rel ? public_path($rel) : null;
   $exists = $abs ? file_exists($abs) : false;
 @endphp

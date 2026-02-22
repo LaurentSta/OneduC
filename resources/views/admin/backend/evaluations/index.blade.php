@@ -28,19 +28,26 @@
           </thead>
           <tbody>
             @foreach ($evaluations as $key => $evaluation)
-              @php $scormUrl = url('modules/scorm/01_evaluations/'.$evaluation->scorm_path.'/res/index.html'); @endphp
+              @php
+                $rel = \App\Support\LearningAssetPath::resolveEvaluationIndexRelativePath($evaluation->scorm_path);
+                $scormUrl = $rel ? url($rel) : null;
+              @endphp
               <tr class="border-b border-gray-100 transition">
                 <td class="px-4 py-3">{{ $key + 1 }}</td>
                 <td class="px-4 py-3 font-medium text-gray-900">{{ $evaluation->titre }}</td>
                 <td class="px-4 py-3">
                   <div class="flex items-center gap-2 flex-wrap">
-                    <a href="{{ $scormUrl }}" target="_blank" rel="noopener" class="underline break-all text-bleuone">
-                      /modules/scorm/01_evaluations/{{ $evaluation->scorm_path }}/res/index.html
-                    </a>
-                    <button type="button" class="inline-flex items-center gap-1 px-2 py-1 text-xs rounded border border-gray-300 hover:bg-gray-50" onclick="copyToClipboard('{{ $scormUrl }}')">
-                      <i class="ti ti-copy"></i>
-                      Copier
-                    </button>
+                    @if($scormUrl)
+                      <a href="{{ $scormUrl }}" target="_blank" rel="noopener" class="underline break-all text-bleuone">
+                        /{{ $rel }}
+                      </a>
+                      <button type="button" class="inline-flex items-center gap-1 px-2 py-1 text-xs rounded border border-gray-300 hover:bg-gray-50" onclick="copyToClipboard('{{ $scormUrl }}')">
+                        <i class="ti ti-copy"></i>
+                        Copier
+                      </button>
+                    @else
+                      <span class="text-gray-500">Aucun chemin configuré</span>
+                    @endif
                   </div>
                 </td>
                 <td class="px-4 py-3">

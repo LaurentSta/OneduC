@@ -46,11 +46,26 @@
     @if(session('success') || session('success_scorm_v2'))
         <div class="mb-4 rounded-sm border-l-4 border-green-500 bg-green-50 p-3 text-xs text-green-800 font-medium">
             <i class="ti ti-check mr-1"></i> {{ session('success') ?? session('success_scorm_v2') }}
+            @if(session('success_scorm_v2') && session('new_scorm_path'))
+                <div class="mt-1 font-mono text-[10px] text-green-700">
+                    SCORM chargé : <span class="font-semibold">public/{{ session('new_scorm_path') }}</span>
+                </div>
+            @endif
         </div>
     @endif
     @if(session('error'))
         <div class="mb-4 rounded-sm border-l-4 border-red-500 bg-red-50 p-3 text-xs text-red-800 font-medium">
             <i class="ti ti-alert-circle mr-1"></i> {{ session('error') }}
+        </div>
+    @endif
+    @if($errors->has('zip') || $errors->has('lecture_id'))
+        <div class="mb-4 rounded-sm border-l-4 border-red-500 bg-red-50 p-3 text-xs text-red-800 font-medium">
+            @if($errors->has('zip'))
+                <div><i class="ti ti-alert-circle mr-1"></i> {{ $errors->first('zip') }}</div>
+            @endif
+            @if($errors->has('lecture_id'))
+                <div><i class="ti ti-alert-circle mr-1"></i> {{ $errors->first('lecture_id') }}</div>
+            @endif
         </div>
     @endif
 
@@ -129,11 +144,20 @@
                         <div class="flex gap-2">
                             <input type="file" name="zip" accept=".zip" form="form-import-scorm"
                                    class="block w-full text-[10px] text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded-sm file:border-0 file:bg-gray-200 file:text-gray-700 hover:file:bg-gray-300 cursor-pointer">
-                            <button type="submit" form="form-import-scorm"
+                            <button type="submit" form="form-import-scorm" id="btn-import-scorm"
                                     class="px-3 py-1 bg-orangeone text-white text-[10px] font-bold uppercase rounded hover:bg-orangeone-hover transition whitespace-nowrap">
                                 <i class="ti ti-upload"></i> Envoyer
                             </button>
                         </div>
+                        @if(session('success_scorm_v2') && session('new_scorm_path'))
+                            <p class="mt-2 text-[10px] font-semibold text-green-700">
+                                Dernier import validé.
+                            </p>
+                        @else
+                            <p class="mt-2 text-[10px] text-gray-500">
+                                Un message de confirmation s'affichera après chargement.
+                            </p>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -269,6 +293,23 @@
 
         btns.forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
         setTab(localStorage.getItem('oneduc_lecture_tab') || 'tab-contenu');
+    })();
+
+    // Feedback UI pendant l'import ZIP SCORM
+    (function () {
+        const form = document.getElementById('form-import-scorm');
+        const submitBtn = document.getElementById('btn-import-scorm');
+        const zipInput = document.querySelector('input[name="zip"][form="form-import-scorm"]');
+
+        if (!form || !submitBtn || !zipInput) return;
+
+        form.addEventListener('submit', function () {
+            if (!zipInput.files || zipInput.files.length === 0) return;
+
+            submitBtn.disabled = true;
+            submitBtn.classList.add('opacity-60', 'cursor-not-allowed');
+            submitBtn.innerHTML = '<i class="ti ti-loader text-[11px] mr-1"></i> Import en cours...';
+        });
     })();
 
 </script>

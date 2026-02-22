@@ -31,7 +31,7 @@
                        required>
                 <p class="text-sm text-gray-500 mt-1">
                     Le fichier sera chargé depuis :
-                    <code>/modules/scorm/01_evaluations/<strong>scorm_path</strong>/res/index.html</code>
+                    <code>/modules/evaluations/scorm/<strong>scorm_path</strong>/res/index.html</code>
                 </p>
                 @error('scorm_path')
                     <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
@@ -39,7 +39,7 @@
             </div>
 @php
   $folder = trim(old('scorm_path',$evaluation->scorm_path));
-  $rel = $folder ? "modules/scorm/01_evaluations/{$folder}/res/index.html" : null;
+  $rel = \App\Support\LearningAssetPath::resolveEvaluationIndexRelativePath($folder);
   $exists = $rel ? file_exists(public_path($rel)) : false;
 @endphp
 @if($rel)

@@ -145,9 +145,7 @@
                 {{-- Conteneur Vidéo --}}
                 <div class="relative w-full rounded-2xl overflow-hidden bg-black shadow-inner group aspect-video">
                     @php
-                        $isFullUrl = \Illuminate\Support\Str::startsWith($selectedSection->video_url, ['http', '/']);
-                        $videoPath = $isFullUrl ? $selectedSection->video_url : '/modules/scorm/02_videos/' . ltrim($selectedSection->video_url, '/');
-                        $videoSrc = asset($videoPath);
+                        $videoSrc = \App\Support\LearningAssetPath::resolveSectionVideoUrl($selectedSection->video_url);
                     @endphp
                     
                     <video id="formation-video"

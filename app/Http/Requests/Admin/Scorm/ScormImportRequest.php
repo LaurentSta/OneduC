@@ -27,4 +27,17 @@ class ScormImportRequest extends FormRequest
         ];
     }
 
+    public function messages(): array
+    {
+        return [
+            'lecture_id.required' => 'La leçon cible est obligatoire.',
+            'lecture_id.exists' => 'La leçon sélectionnée est introuvable.',
+            'zip.required' => 'Le fichier ZIP SCORM est obligatoire.',
+            'zip.file' => 'Le fichier ZIP SCORM est invalide.',
+            'zip.uploaded' => 'Le fichier ZIP n\'a pas pu être téléversé. Vérifiez la taille (max 500 Mo).',
+            'zip.mimes' => 'Le fichier doit être un ZIP (.zip).',
+            'zip.max' => 'Le fichier ZIP ne doit pas dépasser 500 Mo.',
+        ];
+    }
+
 }

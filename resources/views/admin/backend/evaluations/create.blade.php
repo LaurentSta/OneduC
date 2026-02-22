@@ -26,7 +26,7 @@
                     class="w-full rounded-md border-gray-300 shadow-sm focus:ring-orangeone focus:border-orangeone"
                     required>
                 <p class="text-sm text-gray-500 mt-1">
-                    Indique simplement le nom du dossier contenant le SCORM, placé dans <code>public/modules/scorm/</code>.
+                    Indique simplement le nom du dossier contenant le SCORM, placé dans <code>public/modules/evaluations/scorm/</code>.
                 </p>
             </div>
 

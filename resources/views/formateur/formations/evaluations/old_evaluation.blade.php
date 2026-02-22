@@ -13,7 +13,13 @@
 <meta name="csrf-token" content="{{ csrf_token() }}">
 
 <main class="flex-1 bg-white">
-  @if(isset($evaluation) && $evaluation->scorm_path)
+  @php
+    $folder = trim((string) ($evaluation->scorm_path ?? ''), '/');
+    $rel = \App\Support\LearningAssetPath::resolveEvaluationIndexRelativePath($folder);
+    $exists = $rel ? file_exists(public_path($rel)) : false;
+  @endphp
+
+  @if(isset($evaluation) && $evaluation->scorm_path && $exists)
     {{-- Contexte SCORM ÉVALUATION --}}
     <script>
       window.SCORM_CONTEXT = {
@@ -36,7 +42,7 @@
 
     <iframe
       title="Évaluation finale"
-      src="{{ asset('modules/scorm/01_evaluations/' . $evaluation->scorm_path . '/res/index.html') }}"
+      src="{{ asset($rel) }}"
       frameborder="0"
       allowfullscreen
       class="w-full"

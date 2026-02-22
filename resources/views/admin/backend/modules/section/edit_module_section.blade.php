@@ -162,7 +162,7 @@
 
                 <p class="form-card-subtitle">
                     La vidéo sera chargée depuis :
-                    <code>/modules/scorm/02_video/[nom].mp4</code>
+                    <code>/modules/videos/[nom].mp4</code>
                 </p>
 
                 @error('video_url')

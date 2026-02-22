@@ -21,12 +21,7 @@
   // Vidéo (facultatif)
   $videoSrc = null;
   if (!empty($selectedSection->video_url)) {
-      $isFullUrl = Str::startsWith($selectedSection->video_url, ['http', '/']);
-      $videoPath = $isFullUrl
-          ? $selectedSection->video_url
-          : '/modules/scorm/02_videos/' . ltrim($selectedSection->video_url, '/');
-
-      $videoSrc = asset($videoPath);
+      $videoSrc = \App\Support\LearningAssetPath::resolveSectionVideoUrl((string) $selectedSection->video_url);
   }
 @endphp
 

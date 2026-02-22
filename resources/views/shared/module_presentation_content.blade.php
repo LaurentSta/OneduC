@@ -222,8 +222,9 @@
             <div class="bg-white rounded-[24px] shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden">
                 <div class="w-full bg-black">
                     @if($module->module_video)
+                        @php $moduleVideoSrc = \App\Support\LearningAssetPath::resolveModuleVideoUrl($module->module_video); @endphp
                         <video class="w-full aspect-video object-cover" controls preload="metadata">
-                            <source src="{{ url('modules/scorm/02_videos/' . trim($module->module_video, '/')) }}" type="video/mp4">
+                            <source src="{{ $moduleVideoSrc }}" type="video/mp4">
                             Votre navigateur ne supporte pas la lecture de videos.
                         </video>
                     @else
