@@ -672,6 +672,7 @@ class ModuleController extends Controller
 public function lire(Request $request, Module $module, ModuleSection $section, ModuleLecture $lecture)
 {
     $user = auth()->user();
+    $isFormateurRoute = $request->routeIs('formateur.*');
 
     // Vérifications de sécurité et de contexte
     abort_unless((int) $section->module_id === (int) $module->id, 404);
@@ -716,6 +717,9 @@ public function lire(Request $request, Module $module, ModuleSection $section, M
     $lectureStats = $anonymous ? [] : $this->buildLectureStats($lectures, (int) $user->id);
 
     // --- LOGIQUE DE NAVIGATION PÉDAGOGIQUE ---
+    $lectureRouteName = $isFormateurRoute ? 'formateur.formations.lecture' : 'stagiaire.module.lecture';
+    $sectionRouteName = $isFormateurRoute ? 'formateur.formations.section' : 'stagiaire.module.section';
+    $detailRouteName  = $isFormateurRoute ? 'formateur.formations.detail' : 'stagiaire.module.detail';
 
     $nextLecturePayload = null;
     $currentSectionLectures = $section->lectures ?? collect();
@@ -728,7 +732,11 @@ public function lire(Request $request, Module $module, ModuleSection $section, M
             'type'       => 'lecture',
             'id'         => (int) $nextLec->id,
             'section_id' => (int) $nextLec->section_id,
-            'url'        => route('stagiaire.module.lecture', [$module->id, $section->id, $nextLec->id])
+            'url'        => route($lectureRouteName, [
+                'module'  => $module->id,
+                'section' => (int) $nextLec->section_id,
+                'lecture' => (int) $nextLec->id,
+            ]),
         ];
     } else {
         // 2. Sinon, chercher le chapitre (section) suivant
@@ -740,13 +748,16 @@ public function lire(Request $request, Module $module, ModuleSection $section, M
             $nextLecturePayload = [
                 'type'       => 'section',
                 'id'         => (int) $nextSection->id,
-                'url'        => route('stagiaire.module.section', [$module->id, $nextSection->id])
+                'url'        => route($sectionRouteName, [
+                    'module'  => $module->id,
+                    'section' => (int) $nextSection->id,
+                ]),
             ];
         } else {
             // 3. Fin du module complet
             $nextLecturePayload = [
                 'type' => 'fin',
-                'url'  => route('stagiaire.module.detail', $module->id)
+                'url'  => route($detailRouteName, ['module' => $module->id]),
             ];
         }
     }

@@ -12,11 +12,13 @@
     $sectionId = $lecture ? (int) $lecture->section_id : null;
 
     // Conserver le contexte (mode / group_id / include_hidden) dans la navigation
-    $contextQuery = $contextQuery ?? [];
-    $qs = '';
-    if (!empty($contextQuery) && is_array($contextQuery)) {
-        $qs = '?' . http_build_query($contextQuery);
-    }
+    $contextQuery = is_array($contextQuery ?? null) ? $contextQuery : [];
+    $appendQuery = static function (string $url, array $query): string {
+        if (empty($query)) {
+            return $url;
+        }
+        return $url . (str_contains($url, '?') ? '&' : '?') . http_build_query($query);
+    };
 
     // --- URL SCORM (robuste) ---
     $scormUrl = null;
@@ -32,22 +34,24 @@
     }
 
     // --- Navigation ---
-    $finalUrl = $moduleId ? route('formateur.formations.detail', ['module' => $moduleId]) . $qs : route('formateur.dashboard');
+    $finalUrl = $moduleId
+        ? $appendQuery(route('formateur.formations.detail', ['module' => $moduleId]), $contextQuery)
+        : route('formateur.dashboard');
     
     $nextUrl = '#';
     if (!empty($nextLecture) && isset($nextLecture['url'])) {
-        $nextUrl = $nextLecture['url'] . (str_contains($nextLecture['url'], '?') ? '&' : '?') . http_build_query($contextQuery);
+        $nextUrl = $appendQuery((string) $nextLecture['url'], $contextQuery);
     }
 
     // --- Quiz Start URL ---
     $quizStartUrl = null;
     if ($lecture && !empty($lecture->quiz_enabled) && $moduleId && $sectionId && $lectureId) {
         if (\Illuminate\Support\Facades\Route::has('formateur.quiz.start')) {
-            $quizStartUrl = \Illuminate\Support\Facades\URL::signedRoute('formateur.quiz.start', [
+            $quizStartUrl = \Illuminate\Support\Facades\URL::signedRoute('formateur.quiz.start', array_merge([
                 'module'  => $moduleId,
                 'section' => $sectionId,
                 'lecture' => $lectureId,
-            ]) . $qs;
+            ], $contextQuery));
         }
     }
 @endphp
@@ -320,18 +324,17 @@
     module_id: @json($moduleId),
     section_id: @json($sectionId),
     next_url: @json($nextUrl),
-    quiz_start_url: @json($quizStartUrl),
+    // En mode formateur, le flux "Leçon suivante" ne doit jamais basculer sur le quiz.
+    quiz_start_url: null,
+    quiz_tester_url: @json($quizStartUrl),
+    force_next_lesson: true,
 
     goToQuiz: function () {
-      if (!this.quiz_start_url) return;
-      window.location.href = this.quiz_start_url;
+      if (!this.quiz_tester_url) return;
+      window.location.href = this.quiz_tester_url;
     },
 
     goToNextLesson: function () {
-      if (this.quiz_start_url) {
-        window.location.href = this.quiz_start_url;
-        return;
-      }
       if (this.next_url && this.next_url !== "#") {
         window.location.href = this.next_url;
         return;

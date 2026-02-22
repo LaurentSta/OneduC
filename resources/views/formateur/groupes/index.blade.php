@@ -90,7 +90,12 @@
               <div class="mb-4">
                 <h4 class="text-sm font-medium text-gray-600 font-varela">Modules associés :</h4>
                 @forelse ($groupe->modules as $module)
-                  <a href="{{ route('frontend.modules.show', $module->id) }}"
+                  @php
+                    $moduleUrl = !empty($module->category_id)
+                      ? route('frontend.modules.show', ['category' => $module->category_id, 'module' => $module->id])
+                      : route('frontend.modules.show.legacy', ['module' => $module->id]);
+                  @endphp
+                  <a href="{{ $moduleUrl }}"
                      class="inline-block bg-vertone/10 text-vertone text-xs font-varela mr-2 mb-2 px-3 py-1 rounded-full hover:bg-vertone/20 transition">
                     {{ Str::limit($module->module_title, 30) }}
                   </a>

@@ -57,8 +57,12 @@ Route::get('/categorie/{id}/sous-categories', [\App\Http\Controllers\Backend\Cat
 // ----------------------------------------------------------
 // Liste des modules de formation disponibles
 Route::get('/MFormations', [\App\Http\Controllers\Frontend\MFormationsController::class, 'index'])->name('frontend.modules.index');
-// Détail d'un module de formation
-Route::get('/modules/{id}', [\App\Http\Controllers\Frontend\MFormationsController::class, 'show'])->name('frontend.modules.show');
+// Détail d'un module dans sa hiérarchie pédagogique (URL canonique)
+Route::get('/categorie/{category}/modules/{module}', [\App\Http\Controllers\Frontend\MFormationsController::class, 'show'])
+    ->name('frontend.modules.show');
+// Ancienne URL conservée pour compatibilité + redirection SEO vers l'URL canonique
+Route::get('/modules/{module}', [\App\Http\Controllers\Frontend\MFormationsController::class, 'showLegacy'])
+    ->name('frontend.modules.show.legacy');
 // ----------------------------------------------------------
 // 📚 Evaluation
 // ----------------------------------------------------------

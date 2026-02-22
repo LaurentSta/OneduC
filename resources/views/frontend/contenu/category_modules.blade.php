@@ -36,7 +36,12 @@
 
                     {{-- Bouton --}}
                     <div class="mt-6 text-center">
-                        <a href="{{ route('frontend.modules.show', $module->id) }}"
+                        @php
+                            $moduleUrl = !empty($module->category_id)
+                                ? route('frontend.modules.show', ['category' => $module->category_id, 'module' => $module->id])
+                                : route('frontend.modules.show.legacy', ['module' => $module->id]);
+                        @endphp
+                        <a href="{{ $moduleUrl }}"
                            class="inline-block px-4 py-2 bg-orangeone text-white text-sm font-medium rounded hover:bg-orange-600 transition">
                             Voir le module
                         </a>

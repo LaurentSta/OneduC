@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 
 class MFormationsController extends Controller
 {
-        public function index(Request $request)
+    public function index(Request $request)
     {
         $categories = Category::all();
 
@@ -25,9 +25,40 @@ class MFormationsController extends Controller
     }
 
 
-    public function show($id)
+    public function show(Category $category, Module $module)
     {
-        $module = Module::with('sections.lectures.objectives')->findOrFail($id);
+        // URL canonique: la catégorie de l'URL doit correspondre au module.
+        if ((int) $module->category_id !== (int) $category->id) {
+            if (empty($module->category_id)) {
+                abort(404);
+            }
+
+            return redirect()->route('frontend.modules.show', [
+                'category' => $module->category_id,
+                'module' => $module->id,
+            ], 301);
+        }
+
+        return $this->renderModuleDetail($module);
+    }
+
+    public function showLegacy(Module $module)
+    {
+        // Redirection permanente de /modules/{id} vers /categorie/{category}/modules/{id}
+        if (!empty($module->category_id)) {
+            return redirect()->route('frontend.modules.show', [
+                'category' => $module->category_id,
+                'module' => $module->id,
+            ], 301);
+        }
+
+        // Fallback de sécurité si un module historique n'a pas de catégorie.
+        return $this->renderModuleDetail($module);
+    }
+
+    private function renderModuleDetail(Module $module)
+    {
+        $module->loadMissing('sections.lectures.objectives');
 
         $userId = auth()->id();
         $lectures = $module->sections->flatMap->lectures;

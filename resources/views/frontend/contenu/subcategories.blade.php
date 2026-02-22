@@ -34,9 +34,14 @@
                         <h4 class="text-lg font-bold text-gray-700 mb-3">Formations disponibles :</h4>
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                             @foreach($subcategory->modules as $module)
+                                @php
+                                    $moduleUrl = !empty($module->category_id)
+                                        ? route('frontend.modules.show', ['category' => $module->category_id, 'module' => $module->id])
+                                        : route('frontend.modules.show.legacy', ['module' => $module->id]);
+                                @endphp
                                 <div class="bg-gray-50 border rounded-lg p-4 hover:shadow-md transition">
                                     <h5 class="font-semibold text-gray-800 text-base">
-                                        <a href="{{ route('frontend.modules.show', $module->id) }}" class="hover:text-orangeone">
+                                        <a href="{{ $moduleUrl }}" class="hover:text-orangeone">
                                             {{ $module->module_title }}
                                         </a>
                                     </h5>

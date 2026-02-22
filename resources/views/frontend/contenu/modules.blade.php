@@ -26,8 +26,13 @@
         <!-- Grille des modules -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             @forelse($modules as $module)
+                @php
+                    $moduleUrl = !empty($module->category_id)
+                        ? route('frontend.modules.show', ['category' => $module->category_id, 'module' => $module->id])
+                        : route('frontend.modules.show.legacy', ['module' => $module->id]);
+                @endphp
                 <div class="bg-white shadow rounded-lg overflow-hidden transition hover:shadow-md">
-                    <a href="{{ route('frontend.modules.show', $module->id) }}">
+                    <a href="{{ $moduleUrl }}">
                         @if($module->module_image)
                             <img src="{{ asset('storage/' . $module->module_image) }}" alt="{{ $module->module_title }}" class="w-full h-48 object-cover">
                         @else
@@ -52,7 +57,7 @@
                     <div class="p-4">
                         <span class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mb-2">{{ $module->level ?? 'Tous niveaux' }}</span>
                         <h3 class="text-lg font-bold text-gray-900 mb-1">
-                            <a href="{{ route('frontend.modules.show', $module->id) }}">{{ $module->module_title }}</a>
+                            <a href="{{ $moduleUrl }}">{{ $module->module_title }}</a>
                         </h3>
                         <p class="text-sm text-gray-700 mb-2">
                             Formateur : <strong>{{ $module->formateur->name ?? 'À définir' }}</strong>
@@ -61,7 +66,7 @@
                             <p class="text-md font-semibold text-gray-800">
                                 {{ $module->is_free ? 'Gratuit' : number_format($module->price, 2, ',', ' ') . ' €' }}
                             </p>
-                            <a href="{{ route('frontend.modules.show', $module->id) }}" class="text-white bg-indigo-600 hover:bg-indigo-700 text-sm font-medium px-4 py-2 rounded">
+                            <a href="{{ $moduleUrl }}" class="text-white bg-indigo-600 hover:bg-indigo-700 text-sm font-medium px-4 py-2 rounded">
                                 Voir
                             </a>
                         </div>

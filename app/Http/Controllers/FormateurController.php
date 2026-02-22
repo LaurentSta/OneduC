@@ -13,6 +13,7 @@ use App\Models\User;
 use App\Services\CodeGeneratorService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use App\Models\ModuleLecture;
@@ -57,6 +58,60 @@ class FormateurController extends Controller
             ->avg('last_score');
 
         $avgScoreRounded = $avgScore ? (int) round($avgScore) : 0;
+        $avgCompletion = $avgScoreRounded;
+
+        // Groupes affichés dans la section "Suivi par groupes" du dashboard
+        $groupesDashboard = Group::query()
+            ->where('instructor_id', $formateurId)
+            ->withCount([
+                'students as stagiaires_count' => function ($q) {
+                    $q->where('role', 'stagiaire');
+                },
+                'modules as modules_count',
+            ])
+            ->orderBy('name')
+            ->get(['id', 'name', 'created_at']);
+
+        $groupIds = $groupesDashboard->pluck('id')->all();
+
+        $lastActivityByGroup = collect();
+        $scoresByGroup = collect();
+
+        if (!empty($groupIds)) {
+            $lastActivityByGroup = DB::table('progressions')
+                ->join('group_user', 'group_user.user_id', '=', 'progressions.user_id')
+                ->whereIn('group_user.group_id', $groupIds)
+                ->selectRaw('group_user.group_id, MAX(progressions.completed_at) as last_completed_at')
+                ->groupBy('group_user.group_id')
+                ->pluck('last_completed_at', 'group_user.group_id');
+
+            $scoresByGroup = DB::table('progressions')
+                ->join('group_user', 'group_user.user_id', '=', 'progressions.user_id')
+                ->leftJoin('scorm_scores', function ($join) {
+                    $join->on('scorm_scores.user_id', '=', 'progressions.user_id')
+                        ->on('scorm_scores.lecture_id', '=', 'progressions.lecture_id');
+                })
+                ->whereIn('group_user.group_id', $groupIds)
+                ->selectRaw('
+                    group_user.group_id,
+                    COUNT(progressions.id) as total_lessons,
+                    SUM(CASE WHEN scorm_scores.last_score >= 50 THEN 1 ELSE 0 END) as success_lessons
+                ')
+                ->groupBy('group_user.group_id')
+                ->get()
+                ->keyBy('group_id');
+        }
+
+        $groupesDashboard = $groupesDashboard->map(function ($g) use ($lastActivityByGroup, $scoresByGroup) {
+            $g->last_completed_at = $lastActivityByGroup[$g->id] ?? null;
+
+            $agg = $scoresByGroup->get($g->id);
+            $total = (int) ($agg->total_lessons ?? 0);
+            $success = (int) ($agg->success_lessons ?? 0);
+            $g->taux_reussite = $total > 0 ? (int) round(($success / $total) * 100) : 0;
+
+            return $g;
+        });
 
         // Modules visibles sur le dashboard (utilisés dans ses groupes OU créés/attribués au formateur)
         $modules = Module::query()
@@ -93,6 +148,8 @@ class FormateurController extends Controller
             'modulesUsed',
             'learnerCount',
             'avgScoreRounded',
+            'avgCompletion',
+            'groupesDashboard',
             'modules'
         ));
     }
@@ -473,6 +530,9 @@ class FormateurController extends Controller
                 ->orWhere('formateur_id', $formateurId);
             })
             ->with([
+                'sections' => function ($q) {
+                    $q->select('id', 'module_id')->orderBy('id');
+                },
                 'groups' => function ($q) use ($formateurId) {
                     $q->where('instructor_id', $formateurId)
                         ->with(['users' => function ($u) {

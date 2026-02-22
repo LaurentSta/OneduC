@@ -117,6 +117,14 @@
                     }
 
                     $titre = $module->module_title ?? $module->module_name ?? $module->name ?? 'Sans titre';
+                    $firstSection = ($module->sections ?? collect())->sortBy('id')->first();
+
+                    $officialUrl = $firstSection
+                      ? route('formateur.formations.section', [
+                          'module' => $module->id,
+                          'section' => $firstSection->id,
+                        ]) . '?mode=officiel'
+                      : null;
                   @endphp
 
                   <tr class="border-b border-gray-100">
@@ -164,50 +172,36 @@
                     {{-- Actions --}}
                     <td class="px-3 py-3 text-right">
                       @if($statut === 'indisponible')
-                        <span class="text-gray-400 line-through text-sm cursor-not-allowed select-none">Voir</span>
+                        <span class="text-gray-400 line-through text-sm cursor-not-allowed select-none">Parcours officiel indisponible</span>
                       @else
-                        <div class="inline-flex items-center justify-end gap-3">
-
-                          {{-- Voir --}}
-                          <a
-                            href="{{ route('formateur.formations.detail', $module->id) }}"
-                            class="btn-oneduc-sm btn-oneduc-sm--outline"
-                          >
-                            Voir
-                          </a>
-
-                          {{-- Cheminement pédagogique : par groupe --}}
-                          @if($groupes->count() === 1)
-                            @php $g = $groupes->first(); @endphp
+                        <div class="inline-flex items-center justify-end gap-2 flex-wrap">
+                          {{-- Accès direct : parcours officiel uniquement --}}
+                          @if($officialUrl)
                             <a
-                              href="{{ route('formateur.groupes.modules.lecons.edit', ['group' => $g->id, 'module' => $module->id]) }}"
+                              href="{{ $officialUrl }}"
                               class="btn-oneduc-sm btn-oneduc-sm--outline"
                             >
-                              Cheminement
+                              Voir le parcours officiel
                             </a>
 
-                          @elseif($groupes->count() > 1)
-                            <div class="relative group">
-                              <button type="button" class="btn-oneduc-sm btn-oneduc-sm--outline">
-                                Cheminement
+                            <span class="relative inline-flex items-center group" aria-label="Information parcours de groupe">
+                              <button
+                                type="button"
+                                class="w-6 h-6 inline-flex items-center justify-center rounded-full border border-gray-300 text-gray-500 text-xs font-bold bg-white hover:text-bleuone hover:border-bleuone transition"
+                                aria-describedby="group-parcours-help-{{ $module->id }}"
+                              >
+                                ?
                               </button>
-
-                              <div class="hidden group-hover:block absolute right-0 mt-2 w-72 bg-white border border-gray-200 rounded-[14px] shadow-lg overflow-hidden z-10">
-                                <div class="px-4 py-2 text-xs font-semibold text-gray-500 bg-gray-50">
-                                  Choisir un groupe
-                                </div>
-                                <div class="max-h-64 overflow-auto">
-                                  @foreach($groupes as $g)
-                                    <a
-                                      href="{{ route('formateur.groupes.modules.lecons.edit', ['group' => $g->id, 'module' => $module->id]) }}"
-                                      class="block px-4 py-2 text-sm text-gray-800 hover:bg-gray-50"
-                                    >
-                                      {{ $g->name ?? ('Groupe #'.$g->id) }}
-                                    </a>
-                                  @endforeach
-                                </div>
-                              </div>
-                            </div>
+                              <span
+                                id="group-parcours-help-{{ $module->id }}"
+                                role="tooltip"
+                                class="pointer-events-none absolute right-0 top-full mt-2 hidden group-hover:block group-focus-within:block w-72 text-left text-xs text-white bg-gray-900 px-3 py-2 rounded-lg shadow-lg z-20"
+                              >
+                                Le parcours de groupe est disponible dans la partie modules de groupe.
+                              </span>
+                            </span>
+                          @else
+                            <span class="text-gray-400 text-xs">Parcours officiel indisponible</span>
                           @endif
 
                         </div>

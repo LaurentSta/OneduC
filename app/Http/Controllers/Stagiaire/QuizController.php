@@ -154,7 +154,10 @@ class QuizController extends Controller
         session()->put("quiz_timer_{$attempt->id}_{$question->id}", now());
         // -------------------------------------
 
-        return view('stagiaire.formations.quiz.question', [
+        $isFormateur = $this->isFormateur();
+        $view = $isFormateur ? 'formateur.formations.quiz.question' : 'stagiaire.formations.quiz.question';
+
+        return view($view, [
             'module'          => $module,
             'section'         => $section,
             'lecture'         => $lecture,
@@ -164,7 +167,8 @@ class QuizController extends Controller
             'question'        => $question,
             'lectureStats'    => $lectureStats,
             'sectionStatuses' => $sectionStatuses,
-            'isFormateur'     => $this->isFormateur(),
+            'contextQuery'    => $this->buildContextQuery(),
+            'isFormateur'     => $isFormateur,
         ]);
     }
 
@@ -333,7 +337,10 @@ class QuizController extends Controller
 
         $nextUrl = '#';
 
-        if ($this->isFormateur()) {
+        $isFormateur = $this->isFormateur();
+        $contextQuery = $this->buildContextQuery();
+
+        if ($isFormateur) {
             // Logique formateur (inchangée)
             $allModuleLectures = $lectures;
             $globalIdx = $allModuleLectures->search(fn ($l) => (int) $l->id === (int) $lecture->id);
@@ -343,10 +350,10 @@ class QuizController extends Controller
                 $nextUrl = route('formateur.formations.lecture', [
                     'module'  => $module->id,
                     'section' => $nextLec->section_id,
-                    'lesson'  => $nextLec->id,
-                ]);
+                    'lecture' => $nextLec->id,
+                ] + $contextQuery);
             } else {
-                $nextUrl = route('formateur.formations.detail', ['module' => $module->id]);
+                $nextUrl = route('formateur.formations.detail', ['module' => $module->id] + $contextQuery);
             }
         } else {
             // Logique Stagiaire : Chapitre par Chapitre
@@ -371,7 +378,9 @@ class QuizController extends Controller
             }
         }
 
-        return view('stagiaire.formations.quiz.result', [
+        $view = $isFormateur ? 'formateur.formations.quiz.result' : 'stagiaire.formations.quiz.result';
+
+        return view($view, [
             'module'          => $module,
             'section'         => $section,
             'lecture'         => $lecture,
@@ -382,7 +391,8 @@ class QuizController extends Controller
             'nextUrl'         => $nextUrl,
             'lectureStats'    => $lectureStats,
             'sectionStatuses' => $sectionStatuses,
-            'isFormateur'     => $this->isFormateur(),
+            'contextQuery'    => $contextQuery,
+            'isFormateur'     => $isFormateur,
         ]);
     }
 
@@ -402,7 +412,7 @@ class QuizController extends Controller
                 'section' => $section->id,
                 'lecture' => $lecture->id,
                 'restart' => 1,
-            ])
+            ] + $this->buildContextQuery())
         );
     }
 
@@ -477,7 +487,7 @@ class QuizController extends Controller
             'section' => $section->id,
             'lecture' => $lecture->id,
             'attempt' => $attempt->id,
-        ]);
+        ] + $this->buildContextQuery());
     }
 
     private function redirectResult(Module $module, ModuleSection $section, ModuleLecture $lecture, QuizAttempt $attempt)
@@ -487,7 +497,7 @@ class QuizController extends Controller
             'section' => $section->id,
             'lecture' => $lecture->id,
             'attempt' => $attempt->id,
-        ]);
+        ] + $this->buildContextQuery());
     }
 
     private function routeName(string $suffix): string
@@ -507,6 +517,24 @@ class QuizController extends Controller
     private function isFormateur(): bool
     {
         return Auth::check() && Auth::user()->role === 'formateur';
+    }
+
+    private function buildContextQuery(): array
+    {
+        $mode = (string) request()->query('mode', '');
+        if (!in_array($mode, ['groupe', 'officiel'], true)) {
+            $mode = null;
+        }
+
+        $groupIdRaw = request()->query('group_id');
+        $groupId = is_numeric($groupIdRaw) ? (int) $groupIdRaw : null;
+
+        return array_filter([
+            'mode'           => $mode,
+            'group_id'       => $groupId ?: null,
+            'include_hidden' => request()->boolean('include_hidden') ? 1 : null,
+            'anonymous'      => request()->boolean('anonymous') ? 1 : null,
+        ], static fn ($v) => $v !== null && $v !== '');
     }
 
     private function resolveGroupIdForUserAndModule(int $userId, int $moduleId): ?int

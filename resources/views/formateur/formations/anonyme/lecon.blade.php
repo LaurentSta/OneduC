@@ -14,24 +14,21 @@
 
   // Query propagée : conserve mode/group_id/include_hidden et force anonymous
   $q = array_merge(($contextQuery ?? []), ['anonymous' => 1]);
+  $appendQuery = static function (string $url, array $query): string {
+      if (empty($query)) {
+          return $url;
+      }
+      return $url . (str_contains($url, '?') ? '&' : '?') . http_build_query($query);
+  };
 
   // Navigation (routes formateur)
   $nextUrl  = '#';
-  $finalUrl = $moduleId ? route('formateur.formations.detail', ['module' => $moduleId]) : route('formateur.dashboard');
+  $finalUrl = $moduleId
+      ? $appendQuery(route('formateur.formations.detail', ['module' => $moduleId]), $q)
+      : route('formateur.dashboard');
 
-  if (!empty($nextLecture) && $moduleId) {
-      if ((int) $nextLecture['section_id'] === (int) $sectionId) {
-          $nextUrl = route('formateur.formations.lecture', [
-              'module'  => $moduleId,
-              'section' => (int) $nextLecture['section_id'],
-              'lecture' => (int) $nextLecture['id'],
-          ] + $q);
-      } else {
-          $nextUrl = route('formateur.formations.section', [
-              'module'  => $moduleId,
-              'section' => (int) $nextLecture['section_id'],
-          ] + $q);
-      }
+  if (!empty($nextLecture) && is_array($nextLecture) && !empty($nextLecture['url'])) {
+      $nextUrl = $appendQuery((string) $nextLecture['url'], $q);
   }
 
   // Quiz (routes formateur)
@@ -41,7 +38,7 @@
           'module'  => $moduleId,
           'section' => $sectionId,
           'lecture' => $lecture->id,
-      ]);
+      ] + $q);
   }
 
   // Source SCORM
@@ -72,6 +69,7 @@
         // ✅ lecture seule (formateur anonyme)
         anonymous: true,
         read_only: true,
+        force_next_lesson: true,
 
         goToNextLesson: function () {
           if (this.next_url && this.next_url !== "#") {
@@ -81,19 +79,21 @@
           window.location.href = this.final_url;
         },
 
-        quiz_start_url: @json($quizStartUrl),
+        // En mode formateur, le quiz est un test volontaire uniquement.
+        quiz_start_url: null,
+        quiz_tester_url: @json($quizStartUrl),
 
         goToQuiz: function () {
-          if (!this.quiz_start_url) {
+          if (!this.quiz_tester_url) {
             alert("Quiz non activé pour cette leçon.");
             return;
           }
-          window.location.href = this.quiz_start_url;
+          window.location.href = this.quiz_tester_url;
         }
       };
 
       console.log('[SCORM_CONTEXT] anonymous/read_only =', window.SCORM_CONTEXT.anonymous, window.SCORM_CONTEXT.read_only);
-      console.log('[SCORM_CONTEXT] quiz_start_url =', window.SCORM_CONTEXT.quiz_start_url);
+      console.log('[SCORM_CONTEXT] quiz_tester_url =', window.SCORM_CONTEXT.quiz_tester_url);
     </script>
 
     {{-- Bloc iframe robuste (identique stagiaire) --}}

@@ -49,7 +49,8 @@
     bouton.style.pointerEvents = "auto";
 
     // Logique de redirection Onéduc
-    if (context.quiz_start_url) {
+    const shouldOfferQuiz = Boolean(context.quiz_start_url) && context.force_next_lesson !== true;
+    if (shouldOfferQuiz) {
       if (texteBouton) texteBouton.innerText = "Passer au Questionnaire";
       bouton.onclick = function () {
         // Appel de la fonction globale définie dans lecon.blade.php
