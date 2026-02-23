@@ -360,20 +360,27 @@ class QuizController extends Controller
             if (!$isLastInSection) {
                 // Il reste des leçons dans le chapitre actuel
                 $nextLec = $sectionLectures->get($currentIndexInSec + 1);
-                $nextUrl = url("/stagiaire/modules/{$module->id}/sections/{$section->id}/lessons/{$nextLec->id}");
+                $nextUrl = route('stagiaire.module.lecture', [
+                    'module'  => $module->id,
+                    'section' => $section->id,
+                    'lecture' => $nextLec->id,
+                ] + $contextQuery);
             } else {
                 // C'est la dernière leçon du chapitre -> On cherche la SECTION suivante
-                $nextSection = $module->sections->where('id', '>', $section->id)->sortBy('id')->first();
+                $nextSection = $module->sections
+                    ->filter(fn ($candidate) => (int) $candidate->id > (int) $section->id)
+                    ->sortBy('id')
+                    ->first(fn ($candidate) => $candidate->lectures->isNotEmpty());
                 
                 if ($nextSection) {
                     // Redirection vers la page de garde du chapitre suivant (Objectifs)
                     $nextUrl = route('stagiaire.module.section', [
                         'module'  => $module->id,
                         'section' => $nextSection->id
-                    ]);
+                    ] + $contextQuery);
                 } else {
                     // Fin du module complet
-                    $nextUrl = url("/stagiaire/formations/{$module->id}/fin");
+                    $nextUrl = route('stagiaire.module.fin', ['module' => $module->id] + $contextQuery);
                 }
             }
         }

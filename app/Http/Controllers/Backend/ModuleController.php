@@ -18,6 +18,7 @@ use App\Models\ScormResult;
 use App\Models\ScormScore;
 use App\Models\SubCategory;
 use App\Models\User;
+use App\Models\VideoSegmentTracking;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -771,7 +772,7 @@ public function lire(Request $request, Module $module, ModuleSection $section, M
     // --- LOGIQUE DE NAVIGATION PÉDAGOGIQUE ---
     $lectureRouteName = $isFormateurRoute ? 'formateur.formations.lecture' : 'stagiaire.module.lecture';
     $sectionRouteName = $isFormateurRoute ? 'formateur.formations.section' : 'stagiaire.module.section';
-    $detailRouteName  = $isFormateurRoute ? 'formateur.formations.detail' : 'stagiaire.module.detail';
+    $finalRouteName   = $isFormateurRoute ? 'formateur.formations.detail' : 'stagiaire.module.fin';
 
     $nextLecturePayload = null;
     $currentSectionLectures = $section->lectures ?? collect();
@@ -795,8 +796,14 @@ public function lire(Request $request, Module $module, ModuleSection $section, M
         $sections = $module->sections->sortBy('id')->values();
         $currentSectionIndex = $sections->search(fn ($s) => (int) $s->id === (int) $section->id);
 
-        if ($currentSectionIndex !== false && isset($sections[$currentSectionIndex + 1])) {
-            $nextSection = $sections[$currentSectionIndex + 1];
+        $nextSection = null;
+        if ($currentSectionIndex !== false) {
+            $nextSection = $sections
+                ->slice($currentSectionIndex + 1)
+                ->first(fn ($candidate) => $candidate->lectures->isNotEmpty());
+        }
+
+        if ($nextSection) {
             $nextLecturePayload = [
                 'type'       => 'section',
                 'id'         => (int) $nextSection->id,
@@ -809,7 +816,7 @@ public function lire(Request $request, Module $module, ModuleSection $section, M
             // 3. Fin du module complet
             $nextLecturePayload = [
                 'type' => 'fin',
-                'url'  => route($detailRouteName, ['module' => $module->id]),
+                'url'  => route($finalRouteName, ['module' => $module->id]),
             ];
         }
     }
@@ -1034,26 +1041,187 @@ public function lire(Request $request, Module $module, ModuleSection $section, M
         $module = Module::with('sections.lectures')->findOrFail($moduleId);
         if (!$module->isVisibleTo(auth()->user())) abort(404);
 
-        $totalSections = $module->sections->count();
-        $totalLectures = $module->sections->flatMap->lectures->count();
+        $sections = $module->sections;
+        $lectures = $sections->flatMap->lectures->values();
+        $lectureIds = $lectures->pluck('id')->map(fn ($id) => (int) $id)->all();
 
-        $totalQuestionsPlanned = $module->sections
-            ->flatMap->lectures
-            ->sum(fn ($lec) => (int) ($lec->question_count ?? 0));
+        $totalSections = $sections->count();
+        $totalLectures = $lectures->count();
 
+        $totalQuestionsPlanned = 0;
         $questionsAnswered = 0;
+        $totalCorrectAnswers = 0;
 
-        foreach ($module->sections->flatMap->lectures as $lecture) {
-            $planned = (int) ($lecture->question_count ?? 0);
-            if ($planned === 0) continue;
+        $latestAttempts = collect();
+        $quizAttemptAgg = collect();
+        $scormAgg = collect();
 
-            $distinctAnswered = ScormInteraction::where('user_id', $userId)
-                ->where('lecture_id', $lecture->id)
-                ->distinct('interaction_id')
-                ->count('interaction_id');
+        $quizTimeSeconds = 0;
+        $scormTimeSeconds = 0;
+        $videoTimeSeconds = 0;
 
-            $questionsAnswered += min($distinctAnswered, $planned);
+        $quizLatencyTotalSeconds = 0;
+        $quizLatencySamples = 0;
+        $scormLatencyTotalSeconds = 0;
+        $scormLatencySamples = 0;
+
+        $scormInteractionsCount = 0;
+        $videoSegmentsCount = 0;
+        $videoReplayCount = 0;
+
+        if (!empty($lectureIds)) {
+            $latestAttempts = QuizAttempt::query()
+                ->where('user_id', $userId)
+                ->whereIn('lecture_id', $lectureIds)
+                ->orderByDesc('finished_at')
+                ->orderByDesc('id')
+                ->get()
+                ->groupBy('lecture_id')
+                ->map(fn ($rows) => $rows->first());
+
+            $latestAttemptIds = $latestAttempts->pluck('id')->all();
+
+            if (!empty($latestAttemptIds)) {
+                $quizAttemptAgg = QuizAttemptQuestion::query()
+                    ->select([
+                        'attempt_id',
+                        DB::raw('SUM(CASE WHEN answered_at IS NOT NULL THEN 1 ELSE 0 END) as answered'),
+                        DB::raw('SUM(CASE WHEN is_correct = 1 THEN 1 ELSE 0 END) as correct'),
+                        DB::raw('SUM(time_seconds) as time_spent'),
+                    ])
+                    ->whereIn('attempt_id', $latestAttemptIds)
+                    ->groupBy('attempt_id')
+                    ->get()
+                    ->keyBy('attempt_id');
+
+                $quizLatencyTotalSeconds = (int) $quizAttemptAgg->sum(fn ($agg) => (int) ($agg->time_spent ?? 0));
+                $quizLatencySamples = (int) $quizAttemptAgg->sum(fn ($agg) => (int) ($agg->answered ?? 0));
+            }
+
+            $quizTimeSeconds = (int) $latestAttempts->sum(fn ($attempt) => (int) ($attempt->total_time_seconds ?? 0));
+
+            $scormAgg = ScormInteraction::query()
+                ->where('user_id', $userId)
+                ->whereIn('lecture_id', $lectureIds)
+                ->whereIn('result', ['correct', 'wrong'])
+                ->select([
+                    'lecture_id',
+                    DB::raw('COUNT(*) as answered'),
+                    DB::raw("SUM(CASE WHEN result = 'correct' THEN 1 ELSE 0 END) as correct"),
+                ])
+                ->groupBy('lecture_id')
+                ->get()
+                ->keyBy('lecture_id');
+
+            $scormInteractionsCount = (int) ScormInteraction::query()
+                ->where('user_id', $userId)
+                ->whereIn('lecture_id', $lectureIds)
+                ->count();
+
+            $scormTimeSeconds = (int) ScormScore::query()
+                ->where('user_id', $userId)
+                ->whereIn('lecture_id', $lectureIds)
+                ->sum('session_time');
+
+            $scormLatencies = ScormInteraction::query()
+                ->where('user_id', $userId)
+                ->whereIn('lecture_id', $lectureIds)
+                ->whereIn('result', ['correct', 'wrong'])
+                ->whereNotNull('latency')
+                ->pluck('latency');
+
+            foreach ($scormLatencies as $latency) {
+                try {
+                    [$h, $m, $s] = array_pad(explode(':', (string) $latency), 3, 0);
+                    $scormLatencyTotalSeconds += ((int) $h * 3600 + (int) $m * 60 + (int) $s);
+                    $scormLatencySamples++;
+                } catch (\Throwable $e) {
+                    // Ignore les latences SCORM mal formatées.
+                }
+            }
+
+            $videoRows = VideoSegmentTracking::query()
+                ->where('user_id', $userId)
+                ->whereIn('lecture_id', $lectureIds)
+                ->get(['watch_count', 'total_watch_time']);
+
+            $videoSegmentsCount = $videoRows->count();
+            $videoTimeSeconds = (int) round((float) $videoRows->sum('total_watch_time'));
+            $videoReplayCount = (int) $videoRows->sum(fn ($row) => max(0, ((int) $row->watch_count) - 1));
         }
+
+        foreach ($lectures as $lecture) {
+            $plannedScorm = (int) ($lecture->question_count ?? 0);
+            $plannedQuiz = (bool) ($lecture->quiz_enabled ?? false)
+                ? (int) ($lecture->quiz_questions_per_attempt ?? 0)
+                : 0;
+            $planned = max($plannedScorm, $plannedQuiz);
+
+            $scormAnswered = (int) ($scormAgg->get($lecture->id)?->answered ?? 0);
+            $scormCorrect = (int) ($scormAgg->get($lecture->id)?->correct ?? 0);
+
+            $quizAnswered = 0;
+            $quizCorrect = 0;
+            $attempt = $latestAttempts->get($lecture->id);
+
+            if ($attempt) {
+                $attemptAgg = $quizAttemptAgg->get($attempt->id);
+                $quizAnswered = (int) ($attemptAgg?->answered ?? 0);
+                $quizCorrect = (int) ($attemptAgg?->correct ?? 0);
+            }
+
+            $answered = max($scormAnswered, $quizAnswered);
+            $correct = max($scormCorrect, $quizCorrect);
+
+            if ($planned > 0) {
+                $answered = min($answered, $planned);
+                $correct = min($correct, $answered);
+            } elseif ($answered > 0) {
+                $planned = $answered;
+            }
+
+            $totalQuestionsPlanned += $planned;
+            $questionsAnswered += $answered;
+            $totalCorrectAnswers += $correct;
+        }
+
+        $lectureStats = !empty($lectureIds)
+            ? $this->buildLectureStats($lectures, $userId)
+            : [];
+
+        $completedLectures = collect($lectureStats)
+            ->filter(fn ($stats) => ($stats['status'] ?? null) === 'completed')
+            ->count();
+
+        $completedSections = $sections->filter(function ($section) use ($lectureStats) {
+            if ($section->lectures->isEmpty()) {
+                return false;
+            }
+
+            return $section->lectures->every(function ($lecture) use ($lectureStats) {
+                return ($lectureStats[$lecture->id]['status'] ?? null) === 'completed';
+            });
+        })->count();
+
+        $moduleCompletionPercent = $totalLectures > 0
+            ? (int) round(($completedLectures / $totalLectures) * 100)
+            : 100;
+
+        $sectionCompletionPercent = $totalSections > 0
+            ? (int) round(($completedSections / $totalSections) * 100)
+            : 100;
+
+        $successRatePercent = $questionsAnswered > 0
+            ? (int) round(($totalCorrectAnswers / $questionsAnswered) * 100)
+            : null;
+
+        $latencySamples = $quizLatencySamples + $scormLatencySamples;
+        $averageLatencySeconds = $latencySamples > 0
+            ? (int) round(($quizLatencyTotalSeconds + $scormLatencyTotalSeconds) / $latencySamples)
+            : null;
+
+        $totalLearningSeconds = $scormTimeSeconds + $quizTimeSeconds + $videoTimeSeconds;
+        $trackedInteractions = $scormInteractionsCount + $quizLatencySamples + $videoSegmentsCount;
 
         return view('stagiaire.fin_module', [
             'module'                => $module,
@@ -1061,6 +1229,23 @@ public function lire(Request $request, Module $module, ModuleSection $section, M
             'totalLectures'         => $totalLectures,
             'totalQuestionsPlanned' => $totalQuestionsPlanned,
             'questionsAnswered'     => $questionsAnswered,
+            'usabilityStats'        => [
+                'completed_lectures'         => $completedLectures,
+                'completed_sections'         => $completedSections,
+                'module_completion_percent'  => $moduleCompletionPercent,
+                'section_completion_percent' => $sectionCompletionPercent,
+                'success_rate_percent'       => $successRatePercent,
+                'total_learning_seconds'     => $totalLearningSeconds,
+                'scorm_time_seconds'         => $scormTimeSeconds,
+                'quiz_time_seconds'          => $quizTimeSeconds,
+                'video_time_seconds'         => $videoTimeSeconds,
+                'average_latency_seconds'    => $averageLatencySeconds,
+                'tracked_interactions'       => $trackedInteractions,
+                'scorm_interactions'         => $scormInteractionsCount,
+                'quiz_answers'               => $quizLatencySamples,
+                'video_segments'             => $videoSegmentsCount,
+                'video_replays'              => $videoReplayCount,
+            ],
         ]);
     }
 

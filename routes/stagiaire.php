@@ -74,8 +74,11 @@ Route::middleware(['auth', 'role:stagiaire', 'track.time'])
             Route::get('/progression/detailmodule', [StagiaireController::class, 'ProgressionDetailModule'])
                 ->name('progression.detailmodule');
 
-            Route::get('/modules/{module}/fin', [ModuleController::class, 'finModule'])
+            Route::get('/formations/{module}/fin', [ModuleController::class, 'finModule'])
                 ->name('module.fin');
+
+            Route::get('/modules/{module}/fin', [ModuleController::class, 'finModule'])
+                ->name('module.fin.legacy');
 
             /*
             |--------------------------------------------------------------------------
