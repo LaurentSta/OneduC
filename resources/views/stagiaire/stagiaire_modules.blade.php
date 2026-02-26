@@ -48,90 +48,29 @@
   </header>
   {{-- 📋 CONTENU PRINCIPAL --}}
   <main class="space-y-8">
+    @php
+      $stagiaireFlowModules = $modules->values()->map(function ($module, $index) {
+          return [
+              'id' => (int) $module->id,
+              'title' => (string) ($module->module_title ?? ''),
+              'order' => $index + 1,
+              'status' => (string) ($module->progression_status ?? 'not_started'),
+              'progress' => (int) ($module->progression_percent ?? 0),
+              'detail_url' => route('stagiaire.module.detail', $module->id),
+          ];
+      });
+    @endphp
 
-    <section aria-labelledby="liste-modules" class="relative pb-12">
-  <h2 id="liste-modules" class="sr-only">Votre parcours de formation</h2>
+    <div
+      data-stagiaire-module-flow
+      data-modules='@json($stagiaireFlowModules)'
+    ></div>
 
-  <div class="flex flex-col items-center space-y-0"> {{-- On gère l'espace via les flèches --}}
-    @forelse($modules as $index => $module)
-      
-      {{-- Card du Module --}}
-      <article class="w-full max-w-2xl bg-white shadow-lg rounded-[24px] overflow-hidden border-2 {{ $module->progression_status === 'completed' ? 'border-vertone' : 'border-transparent' }} transition-all hover:scale-[1.01]">
-        <div class="flex flex-col md:flex-row">
-          
-          {{-- Image miniature --}}
-          <div class="md:w-48 h-32 md:h-auto shrink-0 relative">
-            @if($module->module_image)
-              <img src="{{ asset('storage/' . $module->module_image) }}" 
-                   class="w-full h-full object-cover" 
-                   alt="">
-            @endif
-            {{-- Badge de statut sur l'image --}}
-            <div class="absolute top-2 left-2">
-                @php
-                    $status = $module->progression_status ?? 'not_started';
-                    $badgeColor = [
-                        'completed'   => 'bg-vertone',
-                        'in_progress' => 'bg-orangeone',
-                        'not_started' => 'bg-gray-400',
-                    ][$status] ?? 'bg-gray-400';
-                @endphp
-                <span class="flex h-3 w-3 rounded-full {{ $badgeColor }} ring-2 ring-white"></span>
-            </div>
-          </div>
-
-          <div class="p-6 flex-1">
-            <div class="flex justify-between items-start mb-2">
-              <h3 class="text-xl font-varela text-bleuone">{{ $module->module_title }}</h3>
-              <span class="text-sm font-bold text-bleuone bg-gray-100 px-2 py-1 rounded">Étape {{ $index + 1 }}</span>
-            </div>
-            
-            <p class="text-sm text-gray-600 font-lisible mb-4 line-clamp-2">
-              {{ $module->description }}
-            </p>
-
-            {{-- Barre de progression --}}
-            <div class="flex items-center gap-4">
-              <div class="flex-1 bg-gray-200 h-2 rounded-full overflow-hidden">
-                <div class="h-full bg-vertone transition-all duration-500" style="width: {{ $module->progression_percent ?? 0 }}%"></div>
-              </div>
-              <span class="text-xs font-bold text-vertone">{{ (int)$module->progression_percent ?? 0 }}%</span>
-            </div>
-
-            <div class="mt-4 flex justify-end">
-                <a href="{{ route('stagiaire.module.detail', $module->id) }}" class="text-orangeone font-varela font-bold flex items-center hover:translate-x-1 transition-transform">
-                    Continuer le module
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                    </svg>
-                </a>
-            </div>
-          </div>
-        </div>
-      </article>
-
-      {{-- Flèche de liaison (affichée sauf après le dernier module) --}}
-      @if (!$loop->last)
-        <div class="py-4 flex flex-col items-center">
-          {{-- Ligne verticale en pointillés --}}
-          <div class="w-1 h-8 border-l-4 border-dotted {{ $module->progression_status === 'completed' ? 'border-vertone' : 'border-gray-300' }}"></div>
-          {{-- Icône de flèche --}}
-          <svg xmlns="http://www.w3.org/2000/svg" 
-               class="h-8 w-8 {{ $module->progression_status === 'completed' ? 'text-vertone' : 'text-gray-300' }}" 
-               fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-          </svg>
-          <div class="w-1 h-8 border-l-4 border-dotted {{ ($modules[$index+1]->progression_status ?? '') === 'in_progress' ? 'border-orangeone' : 'border-gray-300' }}"></div>
-        </div>
-      @endif
-
-    @empty
+    @if($modules->isEmpty())
       <div class="text-center py-20 bg-white rounded-[20px] w-full shadow-inner">
         <p class="text-gray-500 font-lisible">Aucun module ne vous a encore été attribué.</p>
       </div>
-    @endforelse
-  </div>
-</section>
+    @endif
 
   </main>
 </div>
