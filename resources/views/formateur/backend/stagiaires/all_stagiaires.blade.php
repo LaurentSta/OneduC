@@ -52,22 +52,16 @@
   {{-- 📋 CONTENU PRINCIPAL --}}
   <main class="space-y-8">
     {{-- 📊 Synthèse --}}
-    <div class="flex flex-wrap items-center justify-between gap-4 px-6 pt-4 pb-2">
-      
-      <div class="flex flex-col gap-1">
-        <p class="text-sm text-gray-600 font-varela">
-          Nombre total de stagiaires :
-          <span class="text-gray-900 font-semibold">
-            {{ $stagiaires->total() }}
-          </span>
-        </p>
-
-        <p class="text-sm text-gray-600 font-varela">
-          Nombre de groupes :
-          <span class="text-gray-900 font-semibold">
-            {{ $groupes->count() }}
-          </span>
-        </p>
+    <div class="flex flex-wrap items-center justify-between gap-4 px-6 pt-4 pb-0">
+      <div class="flex flex-wrap items-center gap-3">
+        <div class="inline-flex items-center gap-2 rounded-full border border-bleuone/20 bg-white px-4 py-2 text-sm font-varela text-gray-700">
+          <span>Nombre total de stagiaires :</span>
+          <span class="font-bold text-bleuone">{{ $stagiaires->total() }}</span>
+        </div>
+        <div class="inline-flex items-center gap-2 rounded-full border border-orangeone/20 bg-white px-4 py-2 text-sm font-varela text-gray-700">
+          <span>Nombre total de groupes :</span>
+          <span class="font-bold text-orangeone">{{ $groupes->count() }}</span>
+        </div>
       </div>
 
       @if(request('group_id'))
@@ -82,7 +76,7 @@
     </div>
 
     {{-- 🔎 Barre de recherche --}}
-    <form method="GET" class="flex flex-wrap items-end gap-3">
+    <form method="GET" class="flex flex-wrap items-end gap-3 -mt-1">
       <div class="w-full md:w-1/2">
         <label for="search" class="sr-only">Recherche</label>
         <input type="text"
@@ -121,9 +115,9 @@
 
 
     {{-- 📊 Tableau des stagiaires --}}
-    <div class="overflow-x-auto bg-white shadow-md rounded-[20px]">
-      <table class="min-w-full text-sm text-left text-gray-800 font-lisible">
-        <thead class="bg-gray-100 uppercase text-xs text-gray-600 font-varela sticky top-0 z-10">
+    <div class="overflow-x-auto bg-white shadow-md rounded-[20px] border-2 border-bleuone/20">
+      <table class="min-w-full bg-white text-sm text-left text-gray-800 font-lisible">
+        <thead class="bg-bleuone uppercase text-xs text-white font-varela sticky top-0 z-10">
           <tr>
             <th class="px-6 py-3">#</th>
             <th class="px-6 py-3">Prénom</th>
@@ -136,7 +130,7 @@
         </thead>
         <tbody>
           @forelse ($stagiaires as $index => $stagiaire)
-            <tr class="border-t hover:bg-gray-50">
+            <tr class="border-t {{ $index % 2 === 0 ? 'bg-white' : 'bg-orangeone/8' }} hover:bg-orangeone/15 transition-colors">
               <td class="px-6 py-4 font-medium">{{ $stagiaires->firstItem() + $index }}</td>
               <td class="px-6 py-4">{{ $stagiaire->prenom }}</td>
               <td class="px-6 py-4">{{ $stagiaire->name }}</td>
