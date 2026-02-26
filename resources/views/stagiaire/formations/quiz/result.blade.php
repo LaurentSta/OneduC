@@ -73,43 +73,81 @@
 
                 {{-- Analyse des réponses (Feedback détaillé) --}}
                 <div class="space-y-2 pl-4 border-l-2 {{ $row->is_correct ? 'border-green-200' : 'border-red-200' }}">
-                    @php
-                        // Décodage des réponses données par le stagiaire (JSON stocké en base)
-                        $givenIds = json_decode($row->answer_option_ids ?? '[]', true) ?? [];
-                        if (!is_array($givenIds)) $givenIds = [(int)$givenIds]; 
-                    @endphp
-
-                    @foreach($row->question->options as $opt)
+                    @if((string) ($row->question->type ?? '') === 'cloze')
                         @php
-                            $isSelected = in_array($opt->id, $givenIds);
-                            $isExpected = (bool)$opt->is_correct;
+                            $given = is_array($row->given_answer ?? null) ? $row->given_answer : [];
+                            $blankRows = is_array($given['blanks'] ?? null) ? $given['blanks'] : [];
+                            $partialScore = (int) ($given['score'] ?? 0);
+                            $partialMax = (int) ($given['max_score'] ?? 0);
                         @endphp
 
-                        {{-- On affiche uniquement si c'est la réponse choisie ou la réponse attendue --}}
-                        @if($isSelected || $isExpected)
-                            <div class="flex items-center gap-2 text-sm">
-                                {{-- Icône d'état --}}
-                                @if($isSelected && $isExpected)
-                                    <i class="ti ti-circle-check-filled text-green-600 text-lg"></i> {{-- Bon choix --}}
-                                @elseif($isSelected && !$isExpected)
-                                    <i class="ti ti-circle-x-filled text-red-500 text-lg"></i> {{-- Mauvais choix --}}
-                                @elseif(!$isSelected && $isExpected)
-                                    <i class="ti ti-arrow-right text-bleuone text-lg"></i> {{-- Correction --}}
-                                @endif
-
-                                <span class="{{ $isSelected ? 'font-semibold' : 'text-gray-500 italic' }}">
-                                    {{ $opt->option_text }}
-                                </span>
-
-                                {{-- Label explicite --}}
-                                @if(!$isSelected && $isExpected)
-                                    <span class="text-xs text-bleuone font-bold ml-auto">(Solution)</span>
-                                @elseif($isSelected && !$isExpected)
-                                    <span class="text-xs text-red-500 font-bold ml-auto">(Votre réponse)</span>
-                                @endif
+                        @forelse($blankRows as $blankKey => $blank)
+                            @php
+                                $blankOk = (bool) ($blank['is_correct'] ?? false);
+                                $answer = (string) ($blank['answer'] ?? '');
+                                $expected = is_array($blank['accepted_answers'] ?? null) ? $blank['accepted_answers'] : [];
+                                $points = (int) ($blank['points'] ?? 0);
+                            @endphp
+                            <div class="rounded-lg border {{ $blankOk ? 'border-green-200 bg-green-50/60' : 'border-red-200 bg-red-50/60' }} p-2">
+                                <div class="flex items-center justify-between gap-2">
+                                    <span class="text-xs font-semibold text-gray-700 font-mono">{{ $blankKey }}</span>
+                                    <span class="text-[11px] font-semibold {{ $blankOk ? 'text-green-700' : 'text-red-700' }}">
+                                        {{ $blankOk ? 'OK' : 'Erreur' }} · {{ $blankOk ? $points : 0 }}/{{ $points }} pt
+                                    </span>
+                                </div>
+                                <p class="mt-1 text-sm text-gray-800">
+                                    <span class="text-gray-500">Votre réponse:</span> {{ $answer !== '' ? $answer : '—' }}
+                                </p>
+                                <p class="mt-1 text-xs text-gray-600">
+                                    Attendu: {{ !empty($expected) ? implode(' / ', $expected) : 'non défini' }}
+                                </p>
                             </div>
-                        @endif
-                    @endforeach
+                        @empty
+                            <p class="text-sm text-gray-500">Détail de correction indisponible pour cette question à trous.</p>
+                        @endforelse
+
+                        <p class="text-xs font-semibold text-gray-700 pt-1">
+                            Score partiel: {{ $partialScore }} / {{ $partialMax }} points
+                        </p>
+                    @else
+                        @php
+                            // Décodage des réponses données par le stagiaire (JSON stocké en base)
+                            $givenIds = json_decode($row->answer_option_ids ?? '[]', true) ?? [];
+                            if (!is_array($givenIds)) $givenIds = [(int)$givenIds];
+                        @endphp
+
+                        @foreach($row->question->options as $opt)
+                            @php
+                                $isSelected = in_array($opt->id, $givenIds);
+                                $isExpected = (bool)$opt->is_correct;
+                            @endphp
+
+                            {{-- On affiche uniquement si c'est la réponse choisie ou la réponse attendue --}}
+                            @if($isSelected || $isExpected)
+                                <div class="flex items-center gap-2 text-sm">
+                                    {{-- Icône d'état --}}
+                                    @if($isSelected && $isExpected)
+                                        <i class="ti ti-circle-check-filled text-green-600 text-lg"></i> {{-- Bon choix --}}
+                                    @elseif($isSelected && !$isExpected)
+                                        <i class="ti ti-circle-x-filled text-red-500 text-lg"></i> {{-- Mauvais choix --}}
+                                    @elseif(!$isSelected && $isExpected)
+                                        <i class="ti ti-arrow-right text-bleuone text-lg"></i> {{-- Correction --}}
+                                    @endif
+
+                                    <span class="{{ $isSelected ? 'font-semibold' : 'text-gray-500 italic' }}">
+                                        {{ $opt->option_text }}
+                                    </span>
+
+                                    {{-- Label explicite --}}
+                                    @if(!$isSelected && $isExpected)
+                                        <span class="text-xs text-bleuone font-bold ml-auto">(Solution)</span>
+                                    @elseif($isSelected && !$isExpected)
+                                        <span class="text-xs text-red-500 font-bold ml-auto">(Votre réponse)</span>
+                                    @endif
+                                </div>
+                            @endif
+                        @endforeach
+                    @endif
                 </div>
             </div>
         @endforeach

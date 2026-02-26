@@ -88,13 +88,18 @@ class GroupeController extends Controller
             ->unique()
             ->values();
 
-        $positions = $request->input('module_positions', []);
+        $positions = collect($request->input('module_positions', []))
+            ->mapWithKeys(fn($value, $moduleId) => [(int) $moduleId => (int) $value]);
+
+        $orderedModuleIds = $moduleIds
+            ->sortBy(fn($moduleId) => $positions->get($moduleId, PHP_INT_MAX))
+            ->values();
+
         $sync = [];
 
-        // normalisation : 1..N selon l’ordre reçu
-        $pos = 1;
-        foreach ($moduleIds as $mid) {
-            $sync[$mid] = ['position' => $pos++];
+        // Normalisation stricte: positions 1..N selon l'ordre final.
+        foreach ($orderedModuleIds as $index => $moduleId) {
+            $sync[$moduleId] = ['position' => $index + 1];
         }
 
         $group->modules()->sync($sync);
@@ -165,22 +170,25 @@ class GroupeController extends Controller
             'description' => $request->description,
         ]);
 
-        // 2. MAJ modules AVEC POSITIONS (CORRECTION ICI)
-        // On récupère les IDs et les positions envoyés par le formulaire
-        $moduleIds = $request->input('modules', []);
-        $positions = $request->input('module_positions', []);
-        
+        // 2. MAJ modules avec ordre normalisé (1..N)
+        $moduleIds = collect($request->input('modules', []))
+            ->map(fn($value) => (int) $value)
+            ->filter()
+            ->unique()
+            ->values();
+
+        $positions = collect($request->input('module_positions', []))
+            ->mapWithKeys(fn($value, $moduleId) => [(int) $moduleId => (int) $value]);
+
+        $orderedModuleIds = $moduleIds
+            ->sortBy(fn($moduleId) => $positions->get($moduleId, PHP_INT_MAX))
+            ->values();
+
         $syncData = [];
-        
-        // On construit le tableau de synchronisation
-        foreach ($moduleIds as $moduleId) {
-            // Si une position est envoyée pour ce module, on l'utilise, sinon on met 0
-            $position = isset($positions[$moduleId]) ? (int)$positions[$moduleId] : 0;
-            
-            $syncData[$moduleId] = ['position' => $position];
+        foreach ($orderedModuleIds as $index => $moduleId) {
+            $syncData[$moduleId] = ['position' => $index + 1];
         }
 
-        // On synchronise en passant les données pivot (position)
         $group->modules()->sync($syncData);
 
 

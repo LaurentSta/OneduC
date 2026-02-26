@@ -977,7 +977,9 @@ public function lire(Request $request, Module $module, ModuleSection $section, M
                     $total    = (int) ($agg->total ?? $attempt->total_questions ?? $planned ?? 0);
                     $answered = (int) ($agg->answered ?? 0);
                     $correct  = (int) ($agg->correct ?? 0);
-                    $score    = ($total > 0) ? (int) round(($correct / $total) * 100) : null;
+                    $score    = !is_null($attempt->percent)
+                        ? (int) $attempt->percent
+                        : (($total > 0) ? (int) round(($correct / $total) * 100) : null);
                     $finished = !is_null($attempt->finished_at);
 
                     if (!$finished) {

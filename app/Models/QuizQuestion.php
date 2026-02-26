@@ -15,6 +15,7 @@ class QuizQuestion extends Model
         'position'   => 'integer',
         'lecture_id' => 'integer',
         'points'     => 'integer',
+        'payload'    => 'array',
     ];
 
     /**

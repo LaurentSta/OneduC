@@ -55,7 +55,48 @@
 
 
   {{-- Stepper --}}
-  @php $steps = ['Groupe','Stagiaires','Modules']; @endphp
+  @php
+    $steps = ['Groupe', 'Stagiaires', 'Modules'];
+
+    $availableModules = $modules
+      ->filter(fn($module) => !empty($module->status) && (int) $module->status === 1)
+      ->values()
+      ->map(fn($module) => [
+        'id' => (int) $module->id,
+        'title' => (string) $module->module_title,
+      ])
+      ->values();
+
+    $modulesById = $availableModules->keyBy('id');
+    $oldPositions = old('module_positions', []);
+
+    $oldModuleIds = collect(old('modules', []))
+      ->map(fn($id) => (int) $id)
+      ->filter(fn($id) => $id > 0)
+      ->unique()
+      ->values();
+
+    $initialSelectedModules = $oldModuleIds
+      ->sortBy(fn($id) => (int) data_get($oldPositions, (string) $id, PHP_INT_MAX))
+      ->values()
+      ->map(function ($id, $index) use ($modulesById) {
+        return [
+          'id' => $id,
+          'title' => (string) data_get($modulesById->get($id), 'title', "Module #{$id}"),
+          'position' => $index + 1,
+          'persisted' => false,
+          'manage_url' => '',
+        ];
+      })
+      ->values();
+
+    $initialWizardStep = 1;
+    if ($errors->has('modules') || $errors->has('modules.*') || $errors->has('module_positions') || $errors->has('module_positions.*')) {
+      $initialWizardStep = 3;
+    } elseif ($errors->has('stagiaires') || $errors->has('stagiaires.*') || $errors->has('password')) {
+      $initialWizardStep = 2;
+    }
+  @endphp
   <nav class="mb-8" aria-label="Progression">
     <ol class="grid grid-cols-1 sm:grid-cols-3 gap-3">
       @foreach($steps as $i => $label)
@@ -258,18 +299,31 @@
     {{-- Étape 3 : Modules --}}
     <fieldset id="step-3" class="step hidden">
       <legend class="sr-only">Modules</legend>
-      <p class="text-base text-gray-600 mb-4">Sélectionner les modules à associer.</p>
+      <p class="text-base text-gray-600 mb-4">Attachez les modules un à un pour construire le parcours.</p>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-        @foreach ($modules as $module)
-          @if (!empty($module->status) && (int)$module->status === 1)
-            <label class="flex items-center space-x-2 bg-gray-50 border rounded px-4 py-2">
-              <input type="checkbox" name="modules[]" value="{{ $module->id }}">
-              <span class="text-base">{{ $module->module_title }}</span>
-            </label>
-          @endif
-        @endforeach
-      </div>
+      <div
+        data-group-module-flow
+        data-mode="create"
+        data-available-modules='@json($availableModules)'
+        data-selected-modules='@json($initialSelectedModules)'
+        class="space-y-6"
+      ></div>
+
+      @if($errors->has('modules') || $errors->has('modules.*'))
+        <div class="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {{ $errors->first('modules') ?: $errors->first('modules.*') }}
+        </div>
+      @endif
+      @if($errors->has('module_positions') || $errors->has('module_positions.*'))
+        <div class="mt-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {{ $errors->first('module_positions') ?: $errors->first('module_positions.*') }}
+        </div>
+      @endif
+      @if($errors->has('nom') || $errors->has('description') || $errors->has('stagiaires') || $errors->has('stagiaires.*') || $errors->has('password'))
+        <div class="mt-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {{ $errors->first() }}
+        </div>
+      @endif
     </fieldset>
 
     {{-- Navigation --}}
@@ -285,7 +339,7 @@
 </div>
 
 <script>
-  let currentStep = 1;
+  let currentStep = {{ $initialWizardStep }};
   const TOTAL_STEPS = 3;
 
   const form = document.getElementById('multi-step-form');
@@ -356,6 +410,12 @@
     submitBtn.classList.toggle('hidden', step !== TOTAL_STEPS);
 
     errorsBox.textContent = '';
+
+    if (step === 3) {
+      window.requestAnimationFrame(() => {
+        window.dispatchEvent(new CustomEvent('oneduc:group-flow-refresh'));
+      });
+    }
   }
 
   function validateStep(step) {
@@ -379,6 +439,15 @@
       completedSteps.delete(step);
       errorsBox.textContent = 'Veuillez compléter les champs requis avant de continuer.';
       return false;
+    }
+
+    if (step === 3) {
+      const selectedModules = current.querySelectorAll('input[name="modules[]"]');
+      if (selectedModules.length === 0) {
+        completedSteps.delete(step);
+        errorsBox.textContent = 'Ajoutez au moins un module au parcours.';
+        return false;
+      }
     }
 
     completedSteps.add(step);

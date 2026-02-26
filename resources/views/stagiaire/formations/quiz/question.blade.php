@@ -6,6 +6,8 @@
 @php
   use Illuminate\Support\Facades\Storage;
   $hasImage = !empty($question->image_path);
+  $clozePayload = is_array($question->payload ?? null) ? $question->payload : [];
+  $clozeRawText = (string) ($clozePayload['raw_text'] ?? '');
 @endphp
 
 <div class="max-w-[900px] mx-auto px-6 py-10">
@@ -58,19 +60,79 @@
           <fieldset class="space-y-3">
             <legend class="sr-only">Choisir une réponse</legend>
 
-            @foreach($question->options as $opt)
-              @if($question->type === 'multiple')
-                <label class="flex items-start gap-3 rounded-xl border border-gray-200 p-4 hover:bg-gray-50 cursor-pointer">
-                  <input type="checkbox" name="answers[]" value="{{ $opt->id }}" class="mt-1" />
-                  <span class="text-gray-900">{{ $opt->option_text }}</span>
-                </label>
-              @else
-                <label class="flex items-start gap-3 rounded-xl border border-gray-200 p-4 hover:bg-gray-50 cursor-pointer">
-                  <input type="radio" name="answer" value="{{ $opt->id }}" class="mt-1" required />
-                  <span class="text-gray-900">{{ $opt->option_text }}</span>
-                </label>
-              @endif
-            @endforeach
+            @if((string) $question->type === 'cloze')
+              <div class="rounded-xl border border-gray-200 bg-white p-4">
+                <p class="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-3">Compléter la formule</p>
+                <div id="cloze-container-stagiaire" class="text-[17px] leading-relaxed text-gray-900 font-mono break-words"></div>
+                <p class="mt-3 text-xs text-gray-500">
+                  Remplissez chaque champ puis validez.
+                </p>
+              </div>
+
+              <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                  const container = document.getElementById('cloze-container-stagiaire');
+                  if (!container) return;
+
+                  const rawText = @json($clozeRawText);
+                  const oldAnswers = @json(old('answers', []));
+                  const regex = new RegExp('\\{\\{\\s*([A-Za-z0-9_]+)\\s*\\}\\}', 'g');
+
+                  const fragment = document.createDocumentFragment();
+                  let lastIndex = 0;
+                  let match = null;
+                  let hasBlank = false;
+
+                  while ((match = regex.exec(rawText)) !== null) {
+                    hasBlank = true;
+                    const key = String(match[1] || '').trim();
+                    const textBefore = rawText.slice(lastIndex, match.index);
+                    if (textBefore) {
+                      fragment.appendChild(document.createTextNode(textBefore));
+                    }
+
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.name = `answers[${key}]`;
+                    input.value = Object.prototype.hasOwnProperty.call(oldAnswers, key) ? String(oldAnswers[key] ?? '') : '';
+                    input.required = true;
+                    input.className = 'inline-block w-32 border-b-2 border-gray-400 focus:border-blue-600 outline-none text-center px-1 bg-transparent mx-1 align-baseline';
+                    fragment.appendChild(input);
+
+                    lastIndex = match.index + match[0].length;
+                  }
+
+                  const tail = rawText.slice(lastIndex);
+                  if (tail) {
+                    fragment.appendChild(document.createTextNode(tail));
+                  }
+
+                  container.textContent = '';
+                  container.appendChild(fragment);
+
+                  if (!hasBlank) {
+                    const warn = document.createElement('p');
+                    warn.className = 'text-sm text-red-600';
+                    warn.textContent = 'Question à trous mal configurée: aucun placeholder détecté.';
+                    container.appendChild(warn);
+                  }
+                });
+              </script>
+            @else
+              @foreach($question->options as $opt)
+                @if($question->type === 'multiple')
+                  <label class="flex items-start gap-3 rounded-xl border border-gray-200 p-4 hover:bg-gray-50 cursor-pointer">
+                    <input type="checkbox" name="answers[]" value="{{ $opt->id }}" class="mt-1" />
+                    <span class="text-gray-900">{{ $opt->option_text }}</span>
+                  </label>
+                @else
+                  <label class="flex items-start gap-3 rounded-xl border border-gray-200 p-4 hover:bg-gray-50 cursor-pointer">
+                    <input type="radio" name="answer" value="{{ $opt->id }}" class="mt-1" required />
+                    <span class="text-gray-900">{{ $opt->option_text }}</span>
+                  </label>
+                @endif
+              @endforeach
+            @endif
           </fieldset>
             {{-- DANS LE FORMULAIRE, AVANT LE BOUTON SUBMIT --}}
               <input type="hidden" name="time_spent" id="time_spent_input" value="0">

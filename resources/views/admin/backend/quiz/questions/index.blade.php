@@ -96,12 +96,14 @@
                                         'single' => 'bg-blue-100 text-blue-800 border-blue-200',
                                         'multiple' => 'bg-purple-100 text-purple-800 border-purple-200',
                                         'boolean' => 'bg-gray-100 text-gray-800 border-gray-200',
+                                        'cloze' => 'bg-amber-100 text-amber-800 border-amber-200',
                                         default => 'bg-gray-100 text-gray-800 border-gray-200'
                                     };
                                     $label = match($q->type) {
                                         'single' => 'Choix Unique',
                                         'multiple' => 'Choix Multiple',
                                         'boolean' => 'Vrai / Faux',
+                                        'cloze' => 'Texte à trous',
                                         default => $q->type
                                     };
                                 @endphp
@@ -112,7 +114,7 @@
 
                             {{-- Nb Options --}}
                             <td class="px-3 py-1.5 border-r border-gray-200 text-center font-mono">
-                                {{ $q->options_count }}
+                                {{ $q->type === 'cloze' ? '—' : (int) ($q->options_count ?? 0) }}
                             </td>
 
                             {{-- État --}}

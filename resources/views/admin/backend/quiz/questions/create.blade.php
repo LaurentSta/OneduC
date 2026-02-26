@@ -48,7 +48,7 @@
         <div>
           <span class="block text-sm font-bold text-gray-700 mb-3">Format de réponse</span>
 
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
             <template x-for="(label, key) in types" :key="key">
               <button type="button" @click="changeType(key)"
                       :class="currentType === key ? 'border-bleuone bg-blue-50 text-bleuone' : 'border-gray-200 bg-white text-gray-600'"
@@ -68,11 +68,11 @@
       <hr class="border-gray-100">
 
       {{-- Section 2 : Réponses --}}
-      <div class="space-y-4">
+      <div class="space-y-4" x-show="currentType !== 'cloze'">
         <div class="flex items-center justify-between">
           <h2 class="text-lg font-semibold text-gray-800">Propositions de réponses</h2>
 
-          <button type="button" @click="addOption()" x-show="currentType !== 'boolean'"
+          <button type="button" @click="addOption()" x-show="currentType !== 'boolean' && currentType !== 'cloze'"
                   class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg font-medium transition">
             + Ajouter un choix
           </button>
@@ -105,7 +105,7 @@
                 <input type="text"
                        :name="`options[${index}][text]`"
                        x-model="option.text"
-                       required
+                       :required="currentType !== 'boolean' && currentType !== 'cloze'"
                        class="w-full border-0 border-b border-transparent focus:border-orangeone focus:ring-0 text-sm p-0 pb-1"
                        :placeholder="'Option ' + (index + 1)">
               </div>
@@ -126,6 +126,77 @@
         <p class="text-xs text-gray-500">
           Choix unique / Vrai-Faux : une seule bonne réponse. Choix multiple : une ou plusieurs.
         </p>
+      </div>
+
+      {{-- Section 2 bis : Texte à trous (Cloze) --}}
+      <div class="space-y-4" x-show="currentType === 'cloze'">
+        <div>
+          <h2 class="text-lg font-semibold text-gray-800">Texte à trous</h2>
+          <p class="mt-1 text-xs text-gray-500">
+            Utilisez des placeholders au format <code>{{ '{' }}{{ '{' }}blank_key{{ '}' }}{{ '}' }}</code>.
+          </p>
+        </div>
+
+        <div class="rounded-xl border border-gray-200 bg-white p-4">
+          <label class="block text-sm font-bold text-gray-700 mb-2" for="cloze_raw_text">
+            Texte brut à compléter
+          </label>
+          <textarea
+            id="cloze_raw_text"
+            name="cloze_raw_text"
+            rows="4"
+            x-model="clozeRawText"
+            @input.debounce.250ms="refreshClozeBlanks()"
+            :required="currentType === 'cloze'"
+            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orangeone focus:border-orangeone shadow-sm font-mono text-sm"
+            placeholder="Ex: =RECHERCHEV({{ '{' }}{{ '{' }}search_val{{ '}' }}{{ '}' }}; {{ '{' }}{{ '{' }}matrix{{ '}' }}{{ '}' }}; {{ '{' }}{{ '{' }}col_index{{ '}' }}{{ '}' }}; FAUX)"
+          ></textarea>
+        </div>
+
+        <div class="rounded-xl border border-gray-200 bg-gray-50 p-4">
+          <h3 class="text-sm font-bold text-gray-700">Configuration des trous</h3>
+          <p class="text-xs text-gray-500 mt-1">
+            Les trous sont détectés automatiquement à partir du texte.
+            Réponses acceptées: séparées par virgules, point-virgules ou retours à la ligne.
+          </p>
+
+          <div class="mt-4 space-y-3" x-show="Object.keys(clozeBlanks).length > 0">
+            <template x-for="(blank, blankKey) in clozeBlanks" :key="blankKey">
+              <div class="grid grid-cols-1 md:grid-cols-[180px_1fr_140px] gap-3 items-center rounded-lg border border-gray-200 bg-white p-3">
+                <div class="text-xs font-mono font-semibold text-bleuone" x-text="blankKey"></div>
+
+                <div>
+                  <label class="block text-[11px] font-semibold text-gray-500 mb-1">Réponses acceptées</label>
+                  <input
+                    type="text"
+                    :name="`cloze_blanks[${blankKey}][accepted_answers]`"
+                    x-model="blank.accepted_answers"
+                    :required="currentType === 'cloze'"
+                    class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg focus:ring-orangeone focus:border-orangeone"
+                    placeholder="valeur_cherchee, valeur cherchée"
+                  >
+                </div>
+
+                <div>
+                  <label class="block text-[11px] font-semibold text-gray-500 mb-1">Points</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    :name="`cloze_blanks[${blankKey}][points]`"
+                    x-model.number="blank.points"
+                    :required="currentType === 'cloze'"
+                    class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg focus:ring-orangeone focus:border-orangeone"
+                  >
+                </div>
+              </div>
+            </template>
+          </div>
+
+          <div x-show="Object.keys(clozeBlanks).length === 0" class="mt-4 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3">
+            Aucun trou détecté. Ajoutez au moins un placeholder <code>{{ '{' }}{{ '{' }}id{{ '}' }}{{ '}' }}</code>.
+          </div>
+        </div>
       </div>
 
       {{-- Section 3 : Médias (optionnel / repliable) --}}
@@ -257,7 +328,8 @@ function quizManager() {
     types: {
       'boolean': 'Vrai / Faux',
       'single': 'Choix Unique',
-      'multiple': 'Choix Multiple'
+      'multiple': 'Choix Multiple',
+      'cloze': 'Texte à trous'
     },
 
     options: (function () {
@@ -275,8 +347,80 @@ function quizManager() {
       ];
     })(),
 
+    clozeRawText: @json(old('cloze_raw_text', '')),
+    clozeBlanks: (function () {
+      const oldBlanks = @json(old('cloze_blanks', []));
+      return oldBlanks && typeof oldBlanks === 'object' ? oldBlanks : {};
+    })(),
+
+    parseClozeKeys(rawText) {
+      const text = String(rawText || '');
+      const regex = new RegExp('\\{\\{\\s*([A-Za-z0-9_]+)\\s*\\}\\}', 'g');
+      const seen = new Set();
+      const keys = [];
+      let match = null;
+
+      while ((match = regex.exec(text)) !== null) {
+        const key = String(match[1] || '').trim();
+        if (!key || seen.has(key)) continue;
+        seen.add(key);
+        keys.push(key);
+      }
+
+      return keys;
+    },
+
+    normalizeClozeBlanks(rawBlanks) {
+      const out = {};
+      const source = rawBlanks && typeof rawBlanks === 'object' ? rawBlanks : {};
+
+      Object.entries(source).forEach(([rawKey, rawCfg]) => {
+        const key = String(rawKey || '').trim();
+        if (!key) return;
+
+        let accepted = rawCfg?.accepted_answers ?? '';
+        if (Array.isArray(accepted)) {
+          accepted = accepted.join(', ');
+        }
+
+        let points = Number(rawCfg?.points ?? 1);
+        if (!Number.isFinite(points) || points < 0) {
+          points = 1;
+        }
+
+        out[key] = {
+          accepted_answers: String(accepted ?? ''),
+          points: Math.round(points),
+        };
+      });
+
+      return out;
+    },
+
+    refreshClozeBlanks() {
+      const keys = this.parseClozeKeys(this.clozeRawText);
+      const current = this.normalizeClozeBlanks(this.clozeBlanks);
+      const next = {};
+
+      keys.forEach((key) => {
+        next[key] = current[key] ?? { accepted_answers: '', points: 1 };
+      });
+
+      this.clozeBlanks = next;
+    },
+
     changeType(type) {
       this.currentType = type;
+
+      if (type === 'cloze') {
+        if (!this.clozeRawText) {
+          const open = '{' + '{';
+          const close = '}' + '}';
+          this.clozeRawText = `=RECHERCHEV(${open}search_val${close}; ${open}matrix${close}; ${open}col_index${close}; FAUX)`;
+        }
+        this.refreshClozeBlanks();
+        return;
+      }
 
       if (type === 'boolean') {
         this.options = [
@@ -303,6 +447,8 @@ function quizManager() {
     },
 
     markCorrect(index) {
+      if (this.currentType === 'cloze') return;
+
       if (this.currentType === 'multiple') {
         // toggle
         this.options[index].is_correct = !this.options[index].is_correct;
@@ -319,12 +465,12 @@ function quizManager() {
     },
 
     addOption() {
-      if (this.currentType === 'boolean') return;
+      if (this.currentType === 'boolean' || this.currentType === 'cloze') return;
       this.options.push({ text: '', is_correct: false });
     },
 
     removeOption(index) {
-      if (this.currentType === 'boolean') return;
+      if (this.currentType === 'boolean' || this.currentType === 'cloze') return;
       if (this.options.length <= 2) return;
 
       const wasCorrect = !!this.options[index].is_correct;
@@ -336,10 +482,15 @@ function quizManager() {
     },
 
     canRemove() {
-      return this.currentType !== 'boolean' && this.options.length > 2;
+      return this.currentType !== 'boolean' && this.currentType !== 'cloze' && this.options.length > 2;
     },
 
     init() {
+      this.clozeBlanks = this.normalizeClozeBlanks(this.clozeBlanks);
+      if (this.currentType === 'cloze') {
+        this.refreshClozeBlanks();
+      }
+
       if (this.currentType === 'single' || this.currentType === 'boolean') {
         this.enforceSingleCorrect();
       }
