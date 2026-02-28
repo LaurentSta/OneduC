@@ -122,4 +122,17 @@
     </div>
   </section>
 </div>
+
+@if(!empty($completionToast))
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const toast = document.createElement('div');
+      toast.className = 'fixed top-5 right-5 z-[120] max-w-sm bg-white border border-green-200 shadow-lg rounded-xl px-4 py-3';
+      toast.innerHTML = '<p class="text-xs font-semibold text-green-700">Module terminé</p>'
+        + '<p class="text-xs text-gray-700 mt-1">{{ addslashes($completionToast) }}</p>';
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 4500);
+    });
+  </script>
+@endif
 @endsection

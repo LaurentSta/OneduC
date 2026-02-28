@@ -21,15 +21,7 @@
 
       <div class="flex items-center gap-4">
 
-        <!-- Notifications avec icône Heroicons -->
-        <div class="relative">
-          <button class="text-gray-600 hover:text-orangeone relative">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-[34px] h-[34px]">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.099A3.001 3.001 0 0112 18a3.001 3.001 0 01-2.857-0.901M6 8c0-3.314 2.239-6 5-6s5 2.686 5 6c0 5.25 2 6 2 6H4s2-0.75 2-6z" />
-            </svg>
-            <span class="absolute top-[10px] right-0 translate-x-1/2 bg-red-600 text-white text-xs px-1.5 py-0.5 rounded-full">3</span>
-          </button>
-        </div>
+        @include('components.user-notification-bell')
 
         <!-- Fullscreen button (non-fonctionnel pour l'instant) -->
         <button class="text-gray-600 hover:text-orangeone text-2xl hidden lg:inline-block">
@@ -75,6 +67,5 @@
       </div>
     </div>
   </header>
-
 
 

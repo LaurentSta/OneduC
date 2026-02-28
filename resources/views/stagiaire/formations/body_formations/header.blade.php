@@ -71,6 +71,7 @@
 
     {{-- DROITE : Actions --}}
     <div class="shrink-0 lg:w-1/4 flex justify-end items-center gap-3">
+      @include('components.user-notification-bell')
       <a href="{{ route('stagiaire.dashboard') }}"
          class="group flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gray-50 text-gray-600 hover:bg-red-50 hover:text-red-600 transition-all border border-gray-100 hover:border-red-100 font-bold text-sm">
         <span>Quitter</span>
