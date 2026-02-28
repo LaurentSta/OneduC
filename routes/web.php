@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\Backend\StagiaireController;
+use App\Http\Controllers\WordCloudParticipationController;
 
 // -------------------------------------------------------------------------
 // Fichier de routes publiques de l'application. Les routes des différents
@@ -96,6 +97,16 @@ Route::middleware(['auth'])->group(function () {
 // ----------------------------------------------------------
 // Affiche une leçon précise
 Route::get('/lecture/{id}', [\App\Http\Controllers\Frontend\LectureController::class, 'show'])->name('lecture.show');
+
+// ----------------------------------------------------------
+// ☁️ Jeu - Nuage de mot (participation)
+// ----------------------------------------------------------
+Route::get('/oneduc/mot', [WordCloudParticipationController::class, 'home'])->name('wordcloud.join');
+Route::post('/oneduc/mot', [WordCloudParticipationController::class, 'resolveCode'])->name('wordcloud.resolve');
+Route::get('/oneduc/mot/{code}', [WordCloudParticipationController::class, 'joinByCode'])->name('wordcloud.join.code');
+Route::post('/oneduc/mot/{code}', [WordCloudParticipationController::class, 'submit'])
+    ->middleware('throttle:30,1')
+    ->name('wordcloud.submit');
 
 
 
