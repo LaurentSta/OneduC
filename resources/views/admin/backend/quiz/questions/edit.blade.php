@@ -362,9 +362,9 @@ function quizEditManager() {
           ->map(fn($o) => ['text' => $o->option_text, 'is_correct' => (bool)$o->is_correct])
       )
     ),
-    clozeRawText: @json(old('cloze_raw_text', data_get($question->payload, 'raw_text', ''))),
+    clozeRawText: {{ \Illuminate\Support\Js::from(old('cloze_raw_text', data_get($question->payload, 'raw_text', ''))) }},
     clozeBlanks: (function () {
-      const initialBlanks = @json(old('cloze_blanks', data_get($question->payload, 'blanks', [])));
+      const initialBlanks = {{ \Illuminate\Support\Js::from(old('cloze_blanks', data_get($question->payload, 'blanks', []))) }};
       return initialBlanks && typeof initialBlanks === 'object' ? initialBlanks : {};
     })(),
 

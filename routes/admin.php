@@ -16,6 +16,7 @@ use App\Http\Controllers\Backend\ScormLibraryController;
 use App\Http\Controllers\Backend\CompetencyController;
 use App\Http\Controllers\Backend\BadgeController;
 use App\Http\Controllers\Backend\PilotageController;
+use App\Http\Controllers\Backend\WordCloudController;
 
 Route::middleware(['auth', 'role:admin', 'admin.activity'])
     ->prefix('admin')
@@ -197,10 +198,24 @@ Route::middleware(['auth', 'role:admin', 'admin.activity'])
     Route::get('/badges/create', [BadgeController::class, 'create'])->name('badges.create');
     Route::post('/badges', [BadgeController::class, 'store'])->name('badges.store');
 
-    Route::get('/badges/{badge}/edit', [BadgeController::class, 'edit'])->name('badges.edit');
-    Route::post('/badges/{badge}', [BadgeController::class, 'update'])->name('badges.update');
-    Route::delete('/badges/{badge}', [BadgeController::class, 'destroy'])
+        Route::get('/badges/{badge}/edit', [BadgeController::class, 'edit'])->name('badges.edit');
+        Route::post('/badges/{badge}', [BadgeController::class, 'update'])->name('badges.update');
+        Route::delete('/badges/{badge}', [BadgeController::class, 'destroy'])
     ->name('badges.destroy');
 
+    // Jeux - Nuage de mot
+    Route::prefix('nuage')->name('nuage.')->group(function () {
+        Route::get('/', [WordCloudController::class, 'index'])->name('index');
+        Route::get('/create', [WordCloudController::class, 'create'])->name('create');
+        Route::post('/', [WordCloudController::class, 'store'])->name('store');
+
+        Route::get('/{wordCloud}', [WordCloudController::class, 'show'])->name('show');
+        Route::get('/{wordCloud}/edit', [WordCloudController::class, 'edit'])->name('edit');
+        Route::put('/{wordCloud}', [WordCloudController::class, 'update'])->name('update');
+        Route::delete('/{wordCloud}', [WordCloudController::class, 'destroy'])->name('destroy');
+
+        Route::get('/{wordCloud}/live', [WordCloudController::class, 'live'])->name('live');
+        Route::get('/{wordCloud}/live/data', [WordCloudController::class, 'liveData'])->name('live.data');
+    });
 
     });

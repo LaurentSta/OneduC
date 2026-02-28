@@ -26,6 +26,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use App\Models\LectureObjective;
 use App\Models\Competency;
+use App\Services\ModuleCompletionNotifier;
 
 
 class ModuleController extends Controller
@@ -1224,6 +1225,15 @@ public function lire(Request $request, Module $module, ModuleSection $section, M
 
         $totalLearningSeconds = $scormTimeSeconds + $quizTimeSeconds + $videoTimeSeconds;
         $trackedInteractions = $scormInteractionsCount + $quizLatencySamples + $videoSegmentsCount;
+        $completionToast = null;
+
+        if ($moduleCompletionPercent >= 100 && auth()->user()?->role === 'stagiaire') {
+            $notifyResult = app(ModuleCompletionNotifier::class)->notify($module, auth()->user());
+
+            if (($notifyResult['created_for_stagiaire'] ?? false) === true) {
+                $completionToast = 'Vous avez termine le module "' . $module->module_name . '".';
+            }
+        }
 
         return view('stagiaire.fin_module', [
             'module'                => $module,
@@ -1248,6 +1258,7 @@ public function lire(Request $request, Module $module, ModuleSection $section, M
                 'video_segments'             => $videoSegmentsCount,
                 'video_replays'              => $videoReplayCount,
             ],
+            'completionToast' => $completionToast,
         ]);
     }
 

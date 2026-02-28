@@ -5,7 +5,9 @@ use App\Http\Controllers\Backend\ModuleController;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Backend\StagiaireController;
+use App\Http\Controllers\WordCloudParticipationController;
 
 // -------------------------------------------------------------------------
 // Fichier de routes publiques de l'application. Les routes des différents
@@ -97,6 +99,16 @@ Route::middleware(['auth'])->group(function () {
 // Affiche une leçon précise
 Route::get('/lecture/{id}', [\App\Http\Controllers\Frontend\LectureController::class, 'show'])->name('lecture.show');
 
+// ----------------------------------------------------------
+// ☁️ Jeu - Nuage de mot (participation)
+// ----------------------------------------------------------
+Route::get('/oneduc/mot', [WordCloudParticipationController::class, 'home'])->name('wordcloud.join');
+Route::post('/oneduc/mot', [WordCloudParticipationController::class, 'resolveCode'])->name('wordcloud.resolve');
+Route::get('/oneduc/mot/{code}', [WordCloudParticipationController::class, 'joinByCode'])->name('wordcloud.join.code');
+Route::post('/oneduc/mot/{code}', [WordCloudParticipationController::class, 'submit'])
+    ->middleware('throttle:30,1')
+    ->name('wordcloud.submit');
+
 
 
 
@@ -117,6 +129,8 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/lecture/{id}/valider', [\App\Http\Controllers\Frontend\LectureController::class, 'valider'])->name('lecture.valider');
     Route::post('/feedback', [\App\Http\Controllers\LessonFeedbackController::class, 'store'])->name('feedback.store');
     Route::get('/feedback/{lesson}', [\App\Http\Controllers\LessonFeedbackController::class, 'index'])->name('feedback.index');
+    Route::post('/notifications/{notificationId}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
 });
 
 // ----------------------------------------------------------

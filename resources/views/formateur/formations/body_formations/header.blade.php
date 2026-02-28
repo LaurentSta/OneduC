@@ -67,9 +67,11 @@
       <span class="text-xs font-varela text-gray-700 whitespace-nowrap">{{ $label }}</span>
     </div>
 
-    <!-- Droite : lien retour -->
-    <a href="{{ route('formateur.dashboard') }}" class="text-sm text-orangeone hover:underline">
-      Retour au tableau de bord
-    </a>
+    <div class="flex items-center gap-3">
+      @include('components.user-notification-bell')
+      <a href="{{ route('formateur.dashboard') }}" class="text-sm text-orangeone hover:underline">
+        Retour au tableau de bord
+      </a>
+    </div>
   </div>
 </header>

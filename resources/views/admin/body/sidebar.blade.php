@@ -102,6 +102,14 @@
                class="{{ $itemBase }} {{ request()->routeIs('admin.retours.*') ? $itemActive : $itemHover }}">
                 <span class="text-base font-medium">Feedback</span>
             </a>
+
+            <hr class="border-white/20 border-t w-3/4 mx-auto">
+            <p class="px-4 py-1 uppercase tracking-wide text-[10px] text-white/70">Jeu</p>
+
+            <a href="{{ route('admin.nuage.index') }}"
+               class="{{ $itemBase }} {{ request()->routeIs('admin.nuage.*') ? $itemActive : $itemHover }}">
+                <span class="text-base font-medium">Nuage de mot</span>
+            </a>
         </nav>
     </div>
 
