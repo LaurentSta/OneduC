@@ -138,6 +138,8 @@ Route::middleware(['auth', 'role:admin', 'admin.activity'])
             Route::get('/questions', [QuizQuestionController::class, 'index'])->name('questions.index');
             Route::get('/questions/create', [QuizQuestionController::class, 'create'])->name('questions.create');
             Route::post('/questions', [QuizQuestionController::class, 'store'])->name('questions.store');
+            Route::post('/questions/import', [QuizQuestionController::class, 'importCsv'])->name('questions.import');
+            Route::get('/questions/import/template', [QuizQuestionController::class, 'downloadCsvTemplate'])->name('questions.import.template');
 
             Route::get('/questions/{question}/edit', [QuizQuestionController::class, 'edit'])->name('questions.edit');
             Route::put('/questions/{question}', [QuizQuestionController::class, 'update'])->name('questions.update');

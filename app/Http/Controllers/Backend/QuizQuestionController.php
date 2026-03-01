@@ -8,8 +8,10 @@ use App\Models\ModuleLecture;
 use App\Models\QuizOption;
 use App\Models\QuizQuestion;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\MessageBag;
 use Illuminate\Validation\ValidationException;
 
 class QuizQuestionController extends Controller
@@ -237,6 +239,95 @@ class QuizQuestionController extends Controller
         return redirect()
             ->route('admin.quiz.questions.index', $lecture)
             ->with('success', 'Question supprimée.');
+    }
+
+    /**
+     * Import CSV en masse des questions d'une leçon.
+     */
+    public function importCsv(Request $request, ModuleLecture $lecture)
+    {
+        $validated = $request->validate([
+            'csv_file' => ['required', 'file', 'mimes:csv,txt', 'max:5120'],
+        ]);
+
+        $rows = $this->readCsvRows($validated['csv_file']);
+        if (empty($rows)) {
+            return redirect()
+                ->route('admin.quiz.questions.index', $lecture)
+                ->withErrors(['csv_file' => 'Le fichier CSV est vide.']);
+        }
+
+        $header = array_map(fn ($v) => $this->normalizeHeader($v), array_shift($rows));
+        $required = ['question_text', 'type'];
+        foreach ($required as $key) {
+            if (!in_array($key, $header, true)) {
+                return redirect()
+                    ->route('admin.quiz.questions.index', $lecture)
+                    ->withErrors(['csv_file' => "Colonne obligatoire manquante: $key"]);
+            }
+        }
+
+        $created = 0;
+        $errors = [];
+
+        foreach ($rows as $i => $row) {
+            $lineNumber = $i + 2; // +1 header, +1 index 0
+            $assoc = $this->rowToAssoc($header, $row);
+
+            if ($this->rowIsEmpty($assoc)) {
+                continue;
+            }
+
+            try {
+                $data = $this->buildDataFromCsvRow($assoc);
+                DB::transaction(function () use ($lecture, $data) {
+                    $this->createQuestionFromData($lecture, $data);
+                });
+                $created++;
+            } catch (\Throwable $e) {
+                $errors[] = "Ligne {$lineNumber}: {$e->getMessage()}";
+            }
+        }
+
+        $redirect = redirect()->route('admin.quiz.questions.index', $lecture)
+            ->with('success', "Import CSV terminé: {$created} question(s) créée(s).");
+
+        if (!empty($errors)) {
+            $bag = new MessageBag(['csv_import' => $errors]);
+            $redirect = $redirect
+                ->with('import_report', [
+                    'created' => $created,
+                    'errors_count' => count($errors),
+                ])
+                ->withErrors($bag);
+        } else {
+            $redirect = $redirect
+                ->with('import_report', [
+                    'created' => $created,
+                    'errors_count' => 0,
+                ]);
+        }
+
+        return $redirect;
+    }
+
+    /**
+     * Télécharge un modèle CSV d'import.
+     */
+    public function downloadCsvTemplate(ModuleLecture $lecture)
+    {
+        $lines = [
+            'question_text;type;is_active;option_1;option_1_correct;option_2;option_2_correct;option_3;option_3_correct;option_4;option_4_correct;cloze_raw_text;cloze_blank_1_key;cloze_blank_1_answers;cloze_blank_1_points;cloze_blank_2_key;cloze_blank_2_answers;cloze_blank_2_points',
+            '"2+2 = ?";single;1;"3";0;"4";1;"5";0;"";0;"";"";"";"";"";"";""',
+            '"Choisissez les fruits";multiple;1;"Pomme";1;"Carotte";0;"Banane";1;"Poire";1;"";"";"";"";"";"";""',
+            '"Le ciel est bleu";boolean;1;"";1;"";0;"";0;"";0;"";"";"";"";"";"";""',
+            '"Paris est la capitale de {{country}}";cloze;1;"";0;"";0;"";0;"";0;"Paris est la capitale de {{country}}";"country";"France|Republique francaise";1;"";"";""',
+        ];
+
+        return response(implode("\n", $lines), 200, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="modele_import_questions_quiz.csv"',
+        ]);
     }
 
     /**
@@ -494,5 +585,189 @@ class QuizQuestionController extends Controller
                 'position'    => $i + 1,
             ]);
         }
+    }
+
+    private function createQuestionFromData(ModuleLecture $lecture, array $data): void
+    {
+        $question = QuizQuestion::create([
+            'lecture_id'    => $lecture->id,
+            'question_text' => $data['question_text'],
+            'type'          => $data['type'],
+            'is_active'     => $data['is_active'] ?? true,
+            'payload'       => null,
+        ]);
+
+        if ($data['type'] === 'cloze') {
+            $question->update([
+                'payload' => $this->buildClozePayload($data),
+            ]);
+            return;
+        }
+
+        $options = $this->buildOptionsForType($data['type'], $data['options'] ?? []);
+        $this->assertOptionsAreValidForType($data['type'], $options);
+        $this->replaceOptions($question->id, $options);
+    }
+
+    /**
+     * @return array<int, array<int, string|null>>
+     */
+    private function readCsvRows(UploadedFile $file): array
+    {
+        $path = $file->getRealPath();
+        if ($path === false) {
+            return [];
+        }
+
+        $handle = fopen($path, 'rb');
+        if ($handle === false) {
+            return [];
+        }
+
+        $rows = [];
+        $firstLine = fgets($handle);
+        if ($firstLine === false) {
+            fclose($handle);
+            return [];
+        }
+
+        $firstLine = preg_replace('/^\xEF\xBB\xBF/', '', $firstLine) ?? '';
+        $delimiter = (substr_count($firstLine, ';') >= substr_count($firstLine, ',')) ? ';' : ',';
+
+        rewind($handle);
+        $line = 0;
+        while (($parsed = fgetcsv($handle, 0, $delimiter)) !== false) {
+            $line++;
+            if ($line === 1 && isset($parsed[0])) {
+                $parsed[0] = preg_replace('/^\xEF\xBB\xBF/', '', (string) $parsed[0]) ?? '';
+            }
+
+            $rows[] = array_map(fn ($v) => is_string($v) ? trim($v) : $v, $parsed);
+        }
+
+        fclose($handle);
+
+        return $rows;
+    }
+
+    /**
+     * @param array<int, string> $header
+     * @param array<int, string|null> $row
+     * @return array<string, string>
+     */
+    private function rowToAssoc(array $header, array $row): array
+    {
+        $assoc = [];
+
+        foreach ($header as $index => $key) {
+            $assoc[$key] = trim((string) ($row[$index] ?? ''));
+        }
+
+        return $assoc;
+    }
+
+    /**
+     * @param array<string, string> $row
+     */
+    private function rowIsEmpty(array $row): bool
+    {
+        foreach ($row as $value) {
+            if (trim($value) !== '') {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private function normalizeHeader(?string $value): string
+    {
+        return strtolower(trim((string) $value));
+    }
+
+    /**
+     * @param array<string, string> $row
+     * @return array<string, mixed>
+     */
+    private function buildDataFromCsvRow(array $row): array
+    {
+        $questionText = trim((string) ($row['question_text'] ?? ''));
+        $type = strtolower(trim((string) ($row['type'] ?? '')));
+        $isActive = $this->toBool($row['is_active'] ?? '1');
+
+        if ($questionText === '') {
+            throw new \InvalidArgumentException("`question_text` est obligatoire.");
+        }
+
+        if (!in_array($type, ['boolean', 'single', 'multiple', 'cloze'], true)) {
+            throw new \InvalidArgumentException("`type` invalide: {$type}.");
+        }
+
+        $data = [
+            'question_text' => $questionText,
+            'type' => $type,
+            'is_active' => $isActive,
+        ];
+
+        if ($type === 'cloze') {
+            $rawText = trim((string) ($row['cloze_raw_text'] ?? ''));
+            if ($rawText === '') {
+                $rawText = $questionText;
+            }
+
+            $data['cloze_raw_text'] = $rawText;
+            $data['cloze_blanks'] = [];
+
+            for ($i = 1; $i <= 8; $i++) {
+                $key = trim((string) ($row["cloze_blank_{$i}_key"] ?? ''));
+                if ($key === '') {
+                    continue;
+                }
+
+                $answersRaw = trim((string) ($row["cloze_blank_{$i}_answers"] ?? ''));
+                $answers = array_values(array_filter(array_map('trim', explode('|', $answersRaw))));
+                $points = $row["cloze_blank_{$i}_points"] ?? '1';
+
+                $data['cloze_blanks'][$key] = [
+                    'accepted_answers' => $answers,
+                    'points' => is_numeric($points) ? (int) $points : 1,
+                ];
+            }
+
+            return $data;
+        }
+
+        $options = [];
+        for ($i = 1; $i <= 8; $i++) {
+            $text = trim((string) ($row["option_{$i}"] ?? ''));
+            $isCorrect = $this->toBool($row["option_{$i}_correct"] ?? '0') ? 1 : 0;
+
+            if ($type === 'boolean') {
+                // option_1_correct = Vrai, option_2_correct = Faux
+                if ($i <= 2) {
+                    $options[] = ['is_correct' => $isCorrect];
+                }
+                continue;
+            }
+
+            if ($text === '') {
+                continue;
+            }
+
+            $options[] = [
+                'text' => $text,
+                'is_correct' => $isCorrect,
+            ];
+        }
+
+        $data['options'] = $options;
+
+        return $data;
+    }
+
+    private function toBool(string $value): bool
+    {
+        $normalized = strtolower(trim($value));
+        return in_array($normalized, ['1', 'true', 'vrai', 'oui', 'yes'], true);
     }
 }
