@@ -41,6 +41,10 @@
                class="px-3 py-1.5 bg-gray-100 text-gray-600 text-[11px] font-bold uppercase rounded border border-gray-300 hover:bg-gray-200 transition flex items-center gap-1">
                 <i class="ti ti-arrow-back-up"></i> Retour Leçon
             </a>
+            <a href="{{ route('admin.quiz.questions.import.template', ['lecture' => $lecture->id]) }}"
+               class="px-3 py-1.5 bg-white text-bleuone text-[11px] font-bold uppercase rounded border border-bleuone hover:bg-bleuone hover:text-white transition flex items-center gap-1">
+                <i class="ti ti-file-download"></i> Modèle CSV
+            </a>
             <a href="{{ route('admin.quiz.questions.create', ['lecture' => $lecture->id]) }}"
                class="px-4 py-1.5 bg-orangeone text-white text-[11px] font-bold uppercase rounded shadow-sm hover:bg-orangeone-hover transition flex items-center gap-1">
                 <i class="ti ti-plus"></i> Ajouter une question
@@ -61,6 +65,43 @@
             </ul>
         </div>
     @endif
+    @if(session('import_report'))
+        <div class="mb-4 rounded-sm border-l-4 border-blue-500 bg-blue-50 p-3 text-xs text-blue-900 font-medium shadow-sm">
+            <div class="font-bold mb-1">Rapport d'import CSV</div>
+            <div>{{ session('import_report.created', 0) }} question(s) créée(s).</div>
+            <div>{{ session('import_report.errors_count', 0) }} erreur(s).</div>
+        </div>
+    @endif
+
+    <div class="mb-4 rounded border border-gray-300 bg-white p-3 shadow-sm">
+        <form action="{{ route('admin.quiz.questions.import', ['lecture' => $lecture->id]) }}"
+              method="POST"
+              enctype="multipart/form-data"
+              class="flex flex-col lg:flex-row lg:items-end gap-3">
+            @csrf
+            <div class="flex-1">
+                <label for="csv_file" class="block text-[11px] font-bold uppercase text-gray-600 mb-1">
+                    Importer des questions (CSV)
+                </label>
+                <input id="csv_file"
+                       name="csv_file"
+                       type="file"
+                       accept=".csv,text/csv,.txt"
+                       required
+                       class="w-full border border-gray-300 rounded px-3 py-2 text-xs">
+                <p class="mt-1 text-[10px] text-gray-500">
+                    Colonnes obligatoires : <span class="font-mono">question_text</span>, <span class="font-mono">type</span>. Types : boolean, single, multiple, cloze.
+                </p>
+            </div>
+            <div>
+                <button type="submit"
+                        class="px-4 py-2 bg-bleuone text-white text-[11px] font-bold uppercase rounded hover:bg-bleuone/90 transition">
+                    Importer CSV
+                </button>
+            </div>
+        </form>
+
+    </div>
 
     {{-- Tableau de Gestion (Style Data Grid) --}}
     <div class="bg-white border border-gray-300 rounded shadow-sm overflow-hidden">
