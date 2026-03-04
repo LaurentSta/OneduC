@@ -1,0 +1,5 @@
+question_text;type;is_active;option_1;option_1_correct;option_2;option_2_correct;option_3;option_3_correct;option_4;option_4_correct;cloze_raw_text;cloze_blank_1_key;cloze_blank_1_answers;cloze_blank_1_points;cloze_blank_2_key;cloze_blank_2_answers;cloze_blank_2_points
+"Le soleil se leve a l'est.";boolean;1;"";1;"";0;"";0;"";0;"";"";"";"";"";"";""
+"Combien font 2 + 2 ?";single;1;"3";0;"4";1;"5";0;"22";0;"";"";"";"";"";"";""
+"Quels sont des langages de programmation ?";multiple;1;"PHP";1;"HTML";0;"Python";1;"JavaScript";1;"";"";"";"";"";"";""
+"La capitale de la France est {{ville}}.";cloze;1;"";0;"";0;"";0;"";0;"La capitale de la France est {{ville}}.";"ville";"Paris|PARIS";1;"";"";""

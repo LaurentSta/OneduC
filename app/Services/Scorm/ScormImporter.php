@@ -4,15 +4,17 @@ namespace App\Services\Scorm;
 
 use App\Models\ScormPackage;
 use App\Models\ScormPackageVersion;
+use DOMDocument;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
-use ZipArchive;
 use RuntimeException;
-use DOMDocument;
-use Illuminate\Support\Str;
+use ZipArchive;
 
 class ScormImporter
 {
+    /**
+     * Importe un package SCORM, injecte l'API runtime et active une version unique.
+     */
     public function importToFolder(UploadedFile $zipFile, string $targetPath): object
     {
         $basePath = public_path($targetPath);
@@ -77,11 +79,14 @@ class ScormImporter
         ];
     }
 
+    /**
+     * Détecte le point d'entrée du package à partir du manifest puis fallback.
+     */
     private function findIndexPath(string $basePath): ?string
     {
         // 1) Chercher imsmanifest.xml (même s’il est dans un sous-dossier)
         $manifest = collect(File::allFiles($basePath))
-            ->first(fn($f) => strtolower($f->getFilename()) === 'imsmanifest.xml');
+            ->first(fn ($f) => strtolower($f->getFilename()) === 'imsmanifest.xml');
 
         if (!$manifest) {
             return null;
@@ -111,20 +116,29 @@ class ScormImporter
                 if (File::exists($abs)) {
                     // Retourner un chemin relatif à $basePath
                     $rel = str_replace($basePath . DIRECTORY_SEPARATOR, '', $abs);
+
                     return str_replace('\\', '/', $rel);
                 }
             }
         }
 
         // 3) Solution de repli (cas simples)
-        if (File::exists($basePath . '/res/index.html')) return 'res/index.html';
-        if (File::exists($basePath . '/index_lms.html')) return 'index_lms.html';
-        if (File::exists($basePath . '/index.html')) return 'index.html';
+        if (File::exists($basePath . '/res/index.html')) {
+            return 'res/index.html';
+        }
+        if (File::exists($basePath . '/index_lms.html')) {
+            return 'index_lms.html';
+        }
+        if (File::exists($basePath . '/index.html')) {
+            return 'index.html';
+        }
 
         return null;
     }
 
-
+    /**
+     * Ajoute le runtime SCORM si absent du head.
+     */
     private function injectApiScript(string $indexPath): void
     {
         $html = File::get($indexPath);
@@ -134,43 +148,49 @@ class ScormImporter
             File::put($indexPath, $html);
         }
     }
+
+    /**
+     * Extrait le ZIP avec protections contre le path traversal.
+     */
     private function safeExtract(ZipArchive $zip, string $basePath): void
-{
-    for ($i = 0; $i < $zip->numFiles; $i++) {
-        $name = $zip->getNameIndex($i);
+    {
+        for ($i = 0; $i < $zip->numFiles; $i++) {
+            $name = $zip->getNameIndex($i);
 
-        if ($name === false) continue;
+            if ($name === false) {
+                continue;
+            }
 
-        // Normalisation
-        $name = str_replace('\\', '/', $name);
+            // Normalisation des séparateurs pour appliquer les contrôles de sécurité.
+            $name = str_replace('\\', '/', $name);
 
-        // Refuser chemins absolus et traversée de dossiers
-        if (str_starts_with($name, '/') || str_contains($name, '../')) {
-            throw new RuntimeException('ZIP invalide : chemin non autorisé détecté.');
+            // Refuser chemins absolus et traversée de dossiers.
+            if (str_starts_with($name, '/') || str_contains($name, '../')) {
+                throw new RuntimeException('ZIP invalide : chemin non autorisé détecté.');
+            }
+
+            $dest = $basePath . DIRECTORY_SEPARATOR . $name;
+
+            // Répertoires.
+            if (str_ends_with($name, '/')) {
+                File::ensureDirectoryExists($dest);
+
+                continue;
+            }
+
+            // Assurer le dossier parent.
+            File::ensureDirectoryExists(dirname($dest));
+
+            // Écrire le fichier.
+            $stream = $zip->getStream($name);
+            if ($stream === false) {
+                throw new RuntimeException('Extraction impossible : ' . $name);
+            }
+
+            $contents = stream_get_contents($stream);
+            fclose($stream);
+
+            File::put($dest, $contents);
         }
-
-        $dest = $basePath . DIRECTORY_SEPARATOR . $name;
-
-        // Répertoires
-        if (str_ends_with($name, '/')) {
-            File::ensureDirectoryExists($dest);
-            continue;
-        }
-
-        // Assurer le dossier parent
-        File::ensureDirectoryExists(dirname($dest));
-
-        // Écrire le fichier
-        $stream = $zip->getStream($name);
-        if ($stream === false) {
-            throw new RuntimeException('Extraction impossible : ' . $name);
-        }
-
-        $contents = stream_get_contents($stream);
-        fclose($stream);
-
-        File::put($dest, $contents);
     }
-}
-
 }
