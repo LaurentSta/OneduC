@@ -1,19 +1,12 @@
 
-{{-- SIDEBAR --}}
-<div  class="flex min-h-screen">
-
-    <div
-  x-show="sidebarOpen"
-  x-transition:enter="transition transform duration-300"
-  x-transition:enter-start="-translate-x-full"
-  x-transition:enter-end="translate-x-0"
-  x-transition:leave="transition transform duration-300"
-  x-transition:leave-start="translate-x-0"
-  x-transition:leave-end="-translate-x-full"
-  class="lg:flex flex-col w-40 bg-[#004461] text-white h-screen justify-between transform transition-transform duration-300"
->
+<aside
+  id="stagiaire-sidebar"
+  :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
+  class="fixed left-0 z-40 w-64 lg:translate-x-0 transition-transform duration-300 flex flex-col bg-[#004461] text-white shadow-lg"
+  style="top: var(--app-header-h, 86px); height: calc(100vh - var(--app-header-h, 86px));"
+  aria-label="Navigation stagiaire">
         <!-- En-tête Admin -->
-        <div>
+        <div class="flex-1 overflow-y-auto">
             <a href="{{ route('stagiaire.dashboard') }}" class="flex items-center justify-center h-16 bg-[#00374F] text-xl font-bold tracking-wide uppercase hover:bg-orangeone transition">
                 Stagiaire
             </a>
@@ -51,15 +44,8 @@
 
         <!-- Barre inférieure -->
         <div class="border-t border-white/20 text-center text-xs py-3">
-            <a href="#" class="block px-4 py-1 hover:text-orangeone">Support</a>
-            <a href="#" class="block px-4 py-1 hover:text-orangeone">Documentation</a>
+            <a href="{{ route('contact') }}" class="block px-4 py-1 hover:text-orangeone">Support</a>
+            <a href="{{ route('stagiaire.documentation') }}" class="block px-4 py-1 hover:text-orangeone">Documentation</a>
         </div>
-    </div>
-
-
-
-
-
-
-
+    </aside>
 

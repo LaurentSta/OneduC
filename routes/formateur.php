@@ -18,6 +18,7 @@ Route::middleware(['auth', 'role:formateur'])
     Route::get('/', [FormateurController::class, 'FormateurDashboard'])->name('dashboard');
     Route::get('/profile', [FormateurController::class, 'FormateurProfile'])->name('profile');
     Route::get('/parametre', [FormateurController::class, 'FormateurParametre'])->name('parametre');
+    Route::get('/documentation', fn () => view('formateur.documentation'))->name('documentation');
     Route::post('/profil/store', [FormateurController::class, 'FormateurProfilStore'])->name('profil.store');
     Route::get('/securite', [FormateurController::class, 'showFormateurSecurite'])->name('securite.show');
     Route::post('/securite', [FormateurController::class, 'FormateurSecurite'])->name('securite');

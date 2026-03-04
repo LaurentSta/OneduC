@@ -40,5 +40,11 @@ return [
         'secret'  => env('NOCAPTCHA_SECRET'),
     ],
 
+    'discord' => [
+        'support_invite_url' => env('DISCORD_SUPPORT_INVITE_URL', ''),
+        'support_webhook_url' => env('DISCORD_SUPPORT_WEBHOOK_URL', ''),
+        'server_id' => env('DISCORD_SERVER_ID', ''),
+    ],
+
 
 ];

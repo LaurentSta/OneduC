@@ -4,8 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\ContactRequest;
 use App\Mail\ContactMessage;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Http\Request;
 use App\Mail\ContactConfirmation;
 
 class ContactController extends Controller
@@ -23,19 +24,7 @@ class ContactController extends Controller
      */
     public function send(ContactRequest $request)
     {
-        // Validation avec captcha
-        $data = $request->validate([
-            'prenom'              => 'nullable|string|max:100',
-            'nom'                 => 'required|string|max:100',
-            'type_utilisateur'    => 'required|in:formateur,stagiaire,autre',
-            'objet_formateur'     => 'nullable|string|max:100',
-            'objet_stagiaire'     => 'nullable|string|max:100',
-            'email'               => 'required|email',
-            'phone'               => 'nullable|string|max:30',
-            'heure_appel'         => 'nullable|string|max:50',
-            'message'             => 'required|string|max:5000',
-            'g-recaptcha-response'=> 'required|captcha', // <-- ajout captcha
-        ]);
+        $data = $request->validated();
 
         // Détermination de l’objet en fonction du profil
         $objet = $data['type_utilisateur'] === 'formateur'
@@ -54,16 +43,56 @@ class ContactController extends Controller
             'message'          => $data['message'],
         ];
 
-        // Envoi de l’email
         Mail::to('contact@oneduc.fr')->send(new ContactMessage($payload));
-
-        // déjà présent :
-        Mail::to('contact@oneduc.fr')->send(new ContactMessage($payload));
-
-        // confirmation à l’expéditeur
         Mail::to($payload['email'])->send(new ContactConfirmation($payload));
 
+        $this->sendToDiscord($payload);
 
         return back()->with('success', 'Votre message a bien été envoyé.');
+    }
+
+    private function sendToDiscord(array $payload): void
+    {
+        $webhookUrl = (string) config('services.discord.support_webhook_url');
+        if ($webhookUrl === '') {
+            return;
+        }
+
+        $objetLabels = [
+            'demande_info' => 'Demande d’information',
+            'support' => 'Support technique',
+            'creation_module' => 'Création de module/leçon',
+            'autre' => 'Autre',
+            'bug' => 'Signalement de bug',
+            'incomprehension' => 'Incompréhension sur une leçon',
+            'probleme_connexion' => 'Problème de connexion',
+        ];
+
+        $objet = (string) ($payload['objet'] ?? 'autre');
+        $objetLabel = $objetLabels[$objet] ?? ucfirst(str_replace('_', ' ', $objet));
+
+        $discordPayload = [
+            'username' => 'Support Oneduc',
+            'embeds' => [[
+                'title' => 'Nouvelle demande de support - oneduc.fr',
+                'color' => 3447003,
+                'fields' => [
+                    ['name' => 'Auteur', 'value' => trim(($payload['prenom'] ?? '').' '.$payload['nom']), 'inline' => true],
+                    ['name' => 'Email', 'value' => $payload['email'], 'inline' => true],
+                    ['name' => 'Profil', 'value' => ucfirst((string) $payload['type_utilisateur']), 'inline' => true],
+                    ['name' => 'Motif', 'value' => $objetLabel, 'inline' => false],
+                    ['name' => 'Téléphone', 'value' => $payload['phone'] !== '' ? $payload['phone'] : 'Non renseigné', 'inline' => true],
+                    ['name' => 'Créneau d’appel', 'value' => $payload['heure_appel'] !== '' ? $payload['heure_appel'] : 'Non renseigné', 'inline' => true],
+                    ['name' => 'Message', 'value' => mb_substr((string) $payload['message'], 0, 1024), 'inline' => false],
+                ],
+                'footer' => ['text' => 'Envoyé depuis le centre de support Oneduc'],
+            ]],
+        ];
+
+        try {
+            Http::asJson()->timeout(8)->post($webhookUrl, $discordPayload)->throw();
+        } catch (\Throwable $e) {
+            Log::warning('Discord support webhook failed.', ['error' => $e->getMessage()]);
+        }
     }
 }

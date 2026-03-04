@@ -47,6 +47,8 @@ Route::middleware(['auth', 'role:stagiaire', 'track.time'])
 
             Route::get('/parametre', [UserController::class, 'UserParametre'])
                 ->name('parametre');
+            Route::get('/documentation', fn () => view('stagiaire.documentation'))
+                ->name('documentation');
 
             Route::post('/profil/store', [UserController::class, 'UserProfilStore'])
                 ->name('profil.store');

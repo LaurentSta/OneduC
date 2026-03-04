@@ -1,18 +1,17 @@
 @extends('frontend.master')
-@section('title', 'Contactez-nous')
+@section('title', 'Centre de support')
 @section('home')
 
 <div class="container mx-auto px-4 pt-8 pb-2">
   <div class="bg-white rounded-[20px] shadow-md px-8 py-0 mb-4 w-full max-w-[1285px] mx-auto">
     <div class="grid grid-cols-12 gap-6 items-center">
       <div class="col-span-12 md:col-span-8">
-        <x-typography variant="titre">Formulaire de contact</x-typography>
+        <x-typography variant="titre">Comment pouvons-nous vous aider ?</x-typography>
         <x-typography variant="sous-titre" class="font-varela text-sous-titre text-orangeone">
-          Une question, une remarque ? Écrivez-nous.
+          Choisissez le canal qui vous convient: Discord ou formulaire.
         </x-typography>
         <x-typography>
-          Remplissez ce formulaire, notre équipe vous répondra dans les plus brefs délais.
-          Merci d’indiquer votre profil pour adapter au mieux notre réponse.
+          Le support est centralisé sur Discord. Les visiteurs peuvent aussi envoyer une demande via le formulaire web.
         </x-typography>
       </div>
       <div class="col-span-12 md:col-span-4 flex justify-center md:justify-end">
@@ -26,25 +25,68 @@
 
 <div class="content-wrapper bg-white py-10">
   <div class="mx-auto px-4 max-w-[1285px]">
-    <div class="card shadow-sm p-6">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 items-start">
+      <div class="card shadow-sm p-6 border border-[#5865F2]/20">
+        <h2 class="text-xl font-semibold text-[#1f2937]">Option 1: Espace Communautaire (Discord)</h2>
+        <p class="text-gray-600 mt-2">
+          Pour les formateurs et stagiaires déjà sur Discord: support rapide, échange direct et suivi en temps réel.
+        </p>
+        <a
+          href="{{ config('services.discord.support_invite_url') !== '' ? config('services.discord.support_invite_url') : '#' }}"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="btn-oneduc inline-flex items-center mt-4 {{ config('services.discord.support_invite_url') === '' ? 'pointer-events-none opacity-50' : '' }}"
+          aria-disabled="{{ config('services.discord.support_invite_url') === '' ? 'true' : 'false' }}"
+        >
+          Rejoindre le serveur Discord
+        </a>
+        <p class="text-xs text-gray-500 mt-2 break-all">{{ config('services.discord.support_invite_url') }}</p>
+        @if(config('services.discord.support_invite_url') === '')
+          <p class="text-xs text-amber-700 mt-2">Ajoutez `DISCORD_SUPPORT_INVITE_URL` dans votre `.env` pour activer le bouton.</p>
+        @endif
 
-      {{-- Alertes --}}
-      @if(session('success'))
-        <div class="mb-6 rounded-md bg-green-50 p-4 text-green-800" role="alert">{{ session('success') }}</div>
-      @endif
-      @if ($errors->any())
-        <div class="mb-6 rounded-md bg-red-50 p-4 text-red-800" role="alert" aria-live="assertive">
-          <p class="font-medium">Le formulaire comporte des erreurs.</p>
-          <ul class="mt-2 list-disc list-inside text-sm">
-            @foreach ($errors->all() as $error) <li>{{ $error }}</li> @endforeach
-          </ul>
-        </div>
-      @endif
+        @if(config('services.discord.server_id') !== '')
+          <div class="mt-4 rounded-lg overflow-hidden border border-gray-200">
+            <iframe
+              src="https://discord.com/widget?id={{ config('services.discord.server_id') }}&theme=light"
+              width="100%"
+              height="380"
+              allowtransparency="true"
+              frameborder="0"
+              sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts">
+            </iframe>
+          </div>
+        @else
+          <p class="text-xs text-amber-700 mt-3">Ajoutez `DISCORD_SERVER_ID` dans votre `.env` pour afficher le widget officiel Discord.</p>
+        @endif
+      </div>
 
-      <p class="text-sm text-gray-600 mb-6">* Champs obligatoires</p>
+      <div class="card shadow-sm p-6 border border-orangeone/30">
+        <h2 class="text-xl font-semibold text-[#1f2937]">Option 2: Formulaire d’assistance</h2>
+        <p class="text-gray-600 mt-2">
+          Pour les visiteurs ou en cas de souci de connexion Discord: remplissez le formulaire ci-dessous.
+        </p>
+        <p class="text-sm text-gray-500 mt-4">
+          Votre message est transmis par email et peut aussi être relayé dans votre salon privé Discord via webhook.
+        </p>
 
-      <form action="{{ route('contact.send') }}" method="POST" class="space-y-6" novalidate>
-        @csrf
+        {{-- Alertes --}}
+        @if(session('success'))
+          <div class="mb-6 mt-6 rounded-md bg-green-50 p-4 text-green-800" role="alert">{{ session('success') }}</div>
+        @endif
+        @if ($errors->any())
+          <div class="mb-6 mt-6 rounded-md bg-red-50 p-4 text-red-800" role="alert" aria-live="assertive">
+            <p class="font-medium">Le formulaire comporte des erreurs.</p>
+            <ul class="mt-2 list-disc list-inside text-sm">
+              @foreach ($errors->all() as $error) <li>{{ $error }}</li> @endforeach
+            </ul>
+          </div>
+        @endif
+
+        <p class="text-sm text-gray-600 mb-6 mt-6">* Champs obligatoires</p>
+
+        <form action="{{ route('contact.send') }}" method="POST" class="space-y-6" novalidate>
+          @csrf
 
         {{-- Honeypot anti-bot --}}
         <div class="sr-only">
@@ -171,7 +213,8 @@
           <button type="submit" class="btn-oneduc">Envoyer</button>
           <button type="reset" class="btn btn-outline-secondary">Annuler</button>
         </div>
-      </form>
+        </form>
+      </div>
     </div>
   </div>
 </div>

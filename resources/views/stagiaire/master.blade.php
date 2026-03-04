@@ -69,7 +69,10 @@
     </style>
 
 </head>
-<body x-data="{ sidebarOpen: true }" class="bg-gray-100 text-gray-900 font-sans">
+<body
+  x-data="{ sidebarOpen: window.innerWidth >= 1024 }"
+  x-init="window.addEventListener('resize', () => { sidebarOpen = window.innerWidth >= 1024 ? true : false })"
+  class="bg-gray-100 text-gray-900 font-sans">
 
     {{-- HEADER --}}
     @include('stagiaire.body_dashboard.header')
@@ -82,7 +85,7 @@
         <!-- Conteneur link-mode Confort+ (ne mets PAS de <button> ici) -->
 <div id="access-toolbar-anchor" class="fixed top-4 right-4 z-50"></div>
         {{-- CONTENU PRINCIPAL --}}
-        <main class="flex-1 p-6">
+        <main class="flex-1 p-6 lg:ml-64" style="padding-top: calc(var(--app-header-h, 86px) + 12px);">
             @yield('content')
         </main>
 
@@ -92,12 +95,19 @@
      <script>
   // Position dynamique sous le vrai header
   function setAccessTop(){
-    var header = document.querySelector('header') || document.getElementById('site-header');
+    var header = document.getElementById('app-header') || document.querySelector('header') || document.getElementById('site-header');
     var h = (header && header.offsetHeight) ? header.offsetHeight : 84;
     document.documentElement.style.setProperty('--access-top', (h + 12) + 'px');
   }
+  function syncAppHeaderOffset(){
+    var header = document.getElementById('app-header') || document.querySelector('header');
+    var h = (header && header.offsetHeight) ? header.offsetHeight : 86;
+    document.documentElement.style.setProperty('--app-header-h', h + 'px');
+  }
   document.addEventListener('DOMContentLoaded', setAccessTop);
+  document.addEventListener('DOMContentLoaded', syncAppHeaderOffset);
   window.addEventListener('resize', setAccessTop);
+  window.addEventListener('resize', syncAppHeaderOffset);
 
   // Paramètres Confort+
   var hebergementDomaine = window.location.origin;

@@ -23,18 +23,30 @@
   {{-- CSRF Token pour AJAX --}}
   <meta name="csrf-token" content="{{ csrf_token() }}">
 </head>
-<body x-data="{ sidebarOpen: true }" class="bg-gray-100 text-gray-900 font-sans">
+<body
+  x-data="{ sidebarOpen: window.innerWidth >= 1024 }"
+  x-init="window.addEventListener('resize', () => { sidebarOpen = window.innerWidth >= 1024 ? true : false })"
+  class="bg-gray-100 text-gray-900 font-sans">
 
     {{-- HEADER FIXE EN HAUT --}}
 @include('formateur.body_dashboard.header')
   {{-- SIDEBAR FIXE A GAUCHE --}}
   @include('formateur.body_dashboard.sidebar')
   {{-- CONTENU PRINCIPAL --}}
-  <main class="flex-1 p-6">
+  <main class="flex-1 p-6 lg:ml-64" style="padding-top: calc(var(--app-header-h, 86px) + 12px);">
     @yield('formateur')
   </main>
 
+  <script>
+    function syncAppHeaderOffset() {
+      const header = document.getElementById('app-header');
+      const height = header ? header.offsetHeight : 86;
+      document.documentElement.style.setProperty('--app-header-h', `${height}px`);
+    }
+
+    document.addEventListener('DOMContentLoaded', syncAppHeaderOffset);
+    window.addEventListener('resize', syncAppHeaderOffset);
+  </script>
 
 </body>
 </html>
-
