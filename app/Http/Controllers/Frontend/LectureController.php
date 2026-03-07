@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\ModuleLecture;
 use App\Models\Progression;
+use Illuminate\Support\Facades\Storage;
 
 class LectureController extends Controller
 {
@@ -60,6 +61,40 @@ class LectureController extends Controller
     return view('admin.backend.modules.lecture.lecture_scorm', [
         'lecture' => $lecture,
         'scormUrl' => asset($path),
+    ]);
+}
+
+public function showSlides($id)
+{
+    $lecture = \App\Models\ModuleLecture::findOrFail($id);
+
+    if (($lecture->content_type ?? 'scorm') !== 'slides') {
+        return redirect()->back()->with('error', 'Cette leçon n\'est pas en mode Slides.');
+    }
+
+    if (($lecture->slides_status ?? null) !== 'ready' || empty($lecture->slides_path)) {
+        return redirect()->back()->with('error', 'Les slides ne sont pas encore prêtes.');
+    }
+
+    $slides = collect(Storage::disk('public')->files($lecture->slides_path))
+        ->filter(fn (string $file) => (bool) preg_match('/^slide[-_]\d+\.jpg$/i', basename($file)))
+        ->sortBy(function (string $file): int {
+            if (preg_match('/(\d+)\.jpg$/i', basename($file), $matches)) {
+                return (int) $matches[1];
+            }
+            return PHP_INT_MAX;
+        })
+        ->values()
+        ->map(fn (string $file) => route('media.storage', ['path' => $file], false))
+        ->all();
+
+    if (empty($slides)) {
+        return redirect()->back()->with('error', 'Aucune slide n\'a été trouvée pour cette leçon.');
+    }
+
+    return view('admin.backend.modules.lecture.lecture_slides', [
+        'lecture' => $lecture,
+        'slides' => $slides,
     ]);
 }
 

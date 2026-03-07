@@ -10,6 +10,9 @@
     $moduleId  = (int) ($module->id ?? 0);
     $lectureId = $lecture ? (int) $lecture->id : null;
     $sectionId = $lecture ? (int) $lecture->section_id : null;
+    $contentType = (string) ($lecture->content_type ?? 'scorm');
+    $isSlidesSelected = $contentType === 'slides';
+    $isScormSelected = !$isSlidesSelected;
     $st = $lectureId ? ($lectureStats[$lectureId] ?? []) : [];
     $currentStatus = strtolower((string) ($st['status'] ?? 'not_started'));
     $isAlreadyDone = in_array($currentStatus, ['completed', 'passed'], true);
@@ -35,6 +38,28 @@
             $scormUrl = asset($p);
         }
     }
+
+    $isSlidesMode = $lecture
+        && $isSlidesSelected
+        && ($lecture->slides_status ?? null) === 'ready'
+        && !empty($lecture->slides_path);
+
+    $slideImages = [];
+    if ($isSlidesMode) {
+        $slideImages = collect(\Illuminate\Support\Facades\Storage::disk('public')->files($lecture->slides_path))
+            ->filter(fn (string $file) => (bool) preg_match('/^slide[-_]\\d+\\.jpg$/i', basename($file)))
+            ->sortBy(function (string $file): int {
+                if (preg_match('/(\\d+)\\.jpg$/i', basename($file), $matches)) {
+                    return (int) $matches[1];
+                }
+                return PHP_INT_MAX;
+            })
+            ->values()
+            ->map(fn (string $file) => route('media.storage', ['path' => $file], false))
+            ->all();
+    }
+
+    $slidesStatus = (string) ($lecture->slides_status ?? 'none');
 
     // --- Navigation ---
     $finalUrl = $moduleId
@@ -113,11 +138,94 @@
   {{-- CORPS DE PAGE --}}
   <div class="flex flex-1 overflow-hidden relative">
       
-      {{-- ZONE CONTENU (SCORM/VIDEO) --}}
+      {{-- ZONE CONTENU (SCORM / SLIDES) --}}
       <main class="relative bg-gray-100 transition-all duration-300 ease-in-out flex flex-col"
             :class="mode === 'formateur' ? 'w-2/3 border-r border-gray-200' : 'w-full'">
           
-          @if ($lecture && $scormUrl)
+          @if ($isSlidesMode && !empty($slideImages))
+              <div
+                x-data="{
+                    current: 1,
+                    total: {{ count($slideImages) }},
+                    slides: @js($slideImages),
+                    get currentSrc() { return this.slides[this.current - 1] ?? null; }
+                }"
+                class="h-full flex flex-col"
+              >
+                <div class="relative flex-1 p-4 md:p-6">
+                    <div class="absolute top-6 right-6 z-10 px-3 py-1 rounded-full bg-black/70 text-white text-xs font-semibold">
+                        Slide <span x-text="current"></span> / <span x-text="total"></span>
+                    </div>
+
+                    <div class="h-full w-full flex items-center justify-center rounded-xl border border-gray-200 bg-white overflow-hidden">
+                        <img :src="currentSrc" alt="Slide de cours" class="max-h-full max-w-full object-contain">
+                    </div>
+
+                    <div class="absolute inset-y-0 left-2 flex items-center">
+                        <button type="button" @click="if(current > 1) current--"
+                                class="h-10 w-10 rounded-full bg-black/60 text-white hover:bg-black/75 transition" aria-label="Slide precedente">
+                            <i class="ti ti-chevron-left"></i>
+                        </button>
+                    </div>
+                    <div class="absolute inset-y-0 right-2 flex items-center">
+                        <button type="button" @click="if(current < total) current++"
+                                class="h-10 w-10 rounded-full bg-black/60 text-white hover:bg-black/75 transition" aria-label="Slide suivante">
+                            <i class="ti ti-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="border-t border-gray-200 bg-white px-4 py-3 flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-2">
+                        <button type="button" @click="current = Math.max(1, current - 1)" class="px-3 py-2 text-xs font-bold uppercase border border-gray-300 rounded hover:bg-gray-50">
+                            Precedent
+                        </button>
+                        <button type="button" @click="current = Math.min(total, current + 1)" class="px-3 py-2 text-xs font-bold uppercase border border-gray-300 rounded hover:bg-gray-50">
+                            Suivant
+                        </button>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        @if($quizStartUrl)
+                            <a href="{{ $quizStartUrl }}" class="px-3 py-2 text-xs font-bold uppercase rounded border border-orangeone text-orangeone hover:bg-orangeone hover:text-white transition">
+                                Tester le quiz
+                            </a>
+                        @endif
+                        <a href="{{ $nextUrl !== '#' ? $nextUrl : $finalUrl }}"
+                           class="inline-flex items-center gap-2 px-4 py-2 bg-orangeone text-white rounded-full text-xs font-bold uppercase hover:bg-orangeone-hover transition">
+                            Lecon suivante
+                            <i class="ti ti-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+              </div>
+          @elseif ($lecture && $isSlidesSelected && in_array($slidesStatus, ['pending', 'processing'], true))
+              <div class="flex items-center justify-center h-full text-gray-500">
+                  <div class="text-center">
+                    <svg class="mx-auto h-12 w-12 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m14.836 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-14.837-2m14.837 2H15" />
+                    </svg>
+                    <p class="mt-2">Conversion des slides en cours.</p>
+                  </div>
+              </div>
+          @elseif ($lecture && $isSlidesSelected && $slidesStatus === 'failed')
+              <div class="flex items-center justify-center h-full text-red-500">
+                  <div class="text-center">
+                    <svg class="mx-auto h-12 w-12 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M5.07 19h13.86c1.54 0 2.5-1.67 1.73-3L13.73 4c-.77-1.33-2.69-1.33-3.46 0L3.34 16c-.77 1.33.19 3 1.73 3z" />
+                    </svg>
+                    <p class="mt-2">La conversion des slides a echoue.</p>
+                  </div>
+              </div>
+          @elseif ($lecture && $isSlidesSelected)
+              <div class="flex items-center justify-center h-full text-gray-500">
+                  <div class="text-center">
+                    <svg class="mx-auto h-12 w-12 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <p class="mt-2">Mode Slides actif, mais aucun support converti n'est disponible.</p>
+                  </div>
+              </div>
+          @elseif ($lecture && $isScormSelected && $scormUrl)
               <iframe
                 title="Contenu de la leçon"
                 src="{{ $scormUrl }}"
@@ -125,13 +233,22 @@
                 allowfullscreen
                 class="w-full h-full block bg-white">
               </iframe>
+          @elseif ($lecture && $isScormSelected)
+              <div class="flex items-center justify-center h-full text-gray-500">
+                  <div class="text-center">
+                    <svg class="mx-auto h-12 w-12 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 20a8 8 0 100-16 8 8 0 000 16z" />
+                    </svg>
+                    <p class="mt-2">Mode SCORM actif, mais la ressource SCORM est manquante.</p>
+                  </div>
+              </div>
           @else
               <div class="flex items-center justify-center h-full text-gray-500">
                   <div class="text-center">
                     <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <p class="mt-2">Aucun contenu SCORM/Vidéo défini pour cette leçon.</p>
+                    <p class="mt-2">Aucun contenu pret (SCORM ou Slides) defini pour cette lecon.</p>
                   </div>
               </div>
           @endif

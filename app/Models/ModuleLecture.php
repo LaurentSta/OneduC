@@ -18,6 +18,7 @@ class ModuleLecture extends Model
         'duration' => 'integer',
         'quiz_enabled' => 'boolean',
         'use_active_scorm_version' => 'boolean',
+        'slides_converted_at' => 'datetime',
     ];
 
     public function section()
