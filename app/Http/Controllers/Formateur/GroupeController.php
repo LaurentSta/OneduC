@@ -416,7 +416,69 @@ class GroupeController extends Controller
             );
         });
 
-        return view('formateur.groupes.module_lecons', compact('group', 'module', 'sections', 'rows'));
+        // Parcours officiel: premier chapitre/leçon selon l'ordre natif du module.
+        $officialFirstLecture = ModuleLecture::query()
+            ->where('module_id', $module->id)
+            ->orderBy('position')
+            ->orderBy('id')
+            ->first(['id', 'section_id']);
+
+        // Parcours groupe: première leçon active selon la personnalisation du groupe.
+        $groupFirstSectionId = 0;
+        $groupFirstLectureId = 0;
+        foreach ($sections as $section) {
+            foreach (($section->lectures ?? collect()) as $lecture) {
+                $row = $rows[$lecture->id] ?? null;
+                $enabled = $row ? (bool) $row->is_enabled : true;
+
+                if (! $enabled) {
+                    continue;
+                }
+
+                $groupFirstSectionId = (int) $section->id;
+                $groupFirstLectureId = (int) $lecture->id;
+                break 2;
+            }
+        }
+
+        if (! $groupFirstSectionId || ! $groupFirstLectureId) {
+            $fallbackSection = $sections->first();
+            $fallbackLecture = $fallbackSection?->lectures?->first();
+            if ($fallbackSection && $fallbackLecture) {
+                $groupFirstSectionId = (int) $fallbackSection->id;
+                $groupFirstLectureId = (int) $fallbackLecture->id;
+            }
+        }
+
+        $officialPreviewUrl = null;
+        if ($officialFirstLecture) {
+            $officialPreviewUrl = route('formateur.formations.lecture', [
+                'module' => $module->id,
+                'section' => (int) $officialFirstLecture->section_id,
+                'lecture' => (int) $officialFirstLecture->id,
+                'mode' => 'officiel',
+            ]);
+        }
+
+        $groupPreviewUrl = null;
+        if ($groupFirstSectionId && $groupFirstLectureId) {
+            $groupPreviewUrl = route('formateur.formations.lecture', [
+                'module' => $module->id,
+                'section' => $groupFirstSectionId,
+                'lecture' => $groupFirstLectureId,
+                'mode' => 'groupe',
+                'group_id' => $group->id,
+            ]);
+        }
+
+        return view('formateur.groupes.module_lecons', compact(
+            'group',
+            'module',
+            'sections',
+            'rows',
+            'officialPreviewUrl',
+            'groupPreviewUrl',
+        ));
     }
 
     /**

@@ -88,6 +88,19 @@ function nodePosition(index) {
   };
 }
 
+function OpenBookIcon({ className = 'h-4 w-4' }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.8"
+        d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+      />
+    </svg>
+  );
+}
+
 function GroupModuleFlow({
   availableModules = [],
   initialModules = [],
@@ -126,7 +139,14 @@ function GroupModuleFlow({
     () =>
       selectedModules.map((module, index) => ({
         id: String(module.id),
-        data: { label: `${module.position}. ${module.title}` },
+        data: {
+          label: (
+            <span className="flex items-center gap-2">
+              <OpenBookIcon className="h-4 w-4 shrink-0" />
+              <span>{`${module.position}. ${module.title}`}</span>
+            </span>
+          ),
+        },
         position: nodePosition(index),
         sourcePosition: Position.Right,
         targetPosition: Position.Left,
@@ -318,18 +338,46 @@ function GroupModuleFlow({
                         type="button"
                         onClick={() => moveModule(module.id, -1)}
                         disabled={index === 0}
-                        className="rounded border border-gray-300 px-2 py-1 disabled:opacity-30"
+                        title={index === 0 ? 'Ce module est déjà en première position' : 'Monter ce module'}
+                        aria-label={index === 0 ? 'Impossible de monter ce module' : 'Monter ce module'}
+                        className="inline-flex h-8 w-8 items-center justify-center rounded border border-gray-300 text-bleuone hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-30"
                       >
-                        Monter
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="h-4 w-4"
+                          aria-hidden="true"
+                        >
+                          <path d="m18 15-6-6-6 6" />
+                        </svg>
                       </button>
 
                       <button
                         type="button"
                         onClick={() => moveModule(module.id, +1)}
                         disabled={index === selectedModules.length - 1}
-                        className="rounded border border-gray-300 px-2 py-1 disabled:opacity-30"
+                        title={index === selectedModules.length - 1 ? 'Ce module est déjà en dernière position' : 'Descendre ce module'}
+                        aria-label={index === selectedModules.length - 1 ? 'Impossible de descendre ce module' : 'Descendre ce module'}
+                        className="inline-flex h-8 w-8 items-center justify-center rounded border border-gray-300 text-bleuone hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-30"
                       >
-                        Descendre
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="h-4 w-4"
+                          aria-hidden="true"
+                        >
+                          <path d="m6 9 6 6 6-6" />
+                        </svg>
                       </button>
 
                       {module.persisted && module.manage_url ? (

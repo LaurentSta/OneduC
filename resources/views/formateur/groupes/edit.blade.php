@@ -134,7 +134,11 @@
                     ? 'bg-bleuone text-white shadow-md ring-2 ring-bleuone ring-offset-2' 
                     : 'bg-white text-bleuone border border-bleuone hover:bg-bleuone/5'"
                 class="w-full px-6 py-4 rounded-full transition font-varela text-lg font-bold focus:outline-none flex items-center justify-center gap-2">
-                <span>1.</span> Informations
+                <span>1.</span>
+                <span>Informations</span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
             </button>
 
             {{-- BOUTON 2 : STAGIAIRES --}}
@@ -144,7 +148,11 @@
                     ? 'bg-bleuone text-white shadow-md ring-2 ring-bleuone ring-offset-2' 
                     : 'bg-white text-bleuone border border-bleuone hover:bg-bleuone/5'"
                 class="w-full px-6 py-4 rounded-full transition font-varela text-lg font-bold focus:outline-none flex items-center justify-center gap-2">
-                <span>2.</span> Stagiaires
+                <span>2.</span>
+                <span>Stagiaires</span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
             </button>
 
             {{-- BOUTON 3 : MODULES --}}
@@ -154,7 +162,11 @@
                     ? 'bg-bleuone text-white shadow-md ring-2 ring-bleuone ring-offset-2' 
                     : 'bg-white text-bleuone border border-bleuone hover:bg-bleuone/5'"
                 class="w-full px-6 py-4 rounded-full transition font-varela text-lg font-bold focus:outline-none flex items-center justify-center gap-2">
-                <span>3.</span> Modules
+                <span>3.</span>
+                <span>Modules</span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
             </button>
         </div>
         <div class="h-1 w-full bg-gray-100 rounded mt-6 mb-2"></div>
@@ -164,23 +176,25 @@
       
       {{-- SECTION 1 : Configuration générale --}}
       <section x-show="activeTab === 'general'" x-cloak class="animate-fade-in-down">
+        <p class="text-base text-gray-600 mb-6">Nommer le groupe et ajouter une description.</p>
+
         <div class="mb-6">
-            <h3 class="text-xl font-bold text-bleuone font-raleway mb-1">Informations du groupe</h3>
-            <p class="text-gray-600 font-lisible">Modifiez le nom pour faciliter l'identification.</p>
+          <label for="nom" class="block mb-2 text-base font-medium text-gray-900">Nom du groupe *</label>
+          <input id="nom" name="nom" type="text" required
+                 value="{{ old('nom', $group->name) }}"
+                 class="bg-gray-50 border {{ $errors->has('nom') ? 'border-red-400' : 'border-gray-300' }} text-base rounded-lg focus:ring-orangeone focus:border-orangeone block w-full p-2.5"
+                 placeholder="Ex : Groupe Marketing 2025 - Niveau 1">
+          @error('nom')
+            <p class="mt-2 text-sm text-red-700">{{ $message }}</p>
+          @enderror
+          <p class="text-xs text-gray-500 mt-1">Un nom clair facilite la recherche et le suivi.</p>
         </div>
 
-        <div class="space-y-6 max-w-3xl">
-            <div>
-                <label for="nom" class="block mb-2 text-base font-medium text-gray-900">Nom du groupe <span class="text-orangeone">*</span></label>
-                <input id="nom" name="nom" type="text" value="{{ old('nom', $group->name) }}" required
-                    class="bg-gray-50 border border-gray-300 text-base rounded-lg focus:ring-orangeone focus:border-orangeone block w-full p-2.5">
-            </div>
-
-            <div>
-                <label for="description" class="block mb-2 text-base font-medium text-gray-900">Description</label>
-                <textarea id="description" name="description" rows="4"
-                    class="bg-gray-50 border border-gray-300 text-base rounded-lg focus:ring-orangeone focus:border-orangeone block w-full p-2.5">{{ old('description', $group->description) }}</textarea>
-            </div>
+        <div class="mb-6">
+          <label for="description" class="block mb-2 text-base font-medium text-gray-900">Description</label>
+          <textarea id="description" name="description" rows="3"
+                    class="bg-gray-50 border border-gray-300 text-base rounded-lg focus:ring-orangeone focus:border-orangeone block w-full p-2.5"
+                    placeholder="Objectifs, public, période…">{{ old('description', $group->description) }}</textarea>
         </div>
       </section>
 

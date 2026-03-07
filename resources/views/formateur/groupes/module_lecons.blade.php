@@ -21,77 +21,77 @@
           — Module : <span class="font-semibold">{{ $module->module_title }}</span>
         </x-typography>
 
-        <div class="mt-5 flex flex-wrap gap-3">
-          <a href="{{ route('formateur.groupes.edit', $group->id) }}"
-             class="btn-oneduc-blue !px-4 !py-2 !border-2">
-            Retour au groupe
-          </a>
-          
-          <form method="POST"
-                action="{{ route('formateur.groupes.modules.lecons.reset', ['group' => $group->id, 'module' => $module->id]) }}"
-                onsubmit="return confirm('Réinitialiser le cheminement de ce groupe pour ce module ?');">
-            @csrf
-            <button type="submit" class="btn-oneduc-blue !px-4 !py-2 !border-2">
-              Réinitialiser
-            </button>
-          </form>
+        <div class="mt-5 flex flex-col gap-3 md:flex-row md:items-center">
+          <div class="flex flex-wrap items-center gap-3">
+            <a href="{{ route('formateur.groupes.edit', $group->id) }}"
+               class="btn-oneduc-blue !px-4 !py-2 !border-2 inline-flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 19l-7-7 7-7" />
+              </svg>
+              Retour au groupe
+            </a>
 
+            <form method="POST"
+                  action="{{ route('formateur.groupes.modules.lecons.reset', ['group' => $group->id, 'module' => $module->id]) }}"
+                  onsubmit="return confirm('Réinitialiser le cheminement de ce groupe pour ce module ?');">
+              @csrf
+              <button type="submit" class="btn-oneduc-blue !px-4 !py-2 !border-2 inline-flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 4v6h6M20 20v-6h-6M20 10a8 8 0 00-14.9-4M4 14a8 8 0 0014.9 4" />
+                </svg>
+                Réinitialiser
+              </button>
+            </form>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-3 md:ml-auto">
+            @if(!empty($officialPreviewUrl))
+              <a href="{{ $officialPreviewUrl }}"
+                 target="_blank"
+                 rel="noopener"
+                 class="inline-flex items-center gap-2 rounded-lg border-2 border-bleuone bg-white px-4 py-2 text-sm font-semibold text-bleuone transition hover:bg-bleuone hover:text-white">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+                Voir le parcours officiel
+              </a>
+            @else
+              <button type="button"
+                      disabled
+                      class="inline-flex cursor-not-allowed items-center gap-2 rounded-lg border-2 border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-400">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+                Voir le parcours officiel
+              </button>
+            @endif
+
+            @if(!empty($groupPreviewUrl))
+              <a href="{{ $groupPreviewUrl }}"
+                 target="_blank"
+                 rel="noopener"
+                 class="inline-flex items-center gap-2 rounded-lg border-2 border-bleuone bg-white px-4 py-2 text-sm font-semibold text-bleuone transition hover:bg-bleuone hover:text-white">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+                Voir le parcours du groupe
+              </a>
+            @else
+              <button type="button"
+                      disabled
+                      class="inline-flex cursor-not-allowed items-center gap-2 rounded-lg border-2 border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-400">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+                Voir le parcours du groupe
+              </button>
+            @endif
+          </div>
         </div>
+        <p class="mt-2 text-xs text-gray-500">
+          Les aperçus s'ouvrent dans un nouvel onglet.
+        </p>
       </div>
-@php
-  // Cherche la 1ère leçon ACTIVE (selon le tableau d’activation du groupe)
-  $firstSection = null;
-  $firstLecture = null;
-
-  foreach ($sections as $sec) {
-    foreach (($sec->lectures ?? collect()) as $lec) {
-
-      // $rows doit être votre tableau indexé par lecture_id (GroupModuleLecture)
-      $row = $rows[$lec->id] ?? null;
-
-      // Par défaut : si pas de ligne en base, on considère la leçon active
-      $enabled = $row ? (bool) $row->is_enabled : true;
-
-      if ($enabled) {
-        $firstSection = $sec;
-        $firstLecture = $lec;
-        break 2;
-      }
-    }
-  }
-
-  // Fallback : si tout est désactivé, on prend quand même la première leçon
-  if (!$firstSection || !$firstLecture) {
-    $firstSection = $sections->first();
-    $firstLecture = $firstSection?->lectures?->first();
-  }
-@endphp
-
-@if($firstSection && $firstLecture)
-  {{-- Officiel --}}
-<a href="{{ route('formateur.formations.lecture', [
-      'module'  => $module->id,
-      'section' => $firstSection->id,
-      'lecture' => $firstLecture->id,
-]) }}?mode=officiel"
-   target="_blank" rel="noopener"
-   class="btn-oneduc-blue !px-4 !py-2 !border-2">
-  Voir le parcours officiel
-</a>
-
-{{-- Groupe (sans include_hidden) --}}
-<a href="{{ route('formateur.formations.lecture', [
-      'module'  => $module->id,
-      'section' => $firstSection->id,
-      'lecture' => $firstLecture->id,
-]) }}?mode=groupe&group_id={{ $group->id }}"
-   target="_blank" rel="noopener"
-   class="btn-oneduc-blue !px-4 !py-2 !border-2">
-  Voir le parcours du groupe
-</a>
-
-@endif
-
 
       <div class="col-span-12 md:col-span-3 flex justify-center md:justify-end">
         <img src="{{ asset('images/svg/Modules.svg') }}"
