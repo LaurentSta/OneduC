@@ -12,14 +12,21 @@ function loadStagiaireModuleFlowWhenNeeded() {
   import('./stagiaire-module-path-flow.jsx');
 }
 
+function loadGroupLessonFlowWhenNeeded() {
+  if (!document.querySelector('[data-group-lesson-flow]')) return;
+  import('./formateur-group-lesson-flow.jsx');
+}
+
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
     loadGroupModuleFlowWhenNeeded();
     loadStagiaireModuleFlowWhenNeeded();
+    loadGroupLessonFlowWhenNeeded();
   }, { once: true });
 } else {
   loadGroupModuleFlowWhenNeeded();
   loadStagiaireModuleFlowWhenNeeded();
+  loadGroupLessonFlowWhenNeeded();
 }
 
 /*
