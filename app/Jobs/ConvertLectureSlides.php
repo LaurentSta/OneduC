@@ -183,7 +183,11 @@ class ConvertLectureSlides implements ShouldQueue
                 'error' => $e->getMessage(),
             ]);
         } finally {
-            Storage::disk('local')->delete($this->uploadedFilePath);
+            // On conserve les fichiers source persistés (slides/sources/*)
+            // afin de permettre une relance de conversion côté admin.
+            if (str_starts_with($this->uploadedFilePath, 'slides/uploads/')) {
+                Storage::disk('local')->delete($this->uploadedFilePath);
+            }
         }
     }
 }

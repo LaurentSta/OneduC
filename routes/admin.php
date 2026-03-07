@@ -188,6 +188,7 @@ Route::middleware(['auth', 'role:admin', 'admin.activity'])
 
     Route::prefix('slides')->name('slides.')->group(function () {
         Route::post('/import-lecture', [ModuleController::class, 'importSlidesForLecture'])->name('import');
+        Route::post('/retry-lecture', [ModuleController::class, 'retrySlidesForLecture'])->name('retry');
     });
 
     // Compétences

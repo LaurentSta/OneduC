@@ -6,6 +6,7 @@
     $displayScormPath = session('new_scorm_path') ?? $mlecture->scorm_path;
     $contentType = old('content_type', $mlecture->content_type ?? 'scorm');
     $slidesStatus = $mlecture->slides_status ?? 'none';
+    $hasSlidesSource = !empty($mlecture->slides_source_path);
 
     $slidesStatusStyles = [
         'none' => 'bg-gray-100 text-gray-600',
@@ -281,6 +282,20 @@
                             <div class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
                                 Erreur de conversion: {{ $mlecture->slides_error }}
                             </div>
+                            <div class="flex flex-wrap items-center gap-2">
+                                <button
+                                    type="submit"
+                                    form="form-retry-slides"
+                                    class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-red-200 text-red-700 hover:bg-red-600 hover:text-white transition text-xs font-varela cursor-pointer {{ $hasSlidesSource ? '' : 'opacity-50 cursor-not-allowed' }}"
+                                    {{ $hasSlidesSource ? '' : 'disabled' }}
+                                >
+                                    <i class="ti ti-rotate-clockwise-2"></i>
+                                    Relancer conversion
+                                </button>
+                                @unless($hasSlidesSource)
+                                    <span class="text-xs text-gray-500">Aucune source conservée, réimporte un fichier.</span>
+                                @endunless
+                            </div>
                         @endif
 
                         <div class="rounded-lg border border-dashed border-gray-300 bg-gray-50 p-3">
@@ -303,6 +318,9 @@
                                     Convertir
                                 </button>
                             </div>
+                            @if($hasSlidesSource)
+                                <p class="mt-2 text-xs text-gray-500">Source enregistrée: conversion relançable sans nouveau dépôt.</p>
+                            @endif
                         </div>
                     </div>
                 </section>
@@ -459,6 +477,12 @@
 
 {{-- FORM IMPORT SLIDES --}}
 <form id="form-import-slides" method="POST" action="{{ route('admin.slides.import') }}" enctype="multipart/form-data" class="hidden">
+    @csrf
+    <input type="hidden" name="lecture_id" value="{{ $mlecture->id }}">
+</form>
+
+{{-- FORM RETRY SLIDES --}}
+<form id="form-retry-slides" method="POST" action="{{ route('admin.slides.retry') }}" class="hidden">
     @csrf
     <input type="hidden" name="lecture_id" value="{{ $mlecture->id }}">
 </form>

@@ -451,6 +451,7 @@ class ModuleController extends Controller
             'content_type'               => 'scorm',
             'slides_status'              => 'none',
             'slides_path'                => null,
+            'slides_source_path'         => null,
             'slides_error'               => null,
             'slides_converted_at'        => null,
             'slide_count'                => 0,
@@ -521,8 +522,12 @@ class ModuleController extends Controller
         $lecture = ModuleLecture::findOrFail((int) $validated['lecture_id']);
         $file = $request->file('slides_file');
 
+        if (!empty($lecture->slides_source_path)) {
+            Storage::disk('local')->delete($lecture->slides_source_path);
+        }
+
         $storedPath = $file->storeAs(
-            'slides/uploads',
+            'slides/sources/lecture_' . $lecture->id,
             'lecture_' . $lecture->id . '_' . Str::uuid() . '.' . $file->getClientOriginalExtension(),
             'local'
         );
@@ -531,6 +536,7 @@ class ModuleController extends Controller
             'content_type' => 'slides',
             'slides_status' => 'pending',
             'slides_error' => null,
+            'slides_source_path' => $storedPath,
         ]);
 
         ConvertLectureSlides::dispatch($lecture->id, $storedPath)->afterResponse();
@@ -538,6 +544,37 @@ class ModuleController extends Controller
         return redirect()
             ->back()
             ->with('success', 'Import Slides lancé. Conversion en cours...');
+    }
+
+    /**
+     * Relance une conversion Slides à partir du dernier fichier source enregistré.
+     */
+    public function retrySlidesForLecture(Request $request)
+    {
+        $validated = $request->validate([
+            'lecture_id' => ['required', 'exists:module_lectures,id'],
+        ]);
+
+        $lecture = ModuleLecture::findOrFail((int) $validated['lecture_id']);
+        $sourcePath = (string) ($lecture->slides_source_path ?? '');
+
+        if ($sourcePath === '' || !Storage::disk('local')->exists($sourcePath)) {
+            return redirect()
+                ->back()
+                ->with('error', 'Aucun fichier source disponible. Reimporte un PPT/PDF avant de relancer.');
+        }
+
+        $lecture->update([
+            'content_type' => 'slides',
+            'slides_status' => 'pending',
+            'slides_error' => null,
+        ]);
+
+        ConvertLectureSlides::dispatch($lecture->id, $sourcePath)->afterResponse();
+
+        return redirect()
+            ->back()
+            ->with('success', 'Relance de conversion envoyée. Traitement en cours...');
     }
 
 
@@ -697,6 +734,13 @@ class ModuleController extends Controller
 
     private function deleteLectureAndDependencies(ModuleLecture $lecture): void
     {
+        if (!empty($lecture->slides_path)) {
+            Storage::disk('public')->deleteDirectory($lecture->slides_path);
+        }
+        if (!empty($lecture->slides_source_path)) {
+            Storage::disk('local')->delete($lecture->slides_source_path);
+        }
+
         // Nettoyage explicite (questions + médias + objectifs) avant suppression de la leçon.
         $this->deleteQuestionsForLecture((int) $lecture->id);
         LectureObjective::query()->where('lecture_id', $lecture->id)->delete();
