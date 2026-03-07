@@ -31,6 +31,7 @@ class ScormLibraryController extends Controller
             );
 
             $lecture->update([
+                'content_type' => 'scorm',
                 'scorm_path' => $result->relative_index_path,
                 'scorm_package_id' => $result->package_id,
                 'scorm_package_version_id' => $result->version_id,

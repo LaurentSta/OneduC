@@ -17,10 +17,10 @@ Route::post('/scorm/progress', [SCORMController::class, 'saveProgress'])
     ->middleware('auth');
 
 Route::get('/lecture/{id}/scorm', [LectureController::class, 'showScorm'])->name('lecture.scorm');
+Route::get('/lecture/{id}/slides', [LectureController::class, 'showSlides'])->name('lecture.slides');
 
 
 
 Route::post('/scorm/evaluation-progress', [EvaluationSCORMController::class, 'saveEvaluationProgress'])
 ->withoutMiddleware([VerifyCsrfToken::class]);
-
 

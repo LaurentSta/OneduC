@@ -4,6 +4,7 @@
 namespace App\Http\Controllers\Backend;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\ConvertLectureSlides;
 use App\Models\Category;
 use App\Models\Evaluation;
 use App\Models\Module;
@@ -447,6 +448,11 @@ class ModuleController extends Controller
             'section_id'                 => $request->section_id,
             'lecture_title'              => $request->lecture_title,
             'position'                   => $lastPosition + 1,
+            'content_type'               => 'scorm',
+            'slides_status'              => 'none',
+            'slides_path'                => null,
+            'slides_error'               => null,
+            'slides_converted_at'        => null,
             'slide_count'                => 0,
             'quiz_questions_per_attempt' => 0,
             'scorm_path'                 => null,
@@ -501,6 +507,39 @@ class ModuleController extends Controller
         ]);
     }
 
+    /**
+     * Import d'un support Slides (PPT/PPTX/PDF) pour une leçon.
+     * La conversion est traitée en arrière-plan.
+     */
+    public function importSlidesForLecture(Request $request)
+    {
+        $validated = $request->validate([
+            'lecture_id' => ['required', 'exists:module_lectures,id'],
+            'slides_file' => ['required', 'file', 'mimes:ppt,pptx,pdf', 'max:51200'],
+        ]);
+
+        $lecture = ModuleLecture::findOrFail((int) $validated['lecture_id']);
+        $file = $request->file('slides_file');
+
+        $storedPath = $file->storeAs(
+            'slides/uploads',
+            'lecture_' . $lecture->id . '_' . Str::uuid() . '.' . $file->getClientOriginalExtension(),
+            'local'
+        );
+
+        $lecture->update([
+            'content_type' => 'slides',
+            'slides_status' => 'pending',
+            'slides_error' => null,
+        ]);
+
+        ConvertLectureSlides::dispatch($lecture->id, $storedPath)->afterResponse();
+
+        return redirect()
+            ->back()
+            ->with('success', 'Import Slides lancé. Conversion en cours...');
+    }
+
 
  /**
      * 12) Mise à jour d’une lecture (admin)
@@ -515,6 +554,7 @@ class ModuleController extends Controller
             'lecture_title'              => 'required|string|max:255',
             // AJOUT : Validation de la durée (entier, positif ou nul)
             'duration'                   => 'nullable|integer|min:0',
+            'content_type'               => 'required|in:scorm,slides',
 
             // Autoriser explicitement la persistance du chemin
             'scorm_path'                 => 'nullable|string|max:255',
@@ -569,6 +609,7 @@ class ModuleController extends Controller
                 'lecture_title'              => $validated['lecture_title'],
                 // AJOUT : Sauvegarde de la durée
                 'duration'                   => $request->input('duration'),
+                'content_type'               => $validated['content_type'],
                 
                 'scorm_path'                 => $finalScormPath,
 
@@ -576,7 +617,9 @@ class ModuleController extends Controller
                 'use_active_scorm_version'   => $useActive,
                 'scorm_package_version_id'   => $useActive ? null : $request->input('scorm_package_version_id'),
 
-                'slide_count'                => (int) $request->input('slide_count', 0),
+                'slide_count'                => $request->filled('slide_count')
+                    ? (int) $request->input('slide_count')
+                    : (int) ($lecture->slide_count ?? 0),
                 'quiz_enabled'               => $quizEnabled,
                 'quiz_questions_per_attempt' => $quizEnabled ? (int) $request->input('quiz_questions_per_attempt') : 0,
             ]);

@@ -186,6 +186,10 @@ Route::middleware(['auth', 'role:admin', 'admin.activity'])
         Route::post('/import-lecture', [ScormLibraryController::class, 'importForLecture'])->name('import');
     });
 
+    Route::prefix('slides')->name('slides.')->group(function () {
+        Route::post('/import-lecture', [ModuleController::class, 'importSlidesForLecture'])->name('import');
+    });
+
     // Compétences
     Route::prefix('competences')->name('competencies.')->group(function () {
     Route::get('/', [CompetencyController::class, 'index'])->name('index');
