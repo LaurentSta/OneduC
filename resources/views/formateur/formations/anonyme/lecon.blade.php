@@ -65,6 +65,7 @@
 
         next_url: @json($nextUrl),
         final_url: @json($finalUrl),
+        is_already_done: false,
 
         // ✅ lecture seule (formateur anonyme)
         anonymous: true,
@@ -89,6 +90,18 @@
             return;
           }
           window.location.href = this.quiz_tester_url;
+        }
+      };
+
+      window.goToQuiz = function () {
+        if (window.SCORM_CONTEXT && typeof window.SCORM_CONTEXT.goToQuiz === "function") {
+          window.SCORM_CONTEXT.goToQuiz();
+        }
+      };
+
+      window.goToNextLesson = function () {
+        if (window.SCORM_CONTEXT && typeof window.SCORM_CONTEXT.goToNextLesson === "function") {
+          window.SCORM_CONTEXT.goToNextLesson();
         }
       };
 

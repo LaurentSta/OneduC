@@ -130,8 +130,12 @@
       <div class="mb-6">
         <label for="nom" class="block mb-2 text-base font-medium text-gray-900">Nom du groupe *</label>
         <input id="nom" name="nom" type="text" required
-               class="bg-gray-50 border border-gray-300 text-base rounded-lg focus:ring-orangeone focus:border-orangeone block w-full p-2.5"
+               value="{{ old('nom') }}"
+               class="bg-gray-50 border {{ $errors->has('nom') ? 'border-red-400' : 'border-gray-300' }} text-base rounded-lg focus:ring-orangeone focus:border-orangeone block w-full p-2.5"
                placeholder="Ex : Groupe Marketing 2025 - Niveau 1">
+        @error('nom')
+          <p class="mt-2 text-sm text-red-700">{{ $message }}</p>
+        @enderror
         <p class="text-xs text-gray-500 mt-1">Un nom clair facilite la recherche et le suivi.</p>
       </div>
 
@@ -139,7 +143,7 @@
         <label for="description" class="block mb-2 text-base font-medium text-gray-900">Description</label>
         <textarea id="description" name="description" rows="3"
                   class="bg-gray-50 border border-gray-300 text-base rounded-lg focus:ring-orangeone focus:border-orangeone block w-full p-2.5"
-                  placeholder="Objectifs, public, période…"></textarea>
+                  placeholder="Objectifs, public, période…">{{ old('description') }}</textarea>
       </div>
     </fieldset>
 
@@ -241,6 +245,7 @@
                 <label for="password" class="sr-only">Mot de passe commun</label>
                 <div class="relative flex items-center">
                     <input id="password" name="password" type="text" required minlength="8" autocomplete="off"
+                        value="{{ old('password') }}"
                         class="bg-white border border-gray-300 text-gray-900 text-base rounded-l-lg focus:ring-orangeone focus:border-orangeone block w-full pl-4 py-3 font-mono tracking-wide"
                         placeholder="Ex: Formation2026!">
                     
@@ -249,6 +254,9 @@
                         🎲 Générer
                     </button>
                 </div>
+                @error('password')
+                  <p class="mt-2 text-sm text-red-700">{{ $message }}</p>
+                @enderror
                 <p class="text-[10px] text-gray-400 mt-2 italic">Minimum 8 caractères.</p>
             </div>
         </div>

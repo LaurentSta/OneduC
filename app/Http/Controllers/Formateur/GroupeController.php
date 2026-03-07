@@ -15,7 +15,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Database\QueryException;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class GroupeController extends Controller
 {
@@ -46,75 +48,100 @@ class GroupeController extends Controller
      */
     public function store(Request $request)
     {
-        // Validation volontairement minimale pour rester aligné au comportement actuel.
-        DB::transaction(function () use ($request): void {
-            $group = Group::create([
-                'name' => $request->nom,
-                'description' => $request->description,
-                'instructor_id' => auth()->id(),
-            ]);
+        $request->validate([
+            'nom' => ['required', 'string', 'max:150', Rule::unique('groups', 'name')],
+            'description' => ['nullable', 'string', 'max:2000'],
+            'password' => ['required', 'string', 'min:8'],
+            'modules' => ['required', 'array', 'min:1'],
+            'modules.*' => [Rule::exists('modules', 'id')->where('status', 1)],
+            'module_positions' => ['nullable', 'array'],
+            'module_positions.*' => ['nullable', 'integer', 'min:1'],
+            'stagiaires' => ['nullable', 'array'],
+            'stagiaires.*.email' => ['nullable', 'email', 'distinct'],
+            'stagiaires.*.prenom' => ['nullable', 'string', 'max:255'],
+            'stagiaires.*.nom' => ['nullable', 'string', 'max:255'],
+        ], [
+            'nom.unique' => 'Ce nom de groupe existe déjà. Merci de choisir un autre nom.',
+        ]);
 
-            foreach ($request->input('stagiaires', []) as $s) {
-                if (empty($s['email']) && empty($s['prenom']) && empty($s['nom'])) {
-                    continue;
-                }
+        try {
+            DB::transaction(function () use ($request): void {
+                $group = Group::create([
+                    'name' => trim((string) $request->nom),
+                    'description' => $request->description,
+                    'instructor_id' => auth()->id(),
+                ]);
 
-                $email = strtolower(trim((string) ($s['email'] ?? '')));
-                if ($email === '') {
-                    continue;
-                }
-
-                $user = User::withTrashed()->where('email', $email)->first();
-
-                if ($user) {
-                    if ($user->trashed()) {
-                        $user->restore();
+                foreach ($request->input('stagiaires', []) as $s) {
+                    if (empty($s['email']) && empty($s['prenom']) && empty($s['nom'])) {
+                        continue;
                     }
-                    if (! $user->formateur_id) {
-                        $user->formateur_id = auth()->id();
+
+                    $email = strtolower(trim((string) ($s['email'] ?? '')));
+                    if ($email === '') {
+                        continue;
                     }
-                    $user->prenom = $user->prenom ?: ($s['prenom'] ?? null);
-                    $user->name = $user->name ?: ($s['nom'] ?? null);
-                    $user->save();
-                } else {
-                    $user = User::create([
-                        'prenom' => $s['prenom'] ?? null,
-                        'name' => $s['nom'] ?? null,
-                        'email' => $email,
-                        'password' => Hash::make((string) $request->password),
-                        'role' => 'stagiaire',
-                        'formateur_id' => auth()->id(),
-                        'status' => 1,
-                        'code_acces' => CodeGeneratorService::generateUniqueAccessCode(),
+
+                    $user = User::withTrashed()->where('email', $email)->first();
+
+                    if ($user) {
+                        if ($user->trashed()) {
+                            $user->restore();
+                        }
+                        if (! $user->formateur_id) {
+                            $user->formateur_id = auth()->id();
+                        }
+                        $user->prenom = $user->prenom ?: ($s['prenom'] ?? null);
+                        $user->name = $user->name ?: ($s['nom'] ?? null);
+                        $user->save();
+                    } else {
+                        $user = User::create([
+                            'prenom' => $s['prenom'] ?? null,
+                            'name' => $s['nom'] ?? null,
+                            'email' => $email,
+                            'password' => Hash::make((string) $request->password),
+                            'role' => 'stagiaire',
+                            'formateur_id' => auth()->id(),
+                            'status' => 1,
+                            'code_acces' => CodeGeneratorService::generateUniqueAccessCode(),
+                        ]);
+                    }
+
+                    $group->students()->syncWithoutDetaching([
+                        $user->id => ['role_in_group' => 'stagiaire'],
                     ]);
                 }
 
-                $group->students()->syncWithoutDetaching([
-                    $user->id => ['role_in_group' => 'stagiaire'],
+                $moduleIds = collect($request->input('modules', []))
+                    ->map(fn ($value) => (int) $value)
+                    ->filter()
+                    ->unique()
+                    ->values();
+
+                $positions = collect($request->input('module_positions', []))
+                    ->mapWithKeys(fn ($value, $moduleId) => [(int) $moduleId => (int) $value]);
+
+                // On normalise la position en 1..N pour éviter des trous/inversions côté pivot.
+                $orderedModuleIds = $moduleIds
+                    ->sortBy(fn ($moduleId) => $positions->get($moduleId, PHP_INT_MAX))
+                    ->values();
+
+                $sync = [];
+                foreach ($orderedModuleIds as $index => $moduleId) {
+                    $sync[$moduleId] = ['position' => $index + 1];
+                }
+
+                $group->modules()->sync($sync);
+            });
+        } catch (QueryException $e) {
+            if ((string) $e->getCode() === '23000' && str_contains($e->getMessage(), 'groups_name_unique')) {
+                throw ValidationException::withMessages([
+                    'nom' => 'Ce nom de groupe existe déjà. Merci de choisir un autre nom.',
                 ]);
             }
 
-            $moduleIds = collect($request->input('modules', []))
-                ->map(fn ($value) => (int) $value)
-                ->filter()
-                ->unique()
-                ->values();
-
-            $positions = collect($request->input('module_positions', []))
-                ->mapWithKeys(fn ($value, $moduleId) => [(int) $moduleId => (int) $value]);
-
-            // On normalise la position en 1..N pour éviter des trous/inversions côté pivot.
-            $orderedModuleIds = $moduleIds
-                ->sortBy(fn ($moduleId) => $positions->get($moduleId, PHP_INT_MAX))
-                ->values();
-
-            $sync = [];
-            foreach ($orderedModuleIds as $index => $moduleId) {
-                $sync[$moduleId] = ['position' => $index + 1];
-            }
-
-            $group->modules()->sync($sync);
-        });
+            throw $e;
+        }
 
         return redirect()
             ->route('formateur.groupes.index')

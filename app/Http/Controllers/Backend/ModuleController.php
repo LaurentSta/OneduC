@@ -9,6 +9,7 @@ use App\Models\Evaluation;
 use App\Models\Module;
 use App\Models\ModuleLecture;
 use App\Models\ModuleSection;
+use App\Models\QuizQuestion;
 use App\Models\QuizAttempt;
 use App\Models\QuizAttemptQuestion;
 use App\Models\ScormInteraction;
@@ -604,7 +605,15 @@ class ModuleController extends Controller
      */
     public function DeleteLecture($id)
     {
-        ModuleLecture::find($id)?->delete();
+        $lecture = ModuleLecture::find($id);
+
+        if ($lecture) {
+            DB::transaction(function () use ($lecture): void {
+                $this->deleteLectureAndDependencies($lecture);
+            });
+        }
+
+        $this->cleanupOrphanQuizQuestions();
 
         return redirect()->back()->with([
             'message'    => 'Lecture supprimée',
@@ -617,14 +626,79 @@ class ModuleController extends Controller
         $section = ModuleSection::find($id);
 
         if ($section) {
-            $section->lectures()->delete();
-            $section->delete();
+            DB::transaction(function () use ($section): void {
+                $lectureIds = ModuleLecture::query()
+                    ->where('section_id', $section->id)
+                    ->pluck('id');
+
+                if ($lectureIds->isNotEmpty()) {
+                    ModuleLecture::query()
+                        ->whereIn('id', $lectureIds)
+                        ->get()
+                        ->each(function (ModuleLecture $lecture): void {
+                            $this->deleteLectureAndDependencies($lecture);
+                        });
+                }
+
+                $section->delete();
+            });
         }
+
+        $this->cleanupOrphanQuizQuestions();
 
         return redirect()->back()->with([
             'message'    => 'Section supprimée',
             'alert-type' => 'success',
         ]);
+    }
+
+    private function deleteLectureAndDependencies(ModuleLecture $lecture): void
+    {
+        // Nettoyage explicite (questions + médias + objectifs) avant suppression de la leçon.
+        $this->deleteQuestionsForLecture((int) $lecture->id);
+        LectureObjective::query()->where('lecture_id', $lecture->id)->delete();
+        $lecture->delete();
+    }
+
+    private function deleteQuestionsForLecture(int $lectureId): void
+    {
+        QuizQuestion::query()
+            ->where('lecture_id', $lectureId)
+            ->orderBy('id')
+            ->chunkById(200, function ($questions): void {
+                foreach ($questions as $question) {
+                    if (!empty($question->image_path)) {
+                        Storage::disk('public')->delete($question->image_path);
+                    }
+                    if (!empty($question->audio_path)) {
+                        Storage::disk('public')->delete($question->audio_path);
+                    }
+                    $question->delete();
+                }
+            });
+    }
+
+    private function cleanupOrphanQuizQuestions(): int
+    {
+        $deleted = 0;
+
+        QuizQuestion::query()
+            ->whereDoesntHave('lecture')
+            ->orderBy('id')
+            ->chunkById(200, function ($questions) use (&$deleted): void {
+                foreach ($questions as $question) {
+                    if (!empty($question->image_path)) {
+                        Storage::disk('public')->delete($question->image_path);
+                    }
+                    if (!empty($question->audio_path)) {
+                        Storage::disk('public')->delete($question->audio_path);
+                    }
+                    $question->delete();
+                    $deleted++;
+                }
+            });
+
+        return $deleted;
     }
 
     /**

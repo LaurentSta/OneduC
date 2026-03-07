@@ -10,6 +10,9 @@
     $moduleId  = (int) ($module->id ?? 0);
     $lectureId = $lecture ? (int) $lecture->id : null;
     $sectionId = $lecture ? (int) $lecture->section_id : null;
+    $st = $lectureId ? ($lectureStats[$lectureId] ?? []) : [];
+    $currentStatus = strtolower((string) ($st['status'] ?? 'not_started'));
+    $isAlreadyDone = in_array($currentStatus, ['completed', 'passed'], true);
 
     // Conserver le contexte (mode / group_id / include_hidden) dans la navigation
     $contextQuery = is_array($contextQuery ?? null) ? $contextQuery : [];
@@ -324,6 +327,7 @@
     module_id: @json($moduleId),
     section_id: @json($sectionId),
     next_url: @json($nextUrl),
+    is_already_done: @json($isAlreadyDone),
     // En mode formateur, le flux "Leçon suivante" ne doit jamais basculer sur le quiz.
     quiz_start_url: null,
     quiz_tester_url: @json($quizStartUrl),
@@ -340,6 +344,18 @@
         return;
       }
       window.location.href = finalUrl;
+    }
+  };
+
+  window.goToQuiz = function () {
+    if (window.SCORM_CONTEXT && typeof window.SCORM_CONTEXT.goToQuiz === "function") {
+      window.SCORM_CONTEXT.goToQuiz();
+    }
+  };
+
+  window.goToNextLesson = function () {
+    if (window.SCORM_CONTEXT && typeof window.SCORM_CONTEXT.goToNextLesson === "function") {
+      window.SCORM_CONTEXT.goToNextLesson();
     }
   };
 </script>

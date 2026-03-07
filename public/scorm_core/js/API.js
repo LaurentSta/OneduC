@@ -24,6 +24,22 @@
   }
 
   let nextButtonShown = false;
+  let nextButtonRetryTimer = null;
+  let nextButtonRetryCount = 0;
+  const MAX_NEXT_BUTTON_RETRIES = 30;
+  const NEXT_BUTTON_RETRY_DELAY_MS = 200;
+
+  function scheduleNextButtonRetry() {
+    if (nextButtonShown) return;
+    if (nextButtonRetryTimer) return;
+    if (nextButtonRetryCount >= MAX_NEXT_BUTTON_RETRIES) return;
+
+    nextButtonRetryTimer = setTimeout(() => {
+      nextButtonRetryTimer = null;
+      nextButtonRetryCount += 1;
+      afficherBoutonSuivantDepuisIframe();
+    }, NEXT_BUTTON_RETRY_DELAY_MS);
+  }
 
   function afficherBoutonSuivantDepuisIframe() {
     if (nextButtonShown) return;
@@ -45,7 +61,15 @@
       bouton.style.cursor = "pointer";
     });
 
-    if (!wrappers.length || !boutons.length || !context) {
+    if (!context) {
+      scheduleNextButtonRetry();
+      return;
+    }
+
+    if (!wrappers.length || !boutons.length) {
+      // Certains contenus SCORM remontent "completed" très tôt :
+      // on réessaie un peu plus tard si le DOM parent n'est pas prêt.
+      scheduleNextButtonRetry();
       return;
     }
 
@@ -58,6 +82,8 @@
         // Appel de la fonction globale définie dans lecon.blade.php
         if (typeof window.parent.goToQuiz === "function") {
             window.parent.goToQuiz();
+        } else if (typeof context.goToQuiz === "function") {
+            context.goToQuiz();
         } else {
             window.parent.location.href = context.quiz_start_url;
         }
@@ -69,6 +95,8 @@
         bouton.onclick = function () {
         if (typeof window.parent.goToNextLesson === "function") {
             window.parent.goToNextLesson();
+        } else if (typeof context.goToNextLesson === "function") {
+            context.goToNextLesson();
         } else {
             window.parent.location.href = context.next_url;
         }
@@ -76,6 +104,11 @@
       });
     }
 
+    if (nextButtonRetryTimer) {
+      clearTimeout(nextButtonRetryTimer);
+      nextButtonRetryTimer = null;
+    }
+    nextButtonRetryCount = 0;
     nextButtonShown = true;
     console.log("🚀 Bouton de navigation Onéduc activé");
   }
