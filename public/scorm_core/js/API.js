@@ -10,7 +10,7 @@
   // 1) Helpers Onéduc (parent)
   // ----------------------------
   function getContext() {
-    return window.parent?.SCORM_CONTEXT || null;
+    return window.parent?.SCORM_CONTEXT || window.SCORM_CONTEXT || null;
   }
 
   function getLectureId() {
@@ -18,8 +18,9 @@
   }
 
   function isDoneStatus(scormValue) {
-    // SCORM 1.2 : Storyline ("passed") vs iSpring ("completed")
-    return scormValue === "completed" || scormValue === "passed";
+    // SCORM 1.2/2004 : valeurs de complétion/succès
+    const v = String(scormValue ?? "").toLowerCase();
+    return v === "completed" || v === "passed";
   }
 
   let nextButtonShown = false;
@@ -28,47 +29,51 @@
     if (nextButtonShown) return;
 
     const context = getContext();
-    const wrapper = window.parent?.document.getElementById("next-lesson-wrapper");
-    const bouton = window.parent?.document.getElementById("next-lesson-button");
-    const texteBouton = window.parent?.document.getElementById("next-button-text");
-    if (wrapper && bouton) {
-        wrapper.classList.remove("hidden");
-        
-        // CORRECTION : Forcer l'opacité et le curseur
-        bouton.style.opacity = "1";
-        bouton.style.pointerEvents = "auto"; // Réactive le clic et le curseur
-        bouton.style.cursor = "pointer";    // Force l'affichage de la main
-    }
-    if (!wrapper || !bouton || !context) {
+    const parentDoc = window.parent?.document;
+    const wrappers = Array.from(parentDoc?.querySelectorAll("#next-lesson-wrapper") ?? []);
+    const boutons = Array.from(parentDoc?.querySelectorAll("#next-lesson-button") ?? []);
+    const textesBouton = Array.from(parentDoc?.querySelectorAll("#next-button-text") ?? []);
+
+    wrappers.forEach((wrapper) => {
+      wrapper.classList.remove("hidden");
+      wrapper.style.pointerEvents = "auto";
+    });
+
+    boutons.forEach((bouton) => {
+      bouton.style.opacity = "1";
+      bouton.style.pointerEvents = "auto";
+      bouton.style.cursor = "pointer";
+    });
+
+    if (!wrappers.length || !boutons.length || !context) {
       return;
     }
-
-    // Affiche le conteneur et gère l'opacité (Onéduc design)
-    wrapper.classList.remove("hidden");
-    bouton.style.opacity = "1";
-    bouton.style.pointerEvents = "auto";
 
     // Logique de redirection Onéduc
     const shouldOfferQuiz = Boolean(context.quiz_start_url) && context.force_next_lesson !== true;
     if (shouldOfferQuiz) {
-      if (texteBouton) texteBouton.innerText = "Passer au Questionnaire";
-      bouton.onclick = function () {
+      textesBouton.forEach((texte) => { texte.innerText = "Passer au Questionnaire"; });
+      boutons.forEach((bouton) => {
+        bouton.onclick = function () {
         // Appel de la fonction globale définie dans lecon.blade.php
         if (typeof window.parent.goToQuiz === "function") {
             window.parent.goToQuiz();
         } else {
             window.parent.location.href = context.quiz_start_url;
         }
-      };
+        };
+      });
     } else {
-      if (texteBouton) texteBouton.innerText = "Leçon suivante";
-      bouton.onclick = function () {
+      textesBouton.forEach((texte) => { texte.innerText = "Leçon suivante"; });
+      boutons.forEach((bouton) => {
+        bouton.onclick = function () {
         if (typeof window.parent.goToNextLesson === "function") {
             window.parent.goToNextLesson();
         } else {
             window.parent.location.href = context.next_url;
         }
-      };
+        };
+      });
     }
 
     nextButtonShown = true;
@@ -149,8 +154,13 @@
       cmiStore[name] = value;
       envoyerProgression(name, value);
 
-      // Détection immédiate du succès (Storyline/iSpring)
-      if (name === "cmi.core.lesson_status" && isDoneStatus(value)) {
+      // Détection immédiate du succès (Storyline/iSpring SCORM 1.2/2004)
+      if (
+        (name === "cmi.core.lesson_status" ||
+         name === "cmi.completion_status" ||
+         name === "cmi.success_status") &&
+        isDoneStatus(value)
+      ) {
         afficherBoutonSuivantDepuisIframe();
       }
 
@@ -158,7 +168,13 @@
     },
 
     LMSCommit: function () { return "true"; },
-    LMSFinish: function () { return "true"; },
+    LMSFinish: function () {
+      // Fallback robuste: certains Storyline n'envoient jamais "completed/passed"
+      // mais appellent LMSFinish en fin de session.
+      envoyerProgression("cmi.core.lesson_status", "completed");
+      afficherBoutonSuivantDepuisIframe();
+      return "true";
+    },
     LMSGetLastError: function () { return "0"; },
     LMSGetErrorString: function () { return ""; },
     LMSGetDiagnostic: function () { return ""; }

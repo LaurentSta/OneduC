@@ -78,20 +78,6 @@
                 class="w-full h-full block">
             </iframe>
 
-            {{-- 
-                BOUTON SUIVANT DYNAMIQUE 
-                'hidden' est supprimé si la leçon est déjà finie en base.
-                Sinon, API.js le fera apparaître lors du signal 'completed'.
-            --}}
-            <div id="next-lesson-wrapper" class="{{ $isAlreadyDone ? '' : 'hidden' }} absolute bottom-10 left-1/2 -translate-x-1/2 z-50">
-                <button id="next-lesson-button" 
-                   class="oneduc-btn-alert flex items-center gap-3 px-8 py-4 bg-orangeone text-white rounded-full font-bold shadow-2xl hover:scale-105 transition-all">
-                    <span id="next-button-text">
-                        {{ $lecture->quiz_enabled ? 'Passer au questionnaire' : 'Continuer' }}
-                    </span>
-                    <i class="ti ti-arrow-right text-xl"></i>
-                </button>
-            </div>
         @else
             <div class="flex items-center justify-center h-full">
                 <div class="max-w-md w-full bg-white rounded-[24px] shadow-sm border border-gray-100 p-10 text-center">

@@ -77,5 +77,82 @@
       <a href="{{ route('contact') }}" class="btn btn-outline-secondary">Support</a>
     </div>
   </section>
+
+  <section class="bg-white rounded-[20px] shadow-md p-6">
+    <h2 class="text-xl font-semibold text-bleuone">Centre de support Discord</h2>
+    <p class="text-gray-700 mt-3">
+      Le support Oneduc est prioritairement traité sur Discord pour un suivi plus rapide. Si vous ne pouvez pas utiliser Discord,
+      utilisez le formulaire web.
+    </p>
+
+    <div class="mt-4 flex flex-wrap gap-3">
+      <a
+        href="{{ config('services.discord.support_invite_url') !== '' ? config('services.discord.support_invite_url') : '#' }}"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="btn-oneduc {{ config('services.discord.support_invite_url') === '' ? 'pointer-events-none opacity-50' : '' }}"
+        aria-disabled="{{ config('services.discord.support_invite_url') === '' ? 'true' : 'false' }}"
+      >
+        Rejoindre Discord
+      </a>
+      <a href="{{ route('contact') }}" class="btn btn-outline-secondary">Utiliser le formulaire</a>
+    </div>
+
+    @if(config('services.discord.support_invite_url') === '')
+      <p class="text-xs text-amber-700 mt-3">Lien Discord non configuré (`DISCORD_SUPPORT_INVITE_URL`).</p>
+    @endif
+
+    <div class="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <article class="rounded-xl border border-gray-200 p-4">
+        <h3 class="font-semibold text-bleuone">Avant de poster votre demande</h3>
+        <ul class="mt-3 text-gray-700 space-y-2 list-disc list-inside">
+          <li>Précisez le module, la section et la leçon concernés.</li>
+          <li>Ajoutez le message d’erreur exact si vous en avez un.</li>
+          <li>Indiquez votre navigateur et votre appareil (PC, mobile).</li>
+          <li>Ajoutez une capture d’écran si possible.</li>
+        </ul>
+      </article>
+
+      <article class="rounded-xl border border-gray-200 p-4">
+        <h3 class="font-semibold text-bleuone">Bonnes pratiques sur Discord</h3>
+        <ul class="mt-3 text-gray-700 space-y-2 list-disc list-inside">
+          <li>Un sujet = une demande, pour faciliter le suivi.</li>
+          <li>Évitez de partager des données sensibles (mot de passe, code personnel).</li>
+          <li>Utilisez un titre clair: “Bug quiz leçon X” plutôt que “Aide”.</li>
+          <li>Restez sur le même fil jusqu’à résolution du problème.</li>
+        </ul>
+      </article>
+    </div>
+  </section>
+
+  <section class="bg-white rounded-[20px] shadow-md p-6">
+    <h2 class="text-xl font-semibold text-bleuone">FAQ Support Discord</h2>
+    <div class="mt-4 space-y-3">
+      <details class="rounded-lg border border-gray-200 p-4">
+        <summary class="cursor-pointer font-semibold text-bleuone">Je n’arrive pas à rejoindre le serveur Discord, que faire ?</summary>
+        <p class="mt-2 text-gray-700">Vérifiez que le lien d’invitation est complet. Si le problème persiste, passez par le formulaire de support.</p>
+      </details>
+
+      <details class="rounded-lg border border-gray-200 p-4">
+        <summary class="cursor-pointer font-semibold text-bleuone">Quel délai de réponse puis-je attendre ?</summary>
+        <p class="mt-2 text-gray-700">Le canal Discord est le plus rapide. Les délais varient selon l’affluence et la complexité du sujet.</p>
+      </details>
+
+      <details class="rounded-lg border border-gray-200 p-4">
+        <summary class="cursor-pointer font-semibold text-bleuone">Puis-je ouvrir un ticket sans compte Discord ?</summary>
+        <p class="mt-2 text-gray-700">Oui. Utilisez le formulaire web de contact, votre demande sera traitée par l’équipe support.</p>
+      </details>
+
+      <details class="rounded-lg border border-gray-200 p-4">
+        <summary class="cursor-pointer font-semibold text-bleuone">Quelles informations accélèrent le traitement ?</summary>
+        <p class="mt-2 text-gray-700">Le contexte exact, l’URL si disponible, la date/heure, votre rôle et une capture d’écran.</p>
+      </details>
+
+      <details class="rounded-lg border border-gray-200 p-4">
+        <summary class="cursor-pointer font-semibold text-bleuone">Mon quiz ne se lance pas, est-ce un bug ?</summary>
+        <p class="mt-2 text-gray-700">Souvent, c’est lié à la session, au navigateur ou à un blocage pop-up. Signalez la leçon concernée au support.</p>
+      </details>
+    </div>
+  </section>
 </div>
 @endsection

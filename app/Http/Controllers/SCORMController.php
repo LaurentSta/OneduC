@@ -50,8 +50,10 @@ class SCORMController extends Controller
                 if ($score > ($sc->best_score ?? -1)) $sc->best_score = $score;
                 break;
 
-            // Gestion du Statut (Passed / Completed)
+            // Gestion du Statut (SCORM 1.2 + 2004)
             case 'cmi.core.lesson_status':
+            case 'cmi.completion_status':
+            case 'cmi.success_status':
                 $status = strtolower((string)$scormValue);
                 // On ne rétrograde jamais un statut "completed"
                 if (!in_array($sc->lesson_status, ['completed', 'passed'])) {
