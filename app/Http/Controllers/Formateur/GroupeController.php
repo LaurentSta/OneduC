@@ -305,44 +305,59 @@ class GroupeController extends Controller
      */
     private function ensureCustomization(Group $group, Module $module): void
     {
-        $exists = GroupModuleLecture::query()
-            ->where('group_id', $group->id)
+        $moduleLectureIds = ModuleLecture::query()
             ->where('module_id', $module->id)
-            ->exists();
+            ->orderBy('section_id')
+            ->orderBy('position')
+            ->orderBy('id')
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->values();
 
-        if ($exists) {
+        if ($moduleLectureIds->isEmpty()) {
             return;
         }
 
-        DB::transaction(function () use ($group, $module): void {
-            $existsLocked = GroupModuleLecture::query()
+        DB::transaction(function () use ($group, $module, $moduleLectureIds): void {
+            $existingRows = GroupModuleLecture::query()
                 ->where('group_id', $group->id)
                 ->where('module_id', $module->id)
                 ->lockForUpdate()
-                ->exists();
+                ->get(['lecture_id', 'position']);
 
-            if ($existsLocked) {
+            if ($existingRows->isEmpty()) {
+                $pos = 1;
+                $payload = $moduleLectureIds->map(function ($lectureId) use ($group, $module, &$pos) {
+                    return [
+                        'group_id' => $group->id,
+                        'module_id' => $module->id,
+                        'lecture_id' => (int) $lectureId,
+                        'position' => $pos++,
+                        'is_enabled' => true,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
+                })->all();
+
+                GroupModuleLecture::query()->insert($payload);
                 return;
             }
 
-            $lectures = ModuleLecture::query()
-                ->where('module_id', $module->id)
-                ->orderBy('section_id')
-                ->orderBy('position')
-                ->orderBy('id')
-                ->get(['id']);
+            $existingLectureIds = $existingRows
+                ->pluck('lecture_id')
+                ->map(fn ($id) => (int) $id);
 
-            if ($lectures->isEmpty()) {
+            $missingLectureIds = $moduleLectureIds->diff($existingLectureIds)->values();
+            if ($missingLectureIds->isEmpty()) {
                 return;
             }
 
-            // Insertion en masse: plus performant qu'un create() par ligne.
-            $pos = 1;
-            $payload = $lectures->map(function ($lecture) use ($group, $module, &$pos) {
+            $pos = ((int) $existingRows->max('position')) + 1;
+            $payload = $missingLectureIds->map(function ($lectureId) use ($group, $module, &$pos) {
                 return [
                     'group_id' => $group->id,
                     'module_id' => $module->id,
-                    'lecture_id' => $lecture->id,
+                    'lecture_id' => (int) $lectureId,
                     'position' => $pos++,
                     'is_enabled' => true,
                     'created_at' => now(),
@@ -421,7 +436,29 @@ class GroupeController extends Controller
         $row = GroupModuleLecture::where('group_id', $group->id)
             ->where('module_id', $module->id)
             ->where('lecture_id', $lectureId)
-            ->firstOrFail();
+            ->first();
+
+        if (! $row) {
+            $lectureExistsInModule = ModuleLecture::query()
+                ->where('id', $lectureId)
+                ->where('module_id', $module->id)
+                ->exists();
+
+            abort_unless($lectureExistsInModule, 404);
+
+            $nextPosition = ((int) GroupModuleLecture::query()
+                ->where('group_id', $group->id)
+                ->where('module_id', $module->id)
+                ->max('position')) + 1;
+
+            $row = GroupModuleLecture::query()->create([
+                'group_id' => $group->id,
+                'module_id' => $module->id,
+                'lecture_id' => (int) $lectureId,
+                'position' => max(1, $nextPosition),
+                'is_enabled' => true,
+            ]);
+        }
 
         $row->update(['is_enabled' => ! (bool) $row->is_enabled]);
 
