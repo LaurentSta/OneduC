@@ -57,7 +57,7 @@
                 <div class="sm:col-span-3">
                     <p class="text-sm font-medium text-gray-700 mb-2">Image actuelle</p>
                     <img id="preview-image"
-                         src="{{ $category->category_image ? asset('storage/' . $category->category_image) : asset('upload/category_images/NoImage.png') }}"
+                         src="{{ $category->category_image_url }}"
                          alt="Image catégorie {{ $category->category_name }}"
                          class="w-36 h-36 rounded-[16px] border border-gray-200 object-cover bg-gray-50">
                 </div>

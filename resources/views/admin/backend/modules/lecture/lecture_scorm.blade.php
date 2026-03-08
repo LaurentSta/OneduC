@@ -11,7 +11,7 @@
                     Prévisualisation : {{ $lecture->lecture_title }}
                 </h1>
                 <p class="text-xs text-gray-600 mt-1 break-all">
-                    Chemin : {{ $lecture->scorm_path }}
+                    Chemin : {{ $scormPath ?? $lecture->scorm_index_path ?? $lecture->scorm_path }}
                 </p>
             </div>
 
@@ -30,7 +30,7 @@
         <div class="rounded-[16px] overflow-hidden border border-gray-200 bg-white"
              style="height: 80vh;">
             <iframe
-                src="{{ asset($lecture->scorm_path) }}"
+                src="{{ $scormUrl ?? $lecture->scorm_asset_url }}"
                 class="w-full h-full border-0"
                 title="Prévisualisation SCORM : {{ $lecture->lecture_title }}"
                 loading="lazy"

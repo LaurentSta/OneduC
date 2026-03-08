@@ -19,9 +19,15 @@ class ScormImporter
     {
         $basePath = public_path($targetPath);
         File::ensureDirectoryExists($basePath);
+        $importedAt = now();
+        $realZipPath = $zipFile->getRealPath();
+        if (!$realZipPath) {
+            throw new RuntimeException('Fichier ZIP introuvable après upload.');
+        }
+        $zipHash = hash_file('sha256', $realZipPath) ?: null;
 
         $zip = new ZipArchive();
-        if ($zip->open($zipFile->getRealPath()) !== true) {
+        if ($zip->open($realZipPath) !== true) {
             throw new RuntimeException('Impossible d\'ouvrir le ZIP.');
         }
 
@@ -60,7 +66,7 @@ class ScormImporter
                 'index_path' => $indexPath,
                 'size_bytes' => (int) $zipFile->getSize(),
                 'api_injected' => true,
-                'imported_at' => now(),
+                'imported_at' => $importedAt,
             ]
         );
 
@@ -76,6 +82,9 @@ class ScormImporter
             'package_id' => $package->id,
             'version_id' => $version->id,
             'relative_index_path' => $indexPath,
+            'imported_at' => $importedAt->toIso8601String(),
+            'zip_hash' => $zipHash,
+            'cache_token' => (string) $importedAt->timestamp,
         ];
     }
 

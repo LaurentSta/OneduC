@@ -38,7 +38,7 @@
 
                 {{-- Image --}}
                 <div class="relative group w-full h-48 overflow-hidden">
-                    <img src="{{ asset('storage/'.$category->category_image) }}"
+                    <img src="{{ $category->category_image_url }}"
                          alt="{{ $category->category_name }}"
                          class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105">
                     <div class="absolute inset-0 bg-black bg-opacity-10 group-hover:bg-opacity-30 transition"></div>

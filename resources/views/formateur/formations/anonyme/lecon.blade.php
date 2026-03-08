@@ -46,10 +46,7 @@
   }
 
   // Source SCORM
-  $scormSrc = null;
-  if ($lecture && !empty($lecture->scorm_path)) {
-      $scormSrc = asset($lecture->scorm_path);
-  }
+  $scormSrc = $lecture?->scorm_asset_url;
 
   $isSlidesMode = $lecture
       && $isSlidesSelected

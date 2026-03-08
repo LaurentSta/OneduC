@@ -8,42 +8,45 @@ use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        // ✅ ADMIN
-        User::create([
-            'prenom' => 'Super',
-            'name' => 'Admin',
-            'username' => 'admin',
-            'email' => 'admin@gmail.com',
-            'password' => Hash::make('111'),
-            'role' => 'admin',
-            'status' => true,
-        ]);
+        // ADMIN
+        User::updateOrCreate(
+            ['email' => 'admin@gmail.com'],
+            [
+                'prenom' => 'Super',
+                'name' => 'Admin',
+                'username' => 'admin',
+                'password' => Hash::make('111'),
+                'role' => 'admin',
+                'status' => 1,
+            ]
+        );
 
-        // ✅ FORMATEUR
-        User::create([
-            'prenom' => 'Jean',
-            'name' => 'Formateur',
-            'username' => 'formateur',
-            'email' => 'instructor@gmail.com',
-            'password' => Hash::make('111'),
-            'role' => 'formateur',
-            'status' => true,
-        ]);
+        // FORMATEUR
+        User::updateOrCreate(
+            ['email' => 'instructor@gmail.com'],
+            [
+                'prenom' => 'Jean',
+                'name' => 'Formateur',
+                'username' => 'formateur',
+                'password' => Hash::make('111'),
+                'role' => 'formateur',
+                'status' => 1,
+            ]
+        );
 
-        // ✅ STAGIAIRE
-        User::create([
-            'prenom' => 'Laura',
-            'name' => 'Stagiaire',
-            'username' => 'stagiaire',
-            'email' => 'user@gmail.com',
-            'password' => Hash::make('111'),
-            'role' => 'stagiaire',
-            'status' => true,
-        ]);
+        // STAGIAIRE
+        User::updateOrCreate(
+            ['email' => 'user@gmail.com'],
+            [
+                'prenom' => 'Laura',
+                'name' => 'Stagiaire',
+                'username' => 'stagiaire',
+                'password' => Hash::make('111'),
+                'role' => 'stagiaire',
+                'status' => 1,
+            ]
+        );
     }
 }

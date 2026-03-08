@@ -26,18 +26,8 @@
         return $url . (str_contains($url, '?') ? '&' : '?') . http_build_query($query);
     };
 
-    // --- URL SCORM (robuste) ---
-    $scormUrl = null;
-    if ($lecture && !empty($lecture->scorm_path)) {
-        $p = (string) $lecture->scorm_path;
-        if (\Illuminate\Support\Str::startsWith($p, ['http://', 'https://'])) {
-            $scormUrl = $p;
-        } elseif (\Illuminate\Support\Str::startsWith($p, '/')) {
-            $scormUrl = url($p);
-        } else {
-            $scormUrl = asset($p);
-        }
-    }
+    // URL SCORM versionnee (anti-cache) resolue par le modele.
+    $scormUrl = $lecture?->scorm_asset_url;
 
     $isSlidesMode = $lecture
         && $isSlidesSelected

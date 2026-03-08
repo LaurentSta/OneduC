@@ -42,7 +42,7 @@
     }
 
     // 4. Source du contenu SCORM
-    $scormSrc = $lecture && $lecture->scorm_path ? asset($lecture->scorm_path) : null;
+    $scormSrc = $lecture?->scorm_asset_url;
 
     // 5. Source du contenu Slides
     $isSlidesMode = $lecture

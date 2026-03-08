@@ -3,7 +3,15 @@
 
 @section('admin')
 @php
-    $displayScormPath = session('new_scorm_path') ?? $mlecture->scorm_path;
+    $resolvedScormPath = $mlecture->scorm_index_path ?? $mlecture->scorm_path;
+    $displayScormPath = session('new_scorm_path') ?? $resolvedScormPath;
+    $scormVersion = $mlecture->resolveScormVersion();
+    $displayScormImportedAt = session('scorm_imported_at')
+        ? \Illuminate\Support\Carbon::make((string) session('scorm_imported_at'))
+        : $scormVersion?->imported_at;
+    $displayScormHash = session('scorm_import_hash');
+    $displayScormCacheToken = session('scorm_cache_token')
+        ?? ($displayScormImportedAt?->timestamp ? (string) $displayScormImportedAt->timestamp : null);
     $contentType = old('content_type', $mlecture->content_type ?? 'scorm');
     $slidesStatus = $mlecture->slides_status ?? 'none';
     $hasSlidesSource = !empty($mlecture->slides_source_path);
@@ -67,8 +75,17 @@
             <div class="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
                 <i class="ti ti-check mr-1"></i> {{ session('success') ?? session('success_scorm_v2') }}
                 @if(session('success_scorm_v2') && session('new_scorm_path'))
-                    <div class="mt-1 font-mono text-xs text-green-700">
-                        SCORM charge : public/{{ session('new_scorm_path') }}
+                    <div class="mt-1 font-mono text-xs text-green-700 space-y-1">
+                        @if(session('previous_scorm_path'))
+                            <div>Ancien : public/{{ session('previous_scorm_path') }}</div>
+                        @endif
+                        <div>Nouveau : public/{{ session('new_scorm_path') }}</div>
+                        @if(session('scorm_cache_token'))
+                            <div>Version cache : v={{ session('scorm_cache_token') }}</div>
+                        @endif
+                        @if(session('scorm_import_hash'))
+                            <div>Empreinte ZIP : {{ strtoupper(substr((string) session('scorm_import_hash'), 0, 12)) }}</div>
+                        @endif
                     </div>
                 @endif
             </div>
@@ -212,6 +229,19 @@
                                 <div class="font-mono text-xs bg-white px-3 py-2 border border-gray-200 rounded-lg truncate text-gray-600">
                                     Path: public/{{ $displayScormPath }}
                                 </div>
+                                @if($displayScormImportedAt || $displayScormCacheToken || $displayScormHash)
+                                    <div class="rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-xs text-green-700 space-y-1">
+                                        @if($displayScormImportedAt)
+                                            <div>Dernier ecrasement : {{ $displayScormImportedAt->format('d/m/Y H:i:s') }}</div>
+                                        @endif
+                                        @if($displayScormCacheToken)
+                                            <div>Version cache : v={{ $displayScormCacheToken }}</div>
+                                        @endif
+                                        @if($displayScormHash)
+                                            <div>Empreinte ZIP : {{ strtoupper(substr((string) $displayScormHash, 0, 12)) }}</div>
+                                        @endif
+                                    </div>
+                                @endif
                                 <a href="{{ route('lecture.scorm', ['id' => $mlecture->id]) }}" target="_blank"
                                    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-bleuone/20 text-bleuone hover:bg-bleuone hover:text-white transition text-xs font-varela cursor-pointer">
                                     <i class="ti ti-eye"></i>
@@ -243,7 +273,7 @@
                                 </button>
                             </div>
                             @if(session('success_scorm_v2') && session('new_scorm_path'))
-                                <p class="mt-2 text-xs text-green-700 font-semibold">Dernier import valide.</p>
+                                <p class="mt-2 text-xs text-green-700 font-semibold">Ecrasement confirme et version rechargable (cache-buster actif).</p>
                             @else
                                 <p class="mt-2 text-xs text-gray-500">Un message de confirmation s'affichera apres chargement.</p>
                             @endif

@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use App\Models\ScormPackage;
 use App\Models\ScormPackageVersion;
+use Illuminate\Support\Str;
 
 class ModuleLecture extends Model
 {
@@ -61,13 +62,58 @@ class ModuleLecture extends Model
         return $this->belongsTo(ScormPackageVersion::class, 'scorm_package_version_id');
     }
 
-    public function getScormIndexPathAttribute(): ?string
+    public function resolveScormVersion(): ?ScormPackageVersion
     {
         if ($this->use_active_scorm_version && $this->scormPackage?->activeVersion) {
-            return $this->scormPackage->activeVersion->index_path;
+            return $this->scormPackage->activeVersion;
         }
 
-        return $this->scormPackageVersion?->index_path;
+        return $this->scormPackageVersion;
+    }
+
+    public function getScormIndexPathAttribute(): ?string
+    {
+        $version = $this->resolveScormVersion();
+
+        return $version?->index_path ?? $this->scorm_path;
+    }
+
+    public function getScormCacheTokenAttribute(): ?string
+    {
+        $version = $this->resolveScormVersion();
+
+        if ($version?->imported_at) {
+            return (string) $version->imported_at->timestamp;
+        }
+
+        if ($version?->updated_at) {
+            return (string) $version->updated_at->timestamp;
+        }
+
+        return $this->updated_at ? (string) $this->updated_at->timestamp : null;
+    }
+
+    public function getScormAssetUrlAttribute(): ?string
+    {
+        $path = trim((string) ($this->scorm_index_path ?? ''));
+        if ($path === '') {
+            return null;
+        }
+
+        if (Str::startsWith($path, ['http://', 'https://'])) {
+            $url = $path;
+        } elseif (Str::startsWith($path, '/')) {
+            $url = url($path);
+        } else {
+            $url = asset($path);
+        }
+
+        $token = $this->scorm_cache_token;
+        if (!$token) {
+            return $url;
+        }
+
+        return $url . (str_contains($url, '?') ? '&' : '?') . 'v=' . rawurlencode($token);
     }
 
     public function objectives()

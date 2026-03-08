@@ -74,7 +74,7 @@
         {{ $category->category_description }}
     </td>
     <td class="px-4 py-3">
-        <img src="{{ $category->category_image ? asset('storage/' . $category->category_image) : asset('upload/category_images/NoImage.png') }}"
+        <img src="{{ $category->category_image_url }}"
              alt="Image catégorie {{ $category->category_name }}"
              class="h-10 w-10 rounded-full object-cover border border-gray-200">
     </td>
