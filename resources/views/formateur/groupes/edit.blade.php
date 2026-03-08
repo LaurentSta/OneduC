@@ -64,7 +64,7 @@
   $initialActiveTab = 'general';
   if ($errors->has('modules') || $errors->has('modules.*') || $errors->has('module_positions') || $errors->has('module_positions.*')) {
     $initialActiveTab = 'parcours';
-  } elseif ($errors->has('stagiaires') || $errors->has('stagiaires.*') || $errors->has('remove_students') || $errors->has('remove_students.*')) {
+  } elseif ($errors->has('stagiaires') || $errors->has('stagiaires.*') || $errors->has('remove_students') || $errors->has('remove_students.*') || $errors->has('password')) {
     $initialActiveTab = 'stagiaires';
   }
 @endphp
@@ -115,7 +115,6 @@
   {{-- CONTENU PRINCIPAL --}}
   <main
     x-data="groupEdit()"
-    data-next-index="{{ max(0, (int) $group->students->count()) }}"
     class="bg-white rounded-[20px] shadow-md px-8 py-10 w-full"
   >
 
@@ -136,9 +135,6 @@
                 class="w-full px-6 py-4 rounded-full transition font-varela text-lg font-bold focus:outline-none flex items-center justify-center gap-2">
                 <span>1.</span>
                 <span>Informations</span>
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
             </button>
 
             {{-- BOUTON 2 : STAGIAIRES --}}
@@ -150,9 +146,6 @@
                 class="w-full px-6 py-4 rounded-full transition font-varela text-lg font-bold focus:outline-none flex items-center justify-center gap-2">
                 <span>2.</span>
                 <span>Stagiaires</span>
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                </svg>
             </button>
 
             {{-- BOUTON 3 : MODULES --}}
@@ -164,9 +157,6 @@
                 class="w-full px-6 py-4 rounded-full transition font-varela text-lg font-bold focus:outline-none flex items-center justify-center gap-2">
                 <span>3.</span>
                 <span>Modules</span>
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                </svg>
             </button>
         </div>
         <div class="h-1 w-full bg-gray-100 rounded mt-6 mb-2"></div>
@@ -245,35 +235,92 @@
         </div>
         @endif
 
-        {{-- Ajout Nouveaux Stagiaires --}}
-        <div class="bg-gray-50 border border-gray-200 rounded-[16px] p-6">
-             <div class="flex items-center justify-between mb-4">
-                <h4 class="font-bold text-bleuone">Ajouter de nouveaux stagiaires</h4>
-                <div class="flex items-center gap-2">
-                    <button type="button"
-                            class="w-10 h-10 inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 hover:text-bleuone hover:border-bleuone/30 transition"
-                            onclick="openCsvModalEdit()"
-                            aria-label="Importer des stagiaires par CSV"
-                            title="Importer un lot CSV">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
-                        </svg>
-                    </button>
-
-                    <button type="button" @click="addStudentRow()" class="btn-oneduc text-sm py-2 px-4">
-                        + Ajouter une ligne
-                    </button>
-                </div>
+        {{-- Ajout Nouveaux Stagiaires (même structure que création) --}}
+        <div class="mb-8">
+          <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
+            <div class="space-y-3">
+              <h3 class="text-xl font-bold text-bleuone font-raleway">Ajouter vos stagiaires</h3>
+              <p class="text-sm text-gray-600 font-lisible mt-1">Renseignez les informations de vos apprenants.</p>
             </div>
-            
-            <table class="w-full" x-show="nextNewStudentIndex > 0">
-                 <tbody id="new-students-tbody" class="space-y-2 block sm:table-row-group">
-                    {{-- Les TR seront injectés ici via JS --}}
-                 </tbody>
-            </table>
-            <p x-show="nextNewStudentIndex === 0" class="text-sm text-gray-500 italic text-center py-2">
-                Aucun nouveau stagiaire ajouté pour le moment.
-            </p>
+            <div class="flex items-center gap-2 sm:pt-1">
+              <button type="button"
+                      class="w-10 h-10 inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 hover:text-bleuone hover:border-bleuone/30 transition"
+                      onclick="openCsvModalEdit()"
+                      aria-label="Importer des stagiaires par CSV"
+                      title="Importer un lot CSV">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div id="stagiaires-container-edit" class="space-y-3">
+            <div class="bg-white border border-gray-200 p-4 rounded-[12px] shadow-sm relative stagiaire-row-edit group hover:border-orangeone/50 transition">
+              <div class="grid grid-cols-1 md:grid-cols-[1fr_1fr_2fr_auto] gap-4 items-start">
+                <div>
+                  <label for="stagiaires_edit_0_prenom" class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Prénom</label>
+                  <input id="stagiaires_edit_0_prenom" name="stagiaires[0][prenom]" type="text" placeholder="Ex: Thomas"
+                         class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-orangeone focus:border-orangeone w-full p-2.5">
+                </div>
+
+                <div>
+                  <label for="stagiaires_edit_0_nom" class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Nom</label>
+                  <input id="stagiaires_edit_0_nom" name="stagiaires[0][nom]" type="text" placeholder="Ex: Dupont"
+                         class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-orangeone focus:border-orangeone w-full p-2.5">
+                </div>
+
+                <div>
+                  <label for="stagiaires_edit_0_email" class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Email professionnel</label>
+                  <input id="stagiaires_edit_0_email" name="stagiaires[0][email]" type="email" placeholder="thomas.dupont@entreprise.com"
+                         class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-orangeone focus:border-orangeone w-full p-2.5">
+                </div>
+
+                <div class="flex items-end h-full pb-[3px]">
+                  <button type="button" class="text-gray-300 hover:text-red-600 transition p-2 rounded-full hover:bg-red-50"
+                          onclick="removeStagiaireEdit(this)" title="Supprimer la ligne">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-3">
+            <button type="button"
+                    class="px-4 py-2 bg-bleuone/10 text-bleuone border border-bleuone/20 font-bold rounded-lg hover:bg-bleuone hover:text-white transition inline-flex items-center justify-center gap-2 text-sm"
+                    onclick="addStagiaireEdit()">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+              Ajouter un stagiaire
+            </button>
+          </div>
+        </div>
+
+        <div class="mt-6 bg-orangeone/5 border border-orangeone/20 rounded-[12px] p-3">
+          <div class="mb-2 flex items-center gap-2">
+            <h4 class="text-sm font-bold text-gray-800 font-raleway">Code d'accès provisoire du groupe</h4>
+            <div class="relative group">
+              <button type="button" aria-label="Information" class="inline-flex h-5 w-5 items-center justify-center rounded-full border border-gray-300 bg-white text-[11px] font-bold text-gray-600">
+                i
+              </button>
+              <div class="pointer-events-none absolute left-1/2 top-full z-20 mt-2 hidden w-72 -translate-x-1/2 rounded-lg border border-gray-200 bg-white p-2 text-xs text-gray-700 shadow-lg group-hover:block group-focus-within:block">
+                Les stagiaires recevront un e-mail avec leur identifiant et un lien qu'ils pourront utiliser pour se connecter.
+              </div>
+            </div>
+          </div>
+
+          <div class="w-full max-w-sm">
+            <label for="password" class="sr-only">Mot de passe commun</label>
+            <input id="password" name="password" type="text" required minlength="8" autocomplete="off"
+                   value="{{ old('password', $group->temporary_password) }}"
+                   class="bg-white border {{ $errors->has('password') ? 'border-red-400' : 'border-gray-300' }} text-gray-900 text-sm rounded-lg focus:ring-orangeone focus:border-orangeone block w-full px-3 py-2.5 font-mono tracking-wide"
+                   placeholder="Ex: Formation2026!">
+            @error('password')
+              <p class="mt-2 text-sm text-red-700">{{ $message }}</p>
+            @enderror
+          </div>
         </div>
       </section>
 
@@ -296,6 +343,12 @@
             <p class="text-xs text-gray-500 bg-gray-50 border border-gray-100 rounded-lg px-3 py-2">
               Exemple d’en-tête: <code>prenom;nom;email</code> (ou séparateur virgule).
             </p>
+            <div class="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
+              <p class="text-xs font-semibold text-gray-700 mb-1">Exemple CSV (2 stagiaires)</p>
+              <pre class="text-xs text-gray-700 whitespace-pre-wrap">prenom;nom;email
+Camille;Martin;camille.martin@entreprise.fr
+Lucas;Bernard;lucas.bernard@entreprise.fr</pre>
+            </div>
 
             <input id="csv-file-edit" type="file" accept=".csv,text/csv"
                    class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm">
@@ -383,16 +436,7 @@ document.addEventListener('alpine:init', () => {
   Alpine.data('groupEdit', () => ({
     activeTab: @json($initialActiveTab),
     removed: [],
-    nextNewStudentIndex: 0,
-
-    init() {
-      this.nextNewStudentIndex = parseInt(this.$el.dataset.nextIndex || '0', 10);
-
-      window.addEventListener('oneduc:csv-import-edit', (event) => {
-        const rows = event?.detail?.rows || [];
-        this.addStudentsFromCsv(rows);
-      });
-    },
+    init() {},
 
     // --- STAGIAIRES ---
     toggleRemove(id, name) {
@@ -417,51 +461,6 @@ document.addEventListener('alpine:init', () => {
         input.value = n;
         hiddenWrap.appendChild(input);
       }
-    },
-
-    addStudentsFromCsv(rows = []) {
-      if (!Array.isArray(rows) || rows.length === 0) return;
-      rows.forEach((row) => this.addStudentRow(row));
-    },
-
-    addStudentRow(data = {}) {
-      const container = document.getElementById('new-students-tbody');
-      if (!container) return;
-
-      const escapeHtml = (value) => String(value ?? '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-
-      const prenom = escapeHtml(data.prenom || '');
-      const nom = escapeHtml(data.nom || '');
-      const email = escapeHtml(data.email || '');
-
-      const i = this.nextNewStudentIndex++;
-      const tr = document.createElement('tr');
-      tr.className = 'border-t border-gray-100 flex flex-col sm:table-row bg-gray-50 sm:bg-transparent p-4 sm:p-0 rounded-lg mb-2 sm:mb-0';
-      tr.innerHTML = `
-        <td class='py-2 sm:py-3 pr-3 w-full sm:w-auto block sm:table-cell'>
-          <input required name='stagiaires[${i}][prenom]' type='text' placeholder='Prénom' value='${prenom}'
-            class='w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-orangeone focus:border-orangeone'>
-        </td>
-        <td class='py-2 sm:py-3 pr-3 w-full sm:w-auto block sm:table-cell'>
-          <input required name='stagiaires[${i}][nom]' type='text' placeholder='Nom' value='${nom}'
-            class='w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-orangeone focus:border-orangeone'>
-        </td>
-        <td class='py-2 sm:py-3 pr-3 w-full sm:w-auto block sm:table-cell'>
-          <input required name='stagiaires[${i}][email]' type='email' placeholder='Email' value='${email}'
-            class='w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-orangeone focus:border-orangeone'>
-        </td>
-        <td class='py-2 sm:py-3 text-right block sm:table-cell'>
-          <button type='button' class='text-red-500 font-bold text-sm hover:underline' onclick="this.closest('tr').remove()">
-            Supprimer
-          </button>
-        </td>
-      `;
-      container.appendChild(tr);
     }
   }));
 });
@@ -469,6 +468,81 @@ document.addEventListener('alpine:init', () => {
 
 <script>
 (function () {
+  function fillStagiaireRowEdit(row, data) {
+    const prenomInput = row.querySelector('input[name$="[prenom]"]');
+    const nomInput = row.querySelector('input[name$="[nom]"]');
+    const emailInput = row.querySelector('input[name$="[email]"]');
+
+    if (prenomInput) prenomInput.value = data.prenom || '';
+    if (nomInput) nomInput.value = data.nom || '';
+    if (emailInput) emailInput.value = data.email || '';
+  }
+
+  function findEmptyStagiaireRowEdit() {
+    const rows = Array.from(document.querySelectorAll('#stagiaires-container-edit .stagiaire-row-edit'));
+    return rows.find((row) => {
+      const values = Array.from(row.querySelectorAll('input[name$="[prenom]"], input[name$="[nom]"], input[name$="[email]"]'))
+        .map((i) => (i.value || '').trim());
+      return values.every(v => v === '');
+    }) || null;
+  }
+
+  window.addStagiaireEdit = function (data = null) {
+    const container = document.getElementById('stagiaires-container-edit');
+    if (!container) return;
+
+    const rows = container.querySelectorAll('.stagiaire-row-edit');
+    const index = rows.length;
+
+    const tpl = `
+      <div class="bg-white border border-gray-200 p-4 rounded-[12px] shadow-sm relative stagiaire-row-edit group hover:border-orangeone/50 transition mt-3 animate-fade-in-down">
+        <div class="grid grid-cols-1 md:grid-cols-[1fr_1fr_2fr_auto] gap-4 items-start">
+          <div>
+            <label for="stagiaires_edit_${index}_prenom" class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Prénom</label>
+            <input id="stagiaires_edit_${index}_prenom" name="stagiaires[${index}][prenom]" type="text" placeholder="Prénom"
+                   class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-orangeone focus:border-orangeone w-full p-2.5">
+          </div>
+          <div>
+            <label for="stagiaires_edit_${index}_nom" class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Nom</label>
+            <input id="stagiaires_edit_${index}_nom" name="stagiaires[${index}][nom]" type="text" placeholder="Nom"
+                   class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-orangeone focus:border-orangeone w-full p-2.5">
+          </div>
+          <div>
+            <label for="stagiaires_edit_${index}_email" class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Email professionnel</label>
+            <input id="stagiaires_edit_${index}_email" name="stagiaires[${index}][email]" type="email" placeholder="Email"
+                   class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-orangeone focus:border-orangeone w-full p-2.5">
+          </div>
+          <div class="flex items-end h-full pb-[3px]">
+            <button type="button" class="text-gray-300 hover:text-red-600 transition p-2 rounded-full hover:bg-red-50"
+                    onclick="removeStagiaireEdit(this)" title="Supprimer la ligne">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>`;
+
+    container.insertAdjacentHTML('beforeend', tpl);
+
+    if (data && (data.prenom || data.nom || data.email)) {
+      const inserted = container.lastElementChild;
+      if (inserted) fillStagiaireRowEdit(inserted, data);
+    }
+  };
+
+  window.removeStagiaireEdit = function (btn) {
+    const row = btn.closest('.stagiaire-row-edit');
+    const container = document.getElementById('stagiaires-container-edit');
+    if (!container || !row) return;
+
+    if (container.querySelectorAll('.stagiaire-row-edit').length <= 1) {
+      alert('Le groupe doit contenir au moins un stagiaire.');
+      return;
+    }
+    row.remove();
+  };
+
   function showCsvFeedbackEdit(message, type = 'info') {
     const box = document.getElementById('csv-feedback-edit');
     if (!box) return;
@@ -600,7 +674,7 @@ document.addEventListener('alpine:init', () => {
   }
 
   function collectExistingEmailsEdit() {
-    const fromNewRows = Array.from(document.querySelectorAll('#new-students-tbody input[name$="[email]"]'))
+    const fromNewRows = Array.from(document.querySelectorAll('#stagiaires-container-edit input[name$="[email]"]'))
       .map((i) => (i.value || '').trim().toLowerCase())
       .filter(Boolean);
 
@@ -611,10 +685,20 @@ document.addEventListener('alpine:init', () => {
     return new Set([...fromNewRows, ...fromCurrentGroup]);
   }
 
-  function dispatchCsvStudentsToEdit(students) {
-    window.dispatchEvent(new CustomEvent('oneduc:csv-import-edit', {
-      detail: { rows: students },
-    }));
+  function addStudentsFromCsvEdit(students) {
+    let added = 0;
+
+    students.forEach((student) => {
+      const emptyRow = findEmptyStagiaireRowEdit();
+      if (emptyRow) {
+        fillStagiaireRowEdit(emptyRow, student);
+      } else {
+        addStagiaireEdit(student);
+      }
+      added++;
+    });
+
+    return { added };
   }
 
   const importBtn = document.getElementById('csv-import-confirm-edit');
@@ -651,11 +735,8 @@ document.addEventListener('alpine:init', () => {
           uniqueStudents.push(student);
         });
 
-        if (uniqueStudents.length > 0) {
-          dispatchCsvStudentsToEdit(uniqueStudents);
-        }
-
-        showCsvFeedbackEdit(`Import terminé: ${uniqueStudents.length} ajouté(s), ${duplicates} doublon(s), ${skipped} ligne(s) ignorée(s).`, 'success');
+        const { added } = addStudentsFromCsvEdit(uniqueStudents);
+        showCsvFeedbackEdit(`Import terminé: ${added} ajouté(s), ${duplicates} doublon(s), ${skipped} ligne(s) ignorée(s).`, 'success');
       };
       reader.onerror = () => showCsvFeedbackEdit('Lecture du fichier impossible.', 'error');
       reader.readAsText(file);

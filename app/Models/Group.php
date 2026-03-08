@@ -12,7 +12,12 @@ class Group extends Model
     protected $fillable = [
         'name',
         'description',
+        'temporary_password',
         'instructor_id',
+    ];
+
+    protected $casts = [
+        'temporary_password' => 'encrypted',
     ];
 
     public function instructor()

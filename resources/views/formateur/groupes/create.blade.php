@@ -108,19 +108,6 @@
                   aria-current="{{ $i===0 ? 'step' : 'false' }}">
             <span>Étape {{ $i+1 }} :</span>
             <span>{{ $label }}</span>
-            @if($i === 0)
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            @elseif($i === 1)
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-              </svg>
-            @else
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-              </svg>
-            @endif
           </button>
         </li>
       @endforeach
@@ -168,14 +155,14 @@
       
       {{-- A. LISTE DES STAGIAIRES --}}
       <div class="mb-8">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-            <div>
+        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
+            <div class="space-y-3">
                 <h3 class="text-xl font-bold text-bleuone font-raleway">Ajouter vos stagiaires</h3>
                 <p class="text-sm text-gray-600 font-lisible mt-1">
                     Renseignez les informations de vos apprenants.
                 </p>
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 sm:pt-1">
                 <button type="button"
                     class="w-10 h-10 inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 hover:text-bleuone hover:border-bleuone/30 transition"
                     onclick="openCsvModalCreate()"
@@ -184,13 +171,6 @@
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
                     </svg>
-                </button>
-
-                <button type="button"
-                    class="px-4 py-2 bg-bleuone/10 text-bleuone border border-bleuone/20 font-bold rounded-lg hover:bg-bleuone hover:text-white transition flex items-center justify-center gap-2 text-sm"
-                    onclick="addStagiaire()">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
-                    Ajouter un stagiaire
                 </button>
             </div>
         </div>
@@ -233,46 +213,39 @@
                 </div>
             </div>
         </div>
+        <div class="mt-3">
+          <button type="button"
+              class="px-4 py-2 bg-bleuone/10 text-bleuone border border-bleuone/20 font-bold rounded-lg hover:bg-bleuone hover:text-white transition inline-flex items-center justify-center gap-2 text-sm"
+              onclick="addStagiaire()">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+              Ajouter un stagiaire
+          </button>
+        </div>
       </div>
 
-      <hr class="border-gray-100 my-8">
-
       {{-- B. MOT DE PASSE PROVISOIRE --}}
-      <div class="bg-orangeone/5 border border-orangeone/20 rounded-[16px] p-6 flex flex-col md:flex-row gap-6 items-start">
-        {{-- Icône clé --}}
-        <div class="hidden md:flex flex-shrink-0 pt-1">
-            <div class="w-12 h-12 rounded-full bg-white text-orangeone flex items-center justify-center shadow-sm border border-orangeone/20">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-                </svg>
+      <div class="bg-orangeone/5 border border-orangeone/20 rounded-[12px] p-3">
+        <div class="mb-2 flex items-center gap-2">
+          <h4 class="text-sm font-bold text-gray-800 font-raleway">Code d'accès provisoire du groupe</h4>
+          <div class="relative group">
+            <button type="button" aria-label="Information" class="inline-flex h-5 w-5 items-center justify-center rounded-full border border-gray-300 bg-white text-[11px] font-bold text-gray-600">
+              i
+            </button>
+            <div class="pointer-events-none absolute left-1/2 top-full z-20 mt-2 hidden w-72 -translate-x-1/2 rounded-lg border border-gray-200 bg-white p-2 text-xs text-gray-700 shadow-lg group-hover:block group-focus-within:block">
+              Les stagiaires recevront un e-mail avec leur identifiant et un lien qu'ils pourront utiliser pour se connecter.
             </div>
+          </div>
         </div>
-        
-        <div class="flex-grow w-full">
-            <h4 class="text-lg font-bold text-gray-800 font-raleway mb-2">Code d'accès provisoire du groupe</h4>
-            <div class="text-sm text-gray-600 mb-4 font-lisible space-y-1">
-                <p>Ce code servira <strong>uniquement à la première connexion</strong>.</p>
-                <p class="text-xs text-gray-500">Note : Vos stagiaires devront obligatoirement choisir leur propre mot de passe ensuite (RGPD).</p>
-            </div>
 
-            <div class="w-full max-w-md">
-                <label for="password" class="sr-only">Mot de passe commun</label>
-                <div class="relative flex items-center">
-                    <input id="password" name="password" type="text" required minlength="8" autocomplete="off"
-                        value="{{ old('password') }}"
-                        class="bg-white border border-gray-300 text-gray-900 text-base rounded-l-lg focus:ring-orangeone focus:border-orangeone block w-full pl-4 py-3 font-mono tracking-wide"
-                        placeholder="Ex: Formation2026!">
-                    
-                    <button type="button" onclick="generatePassword()" 
-                            class="bg-gray-100 border border-l-0 border-gray-300 text-gray-600 hover:bg-gray-200 hover:text-gray-800 font-bold py-3 px-4 rounded-r-lg transition text-sm whitespace-nowrap">
-                        🎲 Générer
-                    </button>
-                </div>
-                @error('password')
-                  <p class="mt-2 text-sm text-red-700">{{ $message }}</p>
-                @enderror
-                <p class="text-[10px] text-gray-400 mt-2 italic">Minimum 8 caractères.</p>
-            </div>
+        <div class="w-full max-w-sm">
+            <label for="password" class="sr-only">Mot de passe commun</label>
+            <input id="password" name="password" type="text" required minlength="8" autocomplete="off"
+                value="{{ old('password') }}"
+                class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-orangeone focus:border-orangeone block w-full px-3 py-2.5 font-mono tracking-wide"
+                placeholder="Ex: Formation2026!">
+            @error('password')
+              <p class="mt-2 text-sm text-red-700">{{ $message }}</p>
+            @enderror
         </div>
       </div>
     </fieldset>
@@ -296,6 +269,12 @@
           <p class="text-xs text-gray-500 bg-gray-50 border border-gray-100 rounded-lg px-3 py-2">
             Exemple d’en-tête: <code>prenom;nom;email</code> (ou séparateur virgule).
           </p>
+          <div class="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
+            <p class="text-xs font-semibold text-gray-700 mb-1">Exemple CSV (2 stagiaires)</p>
+            <pre class="text-xs text-gray-700 whitespace-pre-wrap">prenom;nom;email
+Camille;Martin;camille.martin@entreprise.fr
+Lucas;Bernard;lucas.bernard@entreprise.fr</pre>
+          </div>
 
           <input id="csv-file-create" type="file" accept=".csv,text/csv"
                  class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm">
@@ -779,21 +758,6 @@
       }
     }
   });
-
-  // Générateur de mot de passe (Nouveau)
-  window.generatePassword = function() {
-      const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%&*";
-      const length = 8;
-      let password = "";
-      for (let i = 0, n = chars.length; i < length; ++i) {
-          password += chars.charAt(Math.floor(Math.random() * n));
-      }
-      const pwdInput = document.getElementById('password');
-      if (pwdInput) {
-        pwdInput.value = password;
-        pwdInput.classList.remove('border-red-500'); // Retire l'erreur rouge si elle était là
-      }
-  }
 
   // Nettoyage avant soumission (supprime les lignes vides)
   form.addEventListener('submit', () => {

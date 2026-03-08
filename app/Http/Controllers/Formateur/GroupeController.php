@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Formateur;
 
 use App\Http\Controllers\Controller;
+use App\Mail\StagiaireGroupInvitation;
 use App\Models\Group;
 use App\Models\GroupModuleLecture;
 use App\Models\Module;
@@ -13,8 +14,8 @@ use App\Services\CodeGeneratorService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Illuminate\Database\QueryException;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -64,11 +65,14 @@ class GroupeController extends Controller
             'nom.unique' => 'Ce nom de groupe existe déjà. Merci de choisir un autre nom.',
         ]);
 
+        $temporaryPassword = (string) $request->password;
+
         try {
-            DB::transaction(function () use ($request): void {
+            DB::transaction(function () use ($request, $temporaryPassword): void {
                 $group = Group::create([
                     'name' => trim((string) $request->nom),
                     'description' => $request->description,
+                    'temporary_password' => $temporaryPassword,
                     'instructor_id' => auth()->id(),
                 ]);
 
@@ -93,13 +97,16 @@ class GroupeController extends Controller
                         }
                         $user->prenom = $user->prenom ?: ($s['prenom'] ?? null);
                         $user->name = $user->name ?: ($s['nom'] ?? null);
+                        if (blank($user->code_acces)) {
+                            $user->code_acces = CodeGeneratorService::generateUniqueAccessCode();
+                        }
                         $user->save();
                     } else {
                         $user = User::create([
                             'prenom' => $s['prenom'] ?? null,
                             'name' => $s['nom'] ?? null,
                             'email' => $email,
-                            'password' => Hash::make((string) $request->password),
+                            'password' => Hash::make($temporaryPassword),
                             'role' => 'stagiaire',
                             'formateur_id' => auth()->id(),
                             'status' => 1,
@@ -107,9 +114,21 @@ class GroupeController extends Controller
                         ]);
                     }
 
+                    $alreadyInGroup = DB::table('group_user')
+                        ->where('group_id', $group->id)
+                        ->where('user_id', $user->id)
+                        ->where('role_in_group', 'stagiaire')
+                        ->exists();
+
                     $group->students()->syncWithoutDetaching([
                         $user->id => ['role_in_group' => 'stagiaire'],
                     ]);
+
+                    if (! $alreadyInGroup) {
+                        DB::afterCommit(function () use ($group, $user): void {
+                            $this->sendInvitationEmailToStagiaire($group, $user);
+                        });
+                    }
                 }
 
                 $moduleIds = collect($request->input('modules', []))
@@ -176,6 +195,7 @@ class GroupeController extends Controller
                 Rule::unique('groups', 'name')->ignore($id),
             ],
             'description' => ['nullable', 'string', 'max:2000'],
+            'password' => ['required', 'string', 'min:8'],
             'modules' => ['required', 'array', 'min:1'],
             'modules.*' => [Rule::exists('modules', 'id')->where('status', 1)],
             'module_positions' => ['nullable', 'array'],
@@ -192,9 +212,12 @@ class GroupeController extends Controller
             ->with('students')
             ->firstOrFail();
 
+        $temporaryPassword = (string) $request->password;
+
         $group->update([
             'name' => $request->nom,
             'description' => $request->description,
+            'temporary_password' => $temporaryPassword,
         ]);
 
         $moduleIds = collect($request->input('modules', []))
@@ -253,13 +276,16 @@ class GroupeController extends Controller
                     }
                     $user->prenom = $user->prenom ?: ($s['prenom'] ?? null);
                     $user->name = $user->name ?: ($s['nom'] ?? null);
+                    if (blank($user->code_acces)) {
+                        $user->code_acces = CodeGeneratorService::generateUniqueAccessCode();
+                    }
                     $user->save();
                 } else {
                     $user = User::create([
                         'prenom' => $s['prenom'] ?? null,
                         'name' => $s['nom'] ?? null,
                         'email' => $email,
-                        'password' => Hash::make(Str::random(12)),
+                        'password' => Hash::make($temporaryPassword),
                         'role' => 'stagiaire',
                         'formateur_id' => auth()->id(),
                         'status' => 1,
@@ -267,15 +293,36 @@ class GroupeController extends Controller
                     ]);
                 }
 
+                $alreadyInGroup = DB::table('group_user')
+                    ->where('group_id', $group->id)
+                    ->where('user_id', $user->id)
+                    ->where('role_in_group', 'stagiaire')
+                    ->exists();
+
                 $group->students()->syncWithoutDetaching([
                     $user->id => ['role_in_group' => 'stagiaire'],
                 ]);
+
+                if (! $alreadyInGroup) {
+                    DB::afterCommit(function () use ($group, $user): void {
+                        $this->sendInvitationEmailToStagiaire($group, $user);
+                    });
+                }
             }
         }
 
         return redirect()
             ->route('formateur.groupes.index')
             ->with('success', 'Groupe modifié avec succès.');
+    }
+
+    private function sendInvitationEmailToStagiaire(Group $group, User $user): void
+    {
+        $loginUrl = route('stagiaire.code.form');
+
+        Mail::to($user->email)->send(
+            new StagiaireGroupInvitation($user, $group, $loginUrl)
+        );
     }
 
     /**

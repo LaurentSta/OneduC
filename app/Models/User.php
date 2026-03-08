@@ -7,10 +7,26 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class User extends Authenticatable
 {
     use HasFactory, Notifiable, SoftDeletes;
+
+    protected static function booted(): void
+    {
+        static::deleting(function (User $user): void {
+            if ($user->role === 'stagiaire') {
+                $user->cleanupRelatedStagiaireData();
+                return;
+            }
+
+            if ($user->role === 'formateur') {
+                $user->cleanupOwnedGroupsAndLinkedStagiaires();
+            }
+        });
+    }
 
     // ✅ Autorise tous les champs dans les requêtes mass assignable
     protected $guarded = [];
@@ -137,6 +153,109 @@ class User extends Authenticatable
     public function pilotageNotificationPreference()
     {
         return $this->hasOne(PilotNotificationPreference::class, 'user_id');
+    }
+
+    private function cleanupOwnedGroupsAndLinkedStagiaires(): void
+    {
+        $formateurId = (int) $this->id;
+
+        DB::transaction(function () use ($formateurId): void {
+            $candidateStagiaireIds = User::query()
+                ->where('role', 'stagiaire')
+                ->where(function ($query) use ($formateurId): void {
+                    $query->where('formateur_id', $formateurId)
+                        ->orWhereHas('groupesStagiaire', function ($groupQuery) use ($formateurId): void {
+                            $groupQuery->where('groups.instructor_id', $formateurId);
+                        });
+                })
+                ->pluck('id');
+
+            Group::query()
+                ->where('instructor_id', $formateurId)
+                ->delete();
+
+            foreach ($candidateStagiaireIds as $stagiaireId) {
+                $stagiaire = User::query()
+                    ->whereKey($stagiaireId)
+                    ->where('role', 'stagiaire')
+                    ->first();
+
+                if (! $stagiaire) {
+                    continue;
+                }
+
+                $otherGroupInstructorId = DB::table('group_user')
+                    ->join('groups', 'groups.id', '=', 'group_user.group_id')
+                    ->where('group_user.user_id', $stagiaire->id)
+                    ->where('group_user.role_in_group', 'stagiaire')
+                    ->where('groups.instructor_id', '<>', $formateurId)
+                    ->orderBy('groups.id')
+                    ->value('groups.instructor_id');
+
+                $hasAnotherDirectFormateur = ! empty($stagiaire->formateur_id)
+                    && (int) $stagiaire->formateur_id !== $formateurId;
+
+                if ($otherGroupInstructorId || $hasAnotherDirectFormateur) {
+                    if ((int) $stagiaire->formateur_id === $formateurId) {
+                        $stagiaire->formateur_id = $otherGroupInstructorId ?: null;
+                        $stagiaire->save();
+                    }
+
+                    continue;
+                }
+
+                $stagiaire->delete();
+            }
+        });
+    }
+
+    private function cleanupRelatedStagiaireData(): void
+    {
+        $stagiaireId = (int) $this->id;
+
+        $singleUserTables = [
+            'group_user',
+            'progressions',
+            'scorm_scores',
+            'scorm_results',
+            'scorm_interactions',
+            'scorm_evaluation_results',
+            'scorm_evaluation_scores',
+            'scorm_evaluation_interactions',
+            'quiz_attempts',
+            'lesson_feedbacks',
+            'video_segment_trackings',
+            'pilot_subscriptions',
+            'pilot_notification_preferences',
+            'word_cloud_entries',
+            'learning_objectives',
+            'sessions',
+            'activity_journal_entries',
+        ];
+
+        foreach ($singleUserTables as $table) {
+            if (! Schema::hasTable($table)) {
+                continue;
+            }
+
+            DB::table($table)
+                ->where('user_id', $stagiaireId)
+                ->delete();
+        }
+
+        if (Schema::hasTable('module_completion_notifications')) {
+            DB::table('module_completion_notifications')
+                ->where('stagiaire_id', $stagiaireId)
+                ->orWhere('recipient_id', $stagiaireId)
+                ->delete();
+        }
+
+        if (Schema::hasTable('notifications')) {
+            DB::table('notifications')
+                ->where('notifiable_type', self::class)
+                ->where('notifiable_id', $stagiaireId)
+                ->delete();
+        }
     }
 
 }

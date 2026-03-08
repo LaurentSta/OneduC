@@ -269,7 +269,7 @@ function GroupModuleFlow({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-2 md:flex-row md:items-end">
+      <div className="space-y-3">
         <div className="w-full">
           <label className="block text-sm">Ajouter un module</label>
           <select
@@ -294,9 +294,12 @@ function GroupModuleFlow({
           type="button"
           onClick={addModule}
           disabled={!newModuleId}
-          className="rounded border border-gray-300 px-4 py-2 disabled:opacity-50"
+          className="inline-flex items-center justify-center gap-2 rounded-lg border border-bleuone/20 bg-bleuone/10 px-4 py-2 text-sm font-bold text-bleuone transition hover:bg-bleuone hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
         >
-          Ajouter
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+          </svg>
+          Ajouter un module
         </button>
       </div>
 
