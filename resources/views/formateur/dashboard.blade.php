@@ -33,7 +33,7 @@
   {{-- SIDEBAR FIXE A GAUCHE --}}
   @include('formateur.body_dashboard.sidebar')
   {{-- CONTENU PRINCIPAL --}}
-  <main class="flex-1 p-6 lg:ml-64" style="padding-top: calc(var(--app-header-h, 86px) + 12px);">
+  <main class="flex-1 p-6 lg:ml-[12.5rem]" style="padding-top: calc(var(--app-header-h, 86px) + 12px);">
     @yield('formateur')
   </main>
 

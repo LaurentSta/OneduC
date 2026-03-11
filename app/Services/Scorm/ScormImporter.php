@@ -7,6 +7,7 @@ use App\Models\ScormPackageVersion;
 use DOMDocument;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
 use RuntimeException;
 use ZipArchive;
 
@@ -20,6 +21,10 @@ class ScormImporter
         $basePath = public_path($targetPath);
         File::ensureDirectoryExists($basePath);
         $importedAt = now();
+        $releaseFolder = 'release_' . $importedAt->format('Ymd_His_u') . '_' . Str::lower(Str::random(6));
+        $extractPath = $basePath . DIRECTORY_SEPARATOR . $releaseFolder;
+        File::ensureDirectoryExists($extractPath);
+
         $realZipPath = $zipFile->getRealPath();
         if (!$realZipPath) {
             throw new RuntimeException('Fichier ZIP introuvable après upload.');
@@ -32,17 +37,17 @@ class ScormImporter
         }
 
         try {
-            $this->safeExtract($zip, $basePath);
+            $this->safeExtract($zip, $extractPath);
         } finally {
             $zip->close();
         }
 
-        $relativeIndex = $this->findIndexPath($basePath);
+        $relativeIndex = $this->findIndexPath($extractPath);
         if (!$relativeIndex) {
             throw new RuntimeException('Index SCORM introuvable.');
         }
 
-        $fullIndexPath = $basePath . DIRECTORY_SEPARATOR . $relativeIndex;
+        $fullIndexPath = $extractPath . DIRECTORY_SEPARATOR . $relativeIndex;
         $this->injectApiScript($fullIndexPath);
 
         // Package (slug stable = nom du dossier)
@@ -54,7 +59,7 @@ class ScormImporter
         );
 
         // Version : vous voulez "écraser" => on force une version unique (1)
-        $indexPath = $targetPath . '/' . $relativeIndex;
+        $indexPath = $targetPath . '/' . $releaseFolder . '/' . $relativeIndex;
 
         $version = ScormPackageVersion::updateOrCreate(
             [

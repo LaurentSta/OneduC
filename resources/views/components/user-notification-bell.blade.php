@@ -13,7 +13,7 @@
 <div x-data="{ open: false }" class="relative" @click.outside="open = false" @keydown.escape.window="open = false">
   <button type="button"
           @click="open = !open"
-          class="text-gray-600 hover:text-orangeone relative"
+          class="text-[#004461] hover:text-[#004461] relative pt-1"
           aria-label="Notifications">
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-[34px] h-[34px]">
       <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.099A3.001 3.001 0 0112 18a3.001 3.001 0 01-2.857-0.901M6 8c0-3.314 2.239-6 5-6s5 2.686 5 6c0 5.25 2 6 2 6H4s2-0.75 2-6z" />

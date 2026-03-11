@@ -19,10 +19,9 @@
         </button>
 
         <!-- Logo juste à droite du burger -->
-        <a href="{{ url('/') }}" class="inline-flex items-center gap-2">
-        <img src="{{ asset('backend/assets/img/logos/LOGOOneducSVG.svg') }}" alt="Logo Oneduc" class="h-10">
-        <span class="font-bold text-lg text-gray-800">Oneduc.fr</span>
-    </a>
+        <a href="{{ url('/') }}" class="inline-flex items-center">
+          <img src="{{ asset('frontend/assets/img/front-pages/branding/LogoOneducPositionG.svg') }}" alt="Logo Oneduc" class="h-10 w-auto">
+        </a>
       </div>
 
       <div class="flex items-center gap-4">

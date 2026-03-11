@@ -113,6 +113,8 @@
                         <th class="px-3 py-2 border-r border-gray-300">Énoncé de la question</th>
                         <th class="px-3 py-2 border-r border-gray-300 w-32 text-center">Type</th>
                         <th class="px-3 py-2 border-r border-gray-300 w-20 text-center">Options</th>
+                        <th class="px-3 py-2 border-r border-gray-300 w-20 text-center">Image</th>
+                        <th class="px-3 py-2 border-r border-gray-300 w-20 text-center">Son</th>
                         <th class="px-3 py-2 border-r border-gray-300 w-20 text-center">État</th>
                         <th class="px-3 py-2 text-right w-40">Actions</th>
                     </tr>
@@ -158,6 +160,32 @@
                                 {{ $q->type === 'cloze' ? '—' : (int) ($q->options_count ?? 0) }}
                             </td>
 
+                            {{-- Image --}}
+                            <td class="px-3 py-1.5 border-r border-gray-200 text-center">
+                                @if(!empty($q->image_path))
+                                    <span class="inline-flex items-center justify-center px-2 py-0.5 rounded border bg-green-100 text-green-700 border-green-300 text-[9px] font-bold uppercase">
+                                        Oui
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center justify-center px-2 py-0.5 rounded border bg-red-100 text-red-700 border-red-300 text-[9px] font-bold uppercase">
+                                        Non
+                                    </span>
+                                @endif
+                            </td>
+
+                            {{-- Son --}}
+                            <td class="px-3 py-1.5 border-r border-gray-200 text-center">
+                                @if(!empty($q->audio_path))
+                                    <span class="inline-flex items-center justify-center px-2 py-0.5 rounded border bg-green-100 text-green-700 border-green-300 text-[9px] font-bold uppercase">
+                                        Oui
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center justify-center px-2 py-0.5 rounded border bg-red-100 text-red-700 border-red-300 text-[9px] font-bold uppercase">
+                                        Non
+                                    </span>
+                                @endif
+                            </td>
+
                             {{-- État --}}
                             <td class="px-3 py-1.5 border-r border-gray-200 text-center">
                                 @if($q->is_active)
@@ -197,7 +225,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-4 py-8 text-center text-gray-400 italic bg-gray-50 text-xs border-b border-gray-200">
+                            <td colspan="8" class="px-4 py-8 text-center text-gray-400 italic bg-gray-50 text-xs border-b border-gray-200">
                                 <div class="flex flex-col items-center gap-2">
                                     <i class="ti ti-folder-off text-2xl text-gray-300"></i>
                                     <span>Aucune question enregistrée pour le moment.</span>

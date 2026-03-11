@@ -2,7 +2,7 @@
 <aside
   id="formateur-sidebar"
   :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
-  class="fixed left-0 z-40 w-64 lg:translate-x-0 transition-transform duration-300 flex flex-col bg-[#004461] text-white shadow-lg"
+  class="fixed left-0 z-40 w-[12.5rem] lg:translate-x-0 transition-transform duration-300 flex flex-col bg-[#004461] text-white shadow-lg"
   style="top: var(--app-header-h, 86px); height: calc(100vh - var(--app-header-h, 86px));"
   aria-label="Navigation formateur">
 
@@ -50,4 +50,3 @@
             <a href="{{ route('formateur.documentation') }}" class="block px-4 py-1 hover:text-orangeone">Documentation</a>
         </div>
     </aside>
-
