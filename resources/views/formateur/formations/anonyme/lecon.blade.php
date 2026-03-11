@@ -133,7 +133,7 @@
     </script>
 
     {{-- Bloc iframe robuste (identique stagiaire) --}}
-    <div class="relative w-full bg-gray-100" style="height: calc(100vh - 64px);">
+    <div class="relative w-full bg-gray-100" style="height: calc(100vh - var(--app-header-h, 86px));">
       @if ($isSlidesMode && !empty($slideImages))
         <div
           x-data="{

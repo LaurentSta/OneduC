@@ -82,7 +82,7 @@
 <div x-data="{ 
     mode: 'formateur', // 'stagiaire' ou 'formateur'
     activeTab: 'quiz' 
-}" class="flex flex-col h-[calc(100vh-64px)] bg-white overflow-hidden">
+}" class="flex flex-col h-[calc(100vh-var(--app-header-h,86px))] bg-white overflow-hidden">
 
   {{-- BARRE D'OUTILS FORMATEUR (Cockpit) --}}
   <div class="bg-gray-800 text-white px-4 py-3 flex items-center justify-between shadow-md z-30 shrink-0 border-b border-gray-700">

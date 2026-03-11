@@ -2,7 +2,8 @@
 <aside
   x-cloak
   x-show="sidebarOpen"
-  class="w-80 flex-shrink-0 bg-white border-r border-gray-100 flex flex-col h-[calc(100vh-64px)] fixed md:sticky top-16 z-20"
+  class="w-80 flex-shrink-0 bg-white border-r border-gray-100 flex flex-col fixed md:sticky z-20"
+  style="top: var(--app-header-h, 86px); height: calc(100vh - var(--app-header-h, 86px));"
   role="navigation"
   aria-label="Plan du module (formateur)"
 >

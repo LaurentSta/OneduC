@@ -1,4 +1,4 @@
-<header class="w-full bg-white shadow px-6 py-4">
+<header id="app-header" class="w-full bg-white shadow px-6 py-4">
   <div class="flex items-center gap-4 justify-between">
     <!-- Gauche : bouton + titre -->
     <div class="flex items-center gap-3">

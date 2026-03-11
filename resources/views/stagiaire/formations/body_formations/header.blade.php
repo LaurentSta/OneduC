@@ -20,7 +20,7 @@
         : 0;
 @endphp
 
-<header class="w-full bg-white/80 backdrop-blur-md sticky top-0 z-30 border-b border-gray-100 px-6 py-3">
+<header id="app-header" class="w-full bg-white/80 backdrop-blur-md sticky top-0 z-30 border-b border-gray-100 px-6 py-3">
   <div class="max-w-screen-2xl mx-auto flex items-center justify-between gap-8">
 
     {{-- GAUCHE : Logo & Menu --}}

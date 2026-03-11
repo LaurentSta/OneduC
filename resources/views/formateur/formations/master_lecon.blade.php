@@ -15,6 +15,11 @@
   {{-- Video.js (utilisé dans chapitre.blade.php) --}}
   <link href="https://vjs.zencdn.net/8.9.0/video-js.css" rel="stylesheet" />
   <script src="https://vjs.zencdn.net/8.9.0/video.min.js"></script>
+  <style>
+    [x-cloak] {
+      display: none !important;
+    }
+  </style>
 </head>
 <body class="bg-white text-gray-900">
   <div
@@ -30,7 +35,7 @@
     {{-- HEADER formations formateur --}}
     @include('formateur.formations.body_formations.header')
 
-    <div class="mx-auto px-4 md:px-6 py-4">
+    <div class="mx-auto px-4 md:px-6 py-0">
       <div
         class="grid gap-6"
         :class="sidebarOpen
@@ -77,5 +82,16 @@
       </button>
     </div>
   </div>
+  <script>
+    function syncAppHeaderOffset() {
+      const header = document.getElementById('app-header') || document.querySelector('header');
+      const height = header ? header.offsetHeight : 86;
+      document.documentElement.style.setProperty('--app-header-h', `${height}px`);
+    }
+
+    document.addEventListener('DOMContentLoaded', syncAppHeaderOffset);
+    window.addEventListener('load', syncAppHeaderOffset);
+    window.addEventListener('resize', syncAppHeaderOffset);
+  </script>
 </body>
 </html>

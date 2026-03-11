@@ -11,6 +11,9 @@
     <script src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.13.5/dist/cdn.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.5/dist/cdn.min.js" defer></script>
     <style>
+    [x-cloak] {
+      display: none !important;
+    }
     /* ================================
     Bouton d’alerte pédagogique
     ================================ */
@@ -59,7 +62,7 @@
         @endif
         {{-- Bouton Confort+ sous le header --}}
 <div id="access-toolbar-anchor" class="access-anchor" aria-label="Outils d’accessibilité"></div>
-        <div class="mx-auto px-2 md:px-2 py-2">
+        <div class="mx-auto px-2 md:px-2 py-0">
             <div
               class="grid gap-6"
               :class="sidebarOpen
@@ -124,6 +127,12 @@
 {{-- ... reste de votre code master ... --}}
 
     <script>
+    function syncAppHeaderOffset() {
+        const header = document.getElementById('app-header') || document.querySelector('header');
+        const height = header ? header.offsetHeight : 86;
+        document.documentElement.style.setProperty('--app-header-h', `${height}px`);
+    }
+
     // Fonction pour calculer et appliquer le centrage sur la zone de contenu
     function ajusterPositionBouton() {
         const sidebar = document.getElementById('module-sidebar-wrapper');
@@ -149,10 +158,13 @@
     });
 
     // Ajustement lors du redimensionnement de la fenêtre ou du chargement
+    window.addEventListener('resize', syncAppHeaderOffset);
     window.addEventListener('resize', ajusterPositionBouton);
+    window.addEventListener('load', syncAppHeaderOffset);
     window.addEventListener('load', ajusterPositionBouton);
 
     // Exécution immédiate au cas où
+    document.addEventListener('DOMContentLoaded', syncAppHeaderOffset);
     document.addEventListener('DOMContentLoaded', ajusterPositionBouton);
     </script>
 </body>
