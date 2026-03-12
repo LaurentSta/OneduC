@@ -518,9 +518,10 @@ class FormateurController extends Controller
     /* -------------------------------------------------------------------------
      | Mes modules (index)
      |-------------------------------------------------------------------------- */
-    public function mesModules()
+    public function mesModules(Request $request)
     {
         $formateurId = auth()->id();
+        $search = trim((string) $request->query('search', ''));
 
         $modules = Module::query()
             ->where(function ($q) use ($formateurId) {
@@ -528,6 +529,12 @@ class FormateurController extends Controller
                     $g->where('instructor_id', $formateurId);
                 })
                 ->orWhere('formateur_id', $formateurId);
+            })
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('module_title', 'like', "%{$search}%")
+                      ->orWhere('module_name', 'like', "%{$search}%");
+                });
             })
             ->with([
                 'sections' => function ($q) {
@@ -541,9 +548,10 @@ class FormateurController extends Controller
                 },
             ])
             ->orderByDesc('created_at')
-            ->get();
+            ->paginate(15)
+            ->withQueryString();
 
-        return view('formateur.formations.index', compact('modules'));
+        return view('formateur.formations.index', compact('modules', 'search'));
     }
 
     /* -------------------------------------------------------------------------

@@ -46,9 +46,14 @@ class ProgressionController extends Controller
 
             $groupes = Group::query()
                 ->where('instructor_id', $formateurId)
+                ->when($search !== '', function ($query) use ($search) {
+                    $query->where('name', 'like', "%{$search}%");
+                })
                 ->orderBy('name')
-                ->get(['id', 'name'])
-                ->map(function ($g) use ($formateurId) {
+                ->paginate(15, ['id', 'name'])
+                ->withQueryString();
+
+            $groupes->getCollection()->transform(function ($g) use ($formateurId) {
 
                     // Récupérer les stagiaires
                     $stagiaires = User::query()
@@ -111,7 +116,8 @@ class ProgressionController extends Controller
             return view('formateur.progressions.groupes', [
                 'groupes'      => $groupes,
                 'groupesList'  => $groupesList,
-                'totalGroupes' => $groupes->count(),
+                'totalGroupes' => $groupes->total(),
+                'search'       => $search,
             ]);
         }
         /*
