@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Models\ScormPackage;
 use App\Models\ScormPackageVersion;
 use Illuminate\Support\Str;
@@ -120,6 +121,13 @@ class ModuleLecture extends Model
     {
         return $this->hasMany(LectureObjective::class, 'lecture_id')
                     ->orderBy('position');
+    }
+
+    public function lessonResources(): HasMany
+    {
+        return $this->hasMany(LessonResource::class, 'lecture_id')
+            ->orderBy('position')
+            ->orderByDesc('id');
     }
 
     // J'AI SUPPRIMÉ LES FONCTIONS DE CALCUL ICI CAR ELLES N'ONT RIEN A FAIRE DANS LA LEÇON

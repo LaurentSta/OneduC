@@ -178,9 +178,6 @@
             alt="{{ $question->image_alt ?? '' }}"
             class="w-full max-h-[600px] object-contain rounded-[20px] border border-gray-200"
           />
-          @if (!empty($question->image_alt))
-            <p class="mt-3 text-xs text-gray-500">{{ $question->image_alt }}</p>
-          @endif
         </aside>
       @endif
 

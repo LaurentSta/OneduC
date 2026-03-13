@@ -187,7 +187,23 @@
   </div>
 
   {{-- Pied de page --}}
-  <div class="p-4 bg-white border-t border-gray-100">
+  <div class="p-4 bg-white border-t border-gray-100 space-y-3">
+    @if(isset($selectedLecture) && ($lessonResources ?? collect())->isNotEmpty())
+      <button
+        type="button"
+        @click="resourcesPanelOpen = !resourcesPanelOpen"
+        class="flex w-full items-center justify-between gap-3 rounded-xl border border-gray-200 bg-gray-50 px-3 py-3 text-left text-gray-600 transition hover:border-gray-300 hover:bg-gray-100"
+      >
+        <div class="min-w-0">
+          <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-400">Ressources</p>
+          <p class="mt-1 text-sm font-semibold text-gray-700">Documents ({{ $lessonResources->count() }})</p>
+        </div>
+        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500">
+          <i class="ti" :class="resourcesPanelOpen ? 'ti-x' : 'ti-paperclip'"></i>
+        </span>
+      </button>
+    @endif
+
     <a
       href="mailto:{{ $formateur->email ?? 'support@oneduc.fr' }}"
       class="flex items-center gap-3 p-4 rounded-xl bg-bleuone text-white hover:opacity-95 transition-opacity group shadow-md"

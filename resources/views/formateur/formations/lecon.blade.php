@@ -72,6 +72,18 @@
             ], $contextQuery));
         }
     }
+
+    $formatBytes = static function (?int $bytes): string {
+        $bytes = max(0, (int) $bytes);
+        if ($bytes >= 1048576) {
+            return number_format($bytes / 1048576, 1, ',', ' ') . ' Mo';
+        }
+        if ($bytes >= 1024) {
+            return number_format($bytes / 1024, 1, ',', ' ') . ' Ko';
+        }
+
+        return $bytes . ' o';
+    };
 @endphp
 
 @if ($lectureId)
@@ -79,9 +91,20 @@
 @endif
 
 {{-- Wrapper Principal avec Alpine pour gérer l'état Inspecteur --}}
-<div x-data="{ 
-    mode: 'formateur', // 'stagiaire' ou 'formateur'
-    activeTab: 'quiz' 
+<div x-data="{
+    mode: 'formateur',
+    activeTab: 'quiz',
+    tabStorageKey: @js('formateur-lesson-tab-' . ($lectureId ?? 'default')),
+    init() {
+        const savedTab = window.localStorage.getItem(this.tabStorageKey);
+        if (savedTab === 'quiz' || savedTab === 'infos') {
+            this.activeTab = savedTab;
+        }
+
+        this.$watch('activeTab', value => {
+            window.localStorage.setItem(this.tabStorageKey, value);
+        });
+    }
 }" class="flex flex-col h-[calc(100vh-var(--app-header-h,86px))] bg-white overflow-hidden">
 
   {{-- BARRE D'OUTILS FORMATEUR (Cockpit) --}}
@@ -253,80 +276,60 @@
              class="w-1/3 bg-white border-l border-gray-200 flex flex-col shadow-xl z-20 absolute right-0 top-0 bottom-0 lg:relative lg:translate-x-0">
           
           <div class="flex-1 overflow-y-auto custom-scrollbar p-6">
-              {{-- ... début de la zone sidebar ... --}}
+              @php
+                  $totalInBank = isset($quizData) ? $quizData->count() : 0;
+                  $currentCount = $lecture->quiz_questions_per_attempt ?? 0;
+                  $percent = $totalInBank > 0 ? ($currentCount / $totalInBank) * 100 : 0;
+              @endphp
 
-<div class="flex-1 overflow-y-auto custom-scrollbar p-6">
-
-    {{-- Onglet QUIZ (Vue rayons X) --}}
-    <div x-show="activeTab === 'quiz'">
-
-        {{-- ======================================================== --}}
-        {{-- 🎛️ NOUVEAU BLOC : PARAMÉTRAGE DU TIRAGE --}}
-        {{-- ======================================================== --}}
-        @php
-            $totalInBank = isset($quizData) ? $quizData->count() : 0;
-            $currentCount = $lecture->quiz_questions_per_attempt ?? 0;
-            // Sécurité visuelle pour éviter division par zéro
-            $percent = $totalInBank > 0 ? ($currentCount / $totalInBank) * 100 : 0;
-        @endphp
-
-        <div class="mb-6 bg-blue-50 rounded-xl p-4 border border-blue-100 shadow-sm">
-            <h4 class="font-bold text-bleuone text-xs uppercase mb-3 flex items-center justify-between">
-                <span>Paramètres du tirage</span>
-                <span class="bg-white text-bleuone px-2 py-0.5 rounded text-[10px] border border-blue-100">
-                    {{ $currentCount }} / {{ $totalInBank }} utilisés
-                </span>
-            </h4>
-
-            <form action="{{ route('formateur.lecture.update_quiz_count', $lecture->id) }}" method="POST" class="space-y-3">
-                @csrf
-                
-                <div>
-                    <label for="q_count" class="block text-xs text-gray-500 mb-1">
-                        Nombre de questions posées au stagiaire :
-                    </label>
-                    <div class="flex gap-2">
-                        <input type="number" 
-                               id="q_count" 
-                               name="questions_count" 
-                               value="{{ $currentCount }}" 
-                               min="1" 
-                               max="{{ $totalInBank }}"
-                               class="w-full text-sm font-bold text-center border-gray-300 rounded-lg focus:ring-orangeone focus:border-orangeone"
-                        >
-                        <button type="submit" class="bg-bleuone hover:bg-bleuone/90 text-white px-3 py-2 rounded-lg text-xs font-bold transition-colors">
-                            OK
-                        </button>
-                    </div>
-                </div>
-
-                {{-- Jauge visuelle --}}
-                <div class="w-full bg-blue-200 rounded-full h-1.5 dark:bg-gray-700 mt-2 overflow-hidden">
-                    <div class="bg-orangeone h-1.5 rounded-full transition-all duration-500" style="width: {{ $percent }}%"></div>
-                </div>
-                <p class="text-[10px] text-gray-400 italic text-center">
-                    Le système tirera {{ $currentCount }} questions au hasard parmi les {{ $totalInBank }} disponibles.
-                </p>
-            </form>
-        </div>
-        {{-- ======================================================== --}}
-
-
-        <div class="mb-6 pb-4 border-b border-gray-100">
-            <h3 class="font-raleway text-bleuone font-bold text-lg flex items-center gap-2">
-            {{-- ... La suite de ton code existant (Corrigé du Quiz) ... --}}
-              {{-- Onglet QUIZ (Vue rayons X) --}}
               <div x-show="activeTab === 'quiz'">
-                  <div class="mb-6 pb-4 border-b border-gray-100">
-                    <h3 class="font-raleway text-bleuone font-bold text-lg flex items-center gap-2">
-                        <svg class="w-5 h-5 text-orangeone" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                        Corrigé du Quiz
-                    </h3>
-                    <p class="text-xs text-gray-500 mt-1">
-                        Consultez les réponses sans avoir à lancer le quiz.
-                    </p>
+                  <div class="mb-6 bg-blue-50 rounded-xl p-4 border border-blue-100 shadow-sm">
+                      <h4 class="font-bold text-bleuone text-xs uppercase mb-3 flex items-center justify-between">
+                          <span>Paramètres du tirage</span>
+                          <span class="bg-white text-bleuone px-2 py-0.5 rounded text-[10px] border border-blue-100">
+                              {{ $currentCount }} / {{ $totalInBank }} utilisés
+                          </span>
+                      </h4>
+
+                      <form action="{{ route('formateur.lecture.update_quiz_count', $lecture->id) }}" method="POST" class="space-y-3">
+                          @csrf
+                          <div>
+                              <label for="q_count" class="block text-xs text-gray-500 mb-1">
+                                  Nombre de questions posées au stagiaire :
+                              </label>
+                              <div class="flex gap-2">
+                                  <input type="number"
+                                         id="q_count"
+                                         name="questions_count"
+                                         value="{{ $currentCount }}"
+                                         min="1"
+                                         max="{{ $totalInBank }}"
+                                         class="w-full text-sm font-bold text-center border-gray-300 rounded-lg focus:ring-orangeone focus:border-orangeone">
+                                  <button type="submit" class="bg-bleuone hover:bg-bleuone/90 text-white px-3 py-2 rounded-lg text-xs font-bold transition-colors">
+                                      OK
+                                  </button>
+                              </div>
+                          </div>
+
+                          <div class="w-full bg-blue-200 rounded-full h-1.5 dark:bg-gray-700 mt-2 overflow-hidden">
+                              <div class="bg-orangeone h-1.5 rounded-full transition-all duration-500" style="width: {{ $percent }}%"></div>
+                          </div>
+                          <p class="text-[10px] text-gray-400 italic text-center">
+                              Le système tirera {{ $currentCount }} questions au hasard parmi les {{ $totalInBank }} disponibles.
+                          </p>
+                      </form>
                   </div>
-                  
+
+                  <div class="mb-6 pb-4 border-b border-gray-100">
+                      <h3 class="font-raleway text-bleuone font-bold text-lg flex items-center gap-2">
+                          <svg class="w-5 h-5 text-orangeone" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                          Corrigé du Quiz
+                      </h3>
+                      <p class="text-xs text-gray-500 mt-1">
+                          Consultez les réponses sans avoir à lancer le quiz.
+                      </p>
+                  </div>
+
                   @if(isset($quizData) && $quizData->count() > 0)
                       <div class="space-y-6">
                           @foreach($quizData as $index => $q)
@@ -338,17 +341,17 @@
                                       @foreach($q->answers as $ans)
                                           <li class="text-xs flex items-start gap-2 p-2 rounded-lg {{ $ans->is_correct ? 'bg-green-50 border border-green-100 text-green-800' : 'text-gray-500' }}">
                                               <span class="mt-0.5 shrink-0">
-                                                  @if($ans->is_correct) 
-                                                    <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
-                                                  @else 
-                                                    <span class="inline-block w-4 h-4 border border-gray-300 rounded-full"></span>
+                                                  @if($ans->is_correct)
+                                                      <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                                                  @else
+                                                      <span class="inline-block w-4 h-4 border border-gray-300 rounded-full"></span>
                                                   @endif
                                               </span>
                                               <div class="flex-1">
                                                   <span class="{{ $ans->is_correct ? 'font-bold' : '' }}">{{ $ans->option_text }}</span>
                                                   @if($ans->feedback)
                                                       <div class="mt-1 text-[11px] text-gray-500 italic border-l-2 border-gray-300 pl-2">
-                                                        💡 {{ $ans->feedback }}
+                                                          💡 {{ $ans->feedback }}
                                                       </div>
                                                   @endif
                                               </div>
@@ -360,41 +363,179 @@
                       </div>
                   @else
                       <div class="text-center py-10 bg-gray-50 rounded-xl border border-dashed border-gray-300">
-                        <p class="text-gray-500 text-sm font-medium">Aucun quiz configuré pour cette leçon.</p>
-                        <p class="text-xs text-gray-400 mt-1">Activez l'option "Quiz" dans l'édition du module.</p>
+                          <p class="text-gray-500 text-sm font-medium">Aucun quiz configuré pour cette leçon.</p>
+                          <p class="text-xs text-gray-400 mt-1">Activez l'option "Quiz" dans l'édition du module.</p>
                       </div>
                   @endif
               </div>
 
-              {{-- Onglet INFOS --}}
               <div x-show="activeTab === 'infos'" style="display: none;">
-                  <h3 class="font-raleway text-bleuone font-bold text-lg mb-4">Méta-données & Sources</h3>
+                  <h3 class="font-raleway text-bleuone font-bold text-lg mb-4">Fichiers, ressources & infos</h3>
                   
                   <div class="space-y-4">
-                    {{-- Téléchargements --}}
+                    <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+                        <div class="flex items-start justify-between gap-3 mb-4">
+                            <div>
+                                <h4 class="text-xs font-bold text-bleuone uppercase">Ajouter une ressource stagiaire</h4>
+                                <p class="text-xs text-gray-500 mt-1">
+                                    Images, PDF, Word, Excel, PowerPoint, texte ou CSV. Limite 50 Mo.
+                                </p>
+                            </div>
+                            <span class="inline-flex items-center rounded-full bg-orange-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-orangeone">
+                                {{ $lessonResources->count() }} fichier{{ $lessonResources->count() > 1 ? 's' : '' }}
+                            </span>
+                        </div>
+
+                        <form action="{{ route('formateur.formations.lesson.resources.store', ['module' => $module->id, 'section' => $section->id, 'lecture' => $lecture->id]) }}"
+                              method="POST"
+                              enctype="multipart/form-data"
+                              class="space-y-3">
+                            @csrf
+                            @if($errors->has('title') || $errors->has('resource_file'))
+                                <div class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+                                    @error('title')<div>{{ $message }}</div>@enderror
+                                    @error('resource_file')<div>{{ $message }}</div>@enderror
+                                </div>
+                            @endif
+                            <div>
+                                <label for="resource_title" class="block text-xs font-semibold text-gray-600 mb-1">Titre</label>
+                                <input
+                                    id="resource_title"
+                                    type="text"
+                                    name="title"
+                                    maxlength="255"
+                                    placeholder="Ex: Fiche pratique de la leçon"
+                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orangeone focus:ring-orangeone"
+                                >
+                            </div>
+                            <div>
+                                <label for="resource_file" class="block text-xs font-semibold text-gray-600 mb-1">Fichier</label>
+                                <input
+                                    id="resource_file"
+                                    type="file"
+                                    name="resource_file"
+                                    accept=".jpg,.jpeg,.png,.gif,.webp,.avif,.pdf,.doc,.docx,.odt,.txt,.rtf,.xls,.xlsx,.ods,.ppt,.pptx,.odp,.csv"
+                                    class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 file:mr-3 file:rounded-md file:border-0 file:bg-orangeone file:px-3 file:py-2 file:text-xs file:font-bold file:text-white hover:file:bg-orangeone-hover"
+                                    required
+                                >
+                            </div>
+                            <label class="flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-700">
+                                <input type="hidden" name="is_visible_to_stagiaire" value="0">
+                                <input type="checkbox" name="is_visible_to_stagiaire" value="1" class="rounded border-gray-300 text-orangeone focus:ring-orangeone">
+                                Afficher immédiatement cette ressource aux stagiaires
+                            </label>
+                            <button type="submit" class="inline-flex items-center justify-center rounded-lg bg-orangeone px-4 py-2 text-xs font-bold uppercase text-white transition hover:bg-orangeone-hover">
+                                Ajouter la ressource
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+                        <div class="flex items-center justify-between gap-3 mb-3">
+                            <div>
+                                <h4 class="text-xs font-bold text-bleuone uppercase">Ressources attachées</h4>
+                                <p class="text-xs text-gray-500 mt-1">Chaque fichier peut être rendu visible ou masqué pour les stagiaires.</p>
+                            </div>
+                        </div>
+
+                        <div class="space-y-3">
+                            @forelse($lessonResources as $resource)
+                                @php
+                                    $resourceUrl = $resource->public_url;
+                                    $resourceExt = strtoupper($resource->extension ?: 'FILE');
+                                @endphp
+                                <div class="rounded-xl border border-gray-200 bg-gray-50 p-3">
+                                    <div class="flex items-start gap-3">
+                                        @if($resource->is_image)
+                                            <a href="{{ $resourceUrl }}" target="_blank" class="shrink-0">
+                                                <img src="{{ $resourceUrl }}" alt="{{ $resource->title }}" class="h-14 w-14 rounded-lg border border-gray-200 object-cover bg-white">
+                                            </a>
+                                        @else
+                                            <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white text-xs font-black text-bleuone">
+                                                {{ $resourceExt }}
+                                            </div>
+                                        @endif
+
+                                        <div class="min-w-0 flex-1">
+                                            <div class="flex flex-wrap items-center gap-2">
+                                                <p class="truncate text-sm font-bold text-gray-800">{{ $resource->title }}</p>
+                                                <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase {{ $resource->is_visible_to_stagiaire ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600' }}">
+                                                    {{ $resource->is_visible_to_stagiaire ? 'Visible stagiaire' : 'Masquée stagiaire' }}
+                                                </span>
+                                            </div>
+                                            <p class="mt-1 truncate text-xs text-gray-500">{{ $resource->original_name }}</p>
+                                            <div class="mt-1 flex items-center gap-1 text-[11px] text-gray-400">
+                                                <span class="shrink-0">{{ $formatBytes($resource->file_size) }}</span>
+                                                @if($resource->mime_type)
+                                                    <span class="shrink-0">•</span>
+                                                    <span class="truncate max-w-[180px]" title="{{ $resource->mime_type }}">{{ $resource->mime_type }}</span>
+                                                @endif
+                                            </div>
+
+                                            <div class="mt-3 flex flex-wrap items-center gap-2">
+                                                <a href="{{ $resourceUrl }}" target="_blank" class="inline-flex items-center rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-[11px] font-bold text-blue-700 transition hover:bg-blue-100">
+                                                    Ouvrir
+                                                </a>
+                                                <a href="{{ $resourceUrl }}" download="{{ $resource->original_name }}" class="inline-flex items-center rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-[11px] font-bold text-gray-700 transition hover:bg-gray-100">
+                                                    Télécharger
+                                                </a>
+
+                                                <form action="{{ route('formateur.formations.lesson.resources.visibility', ['module' => $module->id, 'section' => $section->id, 'lecture' => $lecture->id, 'resource' => $resource->id]) }}"
+                                                      method="POST"
+                                                      class="inline-flex">
+                                                    @csrf
+                                                    <input type="hidden" name="is_visible_to_stagiaire" value="{{ $resource->is_visible_to_stagiaire ? 0 : 1 }}">
+                                                    <button type="submit" class="inline-flex items-center rounded-lg border px-3 py-1.5 text-[11px] font-bold transition {{ $resource->is_visible_to_stagiaire ? 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100' : 'border-green-200 bg-green-50 text-green-700 hover:bg-green-100' }}">
+                                                        {{ $resource->is_visible_to_stagiaire ? 'Masquer côté stagiaire' : 'Afficher côté stagiaire' }}
+                                                    </button>
+                                                </form>
+
+                                                <form action="{{ route('formateur.formations.lesson.resources.destroy', ['module' => $module->id, 'section' => $section->id, 'lecture' => $lecture->id, 'resource' => $resource->id]) }}"
+                                                      method="POST"
+                                                      onsubmit="return confirm('Supprimer cette ressource ?');"
+                                                      class="inline-flex">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="inline-flex items-center rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-[11px] font-bold text-red-700 transition hover:bg-red-100">
+                                                        Supprimer
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            @empty
+                                <div class="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-center">
+                                    <p class="text-sm font-medium text-gray-500">Aucune ressource attachée à cette leçon.</p>
+                                    <p class="mt-1 text-xs text-gray-400">Ajoutez un fichier ci-dessus, puis choisissez s’il doit être visible pour les stagiaires.</p>
+                                </div>
+                            @endforelse
+                        </div>
+                    </div>
+
                     <div class="bg-blue-50/50 p-4 rounded-xl border border-blue-100">
                         <h4 class="text-xs font-bold text-bleuone uppercase mb-3 flex items-center gap-2">
                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                            Fichiers sources
+                            Support principal de la leçon
                         </h4>
                         <ul class="text-sm space-y-3">
-                             @if($lecture->video_url)
+                             @if(!empty($lecture->slides_source_path))
                                 <li>
-                                    <a href="{{ $lecture->video_url }}" target="_blank" class="text-gray-700 hover:text-orangeone hover:underline flex items-center gap-2 group">
-                                        <span class="p-1 bg-white rounded border border-gray-200 group-hover:border-orangeone transition-colors">MP4</span>
-                                        Télécharger la vidéo source
+                                    <span class="text-gray-700 flex items-center gap-2">
+                                        <span class="p-1 bg-white rounded border border-gray-200">SRC</span>
+                                        Source slides importée
+                                    </span>
+                                </li>
+                             @endif
+                             @if($lecture->scorm_asset_url)
+                                <li>
+                                    <a href="{{ $lecture->scorm_asset_url }}" target="_blank" class="text-gray-700 hover:text-orangeone hover:underline flex items-center gap-2 group">
+                                        <span class="p-1 bg-white rounded border border-gray-200 group-hover:border-orangeone transition-colors">SCORM</span>
+                                        Ouvrir la ressource principale
                                     </a>
                                 </li>
                              @endif
-                             @if($lecture->pdf_url)
-                                <li>
-                                    <a href="{{ $lecture->pdf_url }}" target="_blank" class="text-gray-700 hover:text-orangeone hover:underline flex items-center gap-2 group">
-                                        <span class="p-1 bg-white rounded border border-gray-200 group-hover:border-orangeone transition-colors">PDF</span>
-                                        Voir le support PDF
-                                    </a>
-                                </li>
-                             @endif
-                             @if(!$lecture->video_url && !$lecture->pdf_url)
+                             @if(empty($lecture->slides_source_path) && !$lecture->scorm_asset_url)
                                 <li class="text-xs text-gray-400 italic">Aucun fichier source direct disponible.</li>
                              @endif
                         </ul>
@@ -415,6 +556,10 @@
                             <div class="flex justify-between">
                                 <dt class="text-gray-500">Questions prévues</dt>
                                 <dd class="font-medium text-gray-700">{{ $lecture->quiz_questions_per_attempt ?? 0 }}</dd>
+                            </div>
+                            <div class="flex justify-between">
+                                <dt class="text-gray-500">Ressources attachées</dt>
+                                <dd class="font-medium text-gray-700">{{ $lessonResources->count() }}</dd>
                             </div>
                         </dl>
                     </div>

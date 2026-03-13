@@ -1004,6 +1004,7 @@ public function lire(Request $request, Module $module, ModuleSection $section, M
 
     // --- 🛠️ NOUVEAU : DONNÉES D'INSPECTION (FORMATEUR) ---
     $quizData = null;
+    $lessonResources = collect();
     
     // Si staff, on charge les questions et les réponses pour l'affichage "Inspecteur"
     if ($isStaff && $lecture->quiz_enabled) {
@@ -1013,6 +1014,10 @@ public function lire(Request $request, Module $module, ModuleSection $section, M
             ->orderBy('id')
             ->get();
     }
+
+    $lessonResources = $lecture->lessonResources()
+        ->when(! $isFormateurRoute, fn ($query) => $query->where('is_visible_to_stagiaire', true))
+        ->get();
     // -----------------------------------------------------
 
     $view = ($anonymous && ($user->role ?? null) === 'formateur')
@@ -1037,6 +1042,7 @@ public function lire(Request $request, Module $module, ModuleSection $section, M
         
         // Nouvelle variable passée à la vue
         'quizData'        => $quizData,
+        'lessonResources' => $lessonResources,
     ]);
 }
 

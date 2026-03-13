@@ -66,6 +66,18 @@
     }
 
     $slidesStatus = (string) ($lecture->slides_status ?? 'none');
+
+    $formatBytes = static function (?int $bytes): string {
+        $bytes = max(0, (int) $bytes);
+        if ($bytes >= 1048576) {
+            return number_format($bytes / 1048576, 1, ',', ' ') . ' Mo';
+        }
+        if ($bytes >= 1024) {
+            return number_format($bytes / 1024, 1, ',', ' ') . ' Ko';
+        }
+
+        return $bytes . ' o';
+    };
 @endphp
 
 <script>
@@ -94,6 +106,74 @@
 
 <main class="w-full h-full">
     <div class="relative w-full bg-gray-100" style="height: calc(100vh - var(--app-header-h, 86px));">
+        @if(($lessonResources ?? collect())->isNotEmpty())
+            <div class="absolute right-4 top-4 z-20 flex flex-col items-end gap-3">
+                <div
+                    x-show="resourcesPanelOpen"
+                    x-transition.opacity
+                    x-cloak
+                    class="w-[320px] max-w-[calc(100vw-2rem)] rounded-2xl border border-gray-200 bg-white/95 p-4 shadow-2xl backdrop-blur"
+                >
+                    <div class="mb-3 flex items-start justify-between gap-3">
+                        <div>
+                        <h2 class="text-sm font-bold text-bleuone">Documents de la leçon</h2>
+                        <p class="mt-1 text-xs text-gray-500">Ces ressources ont été partagées par votre formateur.</p>
+                        </div>
+                        <button
+                            type="button"
+                            @click="resourcesPanelOpen = false"
+                            class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 hover:bg-gray-50 hover:text-bleuone"
+                            aria-label="Fermer les ressources"
+                        >
+                            <i class="ti ti-x"></i>
+                        </button>
+                    </div>
+
+                    <div class="max-h-[60vh] space-y-3 overflow-y-auto pr-1">
+                        @foreach($lessonResources as $resource)
+                            @php
+                                $resourceUrl = $resource->public_url;
+                                $resourceExt = strtoupper($resource->extension ?: 'FILE');
+                            @endphp
+                            <div class="rounded-xl border border-gray-200 bg-gray-50 p-3">
+                                <div class="flex items-start gap-3">
+                                    @if($resource->is_image)
+                                        <a href="{{ $resourceUrl }}" target="_blank" class="shrink-0">
+                                            <img src="{{ $resourceUrl }}" alt="{{ $resource->title }}" class="h-12 w-12 rounded-lg border border-gray-200 object-cover bg-white">
+                                        </a>
+                                    @else
+                                        <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white text-[11px] font-black text-bleuone">
+                                            {{ $resourceExt }}
+                                        </div>
+                                    @endif
+
+                                    <div class="min-w-0 flex-1">
+                                        <p class="truncate text-sm font-bold text-gray-800">{{ $resource->title }}</p>
+                                        <p class="mt-1 truncate text-xs text-gray-500">{{ $resource->original_name }}</p>
+                                        <div class="mt-1 flex items-center gap-1 text-[11px] text-gray-400">
+                                            <span class="shrink-0">{{ $formatBytes($resource->file_size) }}</span>
+                                            @if($resource->mime_type)
+                                                <span class="shrink-0">•</span>
+                                                <span class="truncate max-w-[170px]" title="{{ $resource->mime_type }}">{{ $resource->mime_type }}</span>
+                                            @endif
+                                        </div>
+                                        <div class="mt-2 flex flex-wrap gap-2">
+                                            <a href="{{ $resourceUrl }}" target="_blank" class="inline-flex items-center rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-[11px] font-bold text-blue-700 hover:bg-blue-100">
+                                                Ouvrir
+                                            </a>
+                                            <a href="{{ $resourceUrl }}" download="{{ $resource->original_name }}" class="inline-flex items-center rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-[11px] font-bold text-gray-700 hover:bg-gray-100">
+                                                Télécharger
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+        @endif
+
         @if ($isSlidesMode && !empty($slideImages))
             <div
                 x-data="{

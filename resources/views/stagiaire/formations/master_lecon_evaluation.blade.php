@@ -48,7 +48,7 @@
 <body class="bg-white text-gray-900">
  
     <div
-        x-data="{ sidebarOpen: true }"
+        x-data="{ sidebarOpen: true, resourcesPanelOpen: false }"
         x-init="
             sidebarOpen = JSON.parse(localStorage.getItem('sidebarOpen') ?? 'true');
             $watch('sidebarOpen', v => localStorage.setItem('sidebarOpen', JSON.stringify(v)));
@@ -84,6 +84,7 @@
                             'lectureStats' => $lectureStats ?? [],
                             'sectionStatuses' => $sectionStatuses ?? [],
                             'selectedLecture' => $selectedLecture ?? null,
+                            'lessonResources' => $lessonResources ?? collect(),
                         ])
                     </aside>
                 @endif

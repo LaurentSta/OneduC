@@ -3,6 +3,8 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\FormateurController;
 use App\Http\Controllers\Formateur\GroupeController;
+use App\Http\Controllers\Formateur\ObjectiveController;
+use App\Http\Controllers\Formateur\LessonResourceController;
 use App\Http\Controllers\Formateur\ProgressionController;
 use App\Http\Controllers\Backend\ModuleController;
 // use App\Http\Controllers\Stagiaire\QuizAttemptController;
@@ -69,12 +71,22 @@ Route::middleware(['auth', 'role:formateur'])
     Route::get('/formations', [FormateurController::class, 'mesModules'])->name('formations.index');
     Route::get('/formations/{module}/detail', [FormateurController::class, 'moduleDetail'])->name('formations.detail');
     Route::get('/formations/{module}/preview', [FormateurController::class, 'preview'])->name('formations.preview');
+    Route::get('/objectifs/recherche', [ObjectiveController::class, 'index'])->name('objectifs.index');
 
     Route::get('/formations/{module}/section/{section}', [ModuleController::class, 'section'])
         ->name('formations.section');
 
     Route::get('/formations/{module}/section/{section}/lesson/{lecture}', [ModuleController::class, 'lire'])
         ->name('formations.lecture');
+
+    Route::post('/formations/{module}/section/{section}/lesson/{lecture}/resources', [LessonResourceController::class, 'store'])
+        ->name('formations.lesson.resources.store');
+
+    Route::post('/formations/{module}/section/{section}/lesson/{lecture}/resources/{resource}/visibility', [LessonResourceController::class, 'toggleVisibility'])
+        ->name('formations.lesson.resources.visibility');
+
+    Route::delete('/formations/{module}/section/{section}/lesson/{lecture}/resources/{resource}', [LessonResourceController::class, 'destroy'])
+        ->name('formations.lesson.resources.destroy');
 
        
 

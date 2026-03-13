@@ -24,7 +24,21 @@
         </a>
       </div>
 
-      <div class="flex items-center gap-4">
+      <div class="flex items-center gap-3">
+
+        <form action="{{ route('formateur.objectifs.index') }}"
+              method="GET"
+              class="hidden md:flex items-center">
+          <label for="formateur-objectives-search" class="sr-only">Rechercher un objectif</label>
+          <div class="flex items-center rounded-full border border-gray-200 bg-gray-50 px-3 py-2 shadow-sm transition focus-within:border-orangeone focus-within:bg-white">
+            <input id="formateur-objectives-search"
+                   name="search"
+                   type="search"
+                   value="{{ request()->routeIs('formateur.objectifs.index') ? request('search') : '' }}"
+                   placeholder="Mots-cles objectif"
+                   class="w-44 lg:w-56 border-0 bg-transparent p-0 text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none focus:ring-0">
+          </div>
+        </form>
 
         @include('components.user-notification-bell')
 
