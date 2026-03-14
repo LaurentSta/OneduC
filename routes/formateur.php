@@ -6,6 +6,7 @@ use App\Http\Controllers\Formateur\GroupeController;
 use App\Http\Controllers\Formateur\ObjectiveController;
 use App\Http\Controllers\Formateur\LessonResourceController;
 use App\Http\Controllers\Formateur\ProgressionController;
+use App\Http\Controllers\Formateur\LiveQuizSessionController;
 use App\Http\Controllers\Backend\ModuleController;
 // use App\Http\Controllers\Stagiaire\QuizAttemptController;
 use App\Http\Controllers\Stagiaire\QuizController;
@@ -112,6 +113,9 @@ Route::middleware(['auth', 'role:formateur'])
 Route::post('/formations/lecture/{lecture}/update-quiz-count', [FormateurController::class, 'updateQuizCount'])
         ->name('lecture.update_quiz_count');
 
+Route::post('/formations/lecture/{lecture}/update-live-quiz-entry', [FormateurController::class, 'updateLiveQuizEntry'])
+        ->name('lecture.update_live_quiz_entry');
+
   /*
 |--------------------------------------------------------------------------
 | Quiz DANS la leçon (mêmes écrans que stagiaire)
@@ -128,6 +132,18 @@ Route::prefix('/formations/{module}/section/{section}/lesson/{lecture}/quiz/{att
         Route::post('/answer', [QuizController::class, 'answer'])->name('answer');
         Route::get('/result', [QuizController::class, 'result'])->name('result');
         Route::post('/restart', [QuizController::class, 'restart'])->name('restart');
+    });
+
+Route::prefix('/formations/{module}/section/{section}/lesson/{lecture}/live-quiz')
+    ->name('live-quiz.')
+    ->group(function () {
+        Route::post('/', [LiveQuizSessionController::class, 'store'])->name('store');
+        Route::get('/sessions/{session}', [LiveQuizSessionController::class, 'show'])->name('show');
+        Route::post('/sessions/{session}/start', [LiveQuizSessionController::class, 'start'])->name('start');
+        Route::post('/sessions/{session}/reveal', [LiveQuizSessionController::class, 'reveal'])->name('reveal');
+        Route::post('/sessions/{session}/next', [LiveQuizSessionController::class, 'next'])->name('next');
+        Route::post('/sessions/{session}/close', [LiveQuizSessionController::class, 'close'])->name('close');
+        Route::get('/sessions/{session}/snapshot', [LiveQuizSessionController::class, 'snapshot'])->name('snapshot');
     });
 
 

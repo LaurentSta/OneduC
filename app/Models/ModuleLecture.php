@@ -19,6 +19,7 @@ class ModuleLecture extends Model
     protected $casts = [
         'duration' => 'integer',
         'quiz_enabled' => 'boolean',
+        'live_quiz_entry_enabled' => 'boolean',
         'use_active_scorm_version' => 'boolean',
         'slides_converted_at' => 'datetime',
     ];

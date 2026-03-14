@@ -627,6 +627,26 @@ public function updateQuizCount(Request $request, $lectureId)
 
     return back()->with('success', 'Le nombre de questions a été mis à jour.');
 }
+
+public function updateLiveQuizEntry(Request $request, $lectureId)
+{
+    $lecture = ModuleLecture::findOrFail($lectureId);
+
+    $validated = $request->validate([
+        'enabled' => ['required', 'boolean'],
+    ]);
+
+    $lecture->update([
+        'live_quiz_entry_enabled' => (bool) $validated['enabled'],
+    ]);
+
+    return back()->with(
+        'success',
+        (bool) $validated['enabled']
+            ? 'L’accès a la session presentielle est maintenant visible pour les stagiaires sur cette lecon.'
+            : 'L’accès a la session presentielle est maintenant masque pour les stagiaires sur cette lecon.'
+    );
+}
     /* -------------------------------------------------------------------------
      | Prévisualisation (mode test)
      |-------------------------------------------------------------------------- */

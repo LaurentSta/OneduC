@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\StagiaireController;
 use App\Http\Controllers\Backend\ModuleController;
+use App\Http\Controllers\Stagiaire\LiveQuizSessionController;
 use App\Http\Controllers\Stagiaire\QuizController;
 use App\Http\Controllers\Stagiaire\FirstLoginController; // ✅ Import du nouveau contrôleur
 
@@ -113,6 +114,19 @@ Route::middleware(['auth', 'role:stagiaire', 'track.time'])
 
                     // NOUVEAU : recommencer
                     Route::post('/restart', [QuizController::class, 'restart'])->name('restart');
+                });
+
+            Route::prefix('/live-quiz')
+                ->name('live-quiz.')
+                ->group(function () {
+                    Route::get('/', [LiveQuizSessionController::class, 'index'])->name('index');
+                    Route::post('/lookup', [LiveQuizSessionController::class, 'lookup'])->name('lookup');
+                    Route::get('/notification-status', [LiveQuizSessionController::class, 'notificationStatus'])->name('notification-status');
+                    Route::get('/join/{code}', [LiveQuizSessionController::class, 'joinByCode'])->name('join-code');
+                    Route::post('/sessions/{session}/join', [LiveQuizSessionController::class, 'join'])->name('join');
+                    Route::get('/sessions/{session}', [LiveQuizSessionController::class, 'show'])->name('show');
+                    Route::post('/sessions/{session}/answer', [LiveQuizSessionController::class, 'answer'])->name('answer');
+                    Route::get('/sessions/{session}/snapshot', [LiveQuizSessionController::class, 'snapshot'])->name('snapshot');
                 });
 
         }); // Fin du middleware force.password.change

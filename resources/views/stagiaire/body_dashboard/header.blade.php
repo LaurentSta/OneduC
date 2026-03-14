@@ -30,7 +30,6 @@
       </div>
 
       <div class="flex items-center gap-4">
-
         @include('components.user-notification-bell')
 
         <!-- Fullscreen button (non-fonctionnel pour l'instant) -->

@@ -8,19 +8,97 @@
       ? $authUser->unreadNotifications()->count()
       : 0;
   $latestUnread = $latestNotifications->firstWhere('read_at', null);
+  $activeLiveQuizSession = null;
+
+  if ($authUser && ($authUser->role ?? null) === 'stagiaire') {
+      $lectureIds = $authUser->groupesStagiaire()
+          ->with(['modules.sections.lectures:id,section_id,module_id'])
+          ->get()
+          ->flatMap->modules
+          ->unique('id')
+          ->flatMap(fn ($module) => $module->sections ?? collect())
+          ->flatMap(fn ($section) => $section->lectures ?? collect())
+          ->pluck('id')
+          ->filter()
+          ->unique()
+          ->values();
+
+      if ($lectureIds->isNotEmpty()) {
+          $activeLiveQuizSession = \App\Models\LiveQuizSession::query()
+              ->whereIn('lecture_id', $lectureIds->all())
+              ->whereNull('ended_at')
+              ->whereIn('status', [
+                  \App\Models\LiveQuizSession::STATUS_WAITING,
+                  \App\Models\LiveQuizSession::STATUS_QUESTION_OPEN,
+                  \App\Models\LiveQuizSession::STATUS_ANSWER_REVEALED,
+              ])
+              ->latest('id')
+              ->first();
+      }
+  }
+
+  $bellIndicatorCount = $unreadCount + ($activeLiveQuizSession ? 1 : 0);
+  $liveQuizUrl = $activeLiveQuizSession
+      ? route('stagiaire.live-quiz.join-code', ['code' => $activeLiveQuizSession->access_code])
+      : null;
+  $liveQuizNotificationStatusUrl = $authUser
+      && ($authUser->role ?? null) === 'stagiaire'
+      && \Illuminate\Support\Facades\Route::has('stagiaire.live-quiz.notification-status')
+      ? route('stagiaire.live-quiz.notification-status')
+      : null;
 @endphp
 
-<div x-data="{ open: false }" class="relative" @click.outside="open = false" @keydown.escape.window="open = false">
+<style>
+  @keyframes oneduc-bell-ring {
+    0%, 100% { transform: rotate(0deg); }
+    20% { transform: rotate(12deg); }
+    40% { transform: rotate(-10deg); }
+    60% { transform: rotate(8deg); }
+    80% { transform: rotate(-4deg); }
+  }
+
+  .oneduc-bell-live {
+    animation: oneduc-bell-ring 1.8s ease-in-out infinite;
+    transform-origin: top center;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .oneduc-bell-live {
+      animation: none;
+    }
+  }
+</style>
+
+<div
+  x-data="{ open: false }"
+  class="relative"
+  data-live-quiz-bell
+  data-base-count="{{ $unreadCount }}"
+  data-status-url="{{ $liveQuizNotificationStatusUrl }}"
+  @click.outside="open = false"
+  @keydown.escape.window="open = false"
+>
   <button type="button"
           @click="open = !open"
           class="text-[#004461] hover:text-[#004461] relative pt-1"
           aria-label="Notifications">
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-[34px] h-[34px]">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke-width="1.5"
+      stroke="currentColor"
+      data-bell-icon
+      class="w-[34px] h-[34px] {{ $activeLiveQuizSession ? 'oneduc-bell-live text-orangeone' : '' }}"
+    >
       <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.099A3.001 3.001 0 0112 18a3.001 3.001 0 01-2.857-0.901M6 8c0-3.314 2.239-6 5-6s5 2.686 5 6c0 5.25 2 6 2 6H4s2-0.75 2-6z" />
     </svg>
-    @if($unreadCount > 0)
-      <span class="absolute top-[10px] right-0 translate-x-1/2 bg-red-600 text-white text-[10px] min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center">{{ $unreadCount > 9 ? '9+' : $unreadCount }}</span>
-    @endif
+    <span
+      data-bell-badge
+      class="absolute top-[10px] right-0 translate-x-1/2 {{ $bellIndicatorCount > 0 ? 'flex' : 'hidden' }} {{ $activeLiveQuizSession ? 'bg-orangeone' : 'bg-red-600' }} text-white text-[10px] min-w-[18px] h-[18px] px-1 rounded-full items-center justify-center"
+    >
+      {{ $bellIndicatorCount > 9 ? '9+' : $bellIndicatorCount }}
+    </span>
   </button>
 
   <div x-show="open" x-cloak x-transition class="absolute right-0 mt-2 w-[340px] max-h-[420px] overflow-y-auto bg-white border border-gray-200 rounded-xl shadow-lg z-50" style="display:none;">
@@ -30,6 +108,39 @@
         @csrf
         <button class="text-xs text-blue-600 hover:underline">Tout marquer lu</button>
       </form>
+    </div>
+
+    <div
+      data-live-quiz-item
+      class="{{ $activeLiveQuizSession && $liveQuizUrl ? '' : 'hidden' }} px-4 py-3 border-b border-orange-100 bg-orange-50"
+    >
+      @if($activeLiveQuizSession && $liveQuizUrl)
+        <a href="{{ $liveQuizUrl }}" class="block">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <p data-live-quiz-label class="text-xs font-semibold text-orange-700">Session presentielle en cours</p>
+              <p data-live-quiz-title class="text-xs text-gray-700 mt-1">
+                {{ $activeLiveQuizSession->lecture?->lecture_title ?? 'Une session est disponible' }}
+              </p>
+              <p data-live-quiz-meta class="mt-1 text-[11px] text-gray-500">
+                Code {{ $activeLiveQuizSession->access_code }} · Rejoindre maintenant
+              </p>
+            </div>
+            <span class="mt-1 inline-flex h-2.5 w-2.5 rounded-full bg-orangeone"></span>
+          </div>
+        </a>
+      @else
+        <a href="#" class="block">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <p data-live-quiz-label class="text-xs font-semibold text-orange-700">Session presentielle en cours</p>
+              <p data-live-quiz-title class="text-xs text-gray-700 mt-1">Une session est disponible</p>
+              <p data-live-quiz-meta class="mt-1 text-[11px] text-gray-500">Rejoindre maintenant</p>
+            </div>
+            <span class="mt-1 inline-flex h-2.5 w-2.5 rounded-full bg-orangeone"></span>
+          </div>
+        </a>
+      @endif
     </div>
 
     @forelse($latestNotifications as $notification)
@@ -85,6 +196,92 @@
 
       document.body.appendChild(toast);
       setTimeout(() => { toast.remove(); }, 4500);
+    });
+  </script>
+@endif
+
+@if($liveQuizNotificationStatusUrl)
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const root = document.querySelector('[data-live-quiz-bell]');
+      if (!root) {
+        return;
+      }
+
+      const statusUrl = root.dataset.statusUrl;
+      if (!statusUrl) {
+        return;
+      }
+
+      const bellIcon = root.querySelector('[data-bell-icon]');
+      const badge = root.querySelector('[data-bell-badge]');
+      const liveItem = root.querySelector('[data-live-quiz-item]');
+      const liveLink = liveItem ? liveItem.querySelector('a') : null;
+      const liveTitle = root.querySelector('[data-live-quiz-title]');
+      const liveMeta = root.querySelector('[data-live-quiz-meta]');
+      const baseCount = Number.parseInt(root.dataset.baseCount || '0', 10) || 0;
+
+      const updateBell = function (data) {
+        const hasActiveSession = Boolean(data && data.has_active_session);
+        const totalCount = baseCount + (hasActiveSession ? 1 : 0);
+
+        if (bellIcon) {
+          bellIcon.classList.toggle('oneduc-bell-live', hasActiveSession);
+          bellIcon.classList.toggle('text-orangeone', hasActiveSession);
+        }
+
+        if (badge) {
+          badge.classList.toggle('hidden', totalCount === 0);
+          badge.classList.toggle('flex', totalCount > 0);
+          badge.classList.toggle('bg-orangeone', hasActiveSession);
+          badge.classList.toggle('bg-red-600', !hasActiveSession);
+          badge.textContent = totalCount > 9 ? '9+' : String(totalCount);
+        }
+
+        if (!liveItem || !liveLink) {
+          return;
+        }
+
+        liveItem.classList.toggle('hidden', !hasActiveSession);
+
+        if (!hasActiveSession) {
+          liveLink.setAttribute('href', '#');
+          return;
+        }
+
+        liveLink.setAttribute('href', data.join_url || '#');
+
+        if (liveTitle) {
+          liveTitle.textContent = data.lecture_title || 'Une session est disponible';
+        }
+
+        if (liveMeta) {
+          liveMeta.textContent = data.access_code
+            ? `Code ${data.access_code} · Rejoindre maintenant`
+            : 'Rejoindre maintenant';
+        }
+      };
+
+      const pollStatus = function () {
+        fetch(statusUrl, {
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json',
+          },
+          credentials: 'same-origin',
+        })
+          .then(function (response) {
+            if (!response.ok) {
+              throw new Error('Live quiz status request failed');
+            }
+
+            return response.json();
+          })
+          .then(updateBell)
+          .catch(function () {});
+      };
+
+      window.setInterval(pollStatus, 5000);
     });
   </script>
 @endif

@@ -178,7 +178,7 @@ class StagiaireController extends Controller
                 'modules' => function($q) {
                     $q->withPivot('position')->orderBy('group_module.position', 'asc');
                 },
-                'modules.sections.lectures:id,section_id,module_id,quiz_questions_per_attempt',
+                'modules.sections.lectures:id,section_id,module_id,quiz_questions_per_attempt,live_quiz_entry_enabled',
                 'instructor'
             ])
             ->get();

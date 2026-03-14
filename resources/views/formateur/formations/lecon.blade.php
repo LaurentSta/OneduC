@@ -73,6 +73,17 @@
         }
     }
 
+    $liveQuizStoreUrl = null;
+    if ($lecture && !empty($lecture->quiz_enabled) && $moduleId && $sectionId && $lectureId) {
+        if (\Illuminate\Support\Facades\Route::has('formateur.live-quiz.store')) {
+            $liveQuizStoreUrl = route('formateur.live-quiz.store', [
+                'module' => $moduleId,
+                'section' => $sectionId,
+                'lecture' => $lectureId,
+            ]);
+        }
+    }
+
     $formatBytes = static function (?int $bytes): string {
         $bytes = max(0, (int) $bytes);
         if ($bytes >= 1048576) {
@@ -140,12 +151,24 @@
       </div>
 
       {{-- Bouton Jouer le Quiz (raccourci) --}}
-      @if($quizStartUrl)
-        <a href="{{ $quizStartUrl }}" 
-           class="text-xs bg-orangeone hover:bg-orangeone-hover text-white px-3 py-1.5 rounded-lg font-bold transition-colors">
-            Lancer le Quiz (Tester)
-        </a>
-      @endif
+      <div class="flex items-center gap-2">
+        @if($liveQuizStoreUrl)
+          <form method="POST" action="{{ $liveQuizStoreUrl }}">
+            @csrf
+            <button type="submit"
+                    class="text-xs bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded-lg font-bold transition-colors">
+                Session presentielle
+            </button>
+          </form>
+        @endif
+
+        @if($quizStartUrl)
+          <a href="{{ $quizStartUrl }}" 
+             class="text-xs bg-orangeone hover:bg-orangeone-hover text-white px-3 py-1.5 rounded-lg font-bold transition-colors">
+              Lancer le Quiz (Tester)
+          </a>
+        @endif
+      </div>
   </div>
 
   {{-- CORPS DE PAGE --}}
@@ -317,6 +340,29 @@
                           <p class="text-[10px] text-gray-400 italic text-center">
                               Le système tirera {{ $currentCount }} questions au hasard parmi les {{ $totalInBank }} disponibles.
                           </p>
+                      </form>
+                  </div>
+
+                  <div class="mb-6 bg-emerald-50 rounded-xl p-4 border border-emerald-100 shadow-sm">
+                      <h4 class="font-bold text-bleuone text-xs uppercase mb-3 flex items-center justify-between">
+                          <span>Acces stagiaire</span>
+                          <span class="bg-white px-2 py-0.5 rounded text-[10px] border border-emerald-100 {{ !empty($lecture->live_quiz_entry_enabled) ? 'text-emerald-700' : 'text-gray-500' }}">
+                              {{ !empty($lecture->live_quiz_entry_enabled) ? 'Visible' : 'Masque' }}
+                          </span>
+                      </h4>
+
+                      <form action="{{ route('formateur.lecture.update_live_quiz_entry', $lecture->id) }}" method="POST" class="space-y-3">
+                          @csrf
+                          <input type="hidden" name="enabled" value="{{ !empty($lecture->live_quiz_entry_enabled) ? '0' : '1' }}">
+
+                          <p class="text-xs text-gray-500">
+                              Autoriser ou non l’affichage du bouton <strong>Session presentielle</strong> chez les stagiaires pour cette lecon.
+                          </p>
+
+                          <button type="submit"
+                                  class="w-full rounded-lg px-3 py-2 text-xs font-bold transition-colors {{ !empty($lecture->live_quiz_entry_enabled) ? 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50' : 'bg-emerald-500 text-white hover:bg-emerald-600' }}">
+                              {{ !empty($lecture->live_quiz_entry_enabled) ? 'Masquer le bouton stagiaire' : 'Afficher le bouton stagiaire' }}
+                          </button>
                       </form>
                   </div>
 
