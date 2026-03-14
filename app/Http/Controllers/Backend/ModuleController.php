@@ -21,6 +21,7 @@ use App\Models\ScormScore;
 use App\Models\SubCategory;
 use App\Models\User;
 use App\Models\VideoSegmentTracking;
+use App\Models\WordCloud;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -1005,6 +1006,9 @@ public function lire(Request $request, Module $module, ModuleSection $section, M
     // --- 🛠️ NOUVEAU : DONNÉES D'INSPECTION (FORMATEUR) ---
     $quizData = null;
     $lessonResources = collect();
+    $whiteboardGroups = collect();
+    $currentWhiteboardGroup = null;
+    $wordClouds = collect();
     
     // Si staff, on charge les questions et les réponses pour l'affichage "Inspecteur"
     if ($isStaff && $lecture->quiz_enabled) {
@@ -1018,6 +1022,52 @@ public function lire(Request $request, Module $module, ModuleSection $section, M
     $lessonResources = $lecture->lessonResources()
         ->when(! $isFormateurRoute, fn ($query) => $query->where('is_visible_to_stagiaire', true))
         ->get();
+
+    if ($isFormateurRoute && $isStaff) {
+        $whiteboardGroups = $module->groups()
+            ->where('groups.instructor_id', (int) $user->id)
+            ->with('whiteboard')
+            ->orderBy('groups.name')
+            ->get(['groups.id', 'groups.name', 'groups.description'])
+            ->map(function ($group) use ($groupId, $module, $section, $lecture) {
+                return [
+                    'id' => (int) $group->id,
+                    'name' => (string) $group->name,
+                    'description' => (string) ($group->description ?? ''),
+                    'is_current' => (int) $group->id === (int) $groupId,
+                    'has_whiteboard' => ! is_null($group->whiteboard),
+                    'whiteboard_url' => route('formateur.groupes.whiteboard.show', ['group' => $group->id]),
+                    'lesson_url' => route('formateur.formations.lecture', [
+                        'module' => $module->id,
+                        'section' => $section->id,
+                        'lecture' => $lecture->id,
+                        'mode' => 'groupe',
+                        'group_id' => $group->id,
+                    ]),
+                ];
+            })
+            ->values();
+
+        $currentWhiteboardGroup = $whiteboardGroups->firstWhere('is_current', true);
+
+        $wordClouds = WordCloud::query()
+            ->where('module_id', $module->id)
+            ->orderByDesc('is_active')
+            ->orderByDesc('updated_at')
+            ->get()
+            ->map(function (WordCloud $wordCloud) {
+                return [
+                    'id' => (int) $wordCloud->id,
+                    'title' => (string) $wordCloud->title,
+                    'question' => (string) $wordCloud->question,
+                    'access_code' => (string) $wordCloud->access_code,
+                    'is_active' => (bool) $wordCloud->is_active,
+                    'join_url' => route('wordcloud.join.code', ['code' => $wordCloud->access_code]),
+                    'updated_at_human' => $wordCloud->updated_at?->diffForHumans(),
+                ];
+            })
+            ->values();
+    }
     // -----------------------------------------------------
 
     $view = ($anonymous && ($user->role ?? null) === 'formateur')
@@ -1043,6 +1093,9 @@ public function lire(Request $request, Module $module, ModuleSection $section, M
         // Nouvelle variable passée à la vue
         'quizData'        => $quizData,
         'lessonResources' => $lessonResources,
+        'whiteboardGroups' => $whiteboardGroups,
+        'currentWhiteboardGroup' => $currentWhiteboardGroup,
+        'wordClouds' => $wordClouds,
     ]);
 }
 

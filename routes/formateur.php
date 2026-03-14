@@ -7,6 +7,7 @@ use App\Http\Controllers\Formateur\ObjectiveController;
 use App\Http\Controllers\Formateur\LessonResourceController;
 use App\Http\Controllers\Formateur\ProgressionController;
 use App\Http\Controllers\Formateur\LiveQuizSessionController;
+use App\Http\Controllers\Formateur\WhiteboardController;
 use App\Http\Controllers\Backend\ModuleController;
 // use App\Http\Controllers\Stagiaire\QuizAttemptController;
 use App\Http\Controllers\Stagiaire\QuizController;
@@ -41,6 +42,15 @@ Route::middleware(['auth', 'role:formateur'])
     Route::get('/groupes/{id}/edit', [GroupeController::class, 'edit'])->name('groupes.edit');
     Route::put('/groupes/{id}', [GroupeController::class, 'update'])->name('groupes.update');
     Route::delete('/groupes/{id}', [GroupeController::class, 'destroy'])->name('groupes.destroy');
+    Route::prefix('/groupes/{group}/tableau-blanc')
+        ->name('groupes.whiteboard.')
+        ->group(function () {
+            Route::get('/', [WhiteboardController::class, 'show'])->name('show');
+            Route::get('/snapshot', [WhiteboardController::class, 'snapshot'])->name('snapshot');
+            Route::post('/items', [WhiteboardController::class, 'upsert'])->name('items.upsert');
+            Route::delete('/items/{item}', [WhiteboardController::class, 'destroy'])->name('items.destroy');
+            Route::post('/clear', [WhiteboardController::class, 'clear'])->name('clear');
+        });
 
     // 📈 Progression des stagiaires
     Route::get('/progressions', function () {
@@ -112,9 +122,6 @@ Route::middleware(['auth', 'role:formateur'])
 // Route pour modifier le nombre de questions du quiz (Ajax ou Post classique)
 Route::post('/formations/lecture/{lecture}/update-quiz-count', [FormateurController::class, 'updateQuizCount'])
         ->name('lecture.update_quiz_count');
-
-Route::post('/formations/lecture/{lecture}/update-live-quiz-entry', [FormateurController::class, 'updateLiveQuizEntry'])
-        ->name('lecture.update_live_quiz_entry');
 
   /*
 |--------------------------------------------------------------------------

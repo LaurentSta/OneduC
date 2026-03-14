@@ -127,6 +127,7 @@
                 </button>
               </form>
             </div>
+
           </article>
         @empty
           <p class="text-gray-500 col-span-full font-lisible">Aucun groupe n’a encore été créé.</p>

@@ -17,16 +17,23 @@ function loadGroupLessonFlowWhenNeeded() {
   import('./formateur-group-lesson-flow.jsx');
 }
 
+function loadGroupWhiteboardWhenNeeded() {
+  if (!document.querySelector('[data-whiteboard-app]')) return;
+  import('./group-whiteboard').then(({ mountGroupWhiteboard }) => mountGroupWhiteboard());
+}
+
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
     loadGroupModuleFlowWhenNeeded();
     loadStagiaireModuleFlowWhenNeeded();
     loadGroupLessonFlowWhenNeeded();
+    loadGroupWhiteboardWhenNeeded();
   }, { once: true });
 } else {
   loadGroupModuleFlowWhenNeeded();
   loadStagiaireModuleFlowWhenNeeded();
   loadGroupLessonFlowWhenNeeded();
+  loadGroupWhiteboardWhenNeeded();
 }
 
 /*

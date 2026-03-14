@@ -8,6 +8,7 @@ use App\Http\Controllers\Backend\ModuleController;
 use App\Http\Controllers\Stagiaire\LiveQuizSessionController;
 use App\Http\Controllers\Stagiaire\QuizController;
 use App\Http\Controllers\Stagiaire\FirstLoginController; // ✅ Import du nouveau contrôleur
+use App\Http\Controllers\Stagiaire\WhiteboardController;
 
 Route::middleware(['auth', 'role:stagiaire', 'track.time'])
     ->prefix('stagiaire')
@@ -50,6 +51,17 @@ Route::middleware(['auth', 'role:stagiaire', 'track.time'])
                 ->name('parametre');
             Route::get('/documentation', fn () => view('stagiaire.documentation'))
                 ->name('documentation');
+
+            Route::prefix('/tableau-blanc')
+                ->name('whiteboard.')
+                ->group(function () {
+                    Route::get('/', [WhiteboardController::class, 'index'])->name('index');
+                    Route::get('/notification-status', [WhiteboardController::class, 'notificationStatus'])->name('notification-status');
+                    Route::get('/groupes/{group}', [WhiteboardController::class, 'show'])->name('show');
+                    Route::get('/groupes/{group}/snapshot', [WhiteboardController::class, 'snapshot'])->name('snapshot');
+                    Route::post('/groupes/{group}/items', [WhiteboardController::class, 'upsert'])->name('items.upsert');
+                    Route::delete('/groupes/{group}/items/{item}', [WhiteboardController::class, 'destroy'])->name('items.destroy');
+                });
 
             Route::post('/profil/store', [UserController::class, 'UserProfilStore'])
                 ->name('profil.store');

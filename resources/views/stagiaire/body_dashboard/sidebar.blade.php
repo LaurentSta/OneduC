@@ -48,4 +48,3 @@
             <a href="{{ route('stagiaire.documentation') }}" class="block px-4 py-1 hover:text-orangeone">Documentation</a>
         </div>
     </aside>
-
