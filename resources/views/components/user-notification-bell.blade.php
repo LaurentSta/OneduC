@@ -28,7 +28,6 @@
               ->whereIn('lecture_id', $lectureIds->all())
               ->whereNull('ended_at')
               ->whereIn('status', [
-                  \App\Models\LiveQuizSession::STATUS_WAITING,
                   \App\Models\LiveQuizSession::STATUS_QUESTION_OPEN,
                   \App\Models\LiveQuizSession::STATUS_ANSWER_REVEALED,
               ])
@@ -49,21 +48,28 @@
 @endphp
 
 <style>
-  @keyframes oneduc-bell-ring {
-    0%, 100% { transform: rotate(0deg); }
-    20% { transform: rotate(12deg); }
-    40% { transform: rotate(-10deg); }
-    60% { transform: rotate(8deg); }
-    80% { transform: rotate(-4deg); }
+  @keyframes oneduc-live-pulse {
+    0%, 100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    50% {
+      transform: scale(1.08);
+      opacity: 0.78;
+    }
   }
 
   .oneduc-bell-live {
-    animation: oneduc-bell-ring 1.8s ease-in-out infinite;
-    transform-origin: top center;
+    color: #f97316;
+  }
+
+  .oneduc-live-pulse {
+    animation: oneduc-live-pulse 1.8s ease-in-out infinite;
+    transform-origin: center;
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .oneduc-bell-live {
+    .oneduc-live-pulse {
       animation: none;
     }
   }
@@ -95,7 +101,7 @@
     </svg>
     <span
       data-bell-badge
-      class="absolute top-[10px] right-0 translate-x-1/2 {{ $bellIndicatorCount > 0 ? 'flex' : 'hidden' }} {{ $activeLiveQuizSession ? 'bg-orangeone' : 'bg-red-600' }} text-white text-[10px] min-w-[18px] h-[18px] px-1 rounded-full items-center justify-center"
+      class="absolute top-[10px] right-0 translate-x-1/2 {{ $bellIndicatorCount > 0 ? 'flex' : 'hidden' }} {{ $activeLiveQuizSession ? 'bg-orangeone oneduc-live-pulse' : 'bg-red-600' }} text-white text-[10px] min-w-[18px] h-[18px] px-1 rounded-full items-center justify-center"
     >
       {{ $bellIndicatorCount > 9 ? '9+' : $bellIndicatorCount }}
     </span>
@@ -118,26 +124,26 @@
         <a href="{{ $liveQuizUrl }}" class="block">
           <div class="flex items-start justify-between gap-3">
             <div>
-              <p data-live-quiz-label class="text-xs font-semibold text-orange-700">Session presentielle en cours</p>
+              <p data-live-quiz-label class="text-xs font-semibold text-orange-700">Session en cours</p>
               <p data-live-quiz-title class="text-xs text-gray-700 mt-1">
                 {{ $activeLiveQuizSession->lecture?->lecture_title ?? 'Une session est disponible' }}
               </p>
               <p data-live-quiz-meta class="mt-1 text-[11px] text-gray-500">
-                Code {{ $activeLiveQuizSession->access_code }} · Rejoindre maintenant
+                Code {{ $activeLiveQuizSession->access_code }} · Appuyer pour rejoindre
               </p>
             </div>
-            <span class="mt-1 inline-flex h-2.5 w-2.5 rounded-full bg-orangeone"></span>
+            <span class="mt-1 inline-flex h-2.5 w-2.5 rounded-full bg-orangeone oneduc-live-pulse"></span>
           </div>
         </a>
       @else
         <a href="#" class="block">
           <div class="flex items-start justify-between gap-3">
             <div>
-              <p data-live-quiz-label class="text-xs font-semibold text-orange-700">Session presentielle en cours</p>
+              <p data-live-quiz-label class="text-xs font-semibold text-orange-700">Session en cours</p>
               <p data-live-quiz-title class="text-xs text-gray-700 mt-1">Une session est disponible</p>
-              <p data-live-quiz-meta class="mt-1 text-[11px] text-gray-500">Rejoindre maintenant</p>
+              <p data-live-quiz-meta class="mt-1 text-[11px] text-gray-500">Appuyer pour rejoindre</p>
             </div>
-            <span class="mt-1 inline-flex h-2.5 w-2.5 rounded-full bg-orangeone"></span>
+            <span class="mt-1 inline-flex h-2.5 w-2.5 rounded-full bg-orangeone oneduc-live-pulse"></span>
           </div>
         </a>
       @endif
@@ -235,6 +241,7 @@
           badge.classList.toggle('flex', totalCount > 0);
           badge.classList.toggle('bg-orangeone', hasActiveSession);
           badge.classList.toggle('bg-red-600', !hasActiveSession);
+          badge.classList.toggle('oneduc-live-pulse', hasActiveSession);
           badge.textContent = totalCount > 9 ? '9+' : String(totalCount);
         }
 

@@ -313,7 +313,6 @@ class LiveQuizSessionController extends Controller
             ->whereIn('lecture_id', $lectureIds->all())
             ->whereNull('ended_at')
             ->whereIn('status', [
-                LiveQuizSession::STATUS_WAITING,
                 LiveQuizSession::STATUS_QUESTION_OPEN,
                 LiveQuizSession::STATUS_ANSWER_REVEALED,
             ])

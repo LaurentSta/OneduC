@@ -45,7 +45,7 @@
                 <div class="rounded-[20px] border border-emerald-200 bg-emerald-50 px-6 py-6">
                     <h2 class="text-2xl font-bold text-emerald-900">Session terminee</h2>
                     <p class="mt-3 text-sm leading-6 text-emerald-800">
-                        Vos reponses ont ete enregistrees. Elles contribueront a vos resultats stagiaire dans l'application.
+                        Vos reponses ont ete enregistrees.
                     </p>
 
                     @if ($summary)
@@ -65,12 +65,19 @@
                         </div>
                     @endif
 
+                    <div class="mt-6 rounded-xl border border-emerald-200 bg-white px-4 py-4">
+                        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">Et maintenant</p>
+                        <p class="mt-2 text-sm text-slate-700">
+                            Revenir a la lecon ou passer simplement a la suite.
+                        </p>
+                    </div>
+
                     <div class="mt-6 flex flex-col gap-3 sm:flex-row">
                         <a
                             href="{{ $returnToLessonUrl }}"
                             class="inline-flex items-center justify-center rounded-xl border border-emerald-300 bg-white px-5 py-3 text-sm font-bold text-emerald-900 transition hover:bg-emerald-100"
                         >
-                            Revenir a la lecon
+                            Retour a la lecon
                         </a>
 
                         @if ($nextUrl)
@@ -78,7 +85,7 @@
                                 href="{{ $nextUrl }}"
                                 class="inline-flex items-center justify-center rounded-xl bg-emerald-700 px-5 py-3 text-sm font-bold text-white transition hover:bg-emerald-800"
                             >
-                                Continuer la formation
+                                Lecon suivante
                             </a>
                         @endif
                     </div>
