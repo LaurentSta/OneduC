@@ -76,7 +76,7 @@
          aria-live="polite">
       <button id="next-lesson-button"
               type="button"
-              class="opacity-0 pointer-events-none px-4 py-2 rounded-[10px] shadow-md bg-[#004461] text-white hover:bg-[#00364d] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#E94D2A] transition"
+              class="opacity-0 pointer-events-none px-4 py-2 rounded-[10px] shadow-md bg-[#E94D2A] text-white hover:bg-[#cf4121] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#E94D2A] transition"
               aria-label="Aller à la leçon suivante">
         Leçon suivante
       </button>

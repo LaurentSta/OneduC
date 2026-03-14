@@ -415,7 +415,7 @@
                                     type="file"
                                     name="resource_file"
                                     accept=".jpg,.jpeg,.png,.gif,.webp,.avif,.pdf,.doc,.docx,.odt,.txt,.rtf,.xls,.xlsx,.ods,.ppt,.pptx,.odp,.csv"
-                                    class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 file:mr-3 file:rounded-md file:border-0 file:bg-orangeone file:px-3 file:py-2 file:text-xs file:font-bold file:text-white hover:file:bg-orangeone-hover"
+                                    class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 file:mr-3 file:rounded-md file:border-0 file:bg-bleuone file:px-3 file:py-2 file:text-xs file:font-bold file:text-white hover:file:opacity-90"
                                     required
                                 >
                             </div>
@@ -424,7 +424,7 @@
                                 <input type="checkbox" name="is_visible_to_stagiaire" value="1" class="rounded border-gray-300 text-orangeone focus:ring-orangeone">
                                 Afficher immédiatement cette ressource aux stagiaires
                             </label>
-                            <button type="submit" class="inline-flex items-center justify-center rounded-lg bg-orangeone px-4 py-2 text-xs font-bold uppercase text-white transition hover:bg-orangeone-hover">
+                            <button type="submit" class="inline-flex items-center justify-center rounded-lg bg-bleuone px-4 py-2 text-xs font-bold uppercase text-white transition hover:opacity-90">
                                 Ajouter la ressource
                             </button>
                         </form>

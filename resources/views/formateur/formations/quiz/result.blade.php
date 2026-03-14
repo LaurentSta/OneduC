@@ -187,7 +187,7 @@
       </a>
 
       <a href="{{ (!empty($nextUrl) && $nextUrl !== '#') ? $nextUrl : $fallbackModuleUrl }}"
-         class="inline-flex items-center justify-center rounded-xl bg-bleuone px-5 py-3 text-white font-bold hover:opacity-90 transition">
+         class="inline-flex items-center justify-center rounded-xl bg-orangeone px-5 py-3 text-white font-bold hover:bg-orangeone-hover transition">
         Lecon suivante
       </a>
     </div>
