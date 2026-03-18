@@ -7,7 +7,6 @@
   <link rel="icon" href="{{ asset('favicon.ico') }}" type="image/x-icon">
   <title>Onéduc - Accueil</title>
   @vite(['resources/css/app.css', 'resources/js/app.js'])
-  <script src="https://cdn.jsdelivr.net/npm/alpinejs" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
   <style>
     /* Surcouche Confort+ uniquement pour le front public */
@@ -156,10 +155,16 @@
 <div 
     x-data="{ open: localStorage.getItem('betaPopupSeen') !== '1' }" 
     x-show="open"
+    x-transition:enter="transition ease-out duration-200"
+    x-transition:enter-start="opacity-0"
+    x-transition:enter-end="opacity-100"
+    x-transition:leave="transition ease-in duration-150"
+    x-transition:leave-start="opacity-100"
+    x-transition:leave-end="opacity-0"
     class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 min-h-screen p-4"
     x-cloak
 >
-  <div class="bg-white rounded-lg shadow-lg max-w-md mx-auto p-6 text-center">
+  <div class="bg-white rounded-lg shadow-lg max-w-md mx-auto p-6 text-center transition-transform duration-200 ease-out" @click.stop>
     <h2 class="text-xl font-bold text-bleuone mb-4">Version Bêta</h2>
     <p class="text-gray-700 mb-6">
       Ce site est actuellement en <strong>version bêta</strong>.<br>
@@ -183,7 +188,7 @@
     ======================================-->
      <main
         id="page-transition"
-        class="opacity-0 transition-opacity duration-500 ease-out"
+        class="page-transition-root"
     >
         @yield('home')
     </main>
@@ -217,13 +222,13 @@
 <script src="{{ asset('confortplus/js/toolbar.min.js') }}" defer></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    const page = document.getElementById('page-transition');
-    if (page) {
+    document.body.classList.add('page-is-entering');
+
+    requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-            page.classList.remove('opacity-0');
-            page.classList.add('opacity-100');
+            document.body.classList.remove('page-is-entering');
         });
-    }
+    });
 });
 </script>
 

@@ -37,7 +37,12 @@
           <ul
             x-show="open"
             @click.outside="open = false"
-            x-transition
+            x-transition:enter="transition ease-out duration-180"
+            x-transition:enter-start="opacity-0 -translate-y-1 scale-95"
+            x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+            x-transition:leave="transition ease-in duration-120"
+            x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+            x-transition:leave-end="opacity-0 -translate-y-1 scale-95"
             class="absolute left-0 mt-2 bg-white text-gray-900 shadow-md rounded-md py-2 w-48 z-50"
           >
             <li>

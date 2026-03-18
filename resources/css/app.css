@@ -32,6 +32,56 @@
   p { @apply font-lisible; }
   h1 { @apply font-raleway text-4xl md:text-5xl font-bold text-gray-900 mb-6; }
   h2 { @apply font-varela; }
+
+  body.oneduc-public {
+    --page-enter-duration: 260ms;
+    --page-leave-duration: 180ms;
+    --page-enter-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --page-leave-ease: cubic-bezier(0.4, 0, 1, 1);
+  }
+
+  body.oneduc-public #page-transition {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+    transition:
+      opacity var(--page-enter-duration) var(--page-enter-ease),
+      transform var(--page-enter-duration) var(--page-enter-ease);
+    will-change: opacity, transform;
+  }
+
+  body.oneduc-public.page-is-entering #page-transition {
+    opacity: 0;
+    transform: translate3d(0, 14px, 0);
+  }
+
+  body.oneduc-public.page-is-leaving #page-transition {
+    opacity: 0;
+    transform: translate3d(0, 8px, 0);
+    transition-duration: var(--page-leave-duration);
+    transition-timing-function: var(--page-leave-ease);
+    pointer-events: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html:focus-within {
+      scroll-behavior: auto;
+    }
+
+    body.oneduc-public #page-transition,
+    body.oneduc-public.page-is-entering #page-transition,
+    body.oneduc-public.page-is-leaving #page-transition {
+      opacity: 1;
+      transform: none;
+      transition: none;
+      will-change: auto;
+    }
+
+    body.oneduc-public .btn-oneduc,
+    body.oneduc-public .btn-oneduc-blue,
+    body.oneduc-public .btn-access {
+      transition: none;
+    }
+  }
 }
 
 /* =========================
