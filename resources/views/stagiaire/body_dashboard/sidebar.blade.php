@@ -1,50 +1,77 @@
 
+@php
+    $isFormationActive = request()->routeIs('stagiaire.modules')
+        || request()->routeIs('stagiaire.module.*')
+        || request()->routeIs('stagiaire.evaluations.*')
+        || request()->routeIs('stagiaire.quiz.*')
+        || request()->routeIs('stagiaire.lesson.quiz.*')
+        || request()->routeIs('stagiaire.live-quiz.*');
+
+    $isProgressionActive = request()->routeIs('stagiaire.resultats')
+        || request()->routeIs('stagiaire.progression.*');
+
+    $isDocumentationActive = request()->routeIs('stagiaire.documentation');
+
+    $navBaseClasses = 'flex flex-col items-center rounded-xl px-4 py-3 transition-all duration-200';
+    $navIdleClasses = 'text-white/90 hover:bg-[#0A5B80] hover:text-white';
+    $navActiveClasses = 'bg-[#0A5B80] text-white shadow-lg shadow-black/10';
+@endphp
+
 <aside
   id="stagiaire-sidebar"
   :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
-  class="fixed left-0 z-40 w-64 lg:translate-x-0 transition-transform duration-300 flex flex-col bg-[#004461] text-white shadow-lg"
+  class="fixed left-0 z-40 w-56 lg:translate-x-0 transition-transform duration-300 flex flex-col bg-[#004461] text-white shadow-lg"
   style="top: var(--app-header-h, 86px); height: calc(100vh - var(--app-header-h, 86px));"
   aria-label="Navigation stagiaire">
-        <!-- En-tête Admin -->
         <div class="flex-1 overflow-y-auto">
-            <a href="{{ route('stagiaire.dashboard') }}" class="flex items-center justify-center h-16 bg-[#00374F] text-xl font-bold tracking-wide uppercase hover:bg-orangeone transition">
-                Stagiaire
+            <a
+                href="{{ route('stagiaire.dashboard') }}"
+                class="flex min-h-24 flex-col items-center justify-center gap-1 bg-[#00374F] px-4 text-center transition hover:bg-[#0a4f70]"
+            >
+                <span class="text-[11px] font-bold uppercase tracking-[0.28em] text-white/70">Stagiaire</span>
+                <span class="text-lg font-bold text-white">Tableau de bord</span>
             </a>
 
-            <!-- Navigation -->
-            <nav class="px-2 py-4 text-xs space-y-4 text-center">
-                <!-- Dashboard -->
-                <a href="{{ route('stagiaire.dashboard') }}" class="flex flex-col items-center px-4 py-2 hover:bg-orangeone rounded">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 9.75L12 4l9 5.75M4.5 10.5v7.5A1.5 1.5 0 006 19.5h3.75v-6h4.5v6H18a1.5 1.5 0 001.5-1.5v-7.5" />
-                    </svg>
-                    <span class="text-base font-medium">Dashboard</span>
-                </a>
-                <hr class="border-white/20 border-t border w-3/4 mx-auto">
-                <!-- Catégories -->
-                <a href="{{ route('stagiaire.modules') }}" class="flex flex-col items-center px-4 py-2 hover:bg-orangeone rounded">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-library-big-icon lucide-library-big"><rect width="8" height="18" x="3" y="3" rx="1"/><path d="M7 3v18"/><path d="M20.4 18.9c.2.5-.1 1.1-.6 1.3l-1.9.7c-.5.2-1.1-.1-1.3-.6L11.1 5.1c-.2-.5.1-1.1.6-1.3l1.9-.7c.5-.2 1.1.1 1.3.6Z"/></svg>
-                    <span class="text-base font-medium">Formations</span>
-                </a>
+            <nav class="px-3 py-4 text-center" aria-label="Espaces du stagiaire">
+                <div class="space-y-3">
+                    <a
+                        href="{{ route('stagiaire.modules') }}"
+                        class="{{ $navBaseClasses }} {{ $isFormationActive ? $navActiveClasses : $navIdleClasses }}"
+                        aria-current="{{ $isFormationActive ? 'page' : 'false' }}"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mb-2 lucide lucide-library-big-icon lucide-library-big"><rect width="8" height="18" x="3" y="3" rx="1"/><path d="M7 3v18"/><path d="M20.4 18.9c.2.5-.1 1.1-.6 1.3l-1.9.7c-.5.2-1.1-.1-1.3-.6L11.1 5.1c-.2-.5.1-1.1.6-1.3l1.9-.7c.5-.2 1.1.1 1.3.6Z"/></svg>
+                        <span class="text-[17px] font-medium">Formation</span>
+                    </a>
 
-                <!-- Résultats -->
-                <a href="{{ route('stagiaire.resultats') }}" class="flex flex-col items-center px-4 py-2 hover:bg-orangeone rounded">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chart-column-increasing-icon lucide-chart-column-increasing"><path d="M13 17V9"/><path d="M18 17V5"/><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M8 17v-3"/></svg>
-                    <span class="text-base font-medium">Progressions</span>
-                </a>
+                    <a
+                        href="{{ route('stagiaire.resultats') }}"
+                        class="{{ $navBaseClasses }} {{ $isProgressionActive ? $navActiveClasses : $navIdleClasses }}"
+                        aria-current="{{ $isProgressionActive ? 'page' : 'false' }}"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mb-2 lucide lucide-chart-column-increasing-icon lucide-chart-column-increasing"><path d="M13 17V9"/><path d="M18 17V5"/><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M8 17v-3"/></svg>
+                        <span class="text-[17px] font-medium">Progression</span>
+                    </a>
 
-                <!-- Compétence -->
-                <a href="#" class="flex flex-col items-center px-4 py-2 hover:bg-orangeone rounded">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chart-pie-icon lucide-chart-pie"><path d="M21 12c.552 0 1.005-.449.95-.998a10 10 0 0 0-8.953-8.951c-.55-.055-.998.398-.998.95v8a1 1 0 0 0 1 1z"/><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/></svg>
-                    <span class="text-base font-medium">Compétences</span>
-                </a>
-
+                    <a
+                        href="#"
+                        class="{{ $navBaseClasses }} {{ $navIdleClasses }} cursor-not-allowed opacity-70"
+                        aria-disabled="true"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mb-2 lucide lucide-chart-pie-icon lucide-chart-pie"><path d="M21 12c.552 0 1.005-.449.95-.998a10 10 0 0 0-8.953-8.951c-.55-.055-.998.398-.998.95v8a1 1 0 0 0 1 1z"/><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/></svg>
+                        <span class="text-[17px] font-medium">Compétences</span>
+                    </a>
+                </div>
             </nav>
         </div>
 
-        <!-- Barre inférieure -->
-        <div class="border-t border-white/20 text-center text-xs py-3">
-            <a href="{{ route('contact') }}" class="block px-4 py-1 hover:text-orangeone">Support</a>
-            <a href="{{ route('stagiaire.documentation') }}" class="block px-4 py-1 hover:text-orangeone">Documentation</a>
+        <div class="border-t border-white/20 px-3 py-3 text-center text-xs">
+            <a href="{{ route('contact') }}" class="block rounded-lg px-4 py-2 transition hover:bg-white/10 hover:text-orange-100">Support</a>
+            <a
+                href="{{ route('stagiaire.documentation') }}"
+                class="mt-1 block rounded-lg px-4 py-2 transition {{ $isDocumentationActive ? 'bg-white/15 text-white' : 'hover:bg-white/10 hover:text-orange-100' }}"
+                aria-current="{{ $isDocumentationActive ? 'page' : 'false' }}"
+            >
+                Documentation
+            </a>
         </div>
     </aside>

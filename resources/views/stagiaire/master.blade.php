@@ -85,7 +85,7 @@
         <!-- Conteneur link-mode Confort+ (ne mets PAS de <button> ici) -->
 <div id="access-toolbar-anchor" class="fixed top-4 right-4 z-50"></div>
         {{-- CONTENU PRINCIPAL --}}
-        <main class="flex-1 p-6 lg:ml-64" style="padding-top: calc(var(--app-header-h, 86px) + 12px);">
+        <main class="flex-1 p-6 lg:ml-56" style="padding-top: calc(var(--app-header-h, 86px) + 12px);">
             @yield('content')
         </main>
 

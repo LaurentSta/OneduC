@@ -55,6 +55,14 @@
   @endphp
 
   <div class="flex-1 overflow-y-auto custom-scrollbar bg-gray-50/30">
+    <div class="sticky top-0 z-10 border-b border-gray-100 bg-white/95 px-4 py-4 backdrop-blur">
+      <a href="{{ route('stagiaire.modules') }}" class="block rounded-2xl border border-orange-100 bg-orange-50 px-4 py-4 transition hover:border-orange-200 hover:bg-orange-100/70">
+        <span class="block text-[11px] font-bold uppercase tracking-[0.28em] text-orangeone/70">Stagiaire</span>
+        <span class="mt-1 block text-lg font-bold text-bleuone">Formation</span>
+        <span class="mt-2 block text-xs text-gray-500">Vous êtes dans l'espace formation.</span>
+      </a>
+    </div>
+
     <div class="py-4 px-3">
       <ol class="space-y-3">
         @foreach ($module->sections as $sIndex => $section)
