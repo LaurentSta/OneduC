@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Module extends Model
 {
     use SoftDeletes;
+
+    private const ESTIMATED_SECONDS_PER_QUESTION = 30;
     
     protected $fillable = [
         'category_id','subcategory_id','formateur_id',
@@ -78,16 +80,39 @@ class Module extends Model
 
     // --- C'EST ICI QU'ON AJOUTE LE CALCUL DU TEMPS ---
 
+    public function getEstimatedQuestionCountAttribute(): int
+    {
+        return $this->moduleLecturesForDuration()->sum(function ($lecture) {
+            $plannedScorm = (int) ($lecture->question_count ?? 0);
+            $plannedQuiz = (bool) ($lecture->quiz_enabled ?? false)
+                ? (int) ($lecture->quiz_questions_per_attempt ?? 0)
+                : 0;
+
+            return max($plannedScorm, $plannedQuiz);
+        });
+    }
+
+    public function getEstimatedQuestionSecondsAttribute(): int
+    {
+        return $this->estimated_question_count * self::ESTIMATED_SECONDS_PER_QUESTION;
+    }
+
+    public function getTotalSecondsAttribute(): int
+    {
+        $lessonSeconds = $this->moduleLecturesForDuration()->sum(function ($lecture) {
+            return max(0, (int) ($lecture->duration ?? 0)) * 60;
+        });
+
+        return (int) $lessonSeconds + $this->estimated_question_seconds;
+    }
+
     /**
-     * Calcule la durée totale en minutes (somme des durées des leçons).
+     * Calcule la durée totale en minutes (leçons + questions estimées).
      * Accessible via : $module->total_minutes
      */
     public function getTotalMinutesAttribute()
     {
-        // On somme la durée des leçons via les sections
-        return $this->sections->sum(function ($section) {
-            return $section->lectures->sum('duration');
-        });
+        return (int) ceil($this->total_seconds / 60);
     }
 
     /**
@@ -96,19 +121,138 @@ class Module extends Model
      */
     public function getFormattedDurationAttribute()
     {
-        $minutes = $this->total_minutes;
+        return $this->formatDurationFromSeconds($this->total_seconds);
+    }
 
-        if ($minutes <= 0) {
-            return null; 
+    public function getEstimatedSecondsForUser(?int $userId): int
+    {
+        if (!$userId) {
+            return $this->total_seconds;
         }
 
-        $hours = floor($minutes / 60);
-        $remainingMinutes = $minutes % 60;
+        $lectures = $this->moduleLecturesForDuration();
+        $lectureIds = $lectures->pluck('id')->filter()->values();
+
+        if ($lectureIds->isEmpty()) {
+            return $this->total_seconds;
+        }
+
+        $quizAttemptsByLecture = QuizAttempt::query()
+            ->where('user_id', $userId)
+            ->whereIn('lecture_id', $lectureIds)
+            ->selectRaw('lecture_id, COUNT(*) as total')
+            ->groupBy('lecture_id')
+            ->pluck('total', 'lecture_id');
+
+        $scormAttemptsByLecture = ScormScore::query()
+            ->where('user_id', $userId)
+            ->whereIn('lecture_id', $lectureIds)
+            ->selectRaw('lecture_id, MAX(COALESCE(attempts_count, 1)) as total')
+            ->groupBy('lecture_id')
+            ->pluck('total', 'lecture_id');
+
+        $lessonSeconds = $lectures->sum(function ($lecture) {
+            return max(0, (int) ($lecture->duration ?? 0)) * 60;
+        });
+
+        $questionSeconds = $lectures->sum(function ($lecture) use ($quizAttemptsByLecture, $scormAttemptsByLecture) {
+            $plannedScorm = (int) ($lecture->question_count ?? 0);
+            $plannedQuiz = (bool) ($lecture->quiz_enabled ?? false)
+                ? (int) ($lecture->quiz_questions_per_attempt ?? 0)
+                : 0;
+            $plannedQuestions = max($plannedScorm, $plannedQuiz);
+
+            if ($plannedQuestions <= 0) {
+                return 0;
+            }
+
+            $attempts = max(
+                1,
+                (int) ($quizAttemptsByLecture[$lecture->id] ?? 0),
+                (int) ($scormAttemptsByLecture[$lecture->id] ?? 0),
+            );
+
+            return $plannedQuestions * $attempts * self::ESTIMATED_SECONDS_PER_QUESTION;
+        });
+
+        return (int) $lessonSeconds + (int) $questionSeconds;
+    }
+
+    public function getFormattedDurationForUser(?int $userId): ?string
+    {
+        return $this->formatDurationFromSeconds($this->getEstimatedSecondsForUser($userId));
+    }
+
+    private function moduleLecturesForDuration()
+    {
+        if ($this->hasLoadedLecturesForDuration()) {
+            return $this->sections->flatMap->lectures;
+        }
+
+        return ModuleLecture::query()
+            ->where('module_id', $this->id)
+            ->get([
+                'id',
+                'module_id',
+                'duration',
+                'question_count',
+                'quiz_enabled',
+                'quiz_questions_per_attempt',
+            ]);
+    }
+
+    private function hasLoadedLecturesForDuration(): bool
+    {
+        if (! $this->relationLoaded('sections')) {
+            return false;
+        }
+
+        $requiredAttributes = ['id', 'duration', 'question_count', 'quiz_enabled', 'quiz_questions_per_attempt'];
+
+        return $this->sections->every(function ($section) use ($requiredAttributes) {
+            if (! $section->relationLoaded('lectures')) {
+                return false;
+            }
+
+            return $section->lectures->every(function ($lecture) use ($requiredAttributes) {
+                $attributes = $lecture->getAttributes();
+
+                foreach ($requiredAttributes as $attribute) {
+                    if (! array_key_exists($attribute, $attributes)) {
+                        return false;
+                    }
+                }
+
+                return true;
+            });
+        });
+    }
+
+    private function formatDurationFromSeconds(int $seconds): ?string
+    {
+        if ($seconds <= 0) {
+            return null;
+        }
+
+        $hours = intdiv($seconds, 3600);
+        $remainingSeconds = $seconds % 3600;
+        $minutes = intdiv($remainingSeconds, 60);
+        $remainingSeconds = $remainingSeconds % 60;
+
+        $parts = [];
 
         if ($hours > 0) {
-            return "{$hours}h" . ($remainingMinutes > 0 ? " {$remainingMinutes}min" : "");
+            $parts[] = "{$hours}h";
         }
 
-        return "{$remainingMinutes} min";
+        if ($minutes > 0) {
+            $parts[] = "{$minutes}min";
+        }
+
+        if ($remainingSeconds > 0) {
+            $parts[] = "{$remainingSeconds}s";
+        }
+
+        return implode(' ', $parts);
     }
 }

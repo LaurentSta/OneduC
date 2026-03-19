@@ -56,6 +56,7 @@
               'order' => $index + 1,
               'status' => (string) ($module->progression_status ?? 'not_started'),
               'progress' => (int) ($module->progression_percent ?? 0),
+              'estimated_duration_label' => $module->getFormattedDurationForUser(auth()->id()),
               'detail_url' => route('stagiaire.module.detail', $module->id),
           ];
       });

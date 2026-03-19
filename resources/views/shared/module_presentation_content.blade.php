@@ -16,6 +16,7 @@
 
     $showProgress = $isStagiaireView || ($isPublicView && $isStagiaireUser);
     $showStatuses = $showProgress;
+    $estimatedDurationLabel = $estimatedDurationLabel ?? null;
 @endphp
 
 <style>
@@ -310,7 +311,7 @@
                             </div>
                             <div>
                                 <p class="text-[10px] text-gray-400 font-bold uppercase">Duree estimee</p>
-                                <p class="font-bold text-gray-900">{{ $module->formatted_duration ?? $module->duree ?? 'Rythme libre' }}</p>
+                                <p class="font-bold text-gray-900">{{ $estimatedDurationLabel ?? $module->formatted_duration ?? $module->duree ?? 'Rythme libre' }}</p>
                             </div>
                         </div>
 

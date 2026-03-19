@@ -37,6 +37,7 @@ function normalizeModules(rawModules) {
       order: toPositiveInt(raw?.order) || index + 1,
       status: String(raw?.status ?? 'not_started'),
       progress: Math.max(0, Math.min(100, Number(raw?.progress ?? 0) || 0)),
+      estimatedDurationLabel: String(raw?.estimated_duration_label ?? '').trim(),
       detailUrl: String(raw?.detail_url ?? '').trim(),
     });
   });
@@ -97,7 +98,7 @@ function StagiaireModulePathFlow({ modules = [] }) {
         return {
           id: String(module.id),
           data: {
-            label: `${module.order}. ${module.title}\n${palette.badge} - ${module.progress}%`,
+            label: `${module.order}. ${module.title}\n${palette.badge} - ${module.progress}%${module.estimatedDurationLabel ? `\nDuree estimee : ${module.estimatedDurationLabel}` : ''}`,
             url: module.detailUrl,
           },
           position: nodePosition(index),
@@ -106,7 +107,7 @@ function StagiaireModulePathFlow({ modules = [] }) {
           draggable: false,
           selectable: true,
           style: {
-            width: 240,
+            width: 250,
             border: `2px solid ${palette.border}`,
             borderRadius: '10px',
             background: palette.background,
@@ -115,7 +116,7 @@ function StagiaireModulePathFlow({ modules = [] }) {
             fontWeight: 600,
             lineHeight: '1.4',
             whiteSpace: 'pre-line',
-            padding: '10px 12px',
+            padding: '12px 14px',
           },
         };
       }),

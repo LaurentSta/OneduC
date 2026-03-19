@@ -95,12 +95,15 @@ class StagiaireController extends Controller
             ->unique()
             ->values();
 
+        $estimatedDurationLabel = $module->getFormattedDurationForUser($user->id);
+
         return view('stagiaire.stagiaire_module_detail', compact(
             'module',
             'lessonStatuses',
             'sectionProgress',
             'progression',
-            'lessonObjectives'
+            'lessonObjectives',
+            'estimatedDurationLabel'
         ));
     }
 
@@ -227,7 +230,7 @@ class StagiaireController extends Controller
     // et en triant par celle-ci.
     $group = Group::with(['modules' => function($query) {
         $query->active()
-              ->with(['sections.lectures:id,section_id,module_id,quiz_questions_per_attempt'])
+              ->with(['sections.lectures:id,section_id,module_id,duration,question_count,quiz_enabled,quiz_questions_per_attempt'])
               ->withPivot('position') // On récupère la position définie par le formateur
               ->orderBy('group_module.position', 'asc'); // On trie !
     }])
