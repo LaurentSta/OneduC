@@ -64,9 +64,12 @@
           </div>
 
           <div>
-            <label class="form-oneduc-label">Vidéo locale (MP4)</label>
-            <input name="module_video" value="{{ old('module_video') }}"
-                   class="form-oneduc-input" placeholder="Ex : intro.mp4 ou dossier/intro.mp4">
+            <label class="form-oneduc-label">Téléverser une vidéo locale</label>
+            <input id="module_video_file" type="file" name="module_video_file"
+                   accept="video/mp4,video/x-m4v,video/quicktime,video/x-msvideo,video/webm"
+                   class="form-oneduc-file">
+            <div class="form-oneduc-help">Formats acceptés : MP4, M4V, MOV, AVI, WEBM. Le fichier sera enregistré dans `public/modules/videos/modules/module_{id}`.</div>
+            <video id="moduleVideoPreview" class="mt-3 hidden w-full max-w-md rounded-lg border border-gray-200 bg-black" controls preload="metadata"></video>
           </div>
 
           <div>
@@ -192,23 +195,6 @@
                       placeholder="Décrire le module...">{{ old('description') }}</textarea>
           </div>
         </div>
-
-        <div class="mt-6">
-          <label class="form-oneduc-label">Objectifs pédagogiques</label>
-
-          <div id="objectifs-container" class="space-y-3">
-            <div class="flex items-center gap-3 objectif-item">
-              <input type="text" name="objectifs[]" class="form-oneduc-input" placeholder="Saisir un objectif">
-              <button type="button" class="btn-remove-objectif btn-oneduc-sm btn-oneduc-sm--outline" aria-label="Supprimer">
-                <i class="ti ti-x"></i>
-              </button>
-            </div>
-          </div>
-
-          <button type="button" id="add-objectif" class="btn-oneduc-sm btn-oneduc-sm--outline mt-3">
-            <i class="ti ti-plus"></i> Ajouter un objectif
-          </button>
-        </div>
       </section>
 
       {{-- 5. Options --}}
@@ -257,29 +243,31 @@
     });
   }
 
+  function bindVideoPreview(inputId, videoId) {
+    const input = document.getElementById(inputId);
+    const video = document.getElementById(videoId);
+    if (!input || !video) return;
+
+    input.addEventListener('change', function() {
+      if (!this.files || !this.files[0]) {
+        video.pause();
+        video.removeAttribute('src');
+        video.load();
+        video.classList.add('hidden');
+        return;
+      }
+
+      const objectUrl = URL.createObjectURL(this.files[0]);
+      video.src = objectUrl;
+      video.classList.remove('hidden');
+      video.load();
+    });
+  }
+
   document.addEventListener('DOMContentLoaded', () => {
     bindPreview('header_image', 'showHeaderImage');
     bindPreview('module_image', 'showImage');
-
-    // Objectifs dynamiques
-    document.getElementById('add-objectif')?.addEventListener('click', () => {
-      const container = document.getElementById('objectifs-container');
-      const item = document.createElement('div');
-      item.className = 'flex items-center gap-3 objectif-item';
-      item.innerHTML = `
-        <input type="text" name="objectifs[]" class="form-oneduc-input" placeholder="Saisir un objectif">
-        <button type="button" class="btn-remove-objectif btn-oneduc-sm btn-oneduc-sm--outline" aria-label="Supprimer">
-          <i class="ti ti-x"></i>
-        </button>
-      `;
-      container.appendChild(item);
-    });
-
-    document.addEventListener('click', (e) => {
-      const btn = e.target.closest('.btn-remove-objectif');
-      if (!btn) return;
-      btn.closest('.objectif-item')?.remove();
-    });
+    bindVideoPreview('module_video_file', 'moduleVideoPreview');
   });
 </script>
 

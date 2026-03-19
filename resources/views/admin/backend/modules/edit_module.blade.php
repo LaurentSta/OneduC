@@ -77,7 +77,7 @@
     <div class="mb-8">
         <h2 class="page-title">Modifier un module</h2>
         <p class="page-subtitle">
-            Mets à jour les informations du module, ses médias, et ses objectifs.
+            Mets à jour les informations du module et ses médias.
         </p>
     </div>
 
@@ -113,12 +113,35 @@
                     :value="old('module_name_slug', $module->module_name_slug)"
                 />
 
-                <x-oneduc.input
-                    label="Nom de la vidéo locale (MP4)"
-                    name="module_video"
-                    :value="old('module_video', $module->module_video)"
-                    placeholder="Ex : intro_module1.mp4 ou dossier/intro.mp4"
-                />
+                <div>
+                    <label for="module_video_file" class="block text-base font-semibold text-gray-700 mb-1">
+                        Remplacer par un fichier vidéo
+                    </label>
+                    <input
+                        type="file"
+                        name="module_video_file"
+                        id="module_video_file"
+                        class="form-oneduc-file"
+                        accept="video/mp4,video/x-m4v,video/quicktime,video/x-msvideo,video/webm"
+                    >
+                    <p class="mt-2 text-xs text-gray-500">
+                        Formats acceptés : MP4, M4V, MOV, AVI, WEBM. Le fichier sera stocké dans `public/modules/videos/modules/module_{{ $module->id }}`.
+                    </p>
+
+                    @php
+                        $currentModuleVideoSrc = $module->module_video
+                            ? \App\Support\LearningAssetPath::resolveModuleVideoUrl($module->module_video)
+                            : null;
+                    @endphp
+
+                    <video
+                        id="moduleVideoPreview"
+                        class="mt-3 w-full max-w-md rounded-lg border border-gray-200 bg-black {{ $currentModuleVideoSrc ? '' : 'hidden' }}"
+                        controls
+                        preload="metadata"
+                        @if($currentModuleVideoSrc) src="{{ $currentModuleVideoSrc }}" @endif
+                    ></video>
+                </div>
 
                 <x-oneduc.input
                     label="Label (prix, etc.)"
@@ -225,7 +248,7 @@
                     <label class="block text-base font-semibold text-gray-700 mb-2">
                         Image d’en-tête
                     </label>
-                    <input type="file" name="header_image" id="header_image" class="file" accept="image/*">
+                    <input type="file" name="header_image" id="header_image" class="form-oneduc-file" accept="image/*">
                     <img id="showHeaderImage"
                          src="{{ $module->header_image ? asset('storage/' . $module->header_image) : url('upload/category_images/NoImage.png') }}"
                          class="mt-3 w-48 h-48 object-cover rounded-lg shadow bg-white" />
@@ -235,7 +258,7 @@
                     <label class="block text-base font-semibold text-gray-700 mb-2">
                         Image principale
                     </label>
-                    <input type="file" name="module_image" id="module_image" class="file" accept="image/*">
+                    <input type="file" name="module_image" id="module_image" class="form-oneduc-file" accept="image/*">
                     <img id="showImage"
                          src="{{ $module->module_image ? asset('storage/' . $module->module_image) : url('upload/category_images/NoImage.png') }}"
                          class="mt-3 w-48 h-48 object-cover rounded-lg shadow bg-white" />
@@ -259,36 +282,6 @@
                     name="description"
                     :value="old('description', $module->description)"
                 />
-
-                {{-- Objectifs pédagogiques --}}
-                <div class="md:col-span-2">
-                    <h4 class="text-base font-extrabold text-[#004461] mb-3">
-                        Objectifs pédagogiques
-                    </h4>
-
-                    <div id="objectifs-container" class="space-y-3">
-                        @php
-                            $objectifs = is_array($module->objectifs)
-                                ? $module->objectifs
-                                : (json_decode($module->objectifs, true) ?? preg_split("/\r\n|\n|\r/", $module->objectifs));
-                        @endphp
-
-                        @foreach ($objectifs as $objectif)
-                            <div class="flex items-center gap-3 objectif-item">
-                                <input type="text" name="objectifs[]" class="input flex-1" value="{{ $objectif }}" placeholder="Saisir un objectif" />
-                                <button type="button" class="remove-objectif text-red-600 hover:text-red-800 font-bold px-2" aria-label="Supprimer l’objectif">
-                                    ✕
-                                </button>
-                            </div>
-                        @endforeach
-                    </div>
-
-                    <button type="button"
-                            id="add-objectif"
-                            class="mt-4 inline-flex items-center gap-2 bg-white border border-gray-300 hover:bg-gray-50 text-sm font-semibold px-4 py-2 rounded-lg">
-                        Ajouter un objectif
-                    </button>
-                </div>
             </div>
         </section>
 
@@ -331,26 +324,21 @@
         };
         reader.readAsDataURL(this.files[0]);
     });
-</script>
 
-<script>
-document.getElementById('add-objectif')?.addEventListener('click', function () {
-    const container = document.getElementById('objectifs-container');
-    const item = document.createElement('div');
-    item.classList.add('flex', 'items-center', 'gap-3', 'objectif-item');
-    item.innerHTML = `
-        <input type="text" name="objectifs[]" class="input flex-1" placeholder="Saisir un objectif" />
-        <button type="button" class="remove-objectif text-red-600 hover:text-red-800 font-bold px-2" aria-label="Supprimer l’objectif">✕</button>
-    `;
-    container.appendChild(item);
-});
+    document.getElementById('module_video_file')?.addEventListener('change', function () {
+        const preview = document.getElementById('moduleVideoPreview');
+        if (!preview) {
+            return;
+        }
 
-// suppression
-document.addEventListener('click', function (e) {
-    if (e.target.classList.contains('remove-objectif')) {
-        e.target.closest('.objectif-item')?.remove();
-    }
-});
+        if (!this.files || !this.files[0]) {
+            return;
+        }
+
+        preview.src = URL.createObjectURL(this.files[0]);
+        preview.classList.remove('hidden');
+        preview.load();
+    });
 </script>
 
 @endsection

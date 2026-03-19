@@ -199,6 +199,8 @@ class QuizController extends Controller
         if (in_array($question->type, ['single', 'boolean'], true)) {
             $request->validate([
                 'answer' => ['required', 'integer'],
+            ], [
+                'answer.required' => 'Veuillez répondre en sélectionnant une seule réponse avant de valider.',
             ]);
             $selectedIds = collect([(int) $request->input('answer')]);
 
@@ -215,6 +217,9 @@ class QuizController extends Controller
             $request->validate([
                 'answers'   => ['required', 'array', 'min:1'],
                 'answers.*' => ['integer'],
+            ], [
+                'answers.required' => 'Veuillez sélectionner au moins une réponse avant de valider.',
+                'answers.min' => 'Veuillez sélectionner au moins une réponse avant de valider.',
             ]);
 
             $selectedIds = collect($request->input('answers', []))
@@ -225,7 +230,7 @@ class QuizController extends Controller
                 ->values();
 
             if ($selectedIds->isEmpty()) {
-                return back()->withErrors(['answers' => 'Coche au moins une réponse avant de valider.'])->withInput();
+                return back()->withErrors(['answers' => 'Veuillez sélectionner au moins une réponse avant de valider.'])->withInput();
             }
 
             $correctIds = $question->options
@@ -241,6 +246,9 @@ class QuizController extends Controller
             $request->validate([
                 'answers'   => ['required', 'array', 'min:1'],
                 'answers.*' => ['nullable', 'string'],
+            ], [
+                'answers.required' => 'Veuillez compléter les champs avant de valider.',
+                'answers.min' => 'Veuillez compléter les champs avant de valider.',
             ]);
 
             $evaluation = $this->gradeClozeAnswer($question, (array) $request->input('answers', []));

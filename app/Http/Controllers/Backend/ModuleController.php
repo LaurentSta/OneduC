@@ -105,10 +105,12 @@ class ModuleController extends Controller
             'module_image'    => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
             'header_image'    => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
             'module_video'    => 'nullable|string|max:255',
+            'module_video_file'=> 'nullable|file|mimes:mp4,m4v,mov,avi,webm|max:307200',
             'evaluation_id'   => 'nullable|exists:evaluations,id',
-            'objectifs'       => 'nullable|array',
-            'objectifs.*'     => 'nullable|string|max:255',
         ]);
+
+        $moduleVideo = trim((string) $request->input('module_video', ''));
+        $moduleVideo = $moduleVideo === '' ? null : $moduleVideo;
 
         $imagePath = null;
         if ($request->hasFile('module_image')) {
@@ -126,7 +128,7 @@ class ModuleController extends Controller
             $headerImagePath = 'uploads/modules/headers/' . $headerImageName;
         }
 
-        Module::create([
+        $module = Module::create([
             'category_id'       => $request->category_id,
             'subcategory_id'    => $request->subcategory_id,
             'formateur_id'      => $request->formateur_id,
@@ -136,7 +138,7 @@ class ModuleController extends Controller
             'description'       => $request->description,
             'module_image'      => $imagePath,
             'header_image'      => $headerImagePath,
-            'module_video'      => $request->module_video,
+            'module_video'      => $moduleVideo,
             'label'             => $request->label,
             'duree'             => $request->duree,
             'resources'         => $request->resources,
@@ -147,10 +149,13 @@ class ModuleController extends Controller
             'surevalue'         => $request->has('surevalue') ? 1 : 0,
             'status'            => $request->has('status') ? 1 : 0,
             'evaluation_id'     => $request->evaluation_id,
-            'objectifs'         => $request->filled('objectifs')
-                ? array_values(array_filter($request->input('objectifs')))
-                : [],
         ]);
+
+        if ($request->hasFile('module_video_file')) {
+            $module->update([
+                'module_video' => $this->storeModuleVideo($module, $request->file('module_video_file')),
+            ]);
+        }
 
         return redirect()->route('admin.modules')->with('success', 'Module ajouté avec succès !');
     }
@@ -180,13 +185,19 @@ class ModuleController extends Controller
             'subcategory_id'  => 'nullable|integer|exists:subcategories,id',
             'certificat'      => 'required|in:1,0',
             'module_video'    => 'nullable|string|max:255',
+            'module_video_file'=> 'nullable|file|mimes:mp4,m4v,mov,avi,webm|max:307200',
             'evaluation_id'   => 'nullable|exists:evaluations,id',
             'formateur_id'    => 'required|exists:users,id',
-            'objectifs'       => 'nullable|array',
-            'objectifs.*'     => 'nullable|string|max:255',
             'module_image'    => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
             'header_image'    => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
+
+        $moduleVideo = $module->module_video;
+
+        if ($request->has('module_video')) {
+            $moduleVideo = trim((string) $request->input('module_video', ''));
+            $moduleVideo = $moduleVideo === '' ? null : $moduleVideo;
+        }
 
         $imagePath = $module->module_image;
         if ($request->hasFile('module_image')) {
@@ -210,6 +221,12 @@ class ModuleController extends Controller
             $headerImagePath = 'uploads/modules/headers/' . $headerImageName;
         }
 
+        if ($request->hasFile('module_video_file')) {
+            $moduleVideo = $this->storeModuleVideo($module, $request->file('module_video_file'));
+        } elseif ($module->module_video !== $moduleVideo) {
+            $this->deleteManagedModuleVideo($module->module_video, $module->id);
+        }
+
         $module->update([
             'category_id'       => $request->category_id,
             'subcategory_id'    => $request->subcategory_id,
@@ -220,7 +237,7 @@ class ModuleController extends Controller
             'description'       => $request->description,
             'module_image'      => $imagePath,
             'header_image'      => $headerImagePath,
-            'module_video'      => $request->module_video,
+            'module_video'      => $moduleVideo,
             'label'             => $request->label,
             'duree'             => $request->duree,
             'resources'         => $request->resources,
@@ -231,9 +248,6 @@ class ModuleController extends Controller
             'surevalue'         => $request->has('surevalue') ? 1 : 0,
             'status'            => $request->has('status') ? 1 : 0,
             'evaluation_id'     => $request->evaluation_id,
-            'objectifs'         => $request->filled('objectifs')
-                ? array_values(array_filter($request->input('objectifs')))
-                : [],
         ]);
 
         return redirect()->route('admin.modules')->with('success', 'Module mis à jour avec succès !');
@@ -252,6 +266,7 @@ class ModuleController extends Controller
         if ($module->header_image) {
             Storage::disk('public')->delete($module->header_image);
         }
+        $this->deleteManagedModuleVideo($module->module_video, $module->id);
 
         $module->delete();
 
@@ -429,6 +444,72 @@ class ModuleController extends Controller
         $disk->putFileAs($storageFolder, $video, $fileName);
 
         return route('media.storage', ['path' => $storageFolder . '/' . $fileName], false);
+    }
+
+    private function storeModuleVideo(Module $module, UploadedFile $video): string
+    {
+        $videosBase = trim((string) config('learning_assets.videos_base', 'modules/videos'), '/');
+        $relativeFolder = 'modules/module_' . $module->id;
+        $storageFolder = $videosBase . '/' . $relativeFolder;
+        $disk = Storage::disk('public');
+
+        if (!$disk->exists($storageFolder)) {
+            $disk->makeDirectory($storageFolder);
+        }
+
+        $this->deleteManagedModuleVideo($module->module_video, $module->id);
+
+        $baseName = Str::slug(pathinfo((string) $video->getClientOriginalName(), PATHINFO_FILENAME));
+        if ($baseName === '') {
+            $baseName = 'module-video';
+        }
+
+        $extension = strtolower((string) $video->getClientOriginalExtension());
+        if ($extension === '') {
+            $extension = 'mp4';
+        }
+
+        $fileName = now()->format('Ymd_His') . '_' . Str::random(6) . '_' . $baseName . '.' . $extension;
+        $disk->putFileAs($storageFolder, $video, $fileName);
+
+        return route('media.storage', ['path' => $storageFolder . '/' . $fileName], false);
+    }
+
+    private function deleteManagedModuleVideo(?string $videoPath, int $moduleId): void
+    {
+        $videoPath = trim((string) $videoPath);
+        if ($videoPath === '') {
+            return;
+        }
+
+        $videosBase = trim((string) config('learning_assets.videos_base', 'modules/videos'), '/');
+        $relativeFolder = 'modules/module_' . $moduleId;
+        $normalized = ltrim($videoPath, '/');
+        $disk = Storage::disk('public');
+        $candidatePaths = [];
+
+        if (Str::startsWith($videoPath, '/media/storage/')) {
+            $candidatePaths[] = Str::after($videoPath, '/media/storage/');
+        }
+
+        if (Str::startsWith($videoPath, $relativeFolder . '/')) {
+            $candidatePaths[] = $videosBase . '/' . $videoPath;
+        }
+
+        if (Str::startsWith($normalized, $videosBase . '/' . $relativeFolder . '/')) {
+            $candidatePaths[] = $normalized;
+        }
+
+        foreach (array_unique($candidatePaths) as $candidatePath) {
+            if ($disk->exists($candidatePath)) {
+                $disk->delete($candidatePath);
+            }
+        }
+
+        $folderPath = $videosBase . '/' . $relativeFolder;
+        if ($disk->exists($folderPath) && count($disk->allFiles($folderPath)) === 0) {
+            $disk->deleteDirectory($folderPath);
+        }
     }
 
     /**

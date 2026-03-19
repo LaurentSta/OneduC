@@ -153,6 +153,8 @@ class QuizQuestionController extends Controller
         $data = $this->validatePayload($request);
 
         DB::transaction(function () use ($question, $lecture, $data, $request) {
+            $questionId = (int) $question->getKey();
+
             $question->update([
                 'question_text' => $data['question_text'],
                 'type'          => $data['type'],
@@ -198,7 +200,7 @@ class QuizQuestionController extends Controller
                     'payload' => $this->buildClozePayload($data),
                 ]);
 
-                QuizOption::where('question_id', $question->id)->delete();
+                QuizOption::where('question_id', $questionId)->delete();
                 return;
             }
 
@@ -208,7 +210,7 @@ class QuizQuestionController extends Controller
 
             $this->assertOptionsAreValidForType($data['type'], $options);
 
-            $this->replaceOptions($question->id, $options);
+            $this->replaceOptions($questionId, $options);
         });
 
         return redirect()

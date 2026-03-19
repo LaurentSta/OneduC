@@ -110,7 +110,7 @@
                 <div class="space-y-6">
                     <div class="rounded-[20px] border border-emerald-200 bg-emerald-50 px-6 py-6">
                         <p class="text-sm font-semibold uppercase tracking-[0.22em] text-emerald-700">Correction affichee</p>
-                        <h2 class="mt-3 text-2xl font-bold text-slate-900">{{ $question->question_text }}</h2>
+                        <h2 class="mt-3 text-[28px] font-bold text-slate-900">{{ $question->question_text }}</h2>
                     </div>
 
                     <div class="rounded-[20px] border border-slate-200 bg-white p-6">
@@ -149,6 +149,22 @@
             @else
                 <div class="grid gap-6 {{ !empty($question->image_path) ? 'xl:grid-cols-[1fr_300px]' : 'grid-cols-1' }}">
                     <div class="rounded-[20px] border border-slate-200 bg-white p-6">
+                        @php
+                            $questionType = (string) ($question->type ?? 'single');
+                            $selectionInstruction = match ($questionType) {
+                                'multiple' => 'Veuillez sélectionner une ou plusieurs réponses. Plusieurs réponses sont possibles.',
+                                'cloze' => 'Veuillez compléter tous les champs, puis valider.',
+                                default => 'Veuillez répondre en sélectionnant une seule réponse.',
+                            };
+                            $oldSingleAnswer = (string) old('answer', '');
+                            $oldMultipleAnswers = collect(old('answers', []))
+                                ->flatten()
+                                ->filter(static fn ($value) => $value !== null && $value !== '')
+                                ->map(static fn ($value) => (string) $value)
+                                ->values()
+                                ->all();
+                        @endphp
+
                         @if ($errors->any())
                             <div class="mb-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
                                 {{ $errors->first() }}
@@ -169,22 +185,27 @@
                         <form method="POST" action="{{ route('stagiaire.live-quiz.answer', ['session' => $session->id]) }}" class="mt-6">
                             @csrf
 
-                            @if ((string) $question->type === 'cloze')
+                            <p class="mb-4 text-sm font-medium text-slate-500">
+                                {{ $selectionInstruction }}
+                            </p>
+
+                            @if ($questionType === 'cloze')
                                 <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
                                     <div id="live-cloze-container" class="text-[17px] leading-relaxed text-slate-900 font-mono break-words"></div>
                                 </div>
                             @else
                                 <fieldset class="space-y-3">
+                                    <legend class="sr-only">{{ $selectionInstruction }}</legend>
                                     @foreach ($question->options as $option)
-                                        @if ((string) $question->type === 'multiple')
+                                        @if ($questionType === 'multiple')
                                             <label class="flex items-start gap-3 rounded-xl border border-slate-200 p-4 hover:bg-slate-50 cursor-pointer">
-                                                <input type="checkbox" name="answers[]" value="{{ $option->id }}" class="mt-1">
-                                                <span class="text-slate-800">{{ $option->option_text }}</span>
+                                                <input type="checkbox" name="answers[]" value="{{ $option->id }}" class="mt-1" @checked(in_array((string) $option->id, $oldMultipleAnswers, true))>
+                                                <span class="text-lg leading-relaxed text-slate-800">{{ $option->option_text }}</span>
                                             </label>
                                         @else
                                             <label class="flex items-start gap-3 rounded-xl border border-slate-200 p-4 hover:bg-slate-50 cursor-pointer">
-                                                <input type="radio" name="answer" value="{{ $option->id }}" class="mt-1" required>
-                                                <span class="text-slate-800">{{ $option->option_text }}</span>
+                                                <input type="radio" name="answer" value="{{ $option->id }}" class="mt-1" required @checked($oldSingleAnswer === (string) $option->id)>
+                                                <span class="text-lg leading-relaxed text-slate-800">{{ $option->option_text }}</span>
                                             </label>
                                         @endif
                                     @endforeach

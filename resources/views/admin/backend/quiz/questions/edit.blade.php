@@ -249,7 +249,7 @@
 
         {{-- IMAGE --}}
         {{-- IMAGE --}}
-      <div class="space-y-4" x-data="{ preview: null }">
+      <div class="space-y-4" x-data="{ preview: null, removeImage: false }">
           <label class="block text-xs font-bold text-gray-500 italic">Image</label>
 
           {{-- Image existante --}}
@@ -289,11 +289,11 @@
                 placeholder="Texte alternatif (obligatoire si image)"
                 class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg focus:ring-orangeone focus:border-orangeone">
 
-          <button type="submit"
-                name="remove_image"
-                value="1"
+          <input type="hidden" name="remove_image" :value="removeImage ? 1 : 0">
+
+          <button type="button"
                 class="px-4 py-2 rounded-lg bg-red-600 text-white text-xs font-semibold hover:opacity-90"
-                onclick="return confirm('Supprimer l’image de cette question ?')">
+                @click="if (confirm('Supprimer l’image de cette question ?')) { removeImage = true; $el.form?.requestSubmit(); }">
             Supprimer l’image
         </button>
 

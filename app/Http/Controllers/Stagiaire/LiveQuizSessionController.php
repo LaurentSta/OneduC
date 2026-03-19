@@ -191,18 +191,26 @@ class LiveQuizSessionController extends Controller
             $request->validate([
                 'answer' => ['required', 'integer'],
                 'time_spent' => ['nullable', 'integer', 'min:0', 'max:600'],
+            ], [
+                'answer.required' => 'Veuillez répondre en sélectionnant une seule réponse avant de valider.',
             ]);
         } elseif ((string) $question->type === 'multiple') {
             $request->validate([
                 'answers' => ['required', 'array', 'min:1'],
                 'answers.*' => ['integer'],
                 'time_spent' => ['nullable', 'integer', 'min:0', 'max:600'],
+            ], [
+                'answers.required' => 'Veuillez sélectionner au moins une réponse avant de valider.',
+                'answers.min' => 'Veuillez sélectionner au moins une réponse avant de valider.',
             ]);
         } elseif ((string) $question->type === 'cloze') {
             $request->validate([
                 'answers' => ['required', 'array', 'min:1'],
                 'answers.*' => ['nullable', 'string'],
                 'time_spent' => ['nullable', 'integer', 'min:0', 'max:600'],
+            ], [
+                'answers.required' => 'Veuillez compléter les champs avant de valider.',
+                'answers.min' => 'Veuillez compléter les champs avant de valider.',
             ]);
         } else {
             abort(422, 'Type de question non pris en charge.');
