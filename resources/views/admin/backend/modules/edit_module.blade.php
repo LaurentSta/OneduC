@@ -155,7 +155,21 @@
                     :value="old('duree', $module->duree)"
                     placeholder="Ex : 2h, 3 jours"
                 />
+
+                <x-oneduc.input
+                    label="Temps estimé par question (secondes)"
+                    name="estimated_question_seconds"
+                    type="number"
+                    min="1"
+                    max="600"
+                    :value="old('estimated_question_seconds', $module->estimated_question_seconds ?? 30)"
+                    placeholder="30"
+                />
             </div>
+
+            <p class="mt-3 text-xs text-gray-500">
+                Cette valeur sert au calcul de la durée estimée du module en fonction des questions prévues dans le parcours.
+            </p>
         </section>
 
         {{-- 2. Catégorisation --}}

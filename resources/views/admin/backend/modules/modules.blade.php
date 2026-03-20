@@ -64,6 +64,11 @@
                   {{ $module->module_name }}
                 </p>
                 <p class="text-xs text-gray-500">ID: {{ $module->id }}</p>
+                <p class="mt-1">
+                  <span class="inline-flex items-center rounded-full bg-orange-50 px-2 py-1 text-[11px] font-semibold text-orange-700">
+                    Temps/question : {{ (int) ($module->estimated_question_seconds ?? 30) }} s
+                  </span>
+                </p>
               </td>
 
               <td class="px-4 py-3">

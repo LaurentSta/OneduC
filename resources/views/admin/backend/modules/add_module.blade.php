@@ -83,6 +83,14 @@
             <input name="duree" value="{{ old('duree') }}"
                    class="form-oneduc-input" placeholder="Ex : 2h, 3 jours">
           </div>
+
+          <div>
+            <label class="form-oneduc-label">Temps estimé par question (secondes)</label>
+            <input type="number" min="1" max="600" name="estimated_question_seconds"
+                   value="{{ old('estimated_question_seconds', 30) }}"
+                   class="form-oneduc-input" placeholder="30">
+            <div class="form-oneduc-help">Cette valeur est utilisée pour calculer la durée estimée du module en fonction des questions.</div>
+          </div>
         </div>
       </section>
 

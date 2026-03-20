@@ -9,14 +9,15 @@ class Module extends Model
 {
     use SoftDeletes;
 
-    private const ESTIMATED_SECONDS_PER_QUESTION = 30;
+    private const DEFAULT_ESTIMATED_SECONDS_PER_QUESTION = 30;
     
     protected $fillable = [
         'category_id','subcategory_id','formateur_id',
         'module_image','header_image',
         'module_title','module_name','module_name_slug','description','objectifs',
         'module_video','label','duree','resources','certificat','prerequi',
-        'bestseller','vedette','surevalue','status','evaluation_id'
+        'bestseller','vedette','surevalue','status','evaluation_id',
+        'estimated_question_seconds',
     ];
    
     public function category()
@@ -68,8 +69,9 @@ class Module extends Model
     }
 
     protected $casts = [
-        'status'    => 'boolean',
-        'objectifs' => 'array',
+        'status'                     => 'boolean',
+        'objectifs'                  => 'array',
+        'estimated_question_seconds' => 'integer',
     ];
 
     public function isVisibleTo(?\App\Models\User $user): bool
@@ -94,7 +96,7 @@ class Module extends Model
 
     public function getEstimatedQuestionSecondsAttribute(): int
     {
-        return $this->estimated_question_count * self::ESTIMATED_SECONDS_PER_QUESTION;
+        return $this->estimated_question_count * $this->estimatedSecondsPerQuestion();
     }
 
     public function getTotalSecondsAttribute(): int
@@ -172,7 +174,7 @@ class Module extends Model
                 (int) ($scormAttemptsByLecture[$lecture->id] ?? 0),
             );
 
-            return $plannedQuestions * $attempts * self::ESTIMATED_SECONDS_PER_QUESTION;
+            return $plannedQuestions * $attempts * $this->estimatedSecondsPerQuestion();
         });
 
         return (int) $lessonSeconds + (int) $questionSeconds;
@@ -254,5 +256,10 @@ class Module extends Model
         }
 
         return implode(' ', $parts);
+    }
+
+    private function estimatedSecondsPerQuestion(): int
+    {
+        return max(1, (int) ($this->attributes['estimated_question_seconds'] ?? self::DEFAULT_ESTIMATED_SECONDS_PER_QUESTION));
     }
 }

@@ -100,6 +100,7 @@ class ModuleController extends Controller
             'certificat'      => 'required|in:1,0',
             'label'           => 'nullable|string|max:255',
             'duree'           => 'nullable|string|max:100',
+            'estimated_question_seconds' => 'nullable|integer|min:1|max:600',
             'resources'       => 'nullable|string|max:255',
             'prerequi'        => 'nullable|string',
             'module_image'    => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
@@ -141,6 +142,7 @@ class ModuleController extends Controller
             'module_video'      => $moduleVideo,
             'label'             => $request->label,
             'duree'             => $request->duree,
+            'estimated_question_seconds' => (int) ($request->input('estimated_question_seconds', 30) ?: 30),
             'resources'         => $request->resources,
             'certificat'        => $request->certificat,
             'prerequi'          => $request->prerequi,
@@ -190,6 +192,7 @@ class ModuleController extends Controller
             'formateur_id'    => 'required|exists:users,id',
             'module_image'    => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
             'header_image'    => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'estimated_question_seconds' => 'nullable|integer|min:1|max:600',
         ]);
 
         $moduleVideo = $module->module_video;
@@ -240,6 +243,7 @@ class ModuleController extends Controller
             'module_video'      => $moduleVideo,
             'label'             => $request->label,
             'duree'             => $request->duree,
+            'estimated_question_seconds' => (int) ($request->input('estimated_question_seconds', 30) ?: 30),
             'resources'         => $request->resources,
             'certificat'        => $request->certificat,
             'prerequi'          => $request->prerequi,
