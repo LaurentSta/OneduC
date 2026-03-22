@@ -42,6 +42,12 @@ class Group extends Model
         return $this->belongsToMany(User::class, 'group_user', 'group_id', 'user_id');
     }
 
+    public function observers()
+    {
+        return $this->belongsToMany(User::class, 'group_user', 'group_id', 'user_id')
+            ->wherePivot('role_in_group', 'observateur');
+    }
+
     public function whiteboard()
     {
         return $this->hasOne(GroupWhiteboard::class);

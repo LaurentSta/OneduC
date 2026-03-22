@@ -15,6 +15,7 @@ use App\Http\Controllers\Backend\QuizQuestionController;
 use App\Http\Controllers\Backend\ScormLibraryController;
 use App\Http\Controllers\Backend\CompetencyController;
 use App\Http\Controllers\Backend\BadgeController;
+use App\Http\Controllers\Backend\ObservateurController;
 use App\Http\Controllers\Backend\PilotageController;
 use App\Http\Controllers\Backend\WordCloudController;
 
@@ -40,6 +41,15 @@ Route::middleware(['auth', 'role:admin', 'admin.activity'])
 
         Route::get('/stagiaires', [AdminController::class, 'AllStagiaires'])->name('stagiaires.index');
         Route::delete('/stagiaires/{user}', [AdminController::class, 'DestroyStagiaire'])->name('stagiaires.destroy');
+        Route::delete('/observateurs/{user}', [AdminController::class, 'DestroyObservateur'])->name('observateurs.destroy');
+
+        Route::prefix('observateurs')->name('observateurs.')->group(function () {
+            Route::get('/', [ObservateurController::class, 'index'])->name('index');
+            Route::get('/create', [ObservateurController::class, 'create'])->name('create');
+            Route::post('/', [ObservateurController::class, 'store'])->name('store');
+            Route::get('/{observateur}/edit', [ObservateurController::class, 'edit'])->name('edit');
+            Route::put('/{observateur}', [ObservateurController::class, 'update'])->name('update');
+        });
 
         // Catégories
         Route::controller(CategoryController::class)->group(function () {

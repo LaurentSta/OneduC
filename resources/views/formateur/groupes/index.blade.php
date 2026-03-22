@@ -81,6 +81,19 @@
                 {{ $groupe->name }}
               </h3>
 
+              @if($groupe->observers->isNotEmpty())
+                <div class="mb-3 flex flex-wrap items-center gap-2">
+                  <span class="inline-flex items-center px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold">
+                    Groupe observé
+                  </span>
+                  @foreach($groupe->observers as $observer)
+                    <span class="inline-flex items-center px-3 py-1 rounded-full bg-blue-50/60 text-blue-700 text-xs font-medium">
+                      {{ trim(($observer->prenom ?? '').' '.($observer->name ?? '')) }}
+                    </span>
+                  @endforeach
+                </div>
+              @endif
+
               @if ($groupe->description)
                 <p class="text-sm text-gray-700 font-lisible mb-4 line-clamp-3">
                   {{ $groupe->description }}

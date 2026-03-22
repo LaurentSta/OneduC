@@ -101,7 +101,7 @@ function toLocalActionPath(url) {
   }
 }
 
-function GroupLessonFlow({ sections = [], csrfToken = '' }) {
+function GroupLessonFlow({ sections = [], csrfToken = '', readOnly = false }) {
   const normalizedSections = useMemo(() => normalizeSections(sections), [sections]);
   const [flowInstance, setFlowInstance] = useState(null);
   const [activeLectureId, setActiveLectureId] = useState(null);
@@ -399,33 +399,41 @@ function GroupLessonFlow({ sections = [], csrfToken = '' }) {
 
                         <td className="px-4 py-3 text-right">
                           <div className="inline-flex flex-wrap items-center justify-end gap-2">
-                            <button
-                              type="button"
-                              onClick={() => submitAction(lecture.toggleUrl)}
-                              className={`rounded px-3 py-1.5 text-xs font-semibold text-white ${
-                                lecture.isEnabled ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-500 hover:bg-gray-600'
-                              }`}
-                            >
-                              {lecture.isEnabled ? 'Désactiver' : 'Activer'}
-                            </button>
+                            {readOnly ? (
+                              <span className="rounded border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700">
+                                Lecture seule
+                              </span>
+                            ) : (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => submitAction(lecture.toggleUrl)}
+                                  className={`rounded px-3 py-1.5 text-xs font-semibold text-white ${
+                                    lecture.isEnabled ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-500 hover:bg-gray-600'
+                                  }`}
+                                >
+                                  {lecture.isEnabled ? 'Désactiver' : 'Activer'}
+                                </button>
 
-                            <button
-                              type="button"
-                              onClick={() => submitAction(lecture.moveUpUrl)}
-                              disabled={!canMoveUp}
-                              className="rounded border border-gray-300 px-3 py-1.5 text-xs text-bleuone disabled:cursor-not-allowed disabled:opacity-40"
-                            >
-                              Monter
-                            </button>
+                                <button
+                                  type="button"
+                                  onClick={() => submitAction(lecture.moveUpUrl)}
+                                  disabled={!canMoveUp}
+                                  className="rounded border border-gray-300 px-3 py-1.5 text-xs text-bleuone disabled:cursor-not-allowed disabled:opacity-40"
+                                >
+                                  Monter
+                                </button>
 
-                            <button
-                              type="button"
-                              onClick={() => submitAction(lecture.moveDownUrl)}
-                              disabled={!canMoveDown}
-                              className="rounded border border-gray-300 px-3 py-1.5 text-xs text-bleuone disabled:cursor-not-allowed disabled:opacity-40"
-                            >
-                              Descendre
-                            </button>
+                                <button
+                                  type="button"
+                                  onClick={() => submitAction(lecture.moveDownUrl)}
+                                  disabled={!canMoveDown}
+                                  className="rounded border border-gray-300 px-3 py-1.5 text-xs text-bleuone disabled:cursor-not-allowed disabled:opacity-40"
+                                >
+                                  Descendre
+                                </button>
+                              </>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -492,8 +500,9 @@ function mountGroupLessonFlow() {
 
     const sections = parseJsonDataset(mount, 'sections', []);
     const csrfToken = String(mount.dataset.csrfToken || '');
+    const readOnly = String(mount.dataset.readOnly || '') === '1';
 
-    createRoot(mount).render(<GroupLessonFlow sections={sections} csrfToken={csrfToken} />);
+    createRoot(mount).render(<GroupLessonFlow sections={sections} csrfToken={csrfToken} readOnly={readOnly} />);
     mount.dataset.flowMounted = '1';
   });
 }

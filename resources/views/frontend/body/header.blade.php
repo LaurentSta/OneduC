@@ -65,6 +65,7 @@
               $dashboardRoute = match ($role) {
                   'admin' => route('admin.dashboard'),
                   'formateur' => route('formateur.dashboard'),
+                  'observateur' => route('observateur.dashboard'),
                   'stagiaire' => route('stagiaire.dashboard'),
                   default => '#',
               };

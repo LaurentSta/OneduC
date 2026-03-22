@@ -49,6 +49,7 @@ class Role
         return match ($role) {
             'admin'     => redirect()->route('admin.dashboard')->with('error', $errorMessage),
             'formateur' => redirect()->route('formateur.dashboard')->with('error', $errorMessage),
+            'observateur' => redirect()->route('observateur.dashboard')->with('error', $errorMessage),
             'stagiaire' => redirect()->route('stagiaire.dashboard')->with('error', $errorMessage),
             default     => redirect('/')->with('error', $errorMessage),
         };

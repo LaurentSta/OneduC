@@ -80,29 +80,33 @@ it('stores a cloze payload when an admin creates a cloze question', function () 
     $admin = createQuizUser('admin');
     $context = createQuizLectureContext($admin);
     $lecture = $context['lecture'];
+    $token = 'csrf-cloze-admin';
 
-    $response = $this->actingAs($admin)->post(route('admin.quiz.questions.store', [
-        'lecture' => $lecture->id,
-    ]), [
-        'question_text' => 'Completez la formule.',
-        'type' => 'cloze',
-        'is_active' => 1,
-        'cloze_raw_text' => '=RECHERCHEV({{search_val}}; {{matrix}}; {{col_index}}; FAUX)',
-        'cloze_blanks' => [
-            'search_val' => [
-                'accepted_answers' => 'valeur_cherchee, valeur cherchée',
-                'points' => 1,
+    $response = $this->actingAs($admin)
+        ->withSession(['_token' => $token])
+        ->post(route('admin.quiz.questions.store', [
+            'lecture' => $lecture->id,
+        ]), [
+            '_token' => $token,
+            'question_text' => 'Completez la formule.',
+            'type' => 'cloze',
+            'is_active' => 1,
+            'cloze_raw_text' => '=RECHERCHEV({{search_val}}; {{matrix}}; {{col_index}}; FAUX)',
+            'cloze_blanks' => [
+                'search_val' => [
+                    'accepted_answers' => 'valeur_cherchee, valeur cherchée',
+                    'points' => 1,
+                ],
+                'matrix' => [
+                    'accepted_answers' => 'matrice_table; matrice',
+                    'points' => 1,
+                ],
+                'col_index' => [
+                    'accepted_answers' => 'no_index_col, index',
+                    'points' => 1,
+                ],
             ],
-            'matrix' => [
-                'accepted_answers' => 'matrice_table; matrice',
-                'points' => 1,
-            ],
-            'col_index' => [
-                'accepted_answers' => 'no_index_col, index',
-                'points' => 1,
-            ],
-        ],
-    ]);
+        ]);
 
     $response->assertRedirect(route('admin.quiz.questions.index', ['lecture' => $lecture->id]));
 
@@ -122,6 +126,7 @@ it('grades cloze answers with partial points and finalizes attempt score in perc
     $module = $context['module'];
     $section = $context['section'];
     $lecture = $context['lecture'];
+    $token = 'csrf-cloze-stagiaire';
 
     $question = QuizQuestion::query()->create([
         'lecture_id' => $lecture->id,
@@ -165,18 +170,21 @@ it('grades cloze answers with partial points and finalizes attempt score in perc
         'time_seconds' => 0,
     ]);
 
-    $response = $this->actingAs($stagiaire)->post(route('stagiaire.lesson.quiz.answer', [
-        'module' => $module->id,
-        'section' => $section->id,
-        'lecture' => $lecture->id,
-        'attempt' => $attempt->id,
-    ]), [
-        'answers' => [
-            'search_val' => 'Valeur cherchée',
-            'matrix' => ' matrice ',
-            'col_index' => 'incorrect',
-        ],
-    ]);
+    $response = $this->actingAs($stagiaire)
+        ->withSession(['_token' => $token])
+        ->post(route('stagiaire.lesson.quiz.answer', [
+            'module' => $module->id,
+            'section' => $section->id,
+            'lecture' => $lecture->id,
+            'attempt' => $attempt->id,
+        ]), [
+            '_token' => $token,
+            'answers' => [
+                'search_val' => 'Valeur cherchée',
+                'matrix' => ' matrice ',
+                'col_index' => 'incorrect',
+            ],
+        ]);
 
     $response->assertRedirect(route('stagiaire.lesson.quiz.result', [
         'module' => $module->id,

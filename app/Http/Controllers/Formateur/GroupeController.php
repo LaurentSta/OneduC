@@ -28,7 +28,7 @@ class GroupeController extends Controller
     public function index()
     {
         $groupes = Group::where('instructor_id', auth()->id())
-            ->with(['modules', 'students'])
+            ->with(['modules', 'students', 'observers'])
             ->get();
 
         return view('formateur.groupes.index', compact('groupes'));
@@ -174,7 +174,7 @@ class GroupeController extends Controller
     {
         $group = Group::where('id', $id)
             ->where('instructor_id', auth()->id())
-            ->with(['modules', 'students'])
+            ->with(['modules', 'students', 'observers'])
             ->firstOrFail();
 
         $modules = Module::active()->orderBy('module_title')->get();

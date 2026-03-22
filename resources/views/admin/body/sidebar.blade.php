@@ -83,6 +83,11 @@
                 <span class="text-base font-medium">Groupes</span>
             </a>
 
+            <a href="{{ route('admin.observateurs.index') }}"
+               class="{{ $itemBase }} {{ request()->routeIs('admin.observateurs.*') ? $itemActive : $itemHover }}">
+                <span class="text-base font-medium">Observateurs</span>
+            </a>
+
             <a href="{{ route('admin.stagiaires.index') }}"
                class="{{ $itemBase }} {{ request()->routeIs('admin.stagiaires.*') ? $itemActive : $itemHover }}">
                 <span class="text-base font-medium">Stagiaires</span>

@@ -111,10 +111,23 @@ class CategoryController extends Controller
         $category = Category::findOrFail($id);
 
         $modules = Module::query()
+            ->with('formateur:id,name,prenom')
             ->where('category_id', $id)
             // visiteurs + rôles non admin → seulement actifs
             ->when(!auth()->check() || auth()->user()->role !== 'admin', fn ($q) => $q->active())
-            ->select(['id','module_title','module_image','description','status'])
+            ->select([
+                'id',
+                'category_id',
+                'formateur_id',
+                'module_title',
+                'module_image',
+                'header_image',
+                'description',
+                'duree',
+                'label',
+                'certificat',
+                'status',
+            ])
             ->latest('id')
             ->get();
 

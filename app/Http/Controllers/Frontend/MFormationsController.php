@@ -58,7 +58,12 @@ class MFormationsController extends Controller
 
     private function renderModuleDetail(Module $module)
     {
-        $module->loadMissing('sections.lectures.objectives');
+        $module->loadMissing([
+            'category',
+            'subCategory',
+            'formateur',
+            'sections.lectures.objectives',
+        ]);
 
         $userId = auth()->id();
         $lectures = $module->sections->flatMap->lectures;
@@ -89,14 +94,28 @@ class MFormationsController extends Controller
             ->unique()
             ->values();
 
-        $guestView = auth()->guest(); // ← ajoute ça
+        $rawModuleObjectives = $module->objectifs;
+        $moduleObjectives = match (true) {
+            is_array($rawModuleObjectives) => collect($rawModuleObjectives),
+            is_string($rawModuleObjectives) => collect(preg_split('/\r\n|\r|\n/', $rawModuleObjectives)),
+            default => collect(),
+        };
+
+        $moduleObjectives = $moduleObjectives
+            ->map(fn ($title) => trim((string) $title))
+            ->filter()
+            ->unique()
+            ->values();
+
+        $guestView = auth()->guest();
         return view('frontend.contenu.module_detail', compact(
             'module',
             'lessonStatuses',
             'progression',
             'sectionProgress',
             'guestView',
-            'lessonObjectives'
+            'lessonObjectives',
+            'moduleObjectives'
         ));
     }
 

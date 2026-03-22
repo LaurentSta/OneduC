@@ -112,6 +112,7 @@ public function AdminSecuriteUpdate(Request $request)
         return match (Auth::user()->role) {
             'admin'     => 'admin.dashboard',
             'formateur' => 'formateur.dashboard',
+            'observateur' => 'observateur.dashboard',
             'stagiaire' => 'stagiaire.dashboard',
             default     => 'dashboard',
         };
@@ -220,7 +221,7 @@ public function AdminSecuriteUpdate(Request $request)
         $user = User::findOrFail($request->user_id);
 
         // ✅ Autoriser uniquement les rôles modifiables : formateur OU stagiaire
-        if (!in_array($user->role, ['formateur', 'stagiaire'])) {
+        if (!in_array($user->role, ['formateur', 'stagiaire', 'observateur'])) {
             return response()->json([
                 'success' => false,
                 'message' => 'Action non autorisée.'
@@ -254,6 +255,22 @@ public function AdminSecuriteUpdate(Request $request)
 
         $user->delete(); // soft delete
         return $this->ok('Stagiaire supprimé.', $user->id);
+    }
+
+    public function DestroyObservateur(\App\Models\User $user)
+    {
+        if ($user->id === auth()->id())          return $this->deny('Vous ne pouvez pas vous supprimer.');
+        if ($user->role !== 'observateur')       return $this->deny('Action non autorisée.');
+        if (!\Schema::hasColumn('users','deleted_at')) return $this->deny('Soft delete indisponible.');
+
+        \Illuminate\Support\Facades\DB::table('group_user')
+            ->where('user_id', $user->id)
+            ->where('role_in_group', 'observateur')
+            ->delete();
+
+        $user->delete();
+
+        return $this->ok('Observateur supprimé.', $user->id);
     }
 
     private function ok($msg, $id){

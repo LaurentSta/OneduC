@@ -43,9 +43,15 @@ class ModuleController extends Controller
     {
         $name = optional(request()->route())->getName();
 
-        return (is_string($name) && str_starts_with($name, 'formateur.'))
-            ? 'formateur.formations'
-            : 'stagiaire.formations';
+        if (is_string($name) && str_starts_with($name, 'formateur.')) {
+            return 'formateur.formations';
+        }
+
+        if (is_string($name) && str_starts_with($name, 'observateur.')) {
+            return 'observateur.formations';
+        }
+
+        return 'stagiaire.formations';
     }
 
     /**
@@ -901,11 +907,11 @@ class ModuleController extends Controller
         ]);
 
         $mode          = (string) $request->query('mode', 'groupe'); // 'groupe' | 'officiel'
-        $isStaff       = in_array($user->role ?? null, ['formateur', 'admin'], true);
+        $isStaff       = in_array($user->role ?? null, ['formateur', 'admin', 'observateur'], true);
         $includeHidden = $request->boolean('include_hidden') && $isStaff;
 
         // ✅ Mode anonyme (lecture seule, pas de progression/statuts)
-        $anonymous = $request->boolean('anonymous');
+        $anonymous = $request->boolean('anonymous') || ($user->role ?? null) === 'observateur';
 
         $groupId = $this->resolveGroupIdForContext($request, $user, (int) $module->id);
 
@@ -944,9 +950,11 @@ class ModuleController extends Controller
         ]);
 
         // ✅ Si formateur + anonymous, on rend une vue "stagiaire" adaptée
-        $view = ($anonymous && ($user->role ?? null) === 'formateur')
-            ? 'formateur.formations.anonyme.chapitre'
-            : ($this->viewBase() . '.chapitre');
+        $view = match (true) {
+            $anonymous && ($user->role ?? null) === 'formateur' => 'formateur.formations.anonyme.chapitre',
+            $anonymous && ($user->role ?? null) === 'observateur' => 'observateur.formations.anonyme.chapitre',
+            default => $this->viewBase() . '.chapitre',
+        };
 
         return view($view, [
             'module'          => $module,
@@ -974,6 +982,7 @@ public function lire(Request $request, Module $module, ModuleSection $section, M
 {
     $user = auth()->user();
     $isFormateurRoute = $request->routeIs('formateur.*');
+    $isObserverRoute = $request->routeIs('observateur.*');
 
     // Vérifications de sécurité et de contexte
     abort_unless((int) $section->module_id === (int) $module->id, 404);
@@ -993,9 +1002,9 @@ public function lire(Request $request, Module $module, ModuleSection $section, M
     ]);
 
     $mode          = (string) $request->query('mode', 'groupe');
-    $isStaff       = in_array($user->role ?? null, ['formateur', 'admin'], true);
+    $isStaff       = in_array($user->role ?? null, ['formateur', 'admin', 'observateur'], true);
     $includeHidden = $request->boolean('include_hidden') && $isStaff;
-    $anonymous     = $request->boolean('anonymous');
+    $anonymous     = $request->boolean('anonymous') || ($user->role ?? null) === 'observateur';
 
     $groupId = $this->resolveGroupIdForContext($request, $user, (int) $module->id);
 
@@ -1018,9 +1027,15 @@ public function lire(Request $request, Module $module, ModuleSection $section, M
     $lectureStats = $anonymous ? [] : $this->buildLectureStats($lectures, (int) $user->id);
 
     // --- LOGIQUE DE NAVIGATION PÉDAGOGIQUE ---
-    $lectureRouteName = $isFormateurRoute ? 'formateur.formations.lecture' : 'stagiaire.module.lecture';
-    $sectionRouteName = $isFormateurRoute ? 'formateur.formations.section' : 'stagiaire.module.section';
-    $finalRouteName   = $isFormateurRoute ? 'formateur.formations.detail' : 'stagiaire.module.fin';
+    $lectureRouteName = $isFormateurRoute
+        ? 'formateur.formations.lecture'
+        : ($isObserverRoute ? 'observateur.formations.lecture' : 'stagiaire.module.lecture');
+    $sectionRouteName = $isFormateurRoute
+        ? 'formateur.formations.section'
+        : ($isObserverRoute ? 'observateur.formations.section' : 'stagiaire.module.section');
+    $finalRouteName = $isFormateurRoute
+        ? 'formateur.formations.detail'
+        : ($isObserverRoute ? 'observateur.groupes.index' : 'stagiaire.module.fin');
 
     $nextLecturePayload = null;
     $currentSectionLectures = $section->lectures ?? collect();
@@ -1108,7 +1123,7 @@ public function lire(Request $request, Module $module, ModuleSection $section, M
         ->when(! $isFormateurRoute, fn ($query) => $query->where('is_visible_to_stagiaire', true))
         ->get();
 
-    if ($isFormateurRoute && $isStaff) {
+    if ($isFormateurRoute && ($user->role ?? null) === 'formateur') {
         $whiteboardGroups = $module->groups()
             ->where('groups.instructor_id', (int) $user->id)
             ->with('whiteboard')
@@ -1155,9 +1170,11 @@ public function lire(Request $request, Module $module, ModuleSection $section, M
     }
     // -----------------------------------------------------
 
-    $view = ($anonymous && ($user->role ?? null) === 'formateur')
-        ? 'formateur.formations.anonyme.lecon'
-        : ($this->viewBase() . '.lecon');
+    $view = match (true) {
+        $anonymous && ($user->role ?? null) === 'formateur' => 'formateur.formations.anonyme.lecon',
+        $anonymous && ($user->role ?? null) === 'observateur' => 'observateur.formations.anonyme.lecon',
+        default => $this->viewBase() . '.lecon',
+    };
     
     return view($view, [
         'module'          => $module,
@@ -1570,7 +1587,7 @@ public function lire(Request $request, Module $module, ModuleSection $section, M
     private function resolveGroupIdForContext(Request $request, $user, int $moduleId): ?int
     {
         $forcedGroupId = (int) $request->query('group_id', 0);
-        $isStaff = in_array($user->role ?? null, ['formateur', 'admin'], true);
+        $isStaff = in_array($user->role ?? null, ['formateur', 'admin', 'observateur'], true);
 
         if ($forcedGroupId > 0 && $isStaff) {
 
@@ -1588,6 +1605,16 @@ public function lire(Request $request, Module $module, ModuleSection $section, M
                     ->exists();
 
                 if (!$isOwner) return null;
+            }
+
+            if (($user->role ?? null) === 'observateur') {
+                $isObserved = DB::table('group_user')
+                    ->where('group_id', $forcedGroupId)
+                    ->where('user_id', (int) $user->id)
+                    ->where('role_in_group', 'observateur')
+                    ->exists();
+
+                if (! $isObserved) return null;
             }
 
             return $forcedGroupId;

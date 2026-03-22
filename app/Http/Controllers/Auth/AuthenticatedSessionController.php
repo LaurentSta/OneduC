@@ -25,6 +25,7 @@ class AuthenticatedSessionController extends Controller
         $url = match ($role) {
             'admin'     => route('admin.dashboard'),
             'formateur' => route('formateur.dashboard'),
+            'observateur' => route('observateur.dashboard'),
             'stagiaire' => route('stagiaire.dashboard'),
             default     => route('index') // la route standard de Laravel
         };
@@ -59,6 +60,7 @@ class AuthenticatedSessionController extends Controller
         $url = match ($role) {
             'admin'     => route('admin.dashboard'),
             'formateur' => route('formateur.dashboard'),
+            'observateur' => route('observateur.dashboard'),
             'stagiaire' => route('stagiaire.dashboard'),
             default     => route('index'),
         };

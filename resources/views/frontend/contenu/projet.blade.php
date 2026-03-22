@@ -2,10 +2,10 @@
 @section('title', 'Le projet Oneduc.fr')
 
 @section('home')
-<div class="container mx-auto px-4 pt-8 pb-4">
-  <div class="bg-white rounded-[20px] shadow-md p-8 my-10 w-full">
-    <div class="grid grid-cols-12 gap-6 items-center">
-      <div class="col-span-12 md:col-span-8">
+<div class="max-w-[1248px] mx-auto px-4 pt-8 pb-4">
+  <div class="bg-white rounded-[24px] shadow-md p-8 my-10 w-full">
+    <div class="grid gap-8 lg:grid-cols-[1.15fr_0.85fr] items-center">
+      <div>
         <x-typography variant="titre">Le projet Onéduc.fr</x-typography>
         <x-typography variant="sous-titre" class="font-varela text-sous-titre text-orangeone">
           …en faveur de l’inclusion numérique
@@ -21,7 +21,7 @@
         </div>
       </div>
 
-      <div class="col-span-12 md:col-span-4 flex justify-center md:justify-end">
+      <div class="flex justify-center lg:justify-end">
         <div class="w-full max-w-xs">
           {!! file_get_contents(public_path('images/svg/PointDInterrogation.svg')) !!}
         </div>
@@ -29,7 +29,9 @@
     </div>
   </div>
 
-  <x-oneduc.breadcrumb :items="[['label' => 'Accueil', 'url' => route('index')], ['label' => 'Le projet Onéduc.fr']]" />
+  <div class="mt-4">
+    <x-oneduc.breadcrumb :items="[['label' => 'Accueil', 'url' => route('index')], ['label' => 'Le projet Onéduc.fr']]" />
+  </div>
 </div>
 
 <section class="bg-[#f8f7fa] py-16 md:py-20">
@@ -72,7 +74,53 @@
 
 <section class="bg-white py-16 md:py-20">
   <div class="max-w-[1248px] mx-auto px-4">
-    <div class="max-w-3xl">
+    <div class="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] items-center">
+      <div class="relative">
+        <div class="absolute -inset-4 rounded-[32px] bg-orangeone/10 blur-2xl"></div>
+        <div class="relative overflow-hidden rounded-[32px] border border-slate-200 bg-white shadow-xl">
+          <img
+            src="{{ asset('upload/formateur_images/202505311622_laurent_staelens.jpg') }}"
+            alt="Portrait de Laurent Staelens, fondateur d'Oneduc"
+            class="h-full w-full object-cover">
+        </div>
+      </div>
+
+      <div class="space-y-6">
+        <p class="text-sm font-varela uppercase tracking-[0.25em] text-orangeone">Un projet porte par des humains</p>
+        <h2 class="text-3xl md:text-4xl font-raleway font-bold text-bleuone">
+          Avant d'etre un logiciel, Oneduc est une demarche de terrain.
+        </h2>
+        <div class="space-y-4 text-lg leading-relaxed text-slate-700 font-lisible">
+          <p>
+            Le projet est porte par Laurent Staelens et nourri par des retours d'usage de formateurs, d'accompagnants et de structures qui travaillent avec des publics tres differents.
+          </p>
+          <p>
+            Cette dimension humaine compte : elle permet de faire evoluer la plateforme a partir de situations reelles, de besoins pedagogiques concrets et de contraintes souvent invisibles pour les outils plus generalistes.
+          </p>
+        </div>
+
+        <div class="grid gap-4 md:grid-cols-2">
+          <div class="rounded-3xl bg-slate-50 p-5 border border-slate-200">
+            <h3 class="text-lg font-semibold text-bleuone">Retours du terrain</h3>
+            <p class="mt-2 text-sm leading-relaxed text-slate-600 font-lisible">
+              Chaque evolution utile cherche d'abord a simplifier la vie du formateur et l'entree dans la formation pour l'apprenant.
+            </p>
+          </div>
+          <div class="rounded-3xl bg-orange-50 p-5 border border-orangeone/15">
+            <h3 class="text-lg font-semibold text-bleuone">Developpement progressif</h3>
+            <p class="mt-2 text-sm leading-relaxed text-slate-600 font-lisible">
+              La version beta avance pas a pas, avec une logique de construction sobre, utile et testee dans des contextes reels.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="bg-white py-16 md:py-20">
+  <div class="max-w-[1248px] mx-auto px-4">
+    <div class="w-full">
       <h2 class="text-3xl md:text-4xl font-raleway font-bold text-bleuone">
         À qui s’adresse Oneduc.fr ?
       </h2>
@@ -115,7 +163,7 @@
 
 <section class="bg-[#fff7f3] py-16 md:py-20">
   <div class="max-w-[1248px] mx-auto px-4">
-    <div class="max-w-3xl">
+    <div class="w-full">
       <h2 class="text-3xl md:text-4xl font-raleway font-bold text-bleuone">
         Les grands enjeux du projet
       </h2>
@@ -227,7 +275,7 @@
 
 <section class="bg-[#f8f7fa] py-16 md:py-20">
   <div class="max-w-[1248px] mx-auto px-4">
-    <div class="max-w-3xl">
+    <div class="w-full">
       <h2 class="text-3xl md:text-4xl font-raleway font-bold text-bleuone">
         Les bénéfices attendus
       </h2>
@@ -294,6 +342,9 @@
 
       <div class="rounded-[32px] border border-slate-200 p-8 md:p-10">
         <div class="space-y-4 text-slate-700 leading-relaxed font-lisible">
+          <p class="font-semibold text-bleuone">
+            Le choix associatif permet de garder le cap sur l'utilite pedagogique et l'accessibilite du projet.
+          </p>
           <p>
             Les statuts de l’association précisent qu’Oneduc a pour objet de créer des outils numériques et éducatifs, de promouvoir leurs usages dans les champs de la formation, de l’éducation et de l’enseignement, et d’accompagner la digitalisation des parcours à travers la plateforme Oneduc.fr.
           </p>
@@ -304,6 +355,27 @@
             Cette dimension associative donne au projet une assise collective et ouvre des perspectives de partenariats, d’accompagnement et de diffusion plus larges.
           </p>
         </div>
+
+        <div class="mt-8 grid gap-4 md:grid-cols-3">
+          <div class="rounded-2xl bg-slate-50 p-4">
+            <p class="text-sm font-semibold text-bleuone">Gouvernance</p>
+            <p class="mt-2 text-sm text-slate-600 font-lisible">
+              L'association donne un cadre collectif au projet et clarifie ses orientations.
+            </p>
+          </div>
+          <div class="rounded-2xl bg-slate-50 p-4">
+            <p class="text-sm font-semibold text-bleuone">Soutenabilite</p>
+            <p class="mt-2 text-sm text-slate-600 font-lisible">
+              Les adhesions et soutiens servent a faire vivre l'hebergement, les evolutions et l'accompagnement.
+            </p>
+          </div>
+          <div class="rounded-2xl bg-slate-50 p-4">
+            <p class="text-sm font-semibold text-bleuone">Ethique</p>
+            <p class="mt-2 text-sm text-slate-600 font-lisible">
+              Le cadre loi 1901 renforce la lisibilite du projet pour les partenaires et les structures engagees.
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -311,7 +383,7 @@
 
 <section class="bg-slate-950 py-16 md:py-20">
   <div class="max-w-[1248px] mx-auto px-4">
-    <div class="max-w-4xl rounded-[36px] border border-white/10 bg-white/[0.04] p-8 md:p-12">
+    <div class="w-full rounded-[36px] border border-white/10 bg-white/[0.04] p-8 md:p-12">
       <p class="text-sm font-varela uppercase tracking-[0.25em] text-orange-200">Vision</p>
       <h2 class="mt-4 text-3xl md:text-5xl font-raleway font-bold text-white leading-tight">
         Oneduc.fr n’a pas vocation à être seulement une plateforme de plus.
@@ -330,7 +402,7 @@
           Nous contacter
         </a>
         <a href="{{ route('association') }}" class="inline-flex items-center justify-center rounded-full border-2 border-white/30 px-8 py-3 text-lg font-varela text-white transition-all duration-300 hover:border-white hover:bg-white hover:text-slate-950">
-          Decouvrir l’association
+          Decouvrir l'association
         </a>
       </div>
     </div>

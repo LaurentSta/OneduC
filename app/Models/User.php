@@ -73,6 +73,11 @@ class User extends Authenticatable
         return $query->where('role', 'admin');
     }
 
+    public function scopeObservateurs($query)
+    {
+        return $query->where('role', 'observateur');
+    }
+
     /* -------------------------------------------------------------------------
      | RELATIONS
      |-------------------------------------------------------------------------- */
@@ -91,6 +96,13 @@ class User extends Authenticatable
         return $this->belongsToMany(Group::class, 'group_user', 'user_id', 'group_id')
                     ->withPivot('role_in_group')
                     ->wherePivot('role_in_group', 'formateur');
+    }
+
+    public function groupesObserve()
+    {
+        return $this->belongsToMany(Group::class, 'group_user', 'user_id', 'group_id')
+            ->withPivot('role_in_group')
+            ->wherePivot('role_in_group', 'observateur');
     }
 
     // ✅ Si dans ta table groups tu as une colonne instructor_id

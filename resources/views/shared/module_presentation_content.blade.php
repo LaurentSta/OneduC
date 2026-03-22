@@ -1,10 +1,12 @@
 @php
     $presentationMode = $presentationMode ?? 'public'; // public|stagiaire|formateur
     $lessonObjectives = collect($lessonObjectives ?? []);
+    $moduleObjectives = collect($moduleObjectives ?? []);
     $lessonStatuses = $lessonStatuses ?? [];
     $sectionProgress = $sectionProgress ?? [];
     $progression = (int) ($progression ?? 0);
     $firstSection = $module->sections->first();
+    $lessonCount = $module->sections->flatMap->lectures->count();
 
     $isStagiaireView = $presentationMode === 'stagiaire';
     $isFormateurView = $presentationMode === 'formateur';
@@ -17,6 +19,15 @@
     $showProgress = $isStagiaireView || ($isPublicView && $isStagiaireUser);
     $showStatuses = $showProgress;
     $estimatedDurationLabel = $estimatedDurationLabel ?? null;
+    $displayObjectives = $lessonObjectives
+        ->merge($moduleObjectives)
+        ->map(fn ($title) => trim((string) $title))
+        ->filter()
+        ->unique()
+        ->values();
+    $moduleHeroImage = $module->header_image ?: $module->module_image;
+    $moduleHeroUrl = $moduleHeroImage ? asset('storage/' . ltrim($moduleHeroImage, '/')) : null;
+    $moduleShortDescription = trim(strip_tags((string) ($module->description ?? '')));
 @endphp
 
 <style>
@@ -53,24 +64,101 @@
         </ol>
     </nav>
 
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        <main class="lg:col-span-8">
-            <header class="border-b border-gray-100 pb-2 mb-4">
-                <div class="flex flex-wrap gap-2 mb-2">
-                    @if($module->bestseller)
-                        <span class="inline-block bg-green-100 text-green-700 text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded">Bestseller</span>
-                    @endif
-                    @if($module->vedette)
-                        <span class="inline-block bg-blue-100 text-blue-700 text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded">A la une</span>
-                    @endif
-                    @if($module->surevalue)
-                        <span class="inline-block bg-yellow-100 text-yellow-700 text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded">Valeur sure</span>
+    @if($isPublicView)
+        <section class="mb-8 overflow-hidden rounded-[32px] bg-slate-950 text-white shadow-2xl shadow-slate-300/40">
+            <div class="relative">
+                @if($moduleHeroUrl)
+                    <img src="{{ $moduleHeroUrl }}"
+                         alt="{{ $module->module_title ?? $module->module_name }}"
+                         class="absolute inset-0 h-full w-full object-cover">
+                @endif
+
+                <div class="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/90 to-slate-950/70"></div>
+
+                <div class="relative px-6 py-8 md:px-10 md:py-12">
+                    <div class="flex flex-wrap gap-2">
+                        @if($module->category?->category_name)
+                            <span class="inline-flex items-center rounded-full bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-orange-200">
+                                {{ $module->category->category_name }}
+                            </span>
+                        @endif
+                        @if($module->subCategory?->subcategory_name)
+                            <span class="inline-flex items-center rounded-full bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white/80">
+                                {{ $module->subCategory->subcategory_name }}
+                            </span>
+                        @endif
+                    </div>
+
+                    <div class="mt-6 max-w-3xl">
+                        <h1 class="text-3xl md:text-5xl font-raleway font-bold leading-tight">
+                            {{ $module->module_title ?? $module->module_name }}
+                        </h1>
+                        @if($moduleShortDescription !== '')
+                            <p class="mt-4 text-lg leading-relaxed text-white/80 font-lisible">
+                                {{ \Illuminate\Support\Str::limit($moduleShortDescription, 240) }}
+                            </p>
+                        @endif
+                    </div>
+
+                    <div class="mt-6 flex flex-wrap gap-3 text-sm">
+                        <span class="inline-flex items-center rounded-full bg-white/10 px-4 py-2 font-semibold text-white/85">
+                            {{ $module->formateur->name ?? 'Equipe Oneduc' }}
+                        </span>
+                        <span class="inline-flex items-center rounded-full bg-white/10 px-4 py-2 font-semibold text-white/85">
+                            {{ $estimatedDurationLabel ?? $module->formatted_duration ?? $module->duree ?? 'Rythme libre' }}
+                        </span>
+                        <span class="inline-flex items-center rounded-full bg-white/10 px-4 py-2 font-semibold text-white/85">
+                            {{ $lessonCount }} lecons
+                        </span>
+                        <span class="inline-flex items-center rounded-full bg-white/10 px-4 py-2 font-semibold text-white/85">
+                            {{ $module->level ?? 'Tous niveaux' }}
+                        </span>
+                    </div>
+
+                    @if(!auth()->check())
+                        <div class="mt-8 flex flex-wrap gap-4">
+                            @if(\Illuminate\Support\Facades\Route::has('login.selection'))
+                                <a href="{{ route('login.selection') }}"
+                                   class="inline-flex items-center justify-center rounded-full bg-orangeone px-6 py-3 text-base font-semibold text-white transition hover:bg-orange-600">
+                                    Se connecter pour suivre ce module
+                                </a>
+                            @else
+                                <a href="{{ route('connexion') }}"
+                                   class="inline-flex items-center justify-center rounded-full bg-orangeone px-6 py-3 text-base font-semibold text-white transition hover:bg-orange-600">
+                                    Se connecter pour suivre ce module
+                                </a>
+                            @endif
+                            <a href="{{ route('stagiaire.code.form') }}"
+                               class="inline-flex items-center justify-center rounded-full border border-white/20 px-6 py-3 text-base font-semibold text-white transition hover:bg-white hover:text-slate-950">
+                                Je suis stagiaire, j'ai un code
+                            </a>
+                        </div>
                     @endif
                 </div>
-                <h1 class="text-2xl md:text-3xl font-extrabold text-bleuone leading-tight">
-                    {{ $module->module_title ?? $module->module_name }}
-                </h1>
-            </header>
+            </div>
+        </section>
+    @endif
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <main class="lg:col-span-8">
+            @unless($isPublicView)
+                <header class="border-b border-gray-100 pb-2 mb-4">
+                    <div class="flex flex-wrap gap-2 mb-2">
+                        @if($module->bestseller)
+                            <span class="inline-block bg-green-100 text-green-700 text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded">Bestseller</span>
+                        @endif
+                        @if($module->vedette)
+                            <span class="inline-block bg-blue-100 text-blue-700 text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded">A la une</span>
+                        @endif
+                        @if($module->surevalue)
+                            <span class="inline-block bg-yellow-100 text-yellow-700 text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded">Valeur sure</span>
+                        @endif
+                    </div>
+                    <h1 class="text-2xl md:text-3xl font-extrabold text-bleuone leading-tight">
+                        {{ $module->module_title ?? $module->module_name }}
+                    </h1>
+                </header>
+            @endunless
 
             <div class="border-b border-gray-200 mb-6">
                 <nav class="flex space-x-6" aria-label="Tabs">
@@ -91,7 +179,7 @@
 
                 <div x-show="activeTab === 'objectifs'" x-cloak>
                     <ul class="space-y-3">
-                        @forelse($lessonObjectives as $obj)
+                        @forelse($displayObjectives as $obj)
                             <li class="flex items-start gap-3">
                                 <svg class="size-5 text-orangeone mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
@@ -99,7 +187,7 @@
                                 <span class="text-gray-700 font-medium text-sm md:text-base">{{ $obj }}</span>
                             </li>
                         @empty
-                            <p class="italic text-gray-500">Aucun objectif de lecon n'est encore disponible.</p>
+                            <p class="italic text-gray-500">Aucun objectif pedagogique n'est encore disponible.</p>
                         @endforelse
                     </ul>
                 </div>
@@ -228,6 +316,8 @@
                             <source src="{{ $moduleVideoSrc }}" type="video/mp4">
                             Votre navigateur ne supporte pas la lecture de videos.
                         </video>
+                    @elseif($moduleHeroUrl)
+                        <img src="{{ $moduleHeroUrl }}" alt="{{ $module->module_title ?? $module->module_name }}" class="w-full aspect-video object-cover">
                     @else
                         <div class="aspect-video bg-bleuone flex items-center justify-center">
                             <img src="{{ asset('images/svg/Modules.svg') }}" class="size-20 opacity-20" alt="Illustration">
@@ -263,7 +353,7 @@
                             @else
                                 <button type="button" @click="showAuthModal = true"
                                     class="w-full py-4 px-6 rounded-xl bg-bleuone text-white font-bold hover:bg-blue-700 transition-all">
-                                    Se connecter pour commencer
+                                    Se connecter pour suivre ce module
                                 </button>
                             @endif
                         @else
@@ -278,7 +368,21 @@
                                 Lancer l'evaluation
                             </button>
                         @endif
+
+                        @if($isPublicView && !auth()->check())
+                            <a href="{{ route('stagiaire.code.form') }}"
+                               class="flex items-center justify-center w-full py-4 px-6 rounded-xl border-2 border-orangeone text-orangeone font-bold hover:bg-orangeone hover:text-white transition-colors">
+                                Connexion par code stagiaire
+                            </a>
+                        @endif
                     </div>
+
+                    @if($isPublicView && !auth()->check())
+                        <p class="mt-4 text-sm leading-relaxed text-gray-500 font-lisible">
+                            Les objectifs pedagogiques et le plan du module sont visibles avant connexion.
+                            L'ouverture des lecons demande ensuite une connexion.
+                        </p>
+                    @endif
 
                     <div class="mt-8 pt-6 border-t border-gray-100 space-y-5">
                         <div class="flex items-center gap-4">
@@ -323,7 +427,7 @@
                             </div>
                             <div>
                                 <p class="text-[10px] text-gray-400 font-bold uppercase">Contenu</p>
-                                <p class="font-bold text-gray-900">{{ $module->sections->flatMap->lectures->count() }} lecons</p>
+                                <p class="font-bold text-gray-900">{{ $lessonCount }} lecons</p>
                             </div>
                         </div>
                     </div>

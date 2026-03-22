@@ -47,6 +47,22 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
+        // OBSERVATEUR
+        $observateur = User::updateOrCreate(
+            ['email' => 'observateur@gmail.com'],
+            [
+                'prenom' => 'Claire',
+                'name' => 'Observatrice',
+                'username' => 'observateur',
+                'password' => Hash::make('111'),
+                'role' => 'observateur',
+                'status' => 1,
+                'phone' => '0600000000',
+                'address' => '12 rue des Observateurs, Paris',
+                'societe' => 'Mission d observation pedagogique',
+            ]
+        );
+
         // STAGIAIRE
         User::updateOrCreate(
             ['email' => 'user@gmail.com'],
@@ -227,10 +243,10 @@ class DatabaseSeeder extends Seeder
             }
         }
 
-        $this->seedInstructorGroup($formateur);
+        $this->seedInstructorGroup($formateur, $observateur);
     }
 
-    private function seedInstructorGroup(User $formateur): void
+    private function seedInstructorGroup(User $formateur, User $observateur): void
     {
         $stagiaires = [
             [
@@ -285,6 +301,18 @@ class DatabaseSeeder extends Seeder
             ],
             [
                 'role_in_group' => 'formateur',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]
+        );
+
+        DB::table('group_user')->updateOrInsert(
+            [
+                'group_id' => $group->id,
+                'user_id' => $observateur->id,
+            ],
+            [
+                'role_in_group' => 'observateur',
                 'created_at' => $now,
                 'updated_at' => $now,
             ]
