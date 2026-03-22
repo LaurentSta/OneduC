@@ -80,6 +80,9 @@
               <h3 class="text-xl font-bold text-bleuone font-raleway mb-2 truncate">
                 {{ $groupe->name }}
               </h3>
+              <p class="text-xs text-gray-400 italic font-lisible mb-3">
+                Créé le {{ optional($groupe->created_at)->format('d/m/Y') ?? '—' }}
+              </p>
 
               @if($groupe->observers->isNotEmpty())
                 <div class="mb-3 flex flex-wrap items-center gap-2">

@@ -78,6 +78,9 @@
         <h1 class="font-raleway text-titre text-bleuone leading-tight mb-2">
             Modification du groupe : <br/><span class="text-orangeone">{{ $group->name }}</span>
         </h1>
+        <p class="font-lisible text-xs text-gray-400 italic mb-4">
+          Créé le {{ optional($group->created_at)->format('d/m/Y') ?? '—' }}
+        </p>
         <p class="font-varela text-gray-600 mb-4">
           Gérez la configuration, la liste des apprenants et l'ordre pédagogique des modules.
         </p>
