@@ -93,6 +93,9 @@
                   @foreach ($section->lectures as $lec)
                     @php
                       $isActiveLesson = ($activeLessonId && (int) $activeLessonId === (int) $lec->id);
+                      $displayedQuestions = (bool) ($lec->quiz_enabled ?? false)
+                        ? (int) ($lec->quiz_questions_per_attempt ?? 0)
+                        : (int) ($lec->question_count ?? 0);
                     @endphp
 
                     <li>
@@ -131,9 +134,9 @@
                                 Mode {{ $anonymous ? 'anonyme' : 'formateur' }}
                               </span>
 
-                              @if(!empty($lec->question_count))
+                              @if($displayedQuestions > 0)
                                 <span class="text-[11px] font-black text-gray-500 tabular-nums">
-                                  {{ (int)$lec->question_count }} question{{ (int)$lec->question_count > 1 ? 's' : '' }}
+                                  {{ $displayedQuestions }} question{{ $displayedQuestions > 1 ? 's' : '' }}
                                 </span>
                               @endif
                             </div>

@@ -185,7 +185,7 @@
 
               {{-- Action --}}
               <td class="px-6 py-4 text-right">
-                <a href="{{ route('formateur.progressions.stagiaire', $s->id) }}"
+                <a href="{{ route('formateur.progressions.stagiaire', ['user' => $s->id, 'group_id' => $groupId ?: null]) }}"
                    class="text-orangeone hover:underline text-sm font-semibold">
                   Voir le détail
                 </a>

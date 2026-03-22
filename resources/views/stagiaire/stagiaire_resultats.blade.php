@@ -338,9 +338,9 @@
                                             </div>
                                         </div>
                                         <div class="flex gap-4 text-[11px] text-gray-500 pl-11">
-                                            <span class="flex items-center gap-1" title="Bonnes réponses"><span class="w-2 h-2 rounded-full bg-green-500"></span> {{ $score->correct_answers }}</span>
-                                            <span class="flex items-center gap-1" title="Erreurs"><span class="w-2 h-2 rounded-full bg-red-400"></span> {{ $score->wrong_answers }}</span>
-                                            <span class="text-gray-300">/</span><span>{{ $score->total_questions }} total</span>
+                                            <span class="flex items-center gap-1" title="Bonnes réponses enregistrées"><span class="w-2 h-2 rounded-full bg-green-500"></span> {{ $score->correct_answers }} correctes</span>
+                                            <span class="flex items-center gap-1" title="Erreurs enregistrées"><span class="w-2 h-2 rounded-full bg-red-400"></span> {{ $score->wrong_answers }} erreurs</span>
+                                            <span class="text-gray-300">/</span><span>{{ $score->total_questions }} questions posees</span>
                                         </div>
                                     </div>
 

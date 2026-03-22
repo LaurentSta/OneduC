@@ -51,7 +51,7 @@
                     @if ($summary)
                         <div class="mt-6 grid gap-4 md:grid-cols-3">
                             <div class="rounded-xl bg-white px-4 py-4">
-                                <p class="text-xs uppercase tracking-[0.18em] text-slate-500">Questions</p>
+                                <p class="text-xs uppercase tracking-[0.18em] text-slate-500">Questions posees</p>
                                 <p class="mt-2 text-3xl font-bold text-slate-900">{{ $summary['total'] }}</p>
                             </div>
                             <div class="rounded-xl bg-white px-4 py-4">

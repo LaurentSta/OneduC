@@ -420,7 +420,7 @@
                               <div class="flex items-center justify-between gap-3 mb-3">
                                   <h4 class="font-bold text-bleuone text-xs uppercase">Parametres du tirage</h4>
                                   <span class="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] font-bold text-bleuone">
-                                      {{ $currentCount }} / {{ $totalInBank }} utilises
+                                      {{ $currentCount }} posees / {{ $totalInBank }} disponibles
                                   </span>
                               </div>
 
@@ -448,7 +448,7 @@
                                       <div class="h-1.5 rounded-full bg-orangeone transition-all duration-500" style="width: {{ $percent }}%"></div>
                                   </div>
                                   <p class="text-[11px] italic text-slate-400">
-                                      Le systeme tirera {{ $currentCount }} questions au hasard parmi les {{ $totalInBank }} disponibles.
+                                      Le systeme tirera {{ $currentCount }} questions reellement posees au stagiaire parmi les {{ $totalInBank }} disponibles dans la banque.
                                   </p>
                               </form>
                           </div>
@@ -718,7 +718,7 @@
                                       <dd class="font-medium text-slate-700">{{ $lecture->slide_count ?? 0 }}</dd>
                                   </div>
                                   <div class="flex justify-between gap-4">
-                                      <dt class="text-slate-500">Questions prévues</dt>
+                                      <dt class="text-slate-500">Questions posees / tentative</dt>
                                       <dd class="font-medium text-slate-700">{{ $lecture->quiz_questions_per_attempt ?? 0 }}</dd>
                                   </div>
                                   <div class="flex justify-between gap-4">

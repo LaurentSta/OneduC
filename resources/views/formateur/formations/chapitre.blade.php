@@ -167,12 +167,19 @@
                 @foreach($lectures as $lec)
                   @php
                     $quizCount = (int) ($lec->quiz_questions_count ?? 0);
+                    $plannedCount = (int) ($lec->quiz_questions_per_attempt ?? 0);
                     $declaredCount = (int) ($lec->question_count ?? 0);
-                    $total = $quizCount > 0 ? $quizCount : $declaredCount;
+                    $usesNativeQuiz = (bool) ($lec->quiz_enabled ?? false);
 
-                    $badgeText = $quizCount > 0
-                      ? "Quiz : {$quizCount}"
-                      : ($declaredCount > 0 ? "Déclaré : {$declaredCount}" : "Non défini");
+                    $total = $usesNativeQuiz
+                      ? ($plannedCount > 0 ? $plannedCount : $quizCount)
+                      : $declaredCount;
+
+                    $badgeText = $usesNativeQuiz
+                      ? ($plannedCount > 0
+                        ? "Questions posees : {$plannedCount}"
+                        : ($quizCount > 0 ? "Banque quiz : {$quizCount}" : "Quiz non parametre"))
+                      : ($declaredCount > 0 ? "SCORM : {$declaredCount}" : "Non defini");
                   @endphp
 
                   <div class="rounded-[16px] border border-gray-200 bg-gray-50 p-4">

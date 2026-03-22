@@ -33,9 +33,9 @@
       </div>
 
       <div class="p-4 rounded-2xl bg-gray-50 border border-gray-200">
-        <p class="text-xs text-gray-500">Bonnes réponses</p>
+        <p class="text-xs text-gray-500">Réponses correctes</p>
         <p class="mt-1 text-2xl font-bold text-gray-900">
-          {{ (int)($correctCount ?? 0) }} / {{ (int)($attempt->total_questions ?? 0) }}
+          {{ (int)($correctCount ?? 0) }} / {{ (int)($attempt->total_questions ?? 0) }} questions posées
         </p>
       </div>
 

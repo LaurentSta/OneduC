@@ -50,8 +50,8 @@
         <p class="mt-1 text-2xl font-black text-orangeone">{{ $score }}%</p>
       </div>
       <div class="rounded-2xl border border-gray-200 bg-gray-50 p-4">
-        <p class="text-xs text-gray-500">Bonnes reponses</p>
-        <p class="mt-1 text-2xl font-black text-gray-900">{{ $correctCount }} / {{ $totalQuestions }}</p>
+        <p class="text-xs text-gray-500">Reponses correctes</p>
+        <p class="mt-1 text-2xl font-black text-gray-900">{{ $correctCount }} / {{ $totalQuestions }} questions posees</p>
       </div>
       <div class="rounded-2xl border border-gray-200 bg-gray-50 p-4">
         <p class="text-xs text-gray-500">Temps total</p>

@@ -113,6 +113,9 @@
           ->map(function ($lecture, $lectureIndex) use ($rows, $group, $module) {
             $row = $rows[$lecture->id] ?? null;
             $enabled = $row ? (bool) $row->is_enabled : true;
+            $questionsCount = (bool) ($lecture->quiz_enabled ?? false)
+              ? (int) ($lecture->quiz_questions_per_attempt ?? 0)
+              : (int) ($lecture->question_count ?? 0);
 
             return [
               'id' => (int) $lecture->id,
@@ -120,7 +123,7 @@
               'position' => (int) ($row->position ?? $lecture->position ?? ($lectureIndex + 1)),
               'is_enabled' => $enabled,
               'slides' => (int) ($lecture->slide_count ?? 0),
-              'questions' => (int) ($lecture->question_count ?? $lecture->quiz_questions_per_attempt ?? 0),
+              'questions' => $questionsCount,
               'toggle_url' => route('formateur.groupes.modules.lecons.toggle', [
                 'group' => $group->id,
                 'module' => $module->id,

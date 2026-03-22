@@ -36,36 +36,21 @@ class StagiaireController extends Controller
             ->groupBy('lecture_id')
             ->pluck('total', 'lecture_id');
 
-        // 2. Compter les réponses QUIZ NATIFS par leçon (Via les tentatives)
-        $quizCounts = DB::table('quiz_attempt_questions')
-            ->join('quiz_attempts', 'quiz_attempts.id', '=', 'quiz_attempt_questions.attempt_id')
-            ->where('quiz_attempts.user_id', $user->id)
-            ->whereNotNull('quiz_attempt_questions.answered_at') // On ne compte que les réponses données
-            ->select('quiz_attempts.lecture_id', DB::raw('count(distinct quiz_attempt_questions.question_id) as total'))
-            ->groupBy('quiz_attempts.lecture_id')
-            ->pluck('total', 'lecture_id');
+        $lectureIds = $module->sections->flatMap->lectures->pluck('id')->values()->all();
+        [$quizAttempts, $quizAttemptAgg] = $this->loadLatestQuizAttemptsData($lectureIds, (int) $user->id);
 
-        // Statut par leçon (completed si answered >= quiz_questions_per_attempt)
+        // Statut par leçon : priorité aux tentatives réelles pour les quiz natifs.
         $lessonStatuses = [];
         foreach ($module->sections->flatMap->lectures as $lecture) {
-            $expected = (int)($lecture->quiz_questions_per_attempt ?? 0);
-            
-            // On prend le max des deux sources (ou la somme, selon votre logique, mais max est plus sûr ici)
-            $nbScorm = (int)($scormCounts[$lecture->id] ?? 0);
-            $nbQuiz  = (int)($quizCounts[$lecture->id] ?? 0);
-            $answered = max($nbScorm, $nbQuiz);
-
-            if ($expected === 0) {
-                // Si pas de questions attendues, on considère "non commencé" par défaut
-                // (ou 'completed' si vous gérez la lecture simple, mais restons sur votre logique actuelle)
-                $status = 'not_started';
-            } elseif ($answered >= $expected) {
-                $status = 'completed';
-            } elseif ($answered > 0) {
-                $status = 'incomplete';
+            if ((bool) ($lecture->quiz_enabled ?? false)) {
+                $attempt = $quizAttempts->get($lecture->id);
+                $agg = $attempt ? $quizAttemptAgg->get($attempt->id) : null;
+                $status = $this->quizProgressStatus($attempt, $agg);
             } else {
-                $status = 'not_started';
+                $nbScorm = (int) ($scormCounts[$lecture->id] ?? 0);
+                $status = $nbScorm > 0 ? 'completed' : 'not_started';
             }
+
             $lessonStatuses[$lecture->id] = $status;
         }
 
@@ -342,17 +327,6 @@ class StagiaireController extends Controller
                 })->first();
             });
 
-        $bestFinishedQuizAttempts = $nativeAttempts
-            ->filter(fn ($a) => !is_null($a->finished_at))
-            ->groupBy('lecture_id')
-            ->map(function ($rows) {
-                return $rows->sortBy([
-                    ['score', 'desc'],
-                    ['finished_at', 'desc'],
-                    ['id', 'desc'],
-                ])->first();
-            });
-
         $attemptAgg = collect();
         $attemptIds = $nativeAttempts->pluck('id')->all();
         if (!empty($attemptIds)) {
@@ -423,7 +397,6 @@ class StagiaireController extends Controller
             $lecturesById,
             $scormResults,
             $latestQuizAttempts,
-            $bestFinishedQuizAttempts,
             $attemptAgg,
             $scormAgg,
             $videoByLecture,
@@ -437,8 +410,7 @@ class StagiaireController extends Controller
 
             $sc = $scormResults->get($lectureId);
             $latestQuiz = $latestQuizAttempts->get($lectureId);
-            $bestQuiz = $bestFinishedQuizAttempts->get($lectureId);
-            $displayQuiz = $bestQuiz ?? $latestQuiz;
+            $displayQuiz = $latestQuiz;
             $quizStats = $displayQuiz ? $attemptAgg->get($displayQuiz->id) : null;
             $scormStats = $scormAgg->get($lectureId);
             $videoBounds = $videoBoundsByLecture->get($lectureId);
@@ -646,7 +618,7 @@ class StagiaireController extends Controller
      * Calcule la progression par module et attache:
      * - progress (pour le carrousel)
      * - progression_percent, progression_status (pour la liste)
-     * Règle: completed si answered >= quiz_questions_per_attempt.
+     * Règle: pour les quiz natifs, la progression suit la dernière tentative réelle.
      */
     private function attachProgressAttributes($modules, int $userId): void
     {
@@ -657,14 +629,14 @@ class StagiaireController extends Controller
             ->groupBy('lecture_id')
             ->pluck('count', 'lecture_id');
 
-        // 2. Bulk chargement des réponses QUIZ NATIFS
-        $quizAnswers = DB::table('quiz_attempt_questions')
-            ->join('quiz_attempts', 'quiz_attempts.id', '=', 'quiz_attempt_questions.attempt_id')
-            ->where('quiz_attempts.user_id', $userId)
-            ->whereNotNull('quiz_attempt_questions.answered_at')
-            ->select('quiz_attempts.lecture_id', DB::raw('COUNT(distinct quiz_attempt_questions.question_id) as count'))
-            ->groupBy('quiz_attempts.lecture_id')
-            ->pluck('count', 'lecture_id');
+        $lectureIds = $modules
+            ->flatMap(fn ($module) => $module->sections->flatMap->lectures)
+            ->pluck('id')
+            ->unique()
+            ->values()
+            ->all();
+
+        [$quizAttempts, $quizAttemptAgg] = $this->loadLatestQuizAttemptsData($lectureIds, $userId);
 
         foreach ($modules as $module) {
             $lectures = $module->sections->flatMap->lectures;
@@ -673,17 +645,24 @@ class StagiaireController extends Controller
             $started = false;
 
             foreach ($lectures as $lec) {
-                $expected = (int)($lec->quiz_questions_per_attempt ?? 0);
-                
-                // Fusion des sources
-                $cntScorm = (int)($scormAnswers[$lec->id] ?? 0);
-                $cntQuiz  = (int)($quizAnswers[$lec->id] ?? 0);
-                $answered = max($cntScorm, $cntQuiz);
+                if ((bool) ($lec->quiz_enabled ?? false)) {
+                    $attempt = $quizAttempts->get($lec->id);
+                    $agg = $attempt ? $quizAttemptAgg->get($attempt->id) : null;
+                    $status = $this->quizProgressStatus($attempt, $agg);
 
-                if ($answered > 0) {
-                    $started = true;
+                    if ($status !== 'not_started') {
+                        $started = true;
+                    }
+                    if ($status === 'completed') {
+                        $completed++;
+                    }
+
+                    continue;
                 }
-                if ($expected > 0 && $answered >= $expected) {
+
+                $cntScorm = (int) ($scormAnswers[$lec->id] ?? 0);
+                if ($cntScorm > 0) {
+                    $started = true;
                     $completed++;
                 }
             }
@@ -697,6 +676,67 @@ class StagiaireController extends Controller
             $module->setAttribute('progression_percent', $percent);
             $module->setAttribute('progression_status',  $status);
         }
+    }
+
+    private function loadLatestQuizAttemptsData(array $lectureIds, int $userId): array
+    {
+        if (empty($lectureIds)) {
+            return [collect(), collect()];
+        }
+
+        $attempts = QuizAttempt::query()
+            ->where('user_id', $userId)
+            ->whereIn('lecture_id', $lectureIds)
+            ->orderByDesc('finished_at')
+            ->orderByDesc('started_at')
+            ->orderByDesc('id')
+            ->get()
+            ->groupBy('lecture_id')
+            ->map(function ($rows) {
+                return $rows->sortByDesc(function ($attempt) {
+                    return $attempt->finished_at?->timestamp
+                        ?? $attempt->started_at?->timestamp
+                        ?? $attempt->created_at?->timestamp
+                        ?? 0;
+                })->first();
+            });
+
+        $attemptIds = $attempts->filter()->pluck('id')->all();
+        $attemptAgg = collect();
+
+        if (!empty($attemptIds)) {
+            $attemptAgg = QuizAttemptQuestion::query()
+                ->select([
+                    'attempt_id',
+                    DB::raw('COUNT(*) as total'),
+                    DB::raw('SUM(CASE WHEN answered_at IS NOT NULL THEN 1 ELSE 0 END) as answered'),
+                    DB::raw('SUM(CASE WHEN is_correct = 1 THEN 1 ELSE 0 END) as correct'),
+                ])
+                ->whereIn('attempt_id', $attemptIds)
+                ->groupBy('attempt_id')
+                ->get()
+                ->keyBy('attempt_id');
+        }
+
+        return [$attempts, $attemptAgg];
+    }
+
+    private function quizProgressStatus(?QuizAttempt $attempt, mixed $agg): string
+    {
+        if (!$attempt) {
+            return 'not_started';
+        }
+
+        $answered = (int) data_get($agg, 'answered', 0);
+        $hasStarted = $answered > 0
+            || !is_null($attempt->started_at)
+            || !is_null($attempt->finished_at);
+
+        if (!is_null($attempt->finished_at) && (bool) ($attempt->passed ?? false)) {
+            return 'completed';
+        }
+
+        return $hasStarted ? 'incomplete' : 'not_started';
     }
     
 }
