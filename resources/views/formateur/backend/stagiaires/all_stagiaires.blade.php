@@ -51,6 +51,12 @@
 
   {{-- 📋 CONTENU PRINCIPAL --}}
   <main class="space-y-8">
+    @if (session('success'))
+      <div class="rounded-[16px] border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+        {{ session('success') }}
+      </div>
+    @endif
+
     {{-- 📊 Synthèse --}}
     <div class="flex flex-wrap items-center justify-between gap-4 px-6 pt-4 pb-0">
       <div class="flex flex-wrap items-center gap-3">
@@ -72,7 +78,6 @@
           </span>
         </p>
       @endif
-
     </div>
 
     {{-- 🔎 Barre de recherche --}}
@@ -181,6 +186,13 @@
     {{-- 📄 Pagination --}}
     <div>
       {{ $stagiaires->links('pagination::tailwind') }}
+    </div>
+
+    <div class="flex justify-end">
+      <a href="{{ route('formateur.stagiaires.create', request()->filled('group_id') ? ['group_id' => request('group_id')] : []) }}"
+         class="btn-oneduc w-full md:w-auto px-8 py-3 text-lg text-center">
+        Ajouter un stagiaire
+      </a>
     </div>
 
   </main>

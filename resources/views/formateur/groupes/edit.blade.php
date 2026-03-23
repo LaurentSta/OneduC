@@ -103,19 +103,6 @@
             @endif
         </div>
 
-        @if($group->observers->isNotEmpty())
-          <div class="mb-4 rounded-[16px] border border-blue-200 bg-blue-50/70 px-4 py-3">
-            <p class="text-sm font-semibold text-blue-900">Ce groupe est actuellement observé.</p>
-            <div class="mt-2 flex flex-wrap gap-2">
-              @foreach($group->observers as $observer)
-                <span class="inline-flex items-center rounded-full bg-white px-3 py-1 text-xs font-semibold text-blue-700 border border-blue-200">
-                  {{ trim(($observer->prenom ?? '').' '.($observer->name ?? '')) }}
-                </span>
-              @endforeach
-            </div>
-          </div>
-        @endif
-
         {{-- Fil d’Ariane --}}
         <nav class="text-sm font-varela text-gray-600 mt-2">
           <ol class="inline-flex items-center space-x-1">
@@ -188,10 +175,18 @@
       
       {{-- SECTION 1 : Configuration générale --}}
       <section x-show="activeTab === 'general'" x-cloak class="animate-fade-in-down">
-        <p class="text-base text-gray-600 mb-6">Nommer le groupe et ajouter une description.</p>
-
         <div class="mb-6">
-          <label for="nom" class="block mb-2 text-base font-medium text-gray-900">Nom du groupe *</label>
+          <div class="mb-2 flex items-center gap-2">
+            <label for="nom" class="block text-base font-medium text-gray-900">Nom du groupe</label>
+            <div class="relative group">
+              <button type="button" aria-label="Information sur le nom du groupe" class="inline-flex h-5 w-5 items-center justify-center rounded-full border border-gray-300 bg-white text-[11px] font-bold text-gray-600">
+                ?
+              </button>
+              <div class="pointer-events-none absolute left-1/2 top-full z-20 mt-2 hidden w-72 -translate-x-1/2 rounded-lg border border-gray-200 bg-white p-2 text-xs text-gray-700 shadow-lg group-hover:block group-focus-within:block">
+                Ce champ est obligatoire. Choisissez un nom simple et explicite pour retrouver facilement le groupe par la suite.
+              </div>
+            </div>
+          </div>
           <input id="nom" name="nom" type="text" required
                  value="{{ old('nom', $group->name) }}"
                  class="bg-gray-50 border {{ $errors->has('nom') ? 'border-red-400' : 'border-gray-300' }} text-base rounded-lg focus:ring-orangeone focus:border-orangeone block w-full p-2.5"
@@ -199,11 +194,20 @@
           @error('nom')
             <p class="mt-2 text-sm text-red-700">{{ $message }}</p>
           @enderror
-          <p class="text-xs text-gray-500 mt-1">Un nom clair facilite la recherche et le suivi.</p>
         </div>
 
         <div class="mb-6">
-          <label for="description" class="block mb-2 text-base font-medium text-gray-900">Description</label>
+          <div class="mb-2 flex items-center gap-2">
+            <label for="description" class="block text-base font-medium text-gray-900">Description</label>
+            <div class="relative group">
+              <button type="button" aria-label="Information sur la description du groupe" class="inline-flex h-5 w-5 items-center justify-center rounded-full border border-gray-300 bg-white text-[11px] font-bold text-gray-600">
+                ?
+              </button>
+              <div class="pointer-events-none absolute left-1/2 top-full z-20 mt-2 hidden w-72 -translate-x-1/2 rounded-lg border border-gray-200 bg-white p-2 text-xs text-gray-700 shadow-lg group-hover:block group-focus-within:block">
+                Ce champ est facultatif. Vous pouvez ajouter quelques mots pour preciser l'objectif, le public ou le contexte du groupe si cela vous aide ensuite.
+              </div>
+            </div>
+          </div>
           <textarea id="description" name="description" rows="3"
                     class="bg-gray-50 border border-gray-300 text-base rounded-lg focus:ring-orangeone focus:border-orangeone block w-full p-2.5"
                     placeholder="Objectifs, public, période…">{{ old('description', $group->description) }}</textarea>
@@ -213,10 +217,6 @@
       {{-- SECTION 2 : Stagiaires --}}
       <section x-show="activeTab === 'stagiaires'" x-cloak class="animate-fade-in-down">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-            <div>
-                <h3 class="text-xl font-bold text-bleuone font-raleway mb-1">Gestion des stagiaires</h3>
-                <p class="text-gray-600 font-lisible">Ajoutez ou retirez des apprenants.</p>
-            </div>
             <div id="removed-recap" class="hidden text-sm bg-red-50 text-red-700 px-4 py-2 rounded-lg border border-red-100">
                 <span class="font-bold">À retirer :</span>
                 <ul id="removed-recap-list" class="inline-flex gap-2 list-none ml-2 italic"></ul>
@@ -227,28 +227,59 @@
 
         {{-- Tableau Stagiaires Existants --}}
         @if($group->students->count() > 0)
+        <div class="mb-4">
+            <div class="flex items-center gap-2">
+              <h3 class="text-xl font-bold text-bleuone font-raleway">Liste des stagiaires</h3>
+              <div class="relative group">
+                <button type="button" aria-label="Information sur la liste des stagiaires" class="inline-flex h-5 w-5 items-center justify-center rounded-full border border-gray-300 bg-white text-[11px] font-bold text-gray-600">
+                  ?
+                </button>
+                <div class="pointer-events-none absolute left-1/2 top-full z-20 mt-2 hidden w-80 -translate-x-1/2 rounded-lg border border-gray-200 bg-white p-3 text-xs text-gray-700 shadow-lg group-hover:block group-focus-within:block">
+                  Ce tableau affiche les stagiaires deja rattaches a ce groupe. Vous pouvez consulter leur fiche via l'icone profil ou les retirer du groupe avec la poubelle.
+                </div>
+              </div>
+            </div>
+        </div>
         <div class="border border-gray-200 rounded-[12px] overflow-hidden mb-8">
             <table class="w-full text-sm text-left">
-                <thead class="bg-gray-50 text-xs uppercase text-gray-500 font-bold">
+                <thead class="bg-bleuone text-xs uppercase text-white font-bold">
                     <tr>
                         <th class="px-6 py-3">Nom complet</th>
                         <th class="px-6 py-3">Email</th>
+                        <th class="px-6 py-3">Date de création</th>
                         <th class="px-6 py-3 text-right">Action</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100 bg-white">
                     @foreach($group->students as $stagiaire)
-                    <tr class="hover:bg-gray-50 transition" data-student-row="{{ $stagiaire->id }}">
+                    <tr class="{{ $loop->odd ? 'bg-white' : 'bg-slate-50' }} hover:bg-orangeone/5 transition" data-student-row="{{ $stagiaire->id }}">
                         <td class="px-6 py-3 font-medium text-gray-900">
                             {{ $stagiaire->prenom }} <span class="uppercase">{{ $stagiaire->name }}</span>
                         </td>
                         <td class="px-6 py-3 text-gray-600">{{ $stagiaire->email }}</td>
+                        <td class="px-6 py-3 text-gray-600">
+                            {{ optional($stagiaire->created_at)->format('d/m/Y') ?? '—' }}
+                        </td>
                         <td class="px-6 py-3 text-right">
-                            <button type="button"
-                                @click="toggleRemove({{ $stagiaire->id }}, '{{ addslashes($stagiaire->prenom.' '.$stagiaire->name) }}')"
-                                class="text-orangeone hover:text-red-600 font-bold text-xs uppercase tracking-wider transition">
-                                Retirer
-                            </button>
+                            <div class="inline-flex items-center gap-3">
+                                <a href="{{ route('formateur.stagiaires.edit', $stagiaire->id) }}"
+                                   class="inline-flex items-center justify-center rounded-full p-2 text-bleuone hover:bg-bleuone/10 hover:text-orangeone transition"
+                                   title="Voir le profil"
+                                   aria-label="Voir le profil">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A9.97 9.97 0 0112 15c2.58 0 4.933.975 6.879 2.58M15 11a3 3 0 11-6 0 3 3 0 016 0zm6 1a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </a>
+                                <button type="button"
+                                    @click="toggleRemove({{ $stagiaire->id }}, '{{ addslashes($stagiaire->prenom.' '.$stagiaire->name) }}')"
+                                    class="inline-flex items-center justify-center rounded-full p-2 text-orangeone hover:bg-orangeone/10 hover:text-red-600 transition"
+                                    title="Retirer du groupe"
+                                    aria-label="Retirer du groupe">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                </button>
+                            </div>
                         </td>
                     </tr>
                     @endforeach
@@ -261,8 +292,17 @@
         <div class="mb-8">
           <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
             <div class="space-y-3">
-              <h3 class="text-xl font-bold text-bleuone font-raleway">Ajouter vos stagiaires</h3>
-              <p class="text-sm text-gray-600 font-lisible mt-1">Renseignez les informations de vos apprenants.</p>
+              <div class="flex items-center gap-2">
+                <h3 class="text-xl font-bold text-bleuone font-raleway">Ajouter vos stagiaires</h3>
+                <div class="relative group">
+                  <button type="button" aria-label="Information sur l'ajout de stagiaires" class="inline-flex h-5 w-5 items-center justify-center rounded-full border border-gray-300 bg-white text-[11px] font-bold text-gray-600">
+                    ?
+                  </button>
+                  <div class="pointer-events-none absolute left-1/2 top-full z-20 mt-2 hidden w-80 -translate-x-1/2 rounded-lg border border-gray-200 bg-white p-3 text-xs text-gray-700 shadow-lg group-hover:block group-focus-within:block">
+                    Renseignez le prénom, le nom et l'e-mail de vos apprenants. Vous pouvez les ajouter ligne par ligne ou via l'import CSV. Lors de l'enregistrement, les nouveaux stagiaires ajoutés au groupe recevront un e-mail d'invitation.
+                  </div>
+                </div>
+              </div>
             </div>
             <div class="flex items-center gap-2 sm:pt-1">
               <button type="button"
@@ -293,26 +333,19 @@
                 </div>
 
                 <div>
-                  <label for="stagiaires_edit_0_email" class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Email professionnel</label>
+                  <label for="stagiaires_edit_0_email" class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Email</label>
                   <input id="stagiaires_edit_0_email" name="stagiaires[0][email]" type="email" placeholder="thomas.dupont@entreprise.com"
                          class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-orangeone focus:border-orangeone w-full p-2.5">
                 </div>
 
-                <div class="flex items-end h-full pb-[3px]">
-                  <button type="button" class="text-gray-300 hover:text-red-600 transition p-2 rounded-full hover:bg-red-50"
-                          onclick="removeStagiaireEdit(this)" title="Supprimer la ligne">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
-                </div>
+                <div aria-hidden="true"></div>
               </div>
             </div>
           </div>
 
-          <div class="mt-3">
+          <div class="mt-3 flex justify-end">
             <button type="button"
-                    class="px-4 py-2 bg-bleuone/10 text-bleuone border border-bleuone/20 font-bold rounded-lg hover:bg-bleuone hover:text-white transition inline-flex items-center justify-center gap-2 text-sm"
+                    class="px-4 py-2 bg-bleuone text-white border border-bleuone font-bold rounded-lg hover:opacity-90 transition inline-flex items-center justify-center gap-2 text-sm"
                     onclick="addStagiaireEdit()">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
               Ajouter un stagiaire
@@ -325,7 +358,7 @@
             <h4 class="text-sm font-bold text-gray-800 font-raleway">Code d'accès provisoire du groupe</h4>
             <div class="relative group">
               <button type="button" aria-label="Information" class="inline-flex h-5 w-5 items-center justify-center rounded-full border border-gray-300 bg-white text-[11px] font-bold text-gray-600">
-                i
+                ?
               </button>
               <div class="pointer-events-none absolute left-1/2 top-full z-20 mt-2 hidden w-72 -translate-x-1/2 rounded-lg border border-gray-200 bg-white p-2 text-xs text-gray-700 shadow-lg group-hover:block group-focus-within:block">
                 Les stagiaires recevront un e-mail avec leur identifiant et un lien qu'ils pourront utiliser pour se connecter.
@@ -398,8 +431,17 @@ Lucas;Bernard;lucas.bernard@entreprise.fr</pre>
       <section x-show="activeTab === 'parcours'" x-cloak class="animate-fade-in-down">
         
         <div class="mb-6">
-            <h3 class="text-xl font-bold text-bleuone font-raleway mb-1">Parcours pédagogique</h3>
-            <p class="text-gray-600 font-lisible">Définissez l'ordre chronologique des modules pour vos stagiaires.</p>
+            <div class="flex items-center gap-2">
+              <h3 class="text-xl font-bold text-bleuone font-raleway">Organisation des modules</h3>
+              <div class="relative group">
+                <button type="button" aria-label="Information sur le parcours pédagogique" class="inline-flex h-5 w-5 items-center justify-center rounded-full border border-gray-300 bg-white text-[11px] font-bold text-gray-600">
+                  ?
+                </button>
+                <div class="pointer-events-none absolute left-1/2 top-full z-20 mt-2 hidden w-80 -translate-x-1/2 rounded-lg border border-gray-200 bg-white p-3 text-xs text-gray-700 shadow-lg group-hover:block group-focus-within:block">
+                  Ajoutez les modules utiles pour ce groupe, organisez-les dans l'ordre souhaite, puis utilisez le bouton de gestion des lecons pour personnaliser le contenu de chaque module si besoin.
+                </div>
+              </div>
+            </div>
         </div>
 
         <div
@@ -530,7 +572,7 @@ document.addEventListener('alpine:init', () => {
                    class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-orangeone focus:border-orangeone w-full p-2.5">
           </div>
           <div>
-            <label for="stagiaires_edit_${index}_email" class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Email professionnel</label>
+            <label for="stagiaires_edit_${index}_email" class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Email</label>
             <input id="stagiaires_edit_${index}_email" name="stagiaires[${index}][email]" type="email" placeholder="Email"
                    class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-orangeone focus:border-orangeone w-full p-2.5">
           </div>

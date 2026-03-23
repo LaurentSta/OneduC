@@ -80,22 +80,26 @@
               <h3 class="text-xl font-bold text-bleuone font-raleway mb-2 truncate">
                 {{ $groupe->name }}
               </h3>
-              <p class="text-xs text-gray-400 italic font-lisible mb-3">
-                Créé le {{ optional($groupe->created_at)->format('d/m/Y') ?? '—' }}
-              </p>
+              <div class="mb-3 grid grid-cols-1 sm:grid-cols-2 gap-3 items-start">
+                <p class="text-xs text-gray-400 italic font-lisible">
+                  Créé le {{ optional($groupe->created_at)->format('d/m/Y') ?? '—' }}
+                </p>
 
-              @if($groupe->observers->isNotEmpty())
-                <div class="mb-3 flex flex-wrap items-center gap-2">
-                  <span class="inline-flex items-center px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold">
-                    Groupe observé
-                  </span>
-                  @foreach($groupe->observers as $observer)
-                    <span class="inline-flex items-center px-3 py-1 rounded-full bg-blue-50/60 text-blue-700 text-xs font-medium">
-                      {{ trim(($observer->prenom ?? '').' '.($observer->name ?? '')) }}
-                    </span>
-                  @endforeach
-                </div>
-              @endif
+                @if($groupe->observers->isNotEmpty())
+                  <div class="sm:justify-self-end">
+                    <div class="relative inline-flex group">
+                      <span class="inline-flex items-center px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold cursor-default">
+                        Groupe suivi
+                      </span>
+                      <div class="pointer-events-none absolute right-0 top-full z-20 mt-2 hidden w-max max-w-xs rounded-lg border border-blue-200 bg-white px-3 py-2 text-xs text-blue-900 shadow-lg group-hover:block group-focus-within:block">
+                        @foreach($groupe->observers as $observer)
+                          <div>{{ trim(($observer->prenom ?? '').' '.($observer->name ?? '')) }}</div>
+                        @endforeach
+                      </div>
+                    </div>
+                  </div>
+                @endif
+              </div>
 
               @if ($groupe->description)
                 <p class="text-sm text-gray-700 font-lisible mb-4 line-clamp-3">
@@ -104,7 +108,7 @@
               @endif
 
               <div class="mb-4">
-                <h4 class="text-sm font-medium text-gray-600 font-varela">Modules associés :</h4>
+                <h4 class="text-sm font-bold text-gray-600 font-varela">Modules associés :</h4>
                 @forelse ($groupe->modules as $module)
                   @php
                     $moduleUrl = !empty($module->category_id)
@@ -121,7 +125,7 @@
               </div>
 
               <div>
-                <h4 class="text-sm font-medium text-gray-600 font-varela">Stagiaires :</h4>
+                <h4 class="text-sm font-bold text-gray-600 font-varela">Stagiaires :</h4>
                 <a href="{{ route('formateur.stagiaires.index') }}"
                    class="text-sm text-orangeone hover:underline font-lisible">
                   {{ $groupe->students->count() }} stagiaire{{ $groupe->students->count() > 1 ? 's' : '' }}

@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Validation\Rule;
 use App\Models\ModuleLecture;
 
 
@@ -27,6 +28,7 @@ class FormateurController extends Controller
     public function FormateurDashboard()
     {
         $formateurId = auth()->id();
+        $fifteenDaysAgo = now()->subDays(15);
 
         $groupCount = Group::query()
             ->where('instructor_id', $formateurId)
@@ -39,13 +41,15 @@ class FormateurController extends Controller
             ->distinct('modules.id')
             ->count('modules.id');
 
-        $learnerCount = User::query()
+        $learnerIds = User::query()
             ->where('role', 'stagiaire')
             ->whereHas('groupesStagiaire', function ($q) use ($formateurId) {
                 $q->where('instructor_id', $formateurId);
             })
-            ->distinct('users.id')
-            ->count('users.id');
+            ->distinct()
+            ->pluck('users.id');
+
+        $learnerCount = $learnerIds->count();
 
         // Score moyen (ce n'est pas un taux d'achèvement)
         $avgScore = ScormScore::query()
@@ -59,6 +63,26 @@ class FormateurController extends Controller
 
         $avgScoreRounded = $avgScore ? (int) round($avgScore) : 0;
         $avgCompletion = $avgScoreRounded;
+
+        $activeLearnerIds = collect();
+        $recentLearnerIds = collect();
+
+        if ($learnerIds->isNotEmpty()) {
+            $activeLearnerIds = DB::table('progressions')
+                ->whereIn('user_id', $learnerIds)
+                ->distinct()
+                ->pluck('user_id');
+
+            $recentLearnerIds = DB::table('progressions')
+                ->whereIn('user_id', $learnerIds)
+                ->whereNotNull('completed_at')
+                ->where('completed_at', '>=', $fifteenDaysAgo)
+                ->distinct()
+                ->pluck('user_id');
+        }
+
+        $notStartedLearnersCount = $learnerIds->diff($activeLearnerIds)->count();
+        $inactiveLearnersCount = $activeLearnerIds->diff($recentLearnerIds)->count();
 
         // Groupes affichés dans la section "Suivi par groupes" du dashboard
         $groupesDashboard = Group::query()
@@ -76,22 +100,67 @@ class FormateurController extends Controller
 
         $lastActivityByGroup = collect();
         $scoresByGroup = collect();
+        $learnerIdsByGroup = collect();
+        $activeLearnerIdsByGroup = collect();
+        $recentLearnerIdsByGroup = collect();
 
         if (!empty($groupIds)) {
+            $learnerIdsByGroup = DB::table('group_user')
+                ->join('users', 'users.id', '=', 'group_user.user_id')
+                ->whereIn('group_user.group_id', $groupIds)
+                ->where('group_user.role_in_group', 'stagiaire')
+                ->where('users.role', 'stagiaire')
+                ->select('group_user.group_id', 'group_user.user_id')
+                ->get()
+                ->groupBy('group_id')
+                ->map(fn ($rows) => $rows->pluck('user_id')->unique()->values());
+
+            $activeLearnerIdsByGroup = DB::table('group_user')
+                ->join('users', 'users.id', '=', 'group_user.user_id')
+                ->join('progressions', 'progressions.user_id', '=', 'group_user.user_id')
+                ->whereIn('group_user.group_id', $groupIds)
+                ->where('group_user.role_in_group', 'stagiaire')
+                ->where('users.role', 'stagiaire')
+                ->select('group_user.group_id', 'group_user.user_id')
+                ->distinct()
+                ->get()
+                ->groupBy('group_id')
+                ->map(fn ($rows) => $rows->pluck('user_id')->unique()->values());
+
+            $recentLearnerIdsByGroup = DB::table('group_user')
+                ->join('users', 'users.id', '=', 'group_user.user_id')
+                ->join('progressions', 'progressions.user_id', '=', 'group_user.user_id')
+                ->whereIn('group_user.group_id', $groupIds)
+                ->where('group_user.role_in_group', 'stagiaire')
+                ->where('users.role', 'stagiaire')
+                ->whereNotNull('progressions.completed_at')
+                ->where('progressions.completed_at', '>=', $fifteenDaysAgo)
+                ->select('group_user.group_id', 'group_user.user_id')
+                ->distinct()
+                ->get()
+                ->groupBy('group_id')
+                ->map(fn ($rows) => $rows->pluck('user_id')->unique()->values());
+
             $lastActivityByGroup = DB::table('progressions')
                 ->join('group_user', 'group_user.user_id', '=', 'progressions.user_id')
+                ->join('users', 'users.id', '=', 'group_user.user_id')
                 ->whereIn('group_user.group_id', $groupIds)
+                ->where('group_user.role_in_group', 'stagiaire')
+                ->where('users.role', 'stagiaire')
                 ->selectRaw('group_user.group_id, MAX(progressions.completed_at) as last_completed_at')
                 ->groupBy('group_user.group_id')
                 ->pluck('last_completed_at', 'group_user.group_id');
 
             $scoresByGroup = DB::table('progressions')
                 ->join('group_user', 'group_user.user_id', '=', 'progressions.user_id')
+                ->join('users', 'users.id', '=', 'group_user.user_id')
                 ->leftJoin('scorm_scores', function ($join) {
                     $join->on('scorm_scores.user_id', '=', 'progressions.user_id')
                         ->on('scorm_scores.lecture_id', '=', 'progressions.lecture_id');
                 })
                 ->whereIn('group_user.group_id', $groupIds)
+                ->where('group_user.role_in_group', 'stagiaire')
+                ->where('users.role', 'stagiaire')
                 ->selectRaw('
                     group_user.group_id,
                     COUNT(progressions.id) as total_lessons,
@@ -102,8 +171,15 @@ class FormateurController extends Controller
                 ->keyBy('group_id');
         }
 
-        $groupesDashboard = $groupesDashboard->map(function ($g) use ($lastActivityByGroup, $scoresByGroup) {
+        $groupesDashboard = $groupesDashboard->map(function ($g) use ($lastActivityByGroup, $scoresByGroup, $learnerIdsByGroup, $activeLearnerIdsByGroup, $recentLearnerIdsByGroup) {
+            $groupLearnerIds = collect($learnerIdsByGroup->get($g->id, collect()));
+            $activeIds = collect($activeLearnerIdsByGroup->get($g->id, collect()));
+            $recentIds = collect($recentLearnerIdsByGroup->get($g->id, collect()));
+
             $g->last_completed_at = $lastActivityByGroup[$g->id] ?? null;
+            $g->not_started_count = max(0, $groupLearnerIds->count() - $activeIds->count());
+            $g->inactive_count = max(0, $activeIds->diff($recentIds)->count());
+            $g->alert_count = $g->not_started_count + $g->inactive_count;
 
             $agg = $scoresByGroup->get($g->id);
             $total = (int) ($agg->total_lessons ?? 0);
@@ -113,35 +189,153 @@ class FormateurController extends Controller
             return $g;
         });
 
-        // Modules visibles sur le dashboard (utilisés dans ses groupes OU créés/attribués au formateur)
-        $modules = Module::query()
-            ->withCount('lectures')
-            ->with([
-                'groups' => function ($q) use ($formateurId) {
-                    $q->where('instructor_id', $formateurId)
-                        ->with(['users' => function ($u) {
-                            $u->where('role', 'stagiaire');
-                        }]);
-                },
-            ])
-            ->where(function ($q) use ($formateurId) {
-                $q->whereHas('groups', function ($g) use ($formateurId) {
-                    $g->where('instructor_id', $formateurId);
-                })
-                ->orWhere('formateur_id', $formateurId);
+        $groupsNeedingAttentionCount = $groupesDashboard
+            ->filter(fn ($group) => (int) ($group->alert_count ?? 0) > 0)
+            ->count();
+
+        $priorityGroups = $groupesDashboard
+            ->sort(function ($a, $b) {
+                $alertsA = (int) ($a->alert_count ?? 0);
+                $alertsB = (int) ($b->alert_count ?? 0);
+
+                return ($alertsB <=> $alertsA)
+                    ?: ((int) ($a->taux_reussite ?? 0) <=> (int) ($b->taux_reussite ?? 0))
+                    ?: strcmp((string) $a->name, (string) $b->name);
             })
-            ->orderByDesc('created_at')
-            ->get()
-            ->map(function ($module) {
-                $stagiaires = $module->groups
-                    ->flatMap(fn ($g) => $g->users)
-                    ->unique('id')
-                    ->values();
+            ->take(3)
+            ->values();
 
-                $module->stagiaires = $stagiaires;
+        $moduleInsights = Module::query()
+            ->whereHas('groups', function ($q) use ($formateurId) {
+                $q->where('instructor_id', $formateurId);
+            })
+            ->withCount('lectures')
+            ->orderBy('module_title')
+            ->get(['id', 'module_title']);
 
-                return $module;
-            });
+        $moduleInsights = $moduleInsights->map(function ($module) use ($formateurId) {
+            $stagiaireIds = DB::table('group_module')
+                ->join('group_user', 'group_user.group_id', '=', 'group_module.group_id')
+                ->join('groups', 'groups.id', '=', 'group_module.group_id')
+                ->join('users', 'users.id', '=', 'group_user.user_id')
+                ->where('group_module.module_id', $module->id)
+                ->where('groups.instructor_id', $formateurId)
+                ->where('group_user.role_in_group', 'stagiaire')
+                ->where('users.role', 'stagiaire')
+                ->pluck('users.id')
+                ->unique()
+                ->values();
+
+            $module->stagiaires_count = $stagiaireIds->count();
+            $module->groupes_count = (int) DB::table('group_module')
+                ->join('groups', 'groups.id', '=', 'group_module.group_id')
+                ->where('group_module.module_id', $module->id)
+                ->where('groups.instructor_id', $formateurId)
+                ->count();
+
+            $avgScore = 0;
+            if ($stagiaireIds->isNotEmpty()) {
+                $avgScore = DB::table('scorm_scores')
+                    ->join('module_lectures', 'module_lectures.id', '=', 'scorm_scores.lecture_id')
+                    ->join('module_sections', 'module_sections.id', '=', 'module_lectures.section_id')
+                    ->where('module_sections.module_id', $module->id)
+                    ->whereIn('scorm_scores.user_id', $stagiaireIds)
+                    ->avg('scorm_scores.last_score');
+            }
+
+            $module->avg_score = (int) round($avgScore ?? 0);
+
+            $startedUsers = 0;
+            $topFailed = collect();
+
+            if ($stagiaireIds->isNotEmpty()) {
+                $startedUsers = DB::table('progressions')
+                    ->join('module_lectures', 'module_lectures.id', '=', 'progressions.lecture_id')
+                    ->join('module_sections', 'module_sections.id', '=', 'module_lectures.section_id')
+                    ->where('module_sections.module_id', $module->id)
+                    ->whereIn('progressions.user_id', $stagiaireIds)
+                    ->distinct('progressions.user_id')
+                    ->count('progressions.user_id');
+
+                $topFailed = DB::table('quiz_attempt_questions as qaq')
+                    ->join('quiz_attempts as qa', 'qa.id', '=', 'qaq.attempt_id')
+                    ->join('module_lectures as ml', 'ml.id', '=', 'qa.lecture_id')
+                    ->join('module_sections as ms', 'ms.id', '=', 'ml.section_id')
+                    ->join('quiz_questions as qq', 'qq.id', '=', 'qaq.question_id')
+                    ->where('ms.module_id', $module->id)
+                    ->whereIn('qa.user_id', $stagiaireIds)
+                    ->select(
+                        'qq.question_text',
+                        DB::raw('count(*) as total_attempts'),
+                        DB::raw('sum(case when qaq.is_correct = 0 then 1 else 0 end) as failures')
+                    )
+                    ->groupBy('qq.id', 'qq.question_text')
+                    ->having('failures', '>', 0)
+                    ->orderByDesc('failures')
+                    ->take(1)
+                    ->get()
+                    ->map(function ($question) {
+                        $question->fail_rate = $question->total_attempts > 0
+                            ? (int) round(($question->failures / $question->total_attempts) * 100)
+                            : 0;
+
+                        return $question;
+                    });
+            }
+
+            $module->started_count = $startedUsers;
+            $module->start_rate = $module->stagiaires_count > 0
+                ? (int) round(($startedUsers / $module->stagiaires_count) * 100)
+                : 0;
+
+            $mainDifficulty = $topFailed->first();
+            $module->top_failed_question = $mainDifficulty->question_text ?? null;
+            $module->top_failed_rate = $mainDifficulty->fail_rate ?? 0;
+            $module->top_failed_failures = (int) ($mainDifficulty->failures ?? 0);
+
+            if ($module->start_rate < 50) {
+                $module->attention_label = 'Faible démarrage';
+                $module->attention_variant = 'amber';
+                $module->attention_detail = $module->stagiaires_count > 0
+                    ? $module->started_count . ' stagiaire(s) sur ' . $module->stagiaires_count . ' ont commencé.'
+                    : 'Aucun stagiaire affecté pour le moment.';
+            } elseif ($module->avg_score < 50) {
+                $module->attention_label = 'Résultats faibles';
+                $module->attention_variant = 'red';
+                $module->attention_detail = 'Le score moyen est en dessous du seuil de réussite.';
+            } elseif (! empty($module->top_failed_question)) {
+                $module->attention_label = 'Difficultés quiz';
+                $module->attention_variant = 'blue';
+                $module->attention_detail = 'Question la plus ratée : ' . $module->top_failed_rate . '% d échec.';
+            } else {
+                $module->attention_label = 'Bon suivi';
+                $module->attention_variant = 'green';
+                $module->attention_detail = 'Le module démarre correctement et les résultats sont stables.';
+            }
+
+            $module->attention_score = max(0, 70 - $module->start_rate)
+                + max(0, 65 - $module->avg_score)
+                + min(25, $module->top_failed_failures);
+
+            return $module;
+        });
+
+        $modulesNeedingAttentionCount = $moduleInsights
+            ->filter(function ($module) {
+                return $module->start_rate < 60
+                    || $module->avg_score < 60
+                    || ! empty($module->top_failed_question);
+            })
+            ->count();
+
+        $priorityModules = $moduleInsights
+            ->sort(function ($a, $b) {
+                return ((int) ($b->attention_score ?? 0) <=> (int) ($a->attention_score ?? 0))
+                    ?: ((int) ($b->stagiaires_count ?? 0) <=> (int) ($a->stagiaires_count ?? 0))
+                    ?: strcmp((string) $a->module_title, (string) $b->module_title);
+            })
+            ->take(3)
+            ->values();
 
         return view('formateur.index', compact(
             'groupCount',
@@ -149,8 +343,12 @@ class FormateurController extends Controller
             'learnerCount',
             'avgScoreRounded',
             'avgCompletion',
-            'groupesDashboard',
-            'modules'
+            'notStartedLearnersCount',
+            'inactiveLearnersCount',
+            'groupsNeedingAttentionCount',
+            'modulesNeedingAttentionCount',
+            'priorityGroups',
+            'priorityModules'
         ));
     }
 
@@ -301,7 +499,20 @@ class FormateurController extends Controller
 
     public function createStagiaire()
     {
-        return view('formateur.backend.stagiaires.add_stagiaire');
+        $formateurId = auth()->id();
+
+        $groupes = Group::query()
+            ->where('instructor_id', $formateurId)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        $selectedGroupId = request()->integer('group_id') ?: null;
+
+        if ($selectedGroupId && ! $groupes->contains('id', $selectedGroupId)) {
+            $selectedGroupId = null;
+        }
+
+        return view('formateur.backend.stagiaires.add_stagiaire', compact('groupes', 'selectedGroupId'));
     }
 
     public function storeStagiaire(Request $request)
@@ -373,7 +584,9 @@ class FormateurController extends Controller
         }
 
         if ($group) {
-            $group->users()->syncWithoutDetaching([$user->id]);
+            $group->students()->syncWithoutDetaching([
+                $user->id => ['role_in_group' => 'stagiaire'],
+            ]);
         }
 
         return redirect()
@@ -387,6 +600,11 @@ class FormateurController extends Controller
     {
         $formateurId = auth()->id();
 
+        $groupes = Group::query()
+            ->where('instructor_id', $formateurId)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
         $stagiaire = User::query()
             ->where('role', 'stagiaire')
             ->where(function ($query) use ($formateurId) {
@@ -395,9 +613,12 @@ class FormateurController extends Controller
                         $q->where('instructor_id', $formateurId);
                     });
             })
+            ->with(['groupesStagiaire' => function ($query) use ($formateurId) {
+                $query->where('instructor_id', $formateurId)->orderBy('name');
+            }])
             ->findOrFail($id);
 
-        return view('formateur.backend.stagiaires.edit_stagiaire', compact('stagiaire'));
+        return view('formateur.backend.stagiaires.edit_stagiaire', compact('stagiaire', 'groupes'));
     }
 
     public function updateStagiaire(Request $request, $id)
@@ -419,17 +640,56 @@ class FormateurController extends Controller
             'name'     => 'required|string|max:255',
             'email'    => 'required|email|unique:users,email,' . $stagiaire->id,
             'password' => 'nullable|string|min:8',
+            'group_ids' => ['nullable', 'array'],
+            'group_ids.*' => [
+                'integer',
+                Rule::exists('groups', 'id')->where(fn ($query) => $query->where('instructor_id', $formateurId)),
+            ],
         ]);
 
-        $stagiaire->prenom = $request->prenom;
-        $stagiaire->name = $request->name;
-        $stagiaire->email = $request->email;
+        $selectedGroupIds = collect($request->input('group_ids', []))
+            ->map(fn ($groupId) => (int) $groupId)
+            ->filter()
+            ->unique()
+            ->values();
 
-        if ($request->filled('password')) {
-            $stagiaire->password = Hash::make($request->password);
-        }
+        $trainerGroupIds = Group::query()
+            ->where('instructor_id', $formateurId)
+            ->pluck('id')
+            ->map(fn ($groupId) => (int) $groupId);
 
-        $stagiaire->save();
+        DB::transaction(function () use ($request, $stagiaire, $trainerGroupIds, $selectedGroupIds): void {
+            $stagiaire->prenom = $request->prenom;
+            $stagiaire->name = $request->name;
+            $stagiaire->email = strtolower(trim((string) $request->email));
+
+            if ($request->filled('password')) {
+                $stagiaire->password = Hash::make($request->password);
+            }
+
+            $stagiaire->save();
+
+            if ($trainerGroupIds->isEmpty()) {
+                return;
+            }
+
+            DB::table('group_user')
+                ->where('user_id', $stagiaire->id)
+                ->where('role_in_group', 'stagiaire')
+                ->whereIn('group_id', $trainerGroupIds->all())
+                ->delete();
+
+            foreach ($selectedGroupIds as $groupId) {
+                DB::table('group_user')->updateOrInsert(
+                    [
+                        'group_id' => $groupId,
+                        'user_id' => $stagiaire->id,
+                        'role_in_group' => 'stagiaire',
+                    ],
+                    []
+                );
+            }
+        });
 
         return redirect()
             ->route('formateur.stagiaires.index')

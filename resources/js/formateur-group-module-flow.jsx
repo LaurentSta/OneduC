@@ -270,42 +270,43 @@ function GroupModuleFlow({
   return (
     <div className="space-y-4">
       <div className="space-y-3">
-        <div className="w-full">
-          <label className="block text-sm">Ajouter un module</label>
-          <select
-            value={newModuleId}
-            onChange={(event) => {
-              setAddError('');
-              setNewModuleId(event.target.value);
-            }}
-            className="w-full rounded border border-gray-300 px-3 py-2"
-          >
-            <option value="">- Sélectionner un module -</option>
-            {selectableModules.map((module) => (
-              <option key={`module-option-${module.id}`} value={module.id}>
-                {module.title}
-              </option>
-            ))}
-          </select>
-          {addError ? <p className="mt-1 text-sm text-red-600">{addError}</p> : null}
-        </div>
+        <div className="flex flex-col gap-3 md:flex-row md:items-end">
+          <div className="w-full">
+            <select
+              value={newModuleId}
+              onChange={(event) => {
+                setAddError('');
+                setNewModuleId(event.target.value);
+              }}
+              className="w-full rounded border border-gray-300 px-3 py-2"
+            >
+              <option value="">- Sélectionner un module -</option>
+              {selectableModules.map((module) => (
+                <option key={`module-option-${module.id}`} value={module.id}>
+                  {module.title}
+                </option>
+              ))}
+            </select>
+            {addError ? <p className="mt-1 text-sm text-red-600">{addError}</p> : null}
+          </div>
 
-        <button
-          type="button"
-          onClick={addModule}
-          disabled={!newModuleId}
-          className="inline-flex items-center justify-center gap-2 rounded-lg border border-bleuone/20 bg-bleuone/10 px-4 py-2 text-sm font-bold text-bleuone transition hover:bg-bleuone hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-          </svg>
-          Ajouter un module
-        </button>
+          <button
+            type="button"
+            onClick={addModule}
+            disabled={!newModuleId}
+            className="inline-flex items-center justify-center gap-2 rounded-lg border border-orangeone bg-orangeone px-4 py-2 text-sm font-bold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 md:shrink-0"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+            </svg>
+            Ajouter un module
+          </button>
+        </div>
       </div>
 
-      <div className="overflow-hidden rounded border border-gray-200">
-        <table className="w-full text-left text-sm">
-          <thead className="border-b border-gray-200 bg-gray-50">
+      <div className="overflow-x-auto rounded-[20px] border-2 border-bleuone/20 bg-white shadow-md">
+        <table className="min-w-full bg-white text-left text-sm text-gray-800">
+          <thead className="sticky top-0 z-10 bg-bleuone text-xs uppercase text-white">
             <tr>
               <th className="w-[100px] px-4 py-3 text-center">Ordre</th>
               <th className="px-4 py-3">Nom du module</th>
@@ -313,17 +314,20 @@ function GroupModuleFlow({
             </tr>
           </thead>
 
-          <tbody className="divide-y divide-gray-100 bg-white">
+          <tbody>
             {selectedModules.length === 0 ? (
               <tr>
-                <td colSpan={3} className="py-6 text-center text-gray-500">
+                <td colSpan={3} className="px-4 py-6 text-center text-gray-500">
                   Le parcours est vide.
                 </td>
               </tr>
             ) : (
               selectedModules.map((module, index) => (
-                <tr key={`module-row-${module.id}`}>
-                  <td className="px-4 py-3 text-center">
+                <tr
+                  key={`module-row-${module.id}`}
+                  className={`${index % 2 === 0 ? 'bg-white' : 'bg-orangeone/8'} border-t hover:bg-orangeone/15 transition-colors`}
+                >
+                  <td className="px-4 py-3 text-center font-medium">
                     {module.position}
                     <input type="hidden" name="modules[]" value={module.id} />
                     <input
@@ -384,7 +388,10 @@ function GroupModuleFlow({
                       </button>
 
                       {module.persisted && module.manage_url ? (
-                        <a href={module.manage_url} className="rounded border border-gray-300 px-2 py-1">
+                        <a
+                          href={module.manage_url}
+                          className="rounded border border-bleuone bg-bleuone px-2 py-1 font-semibold text-white shadow-sm transition hover:opacity-90"
+                        >
                           {manageLessonsLabel}
                         </a>
                       ) : null}
