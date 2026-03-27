@@ -49,10 +49,6 @@
  
     <div
         x-data="{ sidebarOpen: true, resourcesPanelOpen: false }"
-        x-init="
-            sidebarOpen = JSON.parse(localStorage.getItem('sidebarOpen') ?? 'true');
-            $watch('sidebarOpen', v => localStorage.setItem('sidebarOpen', JSON.stringify(v)));
-        "
         class="bg-gray-50 min-h-screen"
         @keydown.escape.window="sidebarOpen = false"
         @toggle-sidebar="sidebarOpen = !sidebarOpen"
@@ -84,7 +80,7 @@
                             'lectureStats' => $lectureStats ?? [],
                             'sectionStatuses' => $sectionStatuses ?? [],
                             'selectedLecture' => $selectedLecture ?? null,
-                            'lessonResources' => $lessonResources ?? collect(),
+                            'moduleResources' => $moduleResources ?? ($lessonResources ?? collect()),
                         ])
                     </aside>
                 @endif
@@ -143,7 +139,7 @@
         if (sidebar && wrapper && main) {
             // On récupère la largeur de la sidebar si elle est visible
             // Sinon on considère 0 si elle est masquée par AlpineJS
-            const isSidebarOpen = window.localStorage.getItem('sidebarOpen') !== 'false';
+            const isSidebarOpen = sidebar && sidebar.offsetWidth > 0;
             const sidebarWidth = isSidebarOpen ? sidebar.offsetWidth : 0;
             
             // On définit une variable CSS pour décaler le bouton vers la droite

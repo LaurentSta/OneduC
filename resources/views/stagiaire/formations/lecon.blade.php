@@ -106,7 +106,7 @@
 
 <main class="w-full h-full">
     <div class="relative w-full bg-gray-100" style="height: calc(100vh - var(--app-header-h, 86px));">
-        @if(($lessonResources ?? collect())->isNotEmpty())
+        @if(($moduleResources ?? $lessonResources ?? collect())->isNotEmpty())
             <div class="absolute right-4 top-4 z-20 flex flex-col items-end gap-3">
                 <div
                     x-show="resourcesPanelOpen"
@@ -116,8 +116,8 @@
                 >
                     <div class="mb-3 flex items-start justify-between gap-3">
                         <div>
-                        <h2 class="text-sm font-bold text-bleuone">Documents de la leçon</h2>
-                        <p class="mt-1 text-xs text-gray-500">Ces ressources ont été partagées par votre formateur.</p>
+                        <h2 class="text-sm font-bold text-bleuone">Ressources du module</h2>
+                        <p class="mt-1 text-xs text-gray-500">Ces ressources sont disponibles dans tout le module.</p>
                         </div>
                         <button
                             type="button"
@@ -130,7 +130,7 @@
                     </div>
 
                     <div class="max-h-[60vh] space-y-3 overflow-y-auto pr-1">
-                        @foreach($lessonResources as $resource)
+                        @foreach(($moduleResources ?? $lessonResources ?? collect()) as $resource)
                             @php
                                 $resourceUrl = $resource->public_url;
                                 $resourceExt = strtoupper($resource->extension ?: 'FILE');

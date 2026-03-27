@@ -24,10 +24,6 @@
 <body class="bg-white text-gray-900">
   <div
     x-data="{ sidebarOpen: true }"
-    x-init="
-      sidebarOpen = JSON.parse(localStorage.getItem('formateurSidebarOpen') ?? 'true');
-      $watch('sidebarOpen', v => localStorage.setItem('formateurSidebarOpen', JSON.stringify(v)));
-    "
     class="bg-gray-50 min-h-screen"
     @keydown.escape.window="sidebarOpen = false"
     @toggle-sidebar.window="sidebarOpen = !sidebarOpen"

@@ -43,6 +43,11 @@
                         <p class="mt-2 text-sm text-slate-200">
                             Code d'acces <span class="font-bold tracking-[0.3em]">{{ $session->access_code }}</span>
                         </p>
+                        @if($session->group)
+                            <p class="mt-1 text-sm text-slate-300">
+                                Groupe {{ $session->group->name }}
+                            </p>
+                        @endif
                         <p class="mt-1 text-sm text-slate-300" id="live-status-label">{{ $snapshot['status_label'] }}</p>
                     </div>
 

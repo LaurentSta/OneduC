@@ -13,7 +13,7 @@
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
     {{-- Colonne gauche : accordéons --}}
-    <section x-data="{ openItem: null }" class="space-y-4">
+    <section x-data="{ openItem: 1 }" class="space-y-4">
 
       @php
         use Illuminate\Support\Str;

@@ -7,6 +7,7 @@ use App\Http\Controllers\Formateur\ObjectiveController;
 use App\Http\Controllers\Formateur\LessonResourceController;
 use App\Http\Controllers\Formateur\ProgressionController;
 use App\Http\Controllers\Formateur\LiveQuizSessionController;
+use App\Http\Controllers\Formateur\WordCloudController as FormateurWordCloudController;
 use App\Http\Controllers\Formateur\WhiteboardController;
 use App\Http\Controllers\Backend\ModuleController;
 // use App\Http\Controllers\Stagiaire\QuizAttemptController;
@@ -99,6 +100,14 @@ Route::middleware(['auth', 'role:formateur'])
     Route::delete('/formations/{module}/section/{section}/lesson/{lecture}/resources/{resource}', [LessonResourceController::class, 'destroy'])
         ->name('formations.lesson.resources.destroy');
 
+    Route::prefix('/word-clouds')
+        ->name('wordclouds.')
+        ->group(function () {
+            Route::post('/', [FormateurWordCloudController::class, 'store'])->name('store');
+            Route::get('/{wordCloud}/live', [FormateurWordCloudController::class, 'live'])->name('live');
+            Route::get('/{wordCloud}/live/data', [FormateurWordCloudController::class, 'liveData'])->name('live.data');
+        });
+
        
 
     // Personnaliser les leçons d’un module pour un groupe
@@ -152,6 +161,9 @@ Route::prefix('/formations/{module}/section/{section}/lesson/{lecture}/live-quiz
         Route::post('/sessions/{session}/close', [LiveQuizSessionController::class, 'close'])->name('close');
         Route::get('/sessions/{session}/snapshot', [LiveQuizSessionController::class, 'snapshot'])->name('snapshot');
     });
+
+Route::post('/live-quiz/launch', [LiveQuizSessionController::class, 'launch'])
+    ->name('live-quiz.launch');
 
 
 

@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Jobs\ConvertLectureSlides;
 use App\Models\Category;
 use App\Models\Evaluation;
+use App\Models\Group;
 use App\Models\Module;
 use App\Models\ModuleLecture;
 use App\Models\ModuleSection;
@@ -1105,9 +1106,10 @@ public function lire(Request $request, Module $module, ModuleSection $section, M
 
     // --- 🛠️ NOUVEAU : DONNÉES D'INSPECTION (FORMATEUR) ---
     $quizData = null;
-    $lessonResources = collect();
+    $moduleResources = collect();
     $whiteboardGroups = collect();
     $currentWhiteboardGroup = null;
+    $toolGroups = collect();
     $wordClouds = collect();
     
     // Si staff, on charge les questions et les réponses pour l'affichage "Inspecteur"
@@ -1119,7 +1121,7 @@ public function lire(Request $request, Module $module, ModuleSection $section, M
             ->get();
     }
 
-    $lessonResources = $lecture->lessonResources()
+    $moduleResources = $module->moduleResources()
         ->when(! $isFormateurRoute, fn ($query) => $query->where('is_visible_to_stagiaire', true))
         ->get();
 
@@ -1150,8 +1152,80 @@ public function lire(Request $request, Module $module, ModuleSection $section, M
 
         $currentWhiteboardGroup = $whiteboardGroups->firstWhere('is_current', true);
 
+        $toolGroups = Group::query()
+            ->where('instructor_id', (int) $user->id)
+            ->with([
+                'modules' => function ($query): void {
+                    $query->orderBy('group_module.position')
+                        ->with([
+                            'sections' => function ($sectionQuery): void {
+                                $sectionQuery->orderBy('id')
+                                    ->with([
+                                        'lectures' => function ($lectureQuery): void {
+                                            $lectureQuery
+                                                ->orderBy('position')
+                                                ->orderBy('id')
+                                                ->select('id', 'module_id', 'section_id', 'lecture_title', 'position');
+                                        },
+                                    ])
+                                    ->select('id', 'module_id', 'section_title');
+                            },
+                        ])
+                        ->select('modules.id', 'modules.module_name', 'modules.module_title');
+                },
+            ])
+            ->orderBy('name')
+            ->get(['id', 'name'])
+            ->map(function (Group $group) {
+                $modules = $group->modules->map(function (Module $groupModule) use ($group) {
+                    $lectures = $groupModule->sections
+                        ->flatMap(function (ModuleSection $moduleSection) {
+                            return $moduleSection->lectures->map(function (ModuleLecture $moduleLecture) use ($moduleSection) {
+                                return [
+                                    'id' => (int) $moduleLecture->id,
+                                    'section_id' => (int) $moduleLecture->section_id,
+                                    'title' => (string) $moduleLecture->lecture_title,
+                                    'label' => trim((string) $moduleSection->section_title . ' · ' . (string) $moduleLecture->lecture_title),
+                                ];
+                            });
+                        })
+                        ->values();
+
+                    return [
+                        'id' => (int) $groupModule->id,
+                        'title' => (string) ($groupModule->module_title ?: $groupModule->module_name ?: 'Module'),
+                        'manage_url' => route('formateur.groupes.modules.lecons.edit', [
+                            'group' => $group->id,
+                            'module' => $groupModule->id,
+                        ]),
+                        'lectures' => $lectures,
+                    ];
+                })->values();
+
+                return [
+                    'id' => (int) $group->id,
+                    'name' => (string) $group->name,
+                    'whiteboard_url' => route('formateur.groupes.whiteboard.show', ['group' => $group->id]),
+                    'modules' => $modules,
+                ];
+            })
+            ->values();
+
+        $toolModuleIds = $toolGroups
+            ->pluck('modules')
+            ->flatten(1)
+            ->pluck('id')
+            ->filter()
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values();
+
         $wordClouds = WordCloud::query()
-            ->where('module_id', $module->id)
+            ->when(
+                $toolModuleIds->isNotEmpty(),
+                fn ($query) => $query->whereIn('module_id', $toolModuleIds->all()),
+                fn ($query) => $query->where('module_id', $module->id)
+            )
             ->orderByDesc('is_active')
             ->orderByDesc('updated_at')
             ->get()
@@ -1160,8 +1234,11 @@ public function lire(Request $request, Module $module, ModuleSection $section, M
                     'id' => (int) $wordCloud->id,
                     'title' => (string) $wordCloud->title,
                     'question' => (string) $wordCloud->question,
+                    'module_id' => (int) ($wordCloud->module_id ?? 0),
+                    'group_id' => (int) ($wordCloud->group_id ?? 0),
                     'access_code' => (string) $wordCloud->access_code,
                     'is_active' => (bool) $wordCloud->is_active,
+                    'live_url' => route('formateur.wordclouds.live', ['wordCloud' => $wordCloud->id]),
                     'join_url' => route('wordcloud.join.code', ['code' => $wordCloud->access_code]),
                     'updated_at_human' => $wordCloud->updated_at?->diffForHumans(),
                 ];
@@ -1194,9 +1271,11 @@ public function lire(Request $request, Module $module, ModuleSection $section, M
         
         // Nouvelle variable passée à la vue
         'quizData'        => $quizData,
-        'lessonResources' => $lessonResources,
+        'lessonResources' => $moduleResources,
+        'moduleResources' => $moduleResources,
         'whiteboardGroups' => $whiteboardGroups,
         'currentWhiteboardGroup' => $currentWhiteboardGroup,
+        'toolGroups' => $toolGroups,
         'wordClouds' => $wordClouds,
     ]);
 }

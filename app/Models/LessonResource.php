@@ -24,6 +24,11 @@ class LessonResource extends Model
         return $this->belongsTo(ModuleLecture::class, 'lecture_id');
     }
 
+    public function module(): BelongsTo
+    {
+        return $this->belongsTo(Module::class, 'module_id');
+    }
+
     public function getPublicUrlAttribute(): string
     {
         return Route::has('media.storage')

@@ -96,9 +96,16 @@
         return $bytes . ' o';
     };
 
+    $moduleResources = collect($moduleResources ?? $lessonResources ?? []);
+    $toolGroups = collect($toolGroups ?? []);
     $whiteboardGroups = collect($whiteboardGroups ?? []);
     $currentWhiteboardGroup = $currentWhiteboardGroup ?? null;
     $wordClouds = collect($wordClouds ?? []);
+
+    $defaultToolGroup = $toolGroups->firstWhere('id', (int) ($groupId ?? 0)) ?? $toolGroups->first();
+    $defaultToolGroupId = (string) data_get($defaultToolGroup, 'id', '');
+    $defaultToolModuleId = (string) ($moduleId ?: data_get($defaultToolGroup, 'modules.0.id', ''));
+    $defaultToolLectureId = (string) ($lectureId ?: data_get($defaultToolGroup, 'modules.0.lectures.0.id', ''));
 @endphp
 
 @if ($lectureId)
@@ -109,16 +116,73 @@
 <div x-data="{
     mode: 'formateur',
     activeTab: 'quiz',
+    selectedTool: @js($liveQuizStoreUrl ? 'live_quiz' : ($currentWhiteboardGroup ? 'whiteboard' : 'word_cloud')),
+    toolGroups: @js($toolGroups),
+    selectedToolGroupId: @js($defaultToolGroupId),
+    selectedToolModuleId: @js($defaultToolModuleId),
+    selectedToolLectureId: @js($defaultToolLectureId),
     tabStorageKey: @js('formateur-lesson-tab-' . ($lectureId ?? 'default')),
+    selectedToolGroup() {
+        return this.toolGroups.find(group => String(group.id) === String(this.selectedToolGroupId)) || null;
+    },
+    selectedToolModules() {
+        return this.selectedToolGroup()?.modules || [];
+    },
+    selectedToolModule() {
+        return this.selectedToolModules().find(module => String(module.id) === String(this.selectedToolModuleId)) || null;
+    },
+    selectedToolLectures() {
+        return this.selectedToolModule()?.lectures || [];
+    },
+    selectedToolLecture() {
+        return this.selectedToolLectures().find(lecture => String(lecture.id) === String(this.selectedToolLectureId)) || null;
+    },
+    selectedToolSectionId() {
+        return this.selectedToolLecture()?.section_id || '';
+    },
+    selectedToolWhiteboardUrl() {
+        return this.selectedToolGroup()?.whiteboard_url || '#';
+    },
+    selectedToolManageUrl() {
+        return this.selectedToolModule()?.manage_url || '#';
+    },
+    selectedToolWordCloudGroupName() {
+        return this.selectedToolGroup()?.name || '';
+    },
+    syncToolSelections() {
+        const modules = this.selectedToolModules();
+        if (!modules.length) {
+            this.selectedToolModuleId = '';
+            this.selectedToolLectureId = '';
+            return;
+        }
+
+        if (!modules.some(module => String(module.id) === String(this.selectedToolModuleId))) {
+            this.selectedToolModuleId = String(modules[0].id);
+        }
+
+        const lectures = this.selectedToolLectures();
+        if (!lectures.length) {
+            this.selectedToolLectureId = '';
+            return;
+        }
+
+        if (!lectures.some(lecture => String(lecture.id) === String(this.selectedToolLectureId))) {
+            this.selectedToolLectureId = String(lectures[0].id);
+        }
+    },
     init() {
         const savedTab = window.localStorage.getItem(this.tabStorageKey);
-        if (savedTab === 'quiz' || savedTab === 'infos' || savedTab === 'outils') {
-            this.activeTab = savedTab;
+        if (savedTab === 'quiz' || savedTab === 'ressources' || savedTab === 'outils' || savedTab === 'infos') {
+            this.activeTab = savedTab === 'infos' ? 'ressources' : savedTab;
         }
 
         this.$watch('activeTab', value => {
             window.localStorage.setItem(this.tabStorageKey, value);
         });
+        this.$watch('selectedToolGroupId', () => this.syncToolSelections());
+        this.$watch('selectedToolModuleId', () => this.syncToolSelections());
+        this.syncToolSelections();
     }
 }" class="flex flex-col h-[calc(100vh-var(--app-header-h,86px))] bg-white overflow-hidden">
 
@@ -148,10 +212,10 @@
                       Quiz & Corrigés
                   </button>
                   <span class="mx-1 self-stretch w-px bg-white/80"></span>
-                  <button @click="activeTab = 'infos'" 
-                          :class="activeTab === 'infos' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-300 hover:bg-white hover:text-gray-900'"
+                  <button @click="activeTab = 'ressources'" 
+                          :class="activeTab === 'ressources' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-300 hover:bg-white hover:text-gray-900'"
                           class="h-10 rounded-none px-3.5 text-xs font-bold transition-all whitespace-nowrap">
-                      Fichiers & Infos
+                      Ressources
                   </button>
                   <span class="mx-1 self-stretch w-px bg-white/80"></span>
                   <button @click="activeTab = 'outils'" 
@@ -303,44 +367,7 @@
                   </div>
 
                   <div class="mb-6 rounded-[22px] border border-slate-200 bg-white p-5 shadow-sm">
-                      <div class="grid gap-4 md:grid-cols-2">
-                          @if($liveQuizStoreUrl)
-                              <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                                  <div class="flex items-start gap-3">
-                                      <form method="POST" action="{{ $liveQuizStoreUrl }}" class="flex-1">
-                                          @csrf
-                                          <button type="submit"
-                                                  class="flex w-full flex-col items-center justify-center rounded-[20px] bg-bleuone px-4 py-5 text-center text-white transition hover:bg-bleuone/90">
-                                              <span class="inline-flex h-14 w-14 items-center justify-center rounded-full bg-white/12">
-                                                  <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-                                                      <path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14m-9 5h8a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                                  </svg>
-                                              </span>
-                                              <span class="mt-4 text-[11px] font-bold uppercase tracking-[0.16em]">Lancer une session presentielle</span>
-                                          </button>
-                                      </form>
-                                      <button type="button"
-                                              @click="helpPanel = helpPanel === 'live' ? null : 'live'"
-                                              :aria-expanded="(helpPanel === 'live').toString()"
-                                              class="inline-flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-full border border-slate-300 bg-white text-sm font-black text-bleuone transition hover:border-bleuone hover:bg-white"
-                                              aria-label="Afficher l'aide pour la session presentielle">
-                                          ?
-                                      </button>
-                                  </div>
-                                  <div x-show="helpPanel === 'live'" x-cloak class="mt-3 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-[12px] leading-relaxed text-slate-600" style="display: none;">
-                                      <p>
-                                          La session presentielle sert a animer un quiz en direct avec tout le groupe pendant un cours, un atelier ou une classe virtuelle.
-                                      </p>
-                                      <p class="mt-2">
-                                          Quand vous la lancez, Oneduc cree une session pour cette lecon, genere un code d'acces et les stagiaires peuvent rejoindre depuis leur cloche de notification.
-                                      </p>
-                                      <p class="mt-2">
-                                          Vous pilotez ensuite la seance question par question, affichez la correction au bon moment et suivez les reponses de la salle en temps reel.
-                                      </p>
-                                  </div>
-                              </div>
-                          @endif
-
+                      <div class="grid gap-4">
                           @if($quizStartUrl)
                               <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                                   <div class="flex items-start gap-3">
@@ -372,6 +399,10 @@
                                           Utilisez-le comme un dernier controle qualite avant une diffusion reelle en autonomie ou en session presentielle.
                                       </p>
                                   </div>
+                              </div>
+                          @else
+                              <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-center">
+                                  <p class="text-sm font-medium text-slate-500">Aucun quiz test disponible pour cette lecon.</p>
                               </div>
                           @endif
                       </div>
@@ -507,225 +538,175 @@
                   </div>
               </div>
 
-              <div x-show="activeTab === 'infos'" x-data="{ techInfoOpen: false }" style="display: none;">
-                  <div class="mb-4">
-                      <h3 class="font-raleway text-lg font-bold text-orangeone">Fichiers & Infos</h3>
+              <div x-show="activeTab === 'ressources'" style="display: none;">
+                  <div class="mb-4 flex items-center gap-2">
+                      <h3 class="font-raleway text-lg font-bold text-orangeone">Ressources</h3>
+                      <div x-data="{ open: false }" class="relative">
+                          <button type="button"
+                                  @mouseenter="open = true"
+                                  @mouseleave="open = false"
+                                  @focus="open = true"
+                                  @blur="open = false"
+                                  class="inline-flex h-6 w-6 items-center justify-center rounded-full border border-slate-300 bg-white text-[11px] font-black text-bleuone transition hover:border-bleuone"
+                                  aria-label="Aide sur les ressources">
+                              ?
+                          </button>
+                          <div x-show="open" x-cloak class="absolute left-1/2 top-full z-20 mt-2 w-56 -translate-x-1/2 rounded-xl border border-slate-200 bg-slate-900 px-3 py-2 text-[11px] font-medium leading-relaxed text-white shadow-xl" style="display: none;">
+                              Documents partages sur l'ensemble du module.
+                          </div>
+                      </div>
                   </div>
 
                   <div class="space-y-5">
                       <div class="rounded-[22px] border border-slate-200 bg-white p-5 shadow-sm">
-                          <div class="flex items-start justify-between gap-3">
-                              <div>
-                                  <h3 class="font-raleway text-bleuone font-bold text-lg">Ressources stagiaires</h3>
-                                  <p class="mt-1 text-xs text-slate-500">
-                                      Ajoutez ici les fichiers utiles à la leçon, puis choisissez s’ils doivent être visibles côté stagiaire.
-                                  </p>
+                          <div class="flex items-center justify-between gap-3">
+                              <div class="flex items-center gap-2">
+                                  <h4 class="text-sm font-bold text-bleuone">Ajouter</h4>
+                                  <div x-data="{ open: false }" class="relative">
+                                      <button type="button"
+                                              @mouseenter="open = true"
+                                              @mouseleave="open = false"
+                                              @focus="open = true"
+                                              @blur="open = false"
+                                              class="inline-flex h-5 w-5 items-center justify-center rounded-full border border-slate-300 bg-white text-[10px] font-black text-bleuone">
+                                          ?
+                                      </button>
+                                      <div x-show="open" x-cloak class="absolute left-0 top-full z-20 mt-2 w-52 rounded-xl border border-slate-200 bg-slate-900 px-3 py-2 text-[11px] leading-relaxed text-white shadow-xl" style="display: none;">
+                                          PDF, images et documents bureautiques. Taille maximale : 50 Mo.
+                                      </div>
+                                  </div>
                               </div>
                               <span class="inline-flex items-center rounded-full bg-orange-50 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-orangeone">
-                                  {{ $lessonResources->count() }} fichier{{ $lessonResources->count() > 1 ? 's' : '' }}
+                                  {{ $moduleResources->count() }} fichier{{ $moduleResources->count() > 1 ? 's' : '' }}
                               </span>
                           </div>
 
-                          <div class="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                              <div class="mb-4">
-                                  <h4 class="text-xs font-bold uppercase tracking-wide text-bleuone">Ajouter une ressource</h4>
-                                  <p class="mt-1 text-xs text-slate-500">
-                                      Formats acceptés : image, PDF, Word, Excel, PowerPoint, texte ou CSV. Taille maximale : 50 Mo.
-                                  </p>
-                              </div>
+                          <form action="{{ route('formateur.formations.lesson.resources.store', ['module' => $module->id, 'section' => $section->id, 'lecture' => $lecture->id]) }}"
+                                method="POST"
+                                enctype="multipart/form-data"
+                                class="mt-4 space-y-4">
+                              @csrf
 
-                              <form action="{{ route('formateur.formations.lesson.resources.store', ['module' => $module->id, 'section' => $section->id, 'lecture' => $lecture->id]) }}"
-                                    method="POST"
-                                    enctype="multipart/form-data"
-                                    class="space-y-4">
-                                  @csrf
-                                  @if($errors->has('title') || $errors->has('resource_file'))
-                                      <div class="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
-                                          @error('title')<div>{{ $message }}</div>@enderror
-                                          @error('resource_file')<div>{{ $message }}</div>@enderror
-                                      </div>
-                                  @endif
-
-                                  <div class="grid gap-4">
-                                      <div>
-                                          <label for="resource_title" class="mb-1 block text-xs font-semibold text-slate-600">Titre</label>
-                                          <input
-                                              id="resource_title"
-                                              type="text"
-                                              name="title"
-                                              maxlength="255"
-                                              placeholder="Ex: Fiche pratique de la leçon"
-                                              class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm focus:border-orangeone focus:ring-orangeone"
-                                          >
-                                      </div>
-                                      <div>
-                                          <label for="resource_file" class="mb-1 block text-xs font-semibold text-slate-600">Fichier</label>
-                                          <input
-                                              id="resource_file"
-                                              type="file"
-                                              name="resource_file"
-                                              accept=".jpg,.jpeg,.png,.gif,.webp,.avif,.pdf,.doc,.docx,.odt,.txt,.rtf,.xls,.xlsx,.ods,.ppt,.pptx,.odp,.csv"
-                                              class="block w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-700 file:mr-3 file:rounded-lg file:border-0 file:bg-bleuone file:px-3 file:py-2 file:text-xs file:font-bold file:text-white hover:file:opacity-90"
-                                              required
-                                          >
-                                      </div>
+                              @if($errors->has('title') || $errors->has('resource_file'))
+                                  <div class="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+                                      @error('title')<div>{{ $message }}</div>@enderror
+                                      @error('resource_file')<div>{{ $message }}</div>@enderror
                                   </div>
+                              @endif
 
-                                  <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                                      <label class="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs text-slate-700">
+                              <input
+                                  id="resource_title"
+                                  type="text"
+                                  name="title"
+                                  maxlength="255"
+                                  placeholder="Titre de la ressource"
+                                  class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm focus:border-orangeone focus:ring-orangeone"
+                              >
+
+                              <input
+                                  id="resource_file"
+                                  type="file"
+                                  name="resource_file"
+                                  accept=".jpg,.jpeg,.png,.gif,.webp,.avif,.pdf,.doc,.docx,.odt,.txt,.rtf,.xls,.xlsx,.ods,.ppt,.pptx,.odp,.csv"
+                                  class="block w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-700 file:mr-3 file:rounded-lg file:border-0 file:bg-bleuone file:px-3 file:py-2 file:text-xs file:font-bold file:text-white hover:file:opacity-90"
+                                  required
+                              >
+
+                              <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                                  <div class="flex items-center gap-2 text-xs text-slate-700">
+                                      <label class="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5">
                                           <input type="hidden" name="is_visible_to_stagiaire" value="0">
                                           <input type="checkbox" name="is_visible_to_stagiaire" value="1" class="rounded border-slate-300 text-orangeone focus:ring-orangeone">
-                                          Afficher immédiatement cette ressource aux stagiaires
+                                          Visible stagiaire
                                       </label>
-                                      <button type="submit" class="inline-flex items-center justify-center rounded-xl bg-bleuone px-4 py-2.5 text-xs font-bold uppercase text-white transition hover:opacity-90">
-                                          Ajouter la ressource
-                                      </button>
-                                  </div>
-                              </form>
-                          </div>
-
-                          <div class="mt-5 border-t border-slate-200 pt-5">
-                              <div class="mb-3">
-                                  <h4 class="text-xs font-bold uppercase tracking-wide text-bleuone">Ressources attachées</h4>
-                                  <p class="mt-1 text-xs text-slate-500">
-                                      Chaque fichier peut être ouvert, téléchargé, affiché ou masqué côté stagiaire.
-                                  </p>
-                              </div>
-
-                              <div class="space-y-3">
-                                  @forelse($lessonResources as $resource)
-                                      @php
-                                          $resourceUrl = $resource->public_url;
-                                          $resourceExt = strtoupper($resource->extension ?: 'FILE');
-                                      @endphp
-                                      <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                                          <div class="flex items-start gap-3">
-                                              @if($resource->is_image)
-                                                  <a href="{{ $resourceUrl }}" target="_blank" class="shrink-0">
-                                                      <img src="{{ $resourceUrl }}" alt="{{ $resource->title }}" class="h-14 w-14 rounded-xl border border-slate-200 object-cover bg-white">
-                                                  </a>
-                                              @else
-                                                  <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-xs font-black text-bleuone">
-                                                      {{ $resourceExt }}
-                                                  </div>
-                                              @endif
-
-                                              <div class="min-w-0 flex-1">
-                                                  <div class="flex flex-wrap items-center gap-2">
-                                                      <p class="truncate text-sm font-bold text-slate-800">{{ $resource->title }}</p>
-                                                      <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase {{ $resource->is_visible_to_stagiaire ? 'bg-green-100 text-green-700' : 'bg-slate-200 text-slate-600' }}">
-                                                          {{ $resource->is_visible_to_stagiaire ? 'Visible stagiaire' : 'Masquée stagiaire' }}
-                                                      </span>
-                                                  </div>
-                                                  <p class="mt-1 truncate text-xs text-slate-500">{{ $resource->original_name }}</p>
-                                                  <div class="mt-1 flex items-center gap-1 text-[11px] text-slate-400">
-                                                      <span class="shrink-0">{{ $formatBytes($resource->file_size) }}</span>
-                                                      @if($resource->mime_type)
-                                                          <span class="shrink-0">•</span>
-                                                          <span class="truncate max-w-[180px]" title="{{ $resource->mime_type }}">{{ $resource->mime_type }}</span>
-                                                      @endif
-                                                  </div>
-
-                                                  <div class="mt-3 flex flex-wrap items-center gap-2">
-                                                      <a href="{{ $resourceUrl }}" target="_blank" class="inline-flex items-center rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-[11px] font-bold text-blue-700 transition hover:bg-blue-100">
-                                                          Ouvrir
-                                                      </a>
-                                                      <a href="{{ $resourceUrl }}" download="{{ $resource->original_name }}" class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-bold text-slate-700 transition hover:bg-slate-100">
-                                                          Télécharger
-                                                      </a>
-
-                                                      <form action="{{ route('formateur.formations.lesson.resources.visibility', ['module' => $module->id, 'section' => $section->id, 'lecture' => $lecture->id, 'resource' => $resource->id]) }}"
-                                                            method="POST"
-                                                            class="inline-flex">
-                                                          @csrf
-                                                          <input type="hidden" name="is_visible_to_stagiaire" value="{{ $resource->is_visible_to_stagiaire ? 0 : 1 }}">
-                                                          <button type="submit" class="inline-flex items-center rounded-lg border px-3 py-1.5 text-[11px] font-bold transition {{ $resource->is_visible_to_stagiaire ? 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100' : 'border-green-200 bg-green-50 text-green-700 hover:bg-green-100' }}">
-                                                              {{ $resource->is_visible_to_stagiaire ? 'Masquer côté stagiaire' : 'Afficher côté stagiaire' }}
-                                                          </button>
-                                                      </form>
-
-                                                      <form action="{{ route('formateur.formations.lesson.resources.destroy', ['module' => $module->id, 'section' => $section->id, 'lecture' => $lecture->id, 'resource' => $resource->id]) }}"
-                                                            method="POST"
-                                                            onsubmit="return confirm('Supprimer cette ressource ?');"
-                                                            class="inline-flex">
-                                                          @csrf
-                                                          @method('DELETE')
-                                                          <button type="submit" class="inline-flex items-center rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-[11px] font-bold text-red-700 transition hover:bg-red-100">
-                                                              Supprimer
-                                                          </button>
-                                                      </form>
-                                                  </div>
-                                              </div>
+                                      <div x-data="{ open: false }" class="relative">
+                                          <button type="button"
+                                                  @mouseenter="open = true"
+                                                  @mouseleave="open = false"
+                                                  @focus="open = true"
+                                                  @blur="open = false"
+                                                  class="inline-flex h-5 w-5 items-center justify-center rounded-full border border-slate-300 bg-white text-[10px] font-black text-bleuone">
+                                              ?
+                                          </button>
+                                          <div x-show="open" x-cloak class="absolute left-0 top-full z-20 mt-2 w-56 rounded-xl border border-slate-200 bg-slate-900 px-3 py-2 text-[11px] leading-relaxed text-white shadow-xl" style="display: none;">
+                                              Le stagiaire peut consulter cette ressource depuis son espace ressources du module.
                                           </div>
                                       </div>
-                                  @empty
-                                      <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-center">
-                                          <p class="text-sm font-medium text-slate-500">Aucune ressource attachée à cette leçon.</p>
-                                          <p class="mt-1 text-xs text-slate-400">Ajoutez un fichier ci-dessus, puis choisissez s’il doit être visible pour les stagiaires.</p>
-                                      </div>
-                                  @endforelse
+                                  </div>
+
+                                  <button type="submit" class="inline-flex items-center justify-center rounded-xl bg-bleuone px-4 py-2.5 text-xs font-bold uppercase text-white transition hover:opacity-90">
+                                      Ajouter
+                                  </button>
                               </div>
-                          </div>
+                          </form>
                       </div>
 
                       <div class="rounded-[22px] border border-slate-200 bg-white p-5 shadow-sm">
-                          <div class="flex items-start justify-between gap-3">
-                              <div>
-                                  <h3 class="font-raleway text-bleuone font-bold text-lg">Informations de la leçon</h3>
-                                  <p class="mt-1 text-xs text-slate-500">
-                                      Retrouvez ici le support principal et, si besoin, les détails techniques associés à cette leçon.
-                                  </p>
+                          <div class="mb-4 flex items-center justify-between gap-3">
+                              <h4 class="text-sm font-bold text-bleuone">Liste des ressources</h4>
+                              <div x-data="{ open: false }" class="relative">
+                                  <button type="button"
+                                          @mouseenter="open = true"
+                                          @mouseleave="open = false"
+                                          @focus="open = true"
+                                          @blur="open = false"
+                                          class="inline-flex h-5 w-5 items-center justify-center rounded-full border border-slate-300 bg-white text-[10px] font-black text-bleuone">
+                                      ?
+                                  </button>
+                                  <div x-show="open" x-cloak class="absolute right-0 top-full z-20 mt-2 w-56 rounded-xl border border-slate-200 bg-slate-900 px-3 py-2 text-[11px] leading-relaxed text-white shadow-xl" style="display: none;">
+                                      Seules les actions utiles restent visibles pour limiter la charge cognitive.
+                                  </div>
                               </div>
-                              <button type="button"
-                                      @click="techInfoOpen = !techInfoOpen"
-                                      :aria-expanded="techInfoOpen.toString()"
-                                      class="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-3 py-2 text-[11px] font-bold uppercase tracking-wide text-bleuone transition hover:border-bleuone hover:bg-slate-50">
-                                  Détails techniques
-                              </button>
                           </div>
 
-                          <div class="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                              <h4 class="text-xs font-bold uppercase tracking-wide text-bleuone">Support principal</h4>
+                          <div class="space-y-3">
+                              @forelse($moduleResources as $resource)
+                                  @php
+                                      $resourceUrl = $resource->public_url;
+                                      $resourceExt = strtoupper($resource->extension ?: 'FILE');
+                                  @endphp
+                                  <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                                      <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                                          <div class="min-w-0">
+                                              <div class="flex items-center gap-2">
+                                                  <span class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-2 py-1 text-[10px] font-bold uppercase text-bleuone">{{ $resourceExt }}</span>
+                                                  <p class="truncate text-sm font-bold text-slate-800">{{ $resource->title }}</p>
+                                              </div>
+                                          </div>
 
-                              <div class="mt-3 space-y-3 text-sm">
-                                  @if(!empty($lecture->slides_source_path))
-                                      <div class="flex items-center gap-2 text-slate-700">
-                                          <span class="rounded-lg border border-slate-200 bg-white px-2 py-1 text-[10px] font-bold uppercase text-bleuone">SRC</span>
-                                          Source slides importée
+                                          <div class="flex flex-wrap items-center gap-2">
+                                              <a href="{{ $resourceUrl }}" target="_blank" class="inline-flex items-center rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-[11px] font-bold text-blue-700 transition hover:bg-blue-100">
+                                                  Ouvrir
+                                              </a>
+
+                                              <form action="{{ route('formateur.formations.lesson.resources.visibility', ['module' => $module->id, 'section' => $section->id, 'lecture' => $lecture->id, 'resource' => $resource->id]) }}"
+                                                    method="POST"
+                                                    class="inline-flex">
+                                                  @csrf
+                                                  <input type="hidden" name="is_visible_to_stagiaire" value="{{ $resource->is_visible_to_stagiaire ? 0 : 1 }}">
+                                                  <button type="submit" class="inline-flex items-center rounded-lg border px-3 py-1.5 text-[11px] font-bold transition {{ $resource->is_visible_to_stagiaire ? 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100' : 'border-green-200 bg-green-50 text-green-700 hover:bg-green-100' }}">
+                                                      {{ $resource->is_visible_to_stagiaire ? 'Masquee' : 'Visible stagiaire' }}
+                                                  </button>
+                                              </form>
+
+                                              <form action="{{ route('formateur.formations.lesson.resources.destroy', ['module' => $module->id, 'section' => $section->id, 'lecture' => $lecture->id, 'resource' => $resource->id]) }}"
+                                                    method="POST"
+                                                    onsubmit="return confirm('Supprimer cette ressource ?');"
+                                                    class="inline-flex">
+                                                  @csrf
+                                                  @method('DELETE')
+                                                  <button type="submit" class="inline-flex items-center rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-[11px] font-bold text-red-700 transition hover:bg-red-100">
+                                                      Supprimer
+                                                  </button>
+                                              </form>
+                                          </div>
                                       </div>
-                                  @endif
-                                  @if($lecture->scorm_asset_url)
-                                      <a href="{{ $lecture->scorm_asset_url }}" target="_blank" class="flex items-center gap-2 text-slate-700 transition hover:text-orangeone hover:underline">
-                                          <span class="rounded-lg border border-slate-200 bg-white px-2 py-1 text-[10px] font-bold uppercase text-bleuone">SCORM</span>
-                                          Ouvrir la ressource principale
-                                      </a>
-                                  @endif
-                                  @if(empty($lecture->slides_source_path) && !$lecture->scorm_asset_url)
-                                      <p class="text-xs italic text-slate-400">Aucun fichier source direct disponible.</p>
-                                  @endif
-                              </div>
-                          </div>
-
-                          <div x-show="techInfoOpen" x-collapse class="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4" style="display: none;">
-                              <h4 class="text-xs font-bold uppercase tracking-wide text-slate-500">Détails techniques</h4>
-                              <dl class="mt-3 space-y-2 text-xs">
-                                  <div class="flex justify-between gap-4">
-                                      <dt class="text-slate-500">ID Leçon</dt>
-                                      <dd class="font-mono text-slate-700">{{ $lecture->id }}</dd>
                                   </div>
-                                  <div class="flex justify-between gap-4">
-                                      <dt class="text-slate-500">Slides déclarées</dt>
-                                      <dd class="font-medium text-slate-700">{{ $lecture->slide_count ?? 0 }}</dd>
+                              @empty
+                                  <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-center">
+                                      <p class="text-sm font-medium text-slate-500">Aucune ressource sur ce module.</p>
                                   </div>
-                                  <div class="flex justify-between gap-4">
-                                      <dt class="text-slate-500">Questions posees / tentative</dt>
-                                      <dd class="font-medium text-slate-700">{{ $lecture->quiz_questions_per_attempt ?? 0 }}</dd>
-                                  </div>
-                                  <div class="flex justify-between gap-4">
-                                      <dt class="text-slate-500">Ressources attachées</dt>
-                                      <dd class="font-medium text-slate-700">{{ $lessonResources->count() }}</dd>
-                                  </div>
-                              </dl>
+                              @endforelse
                           </div>
                       </div>
                   </div>
@@ -736,145 +717,215 @@
                       <h3 class="font-raleway text-lg font-bold text-orangeone">Outils numeriques</h3>
                   </div>
 
-                  <div class="mb-5 rounded-[22px] border border-slate-200 bg-white p-5 shadow-sm">
-                      <p class="text-xs text-slate-500">
-                          Centralisez ici les outils collaboratifs de la lecon. Le tableau blanc se pilote par groupe pour rester coherent avec vos promotions.
-                      </p>
-                  </div>
-
-                  <div class="space-y-5">
-                      @if($currentWhiteboardGroup)
-                          <div class="rounded-[22px] border border-slate-200 bg-white p-5 shadow-sm">
-                              <div class="flex items-start justify-between gap-4">
-                                  <div>
-                                      <p class="text-xs font-bold uppercase tracking-wide text-teal-700">Tableau blanc du module</p>
-                                      <h4 class="mt-1 text-base font-bold text-bleuone">{{ $currentWhiteboardGroup['name'] }}</h4>
-                                      <p class="mt-2 text-xs text-slate-500">
-                                          Cette lecon est ouverte dans le contexte du groupe selectionne. Depuis ici vous pouvez ouvrir ou creer le tableau blanc collaboratif rattache a ce module pour ce groupe.
-                                      </p>
-                                  </div>
-                                  <a href="{{ $currentWhiteboardGroup['whiteboard_url'] }}"
-                                     class="inline-flex items-center justify-center rounded-xl bg-teal-600 px-4 py-2.5 text-xs font-bold uppercase text-white transition hover:bg-teal-700">
-                                      {{ !empty($currentWhiteboardGroup['has_whiteboard']) ? 'Ouvrir le tableau' : 'Creer le tableau' }}
-                                  </a>
-                              </div>
-                          </div>
-                      @endif
-
-                      <div class="rounded-[22px] border border-slate-200 bg-white p-5 shadow-sm">
-                          <div class="flex items-center justify-between gap-3 mb-3">
-                              <div>
-                                  <h4 class="text-xs font-bold uppercase text-bleuone">Tableaux disponibles par groupe</h4>
-                                  <p class="mt-1 text-xs text-slate-500">
-                                      Choisissez le groupe concerne si vous souhaitez ouvrir ou creer le tableau blanc de cette lecon dans un autre contexte.
-                                  </p>
-                              </div>
-                              <span class="rounded-full bg-slate-100 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-slate-500">
-                                  {{ $whiteboardGroups->count() }} groupe{{ $whiteboardGroups->count() > 1 ? 's' : '' }}
-                              </span>
-                          </div>
-
-                          <div class="space-y-3">
-                              @forelse($whiteboardGroups as $boardGroup)
-                                  <div class="rounded-2xl border {{ !empty($boardGroup['is_current']) ? 'border-teal-300 bg-teal-50/70' : 'border-slate-200 bg-slate-50' }} p-4">
-                                      <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                                          <div>
-                                              <div class="flex flex-wrap items-center gap-2">
-                                                  <p class="text-sm font-bold text-slate-800">{{ $boardGroup['name'] }}</p>
-                                                  @if(!empty($boardGroup['is_current']))
-                                                      <span class="rounded-full bg-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-teal-700 border border-teal-200">
-                                                          Contexte actuel
-                                                      </span>
-                                                  @endif
-                                                  <span class="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide {{ !empty($boardGroup['has_whiteboard']) ? 'bg-white text-teal-700 border border-teal-200' : 'bg-white text-slate-500 border border-slate-200' }}">
-                                                      {{ !empty($boardGroup['has_whiteboard']) ? 'Cree' : 'A creer' }}
-                                                  </span>
-                                              </div>
-                                              <p class="mt-1 text-xs text-slate-500">
-                                                  {{ $boardGroup['description'] !== '' ? $boardGroup['description'] : 'Groupe sans description.' }}
-                                              </p>
-                                              <p class="mt-2 text-[11px] text-slate-500">
-                                                  Le tableau blanc est reutilisable dans ce module pour ce groupe.
-                                              </p>
-                                          </div>
-
-                                          <div class="flex flex-wrap items-center gap-2">
-                                              @if(empty($boardGroup['is_current']))
-                                                  <a href="{{ $boardGroup['lesson_url'] }}"
-                                                     class="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-[11px] font-bold uppercase text-slate-700 transition hover:bg-slate-100">
-                                                      Basculer sur ce groupe
-                                                  </a>
-                                              @endif
-                                              <a href="{{ $boardGroup['whiteboard_url'] }}"
-                                                 class="inline-flex items-center justify-center rounded-lg bg-bleuone px-3 py-2 text-[11px] font-bold uppercase text-white transition hover:opacity-90">
-                                                  {{ !empty($boardGroup['has_whiteboard']) ? 'Ouvrir le tableau' : 'Creer le tableau' }}
-                                              </a>
-                                          </div>
-                                      </div>
-                                  </div>
-                              @empty
-                                  <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-center">
-                                      <p class="text-sm font-medium text-slate-500">Aucun groupe rattache a ce module pour l'instant.</p>
-                                      <p class="mt-1 text-xs text-slate-400">
-                                          Associez d'abord ce module a un groupe pour ouvrir un tableau blanc collaboratif.
-                                      </p>
-                                  </div>
-                              @endforelse
-                          </div>
+                  <div class="grid gap-5 lg:grid-cols-[12rem_1fr]">
+                      <div class="rounded-[22px] border border-slate-200 bg-white p-3 shadow-sm">
+                          <button type="button"
+                                  @click="selectedTool = 'whiteboard'"
+                                  :class="selectedTool === 'whiteboard' ? 'bg-teal-50 text-teal-800 border-teal-200' : 'bg-white text-slate-700 border-transparent hover:bg-slate-50'"
+                                  class="flex w-full items-center rounded-2xl border px-3 py-3 text-left text-sm font-semibold transition">
+                              Tableau blanc
+                          </button>
+                          <button type="button"
+                                  @click="selectedTool = 'word_cloud'"
+                                  :class="selectedTool === 'word_cloud' ? 'bg-violet-50 text-violet-800 border-violet-200' : 'bg-white text-slate-700 border-transparent hover:bg-slate-50'"
+                                  class="mt-2 flex w-full items-center rounded-2xl border px-3 py-3 text-left text-sm font-semibold transition">
+                              Nuage de mots
+                          </button>
+                          <button type="button"
+                                  @click="selectedTool = 'live_quiz'"
+                                  :class="selectedTool === 'live_quiz' ? 'bg-blue-50 text-blue-800 border-blue-200' : 'bg-white text-slate-700 border-transparent hover:bg-slate-50'"
+                                  class="mt-2 flex w-full items-center rounded-2xl border px-3 py-3 text-left text-sm font-semibold transition">
+                              Quiz en direct
+                          </button>
+                          <button type="button"
+                                  @click="selectedTool = 'module_setup'"
+                                  :class="selectedTool === 'module_setup' ? 'bg-orange-50 text-orangeone border-orange-200' : 'bg-white text-slate-700 border-transparent hover:bg-slate-50'"
+                                  class="mt-2 flex w-full items-center rounded-2xl border px-3 py-3 text-left text-sm font-semibold transition">
+                              Personnalisation du module
+                          </button>
                       </div>
 
-                      <div class="rounded-[22px] border border-slate-200 bg-white p-5 shadow-sm">
-                          <div class="flex items-center justify-between gap-3 mb-3">
-                              <div>
-                                  <h4 class="text-xs font-bold uppercase text-bleuone">Nuages de mots du module</h4>
-                                  <p class="mt-1 text-xs text-slate-500">
-                                      Les nuages crees par l'administration et rattaches a ce module sont reutilisables ici.
-                                  </p>
+                      <div class="space-y-5">
+                          <div class="rounded-[22px] border border-slate-200 bg-white p-5 shadow-sm">
+                              <div class="grid gap-4 md:grid-cols-2">
+                                  <div>
+                                      <label for="tool-group" class="mb-1 block text-xs font-semibold text-slate-600">Groupe</label>
+                                      <select id="tool-group"
+                                              x-model="selectedToolGroupId"
+                                              class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm focus:border-orangeone focus:ring-orangeone">
+                                          <option value="">Choisir un groupe</option>
+                                          <template x-for="group in toolGroups" :key="group.id">
+                                              <option :value="String(group.id)" x-text="group.name"></option>
+                                          </template>
+                                      </select>
+                                  </div>
+
+                                  <div>
+                                      <label for="tool-module" class="mb-1 block text-xs font-semibold text-slate-600">Module</label>
+                                      <select id="tool-module"
+                                              x-model="selectedToolModuleId"
+                                              class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm focus:border-orangeone focus:ring-orangeone"
+                                              :disabled="selectedToolModules().length === 0">
+                                          <option value="">Choisir un module</option>
+                                          <template x-for="moduleItem in selectedToolModules()" :key="moduleItem.id">
+                                              <option :value="String(moduleItem.id)" x-text="moduleItem.title"></option>
+                                          </template>
+                                      </select>
+                                  </div>
                               </div>
-                              <span class="rounded-full bg-violet-50 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-violet-700">
-                                  {{ $wordClouds->count() }} nuage{{ $wordClouds->count() > 1 ? 's' : '' }}
-                              </span>
                           </div>
 
-                          <div class="space-y-3">
-                              @forelse($wordClouds as $wordCloud)
-                                  <div class="rounded-2xl border {{ $wordCloud['is_active'] ? 'border-violet-200 bg-violet-50/60' : 'border-slate-200 bg-slate-50' }} p-4">
-                                      <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                                          <div>
-                                              <div class="flex flex-wrap items-center gap-2">
-                                                  <p class="text-sm font-bold text-slate-800">{{ $wordCloud['title'] }}</p>
-                                                  <span class="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide {{ $wordCloud['is_active'] ? 'bg-white text-violet-700 border border-violet-200' : 'bg-white text-slate-500 border border-slate-200' }}">
-                                                      {{ $wordCloud['is_active'] ? 'Actif' : 'Ferme' }}
-                                                  </span>
-                                              </div>
-                                              <p class="mt-2 text-xs text-slate-600">{{ $wordCloud['question'] }}</p>
-                                              <p class="mt-2 text-[11px] text-slate-500">
-                                                  Code <span class="font-mono font-bold text-slate-700">{{ $wordCloud['access_code'] }}</span>
-                                                  @if($wordCloud['updated_at_human'])
-                                                      · Mis a jour {{ $wordCloud['updated_at_human'] }}
-                                                  @endif
-                                              </p>
-                                          </div>
+                          <section x-show="selectedTool === 'whiteboard'" x-cloak class="rounded-[22px] border border-slate-200 bg-white p-5 shadow-sm" style="display: none;">
+                              <div class="flex items-start justify-between gap-3">
+                                  <div>
+                                      <h4 class="text-lg font-bold text-bleuone">Tableau blanc</h4>
+                                      <p class="mt-1 text-xs text-slate-500">Choisissez un groupe puis ouvrez le tableau dans un nouvel onglet.</p>
+                                  </div>
+                              </div>
 
-                                          <div class="flex flex-wrap items-center gap-2">
-                                              <a href="{{ $wordCloud['join_url'] }}"
-                                                 target="_blank"
-                                                 rel="noopener"
-                                                 class="inline-flex items-center justify-center rounded-lg border border-violet-200 bg-white px-3 py-2 text-[11px] font-bold uppercase text-violet-700 transition hover:bg-violet-100">
-                                                  Ouvrir le nuage
-                                              </a>
+                              <div class="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                                  <a :href="selectedToolWhiteboardUrl()"
+                                     target="_blank"
+                                     rel="noopener"
+                                     class="inline-flex items-center justify-center rounded-xl bg-teal-600 px-4 py-2.5 text-xs font-bold uppercase text-white transition hover:bg-teal-700"
+                                     :class="selectedToolWhiteboardUrl() === '#' ? 'pointer-events-none opacity-50' : ''">
+                                      Ouvrir le tableau blanc
+                                  </a>
+                              </div>
+                          </section>
+
+                          <section x-show="selectedTool === 'word_cloud'" x-cloak class="rounded-[22px] border border-slate-200 bg-white p-5 shadow-sm" style="display: none;">
+                              <div class="flex items-start justify-between gap-3">
+                                  <div>
+                                      <h4 class="text-lg font-bold text-bleuone">Nuage de mots</h4>
+                                      <p class="mt-1 text-xs text-slate-500">Créez un nuage pour le groupe sélectionné et ouvrez le live dans un nouvel onglet.</p>
+                                  </div>
+                                  <span class="rounded-full bg-violet-50 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-violet-700">
+                                      {{ $wordClouds->count() }} nuage{{ $wordClouds->count() > 1 ? 's' : '' }}
+                                  </span>
+                              </div>
+
+                              <form method="POST"
+                                    action="{{ route('formateur.wordclouds.store') }}"
+                                    target="_blank"
+                                    class="mt-4 space-y-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                                  @csrf
+                                  <input type="hidden" name="group_id" :value="selectedToolGroupId">
+                                  <input type="hidden" name="module_id" :value="selectedToolModuleId">
+
+                                  <input type="text"
+                                         name="title"
+                                         required
+                                         placeholder="Titre du nuage"
+                                         class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm focus:border-orangeone focus:ring-orangeone">
+
+                                  <textarea name="question"
+                                            rows="3"
+                                            required
+                                            placeholder="Question à poser au groupe"
+                                            class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm focus:border-orangeone focus:ring-orangeone"></textarea>
+
+                                  <button type="submit"
+                                          class="inline-flex items-center justify-center rounded-xl bg-violet-600 px-4 py-2.5 text-xs font-bold uppercase text-white transition hover:bg-violet-700"
+                                          :class="!selectedToolGroupId || !selectedToolModuleId ? 'pointer-events-none opacity-50' : ''">
+                                      Lancer le nuage de mots
+                                  </button>
+                              </form>
+
+                              <div class="mt-4 space-y-3">
+                                  @forelse($wordClouds as $wordCloud)
+                                      <div x-show="(!selectedToolModuleId || Number(selectedToolModuleId) === {{ $wordCloud['module_id'] ?: 0 }}) && (!selectedToolGroupId || Number(selectedToolGroupId) === {{ $wordCloud['group_id'] ?: 0 }} || {{ $wordCloud['group_id'] ?: 0 }} === 0)"
+                                           class="rounded-2xl border {{ $wordCloud['is_active'] ? 'border-violet-200 bg-violet-50/60' : 'border-slate-200 bg-slate-50' }} p-4">
+                                          <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                                              <div>
+                                                  <div class="flex flex-wrap items-center gap-2">
+                                                      <p class="text-sm font-bold text-slate-800">{{ $wordCloud['title'] }}</p>
+                                                      <span class="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide {{ $wordCloud['is_active'] ? 'bg-white text-violet-700 border border-violet-200' : 'bg-white text-slate-500 border border-slate-200' }}">
+                                                          {{ $wordCloud['is_active'] ? 'Actif' : 'Ferme' }}
+                                                      </span>
+                                                  </div>
+                                                  <p class="mt-2 text-xs text-slate-600">{{ $wordCloud['question'] }}</p>
+                                              </div>
+                                              <div class="flex flex-wrap items-center gap-2">
+                                                  <a href="{{ $wordCloud['live_url'] }}"
+                                                     target="_blank"
+                                                     rel="noopener"
+                                                     class="inline-flex items-center justify-center rounded-lg border border-violet-200 bg-white px-3 py-2 text-[11px] font-bold uppercase text-violet-700 transition hover:bg-violet-100">
+                                                      Ouvrir le live
+                                                  </a>
+                                                  <a href="{{ $wordCloud['join_url'] }}"
+                                                     target="_blank"
+                                                     rel="noopener"
+                                                     class="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-[11px] font-bold uppercase text-slate-700 transition hover:bg-slate-100">
+                                                      Lien stagiaire
+                                                  </a>
+                                              </div>
                                           </div>
                                       </div>
+                                  @empty
+                                      <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-center">
+                                          <p class="text-sm font-medium text-slate-500">Aucun nuage de mots rattache a ce module.</p>
+                                      </div>
+                                  @endforelse
+                              </div>
+                          </section>
+
+                          <section x-show="selectedTool === 'live_quiz'" x-cloak class="rounded-[22px] border border-slate-200 bg-white p-5 shadow-sm" style="display: none;">
+                              <div class="flex items-start justify-between gap-3">
+                                  <div>
+                                      <h4 class="text-lg font-bold text-bleuone">Quiz en direct</h4>
+                                      <p class="mt-1 text-xs text-slate-500">Choisissez un groupe, un module et une leçon avant de lancer la session.</p>
                                   </div>
-                              @empty
-                                  <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-center">
-                                      <p class="text-sm font-medium text-slate-500">Aucun nuage de mots n'est rattache a ce module.</p>
-                                      <p class="mt-1 text-xs text-slate-400">
-                                          Creez-le cote administration puis associez-le au module pour le retrouver ici.
-                                      </p>
+                              </div>
+
+                              <form method="POST"
+                                    action="{{ route('formateur.live-quiz.launch') }}"
+                                    target="_blank"
+                                    class="mt-4 space-y-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                                  @csrf
+                                  <input type="hidden" name="group_id" :value="selectedToolGroupId">
+                                  <input type="hidden" name="module_id" :value="selectedToolModuleId">
+
+                                  <div>
+                                      <label for="tool-lecture" class="mb-1 block text-xs font-semibold text-slate-600">Leçon</label>
+                                      <select id="tool-lecture"
+                                              name="lecture_id"
+                                              x-model="selectedToolLectureId"
+                                              class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm focus:border-orangeone focus:ring-orangeone"
+                                              :disabled="selectedToolLectures().length === 0">
+                                          <option value="">Choisir une leçon</option>
+                                          <template x-for="lectureItem in selectedToolLectures()" :key="lectureItem.id">
+                                              <option :value="String(lectureItem.id)" x-text="lectureItem.label"></option>
+                                          </template>
+                                      </select>
                                   </div>
-                              @endforelse
-                          </div>
+
+                                  <button type="submit"
+                                          class="inline-flex items-center justify-center rounded-xl bg-bleuone px-4 py-2.5 text-xs font-bold uppercase text-white transition hover:bg-bleuone/90"
+                                          :class="!selectedToolGroupId || !selectedToolModuleId || !selectedToolLectureId ? 'pointer-events-none opacity-50' : ''">
+                                      Lancer une session
+                                  </button>
+                              </form>
+                          </section>
+
+                          <section x-show="selectedTool === 'module_setup'" x-cloak class="rounded-[22px] border border-slate-200 bg-white p-5 shadow-sm" style="display: none;">
+                              <div class="flex items-start justify-between gap-3">
+                                  <div>
+                                      <h4 class="text-lg font-bold text-bleuone">Personnalisation du module</h4>
+                                      <p class="mt-1 text-xs text-slate-500">Accédez au paramétrage pédagogique du module sélectionné pour ce groupe.</p>
+                                  </div>
+                              </div>
+
+                              <div class="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                                  <a :href="selectedToolManageUrl()"
+                                     target="_blank"
+                                     rel="noopener"
+                                     class="inline-flex items-center justify-center rounded-xl bg-orangeone px-4 py-2.5 text-xs font-bold uppercase text-white transition hover:bg-orange-600"
+                                     :class="selectedToolManageUrl() === '#' ? 'pointer-events-none opacity-50' : ''">
+                                      Ouvrir la personnalisation du module
+                                  </a>
+                              </div>
+                          </section>
                       </div>
                   </div>
               </div>

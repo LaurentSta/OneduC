@@ -10,6 +10,7 @@ class WordCloud extends Model
 {
     protected $fillable = [
         'module_id',
+        'group_id',
         'title',
         'question',
         'access_code',
@@ -27,6 +28,11 @@ class WordCloud extends Model
     public function module(): BelongsTo
     {
         return $this->belongsTo(Module::class);
+    }
+
+    public function group(): BelongsTo
+    {
+        return $this->belongsTo(Group::class);
     }
 
     public function entries(): HasMany

@@ -76,13 +76,11 @@
               if (($lectureStats[$lecP->id]['status'] ?? null) === 'completed') $doneValidated++;
             }
 
-            $openDefault = $isActiveChapter ? 'true' : 'false';
-
             // Page "chapitre" : on est sur la section sans leçon sélectionnée
             $isSectionPage = ($isActiveChapter && !isset($selectedLecture));
           @endphp
 
-          <li x-data="{ open: {{ $openDefault }} }" class="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
+          <li class="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
             {{-- EN-TÊTE CHAPITRE --}}
             <div class="grid" style="grid-template-columns: 48px 1fr;">
               <a
@@ -111,21 +109,11 @@
                     {{ $doneValidated }}/{{ $totalL }} leçons terminées
                   </span>
 
-                  <button
-                    type="button"
-                    @click.prevent="open = !open"
-                    class="absolute right-1 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-bleuone"
-                    aria-label="Afficher ou masquer les leçons du chapitre"
-                  >
-                    <svg class="w-5 h-5 transition-transform duration-200" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
-                      <path d="M19 9l-7 7-7-7"/>
-                    </svg>
-                  </button>
                 </div>
               </a>
 
               {{-- LISTE DES LEÇONS --}}
-              <div x-show="open" x-collapse class="col-span-2 border-t border-gray-50 bg-white">
+              <div class="col-span-2 border-t border-gray-50 bg-white">
                 <ul class="py-1">
                   @foreach ($section->lectures as $lec)
                     @php
@@ -196,7 +184,7 @@
 
   {{-- Pied de page --}}
   <div class="p-4 bg-white border-t border-gray-100 space-y-3">
-    @if(isset($selectedLecture) && ($lessonResources ?? collect())->isNotEmpty())
+    @if(isset($selectedLecture) && ($moduleResources ?? $lessonResources ?? collect())->isNotEmpty())
       <button
         type="button"
         @click="resourcesPanelOpen = !resourcesPanelOpen"
@@ -204,7 +192,7 @@
       >
         <div class="min-w-0">
           <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-400">Ressources</p>
-          <p class="mt-1 text-sm font-semibold text-gray-700">Documents ({{ $lessonResources->count() }})</p>
+          <p class="mt-1 text-sm font-semibold text-gray-700">Module ({{ ($moduleResources ?? $lessonResources ?? collect())->count() }})</p>
         </div>
         <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500">
           <i class="ti" :class="resourcesPanelOpen ? 'ti-x' : 'ti-paperclip'"></i>

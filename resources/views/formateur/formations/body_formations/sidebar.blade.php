@@ -39,11 +39,9 @@
             // Compteurs : en mode anonyme, on affiche uniquement X leçons
             $totalL = $section->lectures->count();
 
-            // Ouverture par défaut si section active
-            $openDefault = $isActiveChapter ? 'true' : 'false';
           @endphp
 
-          <li x-data="{ open: {{ $openDefault }} }" class="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
+          <li class="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
             {{-- EN-TÊTE CHAPITRE --}}
             <div class="grid" style="grid-template-columns: 48px 1fr;">
               <a
@@ -74,21 +72,11 @@
                     {{ $totalL }} leçon{{ $totalL > 1 ? 's' : '' }}
                   </span>
 
-                  <button
-                    type="button"
-                    @click.prevent="open = !open"
-                    class="absolute right-1 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-bleuone"
-                    aria-label="Afficher ou masquer les leçons du chapitre"
-                  >
-                    <svg class="w-5 h-5 transition-transform duration-200" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3" aria-hidden="true">
-                      <path d="M19 9l-7 7-7-7"/>
-                    </svg>
-                  </button>
                 </div>
               </a>
 
               {{-- LISTE DES LEÇONS --}}
-              <div x-show="open" x-collapse class="col-span-2 border-t border-gray-50 bg-white">
+              <div class="col-span-2 border-t border-gray-50 bg-white">
                 <ul class="py-1">
                   @foreach ($section->lectures as $lec)
                     @php

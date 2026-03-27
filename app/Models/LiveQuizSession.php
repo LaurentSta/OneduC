@@ -33,6 +33,11 @@ class LiveQuizSession extends Model
         return $this->belongsTo(Module::class, 'module_id');
     }
 
+    public function group(): BelongsTo
+    {
+        return $this->belongsTo(Group::class, 'group_id');
+    }
+
     public function section(): BelongsTo
     {
         return $this->belongsTo(ModuleSection::class, 'section_id');

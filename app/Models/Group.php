@@ -53,4 +53,14 @@ class Group extends Model
         return $this->hasOne(GroupWhiteboard::class);
     }
 
+    public function wordClouds()
+    {
+        return $this->hasMany(WordCloud::class);
+    }
+
+    public function liveQuizSessions()
+    {
+        return $this->hasMany(LiveQuizSession::class);
+    }
+
 }

@@ -18,7 +18,7 @@
 
         {{-- COLONNE GAUCHE : CONTENU PÉDAGOGIQUE (7/12) --}}
         {{-- x-data configuré pour être ouvert par défaut (true) --}}
-        <div class="lg:col-span-7 space-y-6" x-data="{ openObjectives: true, openQuestions: true }">
+        <div class="lg:col-span-7 space-y-6" x-data="{ openObjectives: true, openQuestions: false }">
             
             @php
                 use Illuminate\Support\Str;

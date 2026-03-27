@@ -33,14 +33,15 @@ class LessonResourceController extends Controller
         $baseName = Str::slug(pathinfo((string) $file->getClientOriginalName(), PATHINFO_FILENAME));
         $extension = strtolower((string) $file->getClientOriginalExtension());
         $storedPath = $file->storeAs(
-            'lesson-resources/lecture_' . $lecture->id,
+            'module-resources/module_' . $module->id,
             now()->format('Ymd_His') . '_' . Str::random(8) . '_' . ($baseName ?: 'resource') . '.' . $extension,
             'public'
         );
 
-        $nextPosition = ((int) $lecture->lessonResources()->max('position')) + 1;
+        $nextPosition = ((int) $module->moduleResources()->max('position')) + 1;
 
-        $lecture->lessonResources()->create([
+        $module->moduleResources()->create([
+            'lecture_id' => $lecture->id,
             'title' => trim((string) ($validated['title'] ?? '')) ?: pathinfo((string) $file->getClientOriginalName(), PATHINFO_FILENAME),
             'file_path' => $storedPath,
             'original_name' => (string) $file->getClientOriginalName(),
@@ -50,7 +51,7 @@ class LessonResourceController extends Controller
             'position' => $nextPosition,
         ]);
 
-        return back()->with('success', 'Ressource ajoutée à la leçon.');
+        return back()->with('success', 'Ressource ajoutée au module.');
     }
 
     public function toggleVisibility(Request $request, Module $module, ModuleSection $section, ModuleLecture $lecture, LessonResource $resource): RedirectResponse
@@ -96,7 +97,7 @@ class LessonResourceController extends Controller
         abort_unless((int) $module->formateur_id === (int) $user->id, 403);
 
         if ($resource) {
-            abort_unless((int) $resource->lecture_id === (int) $lecture->id, 404);
+            abort_unless((int) $resource->module_id === (int) $module->id, 404);
         }
     }
 }

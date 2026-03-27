@@ -58,6 +58,13 @@ class Module extends Model
         return $this->belongsToMany(Group::class, 'group_module');
     }
 
+    public function moduleResources()
+    {
+        return $this->hasMany(LessonResource::class, 'module_id')
+            ->orderBy('position')
+            ->orderByDesc('id');
+    }
+
     public function evaluation()
     {
         return $this->belongsTo(\App\Models\Evaluation::class);

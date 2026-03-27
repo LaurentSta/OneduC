@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Formateur;
 
 use App\Http\Controllers\Controller;
+use App\Models\Group;
 use App\Models\LiveQuizSession;
 use App\Models\Module;
 use App\Models\ModuleLecture;
@@ -22,59 +23,49 @@ class LiveQuizSessionController extends Controller
     public function store(Request $request, Module $module, ModuleSection $section, ModuleLecture $lecture): RedirectResponse
     {
         $this->assertLectureContext($module, $section, $lecture);
+        $group = null;
 
-        $questions = QuizQuestion::query()
-            ->where('lecture_id', $lecture->id)
-            ->where('is_active', true)
-            ->orderBy('id')
-            ->get();
-
-        if ($questions->isEmpty()) {
-            return back()->withErrors([
-                'live_quiz' => 'Ajoutez au moins une question active sur cette lecon avant de lancer une session presentielle.',
-            ]);
+        if ($request->filled('group_id')) {
+            $group = Group::query()
+                ->where('id', (int) $request->input('group_id'))
+                ->where('instructor_id', (int) auth()->id())
+                ->firstOrFail();
         }
 
-        $existingSessions = LiveQuizSession::query()
-            ->where('formateur_id', auth()->id())
-            ->where('lecture_id', $lecture->id)
-            ->whereNull('ended_at')
-            ->get();
+        return $this->createSessionAndRedirect($module, $section, $lecture, $group);
+    }
 
-        foreach ($existingSessions as $existingSession) {
-            $this->closeSession($existingSession);
-        }
+    public function launch(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'group_id' => ['required', 'exists:groups,id'],
+            'module_id' => ['required', 'exists:modules,id'],
+            'lecture_id' => ['required', 'exists:module_lectures,id'],
+        ]);
 
-        $session = DB::transaction(function () use ($module, $section, $lecture, $questions): LiveQuizSession {
-            $session = LiveQuizSession::query()->create([
-                'formateur_id' => auth()->id(),
-                'module_id' => $module->id,
-                'section_id' => $section->id,
-                'lecture_id' => $lecture->id,
-                'access_code' => $this->generateAccessCode(),
-                'status' => LiveQuizSession::STATUS_WAITING,
-                'current_position' => 0,
-                'total_questions' => $questions->count(),
-            ]);
+        $group = Group::query()
+            ->where('id', (int) $data['group_id'])
+            ->where('instructor_id', (int) auth()->id())
+            ->firstOrFail();
 
-            foreach ($questions as $index => $question) {
-                $session->sessionQuestions()->create([
-                    'question_id' => $question->id,
-                    'position' => $index + 1,
-                ]);
-            }
+        $module = Module::query()
+            ->where('id', (int) $data['module_id'])
+            ->where('formateur_id', (int) auth()->id())
+            ->firstOrFail();
 
-            return $session;
-        });
+        abort_unless($group->modules()->where('modules.id', $module->id)->exists(), 403);
 
-        return redirect()
-            ->route('formateur.live-quiz.show', [
-                'module' => $module->id,
-                'section' => $section->id,
-                'lecture' => $lecture->id,
-                'session' => $session->id,
-            ])
-            ->with('success', 'La session presentielle est prete. Les stagiaires peuvent maintenant rejoindre avec le QR code.');
+        $lecture = ModuleLecture::query()
+            ->where('id', (int) $data['lecture_id'])
+            ->where('module_id', (int) $module->id)
+            ->firstOrFail();
+
+        $section = ModuleSection::query()
+            ->where('id', (int) $lecture->section_id)
+            ->where('module_id', (int) $module->id)
+            ->firstOrFail();
+
+        return $this->createSessionAndRedirect($module, $section, $lecture, $group);
     }
 
     public function show(Module $module, ModuleSection $section, ModuleLecture $lecture, LiveQuizSession $session): View
@@ -82,6 +73,7 @@ class LiveQuizSessionController extends Controller
         $this->assertSessionContext($session, $module, $section, $lecture);
 
         $session->load([
+            'group',
             'sessionQuestions.question.options' => fn ($query) => $query->orderBy('position')->orderBy('id'),
             'participants.user',
             'participants.attempt.attemptQuestions',
@@ -284,6 +276,68 @@ class LiveQuizSessionController extends Controller
         abort_unless((int) $session->section_id === (int) $section->id, 404);
         abort_unless((int) $session->lecture_id === (int) $lecture->id, 404);
         abort_if((int) $session->formateur_id !== (int) auth()->id(), 403);
+    }
+
+    private function createSessionAndRedirect(
+        Module $module,
+        ModuleSection $section,
+        ModuleLecture $lecture,
+        ?Group $group = null
+    ): RedirectResponse {
+        $questions = QuizQuestion::query()
+            ->where('lecture_id', $lecture->id)
+            ->where('is_active', true)
+            ->orderBy('id')
+            ->get();
+
+        if ($questions->isEmpty()) {
+            return back()->withErrors([
+                'live_quiz' => 'Ajoutez au moins une question active sur cette lecon avant de lancer un quiz en direct.',
+            ]);
+        }
+
+        $existingSessions = LiveQuizSession::query()
+            ->where('formateur_id', auth()->id())
+            ->where('lecture_id', $lecture->id)
+            ->where('group_id', $group?->id)
+            ->whereNull('ended_at')
+            ->get();
+
+        foreach ($existingSessions as $existingSession) {
+            $this->closeSession($existingSession);
+        }
+
+        $session = DB::transaction(function () use ($module, $section, $lecture, $questions, $group): LiveQuizSession {
+            $session = LiveQuizSession::query()->create([
+                'formateur_id' => auth()->id(),
+                'group_id' => $group?->id,
+                'module_id' => $module->id,
+                'section_id' => $section->id,
+                'lecture_id' => $lecture->id,
+                'access_code' => $this->generateAccessCode(),
+                'status' => LiveQuizSession::STATUS_WAITING,
+                'current_position' => 0,
+                'total_questions' => $questions->count(),
+            ]);
+
+            foreach ($questions as $index => $question) {
+                $session->sessionQuestions()->create([
+                    'question_id' => $question->id,
+                    'position' => $index + 1,
+                ]);
+            }
+
+            return $session;
+        });
+
+        return redirect()
+            ->route('formateur.live-quiz.show', [
+                'module' => $module->id,
+                'section' => $section->id,
+                'lecture' => $lecture->id,
+                'session' => $session->id,
+            ])
+            ->with('success', 'Le quiz en direct est pret. Les stagiaires peuvent maintenant rejoindre avec le QR code.');
     }
 
     private function extractAnswerOptionIds(mixed $rawValue): array
