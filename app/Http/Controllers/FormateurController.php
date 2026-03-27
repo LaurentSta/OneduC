@@ -1087,7 +1087,7 @@ class FormateurController extends Controller
     /* -------------------------------------------------------------------------
      | Détail module (formateur)
      |-------------------------------------------------------------------------- */
-    public function moduleDetail(Module $module)
+    public function moduleDetail(Request $request, Module $module)
     {
         $formateurId = auth()->id();
 
@@ -1098,13 +1098,34 @@ class FormateurController extends Controller
 
         $module->load([
             'formateur',
-            'sections.lectures.objectives',
+            'sections' => function ($query) {
+                $query->orderBy('id')
+                    ->with(['lectures' => function ($lectureQuery) {
+                        $lectureQuery->orderBy('position')
+                            ->orderBy('id')
+                            ->with(['objectives' => function ($objectiveQuery) {
+                                $objectiveQuery->orderBy('position')->orderBy('id');
+                            }]);
+                    }]);
+            },
             'groups' => function ($q) use ($formateurId) {
                 $q->where('instructor_id', $formateurId)
                     ->with(['users' => function ($u) {
                         $u->where('role', 'stagiaire');
                     }]);
             },
+        ]);
+
+        $mode = (string) $request->query('mode', 'officiel');
+        $groupId = $this->resolveTrainerModuleDetailGroupId($request, $module, $formateurId);
+
+        if ($mode !== 'officiel') {
+            $this->applyTrainerGroupLessonOverrides($module, $groupId);
+        }
+
+        $contextQuery = array_filter([
+            'mode' => $mode !== 'officiel' ? $mode : null,
+            'group_id' => $mode !== 'officiel' ? ($groupId ?: null) : null,
         ]);
 
         $totalSections = $module->sections->count();
@@ -1136,8 +1157,71 @@ class FormateurController extends Controller
             'groupCount',
             'stagiaires',
             'stagiaireCount',
-            'lessonObjectives'
+            'lessonObjectives',
+            'contextQuery'
         ));
+    }
+
+    private function resolveTrainerModuleDetailGroupId(Request $request, Module $module, int $formateurId): ?int
+    {
+        $forcedGroupId = (int) $request->query('group_id', 0);
+
+        if ($forcedGroupId > 0) {
+            $isOwnedGroup = Group::query()
+                ->where('id', $forcedGroupId)
+                ->where('instructor_id', $formateurId)
+                ->exists();
+
+            if (! $isOwnedGroup) {
+                return null;
+            }
+
+            $hasModule = DB::table('group_module')
+                ->where('group_id', $forcedGroupId)
+                ->where('module_id', $module->id)
+                ->exists();
+
+            return $hasModule ? $forcedGroupId : null;
+        }
+
+        return Group::query()
+            ->where('instructor_id', $formateurId)
+            ->whereHas('modules', fn ($query) => $query->where('modules.id', $module->id))
+            ->value('id');
+    }
+
+    private function applyTrainerGroupLessonOverrides(Module $module, ?int $groupId): void
+    {
+        if (! $groupId || ! $module->relationLoaded('sections')) {
+            return;
+        }
+
+        $overrides = \App\Models\GroupModuleLecture::query()
+            ->where('group_id', $groupId)
+            ->where('module_id', $module->id)
+            ->get()
+            ->keyBy('lecture_id');
+
+        if ($overrides->isEmpty()) {
+            return;
+        }
+
+        $module->sections->each(function ($section) use ($overrides): void {
+            $lectures = collect($section->lectures)
+                ->filter(function ($lecture) use ($overrides) {
+                    $row = $overrides->get($lecture->id);
+
+                    return $row ? (bool) $row->is_enabled : true;
+                })
+                ->sortBy(function ($lecture) use ($overrides) {
+                    $row = $overrides->get($lecture->id);
+
+                    return $row ? (int) $row->position : (int) $lecture->position;
+                })
+                ->values();
+
+            $section->setRelation('lectures', $lectures);
+        });
     }
 public function updateQuizCount(Request $request, $lectureId)
 {

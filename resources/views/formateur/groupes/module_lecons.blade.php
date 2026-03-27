@@ -46,7 +46,11 @@
 
           <div class="flex flex-wrap items-center gap-3 md:ml-auto">
             @php
-              $previewUrl = $groupPreviewUrl ?: $officialPreviewUrl;
+              $previewUrl = route('formateur.formations.detail', [
+                'module' => $module->id,
+                'mode' => 'groupe',
+                'group_id' => $group->id,
+              ]);
             @endphp
 
             @if(!empty($previewUrl))

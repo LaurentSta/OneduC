@@ -84,7 +84,7 @@
                         ])
                     </aside>
                 @endif
-                <main class="min-w-0">
+                <main id="lesson-shell-main" class="min-w-0">
                     <div class="px-0 lg:px-0 py-0">
                         @yield('content')
                     </div>
@@ -92,7 +92,7 @@
 {{-- On retire 'inset-x-0' et on utilise 'left-1/2' avec un transform --}}
 <div id="next-lesson-wrapper" 
      class="hidden fixed bottom-10 z-50 pointer-events-none transition-all duration-300"
-     style="left: calc(50% + (var(--sidebar-offset, 0px) / 2)); transform: translateX(-50%);">
+     style="left: 50%; transform: translateX(-50%);">
     <button id="next-lesson-button"
         type="button"
         class="opacity-0 pointer-events-auto cursor-pointer oneduc-btn-alert
@@ -132,26 +132,23 @@
 
     // Fonction pour calculer et appliquer le centrage sur la zone de contenu
     function ajusterPositionBouton() {
-        const sidebar = document.getElementById('module-sidebar-wrapper');
         const wrapper = document.getElementById('next-lesson-wrapper');
-        const main = document.querySelector('main');
-        
-        if (sidebar && wrapper && main) {
-            // On récupère la largeur de la sidebar si elle est visible
-            // Sinon on considère 0 si elle est masquée par AlpineJS
-            const isSidebarOpen = sidebar && sidebar.offsetWidth > 0;
-            const sidebarWidth = isSidebarOpen ? sidebar.offsetWidth : 0;
-            
-            // On définit une variable CSS pour décaler le bouton vers la droite
-            // de la moitié de la largeur de la sidebar
-            document.documentElement.style.setProperty('--sidebar-offset', sidebarWidth + 'px');
+        const shellMain = document.getElementById('lesson-shell-main');
+
+        if (wrapper && shellMain) {
+            const rect = shellMain.getBoundingClientRect();
+            const centerX = rect.left + (rect.width / 2);
+
+            wrapper.style.left = `${Math.round(centerX)}px`;
         }
     }
 
     // Écoute les événements AlpineJS de votre header/sidebar
     window.addEventListener('toggle-sidebar', () => {
-        // Petit délai pour laisser le temps à l'animation de la sidebar de commencer
-        setTimeout(ajusterPositionBouton, 50);
+        // On recalcule pendant et après l'animation Alpine de la sidebar.
+        requestAnimationFrame(ajusterPositionBouton);
+        setTimeout(ajusterPositionBouton, 120);
+        setTimeout(ajusterPositionBouton, 260);
     });
 
     // Ajustement lors du redimensionnement de la fenêtre ou du chargement

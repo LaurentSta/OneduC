@@ -3,6 +3,22 @@ import { createRoot } from 'react-dom/client';
 import { Background, Controls, MarkerType, Position, ReactFlow } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
+const FLOW_COLUMNS = 3;
+const FLOW_HORIZONTAL_GAP = 300;
+const FLOW_VERTICAL_GAP = 180;
+
+function isWrapToNextRow(index, total) {
+  if (index < 0 || index >= total - 1) return false;
+
+  return Math.floor(index / FLOW_COLUMNS) !== Math.floor((index + 1) / FLOW_COLUMNS);
+}
+
+function isWrapFromPreviousRow(index) {
+  if (index <= 0) return false;
+
+  return Math.floor(index / FLOW_COLUMNS) !== Math.floor((index - 1) / FLOW_COLUMNS);
+}
+
 function toPositiveInt(value) {
   const parsed = Number.parseInt(value, 10);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
@@ -77,13 +93,12 @@ function paletteFromStatus(status) {
 }
 
 function nodePosition(index) {
-  const columns = 3;
-  const col = index % columns;
-  const row = Math.floor(index / columns);
+  const col = index % FLOW_COLUMNS;
+  const row = Math.floor(index / FLOW_COLUMNS);
 
   return {
-    x: col * 300,
-    y: row * 180 + 20,
+    x: col * FLOW_HORIZONTAL_GAP,
+    y: row * FLOW_VERTICAL_GAP + 20,
   };
 }
 
@@ -102,8 +117,8 @@ function StagiaireModulePathFlow({ modules = [] }) {
             url: module.detailUrl,
           },
           position: nodePosition(index),
-          sourcePosition: Position.Right,
-          targetPosition: Position.Left,
+          sourcePosition: isWrapToNextRow(index, normalizedModules.length) ? Position.Bottom : Position.Right,
+          targetPosition: isWrapFromPreviousRow(index) ? Position.Top : Position.Left,
           draggable: false,
           selectable: true,
           style: {
@@ -133,6 +148,11 @@ function StagiaireModulePathFlow({ modules = [] }) {
           id: `edge-${prev.id}-${module.id}`,
           source: String(prev.id),
           target: String(module.id),
+          type: 'smoothstep',
+          pathOptions: {
+            borderRadius: 22,
+            offset: 40,
+          },
           markerEnd: {
             type: MarkerType.ArrowClosed,
             color: prevPalette.edge,

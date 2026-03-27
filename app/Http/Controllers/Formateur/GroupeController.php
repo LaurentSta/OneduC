@@ -39,7 +39,12 @@ class GroupeController extends Controller
      */
     public function create()
     {
-        $modules = Module::active()->orderBy('module_title')->get();
+        $modules = Module::active()
+            ->with([
+                'sections.lectures:id,module_id,section_id,duration,question_count,quiz_enabled,quiz_questions_per_attempt',
+            ])
+            ->orderBy('module_title')
+            ->get();
 
         return view('formateur.groupes.create', compact('modules'));
     }
@@ -177,7 +182,12 @@ class GroupeController extends Controller
             ->with(['modules', 'students', 'observers'])
             ->firstOrFail();
 
-        $modules = Module::active()->orderBy('module_title')->get();
+        $modules = Module::active()
+            ->with([
+                'sections.lectures:id,module_id,section_id,duration,question_count,quiz_enabled,quiz_questions_per_attempt',
+            ])
+            ->orderBy('module_title')
+            ->get();
 
         return view('formateur.groupes.edit', compact('group', 'modules'));
     }

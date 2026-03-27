@@ -3,13 +3,31 @@
 @section('formateur')
 
 @php
+  $moduleFlowMeta = static function ($module): array {
+    $lessonCount = (int) collect($module->sections ?? [])->flatMap->lectures->count();
+    $questionCount = (int) collect($module->sections ?? [])->flatMap->lectures->sum(function ($lecture) {
+      $plannedScorm = (int) ($lecture->question_count ?? 0);
+      $plannedQuiz = (bool) ($lecture->quiz_enabled ?? false)
+        ? (int) ($lecture->quiz_questions_per_attempt ?? 0)
+        : 0;
+
+      return max($plannedScorm, $plannedQuiz);
+    });
+
+    return [
+      'lesson_count' => $lessonCount,
+      'question_count' => $questionCount,
+      'duration_label' => (string) ($module->formatted_duration ?? 'Rythme libre'),
+    ];
+  };
+
   $availableModules = $modules
     ->filter(fn($module) => !empty($module->status) && (int) $module->status === 1)
     ->values()
-    ->map(fn($module) => [
+    ->map(fn($module) => array_merge([
       'id' => (int) $module->id,
       'title' => (string) $module->module_title,
-    ])
+    ], $moduleFlowMeta($module)))
     ->values();
 
   $modulesById = $availableModules->keyBy('id');
@@ -25,12 +43,17 @@
     ->sortBy(fn($id) => (int) data_get($oldPositions, (string) $id, PHP_INT_MAX))
     ->values()
     ->map(function ($id, $index) use ($modulesById) {
+      $moduleMeta = $modulesById->get($id) ?? [];
+
       return [
         'id' => $id,
-        'title' => (string) data_get($modulesById->get($id), 'title', "Module #{$id}"),
+        'title' => (string) data_get($moduleMeta, 'title', "Module #{$id}"),
         'position' => $index + 1,
         'persisted' => false,
         'manage_url' => '',
+        'lesson_count' => (int) data_get($moduleMeta, 'lesson_count', 0),
+        'question_count' => (int) data_get($moduleMeta, 'question_count', 0),
+        'duration_label' => (string) data_get($moduleMeta, 'duration_label', 'Rythme libre'),
       ];
     })
     ->values();

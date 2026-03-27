@@ -3,13 +3,31 @@
 @section('formateur')
 
 @php
+  $moduleFlowMeta = static function ($module): array {
+    $lessonCount = (int) collect($module->sections ?? [])->flatMap->lectures->count();
+    $questionCount = (int) collect($module->sections ?? [])->flatMap->lectures->sum(function ($lecture) {
+      $plannedScorm = (int) ($lecture->question_count ?? 0);
+      $plannedQuiz = (bool) ($lecture->quiz_enabled ?? false)
+        ? (int) ($lecture->quiz_questions_per_attempt ?? 0)
+        : 0;
+
+      return max($plannedScorm, $plannedQuiz);
+    });
+
+    return [
+      'lesson_count' => $lessonCount,
+      'question_count' => $questionCount,
+      'duration_label' => (string) ($module->formatted_duration ?? 'Rythme libre'),
+    ];
+  };
+
   $selectedModuleIds = $group->modules->pluck('id')->map(fn($id) => (int) $id)->values();
   $persistedModuleIdSet = $selectedModuleIds->flip();
 
   $sortedSelected = $group->modules
     ->sortBy(fn($m) => (int) ($m->pivot->position ?? 999999))
     ->values()
-    ->map(fn($m, $i) => [
+    ->map(fn($m, $i) => array_merge([
       'id' => (int) $m->id,
       'title' => (string) $m->module_title,
       'position' => (int) ($m->pivot->position ?? ($i + 1)),
@@ -18,16 +36,16 @@
         'group' => $group->id,
         'module' => $m->id,
       ]),
-    ])
+    ], $moduleFlowMeta($m)))
     ->values();
 
   $availableModules = collect($modules)
     ->filter(fn($module) => !empty($module->status) && (int) $module->status === 1)
     ->values()
-    ->map(fn($module) => [
+    ->map(fn($module) => array_merge([
       'id' => (int) $module->id,
       'title' => (string) $module->module_title,
-    ])
+    ], $moduleFlowMeta($module)))
     ->values();
 
   $availableModulesById = $availableModules->keyBy('id');
@@ -46,14 +64,19 @@
       ->values()
       ->map(function ($id, $index) use ($availableModulesById, $persistedModuleIdSet, $group) {
         $isPersisted = $persistedModuleIdSet->has($id);
+        $moduleMeta = $availableModulesById->get($id) ?? [];
+
         return [
           'id' => $id,
-          'title' => (string) data_get($availableModulesById->get($id), 'title', "Module #{$id}"),
+          'title' => (string) data_get($moduleMeta, 'title', "Module #{$id}"),
           'position' => $index + 1,
           'persisted' => $isPersisted,
           'manage_url' => $isPersisted
             ? route('formateur.groupes.modules.lecons.edit', ['group' => $group->id, 'module' => $id])
             : '',
+          'lesson_count' => (int) data_get($moduleMeta, 'lesson_count', 0),
+          'question_count' => (int) data_get($moduleMeta, 'question_count', 0),
+          'duration_label' => (string) data_get($moduleMeta, 'duration_label', 'Rythme libre'),
         ];
       })
       ->values();

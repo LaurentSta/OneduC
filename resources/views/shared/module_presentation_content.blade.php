@@ -5,7 +5,16 @@
     $lessonStatuses = $lessonStatuses ?? [];
     $sectionProgress = $sectionProgress ?? [];
     $progression = (int) ($progression ?? 0);
-    $firstSection = $module->sections->first();
+    $contextQuery = is_array($contextQuery ?? null) ? $contextQuery : [];
+    $appendQuery = static function (string $url, array $query): string {
+        if (empty($query)) {
+            return $url;
+        }
+
+        return $url . (str_contains($url, '?') ? '&' : '?') . http_build_query($query);
+    };
+    $firstSection = $module->sections->first(fn ($section) => collect($section->lectures ?? [])->isNotEmpty())
+        ?: $module->sections->first();
     $lessonCount = $module->sections->flatMap->lectures->count();
 
     $isStagiaireView = $presentationMode === 'stagiaire';
@@ -250,11 +259,17 @@
                                         if ($isStagiaireView) {
                                             $lectureUrl = route('stagiaire.module.lecture', [$module->id, $section->id, $lecture->id]);
                                         } elseif ($isFormateurView) {
-                                            $lectureUrl = route('formateur.formations.lecture', ['module' => $module->id, 'section' => $section->id, 'lecture' => $lecture->id]);
+                                            $lectureUrl = $appendQuery(
+                                                route('formateur.formations.lecture', ['module' => $module->id, 'section' => $section->id, 'lecture' => $lecture->id]),
+                                                $contextQuery
+                                            );
                                         } elseif ($isStagiaireUser) {
                                             $lectureUrl = route('stagiaire.module.lecture', [$module->id, $section->id, $lecture->id]);
                                         } elseif ($isFormateurUser) {
-                                            $lectureUrl = route('formateur.formations.lecture', ['module' => $module->id, 'section' => $section->id, 'lecture' => $lecture->id]);
+                                            $lectureUrl = $appendQuery(
+                                                route('formateur.formations.lecture', ['module' => $module->id, 'section' => $section->id, 'lecture' => $lecture->id]),
+                                                $contextQuery
+                                            );
                                         }
                                         $status = $lessonStatuses[$lecture->id] ?? null;
                                     @endphp
@@ -346,7 +361,7 @@
                                     {{ $progression > 0 ? 'Reprendre' : 'Commencer' }}
                                 </a>
                             @elseif($isFormateurView || ($isPublicView && $isFormateurUser))
-                                <a href="{{ route('formateur.formations.section', ['module' => $module->id, 'section' => $firstSection->id, 'mode' => 'officiel']) }}"
+                                <a href="{{ $appendQuery(route('formateur.formations.section', ['module' => $module->id, 'section' => $firstSection->id]), $contextQuery) }}"
                                    class="flex items-center justify-center w-full py-4 px-6 rounded-xl bg-orangeone text-white font-extrabold text-lg hover:bg-orange-600 transition-all shadow-lg shadow-orange-100 hover:-translate-y-0.5">
                                     Voir le parcours
                                 </a>

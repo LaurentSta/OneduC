@@ -3,6 +3,22 @@ import { createRoot } from 'react-dom/client';
 import { Background, Controls, MarkerType, Position, ReactFlow } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
+const FLOW_COLUMNS = 3;
+const FLOW_HORIZONTAL_GAP = 340;
+const FLOW_VERTICAL_GAP = 190;
+
+function isWrapToNextRow(index, total) {
+  if (index < 0 || index >= total - 1) return false;
+
+  return Math.floor(index / FLOW_COLUMNS) !== Math.floor((index + 1) / FLOW_COLUMNS);
+}
+
+function isWrapFromPreviousRow(index) {
+  if (index <= 0) return false;
+
+  return Math.floor(index / FLOW_COLUMNS) !== Math.floor((index - 1) / FLOW_COLUMNS);
+}
+
 function toPositiveInt(value) {
   const parsed = Number.parseInt(value, 10);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
@@ -32,7 +48,13 @@ function normalizeAvailableModules(rawModules) {
 
     seen.add(id);
     const title = String(raw?.title ?? raw?.module_title ?? '').trim() || `Module #${id}`;
-    out.push({ id, title });
+    out.push({
+      id,
+      title,
+      lesson_count: Math.max(0, Number(raw?.lesson_count ?? 0) || 0),
+      question_count: Math.max(0, Number(raw?.question_count ?? 0) || 0),
+      duration_label: String(raw?.duration_label ?? '').trim() || 'Rythme libre',
+    });
   });
 
   return out;
@@ -59,6 +81,9 @@ function normalizeSelectedModules(rawModules, moduleMap) {
       position: toPositiveInt(raw?.position) || index + 1,
       persisted: raw?.persisted !== false,
       manage_url: String(raw?.manage_url ?? '').trim(),
+      lesson_count: Math.max(0, Number(raw?.lesson_count ?? moduleMap.get(id)?.lesson_count ?? 0) || 0),
+      question_count: Math.max(0, Number(raw?.question_count ?? moduleMap.get(id)?.question_count ?? 0) || 0),
+      duration_label: String(raw?.duration_label ?? moduleMap.get(id)?.duration_label ?? '').trim() || 'Rythme libre',
     });
   });
 
@@ -78,13 +103,12 @@ function renumberModules(modules) {
 }
 
 function nodePosition(index) {
-  const columns = 3;
-  const col = index % columns;
-  const row = Math.floor(index / columns);
+  const col = index % FLOW_COLUMNS;
+  const row = Math.floor(index / FLOW_COLUMNS);
 
   return {
-    x: col * 240,
-    y: row * 140 + 40,
+    x: col * FLOW_HORIZONTAL_GAP,
+    y: row * FLOW_VERTICAL_GAP + 40,
   };
 }
 
@@ -98,6 +122,15 @@ function OpenBookIcon({ className = 'h-4 w-4' }) {
         d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
       />
     </svg>
+  );
+}
+
+function ModuleMetric({ label, value }) {
+  return (
+    <div className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-center">
+      <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{label}</div>
+      <div className="text-[11px] font-bold text-slate-700">{value}</div>
+    </div>
   );
 }
 
@@ -141,21 +174,32 @@ function GroupModuleFlow({
         id: String(module.id),
         data: {
           label: (
-            <span className="flex items-center gap-2">
-              <OpenBookIcon className="h-4 w-4 shrink-0" />
-              <span>{`${module.position}. ${module.title}`}</span>
-            </span>
+            <div className="min-w-[220px] max-w-[220px]">
+              <div className="flex items-start gap-2">
+                <OpenBookIcon className="mt-0.5 h-4 w-4 shrink-0" />
+                <span className="text-[12px] font-semibold leading-snug text-slate-900">
+                  {`${module.position}. ${module.title}`}
+                </span>
+              </div>
+
+              <div className="mt-3 grid grid-cols-3 gap-2">
+                <ModuleMetric label="Leçons" value={module.lesson_count} />
+                <ModuleMetric label="Questions" value={module.question_count} />
+                <ModuleMetric label="Durée" value={module.duration_label} />
+              </div>
+            </div>
           ),
         },
         position: nodePosition(index),
-        sourcePosition: Position.Right,
-        targetPosition: Position.Left,
+        sourcePosition: isWrapToNextRow(index, selectedModules.length) ? Position.Bottom : Position.Right,
+        targetPosition: isWrapFromPreviousRow(index) ? Position.Top : Position.Left,
         draggable: false,
         selectable: false,
         style: {
           border: '2px solid #004461',
           borderRadius: '8px',
-          padding: '10px 12px',
+          width: 260,
+          padding: '12px 14px',
           background: '#fff',
         },
       })),
@@ -169,6 +213,11 @@ function GroupModuleFlow({
         id: `edge-${selectedModules[index].id}-${module.id}`,
         source: String(selectedModules[index].id),
         target: String(module.id),
+        type: 'smoothstep',
+        pathOptions: {
+          borderRadius: 22,
+          offset: 40,
+        },
         markerEnd: {
           type: MarkerType.ArrowClosed,
           color: '#e94d2a', // couleur de la pointe
@@ -236,6 +285,9 @@ function GroupModuleFlow({
           position: current.length + 1,
           persisted: false,
           manage_url: '',
+          lesson_count: availableModule.lesson_count,
+          question_count: availableModule.question_count,
+          duration_label: availableModule.duration_label,
         },
       ]),
     );
