@@ -2,409 +2,594 @@
 
 @section('formateur')
 
-{{--  CONTENEUR GLOBAL /home/laurents/Oneduc_Dev/resources/views/formateur/groupes/create.blade.php --}}
+@php
+  $availableModules = $modules
+    ->filter(fn($module) => !empty($module->status) && (int) $module->status === 1)
+    ->values()
+    ->map(fn($module) => [
+      'id' => (int) $module->id,
+      'title' => (string) $module->module_title,
+    ])
+    ->values();
 
-{{--  EN-TÊTE DE PAGE FORMATEUR – Création d’un groupe --}}
-<div class="bg-white rounded-[20px] shadow-md px-8 pt-4 w-full max-w-[1285px] mx-auto mb-6">
-  <div class="grid grid-cols-12 gap-8 items-center">
+  $modulesById = $availableModules->keyBy('id');
+  $oldPositions = old('module_positions', []);
 
-    {{-- Colonne gauche : titre + texte --}}
-    <div class="col-span-12 md:col-span-8">
-      <x-typography variant="titre">Création d’un groupe</x-typography>
-      <x-typography variant="sous-titre" class="font-varela text-sous-titre text-orangeone">
-        Gérez facilement vos groupes, modules et stagiaires.
-      </x-typography>
-      <x-typography>
-        Créez un nouveau groupe en 3 étapes : nom, stagiaires et modules à associer.
-      </x-typography>
+  $oldModuleIds = collect(old('modules', []))
+    ->map(fn($id) => (int) $id)
+    ->filter(fn($id) => $id > 0)
+    ->unique()
+    ->values();
 
-      {{-- Fil d’Ariane --}}
-      <nav class="text-base font-varela text-gray-600 mt-4" aria-label="Fil d'Ariane">
-        <ol class="list-none p-0 inline-flex items-center space-x-1">
-          <li class="flex items-center">
-            <a href="{{ route('formateur.dashboard') }}" class="text-orangeone hover:underline flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M3 9.75L12 3l9 6.75V19a2 2 0 01-2 2h-4a1 1 0 01-1-1v-5H10v5a1 1 0 01-1 1H5a2 2 0 01-2-2V9.75z"/>
-              </svg>
-            </a>
-            <span class="mx-2 text-gray-400">/</span>
-          </li>
-          <li class="flex items-center">
-            <a href="{{ route('formateur.groupes.index') }}" class="hover:underline text-bleuone">Mes groupes</a>
-            <span class="mx-2 text-gray-400">/</span>
-          </li>
-          <li class="text-gray-400">Création d’un groupe</li>
-        </ol>
-      </nav>
-    </div>
+  $initialSelectedModules = $oldModuleIds
+    ->sortBy(fn($id) => (int) data_get($oldPositions, (string) $id, PHP_INT_MAX))
+    ->values()
+    ->map(function ($id, $index) use ($modulesById) {
+      return [
+        'id' => $id,
+        'title' => (string) data_get($modulesById->get($id), 'title', "Module #{$id}"),
+        'position' => $index + 1,
+        'persisted' => false,
+        'manage_url' => '',
+      ];
+    })
+    ->values();
 
-    {{-- Colonne droite : illustration --}}
-    <div class="col-span-12 md:col-span-4 flex justify-center md:justify-end">
-      <img src="{{ asset('images/svg/Modules_Creation.svg') }}"
-           alt="Illustration de la création de groupe"
-           class="w-full max-w-sm object-contain">
-    </div>
+  $initialStagiaires = collect(old('stagiaires', []))
+    ->map(fn($stagiaire) => [
+      'prenom' => trim((string) data_get($stagiaire, 'prenom', '')),
+      'nom' => trim((string) data_get($stagiaire, 'nom', '')),
+      'email' => trim((string) data_get($stagiaire, 'email', '')),
+    ])
+    ->filter(fn($stagiaire) => $stagiaire['prenom'] !== '' || $stagiaire['nom'] !== '' || $stagiaire['email'] !== '')
+    ->values();
 
-  </div>
-</div>
+  if ($initialStagiaires->isEmpty()) {
+    $initialStagiaires = collect([[
+      'prenom' => '',
+      'nom' => '',
+      'email' => '',
+    ]]);
+  }
 
-{{-- ✅ FORMULAIRE WIZARD --}}
-<div class="bg-white rounded-[20px] shadow-md px-8 py-10 w-full max-w-[1285px] mx-auto
-            font-varela text-base text-gray-800">
+  $steps = [
+    ['label' => 'Informations', 'helper' => 'Nom et description'],
+    ['label' => 'Stagiaires', 'helper' => 'Accès et invitations'],
+    ['label' => 'Modules', 'helper' => 'Parcours pedagogique'],
+  ];
 
+  $initialWizardStep = 1;
+  if ($errors->has('modules') || $errors->has('modules.*') || $errors->has('module_positions') || $errors->has('module_positions.*')) {
+    $initialWizardStep = 3;
+  } elseif ($errors->has('stagiaires') || $errors->has('stagiaires.*') || $errors->has('password')) {
+    $initialWizardStep = 2;
+  }
 
-  {{-- Stepper --}}
-  @php
-    $steps = ['Groupe', 'Stagiaires', 'Modules'];
+  $studentErrorMessage = $errors->first('stagiaires')
+    ?: $errors->first('stagiaires.*.email')
+    ?: $errors->first('stagiaires.*.prenom')
+    ?: $errors->first('stagiaires.*.nom');
+@endphp
 
-    $availableModules = $modules
-      ->filter(fn($module) => !empty($module->status) && (int) $module->status === 1)
-      ->values()
-      ->map(fn($module) => [
-        'id' => (int) $module->id,
-        'title' => (string) $module->module_title,
-      ])
-      ->values();
+<div class="max-w-[1285px] mx-auto px-8">
 
-    $modulesById = $availableModules->keyBy('id');
-    $oldPositions = old('module_positions', []);
+  <div class="bg-white rounded-[20px] shadow-md px-8 pt-6 pb-6 w-full mb-6">
+    <div class="grid grid-cols-12 gap-6 items-center">
+      <div class="col-span-12 md:col-span-9">
+        <h1 class="font-raleway text-titre text-bleuone leading-tight mb-2">
+          Création d’un nouveau groupe
+        </h1>
+        <p class="font-varela text-gray-600 mb-4">
+          Construisez votre groupe avec le même confort de lecture que dans l’édition : informations, stagiaires, puis organisation du parcours.
+        </p>
 
-    $oldModuleIds = collect(old('modules', []))
-      ->map(fn($id) => (int) $id)
-      ->filter(fn($id) => $id > 0)
-      ->unique()
-      ->values();
-
-    $initialSelectedModules = $oldModuleIds
-      ->sortBy(fn($id) => (int) data_get($oldPositions, (string) $id, PHP_INT_MAX))
-      ->values()
-      ->map(function ($id, $index) use ($modulesById) {
-        return [
-          'id' => $id,
-          'title' => (string) data_get($modulesById->get($id), 'title', "Module #{$id}"),
-          'position' => $index + 1,
-          'persisted' => false,
-          'manage_url' => '',
-        ];
-      })
-      ->values();
-
-    $initialWizardStep = 1;
-    if ($errors->has('modules') || $errors->has('modules.*') || $errors->has('module_positions') || $errors->has('module_positions.*')) {
-      $initialWizardStep = 3;
-    } elseif ($errors->has('stagiaires') || $errors->has('stagiaires.*') || $errors->has('password')) {
-      $initialWizardStep = 2;
-    }
-  @endphp
-  <nav class="mb-8" aria-label="Progression">
-    <ol class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-      @foreach($steps as $i => $label)
-        <li>
-          <button type="button"
-                  class="wizard-step w-full px-6 py-4 rounded-full border transition font-varela text-lg
-                         border-bleuone focus:outline-none focus:ring-2 focus:ring-bleuone focus:ring-offset-2 inline-flex items-center justify-center gap-2"
-                  data-step="{{ $i+1 }}"
-                  aria-current="{{ $i===0 ? 'step' : 'false' }}">
-            <span>Étape {{ $i+1 }} :</span>
-            <span>{{ $label }}</span>
-          </button>
-        </li>
-      @endforeach
-    </ol>
-
-    {{-- Barre de progression --}}
-    <div class="overflow-hidden h-2 mt-4 rounded bg-orangeone/15" aria-hidden="true">
-      <div id="progress-bar" class="h-2 bg-orangeone w-1/3 transition-all duration-500"></div>
-    </div>
-    <div id="progress-live" class="sr-only" aria-live="polite">Étape 1 sur 3</div>
-  </nav>
-
-  <form id="multi-step-form" method="POST" action="{{ route('formateur.groupes.store') }}" novalidate>
-    @csrf
-
-    {{-- Étape 1 : Groupe --}}
-    <fieldset id="step-1" class="step">
-      <legend class="sr-only">Informations du groupe</legend>
-      <p class="text-base text-gray-600 mb-6">Nommer le groupe et ajouter une description.</p>
-
-      <div class="mb-6">
-        <label for="nom" class="block mb-2 text-base font-medium text-gray-900">Nom du groupe *</label>
-        <input id="nom" name="nom" type="text" required
-               value="{{ old('nom') }}"
-               class="bg-gray-50 border {{ $errors->has('nom') ? 'border-red-400' : 'border-gray-300' }} text-base rounded-lg focus:ring-orangeone focus:border-orangeone block w-full p-2.5"
-               placeholder="Ex : Groupe Marketing 2025 - Niveau 1">
-        @error('nom')
-          <p class="mt-2 text-sm text-red-700">{{ $message }}</p>
-        @enderror
-        <p class="text-xs text-gray-500 mt-1">Un nom clair facilite la recherche et le suivi.</p>
-      </div>
-
-      <div class="mb-6">
-        <label for="description" class="block mb-2 text-base font-medium text-gray-900">Description</label>
-        <textarea id="description" name="description" rows="3"
-                  class="bg-gray-50 border border-gray-300 text-base rounded-lg focus:ring-orangeone focus:border-orangeone block w-full p-2.5"
-                  placeholder="Objectifs, public, période…">{{ old('description') }}</textarea>
-      </div>
-    </fieldset>
-
-
-    {{-- Étape 2 : Stagiaires & Accès --}}
-    <fieldset id="step-2" class="step hidden">
-      <legend class="sr-only">Stagiaires</legend>
-      
-      {{-- A. LISTE DES STAGIAIRES --}}
-      <div class="mb-8">
-        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
-            <div class="space-y-3">
-                <h3 class="text-xl font-bold text-bleuone font-raleway">Ajouter vos stagiaires</h3>
-                <p class="text-sm text-gray-600 font-lisible mt-1">
-                    Renseignez les informations de vos apprenants.
-                </p>
-            </div>
-            <div class="flex items-center gap-2 sm:pt-1">
-                <button type="button"
-                    class="w-10 h-10 inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 hover:text-bleuone hover:border-bleuone/30 transition"
-                    onclick="openCsvModalCreate()"
-                    aria-label="Importer des stagiaires par CSV"
-                    title="Importer un lot CSV">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
-                    </svg>
-                </button>
-            </div>
-        </div>
-
-        <div id="stagiaires-container" class="space-y-3">
-            {{-- Ligne 0 (Initiale) --}}
-            <div class="bg-white border border-gray-200 p-4 rounded-[12px] shadow-sm relative stagiaire-row group hover:border-orangeone/50 transition">
-                <div class="grid grid-cols-1 md:grid-cols-[1fr_1fr_2fr_auto] gap-4 items-start">
-                    
-                    {{-- Prénom --}}
-                    <div>
-                        <label for="stagiaires_0_prenom" class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Prénom</label>
-                        <input id="stagiaires_0_prenom" name="stagiaires[0][prenom]" type="text" placeholder="Ex: Thomas" required
-                            class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-orangeone focus:border-orangeone w-full p-2.5">
-                    </div>
-
-                    {{-- Nom --}}
-                    <div>
-                        <label for="stagiaires_0_nom" class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Nom</label>
-                        <input id="stagiaires_0_nom" name="stagiaires[0][nom]" type="text" placeholder="Ex: Dupont" required
-                            class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-orangeone focus:border-orangeone w-full p-2.5">
-                    </div>
-
-                    {{-- Email --}}
-                    <div>
-                        <label for="stagiaires_0_email" class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Email professionnel</label>
-                        <input id="stagiaires_0_email" name="stagiaires[0][email]" type="email" placeholder="thomas.dupont@entrepise.com" required
-                            class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-orangeone focus:border-orangeone w-full p-2.5">
-                    </div>
-
-                    {{-- Actions --}}
-                    <div class="flex items-end h-full pb-[3px]">
-                         <button type="button" class="text-gray-300 hover:text-red-600 transition p-2 rounded-full hover:bg-red-50"
-                                onclick="removeStagiaire(this)" title="Supprimer la ligne">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="mt-3">
-          <button type="button"
-              class="px-4 py-2 bg-bleuone/10 text-bleuone border border-bleuone/20 font-bold rounded-lg hover:bg-bleuone hover:text-white transition inline-flex items-center justify-center gap-2 text-sm"
-              onclick="addStagiaire()">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
-              Ajouter un stagiaire
-          </button>
-        </div>
-      </div>
-
-      {{-- B. MOT DE PASSE PROVISOIRE --}}
-      <div class="bg-orangeone/5 border border-orangeone/20 rounded-[12px] p-3">
-        <div class="mb-2 flex items-center gap-2">
-          <h4 class="text-sm font-bold text-gray-800 font-raleway">Code d'accès provisoire du groupe</h4>
-          <div class="relative group">
-            <button type="button" aria-label="Information" class="inline-flex h-5 w-5 items-center justify-center rounded-full border border-gray-300 bg-white text-[11px] font-bold text-gray-600">
-              i
-            </button>
-            <div class="pointer-events-none absolute left-1/2 top-full z-20 mt-2 hidden w-72 -translate-x-1/2 rounded-lg border border-gray-200 bg-white p-2 text-xs text-gray-700 shadow-lg group-hover:block group-focus-within:block">
-              Les stagiaires recevront un e-mail avec leur identifiant et un lien qu'ils pourront utiliser pour se connecter.
-            </div>
+        <div class="flex flex-wrap items-center gap-3 mb-4 font-varela text-sm">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-bleuone/10 text-bleuone border border-bleuone/20">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+            <span class="font-bold">3</span> Étapes guidées
+          </div>
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orangeone/10 text-orangeone border border-orangeone/20">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            </svg>
+            <span class="font-bold">{{ $availableModules->count() }}</span> Modules disponibles
+          </div>
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-vertone/10 text-vertone border border-vertone/20">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+            </svg>
+            Invitations stagiaires automatiques
           </div>
         </div>
 
-        <div class="w-full max-w-sm">
-            <label for="password" class="sr-only">Mot de passe commun</label>
-            <input id="password" name="password" type="text" required minlength="8" autocomplete="off"
-                value="{{ old('password') }}"
-                class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-orangeone focus:border-orangeone block w-full px-3 py-2.5 font-mono tracking-wide"
-                placeholder="Ex: Formation2026!">
-            @error('password')
+        <nav class="text-sm font-varela text-gray-600 mt-2" aria-label="Fil d'Ariane">
+          <ol class="inline-flex items-center space-x-1">
+            <li class="flex items-center">
+              <a href="{{ route('formateur.groupes.index') }}" class="hover:underline text-bleuone">Mes groupes</a>
+              <span class="mx-2 text-gray-400">/</span>
+            </li>
+            <li class="text-gray-400">Créer un groupe</li>
+          </ol>
+        </nav>
+      </div>
+
+      <div class="col-span-12 md:col-span-3 flex justify-center md:justify-end">
+        <img src="{{ asset('images/svg/Groupes.svg') }}" alt="Illustration" class="max-w-[256px] h-auto opacity-80">
+      </div>
+    </div>
+  </div>
+
+  <main class="bg-white rounded-[20px] shadow-md px-8 py-10 w-full">
+    <form id="multi-step-form" method="POST" action="{{ route('formateur.groupes.store') }}" class="space-y-8" novalidate>
+      @csrf
+
+      <nav aria-label="Sections du groupe">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          @foreach($steps as $index => $step)
+            <button
+              type="button"
+              data-step="{{ $index + 1 }}"
+              aria-current="{{ $index + 1 === $initialWizardStep ? 'step' : 'false' }}"
+              class="wizard-step w-full px-6 py-4 rounded-full transition font-varela text-lg font-bold focus:outline-none flex items-center justify-center gap-2 border border-bleuone"
+            >
+              <span>{{ $index + 1 }}.</span>
+              <span>{{ $step['label'] }}</span>
+            </button>
+          @endforeach
+        </div>
+
+        <div class="mt-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div class="h-1 w-full overflow-hidden rounded bg-gray-100">
+            <div id="progress-bar" class="h-1 bg-orangeone transition-all duration-500" style="width: {{ ($initialWizardStep / count($steps)) * 100 }}%"></div>
+          </div>
+          <p id="progress-label" class="shrink-0 text-sm font-varela text-gray-500">Étape {{ $initialWizardStep }} sur {{ count($steps) }}</p>
+        </div>
+        <div id="progress-live" class="sr-only" aria-live="polite">Étape {{ $initialWizardStep }} sur {{ count($steps) }}</div>
+      </nav>
+
+      <fieldset id="step-1" class="step">
+        <section class="animate-fade-in-down">
+          <div class="mb-6">
+            <div class="flex items-center gap-2">
+              <h2 class="text-xl font-bold text-bleuone font-raleway">Configuration générale</h2>
+              <div class="relative group">
+                <button type="button" aria-label="Information sur la configuration générale" class="inline-flex h-5 w-5 items-center justify-center rounded-full border border-gray-300 bg-white text-[11px] font-bold text-gray-600">
+                  ?
+                </button>
+                <div class="pointer-events-none absolute left-1/2 top-full z-20 mt-2 hidden w-80 -translate-x-1/2 rounded-lg border border-gray-200 bg-white p-3 text-xs text-gray-700 shadow-lg group-hover:block group-focus-within:block">
+                  Donnez un nom clair à votre groupe et ajoutez, si besoin, quelques précisions sur le public, les objectifs ou la période de formation.
+                </div>
+              </div>
+            </div>
+            <p class="mt-2 text-sm text-gray-600 font-lisible">
+              Cette première étape reprend les mêmes codes que l’interface d’édition pour faciliter la prise en main.
+            </p>
+          </div>
+
+          <div class="mb-6">
+            <div class="mb-2 flex items-center gap-2">
+              <label for="nom" class="block text-base font-medium text-gray-900">Nom du groupe</label>
+              <div class="relative group">
+                <button type="button" aria-label="Information sur le nom du groupe" class="inline-flex h-5 w-5 items-center justify-center rounded-full border border-gray-300 bg-white text-[11px] font-bold text-gray-600">
+                  ?
+                </button>
+                <div class="pointer-events-none absolute left-1/2 top-full z-20 mt-2 hidden w-72 -translate-x-1/2 rounded-lg border border-gray-200 bg-white p-2 text-xs text-gray-700 shadow-lg group-hover:block group-focus-within:block">
+                  Ce champ est obligatoire. Choisissez un nom simple et explicite pour retrouver facilement le groupe par la suite.
+                </div>
+              </div>
+            </div>
+            <input
+              id="nom"
+              name="nom"
+              type="text"
+              required
+              value="{{ old('nom') }}"
+              class="bg-gray-50 border {{ $errors->has('nom') ? 'border-red-400' : 'border-gray-300' }} text-base rounded-lg focus:ring-orangeone focus:border-orangeone block w-full p-2.5"
+              placeholder="Ex : Groupe Marketing 2025 - Niveau 1"
+            >
+            @error('nom')
               <p class="mt-2 text-sm text-red-700">{{ $message }}</p>
             @enderror
-        </div>
-      </div>
-    </fieldset>
-
-    {{-- Modale import CSV (discrète, dans le wizard) --}}
-    <div id="csv-modal-create" class="fixed inset-0 z-[80] hidden items-center justify-center bg-black/40 p-4">
-      <div class="w-full max-w-xl rounded-2xl border border-gray-200 bg-white shadow-2xl">
-        <div class="flex items-center justify-between border-b border-gray-100 px-5 py-4">
-          <h4 class="font-bold text-bleuone">Import de stagiaires (CSV)</h4>
-          <button type="button" class="text-gray-400 hover:text-gray-700" onclick="closeCsvModalCreate()" aria-label="Fermer">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-
-        <div class="px-5 py-4 space-y-4">
-          <p class="text-sm text-gray-600">
-            Format attendu: colonnes <span class="font-bold">prenom</span>, <span class="font-bold">nom</span>, <span class="font-bold">email</span>.
-          </p>
-          <p class="text-xs text-gray-500 bg-gray-50 border border-gray-100 rounded-lg px-3 py-2">
-            Exemple d’en-tête: <code>prenom;nom;email</code> (ou séparateur virgule).
-          </p>
-          <div class="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
-            <p class="text-xs font-semibold text-gray-700 mb-1">Exemple CSV (2 stagiaires)</p>
-            <pre class="text-xs text-gray-700 whitespace-pre-wrap">prenom;nom;email
-Camille;Martin;camille.martin@entreprise.fr
-Lucas;Bernard;lucas.bernard@entreprise.fr</pre>
           </div>
 
-          <input id="csv-file-create" type="file" accept=".csv,text/csv"
-                 class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm">
+          <div class="mb-6">
+            <div class="mb-2 flex items-center gap-2">
+              <label for="description" class="block text-base font-medium text-gray-900">Description</label>
+              <div class="relative group">
+                <button type="button" aria-label="Information sur la description du groupe" class="inline-flex h-5 w-5 items-center justify-center rounded-full border border-gray-300 bg-white text-[11px] font-bold text-gray-600">
+                  ?
+                </button>
+                <div class="pointer-events-none absolute left-1/2 top-full z-20 mt-2 hidden w-72 -translate-x-1/2 rounded-lg border border-gray-200 bg-white p-2 text-xs text-gray-700 shadow-lg group-hover:block group-focus-within:block">
+                  Ce champ est facultatif. Vous pouvez ajouter quelques mots pour préciser l’objectif, le public ou le contexte du groupe.
+                </div>
+              </div>
+            </div>
+            <textarea
+              id="description"
+              name="description"
+              rows="3"
+              class="bg-gray-50 border border-gray-300 text-base rounded-lg focus:ring-orangeone focus:border-orangeone block w-full p-2.5"
+              placeholder="Objectifs, public, période…"
+            >{{ old('description') }}</textarea>
+          </div>
+        </section>
+      </fieldset>
 
-          <div id="csv-feedback-create" class="hidden rounded-lg px-3 py-2 text-sm"></div>
+      <fieldset id="step-2" class="step hidden">
+        <section class="animate-fade-in-down">
+          <div class="mb-8">
+            <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
+              <div class="space-y-3">
+                <div class="flex items-center gap-2">
+                  <h2 class="text-xl font-bold text-bleuone font-raleway">Ajouter vos stagiaires</h2>
+                  <div class="relative group">
+                    <button type="button" aria-label="Information sur l'ajout de stagiaires" class="inline-flex h-5 w-5 items-center justify-center rounded-full border border-gray-300 bg-white text-[11px] font-bold text-gray-600">
+                      ?
+                    </button>
+                    <div class="pointer-events-none absolute left-1/2 top-full z-20 mt-2 hidden w-80 -translate-x-1/2 rounded-lg border border-gray-200 bg-white p-3 text-xs text-gray-700 shadow-lg group-hover:block group-focus-within:block">
+                      Ajoutez vos apprenants ligne par ligne ou via import CSV. Le code d’accès provisoire défini plus bas sera réutilisé pour leurs comptes.
+                    </div>
+                  </div>
+                </div>
+                <p class="text-sm text-gray-600 font-lisible">
+                  La présentation suit la même logique que l’édition pour garder les repères visuels au moment de l’ajout.
+                </p>
+              </div>
+
+              <div class="flex items-center gap-2 sm:pt-1">
+                <button
+                  type="button"
+                  class="w-10 h-10 inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 hover:text-bleuone hover:border-bleuone/30 transition"
+                  onclick="openCsvModalCreate()"
+                  aria-label="Importer des stagiaires par CSV"
+                  title="Importer un lot CSV"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            @if($studentErrorMessage)
+              <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                {{ $studentErrorMessage }}
+              </div>
+            @endif
+
+            <div id="stagiaires-container" class="space-y-3">
+              @foreach($initialStagiaires as $index => $stagiaire)
+                <div class="bg-white border border-gray-200 p-4 rounded-[12px] shadow-sm relative stagiaire-row group hover:border-orangeone/50 transition">
+                  <div class="grid grid-cols-1 md:grid-cols-[1fr_1fr_2fr_auto] gap-4 items-start">
+                    <div>
+                      <label for="stagiaires_{{ $index }}_prenom" class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Prénom</label>
+                      <input
+                        id="stagiaires_{{ $index }}_prenom"
+                        name="stagiaires[{{ $index }}][prenom]"
+                        type="text"
+                        placeholder="Ex: Thomas"
+                        required
+                        value="{{ $stagiaire['prenom'] }}"
+                        class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-orangeone focus:border-orangeone w-full p-2.5"
+                      >
+                    </div>
+
+                    <div>
+                      <label for="stagiaires_{{ $index }}_nom" class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Nom</label>
+                      <input
+                        id="stagiaires_{{ $index }}_nom"
+                        name="stagiaires[{{ $index }}][nom]"
+                        type="text"
+                        placeholder="Ex: Dupont"
+                        required
+                        value="{{ $stagiaire['nom'] }}"
+                        class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-orangeone focus:border-orangeone w-full p-2.5"
+                      >
+                    </div>
+
+                    <div>
+                      <label for="stagiaires_{{ $index }}_email" class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Email professionnel</label>
+                      <input
+                        id="stagiaires_{{ $index }}_email"
+                        name="stagiaires[{{ $index }}][email]"
+                        type="email"
+                        placeholder="thomas.dupont@entreprise.com"
+                        required
+                        value="{{ $stagiaire['email'] }}"
+                        class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-orangeone focus:border-orangeone w-full p-2.5"
+                      >
+                    </div>
+
+                    <div class="flex items-end h-full pb-[3px]">
+                      <button
+                        type="button"
+                        class="text-gray-300 hover:text-red-600 transition p-2 rounded-full hover:bg-red-50"
+                        onclick="removeStagiaire(this)"
+                        title="Supprimer la ligne"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              @endforeach
+            </div>
+
+            <div class="mt-3 flex justify-end">
+              <button
+                type="button"
+                class="px-4 py-2 bg-bleuone text-white border border-bleuone font-bold rounded-lg hover:opacity-90 transition inline-flex items-center justify-center gap-2 text-sm"
+                onclick="addStagiaire()"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                Ajouter un stagiaire
+              </button>
+            </div>
+          </div>
+
+          <div class="mt-6 bg-orangeone/5 border border-orangeone/20 rounded-[12px] p-3">
+            <div class="mb-2 flex items-center gap-2">
+              <h3 class="text-sm font-bold text-gray-800 font-raleway">Code d'accès provisoire du groupe</h3>
+              <div class="relative group">
+                <button type="button" aria-label="Information sur le code d'accès provisoire" class="inline-flex h-5 w-5 items-center justify-center rounded-full border border-gray-300 bg-white text-[11px] font-bold text-gray-600">
+                  ?
+                </button>
+                <div class="pointer-events-none absolute left-1/2 top-full z-20 mt-2 hidden w-72 -translate-x-1/2 rounded-lg border border-gray-200 bg-white p-2 text-xs text-gray-700 shadow-lg group-hover:block group-focus-within:block">
+                  Les stagiaires recevront un e-mail avec leur identifiant et un lien qu'ils pourront utiliser pour se connecter.
+                </div>
+              </div>
+            </div>
+
+            <div class="w-full max-w-sm">
+              <label for="password" class="sr-only">Mot de passe commun</label>
+              <input
+                id="password"
+                name="password"
+                type="text"
+                required
+                minlength="8"
+                autocomplete="off"
+                value="{{ old('password') }}"
+                class="bg-white border {{ $errors->has('password') ? 'border-red-400' : 'border-gray-300' }} text-gray-900 text-sm rounded-lg focus:ring-orangeone focus:border-orangeone block w-full px-3 py-2.5 font-mono tracking-wide"
+                placeholder="Ex: Formation2026!"
+              >
+              @error('password')
+                <p class="mt-2 text-sm text-red-700">{{ $message }}</p>
+              @enderror
+            </div>
+          </div>
+        </section>
+      </fieldset>
+
+      <div id="csv-modal-create" class="fixed inset-0 z-[80] hidden items-center justify-center bg-black/40 p-4">
+        <div class="w-full max-w-xl rounded-2xl border border-gray-200 bg-white shadow-2xl">
+          <div class="flex items-center justify-between border-b border-gray-100 px-5 py-4">
+            <h4 class="font-bold text-bleuone">Import de stagiaires (CSV)</h4>
+            <button type="button" class="text-gray-400 hover:text-gray-700" onclick="closeCsvModalCreate()" aria-label="Fermer">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <div class="px-5 py-4 space-y-4">
+            <p class="text-sm text-gray-600">
+              Format attendu: colonnes <span class="font-bold">prenom</span>, <span class="font-bold">nom</span>, <span class="font-bold">email</span>.
+            </p>
+            <p class="text-xs text-gray-500 bg-gray-50 border border-gray-100 rounded-lg px-3 py-2">
+              Exemple d’en-tête : <code>prenom;nom;email</code> (ou séparateur virgule).
+            </p>
+            <div class="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
+              <p class="text-xs font-semibold text-gray-700 mb-1">Exemple CSV (2 stagiaires)</p>
+              <pre class="text-xs text-gray-700 whitespace-pre-wrap">prenom;nom;email
+Camille;Martin;camille.martin@entreprise.fr
+Lucas;Bernard;lucas.bernard@entreprise.fr</pre>
+            </div>
+
+            <input id="csv-file-create" type="file" accept=".csv,text/csv" class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm">
+
+            <div id="csv-feedback-create" class="hidden rounded-lg px-3 py-2 text-sm"></div>
+          </div>
+
+          <div class="flex items-center justify-end gap-2 border-t border-gray-100 px-5 py-4">
+            <button type="button" class="px-3 py-2 text-sm rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50" onclick="closeCsvModalCreate()">
+              Fermer
+            </button>
+            <button type="button" id="csv-import-confirm-create" class="px-3 py-2 text-sm rounded-lg bg-bleuone text-white hover:opacity-90">
+              Importer
+            </button>
+          </div>
         </div>
+      </div>
 
-        <div class="flex items-center justify-end gap-2 border-t border-gray-100 px-5 py-4">
-          <button type="button"
-                  class="px-3 py-2 text-sm rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50"
-                  onclick="closeCsvModalCreate()">
-            Fermer
+      <fieldset id="step-3" class="step hidden">
+        <section class="animate-fade-in-down">
+          <div class="mb-6">
+            <div class="flex items-center gap-2">
+              <h2 class="text-xl font-bold text-bleuone font-raleway">Organisation des modules</h2>
+              <div class="relative group">
+                <button type="button" aria-label="Information sur le parcours pédagogique" class="inline-flex h-5 w-5 items-center justify-center rounded-full border border-gray-300 bg-white text-[11px] font-bold text-gray-600">
+                  ?
+                </button>
+                <div class="pointer-events-none absolute left-1/2 top-full z-20 mt-2 hidden w-80 -translate-x-1/2 rounded-lg border border-gray-200 bg-white p-3 text-xs text-gray-700 shadow-lg group-hover:block group-focus-within:block">
+                  Ajoutez les modules utiles pour ce groupe, organisez-les dans l’ordre souhaité, puis validez la création. Vous retrouverez ensuite la même interface dans l’édition pour ajuster le parcours.
+                </div>
+              </div>
+            </div>
+            <p class="mt-2 text-sm text-gray-600 font-lisible">
+              Le rendu reprend déjà la même logique d’organisation que sur la fiche d’édition.
+            </p>
+          </div>
+
+          <div
+            data-group-module-flow
+            data-mode="create"
+            data-available-modules='@json($availableModules)'
+            data-selected-modules='@json($initialSelectedModules)'
+            class="space-y-6"
+          ></div>
+
+          @if($errors->has('modules') || $errors->has('modules.*'))
+            <div class="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {{ $errors->first('modules') ?: $errors->first('modules.*') }}
+            </div>
+          @endif
+
+          @if($errors->has('module_positions') || $errors->has('module_positions.*'))
+            <div class="mt-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {{ $errors->first('module_positions') ?: $errors->first('module_positions.*') }}
+            </div>
+          @endif
+
+          <p class="text-xs text-gray-500 mt-2 font-lisible bg-blue-50 p-2 rounded inline-block border border-blue-100">
+            L’ordre défini ici sera celui présenté à l’apprenant dans son espace.
+          </p>
+        </section>
+      </fieldset>
+
+      <hr class="border-gray-100 my-8">
+
+      <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+        <a href="{{ route('formateur.groupes.index') }}" class="text-gray-500 font-bold hover:text-bleuone transition">
+          Annuler
+        </a>
+
+        <div class="flex w-full md:w-auto flex-col sm:flex-row items-center justify-end gap-3">
+          <button type="button" id="prevBtn" class="hidden w-full sm:w-auto rounded-lg border border-gray-300 px-5 py-3 font-bold text-gray-600 transition hover:bg-gray-50">
+            Précédent
           </button>
-          <button type="button"
-                  id="csv-import-confirm-create"
-                  class="px-3 py-2 text-sm rounded-lg bg-bleuone text-white hover:opacity-90">
-            Importer
+          <button type="button" id="nextBtn" class="btn-oneduc w-full sm:w-auto px-8 py-3 text-lg shadow-lg shadow-orangeone/20">
+            Suivant
+          </button>
+          <button type="submit" id="submitBtn" class="btn-oneduc hidden w-full sm:w-auto px-8 py-3 text-lg shadow-lg shadow-orangeone/20">
+            Créer le groupe
           </button>
         </div>
       </div>
-    </div>
 
-    {{-- Étape 3 : Modules --}}
-    <fieldset id="step-3" class="step hidden">
-      <legend class="sr-only">Modules</legend>
-      <p class="text-base text-gray-600 mb-4">Attachez les modules un à un pour construire le parcours.</p>
-
-      <div
-        data-group-module-flow
-        data-mode="create"
-        data-available-modules='@json($availableModules)'
-        data-selected-modules='@json($initialSelectedModules)'
-        class="space-y-6"
-      ></div>
-
-      @if($errors->has('modules') || $errors->has('modules.*'))
-        <div class="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {{ $errors->first('modules') ?: $errors->first('modules.*') }}
-        </div>
-      @endif
-      @if($errors->has('module_positions') || $errors->has('module_positions.*'))
-        <div class="mt-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {{ $errors->first('module_positions') ?: $errors->first('module_positions.*') }}
-        </div>
-      @endif
-      @if($errors->has('nom') || $errors->has('description') || $errors->has('stagiaires') || $errors->has('stagiaires.*') || $errors->has('password'))
-        <div class="mt-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {{ $errors->first() }}
-        </div>
-      @endif
-    </fieldset>
-
-    {{-- Navigation --}}
-    <div class="flex justify-between mt-8">
-      <button type="button" id="prevBtn" class="btn-oneduc hidden">◀ Précédent</button>
-      <button type="button" id="nextBtn" class="btn-oneduc ml-auto">Suivant ▶</button>
-      <button type="submit" id="submitBtn" class="btn-oneduc hidden ml-auto">Créer le groupe</button>
-    </div>
-
-    {{-- Zone erreurs client --}}
-    <div id="client-errors" class="mt-4 text-base text-red-700" aria-live="polite"></div>
-  </form>
+      <div id="client-errors" class="text-base text-red-700" aria-live="polite"></div>
+    </form>
+  </main>
 </div>
+
+<style>
+  .animate-fade-in-down {
+    animation: fadeInDown 0.3s ease-out;
+  }
+
+  @keyframes fadeInDown {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+</style>
 
 <script>
   let currentStep = {{ $initialWizardStep }};
-  const TOTAL_STEPS = 3;
+  const TOTAL_STEPS = {{ count($steps) }};
 
   const form = document.getElementById('multi-step-form');
   const prevBtn = document.getElementById('prevBtn');
   const nextBtn = document.getElementById('nextBtn');
   const submitBtn = document.getElementById('submitBtn');
   const progressBar = document.getElementById('progress-bar');
+  const progressLabel = document.getElementById('progress-label');
   const progressLive = document.getElementById('progress-live');
   const stepButtons = document.querySelectorAll('.wizard-step');
   const errorsBox = document.getElementById('client-errors');
-
-  // Étapes validées (autorise retour en arrière uniquement si validée)
   const completedSteps = new Set();
 
-  // --- LOGIQUE STEPPER (Inchangée) ---
+  for (let step = 1; step < currentStep; step++) {
+    completedSteps.add(step);
+  }
 
-  stepButtons.forEach(btn => btn.addEventListener('click', () => {
-    const target = parseInt(btn.dataset.step, 10);
+  stepButtons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const target = parseInt(btn.dataset.step, 10);
 
-    if (target < currentStep) {
-      if (completedSteps.has(target)) {
+      if (target === currentStep) {
+        return;
+      }
+
+      if (target < currentStep && (target === 1 || completedSteps.has(target))) {
         currentStep = target;
         showStep(currentStep);
       }
-      return;
-    }
-    return;
-  }));
+    });
+  });
 
   function applyStepperStyles(step) {
-    stepButtons.forEach((b, i) => {
-      const s = i + 1;
-      const active = s === step;
+    stepButtons.forEach((button, index) => {
+      const stepNumber = index + 1;
+      const isActive = stepNumber === step;
+      const isCompleted = stepNumber < step && completedSteps.has(stepNumber);
 
-      b.classList.remove('bg-bleuone','text-white','bg-white','text-bleuone','opacity-60','shadow-md');
-      if (active) {
-        b.classList.add('bg-bleuone','text-white','shadow-md');
-        b.setAttribute('aria-current', 'step');
-      } else {
-        b.classList.add('bg-white','text-bleuone','opacity-60');
-        b.setAttribute('aria-current', 'false');
+      button.classList.remove(
+        'bg-bleuone',
+        'text-white',
+        'shadow-md',
+        'ring-2',
+        'ring-bleuone',
+        'ring-offset-2',
+        'bg-white',
+        'text-bleuone',
+        'border',
+        'border-bleuone',
+        'hover:bg-bleuone/5',
+        'opacity-50',
+        'cursor-not-allowed'
+      );
+
+      if (isActive) {
+        button.classList.add('bg-bleuone', 'text-white', 'shadow-md', 'ring-2', 'ring-bleuone', 'ring-offset-2');
+        button.disabled = false;
+        button.setAttribute('aria-current', 'step');
+        return;
       }
 
-      if (s < step && completedSteps.has(s)) {
-        b.disabled = false;
-        b.classList.remove('cursor-not-allowed');
-      } else if (s === step) {
-        b.disabled = false;
-        b.classList.remove('cursor-not-allowed');
-      } else {
-        b.disabled = true;
-        b.classList.add('cursor-not-allowed');
+      button.classList.add('bg-white', 'text-bleuone', 'border', 'border-bleuone');
+      button.setAttribute('aria-current', 'false');
+
+      if (isCompleted) {
+        button.classList.add('hover:bg-bleuone/5');
+        button.disabled = false;
+        return;
       }
+
+      button.classList.add('opacity-50', 'cursor-not-allowed');
+      button.disabled = true;
     });
   }
 
   function showStep(step) {
-    document.querySelectorAll('.step').forEach(s => s.classList.add('hidden'));
-    document.getElementById(`step-${step}`).classList.remove('hidden');
+    document.querySelectorAll('.step').forEach((section) => {
+      section.classList.add('hidden');
+      section.classList.remove('animate-fade-in-down');
+    });
+
+    const activeStep = document.getElementById(`step-${step}`);
+    activeStep.classList.remove('hidden');
+    activeStep.offsetWidth;
+    activeStep.classList.add('animate-fade-in-down');
 
     applyStepperStyles(step);
 
+    const progressText = `Étape ${step} sur ${TOTAL_STEPS}`;
     progressBar.style.width = `${(step / TOTAL_STEPS) * 100}%`;
-    progressLive.textContent = `Étape ${step} sur ${TOTAL_STEPS}`;
+    progressLabel.textContent = progressText;
+    progressLive.textContent = progressText;
 
     prevBtn.classList.toggle('hidden', step === 1);
     nextBtn.classList.toggle('hidden', step === TOTAL_STEPS);
@@ -424,7 +609,7 @@ Lucas;Bernard;lucas.bernard@entreprise.fr</pre>
     const current = document.getElementById(`step-${step}`);
     const required = current.querySelectorAll('input[required], textarea[required], select[required]');
 
-    required.forEach(el => {
+    required.forEach((el) => {
       const value = (el.value || '').trim();
       const tooShort = el.minLength && value.length < el.minLength;
 
@@ -455,25 +640,24 @@ Lucas;Bernard;lucas.bernard@entreprise.fr</pre>
     return true;
   }
 
-  nextBtn.addEventListener('click', (e) => {
-    e.preventDefault();
+  nextBtn.addEventListener('click', (event) => {
+    event.preventDefault();
+
     if (validateStep(currentStep)) {
       currentStep++;
       showStep(currentStep);
     }
   });
 
-  prevBtn.addEventListener('click', (e) => {
-    e.preventDefault();
+  prevBtn.addEventListener('click', (event) => {
+    event.preventDefault();
+
     const target = currentStep - 1;
-    if (target >= 1 && completedSteps.has(target)) {
-      currentStep--;
+    if (target >= 1 && (target === 1 || completedSteps.has(target))) {
+      currentStep = target;
       showStep(currentStep);
     }
   });
-
-
-  // --- GESTION DES STAGIAIRES & PASSWORD (MODIFIÉ) ---
 
   function fillStagiaireRow(row, data) {
     const prenomInput = row.querySelector('input[name$="[prenom]"]');
@@ -487,76 +671,70 @@ Lucas;Bernard;lucas.bernard@entreprise.fr</pre>
 
   function findEmptyStagiaireRow() {
     const rows = Array.from(document.querySelectorAll('#stagiaires-container .stagiaire-row'));
+
     return rows.find((row) => {
       const values = Array.from(row.querySelectorAll('input[name$="[prenom]"], input[name$="[nom]"], input[name$="[email]"]'))
-        .map((i) => (i.value || '').trim());
-      return values.every(v => v === '');
+        .map((input) => (input.value || '').trim());
+      return values.every((value) => value === '');
     }) || null;
   }
 
-  // Ajout dynamique avec le nouveau design HTML
   window.addStagiaire = function (data = null) {
     const container = document.getElementById('stagiaires-container');
     const rows = container.querySelectorAll('.stagiaire-row');
-    const index = rows.length; // Calcule le bon index pour le tableau PHP
+    const index = rows.length;
 
     const tpl = `
       <div class="bg-white border border-gray-200 p-4 rounded-[12px] shadow-sm relative stagiaire-row group hover:border-orangeone/50 transition mt-3 animate-fade-in-down">
         <div class="grid grid-cols-1 md:grid-cols-[1fr_1fr_2fr_auto] gap-4 items-start">
-            
-            <div>
-                <label for="stagiaires_${index}_prenom" class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Prénom</label>
-                <input id="stagiaires_${index}_prenom" name="stagiaires[${index}][prenom]" type="text" placeholder="Prénom" required
-                    class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-orangeone focus:border-orangeone w-full p-2.5">
-            </div>
-
-            <div>
-                <label for="stagiaires_${index}_nom" class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Nom</label>
-                <input id="stagiaires_${index}_nom" name="stagiaires[${index}][nom]" type="text" placeholder="Nom" required
-                    class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-orangeone focus:border-orangeone w-full p-2.5">
-            </div>
-
-            <div>
-                <label for="stagiaires_${index}_email" class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Email professionnel</label>
-                <input id="stagiaires_${index}_email" name="stagiaires[${index}][email]" type="email" placeholder="Email" required
-                    class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-orangeone focus:border-orangeone w-full p-2.5">
-            </div>
-
-            <div class="flex items-end h-full pb-[3px]">
-                <button type="button" class="text-gray-300 hover:text-red-600 transition p-2 rounded-full hover:bg-red-50"
-                        onclick="removeStagiaire(this)" title="Supprimer la ligne">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                </button>
-            </div>
+          <div>
+            <label for="stagiaires_${index}_prenom" class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Prénom</label>
+            <input id="stagiaires_${index}_prenom" name="stagiaires[${index}][prenom]" type="text" placeholder="Prénom" required class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-orangeone focus:border-orangeone w-full p-2.5">
+          </div>
+          <div>
+            <label for="stagiaires_${index}_nom" class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Nom</label>
+            <input id="stagiaires_${index}_nom" name="stagiaires[${index}][nom]" type="text" placeholder="Nom" required class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-orangeone focus:border-orangeone w-full p-2.5">
+          </div>
+          <div>
+            <label for="stagiaires_${index}_email" class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Email professionnel</label>
+            <input id="stagiaires_${index}_email" name="stagiaires[${index}][email]" type="email" placeholder="Email" required class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-orangeone focus:border-orangeone w-full p-2.5">
+          </div>
+          <div class="flex items-end h-full pb-[3px]">
+            <button type="button" class="text-gray-300 hover:text-red-600 transition p-2 rounded-full hover:bg-red-50" onclick="removeStagiaire(this)" title="Supprimer la ligne">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          </div>
         </div>
       </div>`;
-    
+
     container.insertAdjacentHTML('beforeend', tpl);
 
     if (data && (data.prenom || data.nom || data.email)) {
       const inserted = container.lastElementChild;
       if (inserted) fillStagiaireRow(inserted, data);
     }
-  }
+  };
 
-  // Suppression d'une ligne (avec sécurité min 1 ligne)
   window.removeStagiaire = function (btn) {
     const row = btn.closest('.stagiaire-row');
     const container = document.getElementById('stagiaires-container');
-    
+
     if (container.querySelectorAll('.stagiaire-row').length <= 1) {
-        alert("Le groupe doit contenir au moins un stagiaire.");
-        return;
+      alert('Le groupe doit contenir au moins un stagiaire.');
+      return;
     }
+
     row.remove();
-  }
+  };
 
   function showCsvFeedbackCreate(message, type = 'info') {
     const box = document.getElementById('csv-feedback-create');
     if (!box) return;
+
     box.classList.remove('hidden', 'bg-red-50', 'text-red-700', 'border', 'border-red-100', 'bg-green-50', 'text-green-700', 'border-green-100', 'bg-gray-50', 'text-gray-700', 'border-gray-100');
+
     if (type === 'error') {
       box.classList.add('bg-red-50', 'text-red-700', 'border', 'border-red-100');
     } else if (type === 'success') {
@@ -564,6 +742,7 @@ Lucas;Bernard;lucas.bernard@entreprise.fr</pre>
     } else {
       box.classList.add('bg-gray-50', 'text-gray-700', 'border', 'border-gray-100');
     }
+
     box.textContent = message;
   }
 
@@ -578,11 +757,14 @@ Lucas;Bernard;lucas.bernard@entreprise.fr</pre>
     const modal = document.getElementById('csv-modal-create');
     const input = document.getElementById('csv-file-create');
     const box = document.getElementById('csv-feedback-create');
+
     if (modal) {
       modal.classList.remove('flex');
       modal.classList.add('hidden');
     }
+
     if (input) input.value = '';
+
     if (box) {
       box.classList.add('hidden');
       box.textContent = '';
@@ -638,21 +820,21 @@ Lucas;Bernard;lucas.bernard@entreprise.fr</pre>
 
   function extractStudentsFromCsvCreate(text) {
     const delimiter = detectDelimiterCreate(text);
-    const lines = (text || '').split(/\r?\n/).filter(l => l.trim() !== '');
+    const lines = (text || '').split(/\r?\n/).filter((line) => line.trim() !== '');
     if (lines.length === 0) {
       return { students: [], skipped: 0 };
     }
 
-    const rows = lines.map(line => parseCsvLineCreate(line, delimiter));
+    const rows = lines.map((line) => parseCsvLineCreate(line, delimiter));
     const first = rows[0].map(normalizeCsvHeaderCreate);
 
     const emailAliases = ['email', 'e-mail', 'mail', 'courriel'];
     const prenomAliases = ['prenom', 'firstname', 'first_name', 'givenname', 'given_name'];
     const nomAliases = ['nom', 'name', 'lastname', 'last_name', 'surname', 'familyname'];
 
-    const emailIdx = first.findIndex(h => emailAliases.includes(h));
-    const prenomIdx = first.findIndex(h => prenomAliases.includes(h));
-    const nomIdx = first.findIndex(h => nomAliases.includes(h));
+    const emailIdx = first.findIndex((header) => emailAliases.includes(header));
+    const prenomIdx = first.findIndex((header) => prenomAliases.includes(header));
+    const nomIdx = first.findIndex((header) => nomAliases.includes(header));
     const hasHeader = emailIdx !== -1 || prenomIdx !== -1 || nomIdx !== -1;
 
     const startAt = hasHeader ? 1 : 0;
@@ -686,7 +868,7 @@ Lucas;Bernard;lucas.bernard@entreprise.fr</pre>
   function addStudentsFromCsvCreate(students) {
     const existingEmails = new Set(
       Array.from(document.querySelectorAll('#stagiaires-container input[name$="[email]"]'))
-        .map((i) => (i.value || '').trim().toLowerCase())
+        .map((input) => (input.value || '').trim().toLowerCase())
         .filter(Boolean)
     );
 
@@ -705,6 +887,7 @@ Lucas;Bernard;lucas.bernard@entreprise.fr</pre>
       } else {
         addStagiaire(student);
       }
+
       existingEmails.add(student.email);
       added++;
     });
@@ -734,7 +917,7 @@ Lucas;Bernard;lucas.bernard@entreprise.fr</pre>
         }
 
         const { added, duplicates } = addStudentsFromCsvCreate(students);
-        showCsvFeedbackCreate(`Import terminé: ${added} ajouté(s), ${duplicates} doublon(s), ${skipped} ligne(s) ignorée(s).`, 'success');
+        showCsvFeedbackCreate(`Import terminé : ${added} ajouté(s), ${duplicates} doublon(s), ${skipped} ligne(s) ignorée(s).`, 'success');
       };
       reader.onerror = () => showCsvFeedbackCreate('Lecture du fichier impossible.', 'error');
       reader.readAsText(file);
@@ -759,16 +942,13 @@ Lucas;Bernard;lucas.bernard@entreprise.fr</pre>
     }
   });
 
-  // Nettoyage avant soumission (supprime les lignes vides)
   form.addEventListener('submit', () => {
-    document.querySelectorAll('.stagiaire-row').forEach(row => {
-      const vals = Array.from(row.querySelectorAll('input')).map(i => (i.value || '').trim());
-      // Si tous les champs de la ligne sont vides, on la vire pour pas polluer le POST
-      if (vals.every(v => v === '')) row.remove();
+    document.querySelectorAll('.stagiaire-row').forEach((row) => {
+      const values = Array.from(row.querySelectorAll('input')).map((input) => (input.value || '').trim());
+      if (values.every((value) => value === '')) row.remove();
     });
   });
 
-  // Init
   showStep(currentStep);
 </script>
 

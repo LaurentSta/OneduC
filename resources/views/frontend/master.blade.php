@@ -152,28 +152,25 @@
       </div>
 
       <!-- Pop-up Beta -->
-<div 
-    x-data="{ open: localStorage.getItem('betaPopupSeen') !== '1' }" 
-    x-show="open"
-    x-transition:enter="transition ease-out duration-200"
-    x-transition:enter-start="opacity-0"
-    x-transition:enter-end="opacity-100"
-    x-transition:leave="transition ease-in duration-150"
-    x-transition:leave-start="opacity-100"
-    x-transition:leave-end="opacity-0"
-    class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 min-h-screen p-4"
-    x-cloak
+<div
+    id="beta-popup"
+    class="fixed inset-0 hidden items-center justify-center bg-black bg-opacity-50 z-50 min-h-screen p-4"
+    role="dialog"
+    aria-modal="true"
+    aria-hidden="true"
+    aria-labelledby="beta-popup-title"
 >
-  <div class="bg-white rounded-lg shadow-lg max-w-md mx-auto p-6 text-center transition-transform duration-200 ease-out" @click.stop>
-    <h2 class="text-xl font-bold text-bleuone mb-4">Version Bêta</h2>
+  <div class="bg-white rounded-lg shadow-lg max-w-md mx-auto p-6 text-center transition-transform duration-200 ease-out">
+    <h2 id="beta-popup-title" class="text-xl font-bold text-bleuone mb-4">Version Bêta</h2>
     <p class="text-gray-700 mb-6">
       Ce site est actuellement en <strong>version bêta</strong>.<br>
       Il est développé par des formateurs bénévoles qui contribuent à son contenu.<br>
       Des améliorations et corrections sont en cours.
     </p>
     <div class="text-center">
-      <button 
-        @click="open = false; localStorage.setItem('betaPopupSeen', '1')" 
+      <button
+        id="beta-popup-continue"
+        type="button"
         class="bg-orangeone text-white px-6 py-2 rounded-md hover:bg-orange-600"
       >
         Continuer
@@ -229,6 +226,51 @@ document.addEventListener('DOMContentLoaded', () => {
             document.body.classList.remove('page-is-entering');
         });
     });
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const popup = document.getElementById('beta-popup');
+  const continueBtn = document.getElementById('beta-popup-continue');
+
+  if (!popup || !continueBtn) return;
+
+  const storageKey = 'betaPopupSeen';
+  let alreadySeen = false;
+
+  try {
+    alreadySeen = window.localStorage.getItem(storageKey) === '1';
+  } catch (error) {
+    alreadySeen = false;
+  }
+
+  if (!alreadySeen) {
+    popup.classList.remove('hidden');
+    popup.classList.add('flex');
+    popup.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('overflow-hidden');
+  }
+
+  const closePopup = () => {
+    popup.classList.remove('flex');
+    popup.classList.add('hidden');
+    popup.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('overflow-hidden');
+
+    try {
+      window.localStorage.setItem(storageKey, '1');
+    } catch (error) {
+      // Ignore storage failures: the popup should not block access.
+    }
+  };
+
+  continueBtn.addEventListener('click', closePopup);
+
+  popup.addEventListener('click', event => {
+    if (event.target === popup) {
+      closePopup();
+    }
+  });
 });
 </script>
 
