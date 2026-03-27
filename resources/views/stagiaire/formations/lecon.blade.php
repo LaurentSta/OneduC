@@ -66,18 +66,6 @@
     }
 
     $slidesStatus = (string) ($lecture->slides_status ?? 'none');
-
-    $formatBytes = static function (?int $bytes): string {
-        $bytes = max(0, (int) $bytes);
-        if ($bytes >= 1048576) {
-            return number_format($bytes / 1048576, 1, ',', ' ') . ' Mo';
-        }
-        if ($bytes >= 1024) {
-            return number_format($bytes / 1024, 1, ',', ' ') . ' Ko';
-        }
-
-        return $bytes . ' o';
-    };
 @endphp
 
 <script>
@@ -104,75 +92,64 @@
     console.log("Oneduc : Contexte stagiaire prêt", window.SCORM_CONTEXT);
 </script>
 
-<main class="w-full h-full">
-    <div class="relative w-full bg-gray-100" style="height: calc(100vh - var(--app-header-h, 86px));">
-        @if(($moduleResources ?? $lessonResources ?? collect())->isNotEmpty())
-            <div class="absolute right-4 top-4 z-20 flex flex-col items-end gap-3">
-                <div
-                    x-show="resourcesPanelOpen"
-                    x-transition.opacity
-                    x-cloak
-                    class="w-[320px] max-w-[calc(100vw-2rem)] rounded-2xl border border-gray-200 bg-white/95 p-4 shadow-2xl backdrop-blur"
-                >
-                    <div class="mb-3 flex items-start justify-between gap-3">
-                        <div>
-                        <h2 class="text-sm font-bold text-bleuone">Ressources du module</h2>
-                        <p class="mt-1 text-xs text-gray-500">Ces ressources sont disponibles dans tout le module.</p>
-                        </div>
-                        <button
-                            type="button"
-                            @click="resourcesPanelOpen = false"
-                            class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 hover:bg-gray-50 hover:text-bleuone"
-                            aria-label="Fermer les ressources"
-                        >
-                            <i class="ti ti-x"></i>
-                        </button>
-                    </div>
+<main
+    x-data="{
+        fullscreenSupported: false,
+        fullscreenActive: false,
+        async toggleFullscreen() {
+            const target = this.$refs.contentViewport;
 
-                    <div class="max-h-[60vh] space-y-3 overflow-y-auto pr-1">
-                        @foreach(($moduleResources ?? $lessonResources ?? collect()) as $resource)
-                            @php
-                                $resourceUrl = $resource->public_url;
-                                $resourceExt = strtoupper($resource->extension ?: 'FILE');
-                            @endphp
-                            <div class="rounded-xl border border-gray-200 bg-gray-50 p-3">
-                                <div class="flex items-start gap-3">
-                                    @if($resource->is_image)
-                                        <a href="{{ $resourceUrl }}" target="_blank" class="shrink-0">
-                                            <img src="{{ $resourceUrl }}" alt="{{ $resource->title }}" class="h-12 w-12 rounded-lg border border-gray-200 object-cover bg-white">
-                                        </a>
-                                    @else
-                                        <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white text-[11px] font-black text-bleuone">
-                                            {{ $resourceExt }}
-                                        </div>
-                                    @endif
+            if (!target || !this.fullscreenSupported) {
+                return;
+            }
 
-                                    <div class="min-w-0 flex-1">
-                                        <p class="truncate text-sm font-bold text-gray-800">{{ $resource->title }}</p>
-                                        <p class="mt-1 truncate text-xs text-gray-500">{{ $resource->original_name }}</p>
-                                        <div class="mt-1 flex items-center gap-1 text-[11px] text-gray-400">
-                                            <span class="shrink-0">{{ $formatBytes($resource->file_size) }}</span>
-                                            @if($resource->mime_type)
-                                                <span class="shrink-0">•</span>
-                                                <span class="truncate max-w-[170px]" title="{{ $resource->mime_type }}">{{ $resource->mime_type }}</span>
-                                            @endif
-                                        </div>
-                                        <div class="mt-2 flex flex-wrap gap-2">
-                                            <a href="{{ $resourceUrl }}" target="_blank" class="inline-flex items-center rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-[11px] font-bold text-blue-700 hover:bg-blue-100">
-                                                Ouvrir
-                                            </a>
-                                            <a href="{{ $resourceUrl }}" download="{{ $resource->original_name }}" class="inline-flex items-center rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-[11px] font-bold text-gray-700 hover:bg-gray-100">
-                                                Télécharger
-                                            </a>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
-            </div>
-        @endif
+            try {
+                if (document.fullscreenElement) {
+                    await document.exitFullscreen();
+                    return;
+                }
+
+                if (typeof target.requestFullscreen === 'function') {
+                    await target.requestFullscreen();
+                }
+            } catch (error) {
+                console.error('Impossible de basculer en plein ecran.', error);
+            }
+        },
+        syncFullscreenState() {
+            this.fullscreenActive = !!document.fullscreenElement;
+        },
+        init() {
+            this.fullscreenSupported = !!document.fullscreenEnabled;
+            this.syncFullscreenState();
+            document.addEventListener('fullscreenchange', () => this.syncFullscreenState());
+        }
+    }"
+    class="w-full h-full"
+>
+    <div x-ref="contentViewport" class="relative w-full bg-gray-100" style="height: calc(100vh - var(--app-header-h, 86px));">
+        <div class="pointer-events-none absolute left-4 top-4 z-20 flex flex-wrap items-center gap-2">
+            <button
+                type="button"
+                x-show="fullscreenSupported"
+                x-cloak
+                @click="toggleFullscreen()"
+                class="pointer-events-auto inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/95 px-3 py-2 text-[11px] font-bold uppercase tracking-wide text-slate-700 shadow-sm backdrop-blur transition hover:bg-white"
+                :aria-pressed="fullscreenActive.toString()"
+            >
+                <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path x-show="!fullscreenActive" x-cloak d="M8 4H4v4" style="display: none;" />
+                    <path x-show="!fullscreenActive" x-cloak d="M16 4h4v4" style="display: none;" />
+                    <path x-show="!fullscreenActive" x-cloak d="M8 20H4v-4" style="display: none;" />
+                    <path x-show="!fullscreenActive" x-cloak d="M16 20h4v-4" style="display: none;" />
+                    <path x-show="fullscreenActive" x-cloak d="M9 4H4v5" style="display: none;" />
+                    <path x-show="fullscreenActive" x-cloak d="M15 4h5v5" style="display: none;" />
+                    <path x-show="fullscreenActive" x-cloak d="M9 20H4v-5" style="display: none;" />
+                    <path x-show="fullscreenActive" x-cloak d="M15 20h5v-5" style="display: none;" />
+                </svg>
+                <span x-text="fullscreenActive ? 'Quitter mode plein ecran' : 'Mode plein ecran'"></span>
+            </button>
+        </div>
 
         @if ($isSlidesMode && !empty($slideImages))
             <div

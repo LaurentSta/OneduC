@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 // /home/laurents/Oneduc_Dev/app/Http/Controllers/FormateurController.php
 
+use Carbon\Carbon;
 use App\Mail\FormateurWelcome;
 use App\Mail\NewFormateurNotification;
 use App\Models\Group;
@@ -13,6 +14,7 @@ use App\Models\User;
 use App\Services\CodeGeneratorService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
@@ -352,6 +354,268 @@ class FormateurController extends Controller
         ));
     }
 
+    public function dashboardActivity(Request $request)
+    {
+        $formateurId = auth()->id();
+        $range = $this->sanitizeDashboardActivityRange($request->query('range'));
+        $cacheTtl = match ($range) {
+            'day' => now()->addMinutes(2),
+            'week' => now()->addMinutes(5),
+            default => now()->addMinutes(10),
+        };
+
+        $payload = Cache::remember(
+            "formateur-dashboard-activity:{$formateurId}:{$range}",
+            $cacheTtl,
+            fn () => $this->buildDashboardActivityPayload($formateurId, $range)
+        );
+
+        return response()->json($payload);
+    }
+
+    private function sanitizeDashboardActivityRange(?string $range): string
+    {
+        return in_array($range, ['day', 'week', 'month', 'year'], true) ? $range : 'week';
+    }
+
+    private function buildDashboardActivityPayload(int $formateurId, string $range): array
+    {
+        $config = $this->resolveDashboardActivityConfig($range);
+
+        $groups = Group::query()
+            ->where('instructor_id', $formateurId)
+            ->withCount([
+                'students as learners_count' => function ($query) {
+                    $query->where('users.role', 'stagiaire');
+                },
+            ])
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        $groupsWithLearnersCount = $groups->filter(fn ($group) => (int) $group->learners_count > 0)->count();
+        $totalLearners = (int) $groups->sum('learners_count');
+
+        if ($groups->isEmpty()) {
+            return [
+                'range' => $range,
+                'title' => $config['title'],
+                'subtitle' => $config['subtitle'],
+                'labels' => $config['labels'],
+                'full_labels' => $config['full_labels'],
+                'visible_label_indexes' => $config['visible_label_indexes'],
+                'average_points' => array_fill(0, count($config['bucket_keys']), 0),
+                'chart_groups' => [],
+                'table_groups' => [],
+                'summary' => [
+                    'groups_count' => 0,
+                    'groups_with_learners_count' => 0,
+                    'learners_count' => 0,
+                    'current_average_rate' => 0,
+                    'peak_average_rate' => 0,
+                    'peak_label' => null,
+                ],
+                'meta' => [
+                    'chart_truncated' => false,
+                    'empty_message' => 'Aucun groupe n est encore rattaché à votre espace formateur.',
+                ],
+            ];
+        }
+
+        $groupIds = $groups->pluck('id')->all();
+
+        $activityRows = DB::table('progressions')
+            ->join('group_user', 'group_user.user_id', '=', 'progressions.user_id')
+            ->join('users', 'users.id', '=', 'group_user.user_id')
+            ->whereIn('group_user.group_id', $groupIds)
+            ->where('group_user.role_in_group', 'stagiaire')
+            ->where('users.role', 'stagiaire')
+            ->whereNotNull('progressions.completed_at')
+            ->whereBetween('progressions.completed_at', [
+                $config['query_start_at']->toDateTimeString(),
+                $config['query_end_at']->toDateTimeString(),
+            ])
+            ->selectRaw("group_user.group_id, {$config['bucket_sql']} as bucket_key, COUNT(DISTINCT progressions.user_id) as active_users")
+            ->groupBy('group_user.group_id', DB::raw($config['bucket_sql']))
+            ->get()
+            ->groupBy('group_id')
+            ->map(fn ($rows) => $rows->pluck('active_users', 'bucket_key'));
+
+        $tableGroups = $groups
+            ->map(function ($group) use ($activityRows, $config) {
+                $bucketMap = collect($activityRows->get($group->id, collect()));
+                $learnersCount = (int) $group->learners_count;
+                $points = [];
+
+                foreach ($config['bucket_keys'] as $bucketKey) {
+                    $activeUsers = (int) ($bucketMap[$bucketKey] ?? 0);
+                    $points[] = $learnersCount > 0
+                        ? (int) round(($activeUsers / $learnersCount) * 100)
+                        : 0;
+                }
+
+                $latestRate = count($points) > 0 ? (int) end($points) : 0;
+                $averageRate = count($points) > 0 ? (int) round(array_sum($points) / count($points)) : 0;
+                $firstRate = $points[0] ?? 0;
+
+                return [
+                    'id' => (int) $group->id,
+                    'name' => (string) $group->name,
+                    'learners_count' => $learnersCount,
+                    'points' => $points,
+                    'latest_rate' => $latestRate,
+                    'average_rate' => $averageRate,
+                    'trend' => $latestRate - $firstRate,
+                ];
+            })
+            ->sort(function (array $left, array $right) {
+                return ($right['latest_rate'] <=> $left['latest_rate'])
+                    ?: ($right['average_rate'] <=> $left['average_rate'])
+                    ?: ($right['learners_count'] <=> $left['learners_count'])
+                    ?: strcmp($left['name'], $right['name']);
+            })
+            ->values();
+
+        $palette = ['#F97316', '#004461', '#10B981', '#EF4444', '#8B5CF6', '#0EA5E9'];
+
+        $chartGroups = $tableGroups
+            ->take(6)
+            ->values()
+            ->map(function (array $group, int $index) use ($palette) {
+                $group['color'] = $palette[$index % count($palette)];
+
+                return $group;
+            })
+            ->all();
+
+        $averagePoints = [];
+        foreach ($config['bucket_keys'] as $index => $bucketKey) {
+            $averagePoints[] = $tableGroups->isNotEmpty()
+                ? (int) round($tableGroups->avg(fn (array $group) => $group['points'][$index] ?? 0))
+                : 0;
+        }
+
+        $peakAverageRate = count($averagePoints) > 0 ? max($averagePoints) : 0;
+        $peakIndex = count($averagePoints) > 0 ? array_search($peakAverageRate, $averagePoints, true) : false;
+
+        return [
+            'range' => $range,
+            'title' => $config['title'],
+            'subtitle' => $config['subtitle'],
+            'labels' => $config['labels'],
+            'full_labels' => $config['full_labels'],
+            'visible_label_indexes' => $config['visible_label_indexes'],
+            'average_points' => $averagePoints,
+            'chart_groups' => $chartGroups,
+            'table_groups' => $tableGroups->all(),
+            'summary' => [
+                'groups_count' => $groups->count(),
+                'groups_with_learners_count' => $groupsWithLearnersCount,
+                'learners_count' => $totalLearners,
+                'current_average_rate' => count($averagePoints) > 0 ? (int) end($averagePoints) : 0,
+                'peak_average_rate' => $peakAverageRate,
+                'peak_label' => $peakIndex !== false ? ($config['full_labels'][$peakIndex] ?? null) : null,
+            ],
+            'meta' => [
+                'chart_truncated' => $tableGroups->count() > count($chartGroups),
+                'empty_message' => $totalLearners === 0
+                    ? 'Vos groupes existent déjà, mais aucun stagiaire n y est encore rattaché.'
+                    : null,
+            ],
+        ];
+    }
+
+    private function resolveDashboardActivityConfig(string $range): array
+    {
+        $now = now();
+
+        if ($range === 'day') {
+            $startAt = $now->copy()->subHours(23)->startOfHour();
+            $endAt = $now->copy()->endOfHour();
+            $step = 'hour';
+            $format = 'Y-m-d H:00:00';
+            $bucketSql = "DATE_FORMAT(progressions.completed_at, '%Y-%m-%d %H:00:00')";
+            $title = 'Activité des groupes';
+            $subtitle = 'Lecture heure par heure sur les dernières 24 heures.';
+            $visibleLabelIndexes = [0, 3, 6, 9, 12, 15, 18, 21, 23];
+        } elseif ($range === 'month') {
+            $startAt = $now->copy()->subDays(29)->startOfDay();
+            $endAt = $now->copy()->endOfDay();
+            $step = 'day';
+            $format = 'Y-m-d';
+            $bucketSql = 'DATE(progressions.completed_at)';
+            $title = 'Activité des groupes';
+            $subtitle = 'Tendance quotidienne sur les 30 derniers jours.';
+            $visibleLabelIndexes = [0, 5, 10, 15, 20, 25, 29];
+        } elseif ($range === 'year') {
+            $startAt = $now->copy()->subMonths(11)->startOfMonth();
+            $endAt = $now->copy()->endOfMonth();
+            $step = 'month';
+            $format = 'Y-m-01';
+            $bucketSql = "DATE_FORMAT(progressions.completed_at, '%Y-%m-01')";
+            $title = 'Activité des groupes';
+            $subtitle = 'Vision mensuelle sur les 12 derniers mois.';
+            $visibleLabelIndexes = range(0, 11);
+        } else {
+            $startAt = $now->copy()->subDays(6)->startOfDay();
+            $endAt = $now->copy()->endOfDay();
+            $step = 'day';
+            $format = 'Y-m-d';
+            $bucketSql = 'DATE(progressions.completed_at)';
+            $title = 'Activité des groupes';
+            $subtitle = 'Suivi jour par jour sur les 7 derniers jours.';
+            $visibleLabelIndexes = range(0, 6);
+        }
+
+        $bucketKeys = [];
+        $labels = [];
+        $fullLabels = [];
+        $cursor = $startAt->copy();
+
+        while ($cursor <= $endAt) {
+            $bucketKeys[] = $cursor->format($format);
+            $labels[] = $this->formatDashboardActivityShortLabel($cursor, $range);
+            $fullLabels[] = $this->formatDashboardActivityFullLabel($cursor, $range);
+
+            if ($step === 'month') {
+                $cursor->addMonth();
+            } elseif ($step === 'hour') {
+                $cursor->addHour();
+            } else {
+                $cursor->addDay();
+            }
+        }
+
+        return [
+            'title' => $title,
+            'subtitle' => $subtitle,
+            'query_start_at' => $startAt,
+            'query_end_at' => $now,
+            'bucket_sql' => $bucketSql,
+            'bucket_keys' => $bucketKeys,
+            'labels' => $labels,
+            'full_labels' => $fullLabels,
+            'visible_label_indexes' => $visibleLabelIndexes,
+        ];
+    }
+
+    private function formatDashboardActivityShortLabel(Carbon $date, string $range): string
+    {
+        return match ($range) {
+            'day' => $date->translatedFormat('H\h'),
+            'year' => ucfirst($date->locale('fr')->translatedFormat('M')),
+            default => $date->translatedFormat('d/m'),
+        };
+    }
+
+    private function formatDashboardActivityFullLabel(Carbon $date, string $range): string
+    {
+        return match ($range) {
+            'day' => $date->translatedFormat('d/m H\h'),
+            'year' => ucfirst($date->locale('fr')->translatedFormat('F Y')),
+            default => ucfirst($date->locale('fr')->translatedFormat('D d M')),
+        };
+    }
+
     /* -------------------------------------------------------------------------
      | Auth / Déconnexion Formateur
      |-------------------------------------------------------------------------- */
@@ -453,6 +717,12 @@ class FormateurController extends Controller
     public function indexStagiaires(Request $request)
     {
         $formateurId = auth()->id();
+        $allowedPerPage = [10, 25, 50, 100];
+        $perPage = (int) $request->input('per_page', 10);
+
+        if (! in_array($perPage, $allowedPerPage, true)) {
+            $perPage = 10;
+        }
 
         // Liste des groupes du formateur (pour filtre)
         $groupes = Group::query()
@@ -491,10 +761,10 @@ class FormateurController extends Controller
                 $q->where('instructor_id', $formateurId)->orderBy('name');
             }])
             ->orderBy('name')
-            ->paginate(10)
+            ->paginate($perPage)
             ->withQueryString();
 
-        return view('formateur.backend.stagiaires.all_stagiaires', compact('stagiaires', 'groupes'));
+        return view('formateur.backend.stagiaires.all_stagiaires', compact('stagiaires', 'groupes', 'perPage', 'allowedPerPage'));
     }
 
     public function createStagiaire()

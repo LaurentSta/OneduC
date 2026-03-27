@@ -346,7 +346,7 @@
                                     {{ $progression > 0 ? 'Reprendre' : 'Commencer' }}
                                 </a>
                             @elseif($isFormateurView || ($isPublicView && $isFormateurUser))
-                                <a href="{{ route('formateur.formations.section', ['module' => $module->id, 'section' => $firstSection->id, 'anonymous' => 1]) }}"
+                                <a href="{{ route('formateur.formations.section', ['module' => $module->id, 'section' => $firstSection->id, 'mode' => 'officiel']) }}"
                                    class="flex items-center justify-center w-full py-4 px-6 rounded-xl bg-orangeone text-white font-extrabold text-lg hover:bg-orange-600 transition-all shadow-lg shadow-orange-100 hover:-translate-y-0.5">
                                     Voir le parcours
                                 </a>

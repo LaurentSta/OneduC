@@ -890,6 +890,7 @@ class ModuleController extends Controller
     public function section(Request $request, Module $module, ModuleSection $section)
     {
         $user = auth()->user();
+        $isFormateurRoute = $request->routeIs('formateur.*');
 
         abort_unless((int) $section->module_id === (int) $module->id, 404);
         abort_unless($module->isVisibleTo($user), 404);
@@ -925,6 +926,15 @@ class ModuleController extends Controller
 
         $lectures = $module->sections->flatMap(fn ($s) => $s->lectures)->values();
 
+        $moduleResources = $module->moduleResources()
+            ->when(! $isFormateurRoute, fn ($query) => $query->where('is_visible_to_stagiaire', true))
+            ->get();
+
+        $whiteboardGroups = collect();
+        $currentWhiteboardGroup = null;
+        $toolGroups = collect();
+        $wordClouds = collect();
+
         // ✅ En anonyme : pas de calcul de progression/statuts
         $lectureStats = $anonymous ? [] : $this->buildLectureStats($lectures, (int) $user->id);
 
@@ -950,6 +960,120 @@ class ModuleController extends Controller
             'anonymous'      => ($anonymous ? 1 : null),
         ]);
 
+        if ($isFormateurRoute && ($user->role ?? null) === 'formateur') {
+            $whiteboardGroups = $module->groups()
+                ->where('groups.instructor_id', (int) $user->id)
+                ->with('whiteboard')
+                ->orderBy('groups.name')
+                ->get(['groups.id', 'groups.name', 'groups.description'])
+                ->map(function ($group) use ($groupId) {
+                    return [
+                        'id' => (int) $group->id,
+                        'name' => (string) $group->name,
+                        'description' => (string) ($group->description ?? ''),
+                        'is_current' => (int) $group->id === (int) $groupId,
+                        'has_whiteboard' => ! is_null($group->whiteboard),
+                        'whiteboard_url' => route('formateur.groupes.whiteboard.show', ['group' => $group->id]),
+                    ];
+                })
+                ->values();
+
+            $currentWhiteboardGroup = $whiteboardGroups->firstWhere('is_current', true);
+
+            $toolGroups = Group::query()
+                ->where('instructor_id', (int) $user->id)
+                ->with([
+                    'modules' => function ($query): void {
+                        $query->orderBy('group_module.position')
+                            ->with([
+                                'sections' => function ($sectionQuery): void {
+                                    $sectionQuery->orderBy('id')
+                                        ->with([
+                                            'lectures' => function ($lectureQuery): void {
+                                                $lectureQuery
+                                                    ->orderBy('position')
+                                                    ->orderBy('id')
+                                                    ->select('id', 'module_id', 'section_id', 'lecture_title', 'position');
+                                            },
+                                        ])
+                                        ->select('id', 'module_id', 'section_title');
+                                },
+                            ])
+                            ->select('modules.id', 'modules.module_name', 'modules.module_title');
+                    },
+                ])
+                ->orderBy('name')
+                ->get(['id', 'name'])
+                ->map(function (Group $group) {
+                    $modules = $group->modules->map(function (Module $groupModule) use ($group) {
+                        $lectures = $groupModule->sections
+                            ->flatMap(function (ModuleSection $moduleSection) {
+                                return $moduleSection->lectures->map(function (ModuleLecture $moduleLecture) use ($moduleSection) {
+                                    return [
+                                        'id' => (int) $moduleLecture->id,
+                                        'section_id' => (int) $moduleLecture->section_id,
+                                        'title' => (string) $moduleLecture->lecture_title,
+                                        'label' => trim((string) $moduleSection->section_title . ' · ' . (string) $moduleLecture->lecture_title),
+                                    ];
+                                });
+                            })
+                            ->values();
+
+                        return [
+                            'id' => (int) $groupModule->id,
+                            'title' => (string) ($groupModule->module_title ?: $groupModule->module_name ?: 'Module'),
+                            'manage_url' => route('formateur.groupes.modules.lecons.edit', [
+                                'group' => $group->id,
+                                'module' => $groupModule->id,
+                            ]),
+                            'lectures' => $lectures,
+                        ];
+                    })->values();
+
+                    return [
+                        'id' => (int) $group->id,
+                        'name' => (string) $group->name,
+                        'whiteboard_url' => route('formateur.groupes.whiteboard.show', ['group' => $group->id]),
+                        'modules' => $modules,
+                    ];
+                })
+                ->values();
+
+            $toolModuleIds = $toolGroups
+                ->pluck('modules')
+                ->flatten(1)
+                ->pluck('id')
+                ->filter()
+                ->map(fn ($id) => (int) $id)
+                ->unique()
+                ->values();
+
+            $wordClouds = WordCloud::query()
+                ->when(
+                    $toolModuleIds->isNotEmpty(),
+                    fn ($query) => $query->whereIn('module_id', $toolModuleIds->all()),
+                    fn ($query) => $query->where('module_id', $module->id)
+                )
+                ->orderByDesc('is_active')
+                ->orderByDesc('updated_at')
+                ->get()
+                ->map(function (WordCloud $wordCloud) {
+                    return [
+                        'id' => (int) $wordCloud->id,
+                        'title' => (string) $wordCloud->title,
+                        'question' => (string) $wordCloud->question,
+                        'module_id' => (int) ($wordCloud->module_id ?? 0),
+                        'group_id' => (int) ($wordCloud->group_id ?? 0),
+                        'access_code' => (string) $wordCloud->access_code,
+                        'is_active' => (bool) $wordCloud->is_active,
+                        'live_url' => route('formateur.wordclouds.live', ['wordCloud' => $wordCloud->id]),
+                        'join_url' => route('wordcloud.join.code', ['code' => $wordCloud->access_code]),
+                        'updated_at_human' => $wordCloud->updated_at?->diffForHumans(),
+                    ];
+                })
+                ->values();
+        }
+
         // ✅ Si formateur + anonymous, on rend une vue "stagiaire" adaptée
         $view = match (true) {
             $anonymous && ($user->role ?? null) === 'formateur' => 'formateur.formations.anonyme.chapitre',
@@ -970,6 +1094,12 @@ class ModuleController extends Controller
             'groupId'         => $groupId,
             'includeHidden'   => $includeHidden,
             'anonymous'       => $anonymous,
+            'lessonResources' => $moduleResources,
+            'moduleResources' => $moduleResources,
+            'whiteboardGroups' => $whiteboardGroups,
+            'currentWhiteboardGroup' => $currentWhiteboardGroup,
+            'toolGroups' => $toolGroups,
+            'wordClouds' => $wordClouds,
         ]);
 
     }

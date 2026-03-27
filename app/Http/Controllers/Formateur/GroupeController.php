@@ -499,20 +499,18 @@ class GroupeController extends Controller
 
         $officialPreviewUrl = null;
         if ($officialFirstLecture) {
-            $officialPreviewUrl = route('formateur.formations.lecture', [
+            $officialPreviewUrl = route('formateur.formations.section', [
                 'module' => $module->id,
                 'section' => (int) $officialFirstLecture->section_id,
-                'lecture' => (int) $officialFirstLecture->id,
                 'mode' => 'officiel',
             ]);
         }
 
         $groupPreviewUrl = null;
         if ($groupFirstSectionId && $groupFirstLectureId) {
-            $groupPreviewUrl = route('formateur.formations.lecture', [
+            $groupPreviewUrl = route('formateur.formations.section', [
                 'module' => $module->id,
                 'section' => $groupFirstSectionId,
-                'lecture' => $groupFirstLectureId,
                 'mode' => 'groupe',
                 'group_id' => $group->id,
             ]);

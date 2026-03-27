@@ -45,25 +45,27 @@
     </div>
 
     {{-- CENTRE : PROGRESSION ÉPURÉE --}}
-    <div class="flex-1 max-w-lg hidden md:block">
-      <div class="flex items-center justify-between mb-1.5 px-1">
-        <span class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Progression globale</span>
+    <div class="flex-1 max-w-md hidden md:block">
+      <div class="flex items-center justify-between mb-1 px-1">
+        <span class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Progression de la formation</span>
         <span class="text-sm font-black text-bleuone">{{ $globalPercent }}%</span>
       </div>
       
-      <div class="relative h-2 w-full bg-gray-100 rounded-full overflow-hidden shadow-inner">
-        {{-- Barre de progression avec dégradé subtil --}}
+      <div class="relative h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
         <div
-          class="absolute top-0 left-0 h-full bg-gradient-to-r from-orangeone to-[#ff7a59] rounded-full transition-all duration-700 ease-out"
+          class="absolute top-0 left-0 h-full rounded-full bg-gradient-to-r from-orangeone to-[#ff7a59] transition-all duration-700 ease-out"
           style="width: {{ $globalPercent }}%"
         >
-            {{-- Reflet brillant pour l'aspect interactif --}}
-            <div class="absolute inset-0 bg-white/20 w-full h-full skew-x-[-20deg] translate-x-[-50%]"></div>
+            <div
+              class="absolute inset-0 opacity-30"
+              style="background-image: repeating-linear-gradient(135deg, rgba(255,255,255,0.55) 0, rgba(255,255,255,0.55) 6px, transparent 6px, transparent 12px);"
+            ></div>
+            <div class="absolute inset-y-0 left-0 h-full w-full bg-white/10"></div>
         </div>
       </div>
       
       <div class="mt-1 text-center">
-         <span class="text-[10px] text-gray-400 font-medium italic">
+         <span class="text-[10px] font-semibold text-bleuone">
             {{ $validatedLessonsGlobal }} leçons validées sur {{ $totalLessonsGlobal }}
          </span>
       </div>

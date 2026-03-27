@@ -2,15 +2,20 @@
 
 @section('content')
 
+@php
+    $chapterNo = collect($module->sections ?? [])
+        ->values()
+        ->search(fn ($section) => (int) $section->id === (int) ($selectedSection->id ?? 0));
+
+    $chapterNo = $chapterNo !== false ? $chapterNo + 1 : null;
+@endphp
+
 <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     
     {{-- EN-TÊTE DE CHAPITRE --}}
     <div class="mb-8 border-b border-gray-100 pb-6">
-        <span class="inline-block py-1 px-3 rounded-lg bg-bleuone/10 text-bleuone text-[10px] font-black uppercase tracking-widest mb-3">
-            Chapitre en cours
-        </span>
         <h1 class="text-3xl md:text-4xl font-extrabold text-bleuone leading-tight">
-            {{ $selectedSection->section_title }}
+            {{ $chapterNo ? 'Ch. ' . $chapterNo . ' - ' : '' }}{{ $selectedSection->section_title }}
         </h1>
     </div>
 

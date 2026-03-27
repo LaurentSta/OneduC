@@ -118,10 +118,7 @@
               $titre = $module->module_title ?? $module->module_name ?? $module->name ?? 'Sans titre';
               $firstSection = ($module->sections ?? collect())->sortBy('id')->first();
               $officialUrl = $firstSection
-                ? route('formateur.formations.section', [
-                    'module' => $module->id,
-                    'section' => $firstSection->id,
-                  ]) . '?mode=officiel'
+                ? route('formateur.formations.detail', ['module' => $module->id])
                 : null;
             @endphp
 
@@ -165,14 +162,14 @@
 
               <td class="px-6 py-4">
                 @if($statut === 'indisponible')
-                  <span class="text-gray-400 text-sm">Parcours officiel indisponible</span>
+                  <span class="text-gray-400 text-sm">Accès indisponible</span>
                 @elseif($officialUrl)
                   <a href="{{ $officialUrl }}"
                      class="btn-oneduc px-3 py-1 text-xs text-white bg-orangeone border-orangeone hover:bg-white hover:text-orangeone">
-                    Voir le parcours officiel
+                    Voir le module
                   </a>
                 @else
-                  <span class="text-gray-400 text-sm">Parcours officiel indisponible</span>
+                  <span class="text-gray-400 text-sm">Accès indisponible</span>
                 @endif
               </td>
             </tr>

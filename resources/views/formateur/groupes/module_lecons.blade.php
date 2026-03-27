@@ -45,51 +45,34 @@
           </div>
 
           <div class="flex flex-wrap items-center gap-3 md:ml-auto">
-            @if(!empty($officialPreviewUrl))
-              <a href="{{ $officialPreviewUrl }}"
-                 target="_blank"
-                 rel="noopener"
-                 class="inline-flex items-center gap-2 rounded-lg border-2 border-bleuone bg-white px-4 py-2 text-sm font-semibold text-bleuone transition hover:bg-bleuone hover:text-white">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                </svg>
-                Voir le parcours officiel
-              </a>
-            @else
-              <button type="button"
-                      disabled
-                      class="inline-flex cursor-not-allowed items-center gap-2 rounded-lg border-2 border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-400">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                </svg>
-                Voir le parcours officiel
-              </button>
-            @endif
+            @php
+              $previewUrl = $groupPreviewUrl ?: $officialPreviewUrl;
+            @endphp
 
-            @if(!empty($groupPreviewUrl))
-              <a href="{{ $groupPreviewUrl }}"
+            @if(!empty($previewUrl))
+              <a href="{{ $previewUrl }}"
                  target="_blank"
                  rel="noopener"
-                 class="inline-flex items-center gap-2 rounded-lg border-2 border-bleuone bg-white px-4 py-2 text-sm font-semibold text-bleuone transition hover:bg-bleuone hover:text-white">
+                 class="btn-oneduc inline-flex items-center gap-2 !px-4 !py-2 !text-sm">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 19h8a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
-                Voir le parcours du groupe
+                Voir le parcours
               </a>
             @else
               <button type="button"
                       disabled
                       class="inline-flex cursor-not-allowed items-center gap-2 rounded-lg border-2 border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-400">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 19h8a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
-                Voir le parcours du groupe
+                Voir le parcours
               </button>
             @endif
           </div>
         </div>
         <p class="mt-2 text-xs text-gray-500">
-          Les aperçus s'ouvrent dans un nouvel onglet.
+          L'aperçu s'ouvre dans un nouvel onglet.
         </p>
       </div>
 

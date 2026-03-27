@@ -55,14 +55,6 @@
   @endphp
 
   <div class="flex-1 overflow-y-auto custom-scrollbar bg-gray-50/30">
-    <div class="sticky top-0 z-10 border-b border-gray-100 bg-white/95 px-4 py-4 backdrop-blur">
-      <a href="{{ route('stagiaire.modules') }}" class="block rounded-2xl border border-orange-100 bg-orange-50 px-4 py-4 transition hover:border-orange-200 hover:bg-orange-100/70">
-        <span class="block text-[11px] font-bold uppercase tracking-[0.28em] text-orangeone/70">Stagiaire</span>
-        <span class="mt-1 block text-lg font-bold text-bleuone">Formation</span>
-        <span class="mt-2 block text-xs text-gray-500">Vous êtes dans l'espace formation.</span>
-      </a>
-    </div>
-
     <div class="py-4 px-3">
       <ol class="space-y-3">
         @foreach ($module->sections as $sIndex => $section)
@@ -102,7 +94,7 @@
                     {{ $isSectionPage ? 'text-orangeone' : 'text-bleuone' }}"
                     title="{{ $section->section_title }}"
                   >
-                    Chapitre - {{ $section->section_title }}
+                    Ch. {{ $chapterNo }} - {{ $section->section_title }}
                   </h3>
 
                   <span class="text-[11px] font-bold text-gray-400 mt-1 block italic">
@@ -117,6 +109,7 @@
                 <ul class="py-1">
                   @foreach ($section->lectures as $lec)
                     @php
+                      $lessonNo = $loop->iteration;
                       $st = $lectureStats[$lec->id] ?? [];
                       $status = $st['status'] ?? 'not_started';
 
@@ -147,7 +140,7 @@
                                   {{ $isActiveLesson ? 'text-orangeone' : 'text-gray-700' }}"
                                 title="{{ $lec->lecture_title }}"
                               >
-                                {{ $lec->lecture_title }}
+                                Leç. {{ $lessonNo }} - {{ $lec->lecture_title }}
                               </span>
 
                               @if($isActiveLesson)
@@ -184,18 +177,106 @@
 
   {{-- Pied de page --}}
   <div class="p-4 bg-white border-t border-gray-100 space-y-3">
-    @if(isset($selectedLecture) && ($moduleResources ?? $lessonResources ?? collect())->isNotEmpty())
+    @if(($moduleResources ?? $lessonResources ?? collect())->isNotEmpty())
+      <div
+        x-show="resourcesPanelOpen"
+        x-transition.opacity
+        x-cloak
+        class="rounded-2xl border border-gray-200 bg-white p-4 shadow-2xl"
+      >
+        <div class="mb-3 flex items-start justify-between gap-3">
+          <div class="flex items-start gap-2 min-w-0">
+            <h2 class="text-sm font-bold text-bleuone">Ressources du module</h2>
+            <div x-data="{ open: false }" class="relative">
+              <button
+                type="button"
+                @mouseenter="open = true"
+                @mouseleave="open = false"
+                @focus="open = true"
+                @blur="open = false"
+                class="inline-flex h-5 w-5 items-center justify-center rounded-full border border-gray-200 bg-white text-[10px] font-black text-bleuone transition hover:border-bleuone"
+                aria-label="Aide sur les ressources du module"
+              >
+                ?
+              </button>
+              <div
+                x-show="open"
+                x-cloak
+                class="absolute left-0 top-full z-20 mt-2 w-52 rounded-xl border border-slate-200 bg-slate-900 px-3 py-2 text-[11px] leading-relaxed text-white shadow-xl"
+                style="display: none;"
+              >
+                Documents et supports utilises dans le module.
+              </div>
+            </div>
+          </div>
+          <button
+            type="button"
+            @click="resourcesPanelOpen = false"
+            class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 hover:text-bleuone"
+            aria-label="Fermer les fichiers ressources"
+          >
+            <i class="ti ti-x text-base"></i>
+          </button>
+        </div>
+
+        <div class="max-h-[45vh] space-y-3 overflow-y-auto pr-1">
+          @foreach(($moduleResources ?? $lessonResources ?? collect()) as $resource)
+            @php
+              $resourceUrl = $resource->public_url;
+              $resourceExt = strtoupper($resource->extension ?: 'FILE');
+              $resourceDate = optional($resource->created_at)->format('d/m/Y');
+            @endphp
+            <div class="rounded-xl border border-gray-200 bg-gray-50 p-3">
+              <div class="flex items-start gap-3">
+                @if($resource->is_image)
+                  <a href="{{ $resourceUrl }}" target="_blank" class="shrink-0">
+                    <img src="{{ $resourceUrl }}" alt="{{ $resource->title }}" class="h-12 w-12 rounded-lg border border-gray-200 object-cover bg-white">
+                  </a>
+                @else
+                  <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white text-[11px] font-black text-bleuone">
+                    {{ $resourceExt }}
+                  </div>
+                @endif
+
+                <div class="min-w-0 flex-1">
+                  <p class="truncate text-sm font-bold text-gray-800">{{ $resource->title }}</p>
+                  <div class="mt-1 flex items-center gap-1 text-[11px] text-gray-500">
+                    <span class="truncate max-w-[170px]" title="{{ $resource->original_name }}">{{ $resource->original_name }}</span>
+                    @if($resourceDate)
+                      <span class="shrink-0">•</span>
+                      <span class="shrink-0">{{ $resourceDate }}</span>
+                    @endif
+                  </div>
+                  <div class="mt-2 flex flex-wrap gap-2">
+                    <a href="{{ $resourceUrl }}" target="_blank" class="inline-flex items-center rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-[11px] font-bold text-blue-700 hover:bg-blue-100">
+                      Ouvrir
+                    </a>
+                    <a href="{{ $resourceUrl }}" download="{{ $resource->original_name }}" class="inline-flex items-center rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-[11px] font-bold text-gray-700 hover:bg-gray-100">
+                      Télécharger
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          @endforeach
+        </div>
+      </div>
+
       <button
         type="button"
         @click="resourcesPanelOpen = !resourcesPanelOpen"
         class="flex w-full items-center justify-between gap-3 rounded-xl border border-gray-200 bg-gray-50 px-3 py-3 text-left text-gray-600 transition hover:border-gray-300 hover:bg-gray-100"
       >
-        <div class="min-w-0">
-          <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-400">Ressources</p>
-          <p class="mt-1 text-sm font-semibold text-gray-700">Module ({{ ($moduleResources ?? $lessonResources ?? collect())->count() }})</p>
+        <div class="min-w-0 flex items-center gap-3">
+          <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white text-bleuone">
+            <i class="ti ti-folder text-lg"></i>
+          </span>
+          <div class="min-w-0">
+            <p class="text-sm font-semibold text-gray-700">Fichiers ressources</p>
+          </div>
         </div>
-        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500">
-          <i class="ti" :class="resourcesPanelOpen ? 'ti-x' : 'ti-paperclip'"></i>
+        <span class="inline-flex shrink-0 items-center rounded-full border border-gray-200 bg-white px-3 py-1 text-[11px] font-bold text-bleuone">
+          {{ ($moduleResources ?? $lessonResources ?? collect())->count() }}
         </span>
       </button>
     @endif

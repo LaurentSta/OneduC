@@ -106,11 +106,24 @@
         </select>
       </div>
 
+      <div class="w-full md:w-[180px]">
+        <label for="per_page" class="sr-only">Nombre de stagiaires à afficher</label>
+        <select id="per_page"
+                name="per_page"
+                class="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-orangeone focus:border-orangeone text-sm font-lisible">
+          @foreach ($allowedPerPage as $option)
+            <option value="{{ $option }}" @selected($perPage === $option)>
+              {{ $option }} par page
+            </option>
+          @endforeach
+        </select>
+      </div>
+
       <button type="submit" class="btn-oneduc">
         Filtrer
       </button>
 
-      @if(request()->filled('search') || request()->filled('group_id'))
+      @if(request()->filled('search') || request()->filled('group_id') || request('per_page', 10) != 10)
         <a href="{{ route('formateur.stagiaires.index') }}"
           class="btn-oneduc bg-white text-gray-700 border border-gray-300 hover:border-orangeone hover:text-orangeone">
           Réinitialiser

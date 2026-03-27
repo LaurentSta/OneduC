@@ -64,7 +64,7 @@
                     {{ $isSectionPage ? 'text-orangeone' : 'text-bleuone' }}"
                     title="{{ $section->section_title }}"
                   >
-                    Chapitre - {{ $section->section_title }}
+                    Ch. {{ $chapterNo }} - {{ $section->section_title }}
                   </h3>
 
                   {{-- Formateur : pas de progression. On affiche le nombre de leçons. --}}
@@ -80,6 +80,7 @@
                 <ul class="py-1">
                   @foreach ($section->lectures as $lec)
                     @php
+                      $lessonNo = $loop->iteration;
                       $isActiveLesson = ($activeLessonId && (int) $activeLessonId === (int) $lec->id);
                       $displayedQuestions = (bool) ($lec->quiz_enabled ?? false)
                         ? (int) ($lec->quiz_questions_per_attempt ?? 0)
@@ -106,7 +107,7 @@
                                   {{ $isActiveLesson ? 'text-orangeone' : 'text-gray-700' }}"
                                 title="{{ $lec->lecture_title }}"
                               >
-                                {{ $lec->lecture_title }}
+                                Leç. {{ $lessonNo }} - {{ $lec->lecture_title }}
                               </span>
 
                               @if($isActiveLesson)

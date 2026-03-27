@@ -21,6 +21,7 @@ Route::middleware(['auth', 'role:formateur'])
 
     // 🖥️ Dashboard & profil formateur
     Route::get('/', [FormateurController::class, 'FormateurDashboard'])->name('dashboard');
+    Route::get('/dashboard/activity', [FormateurController::class, 'dashboardActivity'])->name('dashboard.activity');
     Route::get('/profile', [FormateurController::class, 'FormateurProfile'])->name('profile');
     Route::get('/parametre', [FormateurController::class, 'FormateurParametre'])->name('parametre');
     Route::get('/documentation', fn () => view('formateur.documentation'))->name('documentation');
