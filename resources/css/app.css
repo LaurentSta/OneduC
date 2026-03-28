@@ -77,8 +77,7 @@
     }
 
     body.oneduc-public .btn-oneduc,
-    body.oneduc-public .btn-oneduc-blue,
-    body.oneduc-public .btn-access {
+    body.oneduc-public .btn-oneduc-blue {
       transition: none;
     }
   }
@@ -105,83 +104,7 @@
   }
 }
 
-/* =========================
-   Confort+ (utilitaires)
-   ========================= */
-
-@utility access-anchor {
-  position: absolute;
-  z-index: 9999;
-  pointer-events: none;
-  right: 20px;
-  margin-top: -1px;
-
-  @media (max-width: 768px) {
-    right: 16px;
-    top: auto;
-    bottom: 16px;
-  }
-}
-
-@utility accessibility-toolbar {
-  position: fixed;
-  right: 60px;
-  transform: none !important;
-  max-height: calc(100vh - var(--access-top, 96px) - 16px);
-  overflow: auto;
-  z-index: 9998;
-  box-shadow: none !important;
-
-  @media (max-width: 768px) {
-    right: 16px !important;
-    top: auto !important;
-    bottom: 80px !important;
-  }
-}
-
-@utility z-access {
-  z-index: 9999;
-}
-
 @layer utilities {
-  .btn-access {
-    height: 3rem;
-    width: 3rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #fff;
-    border: 1px solid #004461;
-    color: transparent;
-    font-size: 0;
-    position: relative;
-    pointer-events: auto;
-    transition: all 0.3s ease;
-    box-shadow: none !important; /* Suppression de l'ombre orange d'origine */
-
-    &::after {
-      content: "+";
-      color: #E94D2A;
-      font-size: 24px;
-      font-weight: 700;
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-    }
-
-    &:hover {
-      background: #E94D2A;
-      border-color: #E94D2A;
-      &::after { color: #fff; }
-    }
-
-    @media (max-width: 768px) {
-      width: 56px;
-      height: 56px;
-    }
-  }
-
   .whiteboard-grid {
     background-color: #ffffff;
     background-image:

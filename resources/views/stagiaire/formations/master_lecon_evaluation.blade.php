@@ -56,8 +56,6 @@
         @if (!isset($hideHeader))
             @include('stagiaire.formations.body_formations.header')
         @endif
-        {{-- Bouton Confort+ sous le header --}}
-<div id="access-toolbar-anchor" class="access-anchor" aria-label="Outils d’accessibilité"></div>
         <div class="mx-auto px-2 md:px-2 py-0">
             <div
               class="grid gap-6"
@@ -113,16 +111,6 @@
 
         
     </div>
-    <script>
-  var hebergementDomaine = window.location.origin;
-  var hebergementFullPath = hebergementDomaine + '/confortplus/';
-  window.accessibilitytoolbar_custom = {
-    idLinkModeContainer: 'access-toolbar-anchor',
-    cssLinkModeClassName: 'btn-access'
-  };
-</script>
-{{-- ... reste de votre code master ... --}}
-
     <script>
     function syncAppHeaderOffset() {
         const header = document.getElementById('app-header') || document.querySelector('header');
