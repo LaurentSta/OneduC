@@ -24,31 +24,6 @@
           et ceux qui ont besoin d’un accompagnement.
         </p>
 
-        {{-- Indicateurs synthétiques --}}
-        <div class="flex flex-wrap items-center gap-x-6 gap-y-2 mt-2">
-          {{-- Total stagiaires --}}
-          <p class="text-sm text-gray-600 font-varela">
-            Nombre total de stagiaires :
-            <span class="text-gray-900 font-semibold">{{ $totalStagiaires ?? $stagiaires->count() }}</span>
-          </p>
-
-          {{-- Total groupes --}}
-          <p class="text-sm text-gray-600 font-varela">
-            Nombre total de groupes :
-            <span class="text-gray-900 font-semibold">{{ $totalGroupes ?? $groupes->count() }}</span>
-          </p>
-
-          {{-- Groupe sélectionné --}}
-          @if(!empty($groupId))
-            <p class="text-sm text-gray-600 font-varela">
-              Groupe sélectionné :
-              <span class="text-orangeone font-semibold">
-                {{ optional($groupes->firstWhere('id', (int)$groupId))->name }}
-              </span>
-            </p>
-          @endif
-        </div>
-
         {{-- Fil d’Ariane --}}
         <nav class="text-sm font-varela text-gray-600 mt-3" aria-label="Fil d'Ariane">
           <ol class="inline-flex items-center space-x-1">
@@ -76,41 +51,74 @@
   {{-- CONTENU --}}
   <main class="space-y-6">
 
-    {{-- Barre actions + filtre groupe --}}
-    <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+    <form method="GET" action="{{ route('formateur.progressions.stagiaires') }}" class="space-y-3">
+      <div class="flex flex-wrap items-end gap-3">
+        <div class="w-full md:flex-1 md:min-w-[240px]">
+          <label for="search" class="sr-only">Recherche stagiaire</label>
+          <input type="text"
+                 id="search"
+                 name="search"
+                 value="{{ $search ?? request('search') }}"
+                 placeholder="Recherche prénom, nom ou email"
+                 class="h-10 w-full rounded-md border border-gray-300 px-4 text-sm font-lisible shadow-sm focus:border-orangeone focus:ring-orangeone">
+        </div>
 
-      <div class="flex flex-wrap gap-3">
-        <a href="{{ route('formateur.progressions.groupes') }}" class="btn-oneduc">
-          Voir les groupes
+        <div class="w-full md:w-[280px]">
+          <label for="group_id" class="sr-only">Filtrer par groupe</label>
+          <select id="group_id"
+                  name="group_id"
+                  class="h-10 w-full rounded-md border border-gray-300 px-4 text-sm font-lisible shadow-sm focus:border-orangeone focus:ring-orangeone">
+            <option value="">Tous les groupes</option>
+            @foreach($groupes as $g)
+              <option value="{{ $g->id }}" @selected((int)$g->id === (int)($groupId ?? 0))>
+                {{ $g->name }}
+              </option>
+            @endforeach
+          </select>
+        </div>
+
+        <button type="submit" class="inline-flex h-10 items-center justify-center rounded-md border border-orangeone bg-orangeone px-5 text-sm font-varela text-white transition hover:bg-white hover:text-orangeone">
+          Filtrer
+        </button>
+
+        @if(request()->filled('search') || !empty($groupId))
+          <a href="{{ route('formateur.progressions.stagiaires') }}"
+             class="inline-flex h-10 items-center justify-center rounded-md border border-gray-300 bg-white px-5 text-sm font-varela text-gray-700 transition hover:border-orangeone hover:text-orangeone">
+            Réinitialiser
+          </a>
+        @endif
+
+        <a href="{{ route('formateur.progressions.groupes') }}"
+           class="inline-flex h-10 items-center justify-center rounded-md border border-orangeone bg-orangeone px-5 text-sm font-varela text-white transition hover:bg-white hover:text-orangeone">
+          Suivi par groupe
         </a>
 
-        <a href="{{ route('formateur.progressions.stagiaires') }}" class="btn-oneduc">
+        <a href="{{ route('formateur.progressions.stagiaires') }}"
+           class="inline-flex h-10 items-center justify-center rounded-md border border-orangeone bg-orangeone px-5 text-sm font-varela text-white transition hover:bg-white hover:text-orangeone">
           Tous les stagiaires
         </a>
       </div>
 
-      {{-- Filtre groupe --}}
-      <form method="GET" action="{{ route('formateur.progressions.stagiaires') }}" class="flex flex-wrap items-center gap-3">
-        <label for="group_id" class="text-sm font-varela text-gray-700">
-          Filtrer par groupe
-        </label>
+      @if(request('search') || !empty($groupId))
+        <div class="flex flex-wrap items-center gap-x-6 gap-y-2 pt-1">
+          @if(request('search'))
+            <p class="text-sm text-gray-600 font-varela">
+              Recherche active :
+              <span class="text-orangeone font-semibold">{{ request('search') }}</span>
+            </p>
+          @endif
 
-        <select id="group_id"
-                name="group_id"
-                class="w-full md:w-[320px] px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-orangeone focus:border-orangeone text-sm font-lisible">
-          <option value="">Tous les groupes</option>
-          @foreach($groupes as $g)
-            <option value="{{ $g->id }}" @selected((int)$g->id === (int)($groupId ?? 0))>
-              {{ $g->name }}
-            </option>
-          @endforeach
-        </select>
-
-        <button type="submit" class="btn-oneduc">
-          Appliquer
-        </button>
-      </form>
-    </div>
+          @if(!empty($groupId))
+            <p class="text-sm text-gray-600 font-varela">
+              Groupe sélectionné :
+              <span class="text-orangeone font-semibold">
+                {{ optional($groupes->firstWhere('id', (int)$groupId))->name }}
+              </span>
+            </p>
+          @endif
+        </div>
+      @endif
+    </form>
 
     {{-- Tableau stagiaires --}}
     <div class="overflow-x-auto bg-white shadow-md rounded-[20px]">
@@ -201,6 +209,17 @@
           @endforelse
         </tbody>
       </table>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-2">
+      <div class="inline-flex items-center gap-2 rounded-full border border-bleuone/20 bg-white px-4 py-2 text-sm font-varela text-gray-700">
+        <span>Nombre total de stagiaires :</span>
+        <span class="font-bold text-bleuone">{{ $totalStagiaires ?? $stagiaires->count() }}</span>
+      </div>
+      <div class="inline-flex items-center gap-2 rounded-full border border-orangeone/20 bg-white px-4 py-2 text-sm font-varela text-gray-700">
+        <span>Nombre total de groupes :</span>
+        <span class="font-bold text-orangeone">{{ $totalGroupes ?? $groupes->count() }}</span>
+      </div>
     </div>
 
   </main>

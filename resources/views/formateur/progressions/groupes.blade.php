@@ -46,50 +46,45 @@
 
   <main class="space-y-8">
 
-    {{-- Synthèse --}}
-    <div class="flex flex-wrap items-center justify-between gap-4 px-6 pt-4 pb-0">
-      <div class="inline-flex items-center gap-2 rounded-full border border-bleuone/20 bg-white px-4 py-2 text-sm font-varela text-gray-700">
-        <span>Nombre total de groupes :</span>
-        <span class="font-bold text-bleuone">{{ $totalGroupes ?? 0 }}</span>
-      </div>
-
-      @if(request('search'))
-        <p class="text-sm text-gray-600 font-varela">
-          Recherche active :
-          <span class="text-orangeone font-semibold">{{ request('search') }}</span>
-        </p>
-      @endif
-    </div>
-
-    {{-- Actions --}}
-    <div class="flex flex-wrap justify-end gap-3">
-      <a href="{{ route('formateur.progressions.stagiaires') }}" class="btn-oneduc">
-        Suivi par stagiaire
-      </a>
-      <a href="{{ route('formateur.progressions.modules') }}" class="btn-oneduc">
-        Suivi par module
-      </a>
-    </div>
-
     {{-- Recherche --}}
-    <form method="GET" class="flex flex-wrap items-end gap-3 -mt-1">
-      <div class="w-full md:w-1/2">
+    <form method="GET" class="space-y-3">
+      <div class="flex flex-wrap items-end gap-3">
+        <div class="w-full md:flex-1 md:min-w-[280px]">
         <label for="search" class="sr-only">Recherche</label>
         <input type="text"
                id="search"
                name="search"
                value="{{ $search ?? request('search') }}"
                placeholder="Recherche nom du groupe"
-               class="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-orangeone focus:border-orangeone text-sm font-lisible">
+               class="h-10 w-full rounded-md border border-gray-300 px-4 text-sm font-lisible shadow-sm focus:border-orangeone focus:ring-orangeone">
+        </div>
+
+        <button type="submit" class="inline-flex h-10 items-center justify-center rounded-md border border-orangeone bg-orangeone px-5 text-sm font-varela text-white transition hover:bg-white hover:text-orangeone">
+          Filtrer
+        </button>
+
+        @if(request()->filled('search'))
+          <a href="{{ route('formateur.progressions.groupes') }}"
+             class="inline-flex h-10 items-center justify-center rounded-md border border-gray-300 bg-white px-5 text-sm font-varela text-gray-700 transition hover:border-orangeone hover:text-orangeone">
+            Réinitialiser
+          </a>
+        @endif
+
+        <a href="{{ route('formateur.progressions.stagiaires') }}"
+           class="inline-flex h-10 items-center justify-center rounded-md border border-orangeone bg-orangeone px-5 text-sm font-varela text-white transition hover:bg-white hover:text-orangeone">
+          Suivi par stagiaire
+        </a>
+        <a href="{{ route('formateur.progressions.modules') }}"
+           class="inline-flex h-10 items-center justify-center rounded-md border border-orangeone bg-orangeone px-5 text-sm font-varela text-white transition hover:bg-white hover:text-orangeone">
+          Suivi par module
+        </a>
       </div>
 
-      <button type="submit" class="btn-oneduc">Filtrer</button>
-
-      @if(request()->filled('search'))
-        <a href="{{ route('formateur.progressions.groupes') }}"
-           class="btn-oneduc bg-white text-gray-700 border border-gray-300 hover:border-orangeone hover:text-orangeone">
-          Réinitialiser
-        </a>
+      @if(request('search'))
+        <p class="pt-1 text-sm text-gray-600 font-varela">
+          Recherche active :
+          <span class="text-orangeone font-semibold">{{ request('search') }}</span>
+        </p>
       @endif
     </form>
 
@@ -165,6 +160,13 @@
           @endforelse
         </tbody>
       </table>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-2">
+      <div class="inline-flex items-center gap-2 rounded-full border border-bleuone/20 bg-white px-4 py-2 text-sm font-varela text-gray-700">
+        <span>Nombre total de groupes :</span>
+        <span class="font-bold text-bleuone">{{ $totalGroupes ?? 0 }}</span>
+      </div>
     </div>
 
     {{-- Pagination --}}

@@ -54,11 +54,13 @@
 
   {{-- ACTIONS --}}
   <div class="flex flex-wrap justify-end gap-3 mb-6">
-    <a href="{{ route('formateur.progressions.groupes') }}" class="btn-oneduc">
+    <a href="{{ route('formateur.progressions.groupes') }}"
+       class="inline-flex h-10 items-center justify-center rounded-md border border-orangeone bg-orangeone px-5 text-sm font-varela text-white transition hover:bg-white hover:text-orangeone">
       Suivi par groupe
     </a>
 
-    <a href="{{ route('formateur.progressions.stagiaires') }}" class="btn-oneduc">
+    <a href="{{ route('formateur.progressions.stagiaires') }}"
+       class="inline-flex h-10 items-center justify-center rounded-md border border-orangeone bg-orangeone px-5 text-sm font-varela text-white transition hover:bg-white hover:text-orangeone">
       Suivi par stagiaire
     </a>
   </div>
@@ -145,6 +147,13 @@
             <p class="text-gray-500">Aucun module associé à vos groupes pour le moment.</p>
         </div>
     @endforelse
+
+    <div class="flex flex-wrap items-center gap-2">
+        <div class="inline-flex items-center gap-2 rounded-full border border-bleuone/20 bg-white px-4 py-2 text-sm font-varela text-gray-700">
+            <span>Nombre total de modules :</span>
+            <span class="font-bold text-bleuone">{{ $modules->count() }}</span>
+        </div>
+    </div>
 
   </main>
 </div>

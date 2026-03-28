@@ -57,77 +57,65 @@
       </div>
     @endif
 
-    {{-- 📊 Synthèse --}}
-    <div class="flex flex-wrap items-center justify-between gap-4 px-6 pt-4 pb-0">
-      <div class="flex flex-wrap items-center gap-3">
-        <div class="inline-flex items-center gap-2 rounded-full border border-bleuone/20 bg-white px-4 py-2 text-sm font-varela text-gray-700">
-          <span>Nombre total de stagiaires :</span>
-          <span class="font-bold text-bleuone">{{ $stagiaires->total() }}</span>
-        </div>
-        <div class="inline-flex items-center gap-2 rounded-full border border-orangeone/20 bg-white px-4 py-2 text-sm font-varela text-gray-700">
-          <span>Nombre total de groupes :</span>
-          <span class="font-bold text-orangeone">{{ $groupes->count() }}</span>
-        </div>
-      </div>
-
-      @if(request('group_id'))
-        <p class="text-sm text-gray-600 font-varela">
-          Groupe sélectionné :
-          <span class="text-orangeone font-semibold">
-            {{ optional($groupes->firstWhere('id', (int)request('group_id')))->name }}
-          </span>
-        </p>
-      @endif
-    </div>
-
     {{-- 🔎 Barre de recherche --}}
-    <form method="GET" class="flex flex-wrap items-end gap-3 -mt-1">
-      <div class="w-full md:w-1/2">
-        <label for="search" class="sr-only">Recherche</label>
-        <input type="text"
-              id="search"
-              name="search"
-              value="{{ request('search') }}"
-              placeholder="Recherche prénom, nom ou email"
-              class="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-orangeone focus:border-orangeone text-sm font-lisible">
-      </div>
-
-      <div class="w-full md:w-[280px]">
-        <label for="group_id" class="sr-only">Groupe</label>
-        <select id="group_id"
-                name="group_id"
-                class="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-orangeone focus:border-orangeone text-sm font-lisible">
-          <option value="">Tous les groupes</option>
-          @foreach ($groupes as $groupe)
-            <option value="{{ $groupe->id }}" @selected((string)request('group_id') === (string)$groupe->id)>
-              {{ $groupe->name }}
-            </option>
-          @endforeach
-        </select>
-      </div>
-
-      <div class="w-full md:w-[180px]">
+    <form method="GET" class="space-y-3">
+      <div class="flex flex-wrap items-end gap-3">
+        <div class="w-full md:w-[180px]">
         <label for="per_page" class="sr-only">Nombre de stagiaires à afficher</label>
         <select id="per_page"
                 name="per_page"
-                class="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-orangeone focus:border-orangeone text-sm font-lisible">
+                class="h-10 w-full rounded-md border border-gray-300 px-4 text-sm font-lisible shadow-sm focus:border-orangeone focus:ring-orangeone">
           @foreach ($allowedPerPage as $option)
             <option value="{{ $option }}" @selected($perPage === $option)>
               {{ $option }} par page
             </option>
           @endforeach
         </select>
+        </div>
+
+        <div class="w-full md:flex-1 md:min-w-[260px]">
+          <label for="search" class="sr-only">Recherche prénom</label>
+          <input type="text"
+                id="search"
+                name="search"
+                value="{{ request('search') }}"
+                placeholder="Recherche prénom"
+                class="h-10 w-full rounded-md border border-gray-300 px-4 text-sm font-lisible shadow-sm focus:border-orangeone focus:ring-orangeone">
+        </div>
+
+        <div class="w-full md:w-[280px]">
+          <label for="group_id" class="sr-only">Recherche de groupe</label>
+          <select id="group_id"
+                  name="group_id"
+                  class="h-10 w-full rounded-md border border-gray-300 px-4 text-sm font-lisible shadow-sm focus:border-orangeone focus:ring-orangeone">
+            <option value="">Recherche de groupe</option>
+            @foreach ($groupes as $groupe)
+              <option value="{{ $groupe->id }}" @selected((string)request('group_id') === (string)$groupe->id)>
+                {{ $groupe->name }}
+              </option>
+            @endforeach
+          </select>
+        </div>
+
+        <button type="submit" class="inline-flex h-10 items-center justify-center rounded-md border border-orangeone bg-orangeone px-5 text-sm font-varela text-white transition hover:bg-white hover:text-orangeone">
+          Filtrer
+        </button>
+
+        @if(request()->filled('search') || request()->filled('group_id') || request('per_page', 10) != 10)
+          <a href="{{ route('formateur.stagiaires.index') }}"
+            class="inline-flex h-10 items-center justify-center rounded-md border border-gray-300 bg-white px-5 text-sm font-varela text-gray-700 transition hover:border-orangeone hover:text-orangeone">
+            Réinitialiser
+          </a>
+        @endif
       </div>
 
-      <button type="submit" class="btn-oneduc">
-        Filtrer
-      </button>
-
-      @if(request()->filled('search') || request()->filled('group_id') || request('per_page', 10) != 10)
-        <a href="{{ route('formateur.stagiaires.index') }}"
-          class="btn-oneduc bg-white text-gray-700 border border-gray-300 hover:border-orangeone hover:text-orangeone">
-          Réinitialiser
-        </a>
+      @if(request('group_id'))
+        <p class="pt-1 text-sm text-gray-600 font-varela">
+          Groupe sélectionné :
+          <span class="text-orangeone font-semibold">
+            {{ optional($groupes->firstWhere('id', (int)request('group_id')))->name }}
+          </span>
+        </p>
       @endif
     </form>
 
@@ -194,6 +182,17 @@
           @endforelse
         </tbody>
       </table>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-2">
+      <div class="inline-flex items-center gap-2 rounded-full border border-bleuone/20 bg-white px-4 py-2 text-sm font-varela text-gray-700">
+        <span>Nombre total de stagiaires :</span>
+        <span class="font-bold text-bleuone">{{ $stagiaires->total() }}</span>
+      </div>
+      <div class="inline-flex items-center gap-2 rounded-full border border-orangeone/20 bg-white px-4 py-2 text-sm font-varela text-gray-700">
+        <span>Nombre total de groupes :</span>
+        <span class="font-bold text-orangeone">{{ $groupes->count() }}</span>
+      </div>
     </div>
 
     {{-- 📄 Pagination --}}
