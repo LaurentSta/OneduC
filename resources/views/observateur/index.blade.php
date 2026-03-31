@@ -29,8 +29,8 @@
       <p class="mt-2 text-3xl font-bold text-bleuone">{{ $formateurCount }}</p>
     </article>
     <article class="bg-white rounded-[20px] shadow-md p-6 border border-gray-100">
-      <p class="text-sm font-varela text-gray-500">Score moyen observé</p>
-      <p class="mt-2 text-3xl font-bold text-bleuone">{{ $avgScoreRounded }}%</p>
+      <p class="text-sm font-varela text-gray-500">Taux de réussite observé</p>
+      <p class="mt-2 text-3xl font-bold text-bleuone">{{ $avgSuccessRate ?? 0 }}%</p>
       <p class="mt-1 text-xs text-gray-500">{{ $learnerCount }} stagiaire(s) suivis</p>
     </article>
   </section>

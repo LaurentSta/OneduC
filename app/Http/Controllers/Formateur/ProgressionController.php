@@ -7,13 +7,20 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use App\Models\ModuleLecture;
 use App\Models\Progression;
 use App\Models\User;
 use App\Models\Group;
 use App\Models\Module;
+use App\Services\LearningAnalyticsService;
 
 class ProgressionController extends Controller
 {
+    public function __construct(
+        private readonly LearningAnalyticsService $learningAnalytics,
+    ) {
+    }
+
     /**
      * Contrôleur unique piloté par la route (defaults('view', ...))
      * Vues :
@@ -55,65 +62,33 @@ class ProgressionController extends Controller
                 ->paginate(15, ['id', 'name'])
                 ->withQueryString();
 
-            $groupes->getCollection()->transform(function ($g) use ($formateurId) {
+            $pageGroupIds = $groupes->getCollection()->pluck('id')->all();
+            $fifteenDaysAgo = now()->subDays(15);
+            $learnerIdsByGroup = $this->resolveGroupLearnerIds($pageGroupIds);
+            $lectureIdsByGroup = $this->resolveGroupLectureIds($pageGroupIds);
+            $allLearnerIds = $learnerIdsByGroup->flatten()->unique()->values()->all();
+            $allLectureIds = $lectureIdsByGroup->flatten()->unique()->values()->all();
+            $snapshots = $this->learningAnalytics->collectSnapshots($allLearnerIds, $allLectureIds);
 
-                    // Récupérer les stagiaires
-                    $stagiaires = User::query()
-                        ->join('group_user', 'users.id', '=', 'group_user.user_id')
-                        ->where('group_user.group_id', $g->id)
-                        ->where('users.role', 'stagiaire')
-                        ->select('users.id')
-                        ->get();
+            $groupes->getCollection()->transform(function ($group) use ($fifteenDaysAgo, $learnerIdsByGroup, $lectureIdsByGroup, $snapshots) {
+                $stagiaireIds = collect($learnerIdsByGroup->get($group->id, collect()))->values();
+                $groupLectureIds = collect($lectureIdsByGroup->get($group->id, collect()))->values()->all();
+                $scopeSnapshots = $this->filterSnapshots($snapshots, $stagiaireIds->all(), $groupLectureIds);
+                $scopeMetrics = $this->learningAnalytics->aggregateScopeMetrics($scopeSnapshots, $fifteenDaysAgo);
 
-                    $stagiaireIds = $stagiaires->pluck('id');
-                    $g->stagiaires_count = $stagiaireIds->count();
+                $startedCount = (int) ($scopeMetrics['started_users_count'] ?? 0);
+                $recentCount = (int) ($scopeMetrics['recent_users_count'] ?? 0);
 
-                    // Modules du groupe
-                    $g->modules_count = (int) DB::table('group_module')->where('group_id', $g->id)->count();
+                $group->stagiaires_count = $stagiaireIds->count();
+                $group->modules_count = (int) DB::table('group_module')->where('group_id', $group->id)->count();
+                $group->total_site_time = (int) User::whereIn('id', $stagiaireIds)->sum('total_site_time');
+                $group->lecons_terminees_count = (int) ($scopeMetrics['completed_count'] ?? 0);
+                $group->taux_reussite = (int) ($scopeMetrics['success_rate'] ?? 0);
+                $group->not_started_count = max(0, $stagiaireIds->count() - $startedCount);
+                $group->inactive_count = max(0, $startedCount - $recentCount);
 
-                    // --- 🚨 NOUVEAUX INDICATEURS DE DÉCROCHAGE ---
-                    
-                    // 1. Jamais commencé : Aucune progression enregistrée
-                    $activeUserIds = Progression::whereIn('user_id', $stagiaireIds)->distinct('user_id')->pluck('user_id')->toArray();
-                    $g->not_started_count = $stagiaireIds->count() - count($activeUserIds);
-
-                    // 2. Inactifs : N'a rien terminé depuis 15 jours (parmi ceux qui ont commencé)
-                    $fifteenDaysAgo = now()->subDays(15);
-                    
-                    $recentActivityIds = Progression::whereIn('user_id', $stagiaireIds)
-                        ->where('completed_at', '>=', $fifteenDaysAgo)
-                        ->distinct('user_id')
-                        ->pluck('user_id')
-                        ->toArray();
-
-                    // Ceux qui ont commencé MAIS n'ont rien fait récemment
-                    $g->inactive_count = count(array_diff($activeUserIds, $recentActivityIds));
-
-                    // --- FIN INDICATEURS ---
-
-                    // Calculs existants (Moyennes, Temps...)
-                    $g->total_site_time = (int) User::whereIn('id', $stagiaireIds)->sum('total_site_time');
-                    $g->lecons_terminees_count = 0;
-                    $g->taux_reussite = 0;
-
-                    if ($stagiaireIds->isNotEmpty()) {
-                        $g->lecons_terminees_count = (int) Progression::whereIn('user_id', $stagiaireIds)->count();
-                        
-                        $success = (int) DB::table('progressions')
-                            ->join('scorm_scores', function ($join) {
-                                $join->on('progressions.user_id', '=', 'scorm_scores.user_id')
-                                     ->on('progressions.lecture_id', '=', 'scorm_scores.lecture_id');
-                            })
-                            ->whereIn('progressions.user_id', $stagiaireIds)
-                            ->where('scorm_scores.last_score', '>=', 50)
-                            ->count();
-
-                        $total = $g->lecons_terminees_count;
-                        $g->taux_reussite = $total > 0 ? (int) round(($success / $total) * 100) : 0;
-                    }
-
-                    return $g;
-                });
+                return $group;
+            });
 
             return view('formateur.progressions.groupes', [
                 'groupes'      => $groupes,
@@ -128,6 +103,9 @@ class ProgressionController extends Controller
         |--------------------------------------------------------------------------
         */
         if ($view === 'stagiaires') {
+            if ($groupId > 0 && ! $groupesList->pluck('id')->contains($groupId)) {
+                abort(403);
+            }
 
             $query = User::query()
                 ->where('role', 'stagiaire')
@@ -159,45 +137,35 @@ class ProgressionController extends Controller
                 ->with(['groupesStagiaire' => function ($q) use ($formateurId) {
                     $q->where('instructor_id', $formateurId)->orderBy('name');
                 }])
-                ->withCount(['progressions as lecons_terminees_count'])
                 ->orderBy('name')
                 ->paginate(15)
                 ->withQueryString();
 
-            // Enrichissement : dernière activité + taux de réussite
             $ids = $stagiaires->getCollection()->pluck('id')->all();
+            $groupLectureIdsByGroup = $this->resolveGroupLectureIds($groupesList->pluck('id')->all());
+            $allLectureIds = $groupLectureIdsByGroup->flatten()->unique()->values()->all();
+            $lectureScopeIds = $groupId > 0
+                ? collect($groupLectureIdsByGroup->get($groupId, collect()))->values()->all()
+                : $allLectureIds;
+            $scopeSnapshots = $this->filterSnapshots(
+                $this->learningAnalytics->collectSnapshots($ids, $lectureScopeIds),
+                $ids,
+                $lectureScopeIds,
+            );
+            $userMetrics = $this->learningAnalytics->aggregateUserMetrics($scopeSnapshots);
 
-            $lastActivity = Progression::query()
-                ->selectRaw('user_id, MAX(completed_at) as last_completed_at')
-                ->whereIn('user_id', $ids)
-                ->groupBy('user_id')
-                ->pluck('last_completed_at', 'user_id');
+            $stagiaires->getCollection()->transform(function ($stagiaire) use ($userMetrics) {
+                $metrics = $userMetrics->get($stagiaire->id, [
+                    'completed_count' => 0,
+                    'success_rate' => 0,
+                    'last_activity_at' => null,
+                ]);
 
-            $completedCount = Progression::query()
-                ->selectRaw('user_id, COUNT(*) as total')
-                ->whereIn('user_id', $ids)
-                ->groupBy('user_id')
-                ->pluck('total', 'user_id');
+                $stagiaire->lecons_terminees_count = (int) ($metrics['completed_count'] ?? 0);
+                $stagiaire->last_completed_at = $metrics['last_activity_at'] ?? null;
+                $stagiaire->taux_reussite = (int) ($metrics['success_rate'] ?? 0);
 
-            $successCount = DB::table('progressions')
-                ->join('scorm_scores', function ($join) {
-                    $join->on('progressions.user_id', '=', 'scorm_scores.user_id')
-                         ->on('progressions.lecture_id', '=', 'scorm_scores.lecture_id');
-                })
-                ->whereIn('progressions.user_id', $ids)
-                ->where('scorm_scores.last_score', '>=', 50)
-                ->selectRaw('progressions.user_id, COUNT(*) as success')
-                ->groupBy('progressions.user_id')
-                ->pluck('success', 'progressions.user_id');
-
-            $stagiaires->getCollection()->transform(function ($s) use ($lastActivity, $completedCount, $successCount) {
-                $total = (int) ($completedCount[$s->id] ?? 0);
-                $ok    = (int) ($successCount[$s->id] ?? 0);
-
-                $s->last_completed_at = $lastActivity[$s->id] ?? null;
-                $s->taux_reussite     = $total > 0 ? (int) round(($ok / $total) * 100) : 0;
-
-                return $s;
+                return $stagiaire;
             });
 
             return view('formateur.progressions.stagiaires', [
@@ -409,7 +377,22 @@ class ProgressionController extends Controller
                 ->orderBy('module_title')
                 ->get();
 
-            $modules = $modules->map(function ($m) use ($formateurId) {
+            $lectureIdsByModule = $this->resolveModuleLectureIds($modules->pluck('id')->all());
+            $allModuleLearnerIds = DB::table('group_module')
+                ->join('group_user', 'group_user.group_id', '=', 'group_module.group_id')
+                ->join('groups', 'groups.id', '=', 'group_module.group_id')
+                ->join('users', 'users.id', '=', 'group_user.user_id')
+                ->where('groups.instructor_id', $formateurId)
+                ->where('users.role', 'stagiaire')
+                ->pluck('users.id')
+                ->map(fn ($id) => (int) $id)
+                ->unique()
+                ->values()
+                ->all();
+            $allLectureIds = $lectureIdsByModule->flatten()->unique()->values()->all();
+            $allSnapshots = $this->learningAnalytics->collectSnapshots($allModuleLearnerIds, $allLectureIds);
+
+            $modules = $modules->map(function ($m) use ($allSnapshots, $formateurId, $lectureIdsByModule) {
                 
                 // 1. Stagiaires assignés via les groupes du formateur
                 $stagiaireIds = DB::table('group_module')
@@ -422,38 +405,19 @@ class ProgressionController extends Controller
                     ->pluck('users.id')
                     ->unique();
 
+                $moduleLectureIds = collect($lectureIdsByModule->get($m->id, collect()))->values()->all();
+                $scopeSnapshots = $this->filterSnapshots($allSnapshots, $stagiaireIds->all(), $moduleLectureIds);
+                $scopeMetrics = $this->learningAnalytics->aggregateScopeMetrics($scopeSnapshots);
+
                 $m->stagiaires_count = $stagiaireIds->count();
                 $m->groupes_count = DB::table('group_module')
                     ->join('groups', 'groups.id', '=', 'group_module.group_id')
                     ->where('module_id', $m->id)
                     ->where('groups.instructor_id', $formateurId)
                     ->count();
-
-                // 2. Score Moyen (Calcul existant)
-                $avgScore = DB::table('scorm_scores')
-                    ->join('module_lectures', 'module_lectures.id', '=', 'scorm_scores.lecture_id')
-                    ->join('module_sections', 'module_sections.id', '=', 'module_lectures.section_id')
-                    ->where('module_sections.module_id', $m->id)
-                    ->whereIn('scorm_scores.user_id', $stagiaireIds)
-                    ->avg('scorm_scores.last_score');
-                
-                $m->avg_score = (int) round($avgScore ?? 0);
-
-                // --- 🚨 NOUVEAU : TAUX D'ABANDON ---
-                // Définition : Ont commencé le module (au moins 1 leçon faite) MAIS ne l'ont pas fini.
-                // Note : On considère "Fini" si toutes les leçons sont completed. C'est lourd à calculer parfaitement.
-                // Approche simplifiée : On regarde ceux qui ont démarré mais dont la dernière activité date de > 15j
-                
-                $startedUsers = Progression::whereIn('user_id', $stagiaireIds)
-                    ->join('module_lectures', 'module_lectures.id', '=', 'progressions.lecture_id')
-                    ->join('module_sections', 'module_sections.id', '=', 'module_lectures.section_id')
-                    ->where('module_sections.module_id', $m->id)
-                    ->distinct('progressions.user_id')
-                    ->count();
-
-                // Ce n'est pas un vrai "Abandon" (churn) mais plutôt un "Démarrage"
-                $m->started_count = $startedUsers;
-                $m->start_rate = $m->stagiaires_count > 0 ? round(($startedUsers / $m->stagiaires_count) * 100) : 0;
+                $m->avg_score = (int) ($scopeMetrics['average_score'] ?? 0);
+                $m->started_count = (int) ($scopeMetrics['started_users_count'] ?? 0);
+                $m->start_rate = $m->stagiaires_count > 0 ? round(($m->started_count / $m->stagiaires_count) * 100) : 0;
 
 
                 // --- ❌ NOUVEAU : TOP 3 QUESTIONS ÉCHOUÉES ---
@@ -494,6 +458,117 @@ class ProgressionController extends Controller
 
         // Fallback
         return redirect()->route('formateur.progressions.groupes');
+    }
+
+    private function resolveGroupLearnerIds(array $groupIds): Collection
+    {
+        $groupIds = collect($groupIds)
+            ->map(fn ($id) => (int) $id)
+            ->filter(fn (int $id) => $id > 0)
+            ->values()
+            ->all();
+
+        if ($groupIds === []) {
+            return collect();
+        }
+
+        $learnerIdsByGroup = DB::table('group_user')
+            ->join('users', 'users.id', '=', 'group_user.user_id')
+            ->whereIn('group_user.group_id', $groupIds)
+            ->where('group_user.role_in_group', 'stagiaire')
+            ->where('users.role', 'stagiaire')
+            ->select('group_user.group_id', 'group_user.user_id')
+            ->get()
+            ->groupBy('group_id')
+            ->map(fn ($rows) => $rows->pluck('user_id')->map(fn ($id) => (int) $id)->unique()->values());
+
+        return collect($groupIds)
+            ->mapWithKeys(fn (int $groupId) => [$groupId => $learnerIdsByGroup->get($groupId, collect())]);
+    }
+
+    private function resolveGroupLectureIds(array $groupIds): Collection
+    {
+        $groupIds = collect($groupIds)
+            ->map(fn ($id) => (int) $id)
+            ->filter(fn (int $id) => $id > 0)
+            ->values()
+            ->all();
+
+        if ($groupIds === []) {
+            return collect();
+        }
+
+        $moduleIdsByGroup = DB::table('group_module')
+            ->whereIn('group_id', $groupIds)
+            ->select('group_id', 'module_id')
+            ->get()
+            ->groupBy('group_id')
+            ->map(fn ($rows) => $rows->pluck('module_id')->map(fn ($id) => (int) $id)->unique()->values());
+
+        $lectureIdsByModule = $this->resolveModuleLectureIds(
+            $moduleIdsByGroup->flatten()->unique()->values()->all()
+        );
+
+        return collect($groupIds)->mapWithKeys(function (int $groupId) use ($lectureIdsByModule, $moduleIdsByGroup) {
+            $lectureIds = collect($moduleIdsByGroup->get($groupId, collect()))
+                ->flatMap(fn ($moduleId) => $lectureIdsByModule->get((int) $moduleId, collect()))
+                ->unique()
+                ->values();
+
+            return [$groupId => $lectureIds];
+        });
+    }
+
+    private function resolveModuleLectureIds(array $moduleIds): Collection
+    {
+        $moduleIds = collect($moduleIds)
+            ->map(fn ($id) => (int) $id)
+            ->filter(fn (int $id) => $id > 0)
+            ->values()
+            ->all();
+
+        if ($moduleIds === []) {
+            return collect();
+        }
+
+        $lectureIdsByModule = ModuleLecture::query()
+            ->whereIn('module_id', $moduleIds)
+            ->get(['id', 'module_id'])
+            ->groupBy('module_id')
+            ->map(fn ($rows) => $rows->pluck('id')->map(fn ($id) => (int) $id)->unique()->values());
+
+        return collect($moduleIds)
+            ->mapWithKeys(fn (int $moduleId) => [$moduleId => $lectureIdsByModule->get($moduleId, collect())]);
+    }
+
+    private function filterSnapshots(Collection $snapshots, array $userIds, array $lectureIds): Collection
+    {
+        $userLookup = array_fill_keys(
+            collect($userIds)
+                ->map(fn ($id) => (int) $id)
+                ->filter(fn (int $id) => $id > 0)
+                ->values()
+                ->all(),
+            true
+        );
+
+        $lectureLookup = array_fill_keys(
+            collect($lectureIds)
+                ->map(fn ($id) => (int) $id)
+                ->filter(fn (int $id) => $id > 0)
+                ->values()
+                ->all(),
+            true
+        );
+
+        if ($userLookup === [] || $lectureLookup === []) {
+            return collect();
+        }
+
+        return $snapshots->filter(function (array $snapshot) use ($lectureLookup, $userLookup) {
+            return isset($userLookup[(int) ($snapshot['user_id'] ?? 0)])
+                && isset($lectureLookup[(int) ($snapshot['lecture_id'] ?? 0)]);
+        })->values();
     }
 
     private function resolveStagiaireContext(User $stagiaire, int $formateurId, int $preferredGroupId = 0): array

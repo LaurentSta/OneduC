@@ -87,8 +87,8 @@
     <div class="bg-white rounded-[20px] shadow-md p-5 flex items-center gap-2">
       <img src="{{ asset('images/svg/TauxCompletion.svg') }}" alt="" class="w-20 h-20 shrink-0" aria-hidden="true">
       <div class="leading-tight">
-        <p class="text-base font-semibold text-orangeone">Taux de complétion moyen</p>
-        <p class="text-[17px] font-medium text-vertone">{{ number_format($avgCompletion ?? 0, 0) }}%</p>
+        <p class="text-base font-semibold text-orangeone">Taux de réussite moyen</p>
+        <p class="text-[17px] font-medium text-vertone">{{ number_format($avgSuccessRate ?? $avgCompletion ?? 0, 0) }}%</p>
       </div>
     </div>
   </section>

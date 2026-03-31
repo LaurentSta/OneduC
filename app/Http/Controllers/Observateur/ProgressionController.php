@@ -4,13 +4,21 @@ namespace App\Http\Controllers\Observateur;
 
 use App\Http\Controllers\Controller;
 use App\Models\Group;
+use App\Models\ModuleLecture;
 use App\Models\Progression;
 use App\Models\User;
+use App\Services\LearningAnalyticsService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class ProgressionController extends Controller
 {
+    public function __construct(
+        private readonly LearningAnalyticsService $learningAnalytics,
+    ) {
+    }
+
     public function index(Request $request, ?User $user = null)
     {
         $observer = auth()->user();
@@ -34,34 +42,25 @@ class ProgressionController extends Controller
                 ->paginate(15, ['id', 'name'])
                 ->withQueryString();
 
-            $groupes->getCollection()->transform(function ($group) {
-                $stagiaires = User::query()
-                    ->join('group_user', 'users.id', '=', 'group_user.user_id')
-                    ->where('group_user.group_id', $group->id)
-                    ->where('users.role', 'stagiaire')
-                    ->select('users.id')
-                    ->get();
+            $pageGroupIds = $groupes->getCollection()->pluck('id')->all();
+            $learnerIdsByGroup = $this->resolveGroupLearnerIds($pageGroupIds);
+            $lectureIdsByGroup = $this->resolveGroupLectureIds($pageGroupIds);
+            $snapshots = $this->learningAnalytics->collectSnapshots(
+                $learnerIdsByGroup->flatten()->unique()->values()->all(),
+                $lectureIdsByGroup->flatten()->unique()->values()->all(),
+            );
 
-                $stagiaireIds = $stagiaires->pluck('id');
+            $groupes->getCollection()->transform(function ($group) use ($lectureIdsByGroup, $learnerIdsByGroup, $snapshots) {
+                $stagiaireIds = collect($learnerIdsByGroup->get($group->id, collect()))->values();
+                $groupLectureIds = collect($lectureIdsByGroup->get($group->id, collect()))->values()->all();
+                $scopeSnapshots = $this->filterSnapshots($snapshots, $stagiaireIds->all(), $groupLectureIds);
+                $scopeMetrics = $this->learningAnalytics->aggregateScopeMetrics($scopeSnapshots);
+
                 $group->stagiaires_count = $stagiaireIds->count();
                 $group->modules_count = (int) DB::table('group_module')->where('group_id', $group->id)->count();
                 $group->total_site_time = (int) User::whereIn('id', $stagiaireIds)->sum('total_site_time');
-                $group->lecons_terminees_count = (int) Progression::whereIn('user_id', $stagiaireIds)->count();
-                $group->taux_reussite = 0;
-
-                if ($stagiaireIds->isNotEmpty()) {
-                    $success = (int) DB::table('progressions')
-                        ->join('scorm_scores', function ($join) {
-                            $join->on('progressions.user_id', '=', 'scorm_scores.user_id')
-                                ->on('progressions.lecture_id', '=', 'scorm_scores.lecture_id');
-                        })
-                        ->whereIn('progressions.user_id', $stagiaireIds)
-                        ->where('scorm_scores.last_score', '>=', 50)
-                        ->count();
-
-                    $total = max(1, (int) $group->lecons_terminees_count);
-                    $group->taux_reussite = (int) round(($success / $total) * 100);
-                }
+                $group->lecons_terminees_count = (int) ($scopeMetrics['completed_count'] ?? 0);
+                $group->taux_reussite = (int) ($scopeMetrics['success_rate'] ?? 0);
 
                 return $group;
             });
@@ -102,42 +101,33 @@ class ProgressionController extends Controller
                 ->with(['groupesStagiaire' => function ($query) use ($observedGroupIds) {
                     $query->whereIn('groups.id', $observedGroupIds)->orderBy('name');
                 }])
-                ->withCount(['progressions as lecons_terminees_count'])
                 ->orderBy('name')
                 ->paginate(15)
                 ->withQueryString();
 
             $ids = $stagiaires->getCollection()->pluck('id')->all();
+            $groupLectureIdsByGroup = $this->resolveGroupLectureIds($groupesList->pluck('id')->all());
+            $allLectureIds = $groupLectureIdsByGroup->flatten()->unique()->values()->all();
+            $lectureScopeIds = $groupId > 0
+                ? collect($groupLectureIdsByGroup->get($groupId, collect()))->values()->all()
+                : $allLectureIds;
+            $scopeSnapshots = $this->filterSnapshots(
+                $this->learningAnalytics->collectSnapshots($ids, $lectureScopeIds),
+                $ids,
+                $lectureScopeIds,
+            );
+            $userMetrics = $this->learningAnalytics->aggregateUserMetrics($scopeSnapshots);
 
-            $lastActivity = Progression::query()
-                ->selectRaw('user_id, MAX(completed_at) as last_completed_at')
-                ->whereIn('user_id', $ids)
-                ->groupBy('user_id')
-                ->pluck('last_completed_at', 'user_id');
+            $stagiaires->getCollection()->transform(function ($stagiaire) use ($userMetrics) {
+                $metrics = $userMetrics->get($stagiaire->id, [
+                    'completed_count' => 0,
+                    'success_rate' => 0,
+                    'last_activity_at' => null,
+                ]);
 
-            $completedCount = Progression::query()
-                ->selectRaw('user_id, COUNT(*) as total')
-                ->whereIn('user_id', $ids)
-                ->groupBy('user_id')
-                ->pluck('total', 'user_id');
-
-            $successCount = DB::table('progressions')
-                ->join('scorm_scores', function ($join) {
-                    $join->on('progressions.user_id', '=', 'scorm_scores.user_id')
-                        ->on('progressions.lecture_id', '=', 'scorm_scores.lecture_id');
-                })
-                ->whereIn('progressions.user_id', $ids)
-                ->where('scorm_scores.last_score', '>=', 50)
-                ->selectRaw('progressions.user_id, COUNT(*) as success')
-                ->groupBy('progressions.user_id')
-                ->pluck('success', 'progressions.user_id');
-
-            $stagiaires->getCollection()->transform(function ($stagiaire) use ($lastActivity, $completedCount, $successCount) {
-                $total = (int) ($completedCount[$stagiaire->id] ?? 0);
-                $ok = (int) ($successCount[$stagiaire->id] ?? 0);
-
-                $stagiaire->last_completed_at = $lastActivity[$stagiaire->id] ?? null;
-                $stagiaire->taux_reussite = $total > 0 ? (int) round(($ok / $total) * 100) : 0;
+                $stagiaire->lecons_terminees_count = (int) ($metrics['completed_count'] ?? 0);
+                $stagiaire->last_completed_at = $metrics['last_activity_at'] ?? null;
+                $stagiaire->taux_reussite = (int) ($metrics['success_rate'] ?? 0);
 
                 return $stagiaire;
             });
@@ -261,5 +251,81 @@ class ProgressionController extends Controller
         }
 
         abort(404);
+    }
+
+    private function resolveGroupLearnerIds(array $groupIds): Collection
+    {
+        $groupIds = collect($groupIds)
+            ->map(fn ($id) => (int) $id)
+            ->filter(fn (int $id) => $id > 0)
+            ->values()
+            ->all();
+
+        if ($groupIds === []) {
+            return collect();
+        }
+
+        $learnerIdsByGroup = DB::table('group_user')
+            ->join('users', 'users.id', '=', 'group_user.user_id')
+            ->whereIn('group_user.group_id', $groupIds)
+            ->where('group_user.role_in_group', 'stagiaire')
+            ->where('users.role', 'stagiaire')
+            ->select('group_user.group_id', 'group_user.user_id')
+            ->get()
+            ->groupBy('group_id')
+            ->map(fn ($rows) => $rows->pluck('user_id')->map(fn ($id) => (int) $id)->unique()->values());
+
+        return collect($groupIds)
+            ->mapWithKeys(fn (int $groupId) => [$groupId => $learnerIdsByGroup->get($groupId, collect())]);
+    }
+
+    private function resolveGroupLectureIds(array $groupIds): Collection
+    {
+        $groupIds = collect($groupIds)
+            ->map(fn ($id) => (int) $id)
+            ->filter(fn (int $id) => $id > 0)
+            ->values()
+            ->all();
+
+        if ($groupIds === []) {
+            return collect();
+        }
+
+        $moduleIdsByGroup = DB::table('group_module')
+            ->whereIn('group_id', $groupIds)
+            ->select('group_id', 'module_id')
+            ->get()
+            ->groupBy('group_id')
+            ->map(fn ($rows) => $rows->pluck('module_id')->map(fn ($id) => (int) $id)->unique()->values());
+
+        $lectureIdsByModule = ModuleLecture::query()
+            ->whereIn('module_id', $moduleIdsByGroup->flatten()->unique()->values()->all())
+            ->get(['id', 'module_id'])
+            ->groupBy('module_id')
+            ->map(fn ($rows) => $rows->pluck('id')->map(fn ($id) => (int) $id)->unique()->values());
+
+        return collect($groupIds)->mapWithKeys(function (int $groupId) use ($lectureIdsByModule, $moduleIdsByGroup) {
+            $lectureIds = collect($moduleIdsByGroup->get($groupId, collect()))
+                ->flatMap(fn ($moduleId) => $lectureIdsByModule->get((int) $moduleId, collect()))
+                ->unique()
+                ->values();
+
+            return [$groupId => $lectureIds];
+        });
+    }
+
+    private function filterSnapshots(Collection $snapshots, array $userIds, array $lectureIds): Collection
+    {
+        $userLookup = array_fill_keys($userIds, true);
+        $lectureLookup = array_fill_keys($lectureIds, true);
+
+        if ($userLookup === [] || $lectureLookup === []) {
+            return collect();
+        }
+
+        return $snapshots->filter(function (array $snapshot) use ($lectureLookup, $userLookup) {
+            return isset($userLookup[(int) ($snapshot['user_id'] ?? 0)])
+                && isset($lectureLookup[(int) ($snapshot['lecture_id'] ?? 0)]);
+        })->values();
     }
 }
