@@ -57,6 +57,9 @@ class GroupeController extends Controller
         $request->validate([
             'nom' => ['required', 'string', 'max:150', Rule::unique('groups', 'name')],
             'description' => ['nullable', 'string', 'max:2000'],
+            'is_active' => ['required', 'boolean'],
+            'start_date' => ['nullable', 'date'],
+            'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
             'password' => ['required', 'string', 'min:8'],
             'modules' => ['required', 'array', 'min:1'],
             'modules.*' => [Rule::exists('modules', 'id')->where('status', 1)],
@@ -77,6 +80,9 @@ class GroupeController extends Controller
                 $group = Group::create([
                     'name' => trim((string) $request->nom),
                     'description' => $request->description,
+                    'is_active' => $request->boolean('is_active'),
+                    'start_date' => $request->input('start_date') ?: null,
+                    'end_date' => $request->input('end_date') ?: null,
                     'temporary_password' => $temporaryPassword,
                     'instructor_id' => auth()->id(),
                 ]);
@@ -205,6 +211,9 @@ class GroupeController extends Controller
                 Rule::unique('groups', 'name')->ignore($id),
             ],
             'description' => ['nullable', 'string', 'max:2000'],
+            'is_active' => ['required', 'boolean'],
+            'start_date' => ['nullable', 'date'],
+            'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
             'password' => ['required', 'string', 'min:8'],
             'modules' => ['required', 'array', 'min:1'],
             'modules.*' => [Rule::exists('modules', 'id')->where('status', 1)],
@@ -227,6 +236,9 @@ class GroupeController extends Controller
         $group->update([
             'name' => $request->nom,
             'description' => $request->description,
+            'is_active' => $request->boolean('is_active'),
+            'start_date' => $request->input('start_date') ?: null,
+            'end_date' => $request->input('end_date') ?: null,
             'temporary_password' => $temporaryPassword,
         ]);
 

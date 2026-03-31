@@ -19,6 +19,7 @@ class WhiteboardController extends Controller
     {
         $groups = auth()->user()
             ->groupesStagiaire()
+            ->active()
             ->with(['instructor', 'whiteboard'])
             ->orderBy('groups.name')
             ->get();
@@ -37,6 +38,7 @@ class WhiteboardController extends Controller
     {
         $group = auth()->user()
             ->groupesStagiaire()
+            ->active()
             ->whereHas('whiteboard')
             ->with('whiteboard')
             ->get()
@@ -72,6 +74,8 @@ class WhiteboardController extends Controller
 
     private function whiteboardForStudent(Group $group): GroupWhiteboard
     {
+        abort_unless((bool) $group->is_active, 404);
+
         $isMember = $group->students()
             ->where('users.id', auth()->id())
             ->exists();

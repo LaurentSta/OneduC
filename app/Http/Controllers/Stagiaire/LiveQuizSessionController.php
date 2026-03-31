@@ -301,6 +301,7 @@ class LiveQuizSessionController extends Controller
         }
 
         $lectureIds = $user->groupesStagiaire()
+            ->active()
             ->with(['modules.sections.lectures:id,section_id,module_id'])
             ->get()
             ->flatMap->modules

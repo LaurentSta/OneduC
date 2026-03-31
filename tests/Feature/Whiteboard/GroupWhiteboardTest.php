@@ -20,14 +20,14 @@ function createWhiteboardUser(string $role): User
     ]);
 }
 
-function createWhiteboardGroup(User $formateur, array $students = []): Group
+function createWhiteboardGroup(User $formateur, array $students = [], array $attributes = []): Group
 {
-    $group = Group::query()->create([
+    $group = Group::query()->create(array_merge([
         'name' => 'Groupe blanc ' . uniqid(),
         'description' => 'Groupe de test pour le tableau blanc',
         'temporary_password' => 'temp-password',
         'instructor_id' => $formateur->id,
-    ]);
+    ], $attributes));
 
     foreach ($students as $student) {
         DB::table('group_user')->insert([
@@ -105,4 +105,35 @@ it('denies access to a student outside the group', function () {
         ->get(route('stagiaire.whiteboard.show', ['group' => $group->id]));
 
     $response->assertNotFound();
+});
+
+it('denies access to a student when the group is inactive', function () {
+    $formateur = createWhiteboardUser('formateur');
+    $stagiaire = createWhiteboardUser('stagiaire');
+    $group = createWhiteboardGroup($formateur, [$stagiaire], [
+        'is_active' => false,
+    ]);
+
+    $response = $this->actingAs($stagiaire)
+        ->get(route('stagiaire.whiteboard.show', ['group' => $group->id]));
+
+    $response->assertNotFound();
+});
+
+it('ignores inactive groups in the whiteboard notification status for students', function () {
+    $formateur = createWhiteboardUser('formateur');
+    $stagiaire = createWhiteboardUser('stagiaire');
+    $group = createWhiteboardGroup($formateur, [$stagiaire], [
+        'is_active' => false,
+    ]);
+
+    GroupWhiteboard::ensureForGroup($group, $formateur);
+
+    $response = $this->actingAs($stagiaire)
+        ->getJson(route('stagiaire.whiteboard.notification-status'));
+
+    $response->assertOk()
+        ->assertJsonPath('has_available_whiteboard', false)
+        ->assertJsonPath('group_name', null)
+        ->assertJsonPath('join_url', null);
 });

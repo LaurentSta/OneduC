@@ -162,6 +162,7 @@ class StagiaireController extends Controller
 
         // --- 5. GROUPES & MODULES ---
         $groupes = $user->groupesStagiaire()
+            ->active()
             ->with([
                 'modules' => function($q) {
                     $q->withPivot('position')->orderBy('group_module.position', 'asc');
@@ -219,6 +220,7 @@ class StagiaireController extends Controller
               ->withPivot('position') // On récupère la position définie par le formateur
               ->orderBy('group_module.position', 'asc'); // On trie !
     }])
+    ->active()
     ->whereHas('students', fn ($q) => $q->where('email', $user->email))
     ->first(); // On prend le premier groupe trouvé
 

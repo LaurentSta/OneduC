@@ -12,13 +12,24 @@ class Group extends Model
     protected $fillable = [
         'name',
         'description',
+        'is_active',
+        'start_date',
+        'end_date',
         'temporary_password',
         'instructor_id',
     ];
 
     protected $casts = [
+        'is_active' => 'boolean',
+        'start_date' => 'date',
+        'end_date' => 'date',
         'temporary_password' => 'encrypted',
     ];
+
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
 
     public function instructor()
     {
@@ -62,5 +73,4 @@ class Group extends Model
     {
         return $this->hasMany(LiveQuizSession::class);
     }
-
 }

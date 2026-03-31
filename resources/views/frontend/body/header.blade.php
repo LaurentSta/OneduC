@@ -21,10 +21,28 @@
         <a href="{{ route('categories.all') }}" class="px-2 hover:text-orangeone transition">Formations</a>
 
         <!-- Association avec sous-menu -->
-        <div x-data="{ open: false }" class="relative">
+        <div
+          x-data="{
+            open: false,
+            toggle() {
+              this.open = !this.open;
+            },
+            close() {
+              this.open = false;
+            }
+          }"
+          x-ref="associationMenu"
+          class="relative"
+          @keydown.escape.window="close()"
+          @focusin.window="if (open && !$refs.associationMenu.contains($event.target)) close()"
+        >
           <button
-            @click="open = !open"
-            class="px-2 flex items-center gap-1 hover:text-orangeone transition focus:outline-none"
+            type="button"
+            x-ref="associationTrigger"
+            @click="toggle()"
+            :aria-expanded="open.toString()"
+            aria-haspopup="true"
+            class="relative z-50 px-2 flex items-center gap-1 hover:text-orangeone transition focus:outline-none"
           >
             Association
             <!-- Icône flèche -->
@@ -33,10 +51,21 @@
             </svg>
           </button>
 
+          <button
+            x-cloak
+            x-show="open"
+            @click="close()"
+            type="button"
+            class="fixed inset-0 z-40 cursor-default bg-transparent"
+            aria-label="Fermer le menu Association"
+            tabindex="-1"
+          ></button>
+
           <!-- Sous-menu -->
           <ul
+            x-cloak
             x-show="open"
-            @click.outside="open = false"
+            @click.outside="close()"
             x-transition:enter="transition ease-out duration-180"
             x-transition:enter-start="opacity-0 -translate-y-1 scale-95"
             x-transition:enter-end="opacity-100 translate-y-0 scale-100"
@@ -46,13 +75,13 @@
             class="absolute left-0 mt-2 bg-white text-gray-900 shadow-md rounded-md py-2 w-48 z-50"
           >
             <li>
-              <a href="{{ route('association') }}" class="block px-4 py-2 hover:bg-orangeone hover:text-white transition">Associations</a>
+              <a href="{{ route('association') }}" @click="close()" class="block px-4 py-2 hover:bg-orangeone hover:text-white transition">Associations</a>
             </li>
             <li>
-              <a href="{{ route('adhesion') }}" class="block px-4 py-2 hover:bg-orangeone hover:text-white transition">Adhésions</a>
+              <a href="{{ route('adhesion') }}" @click="close()" class="block px-4 py-2 hover:bg-orangeone hover:text-white transition">Adhésions</a>
             </li>
             <li>
-                <a href="{{ route('contact') }}" class="block px-4 py-2 hover:bg-orangeone hover:text-white transition">Contactez-nous</a>
+                <a href="{{ route('contact') }}" @click="close()" class="block px-4 py-2 hover:bg-orangeone hover:text-white transition">Contactez-nous</a>
 
 
             </li>

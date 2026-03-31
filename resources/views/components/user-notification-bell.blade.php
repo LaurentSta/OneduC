@@ -13,6 +13,7 @@
 
   if ($authUser && ($authUser->role ?? null) === 'stagiaire') {
       $lectureIds = $authUser->groupesStagiaire()
+          ->active()
           ->with(['modules.sections.lectures:id,section_id,module_id'])
           ->get()
           ->flatMap->modules
@@ -37,6 +38,7 @@
       }
 
       $availableWhiteboardGroup = $authUser->groupesStagiaire()
+          ->active()
           ->whereHas('whiteboard')
           ->with('whiteboard')
           ->get()

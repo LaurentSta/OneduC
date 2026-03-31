@@ -75,61 +75,109 @@
 
         {{-- 📋 Cartes groupes --}}
         @forelse ($groupes as $groupe)
-          <article class="bg-white border border-gray-200 rounded-[20px] shadow p-6 flex flex-col">
-            <div class="flex-1">
-              <h3 class="text-xl font-bold text-bleuone font-raleway mb-2 truncate">
-                {{ $groupe->name }}
-              </h3>
-              <div class="mb-3 grid grid-cols-1 sm:grid-cols-2 gap-3 items-start">
-                <p class="text-xs text-gray-400 italic font-lisible">
-                  Créé le {{ optional($groupe->created_at)->format('d/m/Y') ?? '—' }}
-                </p>
-
-                @if($groupe->observers->isNotEmpty())
-                  <div class="sm:justify-self-end">
-                    <div class="relative inline-flex group">
-                      <span class="inline-flex items-center px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold cursor-default">
-                        Groupe suivi
-                      </span>
-                      <div class="pointer-events-none absolute right-0 top-full z-20 mt-2 hidden w-max max-w-xs rounded-lg border border-blue-200 bg-white px-3 py-2 text-xs text-blue-900 shadow-lg group-hover:block group-focus-within:block">
-                        @foreach($groupe->observers as $observer)
-                          <div>{{ trim(($observer->prenom ?? '').' '.($observer->name ?? '')) }}</div>
-                        @endforeach
-                      </div>
-                    </div>
+          <article class="flex flex-col rounded-[20px] border border-gray-200 bg-white p-6 shadow">
+            <div class="flex-1 space-y-5">
+              <div class="border-b border-gray-100 pb-4">
+                <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div class="min-w-0">
+                    <h3 class="truncate font-raleway text-xl font-bold text-bleuone">
+                      {{ $groupe->name }}
+                    </h3>
+                    <p class="mt-2 text-xs italic text-gray-400 font-lisible">
+                      Créé le {{ optional($groupe->created_at)->format('d/m/Y') ?? '—' }}
+                    </p>
                   </div>
-                @endif
+
+                  <div class="flex flex-wrap items-center gap-2 sm:justify-end">
+                    <span class="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-bold {{ $groupe->is_active ? 'border-vertone/20 bg-vertone/10 text-vertone' : 'border-gray-200 bg-gray-100 text-gray-600' }}">
+                      <span class="inline-flex h-2.5 w-2.5 rounded-full {{ $groupe->is_active ? 'bg-vertone' : 'bg-gray-400' }}"></span>
+                      {{ $groupe->is_active ? 'Actif' : 'Inactif' }}
+                    </span>
+
+                    @if($groupe->observers->isNotEmpty())
+                      <div class="relative inline-flex group">
+                        <span class="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700 cursor-default">
+                          Groupe suivi
+                        </span>
+                        <div class="pointer-events-none absolute right-0 top-full z-20 mt-2 hidden w-max max-w-xs rounded-lg border border-blue-200 bg-white px-3 py-2 text-xs text-blue-900 shadow-lg group-hover:block group-focus-within:block">
+                          @foreach($groupe->observers as $observer)
+                            <div>{{ trim(($observer->prenom ?? '').' '.($observer->name ?? '')) }}</div>
+                          @endforeach
+                        </div>
+                      </div>
+                    @endif
+                  </div>
+                </div>
               </div>
 
               @if ($groupe->description)
-                <p class="text-sm text-gray-700 font-lisible mb-4 line-clamp-3">
+                <p class="text-sm leading-7 text-gray-700 font-lisible line-clamp-3">
                   {{ $groupe->description }}
                 </p>
               @endif
 
-              <div class="mb-4">
-                <h4 class="text-sm font-bold text-gray-600 font-varela">Modules associés :</h4>
-                @forelse ($groupe->modules as $module)
-                  @php
-                    $moduleUrl = !empty($module->category_id)
-                      ? route('frontend.modules.show', ['category' => $module->category_id, 'module' => $module->id])
-                      : route('frontend.modules.show.legacy', ['module' => $module->id]);
-                  @endphp
-                  <a href="{{ $moduleUrl }}"
-                     class="inline-block bg-vertone/10 text-vertone text-xs font-varela mr-2 mb-2 px-3 py-1 rounded-full hover:bg-vertone/20 transition">
-                    {{ Str::limit($module->module_title, 30) }}
-                  </a>
-                @empty
-                  <p class="text-sm text-gray-400 font-lisible italic">Aucun module</p>
-                @endforelse
-              </div>
+              @if ($groupe->start_date || $groupe->end_date)
+                <div class="grid gap-3 sm:grid-cols-2">
+                  @if ($groupe->start_date)
+                    <div class="flex items-center gap-3 rounded-2xl border border-bleuone/15 bg-slate-50 px-4 py-3">
+                      <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-bleuone/10 text-bleuone">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10m-11 9h12a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2v11a2 2 0 002 2z" />
+                        </svg>
+                      </span>
+                      <div class="min-w-0">
+                        <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-400">Début</p>
+                        <p class="text-sm font-bold text-bleuone">{{ $groupe->start_date->format('d/m/Y') }}</p>
+                      </div>
+                    </div>
+                  @endif
 
-              <div>
-                <h4 class="text-sm font-bold text-gray-600 font-varela">Stagiaires :</h4>
-                <a href="{{ route('formateur.stagiaires.index') }}"
-                   class="text-sm text-orangeone hover:underline font-lisible">
-                  {{ $groupe->students->count() }} stagiaire{{ $groupe->students->count() > 1 ? 's' : '' }}
-                </a>
+                  @if ($groupe->end_date)
+                    <div class="flex items-center gap-3 rounded-2xl border border-orangeone/15 bg-orange-50/60 px-4 py-3">
+                      <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orangeone/10 text-orangeone">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10m-11 9h12a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2v11a2 2 0 002 2z" />
+                        </svg>
+                      </span>
+                      <div class="min-w-0">
+                        <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-400">Fin</p>
+                        <p class="text-sm font-bold text-orangeone">{{ $groupe->end_date->format('d/m/Y') }}</p>
+                      </div>
+                    </div>
+                  @endif
+                </div>
+              @endif
+
+              <div class="rounded-2xl bg-gray-50/80 p-4 space-y-4">
+                <div>
+                  <h4 class="mb-2 text-[11px] font-bold uppercase tracking-[0.16em] text-gray-500 font-varela">Modules associés</h4>
+                  <div class="flex flex-wrap gap-2">
+                    @forelse ($groupe->modules as $module)
+                      @php
+                        $moduleUrl = !empty($module->category_id)
+                          ? route('frontend.modules.show', ['category' => $module->category_id, 'module' => $module->id])
+                          : route('frontend.modules.show.legacy', ['module' => $module->id]);
+                      @endphp
+                      <a href="{{ $moduleUrl }}"
+                         class="inline-flex items-center rounded-full bg-vertone/10 px-3 py-1 text-xs font-varela text-vertone transition hover:bg-vertone/20">
+                        {{ Str::limit($module->module_title, 30) }}
+                      </a>
+                    @empty
+                      <p class="text-sm italic text-gray-400 font-lisible">Aucun module</p>
+                    @endforelse
+                  </div>
+                </div>
+
+                <div class="flex items-center justify-between gap-3 border-t border-gray-200 pt-4">
+                  <div>
+                    <h4 class="text-[11px] font-bold uppercase tracking-[0.16em] text-gray-500 font-varela">Stagiaires</h4>
+                    <p class="mt-1 text-sm text-gray-500 font-lisible">Accès rapide à la liste du groupe</p>
+                  </div>
+                  <a href="{{ route('formateur.stagiaires.index') }}"
+                     class="shrink-0 text-sm font-semibold text-orangeone hover:underline font-lisible">
+                    {{ $groupe->students->count() }} stagiaire{{ $groupe->students->count() > 1 ? 's' : '' }}
+                  </a>
+                </div>
               </div>
             </div>
 
