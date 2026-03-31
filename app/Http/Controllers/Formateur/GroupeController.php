@@ -14,7 +14,9 @@ use App\Services\CodeGeneratorService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Database\QueryException;
 use Illuminate\Validation\Rule;
@@ -214,7 +216,7 @@ class GroupeController extends Controller
             'is_active' => ['required', 'boolean'],
             'start_date' => ['nullable', 'date'],
             'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
-            'password' => ['required', 'string', 'min:8'],
+            'password' => ['nullable', 'string', 'min:8'],
             'modules' => ['required', 'array', 'min:1'],
             'modules.*' => [Rule::exists('modules', 'id')->where('status', 1)],
             'module_positions' => ['nullable', 'array'],
@@ -231,16 +233,44 @@ class GroupeController extends Controller
             ->with('students')
             ->firstOrFail();
 
-        $temporaryPassword = (string) $request->password;
+        $temporaryPasswordInput = trim((string) $request->input('password', ''));
+        $effectiveTemporaryPassword = $temporaryPasswordInput !== ''
+            ? $temporaryPasswordInput
+            : (string) ($group->temporary_password ?? '');
 
-        $group->update([
+        $hasStagiairePayload = collect($request->input('stagiaires', []))->contains(function ($s): bool {
+            $prenom = trim((string) ($s['prenom'] ?? ''));
+            $nom = trim((string) ($s['nom'] ?? ''));
+            $email = trim((string) ($s['email'] ?? ''));
+
+            return $prenom !== '' || $nom !== '' || $email !== '';
+        });
+
+        if ($hasStagiairePayload && $effectiveTemporaryPassword === '') {
+            throw ValidationException::withMessages([
+                'password' => 'Veuillez renseigner un code d\'accès provisoire (au moins 8 caractères) avant d\'ajouter un nouveau stagiaire.',
+            ]);
+        }
+
+        $groupPayload = [
             'name' => $request->nom,
             'description' => $request->description,
-            'is_active' => $request->boolean('is_active'),
             'start_date' => $request->input('start_date') ?: null,
             'end_date' => $request->input('end_date') ?: null,
-            'temporary_password' => $temporaryPassword,
-        ]);
+        ];
+
+        static $hasIsActiveColumn = null;
+        $hasIsActiveColumn ??= Schema::hasColumn('groups', 'is_active');
+        if ($hasIsActiveColumn) {
+            $groupPayload['is_active'] = $request->boolean('is_active');
+        }
+
+        // Ne pas écraser le code provisoire existant quand l'utilisateur modifie seulement la description.
+        if ($temporaryPasswordInput !== '') {
+            $groupPayload['temporary_password'] = $temporaryPasswordInput;
+        }
+
+        $group->update($groupPayload);
 
         $moduleIds = collect($request->input('modules', []))
             ->map(fn ($value) => (int) $value)
@@ -307,7 +337,7 @@ class GroupeController extends Controller
                         'prenom' => $s['prenom'] ?? null,
                         'name' => $s['nom'] ?? null,
                         'email' => $email,
-                        'password' => Hash::make($temporaryPassword),
+                        'password' => Hash::make($effectiveTemporaryPassword),
                         'role' => 'stagiaire',
                         'formateur_id' => auth()->id(),
                         'status' => 1,
@@ -342,9 +372,19 @@ class GroupeController extends Controller
     {
         $loginUrl = route('stagiaire.code.form');
 
-        Mail::to($user->email)->send(
-            new StagiaireGroupInvitation($user, $group, $loginUrl)
-        );
+        try {
+            Mail::to($user->email)->send(
+                new StagiaireGroupInvitation($user, $group, $loginUrl)
+            );
+        } catch (\Throwable $e) {
+            Log::warning('Invitation stagiaire non envoyee (erreur SMTP).', [
+                'group_id' => $group->id,
+                'stagiaire_id' => $user->id,
+                'stagiaire_email' => $user->email,
+                'exception' => $e::class,
+                'message' => $e->getMessage(),
+            ]);
+        }
     }
 
     /**

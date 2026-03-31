@@ -471,7 +471,7 @@
 
           <div class="w-full max-w-sm">
             <label for="password" class="sr-only">Mot de passe commun</label>
-            <input id="password" name="password" type="text" required minlength="8" autocomplete="off"
+            <input id="password" name="password" type="text" autocomplete="off"
                    value="{{ old('password', $group->temporary_password) }}"
                    class="bg-white border {{ $errors->has('password') ? 'border-red-400' : 'border-gray-300' }} text-gray-900 text-sm rounded-lg focus:ring-orangeone focus:border-orangeone block w-full px-3 py-2.5 font-mono tracking-wide"
                    placeholder="Ex: Formation2026!">
