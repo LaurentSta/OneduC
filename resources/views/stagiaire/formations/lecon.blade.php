@@ -204,7 +204,7 @@
                     </div>
 
                     @if ($lecture && $lecture->quiz_enabled && $quizStartUrl)
-                        <a href="{{ $quizStartUrl }}" class="oneduc-btn-alert inline-flex items-center gap-2 px-5 py-2 bg-orangeone text-white rounded-full text-xs font-bold uppercase">
+                        <a href="{{ $quizStartUrl }}" class="btn-oneduc !px-5 !py-2 !text-xs">
                             Passer au questionnaire
                             <i class="ti ti-arrow-right"></i>
                         </a>
@@ -212,7 +212,7 @@
                         <form method="POST" action="{{ route('lecture.valider', ['id' => $lecture->id]) }}">
                             @csrf
                             <input type="hidden" name="redirect_to" value="{{ $nextUrl }}">
-                            <button type="submit" class="oneduc-btn-alert inline-flex items-center gap-2 px-5 py-2 bg-orangeone text-white rounded-full text-xs font-bold uppercase">
+                            <button type="submit" class="btn-oneduc !px-5 !py-2 !text-xs">
                                 Continuer
                                 <i class="ti ti-arrow-right"></i>
                             </button>

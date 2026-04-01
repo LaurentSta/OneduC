@@ -99,7 +99,7 @@
                     </div>
 
                     <div class="mt-6 max-w-3xl">
-                        <h1 class="text-3xl md:text-5xl font-raleway font-bold leading-tight">
+                        <h1 class="text-3xl md:text-5xl font-raleway font-medium leading-tight">
                             {{ $module->module_title ?? $module->module_name }}
                         </h1>
                         @if($moduleShortDescription !== '')
@@ -128,17 +128,17 @@
                         <div class="mt-8 flex flex-wrap gap-4">
                             @if(\Illuminate\Support\Facades\Route::has('login.selection'))
                                 <a href="{{ route('login.selection') }}"
-                                   class="inline-flex items-center justify-center rounded-full bg-orangeone px-6 py-3 text-base font-semibold text-white transition hover:bg-orange-600">
+                                   class="btn-oneduc !px-6 !py-3 !text-base">
                                     Se connecter pour suivre ce module
                                 </a>
                             @else
                                 <a href="{{ route('connexion') }}"
-                                   class="inline-flex items-center justify-center rounded-full bg-orangeone px-6 py-3 text-base font-semibold text-white transition hover:bg-orange-600">
+                                   class="btn-oneduc !px-6 !py-3 !text-base">
                                     Se connecter pour suivre ce module
                                 </a>
                             @endif
                             <a href="{{ route('stagiaire.code.form') }}"
-                               class="inline-flex items-center justify-center rounded-full border border-white/20 px-6 py-3 text-base font-semibold text-white transition hover:bg-white hover:text-slate-950">
+                               class="btn-oneduc-outline !border-white/20 !bg-transparent !px-6 !py-3 !text-base !text-white hover:!border-white hover:!bg-white hover:!text-slate-950">
                                 Je suis stagiaire, j'ai un code
                             </a>
                         </div>
@@ -163,7 +163,7 @@
                             <span class="inline-block bg-yellow-100 text-yellow-700 text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded">Valeur sure</span>
                         @endif
                     </div>
-                    <h1 class="text-2xl md:text-3xl font-extrabold text-bleuone leading-tight">
+                    <h1 class="text-2xl md:text-3xl font-raleway font-medium text-bleuone leading-tight">
                         {{ $module->module_title ?? $module->module_name }}
                     </h1>
                 </header>
@@ -357,17 +357,17 @@
                         @if($firstSection)
                             @if($isStagiaireView || ($isPublicView && $isStagiaireUser))
                                 <a href="{{ route('stagiaire.module.section', [$module->id, $firstSection->id]) }}"
-                                   class="flex items-center justify-center w-full py-4 px-6 rounded-xl bg-orangeone text-white font-extrabold text-lg hover:bg-orange-600 transition-all shadow-lg shadow-orange-100 hover:-translate-y-0.5">
+                                   class="btn-oneduc w-full !px-6 !py-4">
                                     {{ $progression > 0 ? 'Reprendre' : 'Commencer' }}
                                 </a>
                             @elseif($isFormateurView || ($isPublicView && $isFormateurUser))
                                 <a href="{{ $appendQuery(route('formateur.formations.section', ['module' => $module->id, 'section' => $firstSection->id]), $contextQuery) }}"
-                                   class="flex items-center justify-center w-full py-4 px-6 rounded-xl bg-orangeone text-white font-extrabold text-lg hover:bg-orange-600 transition-all shadow-lg shadow-orange-100 hover:-translate-y-0.5">
+                                   class="btn-oneduc w-full !px-6 !py-4">
                                     Voir le parcours
                                 </a>
                             @else
                                 <button type="button" @click="showAuthModal = true"
-                                    class="w-full py-4 px-6 rounded-xl bg-bleuone text-white font-bold hover:bg-blue-700 transition-all">
+                                    class="btn-oneduc-blue w-full !px-6 !py-4">
                                     Se connecter pour suivre ce module
                                 </button>
                             @endif
@@ -379,14 +379,14 @@
 
                         @if($module->evaluation_id)
                             <button @click="showEvalModal = true"
-                                class="w-full py-4 px-6 rounded-xl border-2 border-bleuone text-bleuone font-bold hover:bg-bleuone hover:text-white transition-colors">
+                                class="btn-oneduc-outline w-full !px-6 !py-4">
                                 Lancer l'evaluation
                             </button>
                         @endif
 
                         @if($isPublicView && !auth()->check())
                             <a href="{{ route('stagiaire.code.form') }}"
-                               class="flex items-center justify-center w-full py-4 px-6 rounded-xl border-2 border-orangeone text-orangeone font-bold hover:bg-orangeone hover:text-white transition-colors">
+                               class="btn-oneduc-outline w-full !border-orangeone !text-orangeone hover:!bg-orangeone hover:!text-white !px-6 !py-4">
                                 Connexion par code stagiaire
                             </a>
                         @endif
@@ -476,12 +476,12 @@
                 <div class="mt-8 flex flex-col gap-3">
                     @if(auth()->check())
                         <a href="{{ route('evaluation.show', $module->evaluation_id ?? 1) }}"
-                           class="w-full py-4 bg-orangeone text-white rounded-xl font-bold text-lg hover:bg-orange-600 transition-all shadow-lg shadow-orange-100">
+                           class="btn-oneduc w-full !py-4">
                             Demarrer l'evaluation
                         </a>
                     @else
                         <a href="{{ route('connexion') }}"
-                           class="w-full py-4 bg-orangeone text-white rounded-xl font-bold text-lg hover:bg-orange-600 transition-all shadow-lg shadow-orange-100">
+                           class="btn-oneduc w-full !py-4">
                             Se connecter
                         </a>
                     @endif
@@ -510,12 +510,12 @@
             </p>
             <div class="mt-5 flex gap-3">
                 <a href="{{ route('connexion') }}"
-                   class="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-orangeone text-white font-semibold hover:bg-orange-600">
+                   class="btn-oneduc !px-4 !py-2 !text-base">
                     Se connecter
                 </a>
                 @if(\Illuminate\Support\Facades\Route::has('login.selection'))
                     <a href="{{ route('login.selection') }}"
-                       class="inline-flex items-center justify-center px-4 py-2 rounded-lg border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50">
+                       class="btn-oneduc-outline !px-4 !py-2 !text-base">
                         Choisir un acces
                     </a>
                 @endif

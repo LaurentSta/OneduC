@@ -53,7 +53,7 @@
 
                     <div class="flex flex-wrap items-center gap-3">
                         <a href="{{ $backToLessonUrl }}"
-                           class="inline-flex items-center justify-center rounded-xl border border-white/20 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10 transition">
+                           class="btn-oneduc-outline !border-white/20 !bg-transparent !px-4 !py-2 !text-sm !text-white hover:!border-white hover:!bg-white hover:!text-slate-900">
                             Retour a la lecon
                         </a>
 
@@ -61,7 +61,7 @@
                             @if ($session->isWaiting())
                                 <form method="POST" action="{{ route('formateur.live-quiz.start', ['module' => $module->id, 'section' => $section->id, 'lecture' => $lecture->id, 'session' => $session->id]) }}">
                                     @csrf
-                                    <button type="submit" class="inline-flex items-center justify-center rounded-xl bg-orangeone px-5 py-2.5 text-sm font-bold text-white hover:opacity-90 transition">
+                                    <button type="submit" class="btn-oneduc !px-5 !py-2.5 !text-sm">
                                         Demarrer la session
                                     </button>
                                 </form>

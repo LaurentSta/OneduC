@@ -184,7 +184,7 @@
                               <span class="inline-flex rounded-full bg-bleuone/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-bleuone">
                                   Chapitre
                               </span>
-                              <h1 class="mt-4 text-3xl font-raleway font-bold text-bleuone leading-tight">
+                              <h1 class="mt-4 text-3xl font-raleway font-medium text-bleuone leading-tight">
                                   {{ $selectedSection->section_title }}
                               </h1>
                           </div>
@@ -786,7 +786,7 @@
                                           </div>
                                       </div>
 
-                                      <button type="submit" class="inline-flex items-center justify-center rounded-xl bg-bleuone px-4 py-2.5 text-xs font-bold uppercase text-white transition hover:opacity-90">
+                                      <button type="submit" class="btn-oneduc-blue !px-4 !py-2.5 !text-xs">
                                           Ajouter
                                       </button>
                                   </div>

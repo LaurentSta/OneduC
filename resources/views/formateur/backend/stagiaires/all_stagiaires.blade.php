@@ -97,13 +97,18 @@
           </select>
         </div>
 
-        <button type="submit" class="inline-flex h-10 items-center justify-center rounded-md border border-orangeone bg-orangeone px-5 text-sm font-varela text-white transition hover:bg-white hover:text-orangeone">
+        <button type="submit" class="btn-oneduc h-10 w-full sm:w-[200px] !text-sm">
           Filtrer
         </button>
 
+        <a href="{{ route('formateur.stagiaires.create', request()->filled('group_id') ? ['group_id' => request('group_id')] : []) }}"
+           class="btn-oneduc h-10 w-full sm:w-[200px] !text-sm">
+          Ajouter un stagiaire
+        </a>
+
         @if(request()->filled('search') || request()->filled('group_id') || request('per_page', 10) != 10)
           <a href="{{ route('formateur.stagiaires.index') }}"
-            class="inline-flex h-10 items-center justify-center rounded-md border border-gray-300 bg-white px-5 text-sm font-varela text-gray-700 transition hover:border-orangeone hover:text-orangeone">
+            class="btn-oneduc-outline h-10 !text-sm">
             Réinitialiser
           </a>
         @endif
@@ -157,19 +162,23 @@
                 <div class="flex gap-2">
                   {{-- Modifier --}}
                   <a href="{{ route('formateur.stagiaires.edit', $stagiaire->id) }}"
-                     class="btn-oneduc px-3 py-1 text-xs text-white bg-orangeone border-orangeone hover:bg-white hover:text-orangeone">
+                     class="btn-oneduc !px-3 !py-1 !text-sm">
+                    <x-icons.edit-iconify class="h-4 w-4" />
                     Modifier
                   </a>
 
                   {{-- Supprimer --}}
                   <form action="{{ route('formateur.stagiaires.destroy', $stagiaire->id) }}"
-                        method="POST"
-                        onsubmit="return confirm('Supprimer ce stagiaire ?')">
+                        method="POST">
                     @csrf
                     @method('DELETE')
-                    <button type="submit"
-                            class="btn-oneduc px-3 py-1 text-xs text-white bg-bleuone border-bleuone hover:bg-white hover:text-bleuone">
-                      Supprimer
+                    <button type="button"
+                            class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-bleuone/20 bg-bleuone/10 text-bleuone transition hover:border-bleuone hover:bg-bleuone hover:text-white"
+                            title="Supprimer ce stagiaire"
+                            aria-label="Supprimer {{ trim($stagiaire->prenom . ' ' . $stagiaire->name) ?: $stagiaire->email }}"
+                            data-delete-trigger
+                            data-stagiaire-name="{{ trim($stagiaire->prenom . ' ' . $stagiaire->name) ?: $stagiaire->email }}">
+                      <x-icons.trash-iconify class="h-5 w-5" />
                     </button>
                   </form>
                 </div>
@@ -200,13 +209,101 @@
       {{ $stagiaires->links('pagination::tailwind') }}
     </div>
 
-    <div class="flex justify-end">
-      <a href="{{ route('formateur.stagiaires.create', request()->filled('group_id') ? ['group_id' => request('group_id')] : []) }}"
-         class="btn-oneduc w-full md:w-auto px-8 py-3 text-lg text-center">
-        Ajouter un stagiaire
-      </a>
+    <div id="deleteStagiaireModal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="deleteStagiaireTitle">
+      <div class="absolute inset-0 bg-slate-900/50" data-delete-dismiss></div>
+      <div class="relative flex min-h-full items-center justify-center p-4">
+        <div class="w-full max-w-md rounded-[20px] border border-bleuone/10 bg-white p-6 shadow-xl">
+          <div class="flex items-start gap-3">
+            <div class="inline-flex h-12 w-12 items-center justify-center rounded-full bg-bleuone/10 text-bleuone">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 7.5h15m-10.5 0V6a1.5 1.5 0 011.5-1.5h3A1.5 1.5 0 0115 6v1.5m-7.5 0v10.125A1.875 1.875 0 009.375 19.5h5.25A1.875 1.875 0 0016.5 17.625V7.5M10 10.5v6m4-6v6" />
+              </svg>
+            </div>
+            <div class="flex-1">
+              <h3 id="deleteStagiaireTitle" class="text-lg font-semibold text-bleuone">Confirmer la suppression</h3>
+              <p class="mt-2 text-sm text-gray-700">
+                Voulez-vous vraiment supprimer
+                <span id="deleteStagiaireName" class="font-semibold text-gray-900"></span> ?
+              </p>
+              <p class="mt-2 text-sm text-gray-500">Cette action est irréversible.</p>
+            </div>
+          </div>
+
+          <div class="mt-6 flex flex-wrap justify-end gap-3">
+            <button type="button" class="btn-oneduc-outline h-10 !text-sm" data-delete-dismiss>
+              Annuler
+            </button>
+            <button type="button" id="confirmDeleteStagiaire" class="inline-flex h-10 items-center justify-center rounded-md border border-red-600 bg-red-600 px-5 text-sm font-varela text-white transition hover:bg-red-700">
+              Supprimer
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
 
   </main>
 </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const modal = document.getElementById('deleteStagiaireModal');
+    const modalName = document.getElementById('deleteStagiaireName');
+    const confirmButton = document.getElementById('confirmDeleteStagiaire');
+
+    if (!modal || !modalName || !confirmButton) {
+      return;
+    }
+
+    const dismissButtons = modal.querySelectorAll('[data-delete-dismiss]');
+    let activeForm = null;
+    let activeTrigger = null;
+
+    const closeModal = () => {
+      modal.classList.add('hidden');
+      document.body.classList.remove('overflow-hidden');
+      activeForm = null;
+
+      if (activeTrigger) {
+        activeTrigger.focus();
+      }
+    };
+
+    const openModal = (form, trigger, stagiaireName) => {
+      activeForm = form;
+      activeTrigger = trigger;
+      modalName.textContent = stagiaireName;
+      modal.classList.remove('hidden');
+      document.body.classList.add('overflow-hidden');
+      confirmButton.focus();
+    };
+
+    document.querySelectorAll('[data-delete-trigger]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const form = button.closest('form');
+
+        if (!form) {
+          return;
+        }
+
+        openModal(form, button, button.dataset.stagiaireName || 'ce stagiaire');
+      });
+    });
+
+    dismissButtons.forEach((button) => {
+      button.addEventListener('click', closeModal);
+    });
+
+    confirmButton.addEventListener('click', () => {
+      if (activeForm) {
+        activeForm.submit();
+      }
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && !modal.classList.contains('hidden')) {
+        closeModal();
+      }
+    });
+  });
+</script>
 @endsection

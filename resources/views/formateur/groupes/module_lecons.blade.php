@@ -24,7 +24,7 @@
         <div class="mt-5 flex flex-col gap-3 md:flex-row md:items-center">
           <div class="flex flex-wrap items-center gap-3">
             <a href="{{ route('formateur.groupes.edit', $group->id) }}"
-               class="btn-oneduc-blue !px-4 !py-2 !border-2 inline-flex items-center gap-2">
+               class="btn-oneduc-blue !px-4 !py-2 !text-sm">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 19l-7-7 7-7" />
               </svg>
@@ -35,7 +35,7 @@
                   action="{{ route('formateur.groupes.modules.lecons.reset', ['group' => $group->id, 'module' => $module->id]) }}"
                   onsubmit="return confirm('Réinitialiser le cheminement de ce groupe pour ce module ?');">
               @csrf
-              <button type="submit" class="btn-oneduc-blue !px-4 !py-2 !border-2 inline-flex items-center gap-2">
+              <button type="submit" class="btn-oneduc-blue !px-4 !py-2 !text-sm">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 4v6h6M20 20v-6h-6M20 10a8 8 0 00-14.9-4M4 14a8 8 0 0014.9 4" />
                 </svg>
@@ -57,7 +57,7 @@
               <a href="{{ $previewUrl }}"
                  target="_blank"
                  rel="noopener"
-                 class="btn-oneduc inline-flex items-center gap-2 !px-4 !py-2 !text-sm">
+                 class="btn-oneduc !px-4 !py-2 !text-sm">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 19h8a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>

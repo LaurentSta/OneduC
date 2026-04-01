@@ -64,7 +64,7 @@
                 <a href="{{ route('password.request') }}" class="text-bleuone hover:underline font-medium">Oublié ?</a>
             </div>
 
-            <button type="submit" class="w-full bg-bleuone hover:bg-[#00334a] text-white font-bold py-3 rounded-lg shadow-md transition transform hover:-translate-y-1">
+            <button type="submit" class="btn-oneduc-blue w-full !py-3">
                 Se connecter
             </button>
         </form>
@@ -79,7 +79,7 @@
         {{-- BOUTON DEVENIR FORMATEUR (Plus gros et incitatif) --}}
         <div class="w-full">
             <a href="{{ route('formateur.inscription.form') }}" 
-               class="block w-full text-center bg-white border-2 border-orangeone text-orangeone font-bold py-4 px-6 rounded-xl hover:bg-orangeone hover:text-white transition-all duration-300 shadow-sm hover:shadow-lg">
+               class="btn-oneduc-outline !flex !w-full !flex-col !px-6 !py-4">
                 <span class="text-lg">Devenir formateur sur Onéduc</span>
                 <p class="text-xs font-normal mt-1 opacity-80">Créez votre compte gratuitement et commencez à former.</p>
             </a>

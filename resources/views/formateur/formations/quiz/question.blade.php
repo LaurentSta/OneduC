@@ -167,12 +167,12 @@
 
         <div class="mt-6 flex flex-wrap items-center gap-3">
           <button type="submit"
-                  class="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-orangeone text-white font-bold hover:opacity-90 transition">
+                  class="btn-oneduc !px-6 !py-3 !text-sm">
             Valider la reponse test
           </button>
 
           <a href="{{ $backToLessonUrl }}"
-             class="inline-flex items-center justify-center px-6 py-3 rounded-xl border border-gray-200 text-gray-700 font-semibold hover:bg-gray-50 transition">
+             class="btn-oneduc-outline !px-6 !py-3 !text-sm">
             Revenir a la lecon
           </a>
         </div>

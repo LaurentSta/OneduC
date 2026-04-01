@@ -5,7 +5,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="initial-scale=1.0">
   <link rel="icon" href="{{ asset('favicon.ico') }}" type="image/x-icon">
-  <title>Onéduc - Accueil</title>
+  <title>@yield('title', 'Onéduc - Accueil')</title>
+  <meta name="description" content="@yield('description', 'Onéduc est une plateforme de formation pensée pour l inclusion numerique, la lisibilite des parcours et l accompagnement pedagogique.')">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&family=Varela+Round&display=swap" rel="stylesheet">
   @vite(['resources/css/app.css', 'resources/js/app.js'])
   <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 </head>
@@ -36,7 +40,7 @@
       <button
         id="beta-popup-continue"
         type="button"
-        class="bg-orangeone text-white px-6 py-2 rounded-md hover:bg-orange-600"
+        class="btn-oneduc"
       >
         Continuer
       </button>

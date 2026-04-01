@@ -612,7 +612,7 @@
                                                  min="1"
                                                  max="{{ $totalInBank }}"
                                                  class="w-full rounded-xl border border-slate-300 px-3 py-2 text-center text-sm font-bold focus:border-bleuone focus:ring-bleuone">
-                                          <button type="submit" class="rounded-xl bg-bleuone px-4 py-2 text-xs font-bold text-white transition hover:bg-bleuone/90">
+                                          <button type="submit" class="btn-oneduc-blue !px-4 !py-2 !text-xs">
                                               OK
                                           </button>
                                       </div>
@@ -777,7 +777,7 @@
                                       </div>
                                   </div>
 
-                                  <button type="submit" class="inline-flex items-center justify-center rounded-xl bg-bleuone px-4 py-2.5 text-xs font-bold uppercase text-white transition hover:opacity-90">
+                                  <button type="submit" class="btn-oneduc-blue !px-4 !py-2.5 !text-xs">
                                       Ajouter
                                   </button>
                               </div>

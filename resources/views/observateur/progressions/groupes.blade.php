@@ -31,7 +31,7 @@
       <a href="{{ route('observateur.progressions.stagiaires') }}" class="btn-oneduc">
         Suivi par stagiaire
       </a>
-      <a href="{{ route('observateur.groupes.index') }}" class="btn-oneduc bg-bleuone border-bleuone hover:bg-white hover:text-bleuone">
+      <a href="{{ route('observateur.groupes.index') }}" class="btn-oneduc-blue">
         Groupes observés
       </a>
     </div>
@@ -43,7 +43,7 @@
       </div>
       <button type="submit" class="btn-oneduc">Filtrer</button>
       @if(request()->filled('search'))
-        <a href="{{ route('observateur.progressions.groupes') }}" class="btn-oneduc bg-white text-gray-700 border border-gray-300 hover:border-orangeone hover:text-orangeone">
+        <a href="{{ route('observateur.progressions.groupes') }}" class="btn-oneduc-outline">
           Réinitialiser
         </a>
       @endif
@@ -88,7 +88,7 @@
                 <span class="font-semibold {{ $taux < 50 ? 'text-red-600' : 'text-vertone' }}">{{ $taux }} %</span>
               </td>
               <td class="px-6 py-4">
-                <a href="{{ route('observateur.progressions.stagiaires', ['group_id' => $g->id]) }}" class="btn-oneduc px-3 py-1 text-xs text-white bg-orangeone border-orangeone hover:bg-white hover:text-orangeone">
+                <a href="{{ route('observateur.progressions.stagiaires', ['group_id' => $g->id]) }}" class="btn-oneduc !px-3 !py-1 !text-sm">
                   Voir les stagiaires
                 </a>
               </td>

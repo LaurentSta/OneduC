@@ -42,7 +42,7 @@
           @csrf
           <input type="text" name="code_acces" maxlength="6" required placeholder="CODE12"
                  class="w-full bg-gray-50 border-gray-200 border rounded-xl py-4 text-center text-2xl font-bold tracking-widest text-orangeone focus:ring-2 focus:ring-orangeone mb-4 uppercase">
-          <button type="submit" class="w-full bg-orangeone text-white font-bold py-4 rounded-xl hover:bg-orange-600 shadow-md transition">
+          <button type="submit" class="btn-oneduc w-full !py-4">
             Valider mon code
           </button>
         </form>
@@ -69,7 +69,7 @@
                  class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 focus:ring-2 focus:ring-bleuone">
           <input type="password" name="password" required placeholder="Votre mot de passe"
                  class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 focus:ring-2 focus:ring-bleuone">
-          <button type="submit" class="w-full bg-bleuone text-white font-bold py-4 rounded-xl hover:bg-[#00334a] shadow-md transition">
+          <button type="submit" class="btn-oneduc-blue w-full !py-4">
             Se connecter
           </button>
         </form>

@@ -9,7 +9,7 @@
             <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 12h4l3 8l4 -16l3 8h4" /></svg>
         </div>
         <div>
-            <h1 class="text-2xl font-raleway font-bold text-bleuone">Mes Résultats & Statistiques</h1>
+            <h1 class="text-2xl font-raleway font-medium text-bleuone">Mes Résultats & Statistiques</h1>
             <p class="text-sm text-gray-500">Analyse détaillée de votre progression et historique des réponses.</p>
         </div>
     </div>
@@ -368,7 +368,7 @@
                     <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
                 </div>
                 <h3 class="text-lg font-bold text-gray-900">Aucun résultat enregistré</h3>
-                <a href="{{ route('stagiaire.modules') }}" class="inline-flex mt-6 items-center px-4 py-2 bg-bleuone text-white rounded-lg text-sm font-semibold hover:bg-opacity-90 transition">
+                <a href="{{ route('stagiaire.modules') }}" class="btn-oneduc-blue mt-6 !px-4 !py-2 !text-sm">
                     Aller aux modules
                 </a>
             </div>

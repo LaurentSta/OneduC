@@ -69,7 +69,7 @@
                     {{-- Bouton formations --}}
                     <div class="mt-6 text-center">
                         <a href="{{ route('frontend.category.modules', $category->id) }}"
-                           class="inline-block px-4 py-2 bg-orangeone text-white text-sm font-medium rounded hover:bg-orange-600 transition">
+                           class="btn-oneduc !px-4 !py-2 !text-sm">
                             Voir les formations
                         </a>
                     </div>

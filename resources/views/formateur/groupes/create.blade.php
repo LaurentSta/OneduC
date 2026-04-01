@@ -487,10 +487,10 @@ Lucas;Bernard;lucas.bernard@entreprise.fr</pre>
           </div>
 
           <div class="flex items-center justify-end gap-2 border-t border-gray-100 px-5 py-4">
-            <button type="button" class="px-3 py-2 text-sm rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50" onclick="closeCsvModalCreate()">
+            <button type="button" class="btn-oneduc-outline !px-3 !py-2 !text-sm" onclick="closeCsvModalCreate()">
               Fermer
             </button>
-            <button type="button" id="csv-import-confirm-create" class="px-3 py-2 text-sm rounded-lg bg-bleuone text-white hover:opacity-90">
+            <button type="button" id="csv-import-confirm-create" class="btn-oneduc-blue !px-3 !py-2 !text-sm">
               Importer
             </button>
           </div>

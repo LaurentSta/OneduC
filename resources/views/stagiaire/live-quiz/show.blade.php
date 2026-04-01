@@ -216,7 +216,7 @@
 
                             <div class="mt-4 flex items-center justify-between">
                                 <p class="text-xs font-mono text-slate-400" id="timer_display">00:00</p>
-                                <button type="submit" class="inline-flex items-center justify-center rounded-xl bg-orangeone px-6 py-3 text-sm font-bold text-white hover:opacity-90 transition">
+                                <button type="submit" class="btn-oneduc !px-6 !py-3 !text-sm">
                                     Envoyer ma reponse
                                 </button>
                             </div>

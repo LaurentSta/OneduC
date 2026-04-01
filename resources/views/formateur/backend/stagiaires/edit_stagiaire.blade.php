@@ -127,7 +127,7 @@
 
       <div class="flex flex-col md:flex-row items-center justify-between gap-4">
         <a href="{{ route('formateur.stagiaires.index') }}"
-           class="text-gray-500 font-bold hover:text-bleuone transition">
+           class="btn-oneduc-outline !px-5 !py-2.5 !text-sm">
           Retour à la liste
         </a>
 

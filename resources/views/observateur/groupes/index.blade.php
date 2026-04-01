@@ -66,7 +66,7 @@
               <a href="{{ route('observateur.progressions.stagiaires', ['group_id' => $groupe->id]) }}" class="btn-oneduc w-1/2 text-center">
                 Stagiaires
               </a>
-              <a href="{{ route('observateur.progressions.groupes', ['search' => $groupe->name]) }}" class="btn-oneduc bg-bleuone border-bleuone hover:bg-white hover:text-bleuone w-1/2 text-center">
+              <a href="{{ route('observateur.progressions.groupes', ['search' => $groupe->name]) }}" class="btn-oneduc-blue w-1/2 text-center">
                 Progression
               </a>
             </div>

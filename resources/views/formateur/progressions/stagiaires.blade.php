@@ -77,24 +77,24 @@
           </select>
         </div>
 
-        <button type="submit" class="inline-flex h-10 items-center justify-center rounded-md border border-orangeone bg-orangeone px-5 text-sm font-varela text-white transition hover:bg-white hover:text-orangeone">
+        <button type="submit" class="btn-oneduc h-10 !text-sm">
           Filtrer
         </button>
 
         @if(request()->filled('search') || !empty($groupId))
           <a href="{{ route('formateur.progressions.stagiaires') }}"
-             class="inline-flex h-10 items-center justify-center rounded-md border border-gray-300 bg-white px-5 text-sm font-varela text-gray-700 transition hover:border-orangeone hover:text-orangeone">
+             class="btn-oneduc-outline h-10 !text-sm">
             Réinitialiser
           </a>
         @endif
 
         <a href="{{ route('formateur.progressions.groupes') }}"
-           class="inline-flex h-10 items-center justify-center rounded-md border border-orangeone bg-orangeone px-5 text-sm font-varela text-white transition hover:bg-white hover:text-orangeone">
+           class="btn-oneduc h-10 !text-sm">
           Suivi par groupe
         </a>
 
         <a href="{{ route('formateur.progressions.stagiaires') }}"
-           class="inline-flex h-10 items-center justify-center rounded-md border border-orangeone bg-orangeone px-5 text-sm font-varela text-white transition hover:bg-white hover:text-orangeone">
+           class="btn-oneduc h-10 !text-sm">
           Tous les stagiaires
         </a>
       </div>

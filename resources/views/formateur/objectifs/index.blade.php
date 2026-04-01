@@ -85,7 +85,7 @@
 
       @if($search !== '' || $moduleId > 0)
         <a href="{{ route('formateur.objectifs.index') }}"
-           class="btn-oneduc bg-white text-gray-700 border border-gray-300 hover:border-orangeone hover:text-orangeone">
+           class="btn-oneduc-outline">
           Reinitialiser
         </a>
       @endif
@@ -146,14 +146,14 @@
                   @if($lecture && $section && $module)
                     <a
                       href="{{ route('formateur.formations.lecture', ['module' => $module->id, 'section' => $section->id, 'lecture' => $lecture->id]) }}"
-                      class="btn-oneduc px-3 py-1 text-xs text-white bg-orangeone border-orangeone hover:bg-white hover:text-orangeone">
+                      class="btn-oneduc !px-3 !py-1 !text-sm">
                       Ouvrir
                     </a>
                   @endif
                   <button
                     type="button"
                     data-copy-objective="{{ $objective->title }}"
-                    class="btn-oneduc px-3 py-1 text-xs bg-white text-gray-700 border border-gray-300 hover:border-orangeone hover:text-orangeone">
+                    class="btn-oneduc-outline !px-3 !py-1 !text-sm">
                     Copier
                   </button>
                 </div>

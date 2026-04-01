@@ -16,7 +16,7 @@
 
         <div class="mt-5 flex flex-col gap-3 md:flex-row md:items-center">
           <a href="{{ route('observateur.groupes.index') }}"
-             class="btn-oneduc-blue !px-4 !py-2 !border-2 inline-flex items-center gap-2">
+             class="btn-oneduc-blue !px-4 !py-2 !text-sm">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 19l-7-7 7-7" />
             </svg>
@@ -26,14 +26,14 @@
           <div class="flex flex-wrap items-center gap-3 md:ml-auto">
             @if(!empty($officialPreviewUrl))
               <a href="{{ $officialPreviewUrl }}" target="_blank" rel="noopener"
-                 class="inline-flex items-center gap-2 rounded-lg border-2 border-bleuone bg-white px-4 py-2 text-sm font-semibold text-bleuone transition hover:bg-bleuone hover:text-white">
+                 class="btn-oneduc-outline !px-4 !py-2 !text-sm">
                 Voir le parcours officiel
               </a>
             @endif
 
             @if(!empty($groupPreviewUrl))
               <a href="{{ $groupPreviewUrl }}" target="_blank" rel="noopener"
-                 class="inline-flex items-center gap-2 rounded-lg border-2 border-bleuone bg-white px-4 py-2 text-sm font-semibold text-bleuone transition hover:bg-bleuone hover:text-white">
+                 class="btn-oneduc-outline !px-4 !py-2 !text-sm">
                 Voir le parcours du groupe
               </a>
             @endif

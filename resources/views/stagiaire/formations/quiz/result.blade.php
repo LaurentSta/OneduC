@@ -9,7 +9,7 @@
     {{-- En-tête --}}
     <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
       <div>
-        <h1 class="text-xl font-raleway text-bleuone font-semibold">Résultat du quiz</h1>
+        <h1 class="text-xl font-raleway text-bleuone font-medium">Résultat du quiz</h1>
         <p class="text-sm text-gray-600 mt-1">
           Leçon : <span class="font-medium text-gray-800">{{ $lecture->lecture_title ?? '—' }}</span>
         </p>

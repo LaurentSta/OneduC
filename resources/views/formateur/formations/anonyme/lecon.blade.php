@@ -178,12 +178,12 @@
             </div>
             <div class="flex items-center gap-2">
               @if($quizStartUrl)
-                <a href="{{ $quizStartUrl }}" class="px-3 py-2 text-xs font-bold uppercase rounded border border-orangeone text-orangeone hover:bg-orangeone hover:text-white transition">
+                <a href="{{ $quizStartUrl }}" class="btn-oneduc-outline !px-3 !py-2 !text-xs">
                   Tester le quiz
                 </a>
               @endif
               <a href="{{ $nextUrl !== '#' ? $nextUrl : $finalUrl }}"
-                 class="inline-flex items-center gap-2 px-4 py-2 bg-orangeone text-white rounded-full text-xs font-bold uppercase hover:bg-orangeone-hover transition">
+                 class="btn-oneduc !px-4 !py-2 !text-xs">
                 Lecon suivante
                 <i class="ti ti-arrow-right"></i>
               </a>
@@ -254,7 +254,7 @@
   @else
     <div class="max-w-[900px] mx-auto px-6 py-10">
       <div class="bg-white rounded-[20px] shadow-md p-8">
-        <h1 class="text-xl font-raleway text-bleuone font-semibold">Leçon indisponible</h1>
+        <h1 class="text-xl font-raleway text-bleuone font-medium">Leçon indisponible</h1>
         <p class="text-sm text-gray-600 mt-2">Aucune leçon n’est disponible.</p>
       </div>
     </div>

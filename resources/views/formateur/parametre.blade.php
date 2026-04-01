@@ -184,23 +184,7 @@
   </div>
 
   {{-- SIDEBAR --}}
-  <aside class="bg-white rounded-[20px] shadow-md p-6 h-fit" aria-label="Navigation Mon Espace">
-    <h3 class="text-lg font-semibold text-[#004461] mb-4">Mon Espace</h3>
-    <ul class="space-y-3 text-sm">
-      <li class="flex items-center space-x-2">
-        <span class="w-2.5 h-2.5 bg-orangeone rounded-full" aria-hidden="true"></span>
-        <a href="{{ route('formateur.profile') }}" class="text-gray-700 hover:text-[#004461] font-medium">Profil</a>
-      </li>
-      <li class="flex items-center space-x-2">
-        <span class="w-2.5 h-2.5 bg-orangeone rounded-full" aria-hidden="true"></span>
-        <a href="{{ route('formateur.parametre') }}" class="text-[#E94D2A] font-semibold" aria-current="page">Préférences</a>
-      </li>
-      <li class="flex items-center space-x-2">
-        <span class="w-2.5 h-2.5 bg-orangeone rounded-full" aria-hidden="true"></span>
-        <a href="{{ route('formateur.securite') }}" class="text-gray-700 hover:text-[#004461] font-medium">Sécurité</a>
-      </li>
-    </ul>
-  </aside>
+  @include('formateur.partials.profile_menu')
 
 </div>
 

@@ -44,7 +44,7 @@
 
                     <form method="POST" action="{{ route('stagiaire.live-quiz.join', ['session' => $session->id]) }}" class="mt-6">
                         @csrf
-                        <button type="submit" class="inline-flex items-center justify-center rounded-xl bg-orangeone px-6 py-3 text-sm font-bold text-white hover:opacity-90 transition">
+                        <button type="submit" class="btn-oneduc !px-6 !py-3 !text-sm">
                             Rejoindre la session
                         </button>
                     </form>

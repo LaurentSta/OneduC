@@ -35,7 +35,7 @@
         {{ substr($stagiaire->prenom, 0, 1) }}{{ substr($stagiaire->name, 0, 1) }}
       </div>
       <div>
-        <h1 class="text-2xl font-raleway font-bold text-gray-900">
+        <h1 class="text-2xl font-raleway font-medium text-bleuone">
           {{ $stagiaire->prenom }} {{ $stagiaire->name }}
         </h1>
         <div class="flex flex-wrap items-center gap-3 text-sm text-gray-500 font-varela mt-1">
@@ -54,10 +54,10 @@
     </div>
 
     <div class="flex gap-3">
-      <a href="{{ route('formateur.progressions.stagiaires', array_filter(['group_id' => $selectedGroup?->id])) }}" class="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg font-bold text-sm hover:bg-gray-200 transition">
+      <a href="{{ route('formateur.progressions.stagiaires', array_filter(['group_id' => $selectedGroup?->id])) }}" class="btn-oneduc-outline !px-4 !py-2 !text-sm">
         Retour liste
       </a>
-      <a href="mailto:{{ $stagiaire->email }}" class="px-4 py-2 bg-orangeone text-white rounded-lg font-bold text-sm hover:opacity-90 transition shadow-md shadow-orange-100">
+      <a href="mailto:{{ $stagiaire->email }}" class="btn-oneduc !px-4 !py-2 !text-sm">
         Contacter
       </a>
     </div>

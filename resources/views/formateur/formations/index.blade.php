@@ -60,13 +60,13 @@
                class="h-10 w-full rounded-md border border-gray-300 px-4 text-sm font-lisible shadow-sm focus:border-orangeone focus:ring-orangeone">
         </div>
 
-        <button type="submit" class="inline-flex h-10 items-center justify-center rounded-md border border-orangeone bg-orangeone px-5 text-sm font-varela text-white transition hover:bg-white hover:text-orangeone">
+        <button type="submit" class="btn-oneduc h-10 !text-sm">
           Filtrer
         </button>
 
         @if(request()->filled('search'))
           <a href="{{ route('formateur.formations.index') }}"
-             class="inline-flex h-10 items-center justify-center rounded-md border border-gray-300 bg-white px-5 text-sm font-varela text-gray-700 transition hover:border-orangeone hover:text-orangeone">
+             class="btn-oneduc-outline h-10 !text-sm">
             Réinitialiser
           </a>
         @endif
@@ -161,7 +161,7 @@
                   <span class="text-gray-400 text-sm">Accès indisponible</span>
                 @elseif($officialUrl)
                   <a href="{{ $officialUrl }}"
-                     class="btn-oneduc px-3 py-1 text-xs text-white bg-orangeone border-orangeone hover:bg-white hover:text-orangeone">
+                     class="btn-oneduc !px-3 !py-1 !text-sm">
                     Voir le module
                   </a>
                 @else

@@ -8,7 +8,7 @@
         {{ substr((string) $stagiaire->prenom, 0, 1) }}{{ substr((string) $stagiaire->name, 0, 1) }}
       </div>
       <div>
-        <h1 class="text-2xl font-raleway font-bold text-gray-900">{{ $stagiaire->prenom }} {{ $stagiaire->name }}</h1>
+        <h1 class="text-2xl font-raleway font-medium text-bleuone">{{ $stagiaire->prenom }} {{ $stagiaire->name }}</h1>
         <div class="flex items-center gap-4 text-sm text-gray-500 font-varela mt-1">
           <span>{{ $stagiaire->email }}</span>
           <span class="w-1 h-1 bg-gray-300 rounded-full"></span>

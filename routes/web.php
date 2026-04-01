@@ -24,6 +24,8 @@ Route::get('/le-projet-oneduc-fr', [\App\Http\Controllers\UserController::class,
 Route::get('/association', [\App\Http\Controllers\UserController::class, 'Association'])->name('association');
 // Page d'adhésion pour rejoindre l'association
 Route::get('/adhesion', [\App\Http\Controllers\UserController::class, 'Adhesion'])->name('adhesion');
+// Charte graphique publique
+Route::view('/chartegraphique', 'frontend.contenu.charte_graphique')->name('charte-graphique');
 // Affiche les modules liés à une catégorie (accessible sans connexion)
 Route::get('/categorie/{id}/modules', [\App\Http\Controllers\Backend\CategoryController::class, 'showCategoryModules'])->name('frontend.category.modules');
 // --- Pages légales et conformité ---

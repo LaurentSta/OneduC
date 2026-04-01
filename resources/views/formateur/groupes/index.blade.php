@@ -190,7 +190,7 @@
                     class="w-1/2">
                 @csrf
                 @method('DELETE')
-                <button type="submit" class="btn-oneduc bg-bleuone border-bleuone hover:bg-white hover:text-bleuone w-full">
+                <button type="submit" class="btn-oneduc-blue w-full">
                   Supprimer
                 </button>
               </form>

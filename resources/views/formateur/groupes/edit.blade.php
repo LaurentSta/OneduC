@@ -516,13 +516,13 @@ Lucas;Bernard;lucas.bernard@entreprise.fr</pre>
 
           <div class="flex items-center justify-end gap-2 border-t border-gray-100 px-5 py-4">
             <button type="button"
-                    class="px-3 py-2 text-sm rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50"
+                    class="btn-oneduc-outline !px-3 !py-2 !text-sm"
                     onclick="closeCsvModalEdit()">
               Fermer
             </button>
             <button type="button"
                     id="csv-import-confirm-edit"
-                    class="px-3 py-2 text-sm rounded-lg bg-bleuone text-white hover:opacity-90">
+                    class="btn-oneduc-blue !px-3 !py-2 !text-sm">
               Importer
             </button>
           </div>

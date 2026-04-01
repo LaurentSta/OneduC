@@ -8,7 +8,7 @@
         <h1 class="text-[20px] font-varela text-bleuone">Nuage de mots - {{ $wordCloud->title }}</h1>
         <p class="text-sm text-gray-600 mt-1">{{ $wordCloud->question }}</p>
       </div>
-      <a href="{{ url()->previous() }}" class="px-3 py-2 rounded-lg border border-gray-300 text-sm">Retour</a>
+      <a href="{{ url()->previous() }}" class="btn-oneduc-outline !px-3 !py-2 !text-sm">Retour</a>
     </div>
 
     <div class="flex flex-wrap items-center gap-3 text-sm text-gray-600 mb-5">
@@ -19,7 +19,7 @@
         <span class="rounded-full bg-gray-100 px-3 py-1">Module : {{ $wordCloud->module->module_title ?: $wordCloud->module->module_name }}</span>
       @endif
       <span class="rounded-full bg-orange-50 px-3 py-1 font-mono text-orangeone">Code : {{ $wordCloud->access_code }}</span>
-      <a href="{{ $joinUrl }}" target="_blank" rel="noopener" class="rounded-full bg-bleuone px-3 py-1 text-white">Ouvrir le lien stagiaire</a>
+      <a href="{{ $joinUrl }}" target="_blank" rel="noopener" class="btn-oneduc-blue !px-3 !py-1 !text-sm">Ouvrir le lien stagiaire</a>
     </div>
 
     <div class="rounded-xl border border-gray-200 bg-gray-50 min-h-[420px] p-5 wc-grid" id="cloudZone"></div>

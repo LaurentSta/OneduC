@@ -55,12 +55,12 @@
   {{-- ACTIONS --}}
   <div class="flex flex-wrap justify-end gap-3 mb-6">
     <a href="{{ route('formateur.progressions.groupes') }}"
-       class="inline-flex h-10 items-center justify-center rounded-md border border-orangeone bg-orangeone px-5 text-sm font-varela text-white transition hover:bg-white hover:text-orangeone">
+       class="btn-oneduc h-10 !text-sm">
       Suivi par groupe
     </a>
 
     <a href="{{ route('formateur.progressions.stagiaires') }}"
-       class="inline-flex h-10 items-center justify-center rounded-md border border-orangeone bg-orangeone px-5 text-sm font-varela text-white transition hover:bg-white hover:text-orangeone">
+       class="btn-oneduc h-10 !text-sm">
       Suivi par stagiaire
     </a>
   </div>
