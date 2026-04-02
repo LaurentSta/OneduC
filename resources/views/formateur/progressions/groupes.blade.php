@@ -60,6 +60,7 @@
         </div>
 
         <button type="submit" class="btn-oneduc h-10 !text-sm">
+          <x-icons.filter-iconify class="h-4 w-4" />
           Filtrer
         </button>
 
@@ -72,10 +73,12 @@
 
         <a href="{{ route('formateur.progressions.stagiaires') }}"
            class="btn-oneduc h-10 !text-sm">
+          <x-icons.eye-iconify class="h-4 w-4" />
           Suivi par stagiaire
         </a>
         <a href="{{ route('formateur.progressions.modules') }}"
            class="btn-oneduc h-10 !text-sm">
+          <x-icons.eye-iconify class="h-4 w-4" />
           Suivi par module
         </a>
       </div>
@@ -149,6 +152,7 @@
               <td class="px-6 py-4">
                 <a href="{{ route('formateur.progressions.stagiaires', ['group_id' => $g->id]) }}"
                    class="btn-oneduc !px-3 !py-1 !text-sm">
+                  <x-icons.eye-iconify class="h-4 w-4" />
                   Voir les stagiaires
                 </a>
               </td>

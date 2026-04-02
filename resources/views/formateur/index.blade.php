@@ -413,13 +413,16 @@
 
   <section class="bg-white rounded-[20px] shadow-md p-6">
     <div class="flex flex-wrap items-center gap-4 md:gap-8 text-sm font-varela">
-      <a href="{{ route('formateur.progressions.groupes') }}" class="text-orangeone hover:underline">
+      <a href="{{ route('formateur.progressions.groupes') }}" class="inline-flex items-center gap-2 text-orangeone hover:underline">
+        <x-icons.eye-iconify class="h-4 w-4" />
         Voir les groupes
       </a>
-      <a href="{{ route('formateur.progressions.modules') }}" class="text-orangeone hover:underline">
+      <a href="{{ route('formateur.progressions.modules') }}" class="inline-flex items-center gap-2 text-orangeone hover:underline">
+        <x-icons.eye-iconify class="h-4 w-4" />
         Voir les modules
       </a>
-      <a href="{{ route('formateur.progressions.stagiaires') }}" class="text-orangeone hover:underline">
+      <a href="{{ route('formateur.progressions.stagiaires') }}" class="inline-flex items-center gap-2 text-orangeone hover:underline">
+        <x-icons.eye-iconify class="h-4 w-4" />
         Voir les stagiaires
       </a>
       <a href="{{ route('formateur.groupes.create') }}" class="text-orangeone hover:underline">

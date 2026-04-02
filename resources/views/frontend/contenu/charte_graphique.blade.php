@@ -112,18 +112,6 @@
     'Employer des intitulés vagues quand une consigne directe peut mieux guider l utilisateur.',
   ];
 
-  $trashIcons = [
-    ['index' => '01', 'title' => 'Classique arrondie', 'note' => 'Une forme douce et familière, proche d une action pédagogique.' ],
-    ['index' => '02', 'title' => 'Fine et verticale', 'note' => 'Une proposition discrète, légère et facile à intégrer dans des tableaux.' ],
-    ['index' => '03', 'title' => 'Compacte à lattes', 'note' => 'Un dessin plus dense, utile quand l icône doit rester très lisible en petit.' ],
-    ['index' => '04', 'title' => 'Équilibrée trois traits', 'note' => 'Un style intermédiaire entre interface moderne et repère classique.' ],
-    ['index' => '05', 'title' => 'Couvercle mobile', 'note' => 'Une variante plus expressive pour signifier une action volontaire.' ],
-    ['index' => '06', 'title' => 'Corps arrondi', 'note' => 'Un rendu un peu plus chaleureux, cohérent avec les formes Oneduc.' ],
-    ['index' => '07', 'title' => 'Très structurée', 'note' => 'Une icône nette et rassurante, adaptée aux interfaces de gestion.' ],
-    ['index' => '08', 'title' => 'Monobloc stable', 'note' => 'Une silhouette franche, efficace pour les écrans d administration.' ],
-    ['index' => '09', 'title' => 'Minimaliste', 'note' => 'Une interprétation très simple, presque signalétique.' ],
-    ['index' => '10', 'title' => 'Suppression affirmée', 'note' => 'Une version plus marquée pour signaler une action sensible.' ],
-  ];
 @endphp
 
 <div class="relative overflow-hidden bg-[#f8f7fa]">
@@ -163,7 +151,6 @@
             <a href="#typographies" class="rounded-full border border-slate-200 bg-white px-4 py-2 transition hover:border-orangeone hover:text-orangeone">Typographies</a>
             <a href="#logos" class="rounded-full border border-slate-200 bg-white px-4 py-2 transition hover:border-orangeone hover:text-orangeone">Logos</a>
             <a href="#interfaces" class="rounded-full border border-slate-200 bg-white px-4 py-2 transition hover:border-orangeone hover:text-orangeone">Interface</a>
-            <a href="#icones" class="rounded-full border border-slate-200 bg-white px-4 py-2 transition hover:border-orangeone hover:text-orangeone">Icônes</a>
             <a href="#ton" class="rounded-full border border-slate-200 bg-white px-4 py-2 transition hover:border-orangeone hover:text-orangeone">Ton éditorial</a>
           </div>
         </div>
@@ -337,18 +324,6 @@
           </span>
         </div>
 
-        <div class="mt-8 rounded-[24px] border border-slate-200 bg-white p-6">
-          <div class="flex items-center justify-between gap-4">
-            <div>
-              <p class="font-varela text-sm uppercase tracking-[0.16em] text-slate-500">Action dense en tableau</p>
-              <p class="mt-2 font-lisible text-sm text-slate-600">Pour les suppressions en liste, l icône seule dans une pastille bleue reste acceptable si une fenêtre de confirmation suit systématiquement.</p>
-            </div>
-
-            <button type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-bleuone/20 bg-bleuone/10 text-bleuone">
-              <x-icons.trash-iconify class="h-5 w-5" />
-            </button>
-          </div>
-        </div>
       </div>
 
       <div class="grid gap-6">
@@ -390,215 +365,6 @@
               </div>
             @endforeach
           </div>
-        </article>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section id="icones" class="bg-[#f8f7fa] py-16 md:py-20">
-  <div class="mx-auto max-w-[1248px] px-4">
-    <div class="max-w-3xl">
-      <p class="text-sm font-varela uppercase tracking-[0.24em] text-orangeone">Icônes</p>
-      <h2 class="mt-4 font-varela text-3xl font-normal text-orangeone md:text-4xl">10 propositions de corbeilles à comparer</h2>
-      <p class="mt-5 font-lisible text-lg leading-relaxed text-slate-700">
-        Cette galerie rassemble dix pistes visuelles pour l action de suppression. Elles sont volontairement présentées dans le même cadre pour comparer la lisibilité, la personnalité et la cohérence avec l univers Oneduc.
-      </p>
-    </div>
-
-    <div class="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-5">
-      @foreach ($trashIcons as $icon)
-        <article class="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:border-bleuone/25">
-          <div class="flex items-center justify-between gap-3">
-            <span class="inline-flex items-center rounded-full bg-orangeone/10 px-3 py-1 text-xs font-varela uppercase tracking-[0.16em] text-orangeone">
-              {{ $icon['index'] }}
-            </span>
-            <span class="text-xs font-varela uppercase tracking-[0.14em] text-slate-400">Corbeille</span>
-          </div>
-
-          <div class="mt-6 flex h-24 items-center justify-center rounded-[22px] border border-bleuone/10 bg-white text-bleuone shadow-inner shadow-bleuone/5">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-14 w-14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              @switch($icon['index'])
-                @case('01')
-                  <path stroke-width="1.8" d="M4.5 7.5h15" />
-                  <path stroke-width="1.8" d="M9 7.5V6a1.5 1.5 0 011.5-1.5h3A1.5 1.5 0 0115 6v1.5" />
-                  <path stroke-width="1.8" d="M7.5 7.5v10.125A1.875 1.875 0 009.375 19.5h5.25A1.875 1.875 0 0016.5 17.625V7.5" />
-                  <path stroke-width="1.8" d="M10 10.5v6" />
-                  <path stroke-width="1.8" d="M14 10.5v6" />
-                  @break
-
-                @case('02')
-                  <path stroke-width="1.75" d="M5 6.75h14" />
-                  <path stroke-width="1.75" d="M9 6.75V5.5c0-.55.45-1 1-1h4c.55 0 1 .45 1 1v1.25" />
-                  <path stroke-width="1.75" d="M8 9.25l.75 9a1.5 1.5 0 001.49 1.25h3.52a1.5 1.5 0 001.49-1.25l.75-9" />
-                  <path stroke-width="1.75" d="M10.5 11v5.5" />
-                  <path stroke-width="1.75" d="M13.5 11v5.5" />
-                  @break
-
-                @case('03')
-                  <path stroke-width="1.9" d="M6 7h12" />
-                  <path stroke-width="1.9" d="M9.25 7V5.75c0-.69.56-1.25 1.25-1.25h3c.69 0 1.25.56 1.25 1.25V7" />
-                  <path stroke-width="1.9" d="M8.5 8.5v9.25c0 .97.78 1.75 1.75 1.75h3.5c.97 0 1.75-.78 1.75-1.75V8.5" />
-                  <path stroke-width="1.9" d="M10 10h4" />
-                  <path stroke-width="1.9" d="M10 12.75h4" />
-                  <path stroke-width="1.9" d="M10 15.5h4" />
-                  @break
-
-                @case('04')
-                  <path stroke-width="1.85" d="M4.75 7.25h14.5" />
-                  <path stroke-width="1.85" d="M9.75 7.25v-1c0-.97.78-1.75 1.75-1.75h1c.97 0 1.75.78 1.75 1.75v1" />
-                  <path stroke-width="1.85" d="M7.25 8.75l.8 8.9A2 2 0 0010.04 19.5h3.92a2 2 0 001.99-1.85l.8-8.9" />
-                  <path stroke-width="1.85" d="M9.5 10.25v6" />
-                  <path stroke-width="1.85" d="M12 10.25v6" />
-                  <path stroke-width="1.85" d="M14.5 10.25v6" />
-                  @break
-
-                @case('05')
-                  <path stroke-width="1.8" d="M6 8h11.5" />
-                  <path stroke-width="1.8" d="M8 5.75h6" />
-                  <path stroke-width="1.8" d="M8 8l.6 9.25A1.5 1.5 0 0010.09 18.5h3.82a1.5 1.5 0 001.49-1.25L16 8" />
-                  <path stroke-width="1.8" d="M17.5 6.25l-1.25 1.25" />
-                  <path stroke-width="1.8" d="M10.5 10.25v5.25" />
-                  <path stroke-width="1.8" d="M13.5 10.25v5.25" />
-                  @break
-
-                @case('06')
-                  <path stroke-width="1.9" d="M5 7.5h14" />
-                  <path stroke-width="1.9" d="M10 7.5V6c0-.83.67-1.5 1.5-1.5h1A1.5 1.5 0 0114 6v1.5" />
-                  <path stroke-width="1.9" d="M8 9.5c.15 4.8.47 7.52.95 8.17.29.39.75.63 1.24.63h3.62c.49 0 .95-.24 1.24-.63.48-.65.8-3.37.95-8.17" />
-                  <path stroke-width="1.9" d="M10.25 11.25v4.75" />
-                  <path stroke-width="1.9" d="M13.75 11.25v4.75" />
-                  <path stroke-width="1.9" d="M9 18.25h6" />
-                  @break
-
-                @case('07')
-                  <path stroke-width="1.8" d="M3.5 6h17" />
-                  <path stroke-width="1.8" d="M8.5 6V4.5h7V6" />
-                  <path stroke-width="1.8" d="M18.5 6l-1 12.75A2 2 0 0115.51 20h-7.02a2 2 0 01-1.99-1.25L5.5 6" />
-                  <path stroke-width="1.8" d="M10 10.5v6.25" />
-                  <path stroke-width="1.8" d="M14 10.5v6.25" />
-                  @break
-
-                @case('08')
-                  <path stroke-width="1.85" d="M5.5 7h13" />
-                  <path stroke-width="1.85" d="M9.5 7V5.75c0-.69.56-1.25 1.25-1.25h2.5c.69 0 1.25.56 1.25 1.25V7" />
-                  <path stroke-width="1.85" d="M7.75 9h8.5v8.5A2 2 0 0114.25 19.5h-4.5a2 2 0 01-2-2V9z" />
-                  <path stroke-width="1.85" d="M10 11.25v5" />
-                  <path stroke-width="1.85" d="M12 11.25v5" />
-                  <path stroke-width="1.85" d="M14 11.25v5" />
-                  @break
-
-                @case('09')
-                  <path stroke-width="1.8" d="M7 7.25h10" />
-                  <path stroke-width="1.8" d="M10 7.25V6h4v1.25" />
-                  <path stroke-width="1.8" d="M8.5 9.25h7v8a2 2 0 01-2 2h-3a2 2 0 01-2-2v-8z" />
-                  <path stroke-width="1.8" d="M12 11v6" />
-                  @break
-
-                @case('10')
-                  <path stroke-width="2" d="M4.5 7h15" />
-                  <path stroke-width="2" d="M9 7V5.75A1.25 1.25 0 0110.25 4.5h3.5A1.25 1.25 0 0115 5.75V7" />
-                  <path stroke-width="2" d="M7.25 8.5l.6 8.4A2.25 2.25 0 0010.09 19h3.82a2.25 2.25 0 002.24-2.1l.6-8.4" />
-                  <path stroke-width="2" d="M9.75 10.5l4.5 4.5" />
-                  <path stroke-width="2" d="M14.25 10.5l-4.5 4.5" />
-                  @break
-              @endswitch
-            </svg>
-          </div>
-
-          <h3 class="mt-5 text-lg font-semibold text-bleuone">{{ $icon['title'] }}</h3>
-          <p class="mt-2 font-lisible text-sm leading-relaxed text-slate-600">{{ $icon['note'] }}</p>
-        </article>
-      @endforeach
-    </div>
-
-    <div class="mt-14 rounded-[32px] border border-slate-200 bg-white p-8 shadow-sm">
-      <div class="max-w-3xl">
-        <p class="text-sm font-varela uppercase tracking-[0.24em] text-bleuone">Présentation de l icône retenue</p>
-        <h3 class="mt-4 text-2xl font-raleway font-medium text-bleuone">6 manières de mettre en scène la corbeille Iconify</h3>
-        <p class="mt-4 font-lisible text-base leading-relaxed text-slate-600">
-          Ici, le dessin ne change plus. Seule sa présentation évolue selon le contexte d usage : tableau dense, bouton d action, confirmation, variante discrète ou suppression plus sensible.
-        </p>
-      </div>
-
-      <div class="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-        <article class="rounded-[24px] border border-slate-200 bg-[#f8f7fa] p-6">
-          <p class="text-sm font-varela uppercase tracking-[0.16em] text-orangeone">Option A</p>
-          <h4 class="mt-2 text-lg font-semibold text-bleuone">Pastille bleue légère</h4>
-          <div class="mt-5 flex items-center justify-center">
-            <button type="button" class="inline-flex h-11 w-11 items-center justify-center rounded-full border border-bleuone/20 bg-bleuone/10 text-bleuone transition hover:border-bleuone hover:bg-bleuone hover:text-white">
-              <x-icons.trash-iconify class="h-5 w-5" />
-            </button>
-          </div>
-          <p class="mt-5 font-lisible text-sm leading-relaxed text-slate-600">
-            La plus proche de l actuel. Très adaptée aux tableaux et aux listes denses.
-          </p>
-        </article>
-
-        <article class="rounded-[24px] border border-slate-200 bg-[#f8f7fa] p-6">
-          <p class="text-sm font-varela uppercase tracking-[0.16em] text-orangeone">Option B</p>
-          <h4 class="mt-2 text-lg font-semibold text-bleuone">Pastille bleue pleine</h4>
-          <div class="mt-5 flex items-center justify-center">
-            <button type="button" class="inline-flex h-11 w-11 items-center justify-center rounded-full border border-bleuone bg-bleuone text-white transition hover:bg-white hover:text-bleuone">
-              <x-icons.trash-iconify class="h-5 w-5" />
-            </button>
-          </div>
-          <p class="mt-5 font-lisible text-sm leading-relaxed text-slate-600">
-            Plus visible et plus franche. Bonne option si l action doit être repérée rapidement.
-          </p>
-        </article>
-
-        <article class="rounded-[24px] border border-slate-200 bg-[#f8f7fa] p-6">
-          <p class="text-sm font-varela uppercase tracking-[0.16em] text-orangeone">Option C</p>
-          <h4 class="mt-2 text-lg font-semibold text-bleuone">Carré arrondi discret</h4>
-          <div class="mt-5 flex items-center justify-center">
-            <button type="button" class="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-bleuone/15 bg-white text-bleuone transition hover:border-bleuone hover:bg-bleuone/5">
-              <x-icons.trash-iconify class="h-5 w-5" />
-            </button>
-          </div>
-          <p class="mt-5 font-lisible text-sm leading-relaxed text-slate-600">
-            Plus structurée, plus “outil”. Fonctionne bien dans les interfaces de gestion.
-          </p>
-        </article>
-
-        <article class="rounded-[24px] border border-slate-200 bg-[#f8f7fa] p-6">
-          <p class="text-sm font-varela uppercase tracking-[0.16em] text-orangeone">Option D</p>
-          <h4 class="mt-2 text-lg font-semibold text-bleuone">Bouton avec libellé</h4>
-          <div class="mt-5 flex items-center justify-center">
-            <button type="button" class="btn-oneduc-outline !px-4 !py-2 !text-sm">
-              <x-icons.trash-iconify class="h-4 w-4" />
-              Supprimer
-            </button>
-          </div>
-          <p class="mt-5 font-lisible text-sm leading-relaxed text-slate-600">
-            Recommandée quand il faut lever toute ambiguïté sur l action.
-          </p>
-        </article>
-
-        <article class="rounded-[24px] border border-slate-200 bg-[#f8f7fa] p-6">
-          <p class="text-sm font-varela uppercase tracking-[0.16em] text-orangeone">Option E</p>
-          <h4 class="mt-2 text-lg font-semibold text-bleuone">Version alerte douce</h4>
-          <div class="mt-5 flex items-center justify-center">
-            <button type="button" class="inline-flex h-11 w-11 items-center justify-center rounded-full border border-red-200 bg-red-50 text-red-600 transition hover:bg-red-600 hover:text-white">
-              <x-icons.trash-iconify class="h-5 w-5" />
-            </button>
-          </div>
-          <p class="mt-5 font-lisible text-sm leading-relaxed text-slate-600">
-            Plus explicite pour une suppression sensible, mais plus éloignée de la palette Oneduc.
-          </p>
-        </article>
-
-        <article class="rounded-[24px] border border-slate-200 bg-[#f8f7fa] p-6">
-          <p class="text-sm font-varela uppercase tracking-[0.16em] text-orangeone">Option F</p>
-          <h4 class="mt-2 text-lg font-semibold text-bleuone">Entête de confirmation</h4>
-          <div class="mt-5 flex items-center justify-center">
-            <div class="inline-flex h-14 w-14 items-center justify-center rounded-full bg-bleuone/10 text-bleuone">
-              <x-icons.trash-iconify class="h-6 w-6" />
-            </div>
-          </div>
-          <p class="mt-5 font-lisible text-sm leading-relaxed text-slate-600">
-            Idéale dans une modale de validation pour rappeler visuellement l action avant confirmation.
-          </p>
         </article>
       </div>
     </div>

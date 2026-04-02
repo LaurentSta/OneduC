@@ -56,11 +56,13 @@
   <div class="flex flex-wrap justify-end gap-3 mb-6">
     <a href="{{ route('formateur.progressions.groupes') }}"
        class="btn-oneduc h-10 !text-sm">
+      <x-icons.eye-iconify class="h-4 w-4" />
       Suivi par groupe
     </a>
 
     <a href="{{ route('formateur.progressions.stagiaires') }}"
        class="btn-oneduc h-10 !text-sm">
+      <x-icons.eye-iconify class="h-4 w-4" />
       Suivi par stagiaire
     </a>
   </div>
@@ -103,6 +105,7 @@
                     {{-- 3. Action --}}
                     <div>
                         <a href="{{ route('formateur.formations.detail', $m->id) }}" class="btn-oneduc">
+                            <x-icons.eye-iconify class="h-4 w-4" />
                             Voir le détail
                         </a>
                     </div>

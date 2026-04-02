@@ -97,12 +97,14 @@
           </select>
         </div>
 
-        <button type="submit" class="btn-oneduc h-10 w-full sm:w-[200px] !text-sm">
-          Filtrer
+        <button type="submit" class="btn-oneduc inline-flex h-10 w-full items-center justify-center gap-2 sm:w-[200px] !text-sm">
+          <x-icons.filter-iconify class="h-4 w-4 shrink-0" />
+          <span>Filtrer</span>
         </button>
 
         <a href="{{ route('formateur.stagiaires.create', request()->filled('group_id') ? ['group_id' => request('group_id')] : []) }}"
            class="btn-oneduc h-10 w-full sm:w-[200px] !text-sm">
+          <x-icons.add-stagiaire-button-iconify class="h-4 w-4 shrink-0" />
           Ajouter un stagiaire
         </a>
 
@@ -194,11 +196,17 @@
     </div>
 
     <div class="flex flex-wrap items-center gap-2">
-      <div class="inline-flex items-center gap-2 rounded-full border border-bleuone/20 bg-white px-4 py-2 text-sm font-varela text-gray-700">
+      <div class="inline-flex items-center gap-3 rounded-full border border-bleuone/20 bg-white px-4 py-2 text-sm font-varela text-gray-700">
+        <span class="flex h-8 w-8 items-center justify-center rounded-full bg-bleuone/10 text-bleuone">
+          <x-icons.stagiaire-iconify class="h-4 w-4" />
+        </span>
         <span>Nombre total de stagiaires :</span>
         <span class="font-bold text-bleuone">{{ $stagiaires->total() }}</span>
       </div>
-      <div class="inline-flex items-center gap-2 rounded-full border border-orangeone/20 bg-white px-4 py-2 text-sm font-varela text-gray-700">
+      <div class="inline-flex items-center gap-3 rounded-full border border-orangeone/20 bg-white px-4 py-2 text-sm font-varela text-gray-700">
+        <span class="flex h-8 w-8 items-center justify-center rounded-full bg-orangeone/10 text-orangeone">
+          <x-icons.add-stagiaire-iconify class="h-4 w-4" />
+        </span>
         <span>Nombre total de groupes :</span>
         <span class="font-bold text-orangeone">{{ $groupes->count() }}</span>
       </div>

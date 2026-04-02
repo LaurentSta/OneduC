@@ -162,6 +162,7 @@
                 @elseif($officialUrl)
                   <a href="{{ $officialUrl }}"
                      class="btn-oneduc !px-3 !py-1 !text-sm">
+                    <x-icons.eye-iconify class="h-4 w-4" />
                     Voir le module
                   </a>
                 @else

@@ -78,6 +78,7 @@
         </div>
 
         <button type="submit" class="btn-oneduc h-10 !text-sm">
+          <x-icons.filter-iconify class="h-4 w-4" />
           Filtrer
         </button>
 
@@ -90,11 +91,13 @@
 
         <a href="{{ route('formateur.progressions.groupes') }}"
            class="btn-oneduc h-10 !text-sm">
+          <x-icons.eye-iconify class="h-4 w-4" />
           Suivi par groupe
         </a>
 
         <a href="{{ route('formateur.progressions.stagiaires') }}"
            class="btn-oneduc h-10 !text-sm">
+          <x-icons.eye-iconify class="h-4 w-4" />
           Tous les stagiaires
         </a>
       </div>
@@ -194,7 +197,8 @@
               {{-- Action --}}
               <td class="px-6 py-4 text-right">
                 <a href="{{ route('formateur.progressions.stagiaire', ['user' => $s->id, 'group_id' => $groupId ?: null]) }}"
-                   class="text-orangeone hover:underline text-sm font-semibold">
+                   class="inline-flex items-center gap-2 text-sm font-semibold text-orangeone hover:underline">
+                  <x-icons.eye-iconify class="h-4 w-4" />
                   Voir le détail
                 </a>
               </td>

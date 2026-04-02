@@ -27,6 +27,7 @@
             @if(!empty($officialPreviewUrl))
               <a href="{{ $officialPreviewUrl }}" target="_blank" rel="noopener"
                  class="btn-oneduc-outline !px-4 !py-2 !text-sm">
+                <x-icons.eye-iconify class="h-4 w-4" />
                 Voir le parcours officiel
               </a>
             @endif
@@ -34,6 +35,7 @@
             @if(!empty($groupPreviewUrl))
               <a href="{{ $groupPreviewUrl }}" target="_blank" rel="noopener"
                  class="btn-oneduc-outline !px-4 !py-2 !text-sm">
+                <x-icons.eye-iconify class="h-4 w-4" />
                 Voir le parcours du groupe
               </a>
             @endif

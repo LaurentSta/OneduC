@@ -20,8 +20,14 @@
   <main class="space-y-6">
     <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
       <div class="flex flex-wrap gap-3">
-        <a href="{{ route('observateur.progressions.groupes') }}" class="btn-oneduc">Voir les groupes</a>
-        <a href="{{ route('observateur.progressions.stagiaires') }}" class="btn-oneduc">Tous les stagiaires</a>
+        <a href="{{ route('observateur.progressions.groupes') }}" class="btn-oneduc">
+          <x-icons.eye-iconify class="h-4 w-4" />
+          Voir les groupes
+        </a>
+        <a href="{{ route('observateur.progressions.stagiaires') }}" class="btn-oneduc">
+          <x-icons.eye-iconify class="h-4 w-4" />
+          Tous les stagiaires
+        </a>
       </div>
 
       <form method="GET" action="{{ route('observateur.progressions.stagiaires') }}" class="flex flex-wrap items-center gap-3">
@@ -32,7 +38,10 @@
             <option value="{{ $g->id }}" @selected((int)$g->id === (int)($groupId ?? 0))>{{ $g->name }}</option>
           @endforeach
         </select>
-        <button type="submit" class="btn-oneduc">Appliquer</button>
+        <button type="submit" class="btn-oneduc">
+          <x-icons.filter-iconify class="h-4 w-4" />
+          Appliquer
+        </button>
       </form>
     </div>
 
@@ -81,7 +90,8 @@
                 @endif
               </td>
               <td class="px-6 py-4 text-right">
-                <a href="{{ route('observateur.progressions.stagiaire', $s->id) }}" class="text-orangeone hover:underline text-sm font-semibold">
+                <a href="{{ route('observateur.progressions.stagiaire', $s->id) }}" class="inline-flex items-center gap-2 text-sm font-semibold text-orangeone hover:underline">
+                  <x-icons.eye-iconify class="h-4 w-4" />
                   Voir le détail
                 </a>
               </td>

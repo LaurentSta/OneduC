@@ -29,6 +29,7 @@
 
     <div class="flex flex-wrap justify-end gap-3">
       <a href="{{ route('observateur.progressions.stagiaires') }}" class="btn-oneduc">
+        <x-icons.eye-iconify class="h-4 w-4" />
         Suivi par stagiaire
       </a>
       <a href="{{ route('observateur.groupes.index') }}" class="btn-oneduc-blue">
@@ -41,7 +42,10 @@
         <label for="search" class="sr-only">Recherche</label>
         <input type="text" id="search" name="search" value="{{ $search ?? request('search') }}" placeholder="Recherche nom du groupe" class="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-orangeone focus:border-orangeone text-sm font-lisible">
       </div>
-      <button type="submit" class="btn-oneduc">Filtrer</button>
+      <button type="submit" class="btn-oneduc">
+        <x-icons.filter-iconify class="h-4 w-4" />
+        Filtrer
+      </button>
       @if(request()->filled('search'))
         <a href="{{ route('observateur.progressions.groupes') }}" class="btn-oneduc-outline">
           Réinitialiser
@@ -89,6 +93,7 @@
               </td>
               <td class="px-6 py-4">
                 <a href="{{ route('observateur.progressions.stagiaires', ['group_id' => $g->id]) }}" class="btn-oneduc !px-3 !py-1 !text-sm">
+                  <x-icons.eye-iconify class="h-4 w-4" />
                   Voir les stagiaires
                 </a>
               </td>

@@ -41,7 +41,10 @@
         <h2 class="text-xl font-bold text-bleuone font-raleway">Mes groupes observés</h2>
         <p class="text-sm text-gray-600">Accédez aux progressions et aux parcours en lecture seule.</p>
       </div>
-      <a href="{{ route('observateur.groupes.index') }}" class="btn-oneduc">Voir tous les groupes</a>
+      <a href="{{ route('observateur.groupes.index') }}" class="btn-oneduc">
+        <x-icons.eye-iconify class="h-4 w-4" />
+        Voir tous les groupes
+      </a>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
