@@ -28,6 +28,7 @@ Route::middleware(['auth', 'role:formateur'])
     Route::post('/profil/store', [FormateurController::class, 'FormateurProfilStore'])->name('profil.store');
     Route::get('/securite', [FormateurController::class, 'showFormateurSecurite'])->name('securite.show');
     Route::post('/securite', [FormateurController::class, 'FormateurSecurite'])->name('securite');
+    Route::delete('/compte', [FormateurController::class, 'destroyOwnAccount'])->name('account.destroy');
 
     // 👤 Stagiaires
     Route::get('/stagiaires', [FormateurController::class, 'indexStagiaires'])->name('stagiaires.index');

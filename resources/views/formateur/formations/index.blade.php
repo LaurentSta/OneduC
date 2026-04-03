@@ -61,6 +61,7 @@
         </div>
 
         <button type="submit" class="btn-oneduc h-10 !text-sm">
+          <x-icons.filter-iconify class="h-4 w-4" />
           Filtrer
         </button>
 
@@ -88,10 +89,10 @@
             <th class="px-6 py-3">#</th>
             <th class="px-6 py-3">Titre</th>
             <th class="px-6 py-3">Date de création</th>
-            <th class="px-6 py-3">Statut</th>
+            <th class="w-[180px] px-6 py-3">Statut</th>
             <th class="px-6 py-3 text-center">Groupes associés</th>
             <th class="px-6 py-3 text-center">Stagiaires total</th>
-            <th class="px-6 py-3">Actions</th>
+            <th class="w-[210px] px-6 py-3">Actions</th>
           </tr>
         </thead>
 
@@ -129,19 +130,19 @@
                 {{ optional($module->created_at)->format('d/m/Y') ?? '—' }}
               </td>
 
-              <td class="px-6 py-4">
+              <td class="w-[180px] px-6 py-4">
                 @if($statut === 'utilise')
-                  <span class="inline-flex items-center px-2.5 py-1 text-green-800 bg-green-100 rounded-full text-xs font-semibold border border-green-200">
+                  <span class="inline-flex items-center whitespace-nowrap px-2.5 py-1 text-green-800 bg-green-100 rounded-full text-xs font-semibold border border-green-200">
                     <span class="h-1.5 w-1.5 rounded-full bg-green-600 mr-2" aria-hidden="true"></span>
                     Utilisé
                   </span>
                 @elseif($statut === 'non_utilise')
-                  <span class="inline-flex items-center px-2.5 py-1 text-blue-800 bg-blue-100 rounded-full text-xs font-semibold border border-blue-200">
+                  <span class="inline-flex items-center whitespace-nowrap px-2.5 py-1 text-blue-800 bg-blue-100 rounded-full text-xs font-semibold border border-blue-200">
                     <span class="h-1.5 w-1.5 rounded-full bg-blue-600 mr-2" aria-hidden="true"></span>
                     Non utilisé
                   </span>
                 @else
-                  <span class="inline-flex items-center px-2.5 py-1 text-red-800 bg-red-100 rounded-full text-xs font-semibold border border-red-200">
+                  <span class="inline-flex items-center whitespace-nowrap px-2.5 py-1 text-red-800 bg-red-100 rounded-full text-xs font-semibold border border-red-200">
                     <span class="h-1.5 w-1.5 rounded-full bg-red-600 mr-2" aria-hidden="true"></span>
                     Indisponible
                   </span>
@@ -156,17 +157,17 @@
                 {{ $stagiaires->count() }}
               </td>
 
-              <td class="px-6 py-4">
+              <td class="w-[210px] px-6 py-4">
                 @if($statut === 'indisponible')
-                  <span class="text-gray-400 text-sm">Accès indisponible</span>
+                  <span class="whitespace-nowrap text-sm text-gray-400">Accès indisponible</span>
                 @elseif($officialUrl)
                   <a href="{{ $officialUrl }}"
-                     class="btn-oneduc !px-3 !py-1 !text-sm">
+                     class="btn-oneduc whitespace-nowrap !px-3 !py-1 !text-sm">
                     <x-icons.eye-iconify class="h-4 w-4" />
                     Voir le module
                   </a>
                 @else
-                  <span class="text-gray-400 text-sm">Accès indisponible</span>
+                  <span class="whitespace-nowrap text-sm text-gray-400">Accès indisponible</span>
                 @endif
               </td>
             </tr>
@@ -180,7 +181,10 @@
     </div>
 
     <div class="flex flex-wrap items-center gap-2">
-      <div class="inline-flex items-center gap-2 rounded-full border border-bleuone/20 bg-white px-4 py-2 text-sm font-varela text-gray-700">
+      <div class="inline-flex items-center gap-3 rounded-full border border-bleuone/20 bg-white px-4 py-2 text-sm font-varela text-gray-700">
+        <span class="flex h-8 w-8 items-center justify-center rounded-full bg-bleuone/10 text-bleuone">
+          <x-icons.module-iconify class="h-4 w-4" />
+        </span>
         <span>Nombre total de modules :</span>
         <span class="font-bold text-bleuone">{{ $modules->total() }}</span>
       </div>

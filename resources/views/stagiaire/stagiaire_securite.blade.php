@@ -20,10 +20,10 @@
     <div class="col-span-12">
       <x-typography variant="titre">Sécurité</x-typography>
       <x-typography variant="sous-titre" class="font-varela text-sous-titre text-orangeone">
-        Modifier mon mot de passe
+        Mot de passe et suppression du compte
       </x-typography>
       <x-typography>
-        Utilisez un mot de passe long et unique.
+        Gérez les actions sensibles liées à votre compte stagiaire.
       </x-typography>
 
       {{-- Mention RGPD (courte) --}}
@@ -55,7 +55,7 @@
 <div class="w-full max-w-[1285px] mx-auto px-0">
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
 
-    <div class="lg:col-span-2">
+    <div class="lg:col-span-2 space-y-8">
       <div class="bg-white rounded-[20px] shadow-md p-8 w-full">
 
         @if ($errors->any())
@@ -69,15 +69,13 @@
           </div>
         @endif
 
-        @if (session('status'))
+        @if (session('message') || session('status'))
           <div class="mb-6 rounded-xl border border-green-200 bg-green-50 p-4">
-            <p class="text-sm font-semibold text-green-700">{{ session('status') }}</p>
+            <p class="text-sm font-semibold text-green-700">{{ session('message') ?? session('status') }}</p>
           </div>
         @endif
 
-        {{-- Conserve ta route existante pour ne pas casser.
-             Idéalement : une route update dédiée (POST/PATCH). --}}
-        <form method="POST" action="{{ route('stagiaire.securite.show') }}" novalidate>
+        <form method="POST" action="{{ route('stagiaire.securite') }}" novalidate>
           @csrf
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -112,38 +110,38 @@
 
           <div class="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
             <button type="submit"
-                    class="inline-flex items-center justify-center px-6 py-2.5 rounded-xl text-sm font-semibold bg-orangeone text-white hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orangeone">
+                    class="btn-oneduc !px-6 !py-2.5 !text-sm">
               Modifier le mot de passe
             </button>
 
             <a href="{{ route('stagiaire.profile') }}"
-               class="inline-flex items-center justify-center px-6 py-2.5 rounded-xl text-sm font-semibold border border-gray-200 text-[#004461] hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orangeone">
+               class="btn-oneduc-outline !px-6 !py-2.5 !text-sm">
               Annuler
             </a>
           </div>
 
         </form>
       </div>
+
+      <x-account-deletion-zone
+        :form-action="route('stagiaire.account.destroy')"
+        title="Supprimer mon compte stagiaire"
+        description="La suppression du compte stagiaire est définitive. Vous perdrez l’accès à votre espace et toutes les données pédagogiques liées à votre parcours."
+        modal-title="Supprimer définitivement le compte stagiaire"
+        modal-description="Après confirmation, votre progression et toutes les données liées à vos activités de formation ne pourront plus être récupérées."
+        :consequences="[
+          'Votre accès à la plateforme sera fermé définitivement.',
+          'Vos progressions, résultats, traces SCORM, tentatives de quiz, retours pédagogiques et activités liées à votre compte seront supprimés.',
+          'Vous ne pourrez plus récupérer vos données ni vous reconnecter après validation.',
+        ]"
+        submit-label="Supprimer définitivement le compte stagiaire"
+        password-label="Mot de passe actuel du stagiaire"
+        password-placeholder="Confirmez avec votre mot de passe actuel"
+      />
     </div>
 
     {{-- SIDEBAR --}}
-    <aside class="bg-white rounded-[20px] shadow-md p-6 h-fit" aria-label="Navigation Mon Espace">
-      <h3 class="text-lg font-semibold text-[#004461] mb-4">Mon Espace</h3>
-      <ul class="space-y-3 text-sm">
-        <li class="flex items-center space-x-2">
-          <span class="w-2.5 h-2.5 bg-orangeone rounded-full" aria-hidden="true"></span>
-          <a href="{{ route('stagiaire.profile') }}" class="text-gray-700 hover:text-[#004461] font-medium">Profil</a>
-        </li>
-        <li class="flex items-center space-x-2">
-          <span class="w-2.5 h-2.5 bg-orangeone rounded-full" aria-hidden="true"></span>
-          <a href="{{ route('stagiaire.parametre') }}" class="text-gray-700 hover:text-[#004461] font-medium">Préférences</a>
-        </li>
-        <li class="flex items-center space-x-2">
-          <span class="w-2.5 h-2.5 bg-orangeone rounded-full" aria-hidden="true"></span>
-          <a href="{{ route('stagiaire.securite.show') }}" class="text-[#E94D2A] font-semibold" aria-current="page">Sécurité</a>
-        </li>
-      </ul>
-    </aside>
+    @include('stagiaire.partials.profile_menu')
 
   </div>
 </div>

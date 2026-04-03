@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
 use App\Models\ScormInteraction;
 use App\Models\LessonFeedback;
 use App\Models\VideoSegmentTracking;
@@ -148,7 +149,9 @@ class UserController extends Controller
 
         // Vérification du mot de passe actuel
         if (!Hash::check($request->currentPassword, $user->password)) {
-            return back()->with('error', 'Le mot de passe actuel est incorrect.');
+            return back()->withErrors([
+                'currentPassword' => 'Le mot de passe actuel est incorrect.',
+            ]);
         }
 
         // Mise à jour du mot de passe
@@ -156,6 +159,57 @@ class UserController extends Controller
         $user->save();
 
         return back()->with('message', 'Votre mot de passe a été modifié avec succès.');
+    }
+
+    public function destroyOwnAccount(Request $request)
+    {
+        $user = Auth::user();
+
+        abort_unless($user && $user->role === 'stagiaire', 403);
+
+        $validator = Validator::make(
+            $request->all(),
+            [
+                'password' => ['required', 'string'],
+            ],
+            [
+                'password.required' => 'Le mot de passe actuel est requis pour confirmer la suppression.',
+            ]
+        );
+
+        if ($validator->fails()) {
+            return back()
+                ->withErrors($validator, 'accountDeletion')
+                ->with('openDeleteAccountModal', true);
+        }
+
+        if (! Hash::check((string) $request->input('password'), (string) $user->password)) {
+            return back()
+                ->withErrors([
+                    'password' => 'Le mot de passe actuel est incorrect.',
+                ], 'accountDeletion')
+                ->with('openDeleteAccountModal', true);
+        }
+
+        try {
+            $user->delete();
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            return back()
+                ->withErrors([
+                    'password' => 'La suppression du compte a échoué. Merci de réessayer ou de contacter le support.',
+                ], 'accountDeletion')
+                ->with('openDeleteAccountModal', true);
+        }
+
+        Auth::guard('web')->logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()
+            ->route('index')
+            ->with('success', 'Votre compte stagiaire a été supprimé définitivement.');
     }
 
     public function showCodeLoginForm()

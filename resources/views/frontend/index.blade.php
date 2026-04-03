@@ -146,7 +146,7 @@
           <div class="flex flex-col items-center text-center space-y-4">
             <img src="{{ asset('frontend/assets/img/front-pages/icons/' . $block['src']) }}"
                  alt="{{ $block['title'] }}"
-                 class="w-28">
+                 class="h-[200px] w-auto object-contain">
             <div class="space-y-1">
               <h5 class="text-xl font-semibold text-gray-800">{{ $block['title'] }}</h5>
               <p class="text-sm text-gray-600 leading-relaxed">{{ $block['desc'] }}</p>

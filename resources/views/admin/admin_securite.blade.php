@@ -119,12 +119,12 @@
 
             <div class="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
               <button type="submit"
-                      class="inline-flex items-center justify-center px-6 py-2.5 rounded-xl text-sm font-semibold bg-orangeone text-white hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orangeone">
+                      class="btn-oneduc !px-6 !py-2.5 !text-sm">
                 Modifier le mot de passe
               </button>
 
               <a href="{{ route('admin.profile') }}"
-                 class="inline-flex items-center justify-center px-6 py-2.5 rounded-xl text-sm font-semibold border border-gray-200 text-[#004461] hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orangeone">
+                 class="btn-oneduc-outline !px-6 !py-2.5 !text-sm">
                 Annuler
               </a>
             </div>
@@ -139,25 +139,7 @@
         </div>
 
         {{-- SIDEBAR --}}
-        <aside class="bg-white rounded-[20px] shadow-md p-6 h-fit" aria-label="Navigation Mon Espace">
-          <h3 class="text-lg font-semibold text-[#004461] mb-4">Mon Espace</h3>
-          <ul class="space-y-3 text-sm">
-            <li class="flex items-center space-x-2">
-              <span class="w-2.5 h-2.5 bg-orangeone rounded-full" aria-hidden="true"></span>
-              <a href="{{ route('admin.profile') }}" class="text-gray-700 hover:text-[#004461] font-medium">Profil</a>
-            </li>
-
-            <li class="flex items-center space-x-2">
-              <span class="w-2.5 h-2.5 bg-orangeone rounded-full" aria-hidden="true"></span>
-              <a href="{{ route('admin.parametre') }}" class="text-gray-700 hover:text-[#004461] font-medium">Préférences</a>
-            </li>
-
-            <li class="flex items-center space-x-2">
-              <span class="w-2.5 h-2.5 bg-orangeone rounded-full" aria-hidden="true"></span>
-              <a href="{{ route('admin.securite') }}" class="text-[#E94D2A] font-semibold" aria-current="page">Sécurité</a>
-            </li>
-          </ul>
-        </aside>
+        @include('admin.partials.profile_menu')
 
       </div>
     </div>

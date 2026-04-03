@@ -20,6 +20,10 @@
   $telephone = $profileData->phone ?: null;
   $adresse   = $profileData->address ?: null;
   $dateAjout = $profileData->created_at?->format('d/m/Y');
+  $photoVersion = $profileData->updated_at?->timestamp ?? $profileData->created_at?->timestamp ?? time();
+  $photoUrl = !empty($profileData->photo)
+    ? asset('upload/formateur_images/'.$profileData->photo).'?v='.$photoVersion
+    : asset('upload/NoPhoto.png');
 @endphp
 
 {{-- EN-TÊTE (harmonisée + RGPD court) --}}
@@ -51,7 +55,7 @@
     <div class="flex flex-col items-center text-center mb-8">
       <div class="w-32 h-32">
         <img
-          src="{{ !empty($profileData->photo) ? url('upload/formateur_images/' . $profileData->photo) : url('upload/no_image.jpg') }}"
+          src="{{ $photoUrl }}"
           class="w-32 h-32 rounded-full shadow-lg object-cover border-4 border-orangeone"
           alt="Photo de profil"
         >

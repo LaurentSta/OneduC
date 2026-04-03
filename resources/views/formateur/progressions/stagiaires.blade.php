@@ -135,7 +135,7 @@
             <th class="px-6 py-3 text-center">Taux de réussite</th>
             <th class="px-6 py-3 text-center">Temps sur la plateforme</th>
             <th class="px-6 py-3 text-center">Dernière activité</th>
-            <th class="px-6 py-3 text-right">Action</th>
+            <th class="w-[170px] px-6 py-3 text-right">Action</th>
           </tr>
         </thead>
 
@@ -195,9 +195,9 @@
               </td>
 
               {{-- Action --}}
-              <td class="px-6 py-4 text-right">
+              <td class="w-[170px] px-6 py-4 text-right">
                 <a href="{{ route('formateur.progressions.stagiaire', ['user' => $s->id, 'group_id' => $groupId ?: null]) }}"
-                   class="inline-flex items-center gap-2 text-sm font-semibold text-orangeone hover:underline">
+                   class="inline-flex items-center gap-2 whitespace-nowrap text-sm font-semibold text-orangeone hover:underline">
                   <x-icons.eye-iconify class="h-4 w-4" />
                   Voir le détail
                 </a>
@@ -216,11 +216,17 @@
     </div>
 
     <div class="flex flex-wrap items-center gap-2">
-      <div class="inline-flex items-center gap-2 rounded-full border border-bleuone/20 bg-white px-4 py-2 text-sm font-varela text-gray-700">
+      <div class="inline-flex items-center gap-3 rounded-full border border-bleuone/20 bg-white px-4 py-2 text-sm font-varela text-gray-700">
+        <span class="flex h-8 w-8 items-center justify-center rounded-full bg-bleuone/10 text-bleuone">
+          <x-icons.stagiaire-iconify class="h-4 w-4" />
+        </span>
         <span>Nombre total de stagiaires :</span>
         <span class="font-bold text-bleuone">{{ $totalStagiaires ?? $stagiaires->count() }}</span>
       </div>
-      <div class="inline-flex items-center gap-2 rounded-full border border-orangeone/20 bg-white px-4 py-2 text-sm font-varela text-gray-700">
+      <div class="inline-flex items-center gap-3 rounded-full border border-orangeone/20 bg-white px-4 py-2 text-sm font-varela text-gray-700">
+        <span class="flex h-8 w-8 items-center justify-center rounded-full bg-orangeone/10 text-orangeone">
+          <x-icons.group-iconify class="h-4 w-4" />
+        </span>
         <span>Nombre total de groupes :</span>
         <span class="font-bold text-orangeone">{{ $totalGroupes ?? $groupes->count() }}</span>
       </div>

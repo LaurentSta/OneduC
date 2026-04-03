@@ -17,6 +17,10 @@
   $email = $profileData->email;
   $adresse = $profileData->address ?: null;
   $telephone = $profileData->phone ?: null;
+  $photoVersion = $profileData->updated_at?->timestamp ?? $profileData->created_at?->timestamp ?? time();
+  $photoUrl = !empty($profileData->photo)
+    ? asset('upload/user_images/'.$profileData->photo).'?v='.$photoVersion
+    : asset('upload/NoPhoto.png');
 
   $siteTimeSeconds = (int) ($totalSiteTime ?? 0);
   $tempsSite = gmdate('H\h i\m s\s', max(0, $siteTimeSeconds));
@@ -72,7 +76,7 @@
         <div class="flex flex-col items-center text-center mb-8">
           <div class="relative group w-28 h-28">
             <img
-              src="{{ !empty($profileData->photo) ? asset('upload/user_images/'.$profileData->photo) : asset('upload/admin_images/NoPhoto.png') }}"
+              src="{{ $photoUrl }}"
               alt="Photo de profil"
               class="w-full h-full object-cover rounded-full border-4 border-orangeone shadow-md"
             >
@@ -110,11 +114,11 @@
 
         <div class="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
           <a href="{{ route('stagiaire.parametre') }}"
-             class="inline-flex items-center justify-center px-5 py-2.5 rounded-xl text-sm font-semibold bg-orangeone text-white hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orangeone">
+             class="btn-oneduc !px-5 !py-2.5 !text-sm">
             Modifier mes informations
           </a>
           <a href="{{ route('stagiaire.securite.show') }}"
-             class="inline-flex items-center justify-center px-5 py-2.5 rounded-xl text-sm font-semibold border border-gray-200 text-[#004461] hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orangeone">
+             class="btn-oneduc-outline !px-5 !py-2.5 !text-sm">
             Modifier mon mot de passe
           </a>
         </div>
@@ -123,23 +127,7 @@
     </div>
 
     {{-- SIDEBAR --}}
-    <aside class="bg-white rounded-[20px] shadow-md p-6 h-fit" aria-label="Navigation Mon Espace">
-      <h3 class="text-lg font-semibold text-[#004461] mb-4">Mon Espace</h3>
-      <ul class="space-y-3 text-sm">
-        <li class="flex items-center space-x-2">
-          <span class="w-2.5 h-2.5 bg-orangeone rounded-full" aria-hidden="true"></span>
-          <a href="{{ route('stagiaire.profile') }}" class="text-[#E94D2A] font-semibold" aria-current="page">Profil</a>
-        </li>
-        <li class="flex items-center space-x-2">
-          <span class="w-2.5 h-2.5 bg-orangeone rounded-full" aria-hidden="true"></span>
-          <a href="{{ route('stagiaire.parametre') }}" class="text-gray-700 hover:text-[#004461] font-medium">Préférences</a>
-        </li>
-        <li class="flex items-center space-x-2">
-          <span class="w-2.5 h-2.5 bg-orangeone rounded-full" aria-hidden="true"></span>
-          <a href="{{ route('stagiaire.securite.show') }}" class="text-gray-700 hover:text-[#004461] font-medium">Sécurité</a>
-        </li>
-      </ul>
-    </aside>
+    @include('stagiaire.partials.profile_menu')
 
   </div>
 </div>

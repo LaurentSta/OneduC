@@ -24,7 +24,7 @@
         <a href="{{ route('index') }}">
           <img src="/frontend/assets/img/front-pages/branding/LogoOneducPositionG.svg"
                alt="Logo Onéduc"
-               class="h-[60px] w-auto">
+               class="h-[60px] w-auto shrink-0 origin-left scale-[1.08] transform">
         </a>
       </div>
       </div>
@@ -36,6 +36,29 @@
         <button class="text-gray-600 hover:text-orangeone text-2xl hidden lg:inline-block">
           <i class="la la-expand-arrows-alt"></i>
         </button>
+
+        @php
+          $headerProfileMenuItems = [
+            [
+              'label' => 'Mon profil',
+              'href' => route('stagiaire.profile'),
+              'active' => request()->routeIs('stagiaire.profile'),
+              'icon' => 'profile',
+            ],
+            [
+              'label' => 'Paramètres',
+              'href' => route('stagiaire.parametre'),
+              'active' => request()->routeIs('stagiaire.parametre'),
+              'icon' => 'settings',
+            ],
+            [
+              'label' => 'Sécurité',
+              'href' => route('stagiaire.securite.show'),
+              'active' => request()->routeIs('stagiaire.securite') || request()->routeIs('stagiaire.securite.show'),
+              'icon' => 'security',
+            ],
+          ];
+        @endphp
 
         <!-- User dropdown -->
         <div x-data="{ open: false }" class="relative" @click.outside="open = false" @keydown.escape.window="open = false">
@@ -53,20 +76,40 @@
 
           <div x-show="open"
                x-transition
-               class="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded shadow-md z-20"
+               class="absolute right-0 mt-2 w-64 rounded-[20px] border border-gray-200 bg-white shadow-md z-20"
                style="display: none;">
-            <div class="p-4 border-b">
+            <div class="border-b p-4">
               <p class="text-sm font-semibold">{{ Auth::user()->prenom }}<span class=" text-gray-500"> {{ Auth::user()->name }} </span></p>
 
             </div>
-<a href="{{ route('stagiaire.profile') }}" class="block px-4 py-2 text-sm hover:bg-gray-100">Mon profil</a>
-<a href="{{ route('stagiaire.parametre') }}" class="block px-4 py-2 text-sm hover:bg-gray-100">Paramètres</a>
-<a href="{{ route('stagiaire.securite.show') }}" class="block px-4 py-2 text-sm hover:bg-gray-100">Sécurité</a>
+            <div class="space-y-2 p-3">
+              @foreach ($headerProfileMenuItems as $item)
+                <a
+                  href="{{ $item['href'] }}"
+                  class="group flex items-center gap-3 rounded-[16px] border px-3 py-3 text-sm transition {{ $item['active'] ? 'border-orangeone/20 bg-orangeone/10 text-orangeone' : 'border-slate-200 bg-white text-slate-600 hover:border-bleuone/20 hover:bg-bleuone/5 hover:text-bleuone' }}"
+                  @if($item['active']) aria-current="page" @endif
+                >
+                  <span class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition {{ $item['active'] ? 'bg-orangeone text-white' : 'bg-bleuone/10 text-bleuone group-hover:bg-bleuone group-hover:text-white' }}">
+                    @if($item['icon'] === 'profile')
+                      <x-icons.profile-iconify class="h-4 w-4" />
+                    @elseif($item['icon'] === 'settings')
+                      <x-icons.settings-iconify class="h-4 w-4" />
+                    @else
+                      <x-icons.security-iconify class="h-4 w-4" />
+                    @endif
+                  </span>
 
-            <div class="border-t px-4 py-2">
+                  <span class="font-varela {{ $item['active'] ? 'font-semibold' : 'font-medium' }}">
+                    {{ $item['label'] }}
+                  </span>
+                </a>
+              @endforeach
+            </div>
+
+            <div class="border-t px-3 py-3">
               <form method="POST" action="{{ route('logout') }}" x-data>
                 @csrf
-                <button type="submit" class="block w-full px-4 py-2 text-red-600 hover:bg-red-100">
+                <button type="submit" class="block w-full rounded-[14px] px-4 py-2 text-left text-red-600 transition hover:bg-red-50">
                   Déconnexion
                 </button>
               </form>

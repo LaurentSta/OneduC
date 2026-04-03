@@ -66,8 +66,14 @@ Route::middleware(['auth', 'role:stagiaire', 'track.time'])
             Route::post('/profil/store', [UserController::class, 'UserProfilStore'])
                 ->name('profil.store');
 
-            Route::match(['get', 'post'], '/securite', [UserController::class, 'showUserSecurite'])
+            Route::get('/securite', [UserController::class, 'showUserSecurite'])
                 ->name('securite.show');
+
+            Route::post('/securite', [UserController::class, 'UserSecurite'])
+                ->name('securite');
+
+            Route::delete('/compte', [UserController::class, 'destroyOwnAccount'])
+                ->name('account.destroy');
 
             /*
             |--------------------------------------------------------------------------

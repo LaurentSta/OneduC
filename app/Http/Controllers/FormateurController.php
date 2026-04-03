@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use App\Models\ModuleLecture;
 
@@ -811,13 +812,66 @@ class FormateurController extends Controller
         ]);
 
         if (!Hash::check($request->currentPassword, $user->password)) {
-            return back()->with('error', 'Le mot de passe actuel est incorrect.');
+            return back()->withErrors([
+                'currentPassword' => 'Le mot de passe actuel est incorrect.',
+            ]);
         }
 
         $user->password = Hash::make($request->newPassword);
         $user->save();
 
         return back()->with('message', 'Votre mot de passe a été modifié avec succès.');
+    }
+
+    public function destroyOwnAccount(Request $request)
+    {
+        $user = Auth::user();
+
+        abort_unless($user && $user->role === 'formateur', 403);
+
+        $validator = Validator::make(
+            $request->all(),
+            [
+                'password' => ['required', 'string'],
+            ],
+            [
+                'password.required' => 'Le mot de passe actuel est requis pour confirmer la suppression.',
+            ]
+        );
+
+        if ($validator->fails()) {
+            return back()
+                ->withErrors($validator, 'accountDeletion')
+                ->with('openDeleteAccountModal', true);
+        }
+
+        if (! Hash::check((string) $request->input('password'), (string) $user->password)) {
+            return back()
+                ->withErrors([
+                    'password' => 'Le mot de passe actuel est incorrect.',
+                ], 'accountDeletion')
+                ->with('openDeleteAccountModal', true);
+        }
+
+        try {
+            $user->delete();
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            return back()
+                ->withErrors([
+                    'password' => 'La suppression du compte a échoué. Merci de réessayer ou de contacter le support.',
+                ], 'accountDeletion')
+                ->with('openDeleteAccountModal', true);
+        }
+
+        Auth::guard('web')->logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()
+            ->route('index')
+            ->with('success', 'Votre compte formateur a été supprimé définitivement.');
     }
 
     /* -------------------------------------------------------------------------

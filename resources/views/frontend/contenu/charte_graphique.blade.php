@@ -112,6 +112,90 @@
     'Employer des intitulés vagues quand une consigne directe peut mieux guider l utilisateur.',
   ];
 
+  $famillesIcones = [
+    [
+      'title' => 'Repères métier',
+      'accent' => 'text-bleuone',
+      'tone' => 'bg-bleuone/10 text-bleuone',
+      'items' => [
+        [
+          'name' => 'Stagiaire',
+          'component' => 'icons.stagiaire-iconify',
+          'usage' => 'Repère apprenant pour les compteurs, la navigation de suivi et les synthèses individuelles.',
+        ],
+        [
+          'name' => 'Groupe',
+          'component' => 'icons.group-iconify',
+          'usage' => 'Repère collectif pour les vues de progression par groupe et les totaux de cohortes.',
+        ],
+        [
+          'name' => 'Module',
+          'component' => 'icons.module-iconify',
+          'usage' => 'Repère contenu pour les modules de formation, les suivis pédagogiques et les synthèses associées.',
+        ],
+      ],
+    ],
+    [
+      'title' => 'Actions d interface',
+      'accent' => 'text-orangeone',
+      'tone' => 'bg-orangeone/10 text-orangeone',
+      'items' => [
+        [
+          'name' => 'Filtrer',
+          'component' => 'icons.filter-iconify',
+          'usage' => 'À utiliser sur les boutons de tri, de recherche et de filtrage de tableau.',
+        ],
+        [
+          'name' => 'Voir',
+          'component' => 'icons.eye-iconify',
+          'usage' => 'Réservée aux actions de consultation, d aperçu, de parcours et de détail.',
+        ],
+        [
+          'name' => 'Modifier',
+          'component' => 'icons.edit-iconify',
+          'usage' => 'Action d édition sur un élément existant, dans un tableau ou une fiche.',
+        ],
+        [
+          'name' => 'Supprimer',
+          'component' => 'icons.trash-iconify',
+          'usage' => 'Suppression d un élément avec confirmation explicite avant validation.',
+        ],
+        [
+          'name' => 'Ajouter un stagiaire',
+          'component' => 'icons.add-stagiaire-button-iconify',
+          'usage' => 'CTA principal pour l ajout d un nouvel apprenant dans les vues formateur.',
+        ],
+        [
+          'name' => 'Ajout stagiaire alternatif',
+          'component' => 'icons.add-stagiaire-iconify',
+          'usage' => 'Variante plus dense utilisée sur certains repères secondaires ou compteurs liés aux apprenants.',
+        ],
+      ],
+    ],
+    [
+      'title' => 'Compte et préférences',
+      'accent' => 'text-vertone',
+      'tone' => 'bg-vertone/10 text-vertone',
+      'items' => [
+        [
+          'name' => 'Profil',
+          'component' => 'icons.profile-iconify',
+          'usage' => 'Entrée d accès à la fiche utilisateur et aux informations personnelles.',
+        ],
+        [
+          'name' => 'Paramètres',
+          'component' => 'icons.settings-iconify',
+          'usage' => 'Navigation vers les préférences et réglages du compte.',
+        ],
+        [
+          'name' => 'Sécurité',
+          'component' => 'icons.security-iconify',
+          'usage' => 'Accès aux réglages sensibles liés au mot de passe et à la protection du compte.',
+        ],
+      ],
+    ],
+  ];
+
 @endphp
 
 <div class="relative overflow-hidden bg-[#f8f7fa]">
@@ -151,6 +235,7 @@
             <a href="#typographies" class="rounded-full border border-slate-200 bg-white px-4 py-2 transition hover:border-orangeone hover:text-orangeone">Typographies</a>
             <a href="#logos" class="rounded-full border border-slate-200 bg-white px-4 py-2 transition hover:border-orangeone hover:text-orangeone">Logos</a>
             <a href="#interfaces" class="rounded-full border border-slate-200 bg-white px-4 py-2 transition hover:border-orangeone hover:text-orangeone">Interface</a>
+            <a href="#icones" class="rounded-full border border-slate-200 bg-white px-4 py-2 transition hover:border-orangeone hover:text-orangeone">Icônes</a>
             <a href="#ton" class="rounded-full border border-slate-200 bg-white px-4 py-2 transition hover:border-orangeone hover:text-orangeone">Ton éditorial</a>
           </div>
         </div>
@@ -367,6 +452,45 @@
           </div>
         </article>
       </div>
+    </div>
+  </div>
+</section>
+
+<section id="icones" class="bg-[#f8f7fa] py-16 md:py-20">
+  <div class="mx-auto max-w-[1248px] px-4">
+    <div class="max-w-3xl">
+      <p class="text-sm font-varela uppercase tracking-[0.24em] text-orangeone">Icônes</p>
+      <h2 class="mt-4 font-varela text-3xl font-normal text-orangeone md:text-4xl">Bibliothèque active des icônes Oneduc</h2>
+      <p class="mt-5 font-lisible text-lg leading-relaxed text-slate-700">
+        Cette section regroupe les pictogrammes déjà posés dans les interfaces Oneduc. Elle sert de base commune pour garder une iconographie cohérente entre les vues publiques, formateur et observateur.
+      </p>
+    </div>
+
+    <div class="mt-10 grid gap-6 xl:grid-cols-3">
+      @foreach ($famillesIcones as $famille)
+        <article class="rounded-[32px] border border-slate-200 bg-white p-8 shadow-sm">
+          <p class="text-sm font-varela uppercase tracking-[0.2em] {{ $famille['accent'] }}">{{ $famille['title'] }}</p>
+
+          <div class="mt-6 grid gap-4">
+            @foreach ($famille['items'] as $icone)
+              <div class="rounded-[24px] border border-slate-200 bg-[#f8f7fa] p-5">
+                <div class="flex items-center gap-4">
+                  <span class="inline-flex h-12 w-12 items-center justify-center rounded-2xl {{ $famille['tone'] }}">
+                    <x-dynamic-component :component="$icone['component']" class="h-6 w-6" />
+                  </span>
+
+                  <div>
+                    <h3 class="font-raleway text-xl font-medium text-bleuone">{{ $icone['name'] }}</h3>
+                    <p class="mt-1 text-sm font-varela text-slate-500">Identité visuelle standardisée</p>
+                  </div>
+                </div>
+
+                <p class="mt-4 font-lisible text-sm leading-relaxed text-slate-600">{{ $icone['usage'] }}</p>
+              </div>
+            @endforeach
+          </div>
+        </article>
+      @endforeach
     </div>
   </div>
 </section>
