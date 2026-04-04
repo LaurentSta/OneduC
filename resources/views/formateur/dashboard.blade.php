@@ -37,6 +37,15 @@
     @yield('formateur')
   </main>
 
+  @if (
+      auth()->check()
+      && auth()->user()->role === 'formateur'
+      && \Illuminate\Support\Facades\Route::has('formateur.parcours.index')
+      && !request()->routeIs('formateur.parcours.*')
+  )
+    @include('formateur.body_dashboard.welcome_modal')
+  @endif
+
   <script>
     function syncAppHeaderOffset() {
       const header = document.getElementById('app-header');
