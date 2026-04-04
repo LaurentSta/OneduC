@@ -16,6 +16,8 @@
         || request()->routeIs('formateur.progression.*');
 
     $isDocumentationActive = request()->routeIs('formateur.documentation');
+    $hasParcoursRoute = \Illuminate\Support\Facades\Route::has('formateur.parcours.index');
+    $isParcoursActive = $hasParcoursRoute && request()->routeIs('formateur.parcours.*');
 
     $navBaseClasses = 'flex flex-col items-center rounded-xl px-4 py-3 transition-all duration-200';
     $navIdleClasses = 'text-white/90 hover:bg-[#0A5B80] hover:text-white';
@@ -81,6 +83,15 @@
 
     <div class="border-t border-white/20 px-3 py-3 text-center text-xs">
         <a href="{{ route('contact') }}" class="block rounded-lg px-4 py-2 transition hover:bg-white/10 hover:text-orange-100">Support</a>
+        @if ($hasParcoursRoute)
+            <a
+                href="{{ route('formateur.parcours.index') }}"
+                class="mt-1 block rounded-lg px-4 py-2 transition {{ $isParcoursActive ? 'bg-white/15 text-white' : 'hover:bg-white/10 hover:text-orange-100' }}"
+                aria-current="{{ $isParcoursActive ? 'page' : 'false' }}"
+            >
+                Formation formateur
+            </a>
+        @endif
         <a
             href="{{ route('formateur.documentation') }}"
             class="mt-1 block rounded-lg px-4 py-2 transition {{ $isDocumentationActive ? 'bg-white/15 text-white' : 'hover:bg-white/10 hover:text-orange-100' }}"

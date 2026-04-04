@@ -5,6 +5,8 @@ use App\Http\Controllers\FormateurController;
 use App\Http\Controllers\Formateur\GroupeController;
 use App\Http\Controllers\Formateur\ObjectiveController;
 use App\Http\Controllers\Formateur\LessonResourceController;
+use App\Http\Controllers\Formateur\OnboardingController;
+use App\Http\Controllers\Formateur\ParcoursController;
 use App\Http\Controllers\Formateur\ProgressionController;
 use App\Http\Controllers\Formateur\LiveQuizSessionController;
 use App\Http\Controllers\Formateur\WordCloudController as FormateurWordCloudController;
@@ -22,6 +24,15 @@ Route::middleware(['auth', 'role:formateur'])
     // 🖥️ Dashboard & profil formateur
     Route::get('/', [FormateurController::class, 'FormateurDashboard'])->name('dashboard');
     Route::get('/dashboard/activity', [FormateurController::class, 'dashboardActivity'])->name('dashboard.activity');
+    Route::get('/parcours/{step?}', [OnboardingController::class, 'show'])->name('onboarding.show');
+    Route::prefix('/parcours-formateur')
+        ->name('parcours.')
+        ->group(function () {
+            Route::get('/', [ParcoursController::class, 'index'])->name('index');
+            Route::get('/modules/{module}', [ParcoursController::class, 'showModule'])->name('modules.show');
+            Route::get('/modules/{module}/chapitres/{chapter}', [ParcoursController::class, 'showChapter'])->name('chapters.show');
+            Route::get('/modules/{module}/chapitres/{chapter}/lecons/{lesson}', [ParcoursController::class, 'showLesson'])->name('lessons.show');
+        });
     Route::get('/profile', [FormateurController::class, 'FormateurProfile'])->name('profile');
     Route::get('/parametre', [FormateurController::class, 'FormateurParametre'])->name('parametre');
     Route::get('/documentation', fn () => view('formateur.documentation'))->name('documentation');
