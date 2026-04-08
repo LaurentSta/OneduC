@@ -1,6 +1,10 @@
 import '../css/app.css'; // ✅ Ajoute Tailwind
 
 import './bootstrap';
+import Alpine from 'alpinejs';
+
+window.Alpine = Alpine;
+Alpine.start();
 
 function loadGroupModuleFlowWhenNeeded() {
   if (!document.querySelector('[data-group-module-flow]')) return;

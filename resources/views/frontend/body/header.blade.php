@@ -34,6 +34,7 @@
           x-ref="associationMenu"
           class="relative"
           @keydown.escape.window="close()"
+          @click.window="if (open && !$refs.associationMenu.contains($event.target)) close()"
           @focusin.window="if (open && !$refs.associationMenu.contains($event.target)) close()"
         >
           <button
@@ -50,16 +51,6 @@
               <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
             </svg>
           </button>
-
-          <button
-            x-cloak
-            x-show="open"
-            @click="close()"
-            type="button"
-            class="fixed inset-0 z-40 cursor-default bg-transparent"
-            aria-label="Fermer le menu Association"
-            tabindex="-1"
-          ></button>
 
           <!-- Sous-menu -->
           <ul

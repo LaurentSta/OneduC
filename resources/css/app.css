@@ -29,6 +29,10 @@
     cursor: pointer;
   }
 
+  [x-cloak] {
+    display: none !important;
+  }
+
   p { @apply font-lisible; }
   h1 { @apply font-raleway text-4xl md:text-5xl font-medium text-bleuone mb-6; }
   h2 { @apply font-varela; }
