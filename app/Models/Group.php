@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -53,10 +54,56 @@ class Group extends Model
         return $this->belongsToMany(User::class, 'group_user', 'group_id', 'user_id');
     }
 
+    public function coFormateurs()
+    {
+        return $this->belongsToMany(User::class, 'group_user', 'group_id', 'user_id')
+            ->wherePivot('role_in_group', 'formateur');
+    }
+
     public function observers()
     {
         return $this->belongsToMany(User::class, 'group_user', 'group_id', 'user_id')
             ->wherePivot('role_in_group', 'observateur');
+    }
+
+    public function scopeAccessibleByTrainer(Builder $query, int $trainerId): Builder
+    {
+        return $query->where(function (Builder $groupQuery) use ($trainerId): void {
+            $groupQuery
+                ->where('instructor_id', $trainerId)
+                ->orWhereHas('coFormateurs', function (Builder $trainerQuery) use ($trainerId): void {
+                    $trainerQuery->where('users.id', $trainerId);
+                });
+        });
+    }
+
+    public function isOwnedBy(?User $user): bool
+    {
+        return $user instanceof User && (int) $this->instructor_id === (int) $user->id;
+    }
+
+    public function isAccessibleBy(?User $user): bool
+    {
+        if (! $user instanceof User) {
+            return false;
+        }
+
+        if ($this->isOwnedBy($user)) {
+            return true;
+        }
+
+        if ($this->relationLoaded('coFormateurs')) {
+            return $this->coFormateurs->contains(fn (User $trainer) => (int) $trainer->id === (int) $user->id);
+        }
+
+        return $this->coFormateurs()
+            ->where('users.id', (int) $user->id)
+            ->exists();
+    }
+
+    public function canManageCoFormateurs(?User $user): bool
+    {
+        return $this->isOwnedBy($user);
     }
 
     public function whiteboard()

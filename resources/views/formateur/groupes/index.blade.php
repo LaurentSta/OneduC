@@ -75,6 +75,10 @@
 
         {{-- 📋 Cartes groupes --}}
         @forelse ($groupes as $groupe)
+          @php
+            $isPrimaryTrainer = (int) $groupe->instructor_id === (int) auth()->id();
+            $primaryTrainerName = trim((string) (($groupe->instructor->prenom ?? '') . ' ' . ($groupe->instructor->name ?? '')));
+          @endphp
           <article class="flex flex-col rounded-[20px] border border-gray-200 bg-white p-6 shadow">
             <div class="flex-1 space-y-5">
               <div class="border-b border-gray-100 pb-4">
@@ -86,6 +90,11 @@
                     <p class="mt-2 text-xs italic text-gray-400 font-lisible">
                       Créé le {{ optional($groupe->created_at)->format('d/m/Y') ?? '—' }}
                     </p>
+                    @if(! $isPrimaryTrainer && $primaryTrainerName !== '')
+                      <p class="mt-2 text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">
+                        Formateur principal : {{ $primaryTrainerName }}
+                      </p>
+                    @endif
                   </div>
 
                   <div class="flex flex-wrap items-center gap-2 sm:justify-end">
@@ -93,6 +102,23 @@
                       <span class="inline-flex h-2.5 w-2.5 rounded-full {{ $groupe->is_active ? 'bg-vertone' : 'bg-gray-400' }}"></span>
                       {{ $groupe->is_active ? 'Actif' : 'Inactif' }}
                     </span>
+
+                    <span class="inline-flex items-center rounded-full border px-3 py-1 text-xs font-bold {{ $isPrimaryTrainer ? 'border-bleuone/20 bg-bleuone/10 text-bleuone' : 'border-orangeone/20 bg-orangeone/10 text-orangeone' }}">
+                      {{ $isPrimaryTrainer ? 'Formateur principal' : 'Co-formateur' }}
+                    </span>
+
+                    @if($groupe->coFormateurs->isNotEmpty())
+                      <div class="relative inline-flex group">
+                        <span class="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700 cursor-default">
+                          {{ $groupe->coFormateurs->count() }} co-formateur{{ $groupe->coFormateurs->count() > 1 ? 's' : '' }}
+                        </span>
+                        <div class="pointer-events-none absolute right-0 top-full z-20 mt-2 hidden w-max max-w-xs rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 shadow-lg group-hover:block group-focus-within:block">
+                          @foreach($groupe->coFormateurs as $trainer)
+                            <div>{{ $trainer->email }}</div>
+                          @endforeach
+                        </div>
+                      </div>
+                    @endif
 
                     @if($groupe->observers->isNotEmpty())
                       <div class="relative inline-flex group">
@@ -182,18 +208,20 @@
             </div>
 
             <div class="flex gap-2 mt-6">
-              <a href="{{ route('formateur.groupes.edit', $groupe->id) }}" class="btn-oneduc w-1/2 text-center">
+              <a href="{{ route('formateur.groupes.edit', $groupe->id) }}" class="btn-oneduc {{ $isPrimaryTrainer ? 'w-1/2' : 'w-full' }} text-center">
                 Modifier
               </a>
-              <form action="{{ route('formateur.groupes.destroy', $groupe->id) }}" method="POST"
-                    onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce groupe ?');"
-                    class="w-1/2">
-                @csrf
-                @method('DELETE')
-                <button type="submit" class="btn-oneduc-blue w-full">
-                  Supprimer
-                </button>
-              </form>
+              @if($isPrimaryTrainer)
+                <form action="{{ route('formateur.groupes.destroy', $groupe->id) }}" method="POST"
+                      onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce groupe ?');"
+                      class="w-1/2">
+                  @csrf
+                  @method('DELETE')
+                  <button type="submit" class="btn-oneduc-blue w-full">
+                    Supprimer
+                  </button>
+                </form>
+              @endif
             </div>
 
           </article>

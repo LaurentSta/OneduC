@@ -21,6 +21,15 @@ class ProgressionController extends Controller
     ) {
     }
 
+    private function accessibleTrainerGroupIds(int $formateurId): Collection
+    {
+        return Group::query()
+            ->accessibleByTrainer($formateurId)
+            ->pluck('groups.id')
+            ->map(fn ($groupId) => (int) $groupId)
+            ->values();
+    }
+
     /**
      * Contrôleur unique piloté par la route (defaults('view', ...))
      * Vues :
@@ -32,6 +41,7 @@ class ProgressionController extends Controller
     public function index(Request $request, ?User $user = null)
     {
         $formateurId = auth()->id();
+        $accessibleGroupIds = $this->accessibleTrainerGroupIds($formateurId);
 
         // view peut venir des defaults() de la route (route param) ou de la query string
         $view = $request->route('view') ?? $request->query('view', 'groupes');
@@ -42,7 +52,7 @@ class ProgressionController extends Controller
 
         // Liste groupes (pour menus / filtres)
         $groupesList = Group::query()
-            ->where('instructor_id', $formateurId)
+            ->whereIn('id', $accessibleGroupIds->all())
             ->orderBy('name')
             ->get(['id', 'name']);
 
@@ -54,7 +64,7 @@ class ProgressionController extends Controller
         if ($view === 'groupes') {
 
             $groupes = Group::query()
-                ->where('instructor_id', $formateurId)
+                ->whereIn('id', $accessibleGroupIds->all())
                 ->when($search !== '', function ($query) use ($search) {
                     $query->where('name', 'like', "%{$search}%");
                 })
@@ -109,18 +119,18 @@ class ProgressionController extends Controller
 
             $query = User::query()
                 ->where('role', 'stagiaire')
-                ->where(function ($q) use ($formateurId) {
+                ->where(function ($q) use ($accessibleGroupIds, $formateurId) {
                     $q->where('formateur_id', $formateurId)
-                      ->orWhereHas('groupesStagiaire', function ($gq) use ($formateurId) {
-                          $gq->where('instructor_id', $formateurId);
+                      ->orWhereHas('groupesStagiaire', function ($gq) use ($accessibleGroupIds) {
+                          $gq->whereIn('groups.id', $accessibleGroupIds->all());
                       });
                 });
 
             // Filtre groupe
             if ($groupId > 0) {
-                $query->whereHas('groupesStagiaire', function ($gq) use ($groupId, $formateurId) {
+                $query->whereHas('groupesStagiaire', function ($gq) use ($accessibleGroupIds, $groupId) {
                     $gq->where('groups.id', $groupId)
-                       ->where('instructor_id', $formateurId);
+                       ->whereIn('groups.id', $accessibleGroupIds->all());
                 });
             }
 
@@ -134,8 +144,8 @@ class ProgressionController extends Controller
             }
 
             $stagiaires = $query
-                ->with(['groupesStagiaire' => function ($q) use ($formateurId) {
-                    $q->where('instructor_id', $formateurId)->orderBy('name');
+                ->with(['groupesStagiaire' => function ($q) use ($accessibleGroupIds) {
+                    $q->whereIn('groups.id', $accessibleGroupIds->all())->orderBy('name');
                 }])
                 ->orderBy('name')
                 ->paginate(15)
@@ -191,9 +201,9 @@ class ProgressionController extends Controller
             $allowed = User::query()
                 ->where('id', $user->id)
                 ->where('role', 'stagiaire')
-                ->where(function ($q) use ($formateurId) {
+                ->where(function ($q) use ($accessibleGroupIds, $formateurId) {
                     $q->where('formateur_id', $formateurId)
-                      ->orWhereHas('groupesStagiaire', fn($g) => $g->where('instructor_id', $formateurId));
+                      ->orWhereHas('groupesStagiaire', fn($g) => $g->whereIn('groups.id', $accessibleGroupIds->all()));
                 })
                 ->exists();
 
@@ -372,7 +382,7 @@ class ProgressionController extends Controller
         if ($view === 'modules') {
 
             $modules = Module::query()
-                ->whereHas('groups', fn($q) => $q->where('instructor_id', $formateurId))
+                ->whereHas('groups', fn($q) => $q->whereIn('groups.id', $accessibleGroupIds->all()))
                 ->withCount(['lectures as lectures_count'])
                 ->orderBy('module_title')
                 ->get();
@@ -382,7 +392,7 @@ class ProgressionController extends Controller
                 ->join('group_user', 'group_user.group_id', '=', 'group_module.group_id')
                 ->join('groups', 'groups.id', '=', 'group_module.group_id')
                 ->join('users', 'users.id', '=', 'group_user.user_id')
-                ->where('groups.instructor_id', $formateurId)
+                ->whereIn('groups.id', $accessibleGroupIds->all())
                 ->where('users.role', 'stagiaire')
                 ->pluck('users.id')
                 ->map(fn ($id) => (int) $id)
@@ -392,7 +402,7 @@ class ProgressionController extends Controller
             $allLectureIds = $lectureIdsByModule->flatten()->unique()->values()->all();
             $allSnapshots = $this->learningAnalytics->collectSnapshots($allModuleLearnerIds, $allLectureIds);
 
-            $modules = $modules->map(function ($m) use ($allSnapshots, $formateurId, $lectureIdsByModule) {
+            $modules = $modules->map(function ($m) use ($accessibleGroupIds, $allSnapshots, $lectureIdsByModule) {
                 
                 // 1. Stagiaires assignés via les groupes du formateur
                 $stagiaireIds = DB::table('group_module')
@@ -400,7 +410,7 @@ class ProgressionController extends Controller
                     ->join('groups', 'groups.id', '=', 'group_module.group_id')
                     ->join('users', 'users.id', '=', 'group_user.user_id')
                     ->where('group_module.module_id', $m->id)
-                    ->where('groups.instructor_id', $formateurId)
+                    ->whereIn('groups.id', $accessibleGroupIds->all())
                     ->where('users.role', 'stagiaire')
                     ->pluck('users.id')
                     ->unique();
@@ -413,7 +423,7 @@ class ProgressionController extends Controller
                 $m->groupes_count = DB::table('group_module')
                     ->join('groups', 'groups.id', '=', 'group_module.group_id')
                     ->where('module_id', $m->id)
-                    ->where('groups.instructor_id', $formateurId)
+                    ->whereIn('groups.id', $accessibleGroupIds->all())
                     ->count();
                 $m->avg_score = (int) ($scopeMetrics['average_score'] ?? 0);
                 $m->started_count = (int) ($scopeMetrics['started_users_count'] ?? 0);
@@ -573,11 +583,12 @@ class ProgressionController extends Controller
 
     private function resolveStagiaireContext(User $stagiaire, int $formateurId, int $preferredGroupId = 0): array
     {
+        $accessibleGroupIds = $this->accessibleTrainerGroupIds($formateurId);
         $groupMemberships = DB::table('group_user')
             ->join('groups', 'groups.id', '=', 'group_user.group_id')
             ->where('group_user.user_id', $stagiaire->id)
             ->where('group_user.role_in_group', 'stagiaire')
-            ->where('groups.instructor_id', $formateurId)
+            ->whereIn('groups.id', $accessibleGroupIds->all())
             ->orderByDesc('group_user.created_at')
             ->get([
                 'groups.id',

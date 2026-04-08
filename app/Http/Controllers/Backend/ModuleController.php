@@ -962,7 +962,7 @@ class ModuleController extends Controller
 
         if ($isFormateurRoute && ($user->role ?? null) === 'formateur') {
             $whiteboardGroups = $module->groups()
-                ->where('groups.instructor_id', (int) $user->id)
+                ->accessibleByTrainer((int) $user->id)
                 ->with('whiteboard')
                 ->orderBy('groups.name')
                 ->get(['groups.id', 'groups.name', 'groups.description'])
@@ -981,7 +981,7 @@ class ModuleController extends Controller
             $currentWhiteboardGroup = $whiteboardGroups->firstWhere('is_current', true);
 
             $toolGroups = Group::query()
-                ->where('instructor_id', (int) $user->id)
+                ->accessibleByTrainer((int) $user->id)
                 ->with([
                     'modules' => function ($query): void {
                         $query->orderBy('group_module.position')
@@ -1257,7 +1257,7 @@ public function lire(Request $request, Module $module, ModuleSection $section, M
 
     if ($isFormateurRoute && ($user->role ?? null) === 'formateur') {
         $whiteboardGroups = $module->groups()
-            ->where('groups.instructor_id', (int) $user->id)
+            ->accessibleByTrainer((int) $user->id)
             ->with('whiteboard')
             ->orderBy('groups.name')
             ->get(['groups.id', 'groups.name', 'groups.description'])
@@ -1283,7 +1283,7 @@ public function lire(Request $request, Module $module, ModuleSection $section, M
         $currentWhiteboardGroup = $whiteboardGroups->firstWhere('is_current', true);
 
         $toolGroups = Group::query()
-            ->where('instructor_id', (int) $user->id)
+            ->accessibleByTrainer((int) $user->id)
             ->with([
                 'modules' => function ($query): void {
                     $query->orderBy('group_module.position')
@@ -1808,12 +1808,12 @@ public function lire(Request $request, Module $module, ModuleSection $section, M
             if (!$hasModule) return null;
 
             if (($user->role ?? null) === 'formateur') {
-                $isOwner = DB::table('groups')
+                $isAccessible = Group::query()
+                    ->accessibleByTrainer((int) $user->id)
                     ->where('id', $forcedGroupId)
-                    ->where('instructor_id', (int) $user->id)
                     ->exists();
 
-                if (!$isOwner) return null;
+                if (! $isAccessible) return null;
             }
 
             if (($user->role ?? null) === 'observateur') {
@@ -1834,6 +1834,15 @@ public function lire(Request $request, Module $module, ModuleSection $section, M
 
     private function resolveGroupIdForUserAndModule(int $userId, int $moduleId): ?int
     {
+        $formateurGroupId = Group::query()
+            ->accessibleByTrainer($userId)
+            ->whereHas('modules', fn ($query) => $query->where('modules.id', $moduleId))
+            ->value('groups.id');
+
+        if ($formateurGroupId) {
+            return (int) $formateurGroupId;
+        }
+
         $gid = DB::table('group_user')
             ->join('group_module', 'group_module.group_id', '=', 'group_user.group_id')
             ->where('group_user.user_id', $userId)

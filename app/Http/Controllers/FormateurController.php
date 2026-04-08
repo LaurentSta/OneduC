@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use App\Models\ModuleLecture;
@@ -30,6 +31,15 @@ class FormateurController extends Controller
     ) {
     }
 
+    private function accessibleTrainerGroupIds(int $formateurId): Collection
+    {
+        return Group::query()
+            ->accessibleByTrainer($formateurId)
+            ->pluck('groups.id')
+            ->map(fn ($groupId) => (int) $groupId)
+            ->values();
+    }
+
     /* -------------------------------------------------------------------------
      | Tableau de bord Formateur
      |-------------------------------------------------------------------------- */
@@ -37,22 +47,21 @@ class FormateurController extends Controller
     {
         $formateurId = auth()->id();
         $fifteenDaysAgo = now()->subDays(15);
+        $accessibleGroupIds = $this->accessibleTrainerGroupIds($formateurId);
 
-        $groupCount = Group::query()
-            ->where('instructor_id', $formateurId)
-            ->count();
+        $groupCount = $accessibleGroupIds->count();
 
         $modulesUsed = Module::query()
             ->whereHas('groups', function ($q) use ($formateurId) {
-                $q->where('instructor_id', $formateurId);
+                $q->accessibleByTrainer($formateurId);
             })
             ->distinct('modules.id')
             ->count('modules.id');
 
         $learnerIds = User::query()
             ->where('role', 'stagiaire')
-            ->whereHas('groupesStagiaire', function ($q) use ($formateurId) {
-                $q->where('instructor_id', $formateurId);
+            ->whereHas('groupesStagiaire', function ($q) use ($accessibleGroupIds) {
+                $q->whereIn('groups.id', $accessibleGroupIds->all());
             })
             ->distinct()
             ->pluck('users.id')
@@ -62,7 +71,7 @@ class FormateurController extends Controller
 
         // Groupes affichés dans la section "Suivi par groupes" du dashboard
         $groupesDashboard = Group::query()
-            ->where('instructor_id', $formateurId)
+            ->whereIn('id', $accessibleGroupIds->all())
             ->withCount([
                 'students as stagiaires_count' => function ($q) {
                     $q->where('role', 'stagiaire');
@@ -132,7 +141,7 @@ class FormateurController extends Controller
 
         $moduleInsights = Module::query()
             ->whereHas('groups', function ($q) use ($formateurId) {
-                $q->where('instructor_id', $formateurId);
+                $q->accessibleByTrainer($formateurId);
             })
             ->withCount('lectures')
             ->orderBy('module_title')
@@ -140,13 +149,13 @@ class FormateurController extends Controller
 
         $lectureIdsByModule = $this->resolveModuleLectureIds($moduleInsights->pluck('id')->all());
 
-        $moduleInsights = $moduleInsights->map(function ($module) use ($allSnapshots, $formateurId, $lectureIdsByModule) {
+        $moduleInsights = $moduleInsights->map(function ($module) use ($accessibleGroupIds, $allSnapshots, $lectureIdsByModule) {
             $stagiaireIds = DB::table('group_module')
                 ->join('group_user', 'group_user.group_id', '=', 'group_module.group_id')
                 ->join('groups', 'groups.id', '=', 'group_module.group_id')
                 ->join('users', 'users.id', '=', 'group_user.user_id')
                 ->where('group_module.module_id', $module->id)
-                ->where('groups.instructor_id', $formateurId)
+                ->whereIn('groups.id', $accessibleGroupIds->all())
                 ->where('group_user.role_in_group', 'stagiaire')
                 ->where('users.role', 'stagiaire')
                 ->pluck('users.id')
@@ -161,7 +170,7 @@ class FormateurController extends Controller
             $module->groupes_count = (int) DB::table('group_module')
                 ->join('groups', 'groups.id', '=', 'group_module.group_id')
                 ->where('group_module.module_id', $module->id)
-                ->where('groups.instructor_id', $formateurId)
+                ->whereIn('groups.id', $accessibleGroupIds->all())
                 ->count();
             $module->avg_score = (int) ($scopeMetrics['average_score'] ?? 0);
             $module->started_count = (int) ($scopeMetrics['started_users_count'] ?? 0);
@@ -288,9 +297,10 @@ class FormateurController extends Controller
     private function buildDashboardActivityPayload(int $formateurId, string $range): array
     {
         $config = $this->resolveDashboardActivityConfig($range);
+        $accessibleGroupIds = $this->accessibleTrainerGroupIds($formateurId);
 
         $groups = Group::query()
-            ->where('instructor_id', $formateurId)
+            ->whereIn('id', $accessibleGroupIds->all())
             ->withCount([
                 'students as learners_count' => function ($query) {
                     $query->where('users.role', 'stagiaire');
@@ -880,6 +890,7 @@ class FormateurController extends Controller
     public function indexStagiaires(Request $request)
     {
         $formateurId = auth()->id();
+        $accessibleGroupIds = $this->accessibleTrainerGroupIds($formateurId);
         $allowedPerPage = [10, 25, 50, 100];
         $perPage = (int) $request->input('per_page', 10);
 
@@ -889,24 +900,24 @@ class FormateurController extends Controller
 
         // Liste des groupes du formateur (pour filtre)
         $groupes = Group::query()
-            ->where('instructor_id', $formateurId)
+            ->whereIn('id', $accessibleGroupIds->all())
             ->orderBy('name')
             ->get(['id', 'name']);
 
         $query = User::query()
             ->where('role', 'stagiaire')
-            ->where(function ($q) use ($formateurId) {
+            ->where(function ($q) use ($accessibleGroupIds, $formateurId) {
                 $q->where('formateur_id', $formateurId)
-                    ->orWhereHas('groupesStagiaire', function ($gq) use ($formateurId) {
-                        $gq->where('instructor_id', $formateurId);
+                    ->orWhereHas('groupesStagiaire', function ($gq) use ($accessibleGroupIds) {
+                        $gq->whereIn('groups.id', $accessibleGroupIds->all());
                     });
             });
 
         // Filtre groupe (sécurisé sur le périmètre du formateur)
         if ($groupId = $request->input('group_id')) {
-            $query->whereHas('groupesStagiaire', function ($gq) use ($groupId, $formateurId) {
+            $query->whereHas('groupesStagiaire', function ($gq) use ($groupId, $accessibleGroupIds) {
                 $gq->where('groups.id', $groupId)
-                    ->where('instructor_id', $formateurId);
+                    ->whereIn('groups.id', $accessibleGroupIds->all());
             });
         }
 
@@ -920,8 +931,8 @@ class FormateurController extends Controller
         }
 
         $stagiaires = $query
-            ->with(['groupesStagiaire' => function ($q) use ($formateurId) {
-                $q->where('instructor_id', $formateurId)->orderBy('name');
+            ->with(['groupesStagiaire' => function ($q) use ($accessibleGroupIds) {
+                $q->whereIn('groups.id', $accessibleGroupIds->all())->orderBy('name');
             }])
             ->orderBy('name')
             ->paginate($perPage)
@@ -933,9 +944,10 @@ class FormateurController extends Controller
     public function createStagiaire()
     {
         $formateurId = auth()->id();
+        $accessibleGroupIds = $this->accessibleTrainerGroupIds($formateurId);
 
         $groupes = Group::query()
-            ->where('instructor_id', $formateurId)
+            ->whereIn('id', $accessibleGroupIds->all())
             ->orderBy('name')
             ->get(['id', 'name']);
 
@@ -959,6 +971,7 @@ class FormateurController extends Controller
         ]);
 
         $formateurId = auth()->id();
+        $accessibleGroupIds = $this->accessibleTrainerGroupIds($formateurId);
         $email = strtolower(trim($request->email));
         $prenom = $request->prenom;
         $nom = $request->name;
@@ -969,7 +982,7 @@ class FormateurController extends Controller
         if ($gid) {
             $group = Group::query()
                 ->where('id', $gid)
-                ->where('instructor_id', $formateurId)
+                ->whereIn('id', $accessibleGroupIds->all())
                 ->firstOrFail();
         }
 
@@ -1032,22 +1045,23 @@ class FormateurController extends Controller
     public function editStagiaire($id)
     {
         $formateurId = auth()->id();
+        $accessibleGroupIds = $this->accessibleTrainerGroupIds($formateurId);
 
         $groupes = Group::query()
-            ->where('instructor_id', $formateurId)
+            ->whereIn('id', $accessibleGroupIds->all())
             ->orderBy('name')
             ->get(['id', 'name']);
 
         $stagiaire = User::query()
             ->where('role', 'stagiaire')
-            ->where(function ($query) use ($formateurId) {
+            ->where(function ($query) use ($accessibleGroupIds, $formateurId) {
                 $query->where('formateur_id', $formateurId)
-                    ->orWhereHas('groupesStagiaire', function ($q) use ($formateurId) {
-                        $q->where('instructor_id', $formateurId);
+                    ->orWhereHas('groupesStagiaire', function ($q) use ($accessibleGroupIds) {
+                        $q->whereIn('groups.id', $accessibleGroupIds->all());
                     });
             })
-            ->with(['groupesStagiaire' => function ($query) use ($formateurId) {
-                $query->where('instructor_id', $formateurId)->orderBy('name');
+            ->with(['groupesStagiaire' => function ($query) use ($accessibleGroupIds) {
+                $query->whereIn('groups.id', $accessibleGroupIds->all())->orderBy('name');
             }])
             ->findOrFail($id);
 
@@ -1057,13 +1071,14 @@ class FormateurController extends Controller
     public function updateStagiaire(Request $request, $id)
     {
         $formateurId = auth()->id();
+        $accessibleGroupIds = $this->accessibleTrainerGroupIds($formateurId);
 
         $stagiaire = User::query()
             ->where('role', 'stagiaire')
-            ->where(function ($query) use ($formateurId) {
+            ->where(function ($query) use ($accessibleGroupIds, $formateurId) {
                 $query->where('formateur_id', $formateurId)
-                    ->orWhereHas('groupesStagiaire', function ($q) use ($formateurId) {
-                        $q->where('instructor_id', $formateurId);
+                    ->orWhereHas('groupesStagiaire', function ($q) use ($accessibleGroupIds) {
+                        $q->whereIn('groups.id', $accessibleGroupIds->all());
                     });
             })
             ->findOrFail($id);
@@ -1076,7 +1091,7 @@ class FormateurController extends Controller
             'group_ids' => ['nullable', 'array'],
             'group_ids.*' => [
                 'integer',
-                Rule::exists('groups', 'id')->where(fn ($query) => $query->where('instructor_id', $formateurId)),
+                Rule::exists('groups', 'id')->where(fn ($query) => $query->whereIn('id', $accessibleGroupIds->all())),
             ],
         ]);
 
@@ -1087,7 +1102,7 @@ class FormateurController extends Controller
             ->values();
 
         $trainerGroupIds = Group::query()
-            ->where('instructor_id', $formateurId)
+            ->whereIn('id', $accessibleGroupIds->all())
             ->pluck('id')
             ->map(fn ($groupId) => (int) $groupId);
 
@@ -1132,13 +1147,14 @@ class FormateurController extends Controller
     public function destroyStagiaire($id)
     {
         $formateurId = auth()->id();
+        $accessibleGroupIds = $this->accessibleTrainerGroupIds($formateurId);
 
         $stagiaire = User::query()
             ->where('role', 'stagiaire')
-            ->where(function ($query) use ($formateurId) {
+            ->where(function ($query) use ($accessibleGroupIds, $formateurId) {
                 $query->where('formateur_id', $formateurId)
-                    ->orWhereHas('groupesStagiaire', function ($q) use ($formateurId) {
-                        $q->where('instructor_id', $formateurId);
+                    ->orWhereHas('groupesStagiaire', function ($q) use ($accessibleGroupIds) {
+                        $q->whereIn('groups.id', $accessibleGroupIds->all());
                     });
             })
             ->findOrFail($id);
@@ -1214,12 +1230,13 @@ class FormateurController extends Controller
     public function mesModules(Request $request)
     {
         $formateurId = auth()->id();
+        $accessibleGroupIds = $this->accessibleTrainerGroupIds($formateurId);
         $search = trim((string) $request->query('search', ''));
 
         $modules = Module::query()
-            ->where(function ($q) use ($formateurId) {
-                $q->whereHas('groups', function ($g) use ($formateurId) {
-                    $g->where('instructor_id', $formateurId);
+            ->where(function ($q) use ($accessibleGroupIds, $formateurId) {
+                $q->whereHas('groups', function ($g) use ($accessibleGroupIds) {
+                    $g->whereIn('groups.id', $accessibleGroupIds->all());
                 })
                 ->orWhere('formateur_id', $formateurId);
             })
@@ -1233,8 +1250,8 @@ class FormateurController extends Controller
                 'sections' => function ($q) {
                     $q->select('id', 'module_id')->orderBy('id');
                 },
-                'groups' => function ($q) use ($formateurId) {
-                    $q->where('instructor_id', $formateurId)
+                'groups' => function ($q) use ($accessibleGroupIds) {
+                    $q->whereIn('groups.id', $accessibleGroupIds->all())
                         ->with(['users' => function ($u) {
                             $u->where('role', 'stagiaire');
                         }]);
@@ -1253,9 +1270,10 @@ class FormateurController extends Controller
     public function moduleDetail(Request $request, Module $module)
     {
         $formateurId = auth()->id();
+        $accessibleGroupIds = $this->accessibleTrainerGroupIds($formateurId);
 
         $isAllowed = ($module->formateur_id === $formateurId)
-            || $module->groups()->where('instructor_id', $formateurId)->exists();
+            || $module->groups()->whereIn('groups.id', $accessibleGroupIds->all())->exists();
 
         abort_unless($isAllowed, 403);
 
@@ -1271,8 +1289,8 @@ class FormateurController extends Controller
                             }]);
                     }]);
             },
-            'groups' => function ($q) use ($formateurId) {
-                $q->where('instructor_id', $formateurId)
+            'groups' => function ($q) use ($accessibleGroupIds) {
+                $q->whereIn('groups.id', $accessibleGroupIds->all())
                     ->with(['users' => function ($u) {
                         $u->where('role', 'stagiaire');
                     }]);
@@ -1327,15 +1345,16 @@ class FormateurController extends Controller
 
     private function resolveTrainerModuleDetailGroupId(Request $request, Module $module, int $formateurId): ?int
     {
+        $accessibleGroupIds = $this->accessibleTrainerGroupIds($formateurId);
         $forcedGroupId = (int) $request->query('group_id', 0);
 
         if ($forcedGroupId > 0) {
-            $isOwnedGroup = Group::query()
+            $isAccessibleGroup = Group::query()
                 ->where('id', $forcedGroupId)
-                ->where('instructor_id', $formateurId)
+                ->whereIn('id', $accessibleGroupIds->all())
                 ->exists();
 
-            if (! $isOwnedGroup) {
+            if (! $isAccessibleGroup) {
                 return null;
             }
 
@@ -1348,7 +1367,7 @@ class FormateurController extends Controller
         }
 
         return Group::query()
-            ->where('instructor_id', $formateurId)
+            ->whereIn('id', $accessibleGroupIds->all())
             ->whereHas('modules', fn ($query) => $query->where('modules.id', $module->id))
             ->value('id');
     }
@@ -1410,10 +1429,11 @@ public function updateQuizCount(Request $request, $lectureId)
     public function preview(Module $module)
     {
         $formateurId = auth()->id();
+        $accessibleGroupIds = $this->accessibleTrainerGroupIds($formateurId);
 
         // Sécuriser l'accès au module
         $isAllowed = ($module->formateur_id === $formateurId)
-            || $module->groups()->where('instructor_id', $formateurId)->exists();
+            || $module->groups()->whereIn('groups.id', $accessibleGroupIds->all())->exists();
 
         abort_unless($isAllowed, 403);
 

@@ -44,7 +44,10 @@ class WhiteboardController extends Controller
 
     private function whiteboardForInstructor(Group $group): GroupWhiteboard
     {
-        abort_unless((int) $group->instructor_id === (int) auth()->id(), 404);
+        $group = Group::query()
+            ->accessibleByTrainer((int) auth()->id())
+            ->whereKey($group->id)
+            ->firstOrFail();
 
         return GroupWhiteboard::ensureForGroup($group, auth()->user());
     }

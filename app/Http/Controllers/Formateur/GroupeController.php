@@ -10,7 +10,9 @@ use App\Models\Module;
 use App\Models\ModuleLecture;
 use App\Models\ModuleSection;
 use App\Models\User;
+use App\Notifications\GroupCoTrainerAddedNotification;
 use App\Services\CodeGeneratorService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -29,8 +31,10 @@ class GroupeController extends Controller
      */
     public function index()
     {
-        $groupes = Group::where('instructor_id', auth()->id())
-            ->with(['modules', 'students', 'observers'])
+        $groupes = Group::query()
+            ->accessibleByTrainer((int) auth()->id())
+            ->with(['modules', 'students', 'observers', 'instructor', 'coFormateurs'])
+            ->orderBy('name')
             ->get();
 
         return view('formateur.groupes.index', compact('groupes'));
@@ -48,7 +52,10 @@ class GroupeController extends Controller
             ->orderBy('module_title')
             ->get();
 
-        return view('formateur.groupes.create', compact('modules'));
+        $initialCoFormateurs = $this->resolveCoTrainerPayloadFromIds(old('co_formateurs', []));
+        $canManageCoFormateurs = true;
+
+        return view('formateur.groupes.create', compact('modules', 'initialCoFormateurs', 'canManageCoFormateurs'));
     }
 
     /**
@@ -71,14 +78,26 @@ class GroupeController extends Controller
             'stagiaires.*.email' => ['nullable', 'email', 'distinct'],
             'stagiaires.*.prenom' => ['nullable', 'string', 'max:255'],
             'stagiaires.*.nom' => ['nullable', 'string', 'max:255'],
+            'co_formateurs' => ['nullable', 'array'],
+            'co_formateurs.*' => [
+                'integer',
+                'distinct',
+                Rule::exists('users', 'id')->where(function ($query) {
+                    $query
+                        ->where('role', 'formateur')
+                        ->where('status', 1)
+                        ->where('id', '<>', (int) auth()->id());
+                }),
+            ],
         ], [
             'nom.unique' => 'Ce nom de groupe existe déjà. Merci de choisir un autre nom.',
         ]);
 
         $temporaryPassword = (string) $request->password;
+        $coTrainerIds = $this->sanitizeCoTrainerIds($request->input('co_formateurs', []), (int) auth()->id());
 
         try {
-            DB::transaction(function () use ($request, $temporaryPassword): void {
+            DB::transaction(function () use ($request, $temporaryPassword, $coTrainerIds): void {
                 $group = Group::create([
                     'name' => trim((string) $request->nom),
                     'description' => $request->description,
@@ -88,6 +107,8 @@ class GroupeController extends Controller
                     'temporary_password' => $temporaryPassword,
                     'instructor_id' => auth()->id(),
                 ]);
+
+                $this->syncCoFormateurs($group, $coTrainerIds, auth()->user());
 
                 foreach ($request->input('stagiaires', []) as $s) {
                     if (empty($s['email']) && empty($s['prenom']) && empty($s['nom'])) {
@@ -185,9 +206,10 @@ class GroupeController extends Controller
      */
     public function edit($id)
     {
-        $group = Group::where('id', $id)
-            ->where('instructor_id', auth()->id())
-            ->with(['modules', 'students', 'observers'])
+        $group = Group::query()
+            ->accessibleByTrainer((int) auth()->id())
+            ->where('id', $id)
+            ->with(['modules', 'students', 'observers', 'coFormateurs', 'instructor'])
             ->firstOrFail();
 
         $modules = Module::active()
@@ -197,7 +219,18 @@ class GroupeController extends Controller
             ->orderBy('module_title')
             ->get();
 
-        return view('formateur.groupes.edit', compact('group', 'modules'));
+        $canManageCoFormateurs = $group->canManageCoFormateurs(auth()->user());
+        $initialCoFormateurs = $canManageCoFormateurs && old('co_formateurs')
+            ? $this->resolveCoTrainerPayloadFromIds(old('co_formateurs', []))
+            : $group->coFormateurs
+                ->sortBy('email')
+                ->values()
+                ->map(fn (User $trainer) => [
+                    'id' => (int) $trainer->id,
+                    'email' => (string) $trainer->email,
+                ]);
+
+        return view('formateur.groupes.edit', compact('group', 'modules', 'initialCoFormateurs', 'canManageCoFormateurs'));
     }
 
     /**
@@ -205,6 +238,13 @@ class GroupeController extends Controller
      */
     public function update(Request $request, $id)
     {
+        $group = Group::query()
+            ->accessibleByTrainer((int) auth()->id())
+            ->where('id', $id)
+            ->with(['students', 'coFormateurs'])
+            ->firstOrFail();
+        $canManageCoFormateurs = $group->canManageCoFormateurs(auth()->user());
+
         $request->validate([
             'nom' => [
                 'required',
@@ -226,12 +266,18 @@ class GroupeController extends Controller
             'stagiaires.*.nom' => ['nullable', 'string', 'max:255'],
             'remove_students' => ['nullable', 'array'],
             'remove_students.*' => ['integer', Rule::exists('users', 'id')],
+            'co_formateurs' => ['nullable', 'array'],
+            'co_formateurs.*' => [
+                'integer',
+                'distinct',
+                Rule::exists('users', 'id')->where(function ($query) {
+                    $query
+                        ->where('role', 'formateur')
+                        ->where('status', 1)
+                        ->where('id', '<>', (int) auth()->id());
+                }),
+            ],
         ]);
-
-        $group = Group::where('id', $id)
-            ->where('instructor_id', auth()->id())
-            ->with('students')
-            ->firstOrFail();
 
         $temporaryPasswordInput = trim((string) $request->input('password', ''));
         $effectiveTemporaryPassword = $temporaryPasswordInput !== ''
@@ -271,6 +317,11 @@ class GroupeController extends Controller
         }
 
         $group->update($groupPayload);
+
+        if ($canManageCoFormateurs) {
+            $coTrainerIds = $this->sanitizeCoTrainerIds($request->input('co_formateurs', []), (int) auth()->id());
+            $this->syncCoFormateurs($group, $coTrainerIds, auth()->user());
+        }
 
         $moduleIds = collect($request->input('modules', []))
             ->map(fn ($value) => (int) $value)
@@ -392,9 +443,12 @@ class GroupeController extends Controller
      */
     public function destroy($id)
     {
-        $group = Group::where('id', $id)
-            ->where('instructor_id', auth()->id())
+        $group = Group::query()
+            ->accessibleByTrainer((int) auth()->id())
+            ->where('id', $id)
             ->firstOrFail();
+
+        abort_unless($group->isOwnedBy(auth()->user()), 403);
 
         if (! empty($group->groupe_image) && Storage::disk('public')->exists($group->groupe_image)) {
             Storage::disk('public')->delete($group->groupe_image);
@@ -486,8 +540,8 @@ class GroupeController extends Controller
         $formateurId = auth()->id();
 
         $group = Group::query()
+            ->accessibleByTrainer((int) $formateurId)
             ->where('id', $groupId)
-            ->where('instructor_id', $formateurId)
             ->firstOrFail();
 
         $module = Module::query()->findOrFail($moduleId);
@@ -593,8 +647,9 @@ class GroupeController extends Controller
      */
     public function toggleModuleLesson($groupId, $moduleId, $lectureId)
     {
-        $group = Group::where('id', $groupId)
-            ->where('instructor_id', auth()->id())
+        $group = Group::query()
+            ->accessibleByTrainer((int) auth()->id())
+            ->where('id', $groupId)
             ->firstOrFail();
         $module = Module::findOrFail($moduleId);
 
@@ -649,8 +704,9 @@ class GroupeController extends Controller
      */
     private function moveModuleLesson($groupId, $moduleId, $lectureId, int $delta)
     {
-        $group = Group::where('id', $groupId)
-            ->where('instructor_id', auth()->id())
+        $group = Group::query()
+            ->accessibleByTrainer((int) auth()->id())
+            ->where('id', $groupId)
             ->firstOrFail();
         $module = Module::findOrFail($moduleId);
 
@@ -704,8 +760,9 @@ class GroupeController extends Controller
      */
     public function resetModuleLessons($groupId, $moduleId)
     {
-        $group = Group::where('id', $groupId)
-            ->where('instructor_id', auth()->id())
+        $group = Group::query()
+            ->accessibleByTrainer((int) auth()->id())
+            ->where('id', $groupId)
             ->firstOrFail();
         $module = Module::findOrFail($moduleId);
 
@@ -716,5 +773,146 @@ class GroupeController extends Controller
             ->delete();
 
         return back()->with('success', 'Personnalisation réinitialisée.');
+    }
+
+    public function searchCoFormateurs(Request $request): JsonResponse
+    {
+        $term = trim((string) $request->query('q', ''));
+        if (mb_strlen($term) < 3) {
+            return response()->json(['items' => []]);
+        }
+
+        $groupId = (int) $request->query('group_id', 0);
+        if ($groupId > 0) {
+            $group = Group::query()
+                ->accessibleByTrainer((int) auth()->id())
+                ->where('id', $groupId)
+                ->firstOrFail();
+
+            abort_unless($group->canManageCoFormateurs(auth()->user()), 403);
+        }
+
+        $excludeIds = collect($request->query('exclude', []))
+            ->map(fn ($value) => (int) $value)
+            ->filter(fn ($value) => $value > 0)
+            ->push((int) auth()->id())
+            ->unique()
+            ->values();
+
+        $items = User::query()
+            ->where('role', 'formateur')
+            ->where('status', 1)
+            ->whereNotNull('email')
+            ->where('email', 'like', mb_strtolower($term) . '%')
+            ->when($excludeIds->isNotEmpty(), fn ($query) => $query->whereNotIn('id', $excludeIds->all()))
+            ->orderBy('email')
+            ->limit(10)
+            ->get(['id', 'email'])
+            ->map(fn (User $trainer) => [
+                'id' => (int) $trainer->id,
+                'email' => (string) $trainer->email,
+            ])
+            ->values();
+
+        return response()->json(['items' => $items]);
+    }
+
+    private function sanitizeCoTrainerIds(array $rawIds, int $currentTrainerId)
+    {
+        $candidateIds = collect($rawIds)
+            ->map(fn ($value) => (int) $value)
+            ->filter(fn (int $value) => $value > 0 && $value !== $currentTrainerId)
+            ->unique()
+            ->values();
+
+        if ($candidateIds->isEmpty()) {
+            return collect();
+        }
+
+        return User::query()
+            ->whereIn('id', $candidateIds->all())
+            ->where('role', 'formateur')
+            ->where('status', 1)
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->values();
+    }
+
+    private function resolveCoTrainerPayloadFromIds(array $rawIds)
+    {
+        $ids = collect($rawIds)
+            ->map(fn ($value) => (int) $value)
+            ->filter(fn (int $value) => $value > 0)
+            ->unique()
+            ->values();
+
+        if ($ids->isEmpty()) {
+            return collect();
+        }
+
+        return User::query()
+            ->whereIn('id', $ids->all())
+            ->where('role', 'formateur')
+            ->where('status', 1)
+            ->orderBy('email')
+            ->get(['id', 'email'])
+            ->map(fn (User $trainer) => [
+                'id' => (int) $trainer->id,
+                'email' => (string) $trainer->email,
+            ])
+            ->values();
+    }
+
+    private function syncCoFormateurs(Group $group, $coTrainerIds, ?User $actor = null): void
+    {
+        $targetIds = collect($coTrainerIds)
+            ->map(fn ($value) => (int) $value)
+            ->filter(fn (int $value) => $value > 0)
+            ->unique()
+            ->values();
+
+        $currentIds = $group->coFormateurs()
+            ->pluck('users.id')
+            ->map(fn ($value) => (int) $value)
+            ->values();
+
+        $toDetach = $currentIds->diff($targetIds)->values();
+        $toAttach = $targetIds->diff($currentIds)->values();
+
+        if ($toDetach->isNotEmpty()) {
+            DB::table('group_user')
+                ->where('group_id', $group->id)
+                ->whereIn('user_id', $toDetach->all())
+                ->where('role_in_group', 'formateur')
+                ->delete();
+        }
+
+        if ($toAttach->isNotEmpty()) {
+            $now = now();
+
+            foreach ($toAttach as $trainerId) {
+                DB::table('group_user')->updateOrInsert(
+                    [
+                        'group_id' => $group->id,
+                        'user_id' => $trainerId,
+                    ],
+                    [
+                        'role_in_group' => 'formateur',
+                        'updated_at' => $now,
+                        'created_at' => $now,
+                    ],
+                );
+            }
+        }
+
+        if ($toAttach->isNotEmpty() && $actor instanceof User && Schema::hasTable('notifications')) {
+            DB::afterCommit(function () use ($group, $toAttach, $actor): void {
+                User::query()
+                    ->whereIn('id', $toAttach->all())
+                    ->where('role', 'formateur')
+                    ->get()
+                    ->each(fn (User $trainer) => $trainer->notify(new GroupCoTrainerAddedNotification($group, $actor)));
+            });
+        }
     }
 }

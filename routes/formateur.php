@@ -52,6 +52,7 @@ Route::middleware(['auth', 'role:formateur'])
     // 🧑‍🤝‍🧑 Groupes
     Route::get('/groupes', [GroupeController::class, 'index'])->name('groupes.index');
     Route::get('/groupes/create', [GroupeController::class, 'create'])->name('groupes.create');
+    Route::get('/groupes/co-formateurs/recherche', [GroupeController::class, 'searchCoFormateurs'])->name('groupes.co-formateurs.search');
     Route::post('/groupes', [GroupeController::class, 'store'])->name('groupes.store');
     Route::get('/groupes/{id}/edit', [GroupeController::class, 'edit'])->name('groupes.edit');
     Route::put('/groupes/{id}', [GroupeController::class, 'update'])->name('groupes.update');

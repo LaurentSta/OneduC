@@ -96,7 +96,7 @@
   $oldIsActive = old('is_active', 1);
   $isGroupActive = filter_var($oldIsActive, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
   $isGroupActive = $isGroupActive ?? in_array((string) $oldIsActive, ['1', 'on'], true);
-  $showOptionsPanel = $errors->has('start_date') || $errors->has('end_date') || $errors->has('is_active');
+  $showOptionsPanel = $errors->has('start_date') || $errors->has('end_date') || $errors->has('is_active') || $errors->has('co_formateurs') || $errors->has('co_formateurs.*');
 @endphp
 
 <div class="max-w-[1285px] mx-auto px-8">
@@ -237,69 +237,82 @@
             </summary>
 
             <div class="mt-3 rounded-[18px] border border-gray-200 bg-white px-4 py-4">
-              <div class="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_320px] xl:items-end">
-                <div>
-                  <div class="mb-2 flex items-center gap-2">
-                    <label for="start_date" class="block text-base font-medium text-gray-900">Date de démarrage</label>
+              <div class="grid gap-4 lg:grid-cols-2 lg:items-stretch">
+                <div class="space-y-4 rounded-[18px] border {{ $errors->has('is_active') || $errors->has('start_date') || $errors->has('end_date') ? 'border-sky-300 bg-sky-100/80' : 'border-sky-200 bg-sky-50/80' }} px-4 py-4">
+                  <div class="rounded-[18px] border {{ $errors->has('is_active') ? 'border-red-300 bg-red-50/70' : 'border-white/70 bg-white/80' }} px-4 py-3">
+                    <div class="flex items-center justify-between gap-4">
+                      <input type="hidden" name="is_active" value="0">
+                      <label for="is_active" class="flex items-center gap-3 text-base font-medium text-gray-900">
+                        <span class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-bleuone/10 text-bleuone">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v9m6.364-5.364a9 9 0 11-12.728 0" />
+                          </svg>
+                        </span>
+                        <span>Activer le groupe</span>
+                      </label>
+
+                      <input
+                        id="is_active"
+                        name="is_active"
+                        type="checkbox"
+                        value="1"
+                        class="peer sr-only"
+                        {{ $isGroupActive ? 'checked' : '' }}
+                      >
+                      <label
+                        for="is_active"
+                        aria-label="Activer ou désactiver le groupe"
+                        class="relative inline-flex h-7 w-12 cursor-pointer rounded-full bg-gray-300 transition-colors duration-200 after:absolute after:left-1 after:top-1 after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow-sm after:transition-transform after:duration-200 after:content-[''] peer-checked:bg-vertone peer-checked:after:translate-x-5"
+                      ></label>
+                    </div>
+                    @error('is_active')
+                      <p class="mt-2 text-sm text-red-700">{{ $message }}</p>
+                    @enderror
                   </div>
-                  <input
-                    id="start_date"
-                    name="start_date"
-                    type="date"
-                    value="{{ old('start_date') }}"
-                    class="bg-gray-50 border {{ $errors->has('start_date') ? 'border-red-400' : 'border-gray-300' }} text-base rounded-lg focus:ring-orangeone focus:border-orangeone block w-full p-2.5"
-                  >
-                  @error('start_date')
-                    <p class="mt-2 text-sm text-red-700">{{ $message }}</p>
-                  @enderror
+
+                  <div class="space-y-4">
+                    <div class="rounded-[18px] border {{ $errors->has('start_date') ? 'border-red-300 bg-red-50/70' : 'border-white/70 bg-white/80' }} px-4 py-4">
+                      <div class="mb-2 flex items-center gap-2">
+                        <label for="start_date" class="block text-base font-medium text-gray-900">Date de démarrage</label>
+                      </div>
+                      <input
+                        id="start_date"
+                        name="start_date"
+                        type="date"
+                        value="{{ old('start_date') }}"
+                        class="bg-white border {{ $errors->has('start_date') ? 'border-red-400' : 'border-gray-300' }} text-base rounded-lg focus:ring-orangeone focus:border-orangeone block w-full p-2.5"
+                      >
+                      @error('start_date')
+                        <p class="mt-2 text-sm text-red-700">{{ $message }}</p>
+                      @enderror
+                    </div>
+
+                    <div class="rounded-[18px] border {{ $errors->has('end_date') ? 'border-red-300 bg-red-50/70' : 'border-white/70 bg-white/80' }} px-4 py-4">
+                      <div class="mb-2 flex items-center gap-2">
+                        <label for="end_date" class="block text-base font-medium text-gray-900">Date de fin</label>
+                      </div>
+                      <input
+                        id="end_date"
+                        name="end_date"
+                        type="date"
+                        value="{{ old('end_date') }}"
+                        class="bg-white border {{ $errors->has('end_date') ? 'border-red-400' : 'border-gray-300' }} text-base rounded-lg focus:ring-orangeone focus:border-orangeone block w-full p-2.5"
+                      >
+                      @error('end_date')
+                        <p class="mt-2 text-sm text-red-700">{{ $message }}</p>
+                      @enderror
+                    </div>
+                  </div>
                 </div>
 
-                <div>
-                  <div class="mb-2 flex items-center gap-2">
-                    <label for="end_date" class="block text-base font-medium text-gray-900">Date de fin</label>
-                  </div>
-                  <input
-                    id="end_date"
-                    name="end_date"
-                    type="date"
-                    value="{{ old('end_date') }}"
-                    class="bg-gray-50 border {{ $errors->has('end_date') ? 'border-red-400' : 'border-gray-300' }} text-base rounded-lg focus:ring-orangeone focus:border-orangeone block w-full p-2.5"
-                  >
-                  @error('end_date')
-                    <p class="mt-2 text-sm text-red-700">{{ $message }}</p>
-                  @enderror
-                </div>
-
-                <div class="rounded-[18px] border {{ $errors->has('is_active') ? 'border-red-300 bg-red-50/40' : 'border-gray-200 bg-white' }} px-4 py-3">
-                  <div class="flex items-center justify-between gap-4">
-                    <input type="hidden" name="is_active" value="0">
-                    <label for="is_active" class="flex items-center gap-3 text-base font-medium text-gray-900">
-                      <span class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-bleuone/10 text-bleuone">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v9m6.364-5.364a9 9 0 11-12.728 0" />
-                        </svg>
-                      </span>
-                      <span>Activer le groupe</span>
-                    </label>
-
-                    <input
-                      id="is_active"
-                      name="is_active"
-                      type="checkbox"
-                      value="1"
-                      class="peer sr-only"
-                      {{ $isGroupActive ? 'checked' : '' }}
-                    >
-                    <label
-                      for="is_active"
-                      aria-label="Activer ou désactiver le groupe"
-                      class="relative inline-flex h-7 w-12 cursor-pointer rounded-full bg-gray-300 transition-colors duration-200 after:absolute after:left-1 after:top-1 after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow-sm after:transition-transform after:duration-200 after:content-[''] peer-checked:bg-vertone peer-checked:after:translate-x-5"
-                    ></label>
-                  </div>
-                  @error('is_active')
-                    <p class="mt-2 text-sm text-red-700">{{ $message }}</p>
-                  @enderror
-                </div>
+                @include('formateur.groupes.partials.co-formateurs-field', [
+                  'mode' => 'create',
+                  'selectedCoFormateurs' => $initialCoFormateurs,
+                  'canManageCoFormateurs' => $canManageCoFormateurs,
+                  'group' => null,
+                  'wrapperClass' => 'min-w-0',
+                  'panelClass' => 'border-orange-200 bg-orange-50/80',
+                ])
               </div>
             </div>
           </details>
@@ -1040,5 +1053,7 @@ Lucas;Bernard;lucas.bernard@entreprise.fr</pre>
 
   showStep(currentStep);
 </script>
+
+@include('formateur.groupes.partials.co-formateurs-script')
 
 @endsection
