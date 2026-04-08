@@ -5,6 +5,9 @@
     $chapterCount = $currentModule['chapter_count'] ?? count($currentModule['chapters'] ?? []);
     $lessonCount = $currentModule['lesson_count'] ?? 0;
     $ctaUrl = $currentModule['first_chapter_url'] ?? $currentModule['url'];
+    $presentationVideoEmbedUrl = $currentModule['presentation_video_embed_url']
+        ?? 'https://www.youtube.com/embed/Bw4_SlnqZj8?rel=0&modestbranding=1';
+    $presentationVideoTitle = $currentModule['presentation_video_title'] ?? ('Video de presentation - ' . $currentModule['title']);
 @endphp
 
 @section('parcours_content')
@@ -18,7 +21,7 @@
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
                 <main class="lg:col-span-8">
                 <header class="border-b border-gray-100 pb-2 mb-4">
-                    <h1 class="text-2xl md:text-3xl font-extrabold text-bleuone leading-tight">
+                    <h1 class="font-raleway text-2xl md:text-3xl font-medium text-bleuone leading-tight">
                         {{ $currentModule['title'] }}
                     </h1>
                 </header>
@@ -152,22 +155,44 @@
                 <aside class="lg:col-span-4 lg:sticky lg:top-8 space-y-6">
                     <div class="bg-white rounded-[24px] shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden">
                         <div class="w-full bg-black">
-                            <div class="flex aspect-video items-center justify-center bg-gradient-to-br from-slate-100 via-white to-slate-100 px-6 py-8">
-                                <div class="grid w-full grid-cols-[120px_minmax(0,1fr)] items-center gap-4">
-                                    <div class="flex h-[170px] items-center justify-center rounded-[24px] bg-white shadow-[0_18px_40px_-24px_rgba(0,68,97,0.35)]">
-                                        <div class="px-4 text-center">
-                                            <p class="text-sm font-bold uppercase tracking-[0.18em] text-orangeone">On educ</p>
-                                            <p class="mt-3 text-2xl font-black leading-8 text-bleuone">{{ $currentModule['label'] }}</p>
+                            @if ($presentationVideoEmbedUrl)
+                                <div class="aspect-video bg-slate-950">
+                                    <iframe
+                                        src="{{ $presentationVideoEmbedUrl }}"
+                                        title="{{ $presentationVideoTitle }}"
+                                        class="h-full w-full"
+                                        frameborder="0"
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                        referrerpolicy="strict-origin-when-cross-origin"
+                                        allowfullscreen
+                                    ></iframe>
+                                </div>
+                            @else
+                                <div class="flex aspect-video items-center justify-center bg-gradient-to-br from-slate-100 via-white to-slate-100 px-6 py-8">
+                                    <div class="grid w-full grid-cols-[120px_minmax(0,1fr)] items-center gap-4">
+                                        <div class="flex h-[170px] items-center justify-center rounded-[24px] bg-white shadow-[0_18px_40px_-24px_rgba(0,68,97,0.35)]">
+                                            <div class="px-4 text-center">
+                                                <p class="text-sm font-bold uppercase tracking-[0.18em] text-orangeone">On educ</p>
+                                                <p class="mt-3 text-2xl font-black leading-8 text-bleuone">{{ $currentModule['label'] }}</p>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <p class="text-4xl font-light tracking-tight text-bleuone">{{ $currentModule['title'] }}</p>
                                         </div>
                                     </div>
-                                    <div>
-                                        <p class="text-4xl font-light tracking-tight text-bleuone">{{ $currentModule['title'] }}</p>
-                                    </div>
                                 </div>
-                            </div>
+                            @endif
                         </div>
 
                         <div class="p-6">
+                            @if ($presentationVideoEmbedUrl)
+                                <div class="mb-6 border-b border-gray-100 pb-6">
+                                    <p class="text-[10px] font-black uppercase tracking-[0.2em] text-orangeone">{{ $currentModule['label'] }}</p>
+                                    <p class="mt-2 font-raleway text-2xl font-medium leading-tight text-bleuone">{{ $currentModule['title'] }}</p>
+                                    <p class="mt-2 text-sm text-slate-500 font-lisible">Video de presentation</p>
+                                </div>
+                            @endif
+
                             <div class="mb-6">
                                 <div class="flex justify-between items-end mb-2">
                                     <span class="text-xs font-bold text-gray-500 uppercase">Votre avancee</span>

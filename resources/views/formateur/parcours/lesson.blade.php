@@ -1,6 +1,7 @@
 @extends('formateur.parcours.layout')
 
 @php
+    $customPresentation = $currentLesson['custom_presentation'] ?? null;
     $editorial = $currentLesson['editorial'] ?? [
         'intro' => [
             $currentLesson['objective'],
@@ -171,6 +172,10 @@
                     allowfullscreen
                     class="block h-full w-full"
                 ></iframe>
+            @elseif (!empty($customPresentation['pages']))
+                <div class="h-full p-4 md:p-6">
+                    @include('formateur.parcours.partials.lessons.group-wizard-presentation')
+                </div>
             @else
                 <div class="h-full overflow-y-auto p-4 md:p-6">
                     <article class="mx-auto max-w-5xl overflow-hidden rounded-[28px] border border-gray-100 bg-white shadow-sm">
@@ -187,7 +192,7 @@
                                 </span>
                             </div>
 
-                            <h1 class="mt-5 text-3xl font-extrabold leading-tight text-bleuone md:text-4xl">
+                            <h1 class="mt-5 font-raleway text-3xl font-medium leading-tight text-bleuone md:text-4xl">
                                 {{ $currentLesson['title'] }}
                             </h1>
 

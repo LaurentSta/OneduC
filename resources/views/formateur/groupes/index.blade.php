@@ -77,7 +77,6 @@
         @forelse ($groupes as $groupe)
           @php
             $isPrimaryTrainer = (int) $groupe->instructor_id === (int) auth()->id();
-            $primaryTrainerName = trim((string) (($groupe->instructor->prenom ?? '') . ' ' . ($groupe->instructor->name ?? '')));
           @endphp
           <article class="flex flex-col rounded-[20px] border border-gray-200 bg-white p-6 shadow">
             <div class="flex-1 space-y-5">
@@ -90,11 +89,6 @@
                     <p class="mt-2 text-xs italic text-gray-400 font-lisible">
                       Créé le {{ optional($groupe->created_at)->format('d/m/Y') ?? '—' }}
                     </p>
-                    @if(! $isPrimaryTrainer && $primaryTrainerName !== '')
-                      <p class="mt-2 text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">
-                        Formateur principal : {{ $primaryTrainerName }}
-                      </p>
-                    @endif
                   </div>
 
                   <div class="flex flex-wrap items-center gap-2 sm:justify-end">
@@ -103,9 +97,11 @@
                       {{ $groupe->is_active ? 'Actif' : 'Inactif' }}
                     </span>
 
-                    <span class="inline-flex items-center rounded-full border px-3 py-1 text-xs font-bold {{ $isPrimaryTrainer ? 'border-bleuone/20 bg-bleuone/10 text-bleuone' : 'border-orangeone/20 bg-orangeone/10 text-orangeone' }}">
-                      {{ $isPrimaryTrainer ? 'Formateur principal' : 'Co-formateur' }}
-                    </span>
+                    @unless($isPrimaryTrainer)
+                      <span class="inline-flex items-center rounded-full border border-orangeone/20 bg-orangeone/10 px-3 py-1 text-xs font-bold text-orangeone">
+                        Co-formateur
+                      </span>
+                    @endunless
 
                     @if($groupe->coFormateurs->isNotEmpty())
                       <div class="relative inline-flex group">
@@ -197,7 +193,6 @@
                 <div class="flex items-center justify-between gap-3 border-t border-gray-200 pt-4">
                   <div>
                     <h4 class="text-[11px] font-bold uppercase tracking-[0.16em] text-gray-500 font-varela">Stagiaires</h4>
-                    <p class="mt-1 text-sm text-gray-500 font-lisible">Accès rapide à la liste du groupe</p>
                   </div>
                   <a href="{{ route('formateur.stagiaires.index') }}"
                      class="shrink-0 text-sm font-semibold text-orangeone hover:underline font-lisible">

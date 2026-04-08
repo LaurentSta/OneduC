@@ -347,9 +347,11 @@ class ParcoursController extends Controller
             ],
             'organiser-ses-parcours' => [
                 'label' => 'Module 2',
-                'title' => 'Organiser ses parcours',
-                'description' => 'Preparer l environnement de formation, mettre en place un groupe et securiser l acces des stagiaires.',
-                'duration_label' => '33 min',
+                'title' => 'Mettre en place un environnement de formation',
+                'description' => 'Mettre en place un premier environnement de formation dans Oneduc en organisant l acces, les stagiaires et les modules.',
+                'duration_label' => '45 a 60 min',
+                'presentation_video_embed_url' => 'https://www.youtube.com/embed/Bw4_SlnqZj8?rel=0&modestbranding=1',
+                'presentation_video_title' => 'Video de presentation du module 2',
                 'status_label' => 'Disponible',
                 'trainer_name' => 'Equipe Oneduc',
                 'level_label' => 'Tous niveaux',
@@ -462,6 +464,72 @@ class ParcoursController extends Controller
                                 'subject' => 'Les etapes de creation d un groupe de formation et les premiers parametres a definir.',
                                 'activity' => 'Mise en situation guidee de creation d un groupe a partir d un besoin formule.',
                                 'resources' => 'Scenario de besoin, captures d ecran de creation et fiche pas a pas.',
+                                'custom_presentation' => [
+                                    'resources_label' => 'Wizard groupe',
+                                    'pages' => [
+                                        [
+                                            'badge' => 'Repere',
+                                            'title' => 'Avant de commencer',
+                                            'paragraphs' => [
+                                                'Depuis le tableau de bord du formateur, l entree Groupe donne acces au wizard de creation.',
+                                                'Ce wizard guide la mise en place du groupe en 3 etapes : informations, stagiaires, puis organisation des modules.',
+                                                'Dans cette lecon, vous retrouvez cette logique telle qu elle existe aujourd hui dans Oneduc.',
+                                            ],
+                                            'callout_title' => 'Ce qu il faut retenir',
+                                            'callout_body' => 'Le wizard permet d avancer etape par etape sans perdre les informations deja saisies.',
+                                            'visual' => 'overview',
+                                        ],
+                                        [
+                                            'badge' => 'Etape 1',
+                                            'title' => 'Renseigner les informations du groupe',
+                                            'paragraphs' => [
+                                                'La premiere etape sert a poser le cadre du groupe de formation.',
+                                                'Le formateur renseigne le nom du groupe et peut ajouter une description pour clarifier le public, le contexte ou l objectif.',
+                                                'Il peut ensuite ouvrir les options pour activer le groupe, definir les dates utiles et associer des co-formateurs.',
+                                            ],
+                                            'highlights' => [
+                                                'Nom du groupe',
+                                                'Description',
+                                                'Activation du groupe',
+                                                'Dates de demarrage et de fin',
+                                                'Co-formateurs',
+                                            ],
+                                            'visual' => 'informations',
+                                        ],
+                                        [
+                                            'badge' => 'Etape 2',
+                                            'title' => 'Ajouter les stagiaires',
+                                            'paragraphs' => [
+                                                'La deuxieme etape est consacree a l ajout des apprenants.',
+                                                'Les stagiaires peuvent etre saisis ligne par ligne ou importes a partir d un fichier CSV.',
+                                                'Un code d acces provisoire commun est ensuite defini pour preparer les invitations et faciliter la premiere connexion.',
+                                            ],
+                                            'highlights' => [
+                                                'Ajout manuel des stagiaires',
+                                                'Import CSV',
+                                                'Verification des adresses e-mail',
+                                                'Code d acces provisoire du groupe',
+                                            ],
+                                            'visual' => 'stagiaires',
+                                        ],
+                                        [
+                                            'badge' => 'Etape 3',
+                                            'title' => 'Organiser les modules du parcours',
+                                            'paragraphs' => [
+                                                'La troisieme etape sert a construire le parcours pedagogique du groupe.',
+                                                'Le formateur ajoute les modules utiles, les ordonne et verifie la structure generale avant validation.',
+                                                'L ordre defini ici est celui qui sera ensuite presente a l apprenant dans son espace de formation.',
+                                            ],
+                                            'highlights' => [
+                                                'Ajout des modules utiles',
+                                                'Ordre pedagogique du parcours',
+                                                'Verification de la structure',
+                                                'Impact direct sur la vue apprenant',
+                                            ],
+                                            'visual' => 'modules',
+                                        ],
+                                    ],
+                                ],
                             ],
                             'rendre-la-progresson-lisible-pour-lapprenant' => [
                                 'code' => '2.2',
