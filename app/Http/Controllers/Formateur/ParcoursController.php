@@ -78,15 +78,29 @@ class ParcoursController extends Controller
         $currentModule = $catalogue[$module];
         $currentChapter = $currentModule['chapters'][$chapter];
         $currentLesson = $currentChapter['lessons'][$lesson];
-        $lessonKeys = array_keys($currentChapter['lessons']);
-        $lessonIndex = array_search($lesson, $lessonKeys, true);
+        $lessonSequence = [];
 
-        $previousLesson = $lessonIndex !== false && $lessonIndex > 0
-            ? $currentChapter['lessons'][$lessonKeys[$lessonIndex - 1]]
+        foreach ($currentModule['chapters'] as $chapterKey => $chapterItem) {
+            foreach ($chapterItem['lessons'] as $lessonKey => $lessonItem) {
+                $lessonSequence[] = [
+                    'chapter_key' => $chapterKey,
+                    'chapter_title' => $chapterItem['title'],
+                    'lesson_key' => $lessonKey,
+                    'lesson' => $lessonItem,
+                ];
+            }
+        }
+
+        $lessonIndex = collect($lessonSequence)->search(
+            fn (array $item): bool => $item['chapter_key'] === $chapter && $item['lesson_key'] === $lesson
+        );
+
+        $previousLesson = $lessonIndex !== false && isset($lessonSequence[$lessonIndex - 1])
+            ? $lessonSequence[$lessonIndex - 1]['lesson']
             : null;
 
-        $nextLesson = $lessonIndex !== false && isset($lessonKeys[$lessonIndex + 1])
-            ? $currentChapter['lessons'][$lessonKeys[$lessonIndex + 1]]
+        $nextLesson = $lessonIndex !== false && isset($lessonSequence[$lessonIndex + 1])
+            ? $lessonSequence[$lessonIndex + 1]['lesson']
             : null;
 
         return view('formateur.parcours.lesson', [
@@ -152,6 +166,15 @@ class ParcoursController extends Controller
                         'chapter' => $chapterKey,
                         'lesson' => $lessonKey,
                     ]);
+
+                    if (!empty($lesson['scorm_directory'])) {
+                        $publicScormIndex = public_path(trim($lesson['scorm_directory'], '/') . '/index_lms.html');
+                        $lesson['scorm_url'] = file_exists($publicScormIndex)
+                            ? asset(trim($lesson['scorm_directory'], '/') . '/index_lms.html')
+                            : null;
+                    } else {
+                        $lesson['scorm_url'] = null;
+                    }
                 }
                 unset($lesson);
             }
@@ -169,7 +192,7 @@ class ParcoursController extends Controller
     {
         return [
             'prendre-ses-reperes' => [
-                'label' => 'Etape 1',
+                'label' => 'Module 1',
                 'title' => 'Prendre ses reperes',
                 'description' => 'Comprendre l espace formateur, la navigation, les rubriques principales et le role du formateur.',
                 'duration_label' => '36 min',
@@ -323,32 +346,175 @@ class ParcoursController extends Controller
                 ],
             ],
             'organiser-ses-parcours' => [
-                'label' => 'Etape 2',
+                'label' => 'Module 2',
                 'title' => 'Organiser ses parcours',
-                'description' => 'Decouvrir ou preparer les contenus, structurer une formation et mettre en place un parcours coherent.',
-                'duration_label' => 'Contenu a venir',
-                'status_label' => 'En preparation',
+                'description' => 'Preparer l environnement de formation, mettre en place un groupe et securiser l acces des stagiaires.',
+                'duration_label' => '33 min',
+                'status_label' => 'Disponible',
                 'trainer_name' => 'Equipe Oneduc',
                 'level_label' => 'Tous niveaux',
                 'cta_label' => 'Voir le parcours',
                 'progress_percentage' => 0,
                 'presentation' => [
-                    'Ce module viendra ensuite aider le formateur a preparer ses contenus, structurer ses sequences et rendre le parcours plus lisible pour les apprenants.',
-                    'Il reprendra la meme logique module detail, chapitre et lecon afin de garder une experience homogene dans tout le parcours formateur.',
+                    'Ce module accompagne le formateur dans la mise en place concrete de son environnement de formation dans Oneduc.',
+                    'Il montre comment preparer les informations utiles, creer un groupe a partir d un besoin, organiser son contenu et parametrer les acces indispensables.',
+                    'A travers ce module, le formateur apprend aussi a ajuster un groupe existant et a corriger les premiers problemes d acces rencontres par les stagiaires.',
                 ],
                 'goals' => [
-                    'Identifier ou preparer les contenus utiles.',
-                    'Structurer une formation dans un ordre coherent.',
-                    'Prevoir la suite sans melanger ce parcours au moteur principal de la plateforme.',
+                    'Identifier les elements necessaires a la mise en place d un environnement de formation dans Oneduc.',
+                    'Mettre en place un groupe de formation en organisant les modules et les parametres necessaires a son fonctionnement.',
+                    'Gerer un groupe existant et securiser l acces des stagiaires au parcours.',
                 ],
                 'prerequisites' => [
                     'Avoir parcouru le module 1 ou disposer deja des reperes de base dans l espace formateur.',
-                    'Les contenus detailes et les SCORM de ce module seront ajoutes dans une prochaine phase.',
+                    'Connaitre les rubriques principales liees aux formations et aux groupes.',
+                    'Aucun prerequis technique supplementaire n est necessaire.',
                 ],
-                'chapters' => [],
+                'chapters' => [
+                    'preparer-les-contenus' => [
+                        'label' => 'Chapitre 1',
+                        'title' => 'Preparer la mise en place d un environnement de formation',
+                        'description' => 'Identifier les composants utiles et preparer les informations necessaires a l ouverture d un premier environnement de formation.',
+                        'duration_label' => '11 min',
+                        'objective' => 'Identifier les elements necessaires a la mise en place d un environnement de formation dans Oneduc.',
+                        'progress_percentage' => 0,
+                        'lessons' => [
+                            'retrouver-les-espaces-de-preparation' => [
+                                'code' => '1.1',
+                                'title' => 'Identifier les elements essentiels',
+                                'duration_label' => '5 min',
+                                'scorm_directory' => 'modules/parcours_formateur/module_2_organiser_ses_parcours/chapitre_1_preparer_lenvironnement_de_formation/lecon_1_1_les_composants_indispensables/LesComposantsIndispensables',
+                                'objective' => 'Identifier les elements indispensables a la mise en place d un premier environnement de formation.',
+                                'pedagogical_intention' => 'Donner des reperes simples pour distinguer les composants de base a reunir avant toute mise en place.',
+                                'method' => 'Demonstrative puis guidee',
+                                'learning_process' => 'Observer, reperer',
+                                'subject' => 'Les composants essentiels a preparer : groupe, modules, informations de cadrage et premiers points d acces utiles.',
+                                'activity' => 'Parcours guide avec captures d ecran et reperage des composants indispensables avant l ouverture du parcours.',
+                                'resources' => 'Captures annotees de l espace formateur, schema simple des composants et consigne de reperage.',
+                                'editorial' => [
+                                    'intro' => [
+                                        'Avant de creer un environnement de formation, le formateur a besoin d identifier les composants indispensables a reunir dans la plateforme.',
+                                        'Cette lecon sert a poser un premier cadre simple : quels elements preparer, a quoi ils servent et dans quel ordre les verifier avant ouverture.',
+                                    ],
+                                    'focus_cards' => [
+                                        [
+                                            'title' => 'Le groupe de formation',
+                                            'body' => 'C est l espace central a partir duquel on rattache les stagiaires, les modules et les parametres utiles au bon fonctionnement du parcours.',
+                                        ],
+                                        [
+                                            'title' => 'Les modules associes',
+                                            'body' => 'Ils constituent le contenu mis a disposition des stagiaires. Leur presence et leur ordre doivent etre verifies des le depart.',
+                                        ],
+                                        [
+                                            'title' => 'Les informations de cadrage',
+                                            'body' => 'Le nom du groupe, son objectif, le public vise et les parametres d acces facilitent une mise en route plus claire.',
+                                        ],
+                                        [
+                                            'title' => 'Les acces stagiaires',
+                                            'body' => 'Ils doivent etre anticipes des la preparation pour que le groupe soit fonctionnel et accessible au bon moment.',
+                                        ],
+                                    ],
+                                    'steps' => [
+                                        'Identifier le groupe ou le futur groupe de formation concerne.',
+                                        'Verifier les modules qui devront etre associes au groupe.',
+                                        'Rassembler les informations utiles a l ouverture du parcours.',
+                                        'Anticiper la maniere dont les stagiaires accederont ensuite au contenu.',
+                                    ],
+                                    'checklist' => [
+                                        'Je sais quels composants doivent etre prets avant l ouverture de la formation.',
+                                        'Je distingue le groupe, les modules et les informations de cadrage.',
+                                        'Je peux verifier rapidement si l environnement est pret a etre utilise.',
+                                        'Je peux expliquer le role de chaque composant indispensable.',
+                                    ],
+                                    'placeholder_note' => 'Cette lecon est volontairement presentee en version editoriale provisoire. Le contenu interactif SCORM viendra ensuite prendre place dans cette meme vue.',
+                                ],
+                            ],
+                            'distinguer-contenu-ressource-et-structure' => [
+                                'code' => '1.2',
+                                'title' => 'Preparer les informations utiles',
+                                'duration_label' => '6 min',
+                                'objective' => 'Preparer les informations necessaires a la creation et a l ouverture d un parcours de formation.',
+                                'pedagogical_intention' => 'Aider le formateur a anticiper les informations a renseigner pour ouvrir un parcours dans de bonnes conditions.',
+                                'method' => 'Active, guidee par mini-cas',
+                                'learning_process' => 'Preparer, associer',
+                                'subject' => 'Les informations utiles a preparer : intitule, finalite, public vise, modules mobilises et conditions d acces.',
+                                'activity' => 'Mini-cas dans lequel l apprenant prepare les informations a renseigner avant creation d un parcours.',
+                                'resources' => 'Fiche de preparation, exemples de parametres et correction argumentee.',
+                            ],
+                        ],
+                    ],
+                    'structurer-la-progression' => [
+                        'label' => 'Chapitre 2',
+                        'title' => 'Mettre en place un groupe de formation et structurer son contenu',
+                        'description' => 'Creer un groupe de formation, organiser les modules associes et parametrer les acces utiles a son fonctionnement.',
+                        'duration_label' => '11 min',
+                        'objective' => 'Mettre en place un groupe de formation en organisant les modules et les parametres necessaires a son fonctionnement.',
+                        'progress_percentage' => 0,
+                        'lessons' => [
+                            'ordonner-les-etapes-du-parcours' => [
+                                'code' => '2.1',
+                                'title' => 'Creer un groupe de formation a partir d un besoin',
+                                'duration_label' => '5 min',
+                                'objective' => 'Creer un groupe de formation dans Oneduc a partir d un besoin donne.',
+                                'pedagogical_intention' => 'Montrer comment passer d un besoin de formation a la creation concrete d un groupe exploitable.',
+                                'method' => 'Demonstrative puis active',
+                                'learning_process' => 'Observer, reproduire',
+                                'subject' => 'Les etapes de creation d un groupe de formation et les premiers parametres a definir.',
+                                'activity' => 'Mise en situation guidee de creation d un groupe a partir d un besoin formule.',
+                                'resources' => 'Scenario de besoin, captures d ecran de creation et fiche pas a pas.',
+                            ],
+                            'rendre-la-progresson-lisible-pour-lapprenant' => [
+                                'code' => '2.2',
+                                'title' => 'Organiser les modules du groupe et parametrer l acces',
+                                'duration_label' => '6 min',
+                                'objective' => 'Organiser les modules associes a un groupe et parametrer l acces afin de rendre la formation fonctionnelle et accessible aux stagiaires.',
+                                'pedagogical_intention' => 'Faire comprendre que la creation du groupe ne suffit pas et qu il faut aussi organiser son contenu et ses conditions d acces.',
+                                'method' => 'Active et reflexive',
+                                'learning_process' => 'Organiser, parametrer',
+                                'subject' => 'Le choix des modules associes, leur organisation et les reglages d acces utiles a l ouverture du groupe.',
+                                'activity' => 'Mini-cas de parametrage d un groupe pour le rendre utilisable par les stagiaires.',
+                                'resources' => 'Exemple de groupe, liste de modules et guide simple de parametrage.',
+                            ],
+                        ],
+                    ],
+                    'mettre-en-place-un-parcours-coherent' => [
+                        'label' => 'Chapitre 3',
+                        'title' => 'Gerer le groupe et securiser l acces des stagiaires',
+                        'description' => 'Ajuster un groupe existant, y associer les stagiaires et corriger les premiers blocages d acces rencontres.',
+                        'duration_label' => '11 min',
+                        'objective' => 'Gerer un groupe de formation en ajustant les acces et en securisant l entree des stagiaires dans le parcours.',
+                        'progress_percentage' => 0,
+                        'lessons' => [
+                            'associer-le-bon-parcours-au-bon-contexte' => [
+                                'code' => '3.1',
+                                'title' => 'Ajuster le groupe et associer les stagiaires',
+                                'duration_label' => '5 min',
+                                'objective' => 'Ajuster un groupe de formation existant et y associer les stagiaires de maniere coherente.',
+                                'pedagogical_intention' => 'Montrer qu un groupe peut evoluer et qu il doit etre ajuste avant ou pendant son usage.',
+                                'method' => 'Active',
+                                'learning_process' => 'Ajuster, associer',
+                                'subject' => 'Les actions utiles pour corriger un groupe existant et y ajouter les bons stagiaires.',
+                                'activity' => 'Mise en situation d ajustement de groupe avec association de stagiaires a partir d un cas concret.',
+                                'resources' => 'Cas d usage, liste de stagiaires et fiche de verification.',
+                            ],
+                            'controler-le-parcours-avant-diffusion' => [
+                                'code' => '3.2',
+                                'title' => 'Diagnostiquer et corriger un probleme d acces',
+                                'duration_label' => '6 min',
+                                'objective' => 'Identifier et corriger un probleme d acces au parcours pour un stagiaire.',
+                                'pedagogical_intention' => 'Installer les premiers reflexes de diagnostic lorsqu un stagiaire ne parvient pas a entrer dans le parcours.',
+                                'method' => 'Demonstrative puis active',
+                                'learning_process' => 'Diagnostiquer, corriger',
+                                'subject' => 'Les causes frequentes de blocage d acces et les verifications simples a mener pour les corriger.',
+                                'activity' => 'Mini-cas de diagnostic a partir d un stagiaire qui ne peut pas acceder a sa formation.',
+                                'resources' => 'Cas de blocage, grille de diagnostic et correction pas a pas.',
+                            ],
+                        ],
+                    ],
+                ],
             ],
             'gerer-ses-groupes' => [
-                'label' => 'Etape 3',
+                'label' => 'Module 3',
                 'title' => 'Gerer ses groupes',
                 'description' => 'Creer, retrouver et administrer les groupes, ainsi que rattacher les bons apprenants.',
                 'duration_label' => 'Contenu a venir',
@@ -373,7 +539,7 @@ class ParcoursController extends Controller
                 'chapters' => [],
             ],
             'suivre-et-accompagner' => [
-                'label' => 'Etape 4',
+                'label' => 'Module 4',
                 'title' => 'Suivre et accompagner',
                 'description' => 'Lire les indicateurs utiles, reperer les besoins, suivre la progression et agir au bon moment.',
                 'duration_label' => 'Contenu a venir',
@@ -398,7 +564,7 @@ class ParcoursController extends Controller
                 'chapters' => [],
             ],
             'trouver-de-laide' => [
-                'label' => 'Etape 5',
+                'label' => 'Module 5',
                 'title' => 'Trouver de l aide',
                 'description' => 'Retrouver les ressources utiles, les points d appui, l assistance et les reponses aux questions frequentes.',
                 'duration_label' => 'Contenu a venir',

@@ -8,14 +8,15 @@
 @endphp
 
 @section('parcours_content')
-    <div
-        x-data="{
-            activeTab: 'presentation',
-            openSection: 0
-        }"
-    >
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            <main class="lg:col-span-8">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div
+            x-data="{
+                activeTab: 'presentation',
+                openSection: 0
+            }"
+        >
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                <main class="lg:col-span-8">
                 <header class="border-b border-gray-100 pb-2 mb-4">
                     <h1 class="text-2xl md:text-3xl font-extrabold text-bleuone leading-tight">
                         {{ $currentModule['title'] }}
@@ -146,96 +147,97 @@
                         @endif
                     </div>
                 </section>
-            </main>
+                </main>
 
-            <aside class="lg:col-span-4 lg:sticky lg:top-8 space-y-6">
-                <div class="bg-white rounded-[24px] shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden">
-                    <div class="w-full bg-black">
-                        <div class="flex aspect-video items-center justify-center bg-gradient-to-br from-slate-100 via-white to-slate-100 px-6 py-8">
-                            <div class="grid w-full grid-cols-[120px_minmax(0,1fr)] items-center gap-4">
-                                <div class="flex h-[170px] items-center justify-center rounded-[24px] bg-white shadow-[0_18px_40px_-24px_rgba(0,68,97,0.35)]">
-                                    <div class="px-4 text-center">
-                                        <p class="text-sm font-bold uppercase tracking-[0.18em] text-orangeone">On educ</p>
-                                        <p class="mt-3 text-2xl font-black leading-8 text-bleuone">{{ $currentModule['label'] }}</p>
+                <aside class="lg:col-span-4 lg:sticky lg:top-8 space-y-6">
+                    <div class="bg-white rounded-[24px] shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden">
+                        <div class="w-full bg-black">
+                            <div class="flex aspect-video items-center justify-center bg-gradient-to-br from-slate-100 via-white to-slate-100 px-6 py-8">
+                                <div class="grid w-full grid-cols-[120px_minmax(0,1fr)] items-center gap-4">
+                                    <div class="flex h-[170px] items-center justify-center rounded-[24px] bg-white shadow-[0_18px_40px_-24px_rgba(0,68,97,0.35)]">
+                                        <div class="px-4 text-center">
+                                            <p class="text-sm font-bold uppercase tracking-[0.18em] text-orangeone">On educ</p>
+                                            <p class="mt-3 text-2xl font-black leading-8 text-bleuone">{{ $currentModule['label'] }}</p>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <p class="text-4xl font-light tracking-tight text-bleuone">{{ $currentModule['title'] }}</p>
                                     </div>
                                 </div>
-                                <div>
-                                    <p class="text-4xl font-light tracking-tight text-bleuone">{{ $currentModule['title'] }}</p>
+                            </div>
+                        </div>
+
+                        <div class="p-6">
+                            <div class="mb-6">
+                                <div class="flex justify-between items-end mb-2">
+                                    <span class="text-xs font-bold text-gray-500 uppercase">Votre avancee</span>
+                                    <span class="text-xl font-black text-orangeone">{{ $progressPercentage }}%</span>
+                                </div>
+                                <div class="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+                                    <div class="h-full bg-orangeone rounded-full transition-all duration-1000 ease-out" style="width: {{ $progressPercentage }}%"></div>
+                                </div>
+                            </div>
+
+                            <div class="space-y-3">
+                                <a
+                                    href="{{ $ctaUrl }}"
+                                    class="btn-oneduc w-full !rounded-full !px-6 !py-4 !text-lg !font-varela !font-bold"
+                                >
+                                    {{ $currentModule['cta_label'] }}
+                                </a>
+                            </div>
+
+                            <div class="mt-8 pt-6 border-t border-gray-100 space-y-5">
+                                <div class="flex items-center gap-4">
+                                    <div class="size-10 rounded-full bg-orangeone flex items-center justify-center text-white font-bold text-sm shadow-md">
+                                        {{ \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr($currentModule['trainer_name'], 0, 1)) }}
+                                    </div>
+                                    <div>
+                                        <p class="text-[10px] text-gray-400 font-bold uppercase">Formateur</p>
+                                        <p class="font-bold text-gray-900">{{ $currentModule['trainer_name'] }}</p>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center gap-4">
+                                    <div class="size-10 rounded-lg bg-bleuone/5 text-bleuone flex items-center justify-center">
+                                        <svg class="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <p class="text-[10px] text-gray-400 font-bold uppercase">Niveau</p>
+                                        <p class="font-bold text-gray-900">{{ $currentModule['level_label'] }}</p>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center gap-4">
+                                    <div class="size-10 rounded-lg bg-bleuone/5 text-bleuone flex items-center justify-center">
+                                        <svg class="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <p class="text-[10px] text-gray-400 font-bold uppercase">Duree estimee</p>
+                                        <p class="font-bold text-gray-900">{{ $currentModule['duration_label'] }}</p>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center gap-4">
+                                    <div class="size-10 rounded-lg bg-bleuone/5 text-bleuone flex items-center justify-center">
+                                        <svg class="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <p class="text-[10px] text-gray-400 font-bold uppercase">Contenu</p>
+                                        <p class="font-bold text-gray-900">{{ $lessonCount }} lecon{{ $lessonCount > 1 ? 's' : '' }}</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-
-                    <div class="p-6">
-                        <div class="mb-6">
-                            <div class="flex justify-between items-end mb-2">
-                                <span class="text-xs font-bold text-gray-500 uppercase">Votre avancee</span>
-                                <span class="text-xl font-black text-orangeone">{{ $progressPercentage }}%</span>
-                            </div>
-                            <div class="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
-                                <div class="h-full bg-orangeone rounded-full transition-all duration-1000 ease-out" style="width: {{ $progressPercentage }}%"></div>
-                            </div>
-                        </div>
-
-                        <div class="space-y-3">
-                            <a
-                                href="{{ $ctaUrl }}"
-                                class="flex items-center justify-center w-full py-4 px-6 rounded-xl bg-orangeone text-white font-extrabold text-lg hover:bg-orange-600 transition-all shadow-lg shadow-orange-100 hover:-translate-y-0.5"
-                            >
-                                {{ $currentModule['cta_label'] }}
-                            </a>
-                        </div>
-
-                        <div class="mt-8 pt-6 border-t border-gray-100 space-y-5">
-                            <div class="flex items-center gap-4">
-                                <div class="size-10 rounded-full bg-orangeone flex items-center justify-center text-white font-bold text-sm shadow-md">
-                                    {{ \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr($currentModule['trainer_name'], 0, 1)) }}
-                                </div>
-                                <div>
-                                    <p class="text-[10px] text-gray-400 font-bold uppercase">Formateur</p>
-                                    <p class="font-bold text-gray-900">{{ $currentModule['trainer_name'] }}</p>
-                                </div>
-                            </div>
-
-                            <div class="flex items-center gap-4">
-                                <div class="size-10 rounded-lg bg-bleuone/5 text-bleuone flex items-center justify-center">
-                                    <svg class="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                                    </svg>
-                                </div>
-                                <div>
-                                    <p class="text-[10px] text-gray-400 font-bold uppercase">Niveau</p>
-                                    <p class="font-bold text-gray-900">{{ $currentModule['level_label'] }}</p>
-                                </div>
-                            </div>
-
-                            <div class="flex items-center gap-4">
-                                <div class="size-10 rounded-lg bg-bleuone/5 text-bleuone flex items-center justify-center">
-                                    <svg class="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                </div>
-                                <div>
-                                    <p class="text-[10px] text-gray-400 font-bold uppercase">Duree estimee</p>
-                                    <p class="font-bold text-gray-900">{{ $currentModule['duration_label'] }}</p>
-                                </div>
-                            </div>
-
-                            <div class="flex items-center gap-4">
-                                <div class="size-10 rounded-lg bg-bleuone/5 text-bleuone flex items-center justify-center">
-                                    <svg class="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                                    </svg>
-                                </div>
-                                <div>
-                                    <p class="text-[10px] text-gray-400 font-bold uppercase">Contenu</p>
-                                    <p class="font-bold text-gray-900">{{ $lessonCount }} lecon{{ $lessonCount > 1 ? 's' : '' }}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </aside>
+                </aside>
+            </div>
         </div>
     </div>
 @endsection

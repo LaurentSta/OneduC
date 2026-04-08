@@ -42,16 +42,16 @@
         </div>
     </header>
 
-    <div class="relative z-0 border-t border-orange-100 bg-white">
+    <div class="relative z-30 border-t border-orange-100 bg-white">
         <div class="mx-auto max-w-7xl px-5 lg:px-8">
             <section
                 aria-labelledby="parcours-overview-title"
-                class="relative z-0 h-0 overflow-visible"
+                class="relative z-30 h-0 overflow-visible"
                 style="width: 100vw; margin-left: calc(50% - 50vw);"
             >
                 <div
                     id="parcours-overview-shell"
-                    class="absolute inset-x-0 top-0 will-change-transform transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
+                    class="absolute inset-x-0 top-0 z-30 will-change-transform transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
                     style="visibility: hidden;"
                 >
                     <div
@@ -124,25 +124,7 @@
         </div>
     </div>
 
-    <main class="mx-auto max-w-7xl px-5 py-6 lg:px-8">
-        <nav class="mb-4 text-xs font-medium" aria-label="Fil d ariane">
-            <ol class="flex flex-wrap items-center gap-2">
-                @foreach ($breadcrumbs as $crumb)
-                    @if (! $loop->first)
-                        <li class="text-gray-300">/</li>
-                    @endif
-
-                    <li>
-                        @if ($loop->last)
-                            <span class="font-bold text-bleuone">{{ $crumb['label'] }}</span>
-                        @else
-                            <a href="{{ $crumb['url'] }}" class="text-gray-400 transition hover:text-orangeone">{{ $crumb['label'] }}</a>
-                        @endif
-                    </li>
-                @endforeach
-            </ol>
-        </nav>
-
+    <main class="relative z-10 w-full px-0 py-6">
         @yield('parcours_content')
     </main>
 
