@@ -93,6 +93,11 @@
     ?: $errors->first('stagiaires.*.prenom')
     ?: $errors->first('stagiaires.*.nom');
 
+  $wizardErrorMessages = collect($errors->all())
+    ->filter(fn($message) => filled($message))
+    ->unique()
+    ->values();
+
   $oldIsActive = old('is_active', 1);
   $isGroupActive = filter_var($oldIsActive, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
   $isGroupActive = $isGroupActive ?? in_array((string) $oldIsActive, ['1', 'on'], true);
@@ -152,6 +157,11 @@
   <main class="bg-white rounded-[20px] shadow-md px-8 py-10 w-full">
     <form id="multi-step-form" method="POST" action="{{ route('formateur.groupes.store') }}" class="space-y-8" novalidate>
       @csrf
+
+      @include('formateur.groupes.partials.wizard-errors', [
+        'messages' => $wizardErrorMessages,
+        'clientBoxId' => 'wizard-client-errors',
+      ])
 
       <nav aria-label="Sections du groupe">
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -437,9 +447,9 @@
 
           <div class="mt-6 bg-orangeone/5 border border-orangeone/20 rounded-[12px] p-3">
             <div class="mb-2 flex items-center gap-2">
-              <h3 class="text-sm font-bold text-gray-800 font-raleway">Code d'accès provisoire du groupe</h3>
+              <h3 class="text-sm font-bold text-gray-800 font-raleway">Mot de passe provisoire du groupe</h3>
               <div class="relative group">
-                <button type="button" aria-label="Information sur le code d'accès provisoire" class="inline-flex h-5 w-5 items-center justify-center rounded-full border border-gray-300 bg-white text-[11px] font-bold text-gray-600">
+                <button type="button" aria-label="Information sur le mot de passe provisoire" class="inline-flex h-5 w-5 items-center justify-center rounded-full border border-gray-300 bg-white text-[11px] font-bold text-gray-600">
                   ?
                 </button>
                 <div class="pointer-events-none absolute left-1/2 top-full z-20 mt-2 hidden w-72 -translate-x-1/2 rounded-lg border border-gray-200 bg-white p-2 text-xs text-gray-700 shadow-lg group-hover:block group-focus-within:block">
@@ -449,7 +459,7 @@
             </div>
 
             <div class="w-full max-w-sm">
-              <label for="password" class="sr-only">Mot de passe commun</label>
+              <label for="password" class="sr-only">Mot de passe provisoire</label>
               <input
                 id="password"
                 name="password"
@@ -575,7 +585,6 @@ Lucas;Bernard;lucas.bernard@entreprise.fr</pre>
         </div>
       </div>
 
-      <div id="client-errors" class="text-base text-red-700" aria-live="polite"></div>
     </form>
   </main>
 </div>
@@ -610,7 +619,8 @@ Lucas;Bernard;lucas.bernard@entreprise.fr</pre>
   const progressLabel = document.getElementById('progress-label');
   const progressLive = document.getElementById('progress-live');
   const stepButtons = document.querySelectorAll('.wizard-step');
-  const errorsBox = document.getElementById('client-errors');
+  const wizardClientErrorsBox = document.getElementById('wizard-client-errors');
+  const wizardClientErrorsList = wizardClientErrorsBox?.querySelector('[data-role="messages"]');
   const completedSteps = new Set();
 
   for (let step = 1; step < currentStep; step++) {
@@ -631,6 +641,38 @@ Lucas;Bernard;lucas.bernard@entreprise.fr</pre>
       }
     });
   });
+
+  function hideWizardClientErrors() {
+    if (!wizardClientErrorsBox || !wizardClientErrorsList) {
+      return;
+    }
+
+    wizardClientErrorsList.innerHTML = '';
+    wizardClientErrorsBox.classList.add('hidden');
+  }
+
+  function showWizardClientErrors(messages) {
+    if (!wizardClientErrorsBox || !wizardClientErrorsList) {
+      return;
+    }
+
+    const uniqueMessages = Array.from(new Set(
+      (Array.isArray(messages) ? messages : [messages])
+        .map((message) => (message || '').trim())
+        .filter(Boolean)
+    ));
+
+    wizardClientErrorsList.innerHTML = '';
+
+    uniqueMessages.forEach((message) => {
+      const item = document.createElement('li');
+      item.textContent = message;
+      wizardClientErrorsList.appendChild(item);
+    });
+
+    wizardClientErrorsBox.classList.remove('hidden');
+    wizardClientErrorsBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
 
   function applyStepperStyles(step) {
     stepButtons.forEach((button, index) => {
@@ -697,7 +739,7 @@ Lucas;Bernard;lucas.bernard@entreprise.fr</pre>
     nextBtn.classList.toggle('hidden', step === TOTAL_STEPS);
     submitBtn.classList.toggle('hidden', step !== TOTAL_STEPS);
 
-    errorsBox.textContent = '';
+    hideWizardClientErrors();
 
     if (step === 3) {
       window.requestAnimationFrame(() => {
@@ -710,14 +752,34 @@ Lucas;Bernard;lucas.bernard@entreprise.fr</pre>
     let ok = true;
     const current = document.getElementById(`step-${step}`);
     const required = current.querySelectorAll('input[required], textarea[required], select[required]');
+    const messages = [];
+
+    const addMessage = (message) => {
+      if (message && !messages.includes(message)) {
+        messages.push(message);
+      }
+    };
 
     required.forEach((el) => {
       const value = (el.value || '').trim();
-      const tooShort = el.minLength && value.length < el.minLength;
+      const tooShort = Number(el.minLength) > 0 && value.length > 0 && value.length < Number(el.minLength);
+      const isStudentField = /^stagiaires\[\d+\]\[(prenom|nom|email)\]$/.test(el.name);
 
       if (!value || tooShort) {
         el.classList.add('border-red-500');
         ok = false;
+
+        if (el.name === 'nom') {
+          addMessage('Veuillez renseigner le nom du groupe.');
+        } else if (el.name === 'password') {
+          addMessage(!value
+            ? 'Veuillez renseigner le code d’accès provisoire.'
+            : 'Le code d’accès provisoire doit contenir au moins 8 caractères.');
+        } else if (isStudentField) {
+          addMessage('Veuillez compléter prénom, nom et e-mail pour chaque stagiaire ajouté.');
+        } else {
+          addMessage('Veuillez compléter les champs requis avant de continuer.');
+        }
       } else {
         el.classList.remove('border-red-500');
       }
@@ -725,7 +787,7 @@ Lucas;Bernard;lucas.bernard@entreprise.fr</pre>
 
     if (!ok) {
       completedSteps.delete(step);
-      errorsBox.textContent = 'Veuillez compléter les champs requis avant de continuer.';
+      showWizardClientErrors(messages);
       return false;
     }
 
@@ -733,12 +795,13 @@ Lucas;Bernard;lucas.bernard@entreprise.fr</pre>
       const selectedModules = current.querySelectorAll('input[name="modules[]"]');
       if (selectedModules.length === 0) {
         completedSteps.delete(step);
-        errorsBox.textContent = 'Ajoutez au moins un module au parcours.';
+        showWizardClientErrors(['Ajoutez au moins un module au parcours.']);
         return false;
       }
     }
 
     completedSteps.add(step);
+    hideWizardClientErrors();
     return true;
   }
 
@@ -824,7 +887,7 @@ Lucas;Bernard;lucas.bernard@entreprise.fr</pre>
     const container = document.getElementById('stagiaires-container');
 
     if (container.querySelectorAll('.stagiaire-row').length <= 1) {
-      alert('Le groupe doit contenir au moins un stagiaire.');
+      showWizardClientErrors(['Le groupe doit contenir au moins un stagiaire.']);
       return;
     }
 

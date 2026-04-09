@@ -91,6 +91,11 @@
     $initialActiveTab = 'stagiaires';
   }
 
+  $wizardErrorMessages = collect($errors->all())
+    ->filter(fn($message) => filled($message))
+    ->unique()
+    ->values();
+
   $oldIsActive = old('is_active', $group->is_active);
   $isGroupActive = filter_var($oldIsActive, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
   $isGroupActive = $isGroupActive ?? in_array((string) $oldIsActive, ['1', 'on'], true);
@@ -161,6 +166,11 @@
     <form method="POST" action="{{ route('formateur.groupes.update', $group->id) }}" class="space-y-8">
       @csrf
       @method('PUT')
+
+      @include('formateur.groupes.partials.wizard-errors', [
+        'messages' => $wizardErrorMessages,
+        'clientBoxId' => 'wizard-client-errors',
+      ])
 
       {{-- 1. NAVIGATION UNIFORMISÉE (Style Wizard) --}}
       <nav aria-label="Sections du groupe">
@@ -477,7 +487,7 @@
 
         <div class="mt-6 bg-orangeone/5 border border-orangeone/20 rounded-[12px] p-3">
           <div class="mb-2 flex items-center gap-2">
-            <h4 class="text-sm font-bold text-gray-800 font-raleway">Code d'accès provisoire du groupe</h4>
+            <h4 class="text-sm font-bold text-gray-800 font-raleway">Mot de passe provisoire du groupe</h4>
             <div class="relative group">
               <button type="button" aria-label="Information" class="inline-flex h-5 w-5 items-center justify-center rounded-full border border-gray-300 bg-white text-[11px] font-bold text-gray-600">
                 ?
@@ -489,7 +499,7 @@
           </div>
 
           <div class="w-full max-w-sm">
-            <label for="password" class="sr-only">Mot de passe commun</label>
+            <label for="password" class="sr-only">Mot de passe provisoire</label>
             <input id="password" name="password" type="text" autocomplete="off"
                    value="{{ old('password', $group->temporary_password) }}"
                    class="bg-white border {{ $errors->has('password') ? 'border-red-400' : 'border-gray-300' }} text-gray-900 text-sm rounded-lg focus:ring-orangeone focus:border-orangeone block w-full px-3 py-2.5 font-mono tracking-wide"
@@ -654,6 +664,41 @@ document.addEventListener('alpine:init', () => {
 
 <script>
 (function () {
+  const wizardClientErrorsBox = document.getElementById('wizard-client-errors');
+  const wizardClientErrorsList = wizardClientErrorsBox?.querySelector('[data-role="messages"]');
+
+  function hideEditWizardClientErrors() {
+    if (!wizardClientErrorsBox || !wizardClientErrorsList) {
+      return;
+    }
+
+    wizardClientErrorsList.innerHTML = '';
+    wizardClientErrorsBox.classList.add('hidden');
+  }
+
+  function showEditWizardClientErrors(messages) {
+    if (!wizardClientErrorsBox || !wizardClientErrorsList) {
+      return;
+    }
+
+    const uniqueMessages = Array.from(new Set(
+      (Array.isArray(messages) ? messages : [messages])
+        .map((message) => (message || '').trim())
+        .filter(Boolean)
+    ));
+
+    wizardClientErrorsList.innerHTML = '';
+
+    uniqueMessages.forEach((message) => {
+      const item = document.createElement('li');
+      item.textContent = message;
+      wizardClientErrorsList.appendChild(item);
+    });
+
+    wizardClientErrorsBox.classList.remove('hidden');
+    wizardClientErrorsBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
   function fillStagiaireRowEdit(row, data) {
     const prenomInput = row.querySelector('input[name$="[prenom]"]');
     const nomInput = row.querySelector('input[name$="[nom]"]');
@@ -723,9 +768,12 @@ document.addEventListener('alpine:init', () => {
     if (!container || !row) return;
 
     if (container.querySelectorAll('.stagiaire-row-edit').length <= 1) {
-      alert('Le groupe doit contenir au moins un stagiaire.');
+      showEditWizardClientErrors(['Le groupe doit contenir au moins un stagiaire.']);
       return;
     }
+
+    hideEditWizardClientErrors();
+
     row.remove();
   };
 

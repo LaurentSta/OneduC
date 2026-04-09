@@ -89,9 +89,7 @@ class GroupeController extends Controller
                         ->where('id', '<>', (int) auth()->id());
                 }),
             ],
-        ], [
-            'nom.unique' => 'Ce nom de groupe existe déjà. Merci de choisir un autre nom.',
-        ]);
+        ], $this->groupValidationMessages(), $this->groupValidationAttributes());
 
         $temporaryPassword = (string) $request->password;
         $coTrainerIds = $this->sanitizeCoTrainerIds($request->input('co_formateurs', []), (int) auth()->id());
@@ -277,7 +275,7 @@ class GroupeController extends Controller
                         ->where('id', '<>', (int) auth()->id());
                 }),
             ],
-        ]);
+        ], $this->groupValidationMessages(), $this->groupValidationAttributes());
 
         $temporaryPasswordInput = trim((string) $request->input('password', ''));
         $effectiveTemporaryPassword = $temporaryPasswordInput !== ''
@@ -815,6 +813,45 @@ class GroupeController extends Controller
             ->values();
 
         return response()->json(['items' => $items]);
+    }
+
+    private function groupValidationMessages(): array
+    {
+        return [
+            'nom.required' => 'Veuillez renseigner le nom du groupe.',
+            'nom.unique' => 'Ce nom de groupe existe déjà. Merci de choisir un autre nom.',
+            'password.required' => 'Veuillez renseigner un code d\'accès provisoire.',
+            'password.min' => 'Le code d\'accès provisoire doit contenir au moins 8 caractères.',
+            'modules.required' => 'Veuillez sélectionner au moins un module.',
+            'modules.min' => 'Veuillez sélectionner au moins un module.',
+            'modules.*.exists' => 'Un des modules sélectionnés est invalide.',
+            'stagiaires.*.email.distinct' => 'Chaque stagiaire doit avoir une adresse e-mail différente.',
+            'end_date.after_or_equal' => 'La date de fin doit être postérieure ou égale à la date de démarrage.',
+        ];
+    }
+
+    private function groupValidationAttributes(): array
+    {
+        return [
+            'nom' => 'nom du groupe',
+            'description' => 'description du groupe',
+            'start_date' => 'date de démarrage',
+            'end_date' => 'date de fin',
+            'is_active' => 'statut du groupe',
+            'password' => 'code d\'accès provisoire',
+            'modules' => 'modules du parcours',
+            'modules.*' => 'module du parcours',
+            'module_positions' => 'ordre des modules',
+            'module_positions.*' => 'position du module',
+            'stagiaires' => 'liste des stagiaires',
+            'stagiaires.*.prenom' => 'prénom du stagiaire',
+            'stagiaires.*.nom' => 'nom du stagiaire',
+            'stagiaires.*.email' => 'adresse e-mail du stagiaire',
+            'remove_students' => 'stagiaires à retirer',
+            'remove_students.*' => 'stagiaire à retirer',
+            'co_formateurs' => 'co-formateurs',
+            'co_formateurs.*' => 'co-formateur',
+        ];
     }
 
     private function sanitizeCoTrainerIds(array $rawIds, int $currentTrainerId)
