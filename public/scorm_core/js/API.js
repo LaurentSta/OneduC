@@ -75,8 +75,13 @@
 
     // Logique de redirection Onéduc
     const shouldOfferQuiz = Boolean(context.quiz_start_url) && context.force_next_lesson !== true;
+    const nextStepLabel = String(
+      shouldOfferQuiz
+        ? (context.quiz_button_label || "Passer au Questionnaire")
+        : (context.next_button_label || "Leçon suivante")
+    );
     if (shouldOfferQuiz) {
-      textesBouton.forEach((texte) => { texte.innerText = "Passer au Questionnaire"; });
+      textesBouton.forEach((texte) => { texte.innerText = nextStepLabel; });
       boutons.forEach((bouton) => {
         bouton.onclick = function () {
         // Appel de la fonction globale définie dans lecon.blade.php
@@ -90,7 +95,7 @@
         };
       });
     } else {
-      textesBouton.forEach((texte) => { texte.innerText = "Leçon suivante"; });
+      textesBouton.forEach((texte) => { texte.innerText = nextStepLabel; });
       boutons.forEach((bouton) => {
         bouton.onclick = function () {
         if (typeof window.parent.goToNextLesson === "function") {

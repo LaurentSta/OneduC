@@ -2,8 +2,10 @@ import '../css/app.css'; // ✅ Ajoute Tailwind
 
 import './bootstrap';
 import Alpine from 'alpinejs';
+import collapse from '@alpinejs/collapse';
 
 window.Alpine = Alpine;
+Alpine.plugin(collapse);
 Alpine.start();
 
 function loadGroupModuleFlowWhenNeeded() {

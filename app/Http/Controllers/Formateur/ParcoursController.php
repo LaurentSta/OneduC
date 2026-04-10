@@ -3,6 +3,9 @@
 namespace App\Http\Controllers\Formateur;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ParcoursController extends Controller
 {
@@ -71,55 +74,214 @@ class ParcoursController extends Controller
     public function showLesson(string $module, string $chapter, string $lesson)
     {
         $catalogue = $this->catalogue();
-        abort_unless(isset($catalogue[$module]), 404);
-        abort_unless(isset($catalogue[$module]['chapters'][$chapter]), 404);
-        abort_unless(isset($catalogue[$module]['chapters'][$chapter]['lessons'][$lesson]), 404);
-
-        $currentModule = $catalogue[$module];
-        $currentChapter = $currentModule['chapters'][$chapter];
-        $currentLesson = $currentChapter['lessons'][$lesson];
-        $lessonSequence = [];
-
-        foreach ($currentModule['chapters'] as $chapterKey => $chapterItem) {
-            foreach ($chapterItem['lessons'] as $lessonKey => $lessonItem) {
-                $lessonSequence[] = [
-                    'chapter_key' => $chapterKey,
-                    'chapter_title' => $chapterItem['title'],
-                    'lesson_key' => $lessonKey,
-                    'lesson' => $lessonItem,
-                ];
-            }
-        }
-
-        $lessonIndex = collect($lessonSequence)->search(
-            fn (array $item): bool => $item['chapter_key'] === $chapter && $item['lesson_key'] === $lesson
-        );
-
-        $previousLesson = $lessonIndex !== false && isset($lessonSequence[$lessonIndex - 1])
-            ? $lessonSequence[$lessonIndex - 1]['lesson']
-            : null;
-
-        $nextLesson = $lessonIndex !== false && isset($lessonSequence[$lessonIndex + 1])
-            ? $lessonSequence[$lessonIndex + 1]['lesson']
-            : null;
+        $context = $this->resolveLessonContext($catalogue, $module, $chapter, $lesson);
 
         return view('formateur.parcours.lesson', [
-            'pageTitle' => $currentLesson['title'],
+            'pageTitle' => $context['currentLesson']['title'],
             'parcoursModules' => $catalogue,
             'activeModuleKey' => $module,
             'activeChapterKey' => $chapter,
             'activeLessonKey' => $lesson,
-            'currentModule' => $currentModule,
-            'currentChapter' => $currentChapter,
-            'currentLesson' => $currentLesson,
-            'previousLesson' => $previousLesson,
-            'nextLesson' => $nextLesson,
+            'activeActivityKey' => null,
+            'currentModule' => $context['currentModule'],
+            'currentChapter' => $context['currentChapter'],
+            'currentLesson' => $context['currentLesson'],
+            'previousLesson' => $context['previousLesson'],
+            'nextLesson' => $context['nextLesson'],
+            'nextActivity' => $context['nextActivity'],
+            'activityStatusMap' => $this->loadActivityStatusMap($module),
             'breadcrumbs' => [
                 ['label' => 'Parcours formateur', 'url' => route('formateur.parcours.index')],
-                ['label' => $currentModule['title'], 'url' => $currentModule['url']],
-                ['label' => $currentChapter['title'], 'url' => $currentChapter['url']],
-                ['label' => $currentLesson['code'], 'url' => $currentLesson['url']],
+                ['label' => $context['currentModule']['title'], 'url' => $context['currentModule']['url']],
+                ['label' => $context['currentChapter']['title'], 'url' => $context['currentChapter']['url']],
+                ['label' => $context['currentLesson']['code'], 'url' => $context['currentLesson']['url']],
             ],
+        ]);
+    }
+
+    public function showActivity(string $module, string $chapter, string $lesson, string $activity)
+    {
+        $catalogue = $this->catalogue();
+        $context = $this->resolveLessonContext($catalogue, $module, $chapter, $lesson);
+        $currentActivity = $context['currentLesson']['activity_page'] ?? null;
+
+        abort_unless(
+            is_array($currentActivity) && ($currentActivity['key'] ?? null) === $activity,
+            404
+        );
+
+        $latestSuccessfulAttempt = DB::table('trainer_path_activity_attempts')
+            ->where('user_id', auth()->id())
+            ->where('module_key', $module)
+            ->where('chapter_key', $chapter)
+            ->where('lesson_key', $lesson)
+            ->where('activity_key', $activity)
+            ->where('is_success', true)
+            ->latest('submitted_at')
+            ->first();
+
+        $initialPlacements = [];
+
+        if ($latestSuccessfulAttempt) {
+            $submittedAnswer = $this->decodeJsonColumn($latestSuccessfulAttempt->submitted_answer ?? null);
+            $initialPlacements = is_array($submittedAnswer['placements'] ?? null)
+                ? $submittedAnswer['placements']
+                : [];
+        }
+
+        return view('formateur.parcours.activity', [
+            'pageTitle' => $currentActivity['title'],
+            'parcoursModules' => $catalogue,
+            'activeModuleKey' => $module,
+            'activeChapterKey' => $chapter,
+            'activeLessonKey' => $lesson,
+            'activeActivityKey' => $activity,
+            'currentModule' => $context['currentModule'],
+            'currentChapter' => $context['currentChapter'],
+            'currentLesson' => $context['currentLesson'],
+            'currentActivity' => $currentActivity,
+            'nextLesson' => $context['nextLesson'],
+            'activityStatusMap' => $this->loadActivityStatusMap($module),
+            'activityCompleted' => ! is_null($latestSuccessfulAttempt),
+            'initialPlacements' => $initialPlacements,
+            'breadcrumbs' => [
+                ['label' => 'Parcours formateur', 'url' => route('formateur.parcours.index')],
+                ['label' => $context['currentModule']['title'], 'url' => $context['currentModule']['url']],
+                ['label' => $context['currentChapter']['title'], 'url' => $context['currentChapter']['url']],
+                ['label' => $context['currentLesson']['code'], 'url' => $context['currentLesson']['url']],
+                ['label' => $currentActivity['code'] ?? 'Activite', 'url' => $currentActivity['url']],
+            ],
+        ]);
+    }
+
+    public function submitActivity(Request $request, string $module, string $chapter, string $lesson, string $activity): JsonResponse
+    {
+        $catalogue = $this->catalogue();
+        $context = $this->resolveLessonContext($catalogue, $module, $chapter, $lesson);
+        $currentActivity = $context['currentLesson']['activity_page'] ?? null;
+
+        abort_unless(
+            is_array($currentActivity) && ($currentActivity['key'] ?? null) === $activity,
+            404
+        );
+
+        $placementsInput = $request->input('placements', []);
+
+        if (! is_array($placementsInput)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Les placements transmis sont invalides.',
+                'wrong_item_ids' => [],
+                'missing_item_ids' => [],
+                'wrong_items' => [],
+                'next_url' => $context['nextLesson']['url'] ?? $context['currentChapter']['url'],
+            ], 422);
+        }
+
+        $items = collect($currentActivity['items'] ?? []);
+        $dropzones = collect($currentActivity['dropzones'] ?? []);
+        $validItemIds = $items->pluck('id')->map(fn ($id) => (string) $id)->all();
+        $expectedCategories = $items->mapWithKeys(
+            fn (array $item): array => [(string) $item['id'] => (string) $item['category']]
+        )->all();
+        $labelsByItem = $items->mapWithKeys(
+            fn (array $item): array => [(string) $item['id'] => (string) $item['label']]
+        )->all();
+
+        $placements = [];
+        foreach ($dropzones as $dropzone) {
+            $zoneId = (string) ($dropzone['id'] ?? '');
+            if ($zoneId === '') {
+                continue;
+            }
+
+            $zoneItems = $placementsInput[$zoneId] ?? [];
+            $placements[$zoneId] = collect(is_array($zoneItems) ? $zoneItems : [])
+                ->map(fn ($value) => (string) $value)
+                ->filter(fn (string $value): bool => in_array($value, $validItemIds, true))
+                ->unique()
+                ->values()
+                ->all();
+        }
+
+        $submittedCategories = [];
+        foreach ($placements as $zoneId => $zoneItems) {
+            foreach ($zoneItems as $itemId) {
+                $submittedCategories[$itemId] ??= $zoneId;
+            }
+        }
+
+        $wrongItems = [];
+        $correctItemIds = [];
+
+        foreach ($expectedCategories as $itemId => $expectedCategory) {
+            $actualCategory = $submittedCategories[$itemId] ?? null;
+
+            if ($actualCategory === $expectedCategory) {
+                $correctItemIds[] = $itemId;
+                continue;
+            }
+
+            $wrongItems[] = [
+                'id' => $itemId,
+                'label' => $labelsByItem[$itemId] ?? $itemId,
+                'expected' => $expectedCategory,
+                'actual' => $actualCategory,
+            ];
+        }
+
+        $missingItemIds = array_values(array_filter(
+            array_keys($expectedCategories),
+            fn (string $itemId): bool => ! array_key_exists($itemId, $submittedCategories)
+        ));
+
+        $isSuccess = empty($wrongItems);
+        $message = $isSuccess
+            ? (string) ($currentActivity['success_message'] ?? 'Bravo, l activite est validee.')
+            : (empty($missingItemIds)
+                ? 'Quelques elements sont a revoir avant de poursuivre.'
+                : 'Placez tous les elements dans un bloc avant de valider.');
+
+        $now = now();
+
+        DB::table('trainer_path_activity_attempts')->insert([
+            'user_id' => auth()->id(),
+            'module_key' => $module,
+            'chapter_key' => $chapter,
+            'lesson_key' => $lesson,
+            'activity_key' => $activity,
+            'activity_type' => 'sorting',
+            'total_items' => count($expectedCategories),
+            'correct_items' => count($correctItemIds),
+            'is_success' => $isSuccess,
+            'submitted_answer' => json_encode([
+                'placements' => $placements,
+                'submitted_categories' => $submittedCategories,
+                'missing_items' => $missingItemIds,
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            'expected_answer' => json_encode([
+                'categories' => $expectedCategories,
+                'dropzones' => $dropzones->mapWithKeys(
+                    fn (array $dropzone): array => [(string) $dropzone['id'] => (string) ($dropzone['label'] ?? $dropzone['id'])]
+                )->all(),
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            'wrong_items' => json_encode($wrongItems, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            'submitted_at' => $now,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+
+        return response()->json([
+            'success' => $isSuccess,
+            'message' => $message,
+            'wrong_item_ids' => array_values(array_map(
+                fn (array $item): string => (string) $item['id'],
+                $wrongItems
+            )),
+            'missing_item_ids' => $missingItemIds,
+            'wrong_items' => $wrongItems,
+            'correct_item_ids' => $correctItemIds,
+            'next_url' => $context['nextLesson']['url'] ?? $context['currentChapter']['url'],
         ]);
     }
 
@@ -167,6 +329,16 @@ class ParcoursController extends Controller
                         'lesson' => $lessonKey,
                     ]);
 
+                    if (! empty($lesson['activity_page'])) {
+                        $lesson['activity_page']['key'] = $lesson['activity_page']['key'] ?? 'activite';
+                        $lesson['activity_page']['url'] = route('formateur.parcours.activities.show', [
+                            'module' => $moduleKey,
+                            'chapter' => $chapterKey,
+                            'lesson' => $lessonKey,
+                            'activity' => $lesson['activity_page']['key'],
+                        ]);
+                    }
+
                     if (!empty($lesson['scorm_directory'])) {
                         $publicScormIndex = public_path(trim($lesson['scorm_directory'], '/') . '/index_lms.html');
                         $lesson['scorm_url'] = file_exists($publicScormIndex)
@@ -183,6 +355,100 @@ class ParcoursController extends Controller
         unset($module);
 
         return $modules;
+    }
+
+    /**
+     * @param  array<string, array<string, mixed>>  $catalogue
+     * @return array<string, mixed>
+     */
+    private function resolveLessonContext(array $catalogue, string $module, string $chapter, string $lesson): array
+    {
+        abort_unless(isset($catalogue[$module]), 404);
+        abort_unless(isset($catalogue[$module]['chapters'][$chapter]), 404);
+        abort_unless(isset($catalogue[$module]['chapters'][$chapter]['lessons'][$lesson]), 404);
+
+        $currentModule = $catalogue[$module];
+        $currentChapter = $currentModule['chapters'][$chapter];
+        $currentLesson = $currentChapter['lessons'][$lesson];
+        $lessonSequence = [];
+
+        foreach ($currentModule['chapters'] as $chapterKey => $chapterItem) {
+            foreach ($chapterItem['lessons'] as $lessonKey => $lessonItem) {
+                $lessonSequence[] = [
+                    'chapter_key' => $chapterKey,
+                    'lesson_key' => $lessonKey,
+                    'lesson' => $lessonItem,
+                ];
+            }
+        }
+
+        $lessonIndex = collect($lessonSequence)->search(
+            fn (array $item): bool => $item['chapter_key'] === $chapter && $item['lesson_key'] === $lesson
+        );
+
+        $previousLesson = $lessonIndex !== false && isset($lessonSequence[$lessonIndex - 1])
+            ? $lessonSequence[$lessonIndex - 1]['lesson']
+            : null;
+
+        $nextLesson = $lessonIndex !== false && isset($lessonSequence[$lessonIndex + 1])
+            ? $lessonSequence[$lessonIndex + 1]['lesson']
+            : null;
+
+        return [
+            'currentModule' => $currentModule,
+            'currentChapter' => $currentChapter,
+            'currentLesson' => $currentLesson,
+            'previousLesson' => $previousLesson,
+            'nextLesson' => $nextLesson,
+            'nextActivity' => $currentLesson['activity_page'] ?? null,
+        ];
+    }
+
+    /**
+     * @return array<string, bool>
+     */
+    private function loadActivityStatusMap(string $moduleKey): array
+    {
+        if (! auth()->check()) {
+            return [];
+        }
+
+        return DB::table('trainer_path_activity_attempts')
+            ->where('user_id', auth()->id())
+            ->where('module_key', $moduleKey)
+            ->where('is_success', true)
+            ->get(['chapter_key', 'lesson_key', 'activity_key'])
+            ->mapWithKeys(fn ($row): array => [
+                $this->activityStatusKey(
+                    (string) $row->chapter_key,
+                    (string) $row->lesson_key,
+                    (string) $row->activity_key
+                ) => true,
+            ])
+            ->all();
+    }
+
+    private function activityStatusKey(string $chapterKey, string $lessonKey, string $activityKey): string
+    {
+        return implode('.', [$chapterKey, $lessonKey, $activityKey]);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function decodeJsonColumn(mixed $value): array
+    {
+        if (is_array($value)) {
+            return $value;
+        }
+
+        if (! is_string($value) || $value === '') {
+            return [];
+        }
+
+        $decoded = json_decode($value, true);
+
+        return is_array($decoded) ? $decoded : [];
     }
 
     /**
@@ -393,6 +659,44 @@ class ParcoursController extends Controller
                                 'subject' => 'Les composants essentiels a preparer : groupe, modules, informations de cadrage et premiers points d acces utiles.',
                                 'activity' => 'Parcours guide avec captures d ecran et reperage des composants indispensables avant l ouverture du parcours.',
                                 'resources' => 'Captures annotees de l espace formateur, schema simple des composants et consigne de reperage.',
+                                'activity_page' => [
+                                    'key' => 'classer-les-elements',
+                                    'code' => 'Activite 1',
+                                    'title' => 'Classer les elements de preparation',
+                                    'button_label' => 'Realiser l activite',
+                                    'instruction' => 'Classez chaque element dans la bonne categorie : Information, Stagiaire ou Module.',
+                                    'success_message' => 'Bravo, vous avez correctement classe les elements utiles a la preparation du parcours.',
+                                    'dropzones' => [
+                                        [
+                                            'id' => 'information',
+                                            'label' => 'Information',
+                                            'description' => 'Parametres, dates et reperes generaux utiles a la preparation.',
+                                        ],
+                                        [
+                                            'id' => 'stagiaire',
+                                            'label' => 'Stagiaire',
+                                            'description' => 'Donnees d identification et de contact du participant.',
+                                        ],
+                                        [
+                                            'id' => 'module',
+                                            'label' => 'Module',
+                                            'description' => 'Elements lies au contenu, a son activation et a son encadrement.',
+                                        ],
+                                    ],
+                                    'items' => [
+                                        ['id' => 'date_ouverture', 'label' => 'Date d ouverture', 'category' => 'information'],
+                                        ['id' => 'date_debut', 'label' => 'Date de debut', 'category' => 'information'],
+                                        ['id' => 'visible', 'label' => 'Visible', 'category' => 'information'],
+                                        ['id' => 'ouvert', 'label' => 'Ouvert', 'category' => 'information'],
+                                        ['id' => 'nom', 'label' => 'Nom', 'category' => 'stagiaire'],
+                                        ['id' => 'prenom', 'label' => 'Prenom', 'category' => 'stagiaire'],
+                                        ['id' => 'adresse_mail', 'label' => 'Adresse mail', 'category' => 'stagiaire'],
+                                        ['id' => 'coformateur', 'label' => 'Coformateur', 'category' => 'module'],
+                                        ['id' => 'module_excel_avance', 'label' => 'Module Excel avance', 'category' => 'module'],
+                                        ['id' => 'active', 'label' => 'Active', 'category' => 'module'],
+                                        ['id' => 'desactive', 'label' => 'Desactive', 'category' => 'module'],
+                                    ],
+                                ],
                                 'editorial' => [
                                     'intro' => [
                                         'Avant de creer un environnement de formation, le formateur a besoin d identifier les composants indispensables a reunir dans la plateforme.',

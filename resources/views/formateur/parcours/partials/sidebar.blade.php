@@ -2,13 +2,25 @@
     $chapterPosition = 0;
     $moduleChapterCount = $currentModule['chapter_count'] ?? count($currentModule['chapters'] ?? []);
     $moduleLessonCount = $currentModule['lesson_count'] ?? 0;
+    $activityStatusMap = $activityStatusMap ?? [];
+    $activeActivityKey = $activeActivityKey ?? null;
+
+    $statusIcon = function (bool $completed, bool $inProgress): array {
+        if ($completed) {
+            return ['icon' => '✓', 'class' => 'text-vertone', 'label' => 'Acquise'];
+        }
+
+        if ($inProgress) {
+            return ['icon' => '⏳', 'class' => 'text-orangeone', 'label' => 'En cours'];
+        }
+
+        return ['icon' => '✗', 'class' => 'text-gray-400', 'label' => 'Non commence'];
+    };
 @endphp
 
 <aside
-    x-cloak
-    x-show="sidebarOpen"
-    class="w-80 flex-shrink-0 bg-white border-r border-gray-100 flex flex-col rounded-[24px] shadow-sm lg:sticky lg:top-6"
-    style="display: none;"
+    :class="sidebarOpen ? '!flex' : 'hidden'"
+    class="hidden w-80 flex-shrink-0 border-r border-gray-100 bg-white flex-col rounded-[24px] shadow-sm lg:sticky lg:top-6 lg:!flex"
 >
     <div class="flex-1 overflow-y-auto custom-scrollbar bg-gray-50/30">
         <div class="px-3 py-4">
@@ -70,18 +82,38 @@
                             <ul class="py-1">
                                 @foreach ($chapter['lessons'] as $lessonKey => $lesson)
                                     @php
-                                        $isActiveLesson = ($activeLessonKey ?? null) === $lessonKey;
-                                        $lessonStatusIcon = $isActiveLesson
-                                            ? ['icon' => '⏳', 'class' => 'text-orangeone', 'label' => 'En cours']
-                                            : ['icon' => '✗', 'class' => 'text-gray-400', 'label' => 'Non commencé'];
-                                        $lessonStateText = $isActiveLesson ? 'Contenu en cours' : 'Contenu : non commencé';
+                                        $hasActivity = !empty($lesson['activity_page']);
+                                        $activityKey = $lesson['activity_page']['key'] ?? null;
+                                        $activityStatusKey = $hasActivity && $activityKey
+                                            ? implode('.', [$chapterKey, $lessonKey, $activityKey])
+                                            : null;
+                                        $isActivityCompleted = $activityStatusKey
+                                            ? (($activityStatusMap[$activityStatusKey] ?? false) === true)
+                                            : false;
+                                        $isActiveActivity = $hasActivity
+                                            && ($activeLessonKey ?? null) === $lessonKey
+                                            && $activeActivityKey === $activityKey;
+                                        $isActiveLesson = ($activeLessonKey ?? null) === $lessonKey && !$isActiveActivity;
+                                        $lessonStatusIcon = $statusIcon($isActivityCompleted, $isActiveLesson || $isActiveActivity);
+                                        $lessonStateText = $isActivityCompleted
+                                            ? 'Activite : terminee'
+                                            : ($isActiveActivity
+                                                ? 'Activite : en cours'
+                                                : ($hasActivity
+                                                    ? ($isActiveLesson ? 'Activite : a faire' : 'Activite : a faire')
+                                                    : ($isActiveLesson ? 'Lecture : en cours' : 'Lecture : non commencee')));
+                                        $lessonStateClass = $isActivityCompleted
+                                            ? 'text-vertone'
+                                            : (($isActiveLesson || $isActiveActivity) ? 'text-orangeone' : 'text-gray-500');
+                                        $activityStatusIcon = $statusIcon($isActivityCompleted, $isActiveActivity);
+                                        $activityCount = $isActivityCompleted ? '1/1' : '0/1';
                                     @endphp
 
-                                    <li>
+                                    <li class="space-y-1">
                                         <a
                                             href="{{ $lesson['url'] }}"
-                                            class="block py-3 px-3 transition-all border-l-4 {{ $isActiveLesson ? 'bg-orange-50 border-orangeone' : 'hover:bg-gray-50 border-transparent' }}"
-                                            aria-current="{{ $isActiveLesson ? 'page' : 'false' }}"
+                                            class="block py-3 px-3 transition-all border-l-4 {{ $isActiveActivity ? 'bg-blue-50/40 border-bleuone' : ($isActiveLesson ? 'bg-orange-50 border-orangeone' : 'hover:bg-gray-50 border-transparent') }}"
+                                            aria-current="{{ ($isActiveLesson || $isActiveActivity) ? 'page' : 'false' }}"
                                         >
                                             <div class="flex items-start gap-2">
                                                 <div class="w-6 flex justify-center pt-[2px]">
@@ -98,16 +130,10 @@
                                                         >
                                                             Leç. {{ $loop->iteration }} - {{ $lesson['title'] }}
                                                         </span>
-
-                                                        @if ($isActiveLesson)
-                                                            <span class="text-[10px] font-black uppercase tracking-tighter text-orangeone/70 whitespace-nowrap">
-                                                                Lecture en cours
-                                                            </span>
-                                                        @endif
                                                     </div>
 
                                                     <div class="mt-1 flex items-center justify-between gap-2">
-                                                        <span class="text-[11px] font-bold {{ $isActiveLesson ? 'text-orangeone' : 'text-gray-500' }}">
+                                                        <span class="text-[11px] font-bold {{ $lessonStateClass }}">
                                                             {{ $lessonStateText }}
                                                         </span>
 
@@ -118,6 +144,28 @@
                                                 </div>
                                             </div>
                                         </a>
+
+                                        @if ($hasActivity)
+                                            <a
+                                                href="{{ $lesson['activity_page']['url'] }}"
+                                                class="ml-6 block py-2 px-3 transition-all border-l-4 {{ $isActiveActivity ? 'bg-orange-50 border-orangeone' : 'hover:bg-gray-50 border-transparent' }}"
+                                                aria-current="{{ $isActiveActivity ? 'page' : 'false' }}"
+                                            >
+                                                <div class="flex items-center gap-2">
+                                                    <div class="w-6 flex justify-center">
+                                                        <span class="text-[16px] font-black {{ $activityStatusIcon['class'] }}" aria-label="{{ $activityStatusIcon['label'] }}">
+                                                            {{ $activityStatusIcon['icon'] }}
+                                                        </span>
+                                                    </div>
+
+                                                    <div class="min-w-0 flex-1">
+                                                        <span class="block text-[13px] font-bold leading-snug {{ $isActiveActivity ? 'text-orangeone' : 'text-gray-700' }}">
+                                                            Activite {{ $activityCount }}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </a>
+                                        @endif
                                     </li>
                                 @endforeach
                             </ul>

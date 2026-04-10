@@ -32,6 +32,8 @@ Route::middleware(['auth', 'role:formateur'])
             Route::get('/modules/{module}', [ParcoursController::class, 'showModule'])->name('modules.show');
             Route::get('/modules/{module}/chapitres/{chapter}', [ParcoursController::class, 'showChapter'])->name('chapters.show');
             Route::get('/modules/{module}/chapitres/{chapter}/lecons/{lesson}', [ParcoursController::class, 'showLesson'])->name('lessons.show');
+            Route::get('/modules/{module}/chapitres/{chapter}/lecons/{lesson}/activites/{activity}', [ParcoursController::class, 'showActivity'])->name('activities.show');
+            Route::post('/modules/{module}/chapitres/{chapter}/lecons/{lesson}/activites/{activity}', [ParcoursController::class, 'submitActivity'])->name('activities.submit');
         });
     Route::get('/profile', [FormateurController::class, 'FormateurProfile'])->name('profile');
     Route::get('/parametre', [FormateurController::class, 'FormateurParametre'])->name('parametre');

@@ -43,8 +43,10 @@
                 is_already_done: false,
                 anonymous: false,
                 read_only: false,
-                force_next_lesson: true,
-                quiz_start_url: null,
+                force_next_lesson: @json(empty($nextActivity)),
+                quiz_start_url: @json($nextActivity['url'] ?? null),
+                quiz_button_label: @json($nextActivity['button_label'] ?? null),
+                next_button_label: @json($nextLesson ? 'Leçon suivante' : 'Retour au chapitre'),
                 quiz_tester_url: null,
 
                 goToNextLesson: function () {
@@ -59,6 +61,11 @@
                 },
 
                 goToQuiz: function () {
+                    if (this.quiz_start_url) {
+                        window.location.href = this.quiz_start_url;
+                        return;
+                    }
+
                     if (this.next_url && this.next_url !== '#') {
                         window.location.href = this.next_url;
                     }
@@ -302,7 +309,11 @@
                                     @endif
                                 </div>
 
-                                @if ($nextLesson)
+                                @if ($nextActivity)
+                                    <a href="{{ $nextActivity['url'] }}" class="btn-oneduc !rounded-full !px-6 !py-3 !text-sm">
+                                        {{ $nextActivity['button_label'] ?? 'Realiser l activite' }}
+                                    </a>
+                                @elseif ($nextLesson)
                                     <a href="{{ $nextLesson['url'] }}" class="btn-oneduc !rounded-full !px-6 !py-3 !text-sm">
                                         Lecon suivante
                                     </a>
