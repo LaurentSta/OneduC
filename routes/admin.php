@@ -6,6 +6,8 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\Backend\CategoryController;
 use App\Http\Controllers\Backend\GroupeController;
 use App\Http\Controllers\Backend\ModuleController;
+use App\Http\Controllers\Backend\ModuleSectionController;
+use App\Http\Controllers\Backend\ModuleLectureController;
 use App\Http\Controllers\LessonFeedbackController;
 use App\Http\Controllers\Backend\EvaluationController;
 use App\Http\Controllers\Backend\SkillReferentialController;
@@ -78,7 +80,7 @@ Route::middleware(['auth', 'role:admin', 'admin.activity'])
             Route::delete('/groupes/{id}', 'DeleteGroupe')->name('groupes.delete');
         });
 
-        // Modules
+        // Modules - CRUD de base
         Route::controller(ModuleController::class)->group(function () {
             Route::get('/modules', 'Modules')->name('modules');
             Route::get('/modules/ajout', 'AddModule')->name('modules.add');
@@ -86,23 +88,26 @@ Route::middleware(['auth', 'role:admin', 'admin.activity'])
             Route::get('/modules/edit/{id}', 'EditModule')->name('modules.edit');
             Route::put('/modules/update/{id}', 'UpdateModule')->name('modules.update');
             Route::delete('/modules/{id}', 'DeleteModule')->name('modules.delete');
-
             Route::patch('/modules/{module}/toggle-status', 'toggleStatus')->name('modules.toggle-status');
+        });
 
+        // Modules - Gestion des leçons
+        Route::controller(ModuleLectureController::class)->group(function () {
             Route::get('/modules/{id}/lectures/add', 'AddModuleLecture')->name('modules.lecture.add');
-            Route::post('/modules/sections/store', 'AddModuleSection')->name('modules.section.store');
             Route::post('/modules/lectures/store', 'SaveLecture')->name('modules.lecture.store');
-
             Route::get('/lectures/edit/{id}', 'EditLecture')->name('lectures.edit');
             Route::post('/lectures/update', 'UpdateModuleLecture')->name('lectures.update');
             Route::delete('/lectures/{id}', 'DeleteLecture')->name('lectures.delete');
+            Route::get('/lectures/{id}/move-up', 'MoveLectureUp')->name('lectures.move.up');
+            Route::get('/lectures/{id}/move-down', 'MoveLectureDown')->name('lectures.move.down');
+        });
 
+        // Modules - Gestion des chapitres
+        Route::controller(ModuleSectionController::class)->group(function () {
+            Route::post('/modules/sections/store', 'AddModuleSection')->name('modules.section.store');
             Route::post('/sections/delete/{id}', 'DeleteSection')->name('sections.delete');
             Route::get('/sections/edit/{id}', 'EditModuleSection')->name('sections.edit');
             Route::post('/sections/update/{id}', 'UpdateModuleSection')->name('sections.update');
-
-            Route::get('/lectures/{id}/move-up', 'MoveLectureUp')->name('lectures.move.up');
-            Route::get('/lectures/{id}/move-down', 'MoveLectureDown')->name('lectures.move.down');
         });
 
         // Evaluations
@@ -193,8 +198,8 @@ Route::middleware(['auth', 'role:admin', 'admin.activity'])
     });
 
     Route::prefix('slides')->name('slides.')->group(function () {
-        Route::post('/import-lecture', [ModuleController::class, 'importSlidesForLecture'])->name('import');
-        Route::post('/retry-lecture', [ModuleController::class, 'retrySlidesForLecture'])->name('retry');
+        Route::post('/import-lecture', [ModuleLectureController::class, 'importSlidesForLecture'])->name('import');
+        Route::post('/retry-lecture', [ModuleLectureController::class, 'retrySlidesForLecture'])->name('retry');
     });
 
     // Compétences
