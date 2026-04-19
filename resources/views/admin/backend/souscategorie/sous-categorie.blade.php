@@ -126,7 +126,13 @@
 <script>
     function confirmDelete(id) {
         if (confirm('Êtes-vous sûr de vouloir supprimer cette sous-catégorie ? Cette action est irréversible.')) {
-            window.location.href = "{{ url('/admin/sous-categories/delete/') }}/" + id;
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = "{{ url('/admin/sous-categories') }}/" + id;
+            form.innerHTML = '<input type="hidden" name="_token" value="{{ csrf_token() }}">'
+                           + '<input type="hidden" name="_method" value="DELETE">';
+            document.body.appendChild(form);
+            form.submit();
         }
     }
 

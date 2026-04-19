@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use App\Models\Module;
@@ -79,7 +80,7 @@ public function AdminProfilStore(Request $request)
 
     if ($request->hasFile('photo')) {
         $file = $request->file('photo');
-        $filename = time().'_'.$file->getClientOriginalName();
+        $filename = Str::uuid() . '.' . $file->extension();
         $file->move(public_path('upload/admin_images'), $filename);
         $user->photo = $filename;
     }

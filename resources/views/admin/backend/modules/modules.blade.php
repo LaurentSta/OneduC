@@ -118,7 +118,9 @@
                     Contenu
                   </a>
 
-                  <form action="{{ route('admin.modules.delete', ['id' => $module->id]) }}" method="GET" class="delete-module-form inline-block">
+                  <form action="{{ route('admin.modules.delete', ['id' => $module->id]) }}" method="POST" class="delete-module-form inline-block" onsubmit="return confirm('Supprimer ce module ?')">
+                    @csrf
+                    @method('DELETE')
                     <button type="submit"
                             class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-red-200 text-red-700 hover:bg-red-600 hover:text-white transition text-xs font-varela cursor-pointer">
                       <i class="ti ti-trash"></i>

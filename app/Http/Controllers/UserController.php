@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use App\Models\ScormInteraction;
 use App\Models\LessonFeedback;
 use App\Models\VideoSegmentTracking;
@@ -114,7 +115,7 @@ class UserController extends Controller
     // ✅ Upload image si présente
     if ($request->file('photo')) {
         $file = $request->file('photo');
-        $filename = date('YmdHi') . '_' . $file->getClientOriginalName();
+        $filename = Str::uuid() . '.' . $file->extension();
         $file->move(public_path('/upload/user_images'), $filename);
         $user->photo = $filename;
     }
@@ -247,8 +248,8 @@ class UserController extends Controller
                 ->where('lecture_id', $lecture->id)
                 ->first();
 
-            $status = $score->lesson_status ?? 'not_started';
-            $scoreValue = $score->last_score ?? null;
+            $status = $score?->lesson_status ?? 'not_started';
+            $scoreValue = $score?->last_score ?? null;
 
             $progression[] = [
                 'lecture_id' => $lecture->id,

@@ -159,12 +159,14 @@
                                                     <i class="ti ti-edit"></i>
                                                     Editer
                                                 </a>
-                                                <a href="{{ route('admin.lectures.delete', ['id' => $lecture->id]) }}"
-                                                   onclick="return confirm('Supprimer cette leçon ?')"
-                                                   class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-red-200 text-red-700 hover:bg-red-600 hover:text-white transition text-xs font-varela cursor-pointer">
-                                                    <i class="ti ti-trash"></i>
-                                                    Supprimer
-                                                </a>
+                                                <form action="{{ route('admin.lectures.delete', ['id' => $lecture->id]) }}" method="POST" class="inline-block" onsubmit="return confirm('Supprimer cette leçon ?')">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-red-200 text-red-700 hover:bg-red-600 hover:text-white transition text-xs font-varela cursor-pointer">
+                                                        <i class="ti ti-trash"></i>
+                                                        Supprimer
+                                                    </button>
+                                                </form>
                                             </div>
                                         </td>
                                     </tr>

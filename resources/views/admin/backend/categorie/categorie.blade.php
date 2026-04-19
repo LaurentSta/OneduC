@@ -119,7 +119,13 @@
 <script>
     function confirmDelete(id) {
         if (confirm("Êtes-vous sûr de vouloir supprimer cette catégorie ?")) {
-            window.location.href = "{{ route('admin.categories.delete', ':id') }}".replace(':id', id);
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = "{{ url('/admin/categories') }}/" + id;
+            form.innerHTML = '<input type="hidden" name="_token" value="{{ csrf_token() }}">'
+                           + '<input type="hidden" name="_method" value="DELETE">';
+            document.body.appendChild(form);
+            form.submit();
         }
     }
 

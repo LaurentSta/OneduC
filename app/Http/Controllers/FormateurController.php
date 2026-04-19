@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use App\Models\ModuleLecture;
 
@@ -789,7 +790,7 @@ class FormateurController extends Controller
 
         if ($request->file('photo')) {
             $file = $request->file('photo');
-            $filename = date('YmdHi') . '_' . $file->getClientOriginalName();
+            $filename = Str::uuid() . '.' . $file->extension();
             $file->move(public_path('/upload/formateur_images'), $filename);
             $user->photo = $filename;
         }

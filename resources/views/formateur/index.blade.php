@@ -94,8 +94,8 @@
   </section>
 
   <section
-    x-data="formateurDashboardActivity('{{ route('formateur.dashboard.activity') }}')"
-    class="bg-white rounded-[20px] shadow-md p-6"
+    x-data="formateurDashboardActivity('{{ route('formateur.dashboard.activity') }}', '{{ route('formateur.progressions.stagiaires') }}')"
+    class="bg-white rounded-[20px] shadow-md p-6 relative"
   >
     <div class="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
       <div class="max-w-2xl">
@@ -182,7 +182,13 @@
 
         <div class="mt-5 overflow-x-auto">
           <div class="min-w-[760px]">
-            <svg viewBox="0 0 960 320" class="h-[320px] w-full">
+            <svg
+              viewBox="0 0 960 320"
+              class="h-[320px] w-full"
+              style="cursor: crosshair"
+              @mousemove="handleSvgMousemove($event)"
+              @mouseleave="tooltip = null"
+            >
               <template x-for="tick in yTicks" :key="`tick-${tick}`">
                 <g>
                   <line
@@ -200,6 +206,19 @@
                     x-text="`${tick}%`"
                   ></text>
                 </g>
+              </template>
+
+              {{-- Ligne verticale du curseur --}}
+              <template x-if="tooltip">
+                <line
+                  :x1="x(tooltip.bucketIndex, data.labels.length)"
+                  :x2="x(tooltip.bucketIndex, data.labels.length)"
+                  :y1="paddingTop"
+                  :y2="chartHeight - paddingBottom"
+                  stroke="#CBD5E1"
+                  stroke-width="1.5"
+                  stroke-dasharray="4 4"
+                ></line>
               </template>
 
               <polyline
@@ -228,6 +247,17 @@
                     r="4.5"
                     :fill="group.color"
                   ></circle>
+                  {{-- Point mis en évidence au survol --}}
+                  <template x-if="tooltip && group.points[tooltip.bucketIndex] !== undefined">
+                    <circle
+                      :cx="x(tooltip.bucketIndex, group.points.length)"
+                      :cy="y(group.points[tooltip.bucketIndex])"
+                      r="5"
+                      :fill="group.color"
+                      stroke="white"
+                      stroke-width="2"
+                    ></circle>
+                  </template>
                 </g>
               </template>
 
@@ -244,6 +274,23 @@
               </template>
             </svg>
           </div>
+        </div>
+
+        {{-- Tooltip flottant du graphique --}}
+        <div
+          x-show="tooltip"
+          x-cloak
+          :style="tooltip ? `position:fixed;left:${Math.min(tooltip.clientX + 14, window.innerWidth - 210)}px;top:${tooltip.clientY - 50}px` : ''"
+          class="pointer-events-none z-50 min-w-[170px] rounded-xl border border-gray-200 bg-white px-3 py-2.5 shadow-lg text-sm"
+        >
+          <p class="mb-1.5 text-xs font-semibold text-bleuone" x-text="tooltip?.label"></p>
+          <template x-for="entry in (tooltip?.entries ?? [])" :key="entry.name">
+            <div class="flex items-center gap-2 py-0.5">
+              <span class="h-2 w-2 shrink-0 rounded-full" :style="`background:${entry.color}`"></span>
+              <span class="flex-1 truncate text-gray-600" x-text="entry.name"></span>
+              <span class="ml-2 font-semibold text-gray-800" x-text="`${entry.value}%`"></span>
+            </div>
+          </template>
         </div>
 
         <div class="mt-4 flex flex-wrap gap-3 text-sm">
@@ -264,18 +311,17 @@
         <div class="flex items-center justify-between gap-3">
           <div>
             <h3 class="text-lg font-semibold text-bleuone">Lecture par groupe</h3>
-            <p class="text-sm text-gray-600">Le tableau résume le taux actuel, la moyenne de période et la tendance observée.</p>
+            <p class="text-sm text-gray-600">Taux actuel, moyenne de période et tendance par groupe.</p>
           </div>
           <p class="text-sm text-gray-500" x-text="`${data.summary.learners_count} stagiaire(s) suivis`"></p>
         </div>
 
         <div class="mt-4 overflow-hidden rounded-[18px] border border-gray-100">
-          <div class="max-h-[360px] overflow-auto">
+          <div class="max-h-[400px] overflow-auto">
             <table class="min-w-full text-left text-sm">
               <thead class="sticky top-0 bg-slate-50 text-xs uppercase tracking-[0.18em] text-gray-500">
                 <tr>
                   <th class="px-4 py-3 font-semibold">Groupe</th>
-                  <th class="px-4 py-3 font-semibold">Stagiaires</th>
                   <th class="px-4 py-3 font-semibold">Actuel</th>
                   <th class="px-4 py-3 font-semibold">Moyenne</th>
                   <th class="px-4 py-3 font-semibold">Tendance</th>
@@ -284,19 +330,87 @@
               <tbody class="divide-y divide-gray-100">
                 <template x-for="group in data.table_groups" :key="`row-${group.id}`">
                   <tr class="bg-white transition hover:bg-slate-50">
-                    <td class="px-4 py-3 font-semibold text-gray-800" x-text="group.name"></td>
-                    <td class="px-4 py-3 text-gray-600" x-text="group.learners_count"></td>
+
+                    {{-- Groupe : lien + compteur stagiaires --}}
                     <td class="px-4 py-3">
-                      <span class="inline-flex rounded-full bg-orangeone/10 px-3 py-1 font-semibold text-orangeone" x-text="formatPercent(group.latest_rate)"></span>
+                      <a
+                        :href="`${progressionUrl}?group_id=${group.id}`"
+                        class="block font-semibold text-gray-800 hover:text-orangeone transition-colors truncate max-w-[180px]"
+                        x-text="group.name"
+                      ></a>
+                      <p
+                        class="mt-0.5 text-xs text-gray-400"
+                        x-text="`${group.learners_count} stagiaire${group.learners_count > 1 ? 's' : ''}`"
+                      ></p>
                     </td>
-                    <td class="px-4 py-3 text-gray-700" x-text="formatPercent(group.average_rate)"></td>
+
+                    {{-- Taux actuel : badge coloré + barre de progression --}}
                     <td class="px-4 py-3">
                       <span
-                        class="inline-flex rounded-full px-3 py-1 font-semibold"
-                        :class="group.trend > 0 ? 'bg-vertone/10 text-vertone' : (group.trend < 0 ? 'bg-red-50 text-red-500' : 'bg-slate-100 text-slate-500')"
-                        x-text="formatTrend(group.trend)"
+                        class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold"
+                        :class="group.latest_rate >= 60
+                          ? 'bg-vertone/10 text-vertone'
+                          : (group.latest_rate >= 30
+                            ? 'bg-orangeone/10 text-orangeone'
+                            : 'bg-red-50 text-red-500')"
+                        x-text="formatPercent(group.latest_rate)"
                       ></span>
+                      <div class="mt-1.5 h-1.5 w-16 overflow-hidden rounded-full bg-gray-100">
+                        <div
+                          class="h-full rounded-full transition-all duration-300"
+                          :class="group.latest_rate >= 60
+                            ? 'bg-vertone'
+                            : (group.latest_rate >= 30
+                              ? 'bg-orangeone'
+                              : 'bg-red-400')"
+                          :style="`width:${group.latest_rate}%`"
+                        ></div>
+                      </div>
                     </td>
+
+                    {{-- Moyenne : valeur + barre discrète --}}
+                    <td class="px-4 py-3">
+                      <span class="text-xs font-medium text-gray-700" x-text="formatPercent(group.average_rate)"></span>
+                      <div class="mt-1.5 h-1.5 w-16 overflow-hidden rounded-full bg-gray-100">
+                        <div
+                          class="h-full rounded-full bg-slate-300"
+                          :style="`width:${group.average_rate}%`"
+                        ></div>
+                      </div>
+                    </td>
+
+                    {{-- Tendance : icône directionnelle + valeur --}}
+                    <td class="px-4 py-3">
+                      <span
+                        class="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold"
+                        :class="group.trend > 0
+                          ? 'bg-vertone/10 text-vertone'
+                          : (group.trend < 0
+                            ? 'bg-red-50 text-red-500'
+                            : 'bg-slate-100 text-slate-500')"
+                      >
+                        {{-- Flèche montante --}}
+                        <template x-if="group.trend > 0">
+                          <svg class="h-3 w-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 19V5M5 12l7-7 7 7"/>
+                          </svg>
+                        </template>
+                        {{-- Flèche descendante --}}
+                        <template x-if="group.trend < 0">
+                          <svg class="h-3 w-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 5v14M19 12l-7 7-7-7"/>
+                          </svg>
+                        </template>
+                        {{-- Stable --}}
+                        <template x-if="group.trend === 0">
+                          <svg class="h-3 w-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                            <path d="M5 12h14"/>
+                          </svg>
+                        </template>
+                        <span x-text="formatTrend(group.trend)"></span>
+                      </span>
+                    </td>
+
                   </tr>
                 </template>
               </tbody>
@@ -441,13 +555,15 @@
 </div>
 
 <script>
-  window.formateurDashboardActivity = function (endpoint) {
+  window.formateurDashboardActivity = function (endpoint, progressionUrl) {
     return {
       endpoint,
+      progressionUrl,
       range: 'week',
       loading: true,
       error: null,
       data: null,
+      tooltip: null,
       chartWidth: 960,
       chartHeight: 320,
       paddingTop: 18,
@@ -580,6 +696,53 @@
         }
 
         return 'Stable';
+      },
+
+      handleSvgMousemove(event) {
+        if (!this.data?.labels?.length) return;
+
+        const svg = event.currentTarget;
+        const rect = svg.getBoundingClientRect();
+        const svgX = ((event.clientX - rect.left) / rect.width) * this.chartWidth;
+
+        const totalBuckets = this.data.labels.length;
+        let bucketIndex = 0;
+
+        if (totalBuckets > 1) {
+          const relX = svgX - this.paddingLeft;
+          const bucketSpacing = this.plotWidth / (totalBuckets - 1);
+          bucketIndex = Math.round(relX / bucketSpacing);
+        }
+
+        bucketIndex = Math.max(0, Math.min(totalBuckets - 1, bucketIndex));
+
+        const entries = [];
+
+        if (this.data.average_points?.[bucketIndex] !== undefined) {
+          entries.push({
+            name: 'Moyenne globale',
+            value: this.data.average_points[bucketIndex],
+            color: '#94A3B8',
+          });
+        }
+
+        (this.data.chart_groups ?? []).forEach(group => {
+          if (group.points?.[bucketIndex] !== undefined) {
+            entries.push({
+              name: group.name,
+              value: group.points[bucketIndex],
+              color: group.color,
+            });
+          }
+        });
+
+        this.tooltip = {
+          clientX: event.clientX,
+          clientY: event.clientY,
+          bucketIndex,
+          label: this.data.full_labels?.[bucketIndex] ?? this.data.labels?.[bucketIndex] ?? '',
+          entries,
+        };
       },
     };
   };

@@ -58,16 +58,14 @@ Route::middleware(['auth', 'role:admin', 'admin.activity'])
             Route::post('/categories/store', 'StoreCategory')->name('categories.store');
             Route::get('/categories/edit/{id}', 'EditCategory')->name('categories.edit');
             Route::post('/categories/update', 'UpdateCategory')->name('categories.update');
-            // TODO: idéalement passer en DELETE
-            Route::get('/categories/delete/{id}', 'DeleteCategory')->name('categories.delete');
+            Route::delete('/categories/{id}', 'DeleteCategory')->name('categories.delete');
 
             Route::get('/sous-categories', 'AllSubCategory')->name('subcategories.all');
             Route::get('/sous-categories/ajout', 'AddSubCategory')->name('subcategories.add');
             Route::post('/sous-categories/store', 'StoreSubCategory')->name('subcategories.store');
             Route::get('/sous-categories/edit/{id}', 'EditSubCategory')->name('subcategories.edit');
             Route::post('/sous-categories/update', 'UpdateSubCategory')->name('subcategories.update');
-            // TODO: idéalement passer en DELETE
-            Route::get('/sous-categories/delete/{id}', 'DeleteSubCategory')->name('subcategories.delete');
+            Route::delete('/sous-categories/{id}', 'DeleteSubCategory')->name('subcategories.delete');
         });
 
         // Groupes
@@ -87,8 +85,7 @@ Route::middleware(['auth', 'role:admin', 'admin.activity'])
             Route::post('/modules/store', 'StoreModule')->name('modules.store');
             Route::get('/modules/edit/{id}', 'EditModule')->name('modules.edit');
             Route::put('/modules/update/{id}', 'UpdateModule')->name('modules.update');
-            // TODO: idéalement passer en DELETE
-            Route::get('/modules/delete/{id}', 'DeleteModule')->name('modules.delete');
+            Route::delete('/modules/{id}', 'DeleteModule')->name('modules.delete');
 
             Route::patch('/modules/{module}/toggle-status', 'toggleStatus')->name('modules.toggle-status');
 
@@ -98,8 +95,7 @@ Route::middleware(['auth', 'role:admin', 'admin.activity'])
 
             Route::get('/lectures/edit/{id}', 'EditLecture')->name('lectures.edit');
             Route::post('/lectures/update', 'UpdateModuleLecture')->name('lectures.update');
-            // TODO: idéalement passer en DELETE
-            Route::get('/lectures/delete/{id}', 'DeleteLecture')->name('lectures.delete');
+            Route::delete('/lectures/{id}', 'DeleteLecture')->name('lectures.delete');
 
             Route::post('/sections/delete/{id}', 'DeleteSection')->name('sections.delete');
             Route::get('/sections/edit/{id}', 'EditModuleSection')->name('sections.edit');
