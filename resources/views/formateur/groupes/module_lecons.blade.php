@@ -93,7 +93,7 @@
         'description' => (string) ($section->description ?? ''),
         'lectures' => collect($section->lectures ?? [])
           ->values()
-          ->map(function ($lecture, $lectureIndex) use ($rows, $group, $module) {
+          ->map(function ($lecture, $lectureIndex) use ($rows, $group, $module, $section) {
             $row = $rows[$lecture->id] ?? null;
             $enabled = $row ? (bool) $row->is_enabled : true;
             $questionsCount = (bool) ($lecture->quiz_enabled ?? false)
@@ -122,12 +122,22 @@
                 'module' => $module->id,
                 'lecture' => $lecture->id,
               ], false),
+              'view_url' => route('formateur.formations.lecture', [
+                'module' => $module->id,
+                'section' => $section->id,
+                'lecture' => $lecture->id,
+              ], false),
             ];
           })
           ->values(),
       ];
     })->values();
   @endphp
+
+  <x-formateur.hierarchy-breadcrumb
+      :module="['label' => 'Module', 'title' => $module->module_title, 'url' => null]"
+      :group="['label' => 'Groupe', 'title' => $group->name, 'url' => null]"
+  />
 
   <main class="space-y-6">
     <div

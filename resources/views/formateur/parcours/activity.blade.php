@@ -13,6 +13,14 @@
 @endphp
 
 @section('parcours_content')
+    <div class="px-4 sm:px-6 lg:px-8 pt-4">
+        <x-formateur.hierarchy-breadcrumb
+            :module="['label' => 'Module', 'title' => $currentModule['title'], 'url' => $currentModule['url']]"
+            :chapter="['label' => $currentChapter['label'] ?? 'Chapitre', 'title' => $currentChapter['title'], 'url' => $currentChapter['url']]"
+            :lesson="['label' => $currentLesson['code'] ?? 'Leçon', 'title' => $currentLesson['title'], 'url' => $currentLesson['url']]"
+            :activity="['label' => $currentActivity['code'] ?? 'Activité', 'title' => $currentActivity['title'], 'url' => null]"
+        />
+    </div>
     <div
         x-data="parcoursSortingActivity({
             cards: @js($activityCards),

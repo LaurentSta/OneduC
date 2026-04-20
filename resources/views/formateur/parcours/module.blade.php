@@ -12,6 +12,10 @@
 
 @section('parcours_content')
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+
+        <x-formateur.hierarchy-breadcrumb
+            :module="['label' => 'Module', 'title' => $currentModule['title'], 'url' => null]"
+        />
         <div
             x-data="{
                 activeTab: 'presentation',

@@ -294,6 +294,15 @@
       </div>
   </div>
 
+  {{-- FIL D'ARIANE HIÉRARCHIQUE --}}
+  <div class="shrink-0 border-b border-gray-100 bg-gray-50 px-5 py-2">
+      <x-formateur.hierarchy-breadcrumb
+          :module="['label' => 'Module', 'title' => $moduleLabel, 'url' => $moduleDetailUrl]"
+          :chapter="['label' => $chapterNo ? 'Ch. '.$chapterNo : 'Chapitre', 'title' => $section->section_title ?? '', 'url' => $chapterDetailUrl]"
+          :lesson="['label' => $lessonNo ? 'Leç. '.$lessonNo : 'Leçon', 'title' => $lecture->lecture_title, 'url' => null]"
+      />
+  </div>
+
   {{-- CORPS DE PAGE --}}
   <div class="flex flex-1 overflow-hidden relative">
       

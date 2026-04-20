@@ -29,6 +29,13 @@
 @endphp
 
 @section('parcours_content')
+    <div class="px-4 sm:px-6 lg:px-8 pt-4">
+        <x-formateur.hierarchy-breadcrumb
+            :module="['label' => 'Module', 'title' => $currentModule['title'], 'url' => $currentModule['url']]"
+            :chapter="['label' => $currentChapter['label'] ?? 'Chapitre', 'title' => $currentChapter['title'], 'url' => $currentChapter['url']]"
+            :lesson="['label' => $currentLesson['code'] ?? 'Leçon', 'title' => $currentLesson['title'], 'url' => null]"
+        />
+    </div>
     @if (!empty($currentLesson['scorm_url']))
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
