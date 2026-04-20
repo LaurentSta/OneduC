@@ -205,7 +205,7 @@ Route::get('/inscription-formateur', function () {
     return view('frontend.formateur.reg_formateur');
 })->name('formateur.inscription.form');
 // Traitement de l'inscription formateur
-Route::post('/inscription-formateur', [\App\Http\Controllers\FormateurController::class, 'register'])->name('formateur.inscription');
+Route::post('/inscription-formateur', [\App\Http\Controllers\Formateur\FormateurProfileController::class, 'register'])->name('formateur.inscription');
 
 // Connexion via code d’accès (stagiaire)
 // Connexion d'un stagiaire via un code d'accès fourni par le formateur

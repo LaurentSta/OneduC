@@ -171,6 +171,14 @@
       </div>
   </div>
 
+  {{-- FIL D'ARIANE HIÉRARCHIQUE --}}
+  <div class="shrink-0 border-b border-gray-100 bg-gray-50 px-5 py-2">
+      <x-formateur.hierarchy-breadcrumb
+          :module="['label' => 'Module', 'title' => $moduleLabel, 'url' => $moduleDetailUrl]"
+          :chapter="['label' => $chapterNo ? 'Ch. '.$chapterNo : 'Chapitre', 'title' => $selectedSection->section_title, 'url' => null]"
+      />
+  </div>
+
   <div class="flex flex-1 overflow-hidden relative">
 
       <main class="relative bg-gray-50 transition-all duration-300 ease-in-out flex flex-col min-w-0"

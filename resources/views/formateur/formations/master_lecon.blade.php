@@ -8,10 +8,6 @@
 
   @vite(['resources/css/app.css','resources/js/app.js'])
 
-  {{-- AlpineJS + collapse --}}
-  <script src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.13.5/dist/cdn.min.js" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.5/dist/cdn.min.js" defer></script>
-
   {{-- Video.js (utilisé dans chapitre.blade.php) --}}
   <link href="https://vjs.zencdn.net/8.9.0/video-js.css" rel="stylesheet" />
   <script src="https://vjs.zencdn.net/8.9.0/video.min.js"></script>

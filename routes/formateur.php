@@ -2,12 +2,20 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\FormateurController;
+use App\Http\Controllers\Formateur\FormateurProfileController;
+use App\Http\Controllers\Formateur\FormateurStagiaireController;
+use App\Http\Controllers\Formateur\FormateurModuleController;
 use App\Http\Controllers\Formateur\GroupeController;
+use App\Http\Controllers\Formateur\GroupeModuleLessonController;
 use App\Http\Controllers\Formateur\ObjectiveController;
 use App\Http\Controllers\Formateur\LessonResourceController;
 use App\Http\Controllers\Formateur\OnboardingController;
 use App\Http\Controllers\Formateur\ParcoursController;
 use App\Http\Controllers\Formateur\ProgressionController;
+use App\Http\Controllers\Formateur\ProgressionGroupesController;
+use App\Http\Controllers\Formateur\ProgressionStagiairesController;
+use App\Http\Controllers\Formateur\ProgressionStagiaireController;
+use App\Http\Controllers\Formateur\ProgressionModulesController;
 use App\Http\Controllers\Formateur\LiveQuizSessionController;
 use App\Http\Controllers\Formateur\WordCloudController as FormateurWordCloudController;
 use App\Http\Controllers\Formateur\WhiteboardController;
@@ -35,21 +43,22 @@ Route::middleware(['auth', 'role:formateur'])
             Route::get('/modules/{module}/chapitres/{chapter}/lecons/{lesson}/activites/{activity}', [ParcoursController::class, 'showActivity'])->name('activities.show');
             Route::post('/modules/{module}/chapitres/{chapter}/lecons/{lesson}/activites/{activity}', [ParcoursController::class, 'submitActivity'])->name('activities.submit');
         });
-    Route::get('/profile', [FormateurController::class, 'FormateurProfile'])->name('profile');
-    Route::get('/parametre', [FormateurController::class, 'FormateurParametre'])->name('parametre');
+    // Profil & sécurité
+    Route::get('/profile', [FormateurProfileController::class, 'FormateurProfile'])->name('profile');
+    Route::get('/parametre', [FormateurProfileController::class, 'FormateurParametre'])->name('parametre');
     Route::get('/documentation', fn () => view('formateur.documentation'))->name('documentation');
-    Route::post('/profil/store', [FormateurController::class, 'FormateurProfilStore'])->name('profil.store');
-    Route::get('/securite', [FormateurController::class, 'showFormateurSecurite'])->name('securite.show');
-    Route::post('/securite', [FormateurController::class, 'FormateurSecurite'])->name('securite');
-    Route::delete('/compte', [FormateurController::class, 'destroyOwnAccount'])->name('account.destroy');
+    Route::post('/profil/store', [FormateurProfileController::class, 'FormateurProfilStore'])->name('profil.store');
+    Route::get('/securite', [FormateurProfileController::class, 'showFormateurSecurite'])->name('securite.show');
+    Route::post('/securite', [FormateurProfileController::class, 'FormateurSecurite'])->name('securite');
+    Route::delete('/compte', [FormateurProfileController::class, 'destroyOwnAccount'])->name('account.destroy');
 
     // 👤 Stagiaires
-    Route::get('/stagiaires', [FormateurController::class, 'indexStagiaires'])->name('stagiaires.index');
-    Route::get('/stagiaires/create', [FormateurController::class, 'createStagiaire'])->name('stagiaires.create');
-    Route::post('/stagiaires', [FormateurController::class, 'storeStagiaire'])->name('stagiaires.store');
-    Route::get('/stagiaires/{id}/edit', [FormateurController::class, 'editStagiaire'])->name('stagiaires.edit');
-    Route::put('/stagiaires/{id}', [FormateurController::class, 'updateStagiaire'])->name('stagiaires.update');
-    Route::delete('/stagiaires/{id}', [FormateurController::class, 'destroyStagiaire'])->name('stagiaires.destroy');
+    Route::get('/stagiaires', [FormateurStagiaireController::class, 'indexStagiaires'])->name('stagiaires.index');
+    Route::get('/stagiaires/create', [FormateurStagiaireController::class, 'createStagiaire'])->name('stagiaires.create');
+    Route::post('/stagiaires', [FormateurStagiaireController::class, 'storeStagiaire'])->name('stagiaires.store');
+    Route::get('/stagiaires/{id}/edit', [FormateurStagiaireController::class, 'editStagiaire'])->name('stagiaires.edit');
+    Route::put('/stagiaires/{id}', [FormateurStagiaireController::class, 'updateStagiaire'])->name('stagiaires.update');
+    Route::delete('/stagiaires/{id}', [FormateurStagiaireController::class, 'destroyStagiaire'])->name('stagiaires.destroy');
 
     // 🧑‍🤝‍🧑 Groupes
     Route::get('/groupes', [GroupeController::class, 'index'])->name('groupes.index');
@@ -74,21 +83,17 @@ Route::middleware(['auth', 'role:formateur'])
         return redirect()->route('formateur.progressions.groupes');
     })->name('progressions.index');
 
-    Route::get('/progressions/groupes', [ProgressionController::class, 'index'])
-        ->name('progressions.groupes')
-        ->defaults('view', 'groupes');
+    Route::get('/progressions/groupes', [ProgressionGroupesController::class, 'index'])
+        ->name('progressions.groupes');
 
-    Route::get('/progressions/stagiaires', [ProgressionController::class, 'index'])
-        ->name('progressions.stagiaires')
-        ->defaults('view', 'stagiaires');
+    Route::get('/progressions/stagiaires', [ProgressionStagiairesController::class, 'index'])
+        ->name('progressions.stagiaires');
 
-    Route::get('/progressions/stagiaire/{user}', [ProgressionController::class, 'index'])
-        ->name('progressions.stagiaire')
-        ->defaults('view', 'stagiaire');
-        
-    Route::get('/progressions/modules', [ProgressionController::class, 'index'])
-    ->name('progressions.modules')
-    ->defaults('view', 'modules');
+    Route::get('/progressions/stagiaire/{user}', [ProgressionStagiaireController::class, 'show'])
+        ->name('progressions.stagiaire');
+
+    Route::get('/progressions/modules', [ProgressionModulesController::class, 'index'])
+        ->name('progressions.modules');
 
 
     // ✅ IMPORTANT : route AJAX/SCORM
@@ -96,9 +101,9 @@ Route::middleware(['auth', 'role:formateur'])
         ->name('progression.complete');
 
     // 📂 Formations
-    Route::get('/formations', [FormateurController::class, 'mesModules'])->name('formations.index');
-    Route::get('/formations/{module}/detail', [FormateurController::class, 'moduleDetail'])->name('formations.detail');
-    Route::get('/formations/{module}/preview', [FormateurController::class, 'preview'])->name('formations.preview');
+    Route::get('/formations', [FormateurModuleController::class, 'mesModules'])->name('formations.index');
+    Route::get('/formations/{module}/detail', [FormateurModuleController::class, 'moduleDetail'])->name('formations.detail');
+    Route::get('/formations/{module}/preview', [FormateurModuleController::class, 'preview'])->name('formations.preview');
     Route::get('/objectifs/recherche', [ObjectiveController::class, 'index'])->name('objectifs.index');
 
     Route::get('/formations/{module}/section/{section}', [ModuleController::class, 'section'])
@@ -126,26 +131,26 @@ Route::middleware(['auth', 'role:formateur'])
 
        
 
-    // Personnaliser les leçons d’un module pour un groupe
-    Route::get('/groupes/{group}/modules/{module}/lecons', [GroupeController::class, 'editModuleLessons'])
+    // Personnaliser les leçons d'un module pour un groupe
+    Route::get('/groupes/{group}/modules/{module}/lecons', [GroupeModuleLessonController::class, 'editModuleLessons'])
         ->name('groupes.modules.lecons.edit');
 
-    Route::post('/groupes/{group}/modules/{module}/lecons/{lecture}/toggle', [GroupeController::class, 'toggleModuleLesson'])
+    Route::post('/groupes/{group}/modules/{module}/lecons/{lecture}/toggle', [GroupeModuleLessonController::class, 'toggleModuleLesson'])
         ->name('groupes.modules.lecons.toggle');
 
-    Route::post('/groupes/{group}/modules/{module}/lecons/{lecture}/move-up', [GroupeController::class, 'moveModuleLessonUp'])
+    Route::post('/groupes/{group}/modules/{module}/lecons/{lecture}/move-up', [GroupeModuleLessonController::class, 'moveModuleLessonUp'])
         ->name('groupes.modules.lecons.move.up');
 
-    Route::post('/groupes/{group}/modules/{module}/lecons/{lecture}/move-down', [GroupeController::class, 'moveModuleLessonDown'])
+    Route::post('/groupes/{group}/modules/{module}/lecons/{lecture}/move-down', [GroupeModuleLessonController::class, 'moveModuleLessonDown'])
         ->name('groupes.modules.lecons.move.down');
 
-    Route::post('/groupes/{group}/modules/{module}/lecons/reset', [GroupeController::class, 'resetModuleLessons'])
+    Route::post('/groupes/{group}/modules/{module}/lecons/reset', [GroupeModuleLessonController::class, 'resetModuleLessons'])
         ->name('groupes.modules.lecons.reset');
 
         // Dans le groupe middleware(['auth', 'role:formateur']) ...
 
 // Route pour modifier le nombre de questions du quiz (Ajax ou Post classique)
-Route::post('/formations/lecture/{lecture}/update-quiz-count', [FormateurController::class, 'updateQuizCount'])
+Route::post('/formations/lecture/{lecture}/update-quiz-count', [FormateurModuleController::class, 'updateQuizCount'])
         ->name('lecture.update_quiz_count');
 
   /*

@@ -48,6 +48,7 @@ function normalizeSections(rawSections) {
             toggleUrl: String(rawLecture?.toggle_url ?? '').trim(),
             moveUpUrl: String(rawLecture?.move_up_url ?? '').trim(),
             moveDownUrl: String(rawLecture?.move_down_url ?? '').trim(),
+            viewUrl: String(rawLecture?.view_url ?? '').trim(),
           };
         })
         .filter(Boolean)
@@ -373,13 +374,12 @@ function GroupLessonFlow({ sections = [], csrfToken = '', readOnly = false }) {
                         <td className="px-4 py-3 text-center font-semibold">{lecture.orderInSection}</td>
 
                         <td className="px-4 py-3">
-                          <button
-                            type="button"
-                            className="text-left font-medium text-gray-900 hover:text-bleuone"
-                            onClick={() => setActiveLectureId(lecture.id)}
+                          <a
+                            href={lecture.viewUrl}
+                            className="font-medium text-gray-900 hover:text-bleuone hover:underline"
                           >
                             {lecture.title}
-                          </button>
+                          </a>
                         </td>
 
                         <td className="px-4 py-3 text-center">{lecture.slides}</td>

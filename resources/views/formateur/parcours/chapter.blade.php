@@ -5,6 +5,12 @@
 @endphp
 
 @section('parcours_content')
+    <div class="px-4 sm:px-6 lg:px-8 pt-4">
+        <x-formateur.hierarchy-breadcrumb
+            :module="['label' => 'Module', 'title' => $currentModule['title'], 'url' => $currentModule['url']]"
+            :chapter="['label' => $currentChapter['label'] ?? 'Chapitre', 'title' => $currentChapter['title'], 'url' => null]"
+        />
+    </div>
     <div
         x-data="{ sidebarOpen: window.innerWidth >= 1024 }"
         class="grid items-start gap-6 lg:grid-cols-[24rem_minmax(0,1fr)]"
