@@ -120,6 +120,51 @@ it('attaches selected co-trainers and creates an internal notification when stor
     expect($payload['group_id'] ?? null)->toBe($group->id);
 });
 
+it('allows a short temporary access code when creating and editing a group', function () {
+    $owner = createTrainerForCoTrainerTest('owner-short-code');
+    $module = createActiveModuleForTrainer($owner);
+    $groupName = 'Groupe code court ' . uniqid();
+    $token = Str::random(40);
+
+    $this
+        ->withSession(['_token' => $token])
+        ->actingAs($owner)
+        ->post(route('formateur.groupes.store'), [
+            '_token' => $token,
+            'nom' => $groupName,
+            'description' => 'Groupe avec code court',
+            'is_active' => '1',
+            'password' => 'A',
+            'modules' => [$module->id],
+            'module_positions' => [$module->id => 1],
+            'co_formateurs' => [],
+            'stagiaires' => [],
+        ])
+        ->assertRedirect(route('formateur.groupes.index'));
+
+    $group = Group::query()->where('name', $groupName)->firstOrFail();
+
+    expect($group->temporary_password)->toBe('A');
+
+    $this
+        ->withSession(['_token' => $token])
+        ->actingAs($owner)
+        ->put(route('formateur.groupes.update', $group->id), [
+            '_token' => $token,
+            'nom' => $groupName . ' modifie',
+            'description' => 'Code court conserve',
+            'is_active' => '1',
+            'password' => 'B',
+            'modules' => [$module->id],
+            'module_positions' => [$module->id => 1],
+            'co_formateurs' => [],
+            'stagiaires' => [],
+        ])
+        ->assertRedirect(route('formateur.groupes.index'));
+
+    expect($group->refresh()->temporary_password)->toBe('B');
+});
+
 it('searches only active registered co-trainers by email prefix', function () {
     $owner = createTrainerForCoTrainerTest('owner-search');
     $matchingTrainer = createTrainerForCoTrainerTest('aliasmatch');
@@ -139,6 +184,39 @@ it('searches only active registered co-trainers by email prefix', function () {
     expect($ids)->not->toContain($owner->id);
     expect($ids)->not->toContain($excludedTrainer->id);
     expect($ids)->not->toContain($inactiveTrainer->id);
+});
+
+it('preserves existing modules and ignores stale co-trainer ids when updating a group', function () {
+    $owner = createTrainerForCoTrainerTest('owner-stale-co');
+    $inactiveCoTrainer = createTrainerForCoTrainerTest('inactive-stale-co', false);
+    $module = createActiveModuleForTrainer($owner);
+    $group = createSharedGroupForTrainer($owner, $module, $inactiveCoTrainer);
+    $token = Str::random(40);
+
+    $this
+        ->withSession(['_token' => $token])
+        ->actingAs($owner)
+        ->put(route('formateur.groupes.update', $group->id), [
+            '_token' => $token,
+            'nom' => 'Groupe stale co-formateur modifie',
+            'description' => 'Enregistrement sans champs modules generes par JS',
+            'is_active' => '1',
+            'co_formateurs' => [$inactiveCoTrainer->id],
+            'stagiaires' => [],
+        ])
+        ->assertRedirect(route('formateur.groupes.index'));
+
+    $this->assertDatabaseHas('group_module', [
+        'group_id' => $group->id,
+        'module_id' => $module->id,
+        'position' => 1,
+    ]);
+
+    $this->assertDatabaseMissing('group_user', [
+        'group_id' => $group->id,
+        'user_id' => $inactiveCoTrainer->id,
+        'role_in_group' => 'formateur',
+    ]);
 });
 
 it('lets a co-trainer edit a shared group but not manage co-trainers or delete the group', function () {

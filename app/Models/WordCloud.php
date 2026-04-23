@@ -13,6 +13,7 @@ class WordCloud extends Model
         'group_id',
         'title',
         'question',
+        'questions',
         'access_code',
         'is_active',
         'opened_at',
@@ -20,10 +21,19 @@ class WordCloud extends Model
     ];
 
     protected $casts = [
+        'questions' => 'array',
         'is_active' => 'boolean',
         'opened_at' => 'datetime',
         'closed_at' => 'datetime',
     ];
+
+    public function getQuestionsArrayAttribute(): array
+    {
+        if (!empty($this->questions)) {
+            return $this->questions;
+        }
+        return $this->question ? [$this->question] : [];
+    }
 
     public function module(): BelongsTo
     {

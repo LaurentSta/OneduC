@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Formateur;
 
 use App\Http\Controllers\Controller;
 use App\Mail\StagiaireGroupInvitation;
+use App\Models\FormateurParcours;
 use App\Models\Group;
 use App\Models\Module;
 use App\Models\User;
@@ -45,18 +46,33 @@ class GroupeController extends Controller
         $initialCoFormateurs = $this->resolveCoTrainerPayloadFromIds(old('co_formateurs', []));
         $canManageCoFormateurs = true;
 
-        return view('formateur.groupes.create', compact('modules', 'initialCoFormateurs', 'canManageCoFormateurs'));
+        $mesParcours = FormateurParcours::query()
+            ->where('formateur_id', auth()->id())
+            ->with(['items' => fn ($q) => $q->orderBy('position')])
+            ->orderBy('title')
+            ->get();
+
+        return view('formateur.groupes.create', compact('modules', 'initialCoFormateurs', 'canManageCoFormateurs', 'mesParcours'));
     }
 
     public function store(Request $request)
     {
+        $currentTrainerId = (int) auth()->id();
+        $request->merge([
+            'co_formateurs' => $this->sanitizeCoTrainerIds($request->input('co_formateurs', []), $currentTrainerId)->all(),
+        ]);
+
         $request->validate([
             'nom' => ['required', 'string', 'max:150', Rule::unique('groups', 'name')],
             'description' => ['nullable', 'string', 'max:2000'],
             'is_active' => ['required', 'boolean'],
             'start_date' => ['nullable', 'date'],
             'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
-            'password' => ['required', 'string', 'min:8'],
+            'password' => ['required', 'string'],
+            'formateur_parcours_id' => [
+                'nullable', 'integer',
+                Rule::exists('formateur_parcours', 'id')->where('formateur_id', auth()->id()),
+            ],
             'modules' => ['required', 'array', 'min:1'],
             'modules.*' => [Rule::exists('modules', 'id')->where('status', 1)],
             'module_positions' => ['nullable', 'array'],
@@ -79,7 +95,11 @@ class GroupeController extends Controller
         ], $this->groupValidationMessages(), $this->groupValidationAttributes());
 
         $temporaryPassword = (string) $request->password;
-        $coTrainerIds = $this->sanitizeCoTrainerIds($request->input('co_formateurs', []), (int) auth()->id());
+        $coTrainerIds = collect($request->input('co_formateurs', []))
+            ->map(fn ($value) => (int) $value)
+            ->filter()
+            ->unique()
+            ->values();
 
         try {
             DB::transaction(function () use ($request, $temporaryPassword, $coTrainerIds): void {
@@ -91,6 +111,7 @@ class GroupeController extends Controller
                     'end_date' => $request->input('end_date') ?: null,
                     'temporary_password' => $temporaryPassword,
                     'instructor_id' => auth()->id(),
+                    'formateur_parcours_id' => $request->input('formateur_parcours_id') ?: null,
                 ]);
 
                 $this->syncCoFormateurs($group, $coTrainerIds, auth()->user());
@@ -211,7 +232,13 @@ class GroupeController extends Controller
                     'email' => (string) $trainer->email,
                 ]);
 
-        return view('formateur.groupes.edit', compact('group', 'modules', 'initialCoFormateurs', 'canManageCoFormateurs'));
+        $mesParcours = FormateurParcours::query()
+            ->where('formateur_id', auth()->id())
+            ->with(['items' => fn ($q) => $q->orderBy('position')])
+            ->orderBy('title')
+            ->get();
+
+        return view('formateur.groupes.edit', compact('group', 'modules', 'initialCoFormateurs', 'canManageCoFormateurs', 'mesParcours'));
     }
 
     public function update(Request $request, $id)
@@ -222,6 +249,30 @@ class GroupeController extends Controller
             ->with(['students', 'coFormateurs'])
             ->firstOrFail();
         $canManageCoFormateurs = $group->canManageCoFormateurs(auth()->user());
+        $currentTrainerId = (int) auth()->id();
+
+        $currentModuleIds = $group->modules()
+            ->pluck('modules.id')
+            ->map(fn ($id) => (int) $id)
+            ->values();
+
+        if (! $request->has('modules')) {
+            $currentModulePositions = $group->modules()
+                ->pluck('group_module.position', 'modules.id')
+                ->mapWithKeys(fn ($position, $moduleId) => [(int) $moduleId => (int) $position])
+                ->all();
+
+            $request->merge([
+                'modules' => $currentModuleIds->all(),
+                'module_positions' => $currentModulePositions,
+            ]);
+        }
+
+        $request->merge([
+            'co_formateurs' => $canManageCoFormateurs
+                ? $this->sanitizeCoTrainerIds($request->input('co_formateurs', []), $currentTrainerId)->all()
+                : [],
+        ]);
 
         $request->validate([
             'nom' => [
@@ -234,9 +285,21 @@ class GroupeController extends Controller
             'is_active' => ['required', 'boolean'],
             'start_date' => ['nullable', 'date'],
             'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
-            'password' => ['nullable', 'string', 'min:8'],
+            'password' => ['nullable', 'string'],
+            'formateur_parcours_id' => [
+                'nullable', 'integer',
+                Rule::exists('formateur_parcours', 'id')->where('formateur_id', auth()->id()),
+            ],
             'modules' => ['required', 'array', 'min:1'],
-            'modules.*' => [Rule::exists('modules', 'id')->where('status', 1)],
+            'modules.*' => [
+                Rule::exists('modules', 'id')->where(function ($query) use ($currentModuleIds): void {
+                    $query->where('status', 1);
+
+                    if ($currentModuleIds->isNotEmpty()) {
+                        $query->orWhereIn('id', $currentModuleIds->all());
+                    }
+                }),
+            ],
             'module_positions' => ['nullable', 'array'],
             'stagiaires' => ['nullable', 'array'],
             'stagiaires.*.email' => ['nullable', 'email', 'distinct'],
@@ -272,7 +335,7 @@ class GroupeController extends Controller
 
         if ($hasStagiairePayload && $effectiveTemporaryPassword === '') {
             throw ValidationException::withMessages([
-                'password' => 'Veuillez renseigner un code d\'accès provisoire (au moins 8 caractères) avant d\'ajouter un nouveau stagiaire.',
+                'password' => 'Veuillez renseigner un code d\'accès provisoire avant d\'ajouter un nouveau stagiaire.',
             ]);
         }
 
@@ -281,6 +344,7 @@ class GroupeController extends Controller
             'description' => $request->description,
             'start_date' => $request->input('start_date') ?: null,
             'end_date' => $request->input('end_date') ?: null,
+            'formateur_parcours_id' => $request->input('formateur_parcours_id') ?: null,
         ];
 
         static $hasIsActiveColumn = null;
@@ -296,7 +360,11 @@ class GroupeController extends Controller
         $group->update($groupPayload);
 
         if ($canManageCoFormateurs) {
-            $coTrainerIds = $this->sanitizeCoTrainerIds($request->input('co_formateurs', []), (int) auth()->id());
+            $coTrainerIds = collect($request->input('co_formateurs', []))
+                ->map(fn ($value) => (int) $value)
+                ->filter()
+                ->unique()
+                ->values();
             $this->syncCoFormateurs($group, $coTrainerIds, auth()->user());
         }
 
@@ -485,7 +553,6 @@ class GroupeController extends Controller
             'nom.required' => 'Veuillez renseigner le nom du groupe.',
             'nom.unique' => 'Ce nom de groupe existe déjà. Merci de choisir un autre nom.',
             'password.required' => 'Veuillez renseigner un code d\'accès provisoire.',
-            'password.min' => 'Le code d\'accès provisoire doit contenir au moins 8 caractères.',
             'modules.required' => 'Veuillez sélectionner au moins un module.',
             'modules.min' => 'Veuillez sélectionner au moins un module.',
             'modules.*.exists' => 'Un des modules sélectionnés est invalide.',
@@ -518,9 +585,9 @@ class GroupeController extends Controller
         ];
     }
 
-    private function sanitizeCoTrainerIds(array $rawIds, int $currentTrainerId)
+    private function sanitizeCoTrainerIds($rawIds, int $currentTrainerId)
     {
-        $candidateIds = collect($rawIds)
+        $candidateIds = collect(is_array($rawIds) ? $rawIds : [$rawIds])
             ->map(fn ($value) => (int) $value)
             ->filter(fn (int $value) => $value > 0 && $value !== $currentTrainerId)
             ->unique()
@@ -539,9 +606,9 @@ class GroupeController extends Controller
             ->values();
     }
 
-    private function resolveCoTrainerPayloadFromIds(array $rawIds)
+    private function resolveCoTrainerPayloadFromIds($rawIds)
     {
-        $ids = collect($rawIds)
+        $ids = collect(is_array($rawIds) ? $rawIds : [$rawIds])
             ->map(fn ($value) => (int) $value)
             ->filter(fn (int $value) => $value > 0)
             ->unique()

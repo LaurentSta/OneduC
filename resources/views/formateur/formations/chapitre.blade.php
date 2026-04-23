@@ -46,7 +46,7 @@
     mode: 'formateur',
     activeTab: 'objectifs',
     inspectorHelpOpen: false,
-    selectedTool: @js($currentWhiteboardGroup ? 'whiteboard' : 'word_cloud'),
+    selectedTool: 'whiteboard',
     toolGroups: @js($toolGroups),
     selectedToolGroupId: @js($defaultToolGroupId),
     selectedToolModuleId: @js($defaultToolModuleId),
@@ -962,25 +962,6 @@
 
                           <div x-data="{ open: false }" class="relative flex items-center gap-2" @click.outside="open = false">
                               <button type="button"
-                                      @click="selectedTool = 'word_cloud'"
-                                      :class="selectedTool === 'word_cloud' ? 'bg-violet-50 text-violet-800 border-violet-200' : 'bg-white text-slate-700 border-transparent hover:bg-slate-50'"
-                                      class="flex flex-1 items-center rounded-2xl border px-3 py-3 text-left text-sm font-semibold transition">
-                                  Nuage de mots
-                              </button>
-                              <button type="button"
-                                      @click.stop="open = !open"
-                                      :aria-expanded="open.toString()"
-                                      class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-300 bg-white text-[11px] font-black text-bleuone transition hover:border-bleuone hover:bg-slate-50"
-                                      aria-label="Aide sur nuage de mots">
-                                  ?
-                              </button>
-                              <div x-show="open" x-cloak class="absolute left-0 top-full z-20 mt-2 w-64 rounded-xl border border-slate-200 bg-slate-900 px-3 py-2 text-[11px] leading-relaxed text-white shadow-xl" style="display: none;">
-                                  Recueille les mots ou idees des stagiaires en direct pour faire ressortir les themes dominants du groupe.
-                              </div>
-                          </div>
-
-                          <div x-data="{ open: false }" class="relative flex items-center gap-2" @click.outside="open = false">
-                              <button type="button"
                                       @click="selectedTool = 'whiteboard'"
                                       :class="selectedTool === 'whiteboard' ? 'bg-teal-50 text-teal-800 border-teal-200' : 'bg-white text-slate-700 border-transparent hover:bg-slate-50'"
                                       class="flex flex-1 items-center rounded-2xl border px-3 py-3 text-left text-sm font-semibold transition">
@@ -1045,82 +1026,6 @@
                                      :class="selectedToolWhiteboardUrl() === '#' ? 'pointer-events-none opacity-50' : ''">
                                       Ouvrir le tableau blanc
                                   </a>
-                              </div>
-                          </section>
-
-                          <section x-show="selectedTool === 'word_cloud'" x-cloak class="rounded-[22px] border border-slate-200 bg-white p-5 shadow-sm" style="display: none;">
-                              <div class="flex items-start justify-between gap-3">
-                                  <div>
-                                      <h4 class="text-lg font-bold text-bleuone">Nuage de mots</h4>
-                                      <p class="mt-1 text-xs text-slate-500">Creez un nuage pour le groupe selectionne et ouvrez le live dans un nouvel onglet.</p>
-                                  </div>
-                                  <span class="rounded-full bg-violet-50 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-violet-700">
-                                      {{ $wordClouds->count() }} nuage{{ $wordClouds->count() > 1 ? 's' : '' }}
-                                  </span>
-                              </div>
-
-                              <form method="POST"
-                                    action="{{ route('formateur.wordclouds.store') }}"
-                                    target="_blank"
-                                    class="mt-4 space-y-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                                  @csrf
-                                  <input type="hidden" name="group_id" :value="selectedToolGroupId">
-                                  <input type="hidden" name="module_id" :value="selectedToolModuleId">
-
-                                  <input type="text"
-                                         name="title"
-                                         required
-                                         placeholder="Titre du nuage"
-                                         class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm focus:border-orangeone focus:ring-orangeone">
-
-                                  <textarea name="question"
-                                            rows="3"
-                                            required
-                                            placeholder="Question a poser au groupe"
-                                            class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm focus:border-orangeone focus:ring-orangeone"></textarea>
-
-                                  <button type="submit"
-                                          class="inline-flex items-center justify-center rounded-xl bg-violet-600 px-4 py-2.5 text-xs font-bold uppercase text-white transition hover:bg-violet-700"
-                                          :class="!selectedToolGroupId || !selectedToolModuleId ? 'pointer-events-none opacity-50' : ''">
-                                      Lancer le nuage de mots
-                                  </button>
-                              </form>
-
-                              <div class="mt-4 space-y-3">
-                                  @forelse($wordClouds as $wordCloud)
-                                      <div x-show="(!selectedToolModuleId || Number(selectedToolModuleId) === {{ $wordCloud['module_id'] ?: 0 }}) && (!selectedToolGroupId || Number(selectedToolGroupId) === {{ $wordCloud['group_id'] ?: 0 }} || {{ $wordCloud['group_id'] ?: 0 }} === 0)"
-                                           class="rounded-2xl border {{ $wordCloud['is_active'] ? 'border-violet-200 bg-violet-50/60' : 'border-slate-200 bg-slate-50' }} p-4">
-                                          <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                                              <div>
-                                                  <div class="flex flex-wrap items-center gap-2">
-                                                      <p class="text-sm font-bold text-slate-800">{{ $wordCloud['title'] }}</p>
-                                                      <span class="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide {{ $wordCloud['is_active'] ? 'bg-white text-violet-700 border border-violet-200' : 'bg-white text-slate-500 border border-slate-200' }}">
-                                                          {{ $wordCloud['is_active'] ? 'Actif' : 'Ferme' }}
-                                                      </span>
-                                                  </div>
-                                                  <p class="mt-2 text-xs text-slate-600">{{ $wordCloud['question'] }}</p>
-                                              </div>
-                                              <div class="flex flex-wrap items-center gap-2">
-                                                  <a href="{{ $wordCloud['live_url'] }}"
-                                                     target="_blank"
-                                                     rel="noopener"
-                                                     class="inline-flex items-center justify-center rounded-lg border border-violet-200 bg-white px-3 py-2 text-[11px] font-bold uppercase text-violet-700 transition hover:bg-violet-100">
-                                                      Ouvrir le live
-                                                  </a>
-                                                  <a href="{{ $wordCloud['join_url'] }}"
-                                                     target="_blank"
-                                                     rel="noopener"
-                                                     class="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-[11px] font-bold uppercase text-slate-700 transition hover:bg-slate-100">
-                                                      Lien stagiaire
-                                                  </a>
-                                              </div>
-                                          </div>
-                                      </div>
-                                  @empty
-                                      <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-center">
-                                          <p class="text-sm font-medium text-slate-500">Aucun nuage de mots rattache a ce module.</p>
-                                      </div>
-                                  @endforelse
                               </div>
                           </section>
 

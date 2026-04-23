@@ -9,6 +9,8 @@ class WordCloudEntry extends Model
 {
     protected $fillable = [
         'word_cloud_id',
+        'formateur_parcours_item_id',
+        'question_index',
         'user_id',
         'answer',
         'normalized_answer',

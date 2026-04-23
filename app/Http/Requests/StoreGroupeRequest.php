@@ -23,7 +23,7 @@ class StoreGroupeRequest extends FormRequest
   return [
     'nom' => ['required','string','max:150'],
     'description' => ['nullable','string','max:2000'],
-    'password' => ['required','string','min:8'],
+    'password' => ['required','string'],
     'stagiaires' => ['nullable','array'],
     'stagiaires.*.prenom' => ['nullable','string','max:80'],
     'stagiaires.*.nom' => ['nullable','string','max:80'],

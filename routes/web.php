@@ -8,6 +8,7 @@ use App\Http\Controllers\ContactController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Backend\StagiaireController;
 use App\Http\Controllers\WordCloudParticipationController;
+use App\Http\Controllers\RoueAleatoireParticipationController;
 
 // -------------------------------------------------------------------------
 // Fichier de routes publiques de l'application. Les routes des différents
@@ -110,6 +111,14 @@ Route::get('/oneduc/mot/{code}', [WordCloudParticipationController::class, 'join
 Route::post('/oneduc/mot/{code}', [WordCloudParticipationController::class, 'submit'])
     ->middleware('throttle:30,1')
     ->name('wordcloud.submit');
+Route::get('/oneduc/mot/{code}/data', [WordCloudParticipationController::class, 'liveData'])
+    ->name('wordcloud.live.data');
+
+// ----------------------------------------------------------
+// 🎡 Roue aléatoire (participation)
+// ----------------------------------------------------------
+Route::get('/oneduc/roue/{code}',       [RoueAleatoireParticipationController::class, 'show'])->name('roue.join');
+Route::get('/oneduc/roue/{code}/state', [RoueAleatoireParticipationController::class, 'state'])->name('roue.state');
 
 
 

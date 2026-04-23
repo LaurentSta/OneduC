@@ -214,23 +214,34 @@ class StagiaireController extends Controller
 
     // 1. On récupère le groupe avec ses modules, en demandant explicitement la colonne de pivot 'position'
     // et en triant par celle-ci.
-    $group = Group::with(['modules' => function($query) {
-        $query->active()
-              ->with(['sections.lectures:id,section_id,module_id,duration,question_count,quiz_enabled,quiz_questions_per_attempt'])
-              ->withPivot('position') // On récupère la position définie par le formateur
-              ->orderBy('group_module.position', 'asc'); // On trie !
-    }])
+    $group = Group::with([
+        'modules' => function ($query) {
+            $query->active()
+                  ->with(['sections.lectures:id,section_id,module_id,duration,question_count,quiz_enabled,quiz_questions_per_attempt'])
+                  ->withPivot('position')
+                  ->orderBy('group_module.position', 'asc');
+        },
+        'formateurParcours' => function ($query) {
+            $query->with(['items' => fn ($q) => $q->orderBy('position')]);
+        },
+    ])
     ->active()
     ->whereHas('students', fn ($q) => $q->where('email', $user->email))
-    ->first(); // On prend le premier groupe trouvé
+    ->first();
 
-    // 2. On extrait les modules triés
     $modules = $group ? $group->modules : collect();
-
-    // 3. On branche la progression comme tu le faisais déjà
     $this->attachProgressAttributes($modules, $user->id);
 
-    return view('stagiaire.stagiaire_modules', ['modules' => $modules]);
+    $parcours        = $group?->formateurParcours;
+    $parcoursItems   = $parcours?->items ?? collect();
+    $modulesById     = $modules->keyBy('id');
+
+    // Outils numériques actifs du groupe (nuages de mots)
+    $activeWordClouds = $group
+        ? $group->wordClouds()->where('is_active', true)->orderByDesc('opened_at')->get()
+        : collect();
+
+    return view('stagiaire.stagiaire_modules', compact('modules', 'parcours', 'parcoursItems', 'modulesById', 'activeWordClouds'));
 }
 
     public function StagiaireResultats()

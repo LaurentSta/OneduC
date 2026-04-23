@@ -98,6 +98,44 @@
     ->unique()
     ->values();
 
+  // Payload parcours → modules pour pre-chargement JS
+  $parcoursModulesPayload = ($mesParcours ?? collect())->mapWithKeys(function ($parcours) use ($modulesById) {
+    $modules = $parcours->items
+      ->filter(fn($item) => $item->type === 'module' && $item->module_id)
+      ->map(function ($item, $i) use ($modulesById) {
+        $meta = $modulesById->get($item->module_id) ?? [];
+        return [
+          'id'             => (int) $item->module_id,
+          'title'          => (string) data_get($meta, 'title', "Module #{$item->module_id}"),
+          'position'       => (int) $item->position,
+          'persisted'      => false,
+          'manage_url'     => '',
+          'lesson_count'   => (int) data_get($meta, 'lesson_count', 0),
+          'question_count' => (int) data_get($meta, 'question_count', 0),
+          'duration_label' => (string) data_get($meta, 'duration_label', 'Rythme libre'),
+        ];
+      })
+      ->values();
+    return [$parcours->id => $modules];
+  });
+
+  // Parcours disponibles pour le sélecteur React
+  $availableParcours = ($mesParcours ?? collect())->map(function ($parcours) use ($parcoursModulesPayload) {
+    $modules = $parcoursModulesPayload->get($parcours->id) ?? collect();
+    return [
+      'id'             => $parcours->id,
+      'title'          => $parcours->title,
+      'description'    => $parcours->description,
+      'module_count'   => $modules->count(),
+      'lesson_count'   => (int) $modules->sum('lesson_count'),
+      'question_count' => (int) $modules->sum('question_count'),
+      'wc_count'       => $parcours->items->where('type', 'wordcloud')->count(),
+      'poll_count'     => $parcours->items->where('type', 'poll')->count(),
+      'total_steps'    => $parcours->items->count(),
+      'modules'        => $modules->values()->all(),
+    ];
+  })->values()->all();
+
   $oldIsActive = old('is_active', 1);
   $isGroupActive = filter_var($oldIsActive, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
   $isGroupActive = $isGroupActive ?? in_array((string) $oldIsActive, ['1', 'on'], true);
@@ -465,7 +503,6 @@
                 name="password"
                 type="text"
                 required
-                minlength="8"
                 autocomplete="off"
                 value="{{ old('password') }}"
                 class="bg-white border {{ $errors->has('password') ? 'border-red-400' : 'border-gray-300' }} text-gray-900 text-sm rounded-lg focus:ring-orangeone focus:border-orangeone block w-full px-3 py-2.5 font-mono tracking-wide"
@@ -543,6 +580,7 @@ Lucas;Bernard;lucas.bernard@entreprise.fr</pre>
             data-group-module-flow
             data-mode="create"
             data-available-modules='@json($availableModules)'
+            data-available-parcours='@json($availableParcours)'
             data-selected-modules='@json($initialSelectedModules)'
             class="space-y-6"
           ></div>
@@ -772,9 +810,7 @@ Lucas;Bernard;lucas.bernard@entreprise.fr</pre>
         if (el.name === 'nom') {
           addMessage('Veuillez renseigner le nom du groupe.');
         } else if (el.name === 'password') {
-          addMessage(!value
-            ? 'Veuillez renseigner le code d’accès provisoire.'
-            : 'Le code d’accès provisoire doit contenir au moins 8 caractères.');
+          addMessage('Veuillez renseigner le code d’accès provisoire.');
         } else if (isStudentField) {
           addMessage('Veuillez compléter prénom, nom et e-mail pour chaque stagiaire ajouté.');
         } else {

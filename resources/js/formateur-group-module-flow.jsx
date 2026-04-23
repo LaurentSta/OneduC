@@ -6,6 +6,7 @@ import '@xyflow/react/dist/style.css';
 const FLOW_COLUMNS = 3;
 const FLOW_HORIZONTAL_GAP = 340;
 const FLOW_VERTICAL_GAP = 190;
+const BANNER_OFFSET = 160;
 
 function isWrapToNextRow(index, total) {
   if (index < 0 || index >= total - 1) return false;
@@ -102,14 +103,40 @@ function renumberModules(modules) {
   }));
 }
 
-function nodePosition(index) {
+function nodePosition(index, hasBanner = false) {
   const col = index % FLOW_COLUMNS;
   const row = Math.floor(index / FLOW_COLUMNS);
 
   return {
     x: col * FLOW_HORIZONTAL_GAP,
-    y: row * FLOW_VERTICAL_GAP + 40,
+    y: row * FLOW_VERTICAL_GAP + 40 + (hasBanner ? BANNER_OFFSET : 0),
   };
+}
+
+function ParcoursHeaderLabel({ parcours }) {
+  const chip = (label, bg, text) => (
+    <span key={label} style={{ background: bg, color: text }}
+      className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold">
+      {label}
+    </span>
+  );
+  return (
+    <div style={{ minWidth: 0 }}>
+      <div className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: 'rgba(255,255,255,0.65)' }}>
+        Parcours de formation
+      </div>
+      <div className="text-sm font-bold leading-snug mb-2.5" style={{ color: '#fff' }}>
+        {parcours.title}
+      </div>
+      <div className="flex flex-wrap gap-1.5">
+        {chip(`${parcours.module_count} module${parcours.module_count > 1 ? 's' : ''}`, 'rgba(255,255,255,0.18)', '#fff')}
+        {chip(`${parcours.lesson_count} leçon${parcours.lesson_count > 1 ? 's' : ''}`, '#e94d2a', '#fff')}
+        {chip(`${parcours.question_count} question${parcours.question_count > 1 ? 's' : ''}`, '#16a34a', '#fff')}
+        {parcours.wc_count > 0 && chip(`${parcours.wc_count} nuage${parcours.wc_count > 1 ? 's' : ''} de mots`, '#d97706', '#fff')}
+        {parcours.poll_count > 0 && chip(`${parcours.poll_count} sondage${parcours.poll_count > 1 ? 's' : ''}`, '#0d9488', '#fff')}
+      </div>
+    </div>
+  );
 }
 
 function OpenBookIcon({ className = 'h-4 w-4' }) {
@@ -136,8 +163,11 @@ function ModuleMetric({ label, value }) {
 
 function GroupModuleFlow({
   availableModules = [],
+  availableParcours = [],
   initialModules = [],
+  initialParcoursId = null,
   manageLessonsLabel = 'Gérer les leçons',
+  mountNode = null,
 }) {
   const normalizedAvailableModules = useMemo(
     () => normalizeAvailableModules(availableModules),
@@ -152,6 +182,36 @@ function GroupModuleFlow({
   const [selectedModules, setSelectedModules] = useState(() =>
     normalizeSelectedModules(initialModules, availableModuleMap),
   );
+
+  const [pickerTab, setPickerTab] = useState('modules');
+  const [loadedParcours, setLoadedParcours] = useState(() => {
+    if (!initialParcoursId) return null;
+    return availableParcours.find((p) => p.id === initialParcoursId) ?? null;
+  });
+
+  const loadParcours = (parcours) => {
+    const rawModules = Array.isArray(parcours.modules) ? parcours.modules : [];
+    if (!rawModules.length) return;
+
+    setLoadedParcours(parcours);
+    setSelectedModules((current) => {
+      const existingIds = new Set(current.map((m) => m.id));
+      const newModules = rawModules
+        .map((m) => ({
+          id: toPositiveInt(m?.id),
+          title: String(m?.title ?? '').trim() || `Module #${m?.id}`,
+          position: 0,
+          persisted: false,
+          manage_url: '',
+          lesson_count: Math.max(0, Number(m?.lesson_count ?? 0) || 0),
+          question_count: Math.max(0, Number(m?.question_count ?? 0) || 0),
+          duration_label: String(m?.duration_label ?? '').trim() || 'Rythme libre',
+        }))
+        .filter((m) => m.id > 0 && !existingIds.has(m.id));
+
+      return renumberModules([...current, ...newModules]);
+    });
+  };
 
   const [newModuleId, setNewModuleId] = useState('');
   const [addError, setAddError] = useState('');
@@ -168,9 +228,32 @@ function GroupModuleFlow({
     [normalizedAvailableModules, selectedIds],
   );
 
-  const flowNodes = useMemo(
-    () =>
-      selectedModules.map((module, index) => ({
+  const flowNodes = useMemo(() => {
+    const hasBanner = loadedParcours !== null;
+    const nodes = [];
+
+    if (hasBanner) {
+      const colCount = Math.max(1, Math.min(selectedModules.length, FLOW_COLUMNS));
+      const bannerWidth = (colCount - 1) * FLOW_HORIZONTAL_GAP + 260;
+      nodes.push({
+        id: 'parcours-banner',
+        data: { label: <ParcoursHeaderLabel parcours={loadedParcours} /> },
+        position: { x: 0, y: 0 },
+        sourcePosition: Position.Bottom,
+        draggable: false,
+        selectable: false,
+        style: {
+          border: '2px solid #004461',
+          borderRadius: '12px',
+          width: bannerWidth,
+          padding: '12px 16px',
+          background: '#004461',
+        },
+      });
+    }
+
+    selectedModules.forEach((module, index) => {
+      nodes.push({
         id: String(module.id),
         data: {
           label: (
@@ -181,7 +264,6 @@ function GroupModuleFlow({
                   {`${module.position}. ${module.title}`}
                 </span>
               </div>
-
               <div className="mt-3 grid grid-cols-3 gap-2">
                 <ModuleMetric label="Leçons" value={module.lesson_count} />
                 <ModuleMetric label="Questions" value={module.question_count} />
@@ -190,9 +272,9 @@ function GroupModuleFlow({
             </div>
           ),
         },
-        position: nodePosition(index),
+        position: nodePosition(index, hasBanner),
         sourcePosition: isWrapToNextRow(index, selectedModules.length) ? Position.Bottom : Position.Right,
-        targetPosition: isWrapFromPreviousRow(index) ? Position.Top : Position.Left,
+        targetPosition: isWrapFromPreviousRow(index) ? Position.Top : (hasBanner && index === 0 ? Position.Top : Position.Left),
         draggable: false,
         selectable: false,
         style: {
@@ -202,33 +284,40 @@ function GroupModuleFlow({
           padding: '12px 14px',
           background: '#fff',
         },
-      })),
-    [selectedModules],
-  );
+      });
+    });
 
+    return nodes;
+  }, [selectedModules, loadedParcours]);
 
-  const flowEdges = useMemo(
-    () =>
-      selectedModules.slice(1).map((module, index) => ({
+  const flowEdges = useMemo(() => {
+    const edges = [];
+
+    if (loadedParcours && selectedModules.length > 0) {
+      edges.push({
+        id: 'edge-banner-first',
+        source: 'parcours-banner',
+        target: String(selectedModules[0].id),
+        type: 'smoothstep',
+        markerEnd: { type: MarkerType.ArrowClosed, color: '#e94d2a' },
+        style: { stroke: '#e94d2a', strokeWidth: 3 },
+      });
+    }
+
+    selectedModules.slice(1).forEach((module, index) => {
+      edges.push({
         id: `edge-${selectedModules[index].id}-${module.id}`,
         source: String(selectedModules[index].id),
         target: String(module.id),
         type: 'smoothstep',
-        pathOptions: {
-          borderRadius: 22,
-          offset: 40,
-        },
-        markerEnd: {
-          type: MarkerType.ArrowClosed,
-          color: '#e94d2a', // couleur de la pointe
-        },
-        style: {
-          stroke: '#e94d2a', // couleur de la ligne
-          strokeWidth: 3,
-        },
-      })),
-    [selectedModules],
-  );
+        pathOptions: { borderRadius: 22, offset: 40 },
+        markerEnd: { type: MarkerType.ArrowClosed, color: '#e94d2a' },
+        style: { stroke: '#e94d2a', strokeWidth: 3 },
+      });
+    });
+
+    return edges;
+  }, [selectedModules, loadedParcours]);
 
   const runFitView = useCallback(() => {
     if (!flowInstance || !canvasRef.current) return;
@@ -276,6 +365,7 @@ function GroupModuleFlow({
       return;
     }
 
+    setLoadedParcours(null);
     setSelectedModules((current) =>
       renumberModules([
         ...current,
@@ -299,6 +389,7 @@ function GroupModuleFlow({
     const id = toPositiveInt(moduleId);
     if (!id) return;
 
+    setLoadedParcours(null);
     setSelectedModules((current) => renumberModules(current.filter((module) => module.id !== id)));
   };
 
@@ -322,39 +413,133 @@ function GroupModuleFlow({
   return (
     <div className="space-y-4">
       <div className="space-y-3">
-        <div className="flex flex-col gap-3 md:flex-row md:items-end">
-          <div className="w-full">
-            <select
-              value={newModuleId}
-              onChange={(event) => {
-                setAddError('');
-                setNewModuleId(event.target.value);
-              }}
-              className="w-full rounded border border-gray-300 px-3 py-2"
+        {availableParcours.length > 0 && (
+          <div className="flex gap-1 border-b border-gray-200 mb-1">
+            <button
+              type="button"
+              onClick={() => setPickerTab('modules')}
+              className={`px-4 py-2 text-sm font-semibold border-b-2 -mb-px transition ${pickerTab === 'modules' ? 'border-[#004461] text-[#004461]' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
             >
-              <option value="">- Sélectionner un module -</option>
-              {selectableModules.map((module) => (
-                <option key={`module-option-${module.id}`} value={module.id}>
-                  {module.title}
-                </option>
-              ))}
-            </select>
-            {addError ? <p className="mt-1 text-sm text-red-600">{addError}</p> : null}
+              Modules individuels
+            </button>
+            <button
+              type="button"
+              onClick={() => setPickerTab('parcours')}
+              className={`px-4 py-2 text-sm font-semibold border-b-2 -mb-px transition ${pickerTab === 'parcours' ? 'border-[#004461] text-[#004461]' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+            >
+              Mes parcours ({availableParcours.length})
+            </button>
           </div>
+        )}
 
+        {pickerTab === 'parcours' ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pb-1">
+            {availableParcours.map((parcours) => (
+              <div key={`parcours-card-${parcours.id}`} className="rounded-[12px] border border-gray-200 bg-white shadow-sm overflow-hidden flex flex-col">
+                <div className="bg-[#004461] px-4 py-3">
+                  <h4 className="text-sm font-bold text-white leading-snug">{parcours.title}</h4>
+                </div>
+                <div className="flex flex-col flex-1 px-4 py-3 gap-3">
+                  {parcours.description && (
+                    <p className="text-xs text-gray-500 line-clamp-2">{parcours.description}</p>
+                  )}
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="rounded-lg bg-[#004461]/5 px-2 py-2 text-center">
+                      <div className="text-[10px] font-semibold text-[#004461] uppercase tracking-wide">Modules</div>
+                      <div className="text-sm font-bold text-[#004461]">{parcours.module_count}</div>
+                    </div>
+                    <div className="rounded-lg bg-orange-500/10 px-2 py-2 text-center">
+                      <div className="text-[10px] font-semibold text-orange-600 uppercase tracking-wide">Leçons</div>
+                      <div className="text-sm font-bold text-orange-600">{parcours.lesson_count}</div>
+                    </div>
+                    <div className="rounded-lg bg-green-500/10 px-2 py-2 text-center">
+                      <div className="text-[10px] font-semibold text-green-600 uppercase tracking-wide">Questions</div>
+                      <div className="text-sm font-bold text-green-600">{parcours.question_count}</div>
+                    </div>
+                  </div>
+                  {parcours.module_count > 0 ? (
+                    <button
+                      type="button"
+                      onClick={() => loadParcours(parcours)}
+                      className="mt-auto w-full inline-flex items-center justify-center gap-2 rounded-[8px] px-3 py-2 text-xs font-bold text-white bg-[#004461] hover:opacity-90 transition"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                      </svg>
+                      Ajouter ce parcours
+                    </button>
+                  ) : (
+                    <p className="mt-auto text-center text-[10px] text-gray-400 italic">
+                      Ce parcours ne contient pas de modules — ajoutez des étapes de type module dans le builder pour l'utiliser ici.
+                    </p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3 md:flex-row md:items-end">
+            <div className="w-full">
+              <select
+                value={newModuleId}
+                onChange={(event) => {
+                  setAddError('');
+                  setNewModuleId(event.target.value);
+                }}
+                className="w-full rounded border border-gray-300 px-3 py-2"
+              >
+                <option value="">- Sélectionner un module -</option>
+                {selectableModules.map((module) => (
+                  <option key={`module-option-${module.id}`} value={module.id}>
+                    {module.title}
+                  </option>
+                ))}
+              </select>
+              {addError ? <p className="mt-1 text-sm text-red-600">{addError}</p> : null}
+            </div>
+
+            <button
+              type="button"
+              onClick={addModule}
+              disabled={!newModuleId}
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-orangeone bg-orangeone px-4 py-2 text-sm font-bold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 md:shrink-0"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+              </svg>
+              Ajouter un module
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Hidden input liant le groupe au parcours */}
+      <input type="hidden" name="formateur_parcours_id" value={loadedParcours?.id ?? ''} />
+
+      {/* Bandeau parcours chargé + bouton retrait */}
+      {loadedParcours && (
+        <div className="flex items-center gap-3 rounded-[10px] border border-[#004461]/25 bg-[#004461]/8 px-4 py-2.5 mb-2">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 shrink-0 text-[#004461]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+          </svg>
+          <span className="text-sm font-semibold text-[#004461] flex-1 truncate">
+            Parcours lié : {loadedParcours.title}
+          </span>
           <button
             type="button"
-            onClick={addModule}
-            disabled={!newModuleId}
-            className="inline-flex items-center justify-center gap-2 rounded-lg border border-orangeone bg-orangeone px-4 py-2 text-sm font-bold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 md:shrink-0"
+            onClick={() => {
+              setLoadedParcours(null);
+              setSelectedModules([]);
+            }}
+            className="inline-flex items-center gap-1.5 rounded-[6px] border border-red-300 bg-white px-2.5 py-1 text-xs font-semibold text-red-600 hover:bg-red-50 transition"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"/>
             </svg>
-            Ajouter un module
+            Retirer le parcours
           </button>
         </div>
-      </div>
+      )}
 
       <div className="overflow-x-auto rounded-[20px] border-2 border-bleuone/20 bg-white shadow-md">
         <table className="min-w-full bg-white text-left text-sm text-gray-800">
@@ -494,15 +679,22 @@ function mountGroupModuleFlow() {
     if (mount.dataset.flowMounted === '1') return;
 
     const availableModules = parseJsonDataset(mount, 'availableModules', []);
+    const availableParcours = parseJsonDataset(mount, 'availableParcours', []);
     const selectedModules = parseJsonDataset(mount, 'selectedModules', []);
     const manageLessonsLabel = String(mount.dataset.manageLessonsLabel || 'Gérer les leçons');
+    const initialParcoursId = mount.dataset.initialParcoursId
+      ? parseInt(mount.dataset.initialParcoursId, 10) || null
+      : null;
 
     const root = createRoot(mount);
     root.render(
       <GroupModuleFlow
         availableModules={availableModules}
+        availableParcours={availableParcours}
         initialModules={selectedModules}
+        initialParcoursId={initialParcoursId}
         manageLessonsLabel={manageLessonsLabel}
+        mountNode={mount}
       />,
     );
 

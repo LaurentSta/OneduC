@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\WordCloud;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
@@ -26,7 +28,9 @@ class WordCloudParticipationController extends Controller
             ->where('access_code', strtoupper($code))
             ->firstOrFail();
 
-        return view('wordcloud.answer', compact('wordCloud'));
+        $questions = $wordCloud->questions_array;
+
+        return view('wordcloud.answer', compact('wordCloud', 'questions'));
     }
 
     public function submit(Request $request, string $code): RedirectResponse
@@ -39,8 +43,11 @@ class WordCloudParticipationController extends Controller
             return back()->withErrors(['answer' => 'Ce nuage est fermé pour le moment.']);
         }
 
+        $questions = $wordCloud->questions_array;
+
         $data = $request->validate([
-            'answer' => ['required', 'string', 'max:150'],
+            'answer'         => ['required', 'string', 'max:150'],
+            'question_index' => ['required', 'integer', 'min:0', 'max:' . max(0, count($questions) - 1)],
         ]);
 
         $normalized = $this->normalizeAnswer($data['answer']);
@@ -50,12 +57,34 @@ class WordCloudParticipationController extends Controller
         }
 
         $wordCloud->entries()->create([
-            'user_id' => auth()->id(),
-            'answer' => trim($data['answer']),
+            'user_id'           => auth()->id(),
+            'question_index'    => $data['question_index'],
+            'answer'            => trim($data['answer']),
             'normalized_answer' => $normalized,
         ]);
 
-        return back()->with('success', 'Réponse envoyée.');
+        return back()->with('success', true)->with('answered_qi', $data['question_index']);
+    }
+
+    public function liveData(string $code, Request $request): JsonResponse
+    {
+        $wordCloud = WordCloud::query()
+            ->where('access_code', strtoupper($code))
+            ->firstOrFail();
+
+        $qi = (int) $request->query('q', 0);
+
+        $words = $wordCloud->entries()
+            ->where('question_index', $qi)
+            ->select('normalized_answer as word', DB::raw('count(*) as score'))
+            ->groupBy('normalized_answer')
+            ->orderByDesc('score')
+            ->limit(100)
+            ->get();
+
+        return response()->json([
+            'words' => $words->values(),
+        ]);
     }
 
     public function resolveCode(Request $request): RedirectResponse

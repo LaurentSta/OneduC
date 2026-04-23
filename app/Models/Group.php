@@ -18,6 +18,7 @@ class Group extends Model
         'end_date',
         'temporary_password',
         'instructor_id',
+        'formateur_parcours_id',
     ];
 
     protected $casts = [
@@ -35,6 +36,11 @@ class Group extends Model
     public function instructor()
     {
         return $this->belongsTo(User::class, 'instructor_id');
+    }
+
+    public function formateurParcours()
+    {
+        return $this->belongsTo(FormateurParcours::class, 'formateur_parcours_id');
     }
 
     public function students()

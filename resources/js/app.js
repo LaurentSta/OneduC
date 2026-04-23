@@ -23,6 +23,11 @@ function loadGroupLessonFlowWhenNeeded() {
   import('./formateur-group-lesson-flow.jsx');
 }
 
+function loadParcoursBuilderWhenNeeded() {
+  if (!document.querySelector('[data-parcours-builder]')) return;
+  import('./formateur-parcours-builder.jsx');
+}
+
 function loadGroupWhiteboardWhenNeeded() {
   if (!document.querySelector('[data-whiteboard-app]')) return;
   import('./group-whiteboard').then(({ mountGroupWhiteboard }) => mountGroupWhiteboard());
@@ -83,6 +88,7 @@ if (document.readyState === 'loading') {
     loadGroupModuleFlowWhenNeeded();
     loadStagiaireModuleFlowWhenNeeded();
     loadGroupLessonFlowWhenNeeded();
+    loadParcoursBuilderWhenNeeded();
     loadGroupWhiteboardWhenNeeded();
     initPublicPageTransitions();
   }, { once: true });
@@ -90,6 +96,7 @@ if (document.readyState === 'loading') {
   loadGroupModuleFlowWhenNeeded();
   loadStagiaireModuleFlowWhenNeeded();
   loadGroupLessonFlowWhenNeeded();
+  loadParcoursBuilderWhenNeeded();
   loadGroupWhiteboardWhenNeeded();
   initPublicPageTransitions();
 }

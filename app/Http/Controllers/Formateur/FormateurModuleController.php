@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Formateur;
 
 use App\Http\Controllers\Controller;
+use App\Models\FormateurParcours;
 use App\Models\Group;
 use App\Models\Module;
 use App\Models\ModuleLecture;
@@ -55,7 +56,13 @@ class FormateurModuleController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        return view('formateur.formations.index', compact('modules', 'search'));
+        $mesParcours = FormateurParcours::query()
+            ->where('formateur_id', $formateurId)
+            ->withCount('items')
+            ->orderByDesc('created_at')
+            ->get();
+
+        return view('formateur.formations.index', compact('modules', 'search', 'mesParcours'));
     }
 
     public function moduleDetail(Request $request, Module $module)

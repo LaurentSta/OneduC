@@ -17,7 +17,12 @@ use App\Http\Controllers\Formateur\ProgressionStagiairesController;
 use App\Http\Controllers\Formateur\ProgressionStagiaireController;
 use App\Http\Controllers\Formateur\ProgressionModulesController;
 use App\Http\Controllers\Formateur\LiveQuizSessionController;
+use App\Http\Controllers\Formateur\MesFormationsController;
 use App\Http\Controllers\Formateur\WordCloudController as FormateurWordCloudController;
+use App\Http\Controllers\Formateur\GroupeWordCloudController;
+use App\Http\Controllers\Formateur\OutilsNumeriquesController;
+use App\Http\Controllers\Formateur\OutilsLiveQuizController;
+use App\Http\Controllers\Formateur\RoueAleatoireController;
 use App\Http\Controllers\Formateur\WhiteboardController;
 use App\Http\Controllers\Backend\ModuleController;
 // use App\Http\Controllers\Stagiaire\QuizAttemptController;
@@ -78,6 +83,14 @@ Route::middleware(['auth', 'role:formateur'])
             Route::post('/clear', [WhiteboardController::class, 'clear'])->name('clear');
         });
 
+    // 🌥️ Nuages de mots (parcours, par groupe)
+    Route::prefix('/groupes/{group}/wordcloud')
+        ->name('groupes.wordcloud.')
+        ->group(function () {
+            Route::get('/{item}/live', [GroupeWordCloudController::class, 'live'])->name('live');
+            Route::get('/{item}/data', [GroupeWordCloudController::class, 'liveData'])->name('data');
+        });
+
     // 📈 Progression des stagiaires
     Route::get('/progressions', function () {
         return redirect()->route('formateur.progressions.groupes');
@@ -100,6 +113,33 @@ Route::middleware(['auth', 'role:formateur'])
     Route::post('/progression/complete', [ProgressionController::class, 'markCompleted'])
         ->name('progression.complete');
 
+    // 🛠️ Outils numériques
+    Route::get('/outils-numeriques', [OutilsNumeriquesController::class, 'index'])
+        ->name('outils.index');
+
+    Route::get('/quiz-en-direct', [OutilsLiveQuizController::class, 'index'])
+        ->name('outils.quiz.index');
+
+    Route::prefix('/roue-aleatoire')->name('roue.')->group(function () {
+        Route::get('/',                [RoueAleatoireController::class, 'index'])->name('index');
+        Route::post('/',               [RoueAleatoireController::class, 'store'])->name('store');
+        Route::get('/{session}',       [RoueAleatoireController::class, 'show'])->name('show');
+        Route::post('/{session}/spin', [RoueAleatoireController::class, 'spin'])->name('spin');
+        Route::post('/{session}/reset',[RoueAleatoireController::class, 'reset'])->name('reset');
+        Route::get('/{session}/state', [RoueAleatoireController::class, 'state'])->name('state');
+    });
+
+    // 📚 Mes formations créées
+    Route::prefix('/mes-formations')->name('mes-formations.')->group(function () {
+        Route::get('/',                [MesFormationsController::class, 'index'])->name('index');
+        Route::get('/create',          [MesFormationsController::class, 'create'])->name('create');
+        Route::post('/',               [MesFormationsController::class, 'store'])->name('store');
+        Route::get('/{parcours}',      [MesFormationsController::class, 'show'])->name('show');
+        Route::get('/{parcours}/edit', [MesFormationsController::class, 'edit'])->name('edit');
+        Route::put('/{parcours}',      [MesFormationsController::class, 'update'])->name('update');
+        Route::delete('/{parcours}',   [MesFormationsController::class, 'destroy'])->name('destroy');
+    });
+
     // 📂 Formations
     Route::get('/formations', [FormateurModuleController::class, 'mesModules'])->name('formations.index');
     Route::get('/formations/{module}/detail', [FormateurModuleController::class, 'moduleDetail'])->name('formations.detail');
@@ -121,12 +161,15 @@ Route::middleware(['auth', 'role:formateur'])
     Route::delete('/formations/{module}/section/{section}/lesson/{lecture}/resources/{resource}', [LessonResourceController::class, 'destroy'])
         ->name('formations.lesson.resources.destroy');
 
-    Route::prefix('/word-clouds')
-        ->name('wordclouds.')
+    Route::redirect('/word-clouds', '/formateur/nuages-de-mots', 301);
+
+    Route::prefix('/nuages-de-mots')
+        ->name('nuages.')
         ->group(function () {
-            Route::post('/', [FormateurWordCloudController::class, 'store'])->name('store');
-            Route::get('/{wordCloud}/live', [FormateurWordCloudController::class, 'live'])->name('live');
-            Route::get('/{wordCloud}/live/data', [FormateurWordCloudController::class, 'liveData'])->name('live.data');
+            Route::get('/',                        [FormateurWordCloudController::class, 'index'])->name('index');
+            Route::post('/',                       [FormateurWordCloudController::class, 'store'])->name('store');
+            Route::get('/{wordCloud}/live',        [FormateurWordCloudController::class, 'live'])->name('live');
+            Route::get('/{wordCloud}/live/data',   [FormateurWordCloudController::class, 'liveData'])->name('live.data');
         });
 
        

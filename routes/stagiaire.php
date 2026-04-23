@@ -9,6 +9,7 @@ use App\Http\Controllers\Stagiaire\LiveQuizSessionController;
 use App\Http\Controllers\Stagiaire\QuizController;
 use App\Http\Controllers\Stagiaire\FirstLoginController; // ✅ Import du nouveau contrôleur
 use App\Http\Controllers\Stagiaire\WhiteboardController;
+use App\Http\Controllers\Stagiaire\ParcoursWordCloudController;
 
 Route::middleware(['auth', 'role:stagiaire', 'track.time'])
     ->prefix('stagiaire')
@@ -145,6 +146,15 @@ Route::middleware(['auth', 'role:stagiaire', 'track.time'])
                     Route::get('/sessions/{session}', [LiveQuizSessionController::class, 'show'])->name('show');
                     Route::post('/sessions/{session}/answer', [LiveQuizSessionController::class, 'answer'])->name('answer');
                     Route::get('/sessions/{session}/snapshot', [LiveQuizSessionController::class, 'snapshot'])->name('snapshot');
+                });
+
+            // Nuage de mots (parcours)
+            Route::prefix('/wordcloud')
+                ->name('wordcloud.')
+                ->group(function () {
+                    Route::get('/{item}', [ParcoursWordCloudController::class, 'show'])->name('parcours.show');
+                    Route::post('/{item}/submit', [ParcoursWordCloudController::class, 'submit'])->name('parcours.submit');
+                    Route::get('/{item}/data', [ParcoursWordCloudController::class, 'liveData'])->name('parcours.data');
                 });
 
         }); // Fin du middleware force.password.change

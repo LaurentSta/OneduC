@@ -56,6 +56,10 @@
                            class="btn-oneduc-outline !border-white/20 !bg-transparent !px-4 !py-2 !text-sm !text-white hover:!border-white hover:!bg-white hover:!text-slate-900">
                             Retour a la lecon
                         </a>
+                        <a href="{{ route('formateur.outils.quiz.index') }}"
+                           class="btn-oneduc-outline !border-white/20 !bg-transparent !px-4 !py-2 !text-sm !text-white hover:!border-white hover:!bg-white hover:!text-slate-900">
+                            ← Outils
+                        </a>
 
                         @if (! $session->isClosed())
                             @if ($session->isWaiting())

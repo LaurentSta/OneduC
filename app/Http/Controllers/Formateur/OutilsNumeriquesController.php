@@ -1,0 +1,31 @@
+<?php
+
+namespace App\Http\Controllers\Formateur;
+
+use App\Http\Controllers\Controller;
+use App\Models\Group;
+use App\Models\WordCloud;
+use Illuminate\View\View;
+
+class OutilsNumeriquesController extends Controller
+{
+    public function index(): View
+    {
+        $formateurId = (int) auth()->id();
+
+        $recentWordclouds = WordCloud::query()
+            ->whereHas('group', fn ($q) => $q->where('instructor_id', $formateurId))
+            ->with(['group', 'module'])
+            ->latest()
+            ->limit(5)
+            ->get();
+
+        $groups = Group::query()
+            ->where('instructor_id', $formateurId)
+            ->withCount('students')
+            ->orderBy('name')
+            ->get();
+
+        return view('formateur.outils.index', compact('recentWordclouds', 'groups'));
+    }
+}

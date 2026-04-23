@@ -1,40 +1,46 @@
 @extends('formateur.dashboard')
 
 @section('formateur')
-@php $questions = $wordCloud->questions_array; @endphp
 <div class="w-full px-6 lg:px-8" x-data="{ activeQ: 0 }">
 
   {{-- En-tête --}}
   <div class="bg-white rounded-[20px] shadow-soft p-6 my-6 border border-gray-100">
-    <div class="flex flex-wrap items-center justify-between gap-4 mb-3">
-      <div>
-        <h1 class="text-[20px] font-varela text-bleuone">{{ $wordCloud->title }}</h1>
-        <div class="flex flex-wrap items-center gap-2 mt-2 text-sm text-gray-500">
-          @if($wordCloud->group)
-            <span class="rounded-full bg-gray-100 px-3 py-1">{{ $wordCloud->group->name }}</span>
-          @endif
-          <span class="rounded-full bg-amber-50 px-3 py-1 font-mono text-amber-700">Code : {{ $wordCloud->access_code }}</span>
-          <a href="{{ $joinUrl }}" target="_blank" rel="noopener"
-             class="rounded-full bg-[#004461] px-3 py-1 text-white text-xs font-bold hover:bg-[#005577] transition">
-            Lien stagiaire ↗
-          </a>
+    <div class="flex flex-wrap items-center justify-between gap-4 mb-2">
+      <div class="flex items-center gap-3">
+        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-[18px] font-varela text-bleuone">{{ $item->wc_title }}</h1>
+          <p class="text-sm text-gray-500">Groupe : <span class="font-semibold">{{ $group->name }}</span></p>
         </div>
       </div>
-      <a href="{{ route('formateur.nuages.index') }}" class="btn-oneduc-outline !px-3 !py-2 !text-sm">← Retour</a>
+      <a href="{{ route('formateur.groupes.edit', $group->id) }}"
+         class="btn-oneduc-outline !px-3 !py-2 !text-sm">
+        ← Retour au groupe
+      </a>
     </div>
 
-    {{-- Onglets questions --}}
+    {{-- Tabs questions --}}
     @if(count($questions) > 1)
       <div class="mt-4 flex flex-wrap gap-2">
         @foreach($questions as $qi => $q)
-          <button type="button"
-                  @click="activeQ = {{ $qi }}"
-                  :class="activeQ === {{ $qi }}
-                    ? 'bg-amber-500 text-white border-amber-500'
-                    : 'bg-white text-gray-600 border-gray-300 hover:border-amber-400'"
-                  class="rounded-full border px-4 py-1.5 text-sm font-semibold transition">
+          <button
+            type="button"
+            @click="activeQ = {{ $qi }}"
+            :class="activeQ === {{ $qi }}
+              ? 'bg-amber-500 text-white border-amber-500'
+              : 'bg-white text-gray-600 border-gray-300 hover:border-amber-400'"
+            class="rounded-full border px-4 py-1.5 text-sm font-semibold transition"
+          >
             Question {{ $qi + 1 }}
-            <span class="ml-1.5 text-[10px] counter-badge-{{ $qi }}"></span>
+            @if($responseCounts->has($qi))
+              <span class="ml-1.5 inline-flex items-center rounded-full bg-white/30 px-1.5 text-[10px]">
+                {{ $responseCounts->get($qi) }}/{{ $totalStudents }}
+              </span>
+            @endif
           </button>
         @endforeach
       </div>
@@ -48,11 +54,14 @@
       {{-- Question + compteur --}}
       <div class="bg-white rounded-[16px] shadow-soft border border-gray-100 px-6 py-4 flex items-center justify-between gap-4">
         <p class="font-varela text-base text-gray-800">{{ $question }}</p>
-        <span class="shrink-0 inline-flex items-center gap-1.5 rounded-full bg-amber-50 border border-amber-200 px-3 py-1 text-sm font-semibold text-amber-700">
+        <span
+          id="counter-{{ $qi }}"
+          class="shrink-0 inline-flex items-center gap-1.5 rounded-full bg-amber-50 border border-amber-200 px-3 py-1 text-sm font-semibold text-amber-700"
+        >
           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
           </svg>
-          <span class="respondent-count-{{ $qi }}">0</span> réponse(s)
+          <span class="counter-text-{{ $qi }}">{{ $responseCounts->get($qi, 0) }} / {{ $totalStudents }}</span>
         </span>
       </div>
 
@@ -73,7 +82,7 @@
 </div>
 
 <style>
-  [x-cloak] { display:none !important; }
+  [x-cloak] { display: none !important; }
   .wc-canvas-wrap { position:relative; min-height:420px; border-radius:0.75rem; border:1px solid #e5e7eb; background:#f9fafb; overflow:hidden; }
   .wc-canvas-wrap canvas { display:block; }
   .wc-empty { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; }
@@ -88,13 +97,14 @@
     return _wcPalette[Math.abs(h) % _wcPalette.length];
   }
 
+  const totalStudents = {{ $totalStudents }};
+
   @foreach($questions as $qi => $question)
   (function() {
     const canvas   = document.getElementById('cloudCanvas-{{ $qi }}');
     const emptyEl  = document.getElementById('cloudEmpty-{{ $qi }}');
-    const counter  = document.querySelector('.respondent-count-{{ $qi }}');
-    const badge    = document.querySelector('.counter-badge-{{ $qi }}');
-    const endpoint = @json(route('formateur.nuages.live.data', $wordCloud)) + '?q={{ $qi }}';
+    const counter  = document.querySelector('.counter-text-{{ $qi }}');
+    const endpoint = @json(route('formateur.groupes.wordcloud.data', [$group, $item])) + '?q={{ $qi }}';
     let lastSig = '';
     let lastW   = 0;
 
@@ -102,12 +112,10 @@
       try {
         const res  = await fetch(endpoint, { headers: { 'Accept': 'application/json' } });
         const data = await res.json();
-        const words      = data.words || [];
-        const respondents = data.respondents ?? 0;
-        const sig = JSON.stringify(words);
+        const words = data.words || [];
+        const sig   = JSON.stringify(words);
 
-        if (counter) counter.textContent = respondents;
-        if (badge)   badge.textContent   = respondents > 0 ? `(${respondents})` : '';
+        if (counter) counter.textContent = (data.respondents ?? 0) + ' / ' + totalStudents;
 
         const W = Math.round(canvas.parentElement.getBoundingClientRect().width);
         if (!W) { lastSig = ''; return; }
