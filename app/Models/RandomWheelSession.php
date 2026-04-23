@@ -12,15 +12,17 @@ class RandomWheelSession extends Model
         'group_id',
         'access_code',
         'entries',
+        'active_entry_ids',
         'picks',
         'current_pick_id',
         'spun_at',
     ];
 
     protected $casts = [
-        'entries' => 'array',
-        'picks'   => 'array',
-        'spun_at' => 'datetime',
+        'entries'           => 'array',
+        'active_entry_ids'  => 'array',
+        'picks'             => 'array',
+        'spun_at'           => 'datetime',
     ];
 
     public function group(): BelongsTo
@@ -38,14 +40,55 @@ class RandomWheelSession extends Model
         if (!$this->current_pick_id) {
             return null;
         }
-        return collect($this->entries)->firstWhere('id', $this->current_pick_id);
+
+        return collect($this->entries ?? [])->firstWhere('id', (int) $this->current_pick_id);
+    }
+
+    public function entryIds(): array
+    {
+        return collect($this->entries ?? [])
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->values()
+            ->all();
+    }
+
+    public function activeEntryIds(): array
+    {
+        $entryIds = $this->entryIds();
+
+        if ($this->active_entry_ids === null) {
+            return $entryIds;
+        }
+
+        $activeSet = collect($this->active_entry_ids)
+            ->map(fn ($id) => (int) $id)
+            ->unique();
+
+        return collect($entryIds)
+            ->filter(fn ($id) => $activeSet->contains($id))
+            ->values()
+            ->all();
+    }
+
+    public function activeEntries(): array
+    {
+        $activeIds = $this->activeEntryIds();
+
+        return collect($this->entries ?? [])
+            ->filter(fn ($entry) => in_array((int) ($entry['id'] ?? 0), $activeIds, true))
+            ->values()
+            ->all();
     }
 
     public function availableEntries(): array
     {
-        $pickedIds = $this->picks ?? [];
-        return collect($this->entries)
-            ->filter(fn ($e) => !in_array($e['id'], $pickedIds))
+        $pickedIds = collect($this->picks ?? [])
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        return collect($this->activeEntries())
+            ->filter(fn ($entry) => !in_array((int) $entry['id'], $pickedIds, true))
             ->values()
             ->all();
     }
@@ -57,10 +100,14 @@ class RandomWheelSession extends Model
 
     public function stateKey(): string
     {
+        $picksHash = md5(json_encode(array_values($this->picks ?? [])));
+        $activeHash = md5(json_encode($this->activeEntryIds()));
+
         return implode('|', [
             $this->current_pick_id ?? 'null',
-            count($this->picks ?? []),
+            $picksHash,
             $this->spun_at?->toISOString() ?? 'null',
+            $activeHash,
         ]);
     }
 }

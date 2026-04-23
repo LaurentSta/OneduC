@@ -8,7 +8,7 @@ use App\Models\RandomWheelSession;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class RoueAleatoireController extends Controller
@@ -60,6 +60,7 @@ class RoueAleatoireController extends Controller
             'group_id'       => $group->id,
             'access_code'    => $this->generateCode(),
             'entries'        => $entries,
+            'active_entry_ids' => collect($entries)->pluck('id')->all(),
             'picks'          => [],
             'current_pick_id'=> null,
         ]);
@@ -72,8 +73,9 @@ class RoueAleatoireController extends Controller
         abort_unless($session->formateur_id === (int) auth()->id(), 403);
         $session->load('group');
         $joinUrl = route('roue.join', $session->access_code);
+        $participantsUrl = route('formateur.roue.participants', $session);
 
-        return view('formateur.outils.roue_show', compact('session', 'joinUrl'));
+        return view('formateur.outils.roue_show', compact('session', 'joinUrl', 'participantsUrl'));
     }
 
     public function spin(RandomWheelSession $session): JsonResponse
@@ -83,7 +85,11 @@ class RoueAleatoireController extends Controller
         $available = $session->availableEntries();
 
         if (empty($available)) {
-            return response()->json(['error' => 'Tous les participants ont été tirés.'], 422);
+            $errorMessage = count($session->activeEntryIds()) === 0
+                ? 'Aucun stagiaire actif sur la roue.'
+                : 'Tous les stagiaires actifs ont été tirés.';
+
+            return response()->json(['error' => $errorMessage], 422);
         }
 
         $winner = $available[array_rand($available)];
@@ -97,16 +103,57 @@ class RoueAleatoireController extends Controller
             'spun_at'         => now(),
         ]);
 
-        $winnerIndex = collect($session->entries)->search(fn ($e) => $e['id'] === $winner['id']);
+        $winnerIndex = collect($session->activeEntries())->search(fn ($e) => $e['id'] === $winner['id']);
 
         return response()->json([
             'winner'       => $winner,
             'winner_index' => $winnerIndex,
             'picks_count'  => count($picks),
-            'total'        => count($session->entries),
+            'total'        => count($session->activeEntries()),
+            'total_entries' => count($session->entries ?? []),
             'is_exhausted' => $session->isExhausted(),
             'state_key'    => $session->stateKey(),
         ]);
+    }
+
+    public function updateParticipants(Request $request, RandomWheelSession $session): RedirectResponse|JsonResponse
+    {
+        abort_unless($session->formateur_id === (int) auth()->id(), 403);
+
+        $entryIds = collect($session->entryIds());
+
+        $data = $request->validate([
+            'active_entry_ids' => ['nullable', 'array'],
+            'active_entry_ids.*' => ['integer', Rule::in($entryIds->all())],
+        ]);
+
+        $requestedActive = collect($data['active_entry_ids'] ?? [])
+            ->map(fn ($id) => (int) $id)
+            ->unique();
+
+        // Keep the original wheel order to keep indexes stable in animations.
+        $activeEntryIds = $entryIds
+            ->filter(fn ($id) => $requestedActive->contains($id))
+            ->values()
+            ->all();
+
+        $currentPickId = $session->current_pick_id ? (int) $session->current_pick_id : null;
+        if ($currentPickId !== null && !in_array($currentPickId, $activeEntryIds, true)) {
+            $currentPickId = null;
+        }
+
+        $session->update([
+            'active_entry_ids' => $activeEntryIds,
+            'current_pick_id'  => $currentPickId,
+        ]);
+
+        $session->refresh();
+
+        if ($request->expectsJson()) {
+            return response()->json(self::buildState($session));
+        }
+
+        return redirect()->route('formateur.roue.show', $session);
     }
 
     public function reset(RandomWheelSession $session): RedirectResponse
@@ -131,14 +178,23 @@ class RoueAleatoireController extends Controller
 
     public static function buildState(RandomWheelSession $session): array
     {
+        $activeEntries = $session->activeEntries();
+        $activeEntryIds = $session->activeEntryIds();
+        $currentPick = $session->currentPick();
+        if ($currentPick && !in_array((int) $currentPick['id'], $activeEntryIds, true)) {
+            $currentPick = null;
+        }
+
         return [
-            'current_pick'  => $session->currentPick(),
-            'current_index' => $session->current_pick_id
-                ? collect($session->entries)->search(fn ($e) => $e['id'] === (int) $session->current_pick_id)
+            'current_pick'  => $currentPick,
+            'current_index' => $currentPick
+                ? collect($activeEntries)->search(fn ($e) => $e['id'] === (int) $currentPick['id'])
                 : null,
             'picks'         => $session->picks ?? [],
             'picks_count'   => count($session->picks ?? []),
-            'total'         => count($session->entries),
+            'total'         => count($activeEntries),
+            'total_entries' => count($session->entries ?? []),
+            'active_entry_ids' => $activeEntryIds,
             'is_exhausted'  => $session->isExhausted(),
             'state_key'     => $session->stateKey(),
         ];

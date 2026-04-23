@@ -124,6 +124,7 @@ Route::middleware(['auth', 'role:formateur'])
         Route::get('/',                [RoueAleatoireController::class, 'index'])->name('index');
         Route::post('/',               [RoueAleatoireController::class, 'store'])->name('store');
         Route::get('/{session}',       [RoueAleatoireController::class, 'show'])->name('show');
+        Route::post('/{session}/participants', [RoueAleatoireController::class, 'updateParticipants'])->name('participants');
         Route::post('/{session}/spin', [RoueAleatoireController::class, 'spin'])->name('spin');
         Route::post('/{session}/reset',[RoueAleatoireController::class, 'reset'])->name('reset');
         Route::get('/{session}/state', [RoueAleatoireController::class, 'state'])->name('state');
