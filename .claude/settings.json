@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(php -r ' *)",
+      "Bash(php -l app/Http/Controllers/Stagiaire/ParcoursWordCloudController.php)",
+      "Bash(php -l app/Http/Controllers/Formateur/WordCloudController.php)",
+      "Bash(php -l app/Http/Controllers/WordCloudParticipationController.php)",
+      "Bash(php -l /var/www/Oneduc_Dev/app/Http/Controllers/WordCloudParticipationController.php)",
+      "WebSearch"
+    ]
+  }
+}

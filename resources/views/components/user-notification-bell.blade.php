@@ -10,6 +10,7 @@
   $latestUnread = $latestNotifications->firstWhere('read_at', null);
   $activeLiveQuizSession = null;
   $availableWhiteboardGroup = null;
+  $activeQuestionWall = null;
 
   if ($authUser && ($authUser->role ?? null) === 'stagiaire') {
       $lectureIds = $authUser->groupesStagiaire()
@@ -44,6 +45,13 @@
           ->get()
           ->sortByDesc(fn ($group) => optional($group->whiteboard?->updated_at)->timestamp ?? 0)
           ->first();
+
+      $activeQuestionWall = \App\Models\QuestionWall::query()
+          ->where('is_active', true)
+          ->whereHas('group.students', fn ($query) => $query->where('users.id', (int) $authUser->id))
+          ->with('group')
+          ->latest('updated_at')
+          ->first();
   }
 
   $activeWhiteboardUrl = $availableWhiteboardGroup
@@ -54,7 +62,15 @@
       && \Illuminate\Support\Facades\Route::has('stagiaire.whiteboard.notification-status')
       ? route('stagiaire.whiteboard.notification-status')
       : null;
-  $bellIndicatorCount = $unreadCount + ($activeLiveQuizSession ? 1 : 0) + ($availableWhiteboardGroup ? 1 : 0);
+  $questionWallNotificationStatusUrl = $authUser
+      && ($authUser->role ?? null) === 'stagiaire'
+      && \Illuminate\Support\Facades\Route::has('stagiaire.question-wall.notification-status')
+      ? route('stagiaire.question-wall.notification-status')
+      : null;
+  $activeQuestionWallUrl = $activeQuestionWall
+      ? route('questions.join.code', ['code' => $activeQuestionWall->access_code])
+      : null;
+  $bellIndicatorCount = $unreadCount + ($activeLiveQuizSession ? 1 : 0) + ($availableWhiteboardGroup ? 1 : 0) + ($activeQuestionWall ? 1 : 0);
   $liveQuizUrl = $activeLiveQuizSession
       ? route('stagiaire.live-quiz.join-code', ['code' => $activeLiveQuizSession->access_code])
       : null;
@@ -100,6 +116,7 @@
   data-base-count="{{ $unreadCount }}"
   data-status-url="{{ $liveQuizNotificationStatusUrl }}"
   data-whiteboard-status-url="{{ $whiteboardNotificationStatusUrl }}"
+  data-question-wall-status-url="{{ $questionWallNotificationStatusUrl }}"
   @click.outside="open = false"
   @keydown.escape.window="open = false"
 >
@@ -120,7 +137,7 @@
     </svg>
     <span
       data-bell-badge
-      class="absolute top-[10px] right-0 translate-x-1/2 {{ $bellIndicatorCount > 0 ? 'flex' : 'hidden' }} {{ $activeLiveQuizSession ? 'bg-orangeone oneduc-live-pulse' : ($availableWhiteboardGroup ? 'bg-teal-600' : 'bg-red-600') }} text-white text-[10px] min-w-[18px] h-[18px] px-1 rounded-full items-center justify-center"
+      class="absolute top-[10px] right-0 translate-x-1/2 {{ $bellIndicatorCount > 0 ? 'flex' : 'hidden' }} {{ $activeLiveQuizSession ? 'bg-orangeone oneduc-live-pulse' : ($availableWhiteboardGroup ? 'bg-teal-600' : ($activeQuestionWall ? 'bg-indigo-600' : 'bg-red-600')) }} text-white text-[10px] min-w-[18px] h-[18px] px-1 rounded-full items-center justify-center"
     >
       {{ $bellIndicatorCount > 9 ? '9+' : $bellIndicatorCount }}
     </span>
@@ -201,6 +218,39 @@
       @endif
     </div>
 
+    <div
+      data-question-wall-item
+      class="{{ $activeQuestionWall && $activeQuestionWallUrl ? '' : 'hidden' }} px-4 py-3 border-b border-indigo-100 bg-indigo-50"
+    >
+      @if($activeQuestionWall && $activeQuestionWallUrl)
+        <a href="{{ $activeQuestionWallUrl }}" class="block">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <p class="text-xs font-semibold text-indigo-700">Mur de questions en cours</p>
+              <p data-question-wall-title class="text-xs text-gray-700 mt-1">
+                {{ $activeQuestionWall->title }}
+              </p>
+              <p data-question-wall-meta class="mt-1 text-[11px] text-gray-500">
+                Code {{ $activeQuestionWall->access_code }} · Poser une question ou voter
+              </p>
+            </div>
+            <span class="mt-1 inline-flex h-2.5 w-2.5 rounded-full bg-indigo-500"></span>
+          </div>
+        </a>
+      @else
+        <a href="#" class="block">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <p class="text-xs font-semibold text-indigo-700">Mur de questions en cours</p>
+              <p data-question-wall-title class="text-xs text-gray-700 mt-1">Un mur de questions est disponible</p>
+              <p data-question-wall-meta class="mt-1 text-[11px] text-gray-500">Poser une question ou voter</p>
+            </div>
+            <span class="mt-1 inline-flex h-2.5 w-2.5 rounded-full bg-indigo-500"></span>
+          </div>
+        </a>
+      @endif
+    </div>
+
     @forelse($latestNotifications as $notification)
       @php
         $title = data_get($notification->data, 'title', 'Notification');
@@ -258,7 +308,7 @@
   </script>
 @endif
 
-@if($liveQuizNotificationStatusUrl || $whiteboardNotificationStatusUrl)
+@if($liveQuizNotificationStatusUrl || $whiteboardNotificationStatusUrl || $questionWallNotificationStatusUrl)
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       const root = document.querySelector('[data-live-quiz-bell]');
@@ -268,6 +318,7 @@
 
       const statusUrl = root.dataset.statusUrl;
       const whiteboardStatusUrl = root.dataset.whiteboardStatusUrl;
+      const questionWallStatusUrl = root.dataset.questionWallStatusUrl;
 
       const bellIcon = root.querySelector('[data-bell-icon]');
       const badge = root.querySelector('[data-bell-badge]');
@@ -279,14 +330,20 @@
       const whiteboardLink = whiteboardItem ? whiteboardItem.querySelector('a') : null;
       const whiteboardTitle = root.querySelector('[data-whiteboard-title]');
       const whiteboardMeta = root.querySelector('[data-whiteboard-meta]');
+      const questionWallItem = root.querySelector('[data-question-wall-item]');
+      const questionWallLink = questionWallItem ? questionWallItem.querySelector('a') : null;
+      const questionWallTitle = root.querySelector('[data-question-wall-title]');
+      const questionWallMeta = root.querySelector('[data-question-wall-meta]');
       const baseCount = Number.parseInt(root.dataset.baseCount || '0', 10) || 0;
       let liveQuizCount = {{ $activeLiveQuizSession ? 1 : 0 }};
       let whiteboardCount = {{ $availableWhiteboardGroup ? 1 : 0 }};
+      let questionWallCount = {{ $activeQuestionWall ? 1 : 0 }};
 
       const renderBadge = function () {
-        const totalCount = baseCount + liveQuizCount + whiteboardCount;
+        const totalCount = baseCount + liveQuizCount + whiteboardCount + questionWallCount;
         const hasLiveQuiz = liveQuizCount > 0;
         const hasWhiteboard = whiteboardCount > 0;
+        const hasQuestionWall = questionWallCount > 0;
 
         if (bellIcon) {
           bellIcon.classList.toggle('oneduc-bell-live', hasLiveQuiz);
@@ -298,7 +355,8 @@
           badge.classList.toggle('flex', totalCount > 0);
           badge.classList.toggle('bg-orangeone', hasLiveQuiz);
           badge.classList.toggle('bg-teal-600', !hasLiveQuiz && hasWhiteboard);
-          badge.classList.toggle('bg-red-600', !hasLiveQuiz && !hasWhiteboard);
+          badge.classList.toggle('bg-indigo-600', !hasLiveQuiz && !hasWhiteboard && hasQuestionWall);
+          badge.classList.toggle('bg-red-600', !hasLiveQuiz && !hasWhiteboard && !hasQuestionWall);
           badge.classList.toggle('oneduc-live-pulse', hasLiveQuiz);
           badge.textContent = totalCount > 9 ? '9+' : String(totalCount);
         }
@@ -362,6 +420,35 @@
         }
       };
 
+      const updateQuestionWall = function (data) {
+        const hasQuestionWall = Boolean(data && data.has_active_question_wall);
+        questionWallCount = hasQuestionWall ? 1 : 0;
+        renderBadge();
+
+        if (!questionWallItem || !questionWallLink) {
+          return;
+        }
+
+        questionWallItem.classList.toggle('hidden', !hasQuestionWall);
+
+        if (!hasQuestionWall) {
+          questionWallLink.setAttribute('href', '#');
+          return;
+        }
+
+        questionWallLink.setAttribute('href', data.join_url || '#');
+
+        if (questionWallTitle) {
+          questionWallTitle.textContent = data.title || 'Un mur de questions est disponible';
+        }
+
+        if (questionWallMeta) {
+          questionWallMeta.textContent = data.access_code
+            ? `Code ${data.access_code} · Poser une question ou voter`
+            : 'Poser une question ou voter';
+        }
+      };
+
       const pollLiveQuizStatus = function () {
         if (!statusUrl) {
           return;
@@ -408,9 +495,33 @@
           .catch(function () {});
       };
 
+      const pollQuestionWallStatus = function () {
+        if (!questionWallStatusUrl) {
+          return;
+        }
+
+        fetch(questionWallStatusUrl, {
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json',
+          },
+          credentials: 'same-origin',
+        })
+          .then(function (response) {
+            if (!response.ok) {
+              throw new Error('Question wall status request failed');
+            }
+
+            return response.json();
+          })
+          .then(updateQuestionWall)
+          .catch(function () {});
+      };
+
       renderBadge();
       window.setInterval(pollLiveQuizStatus, 5000);
       window.setInterval(pollWhiteboardStatus, 5000);
+      window.setInterval(pollQuestionWallStatus, 5000);
     });
   </script>
 @endif

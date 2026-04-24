@@ -22,6 +22,7 @@ use App\Http\Controllers\Formateur\WordCloudController as FormateurWordCloudCont
 use App\Http\Controllers\Formateur\GroupeWordCloudController;
 use App\Http\Controllers\Formateur\OutilsNumeriquesController;
 use App\Http\Controllers\Formateur\OutilsLiveQuizController;
+use App\Http\Controllers\Formateur\QuestionWallController;
 use App\Http\Controllers\Formateur\RoueAleatoireController;
 use App\Http\Controllers\Formateur\WhiteboardController;
 use App\Http\Controllers\Backend\ModuleController;
@@ -128,6 +129,15 @@ Route::middleware(['auth', 'role:formateur'])
         Route::post('/{session}/spin', [RoueAleatoireController::class, 'spin'])->name('spin');
         Route::post('/{session}/reset',[RoueAleatoireController::class, 'reset'])->name('reset');
         Route::get('/{session}/state', [RoueAleatoireController::class, 'state'])->name('state');
+    });
+
+    Route::prefix('/mur-questions')->name('questions.')->group(function () {
+        Route::get('/', [QuestionWallController::class, 'index'])->name('index');
+        Route::post('/', [QuestionWallController::class, 'store'])->name('store');
+        Route::get('/{wall}', [QuestionWallController::class, 'show'])->name('show');
+        Route::post('/{wall}/toggle', [QuestionWallController::class, 'toggle'])->name('toggle');
+        Route::post('/{wall}/questions/{question}/status', [QuestionWallController::class, 'updateStatus'])->name('status');
+        Route::get('/{wall}/state', [QuestionWallController::class, 'state'])->name('state');
     });
 
     // 📚 Mes formations créées

@@ -9,6 +9,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Backend\StagiaireController;
 use App\Http\Controllers\WordCloudParticipationController;
 use App\Http\Controllers\RoueAleatoireParticipationController;
+use App\Http\Controllers\QuestionWallParticipationController;
 
 // -------------------------------------------------------------------------
 // Fichier de routes publiques de l'application. Les routes des différents
@@ -119,6 +120,18 @@ Route::get('/oneduc/mot/{code}/data', [WordCloudParticipationController::class, 
 // ----------------------------------------------------------
 Route::get('/oneduc/roue/{code}',       [RoueAleatoireParticipationController::class, 'show'])->name('roue.join');
 Route::get('/oneduc/roue/{code}/state', [RoueAleatoireParticipationController::class, 'state'])->name('roue.state');
+
+// ----------------------------------------------------------
+// ❓ Mur de questions (participation)
+// ----------------------------------------------------------
+Route::get('/oneduc/questions/{code}', [QuestionWallParticipationController::class, 'joinByCode'])
+    ->name('questions.join.code');
+Route::post('/oneduc/questions/{code}/questions', [QuestionWallParticipationController::class, 'submitQuestion'])
+    ->middleware(['auth', 'throttle:30,1'])
+    ->name('questions.submit');
+Route::post('/oneduc/questions/{code}/questions/{question}/vote', [QuestionWallParticipationController::class, 'toggleVote'])
+    ->middleware(['auth', 'throttle:60,1'])
+    ->name('questions.vote.toggle');
 
 
 

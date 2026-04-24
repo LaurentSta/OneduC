@@ -10,6 +10,7 @@ use App\Http\Controllers\Stagiaire\QuizController;
 use App\Http\Controllers\Stagiaire\FirstLoginController; // ✅ Import du nouveau contrôleur
 use App\Http\Controllers\Stagiaire\WhiteboardController;
 use App\Http\Controllers\Stagiaire\ParcoursWordCloudController;
+use App\Http\Controllers\Stagiaire\QuestionWallController;
 
 Route::middleware(['auth', 'role:stagiaire', 'track.time'])
     ->prefix('stagiaire')
@@ -62,6 +63,12 @@ Route::middleware(['auth', 'role:stagiaire', 'track.time'])
                     Route::get('/groupes/{group}/snapshot', [WhiteboardController::class, 'snapshot'])->name('snapshot');
                     Route::post('/groupes/{group}/items', [WhiteboardController::class, 'upsert'])->name('items.upsert');
                     Route::delete('/groupes/{group}/items/{item}', [WhiteboardController::class, 'destroy'])->name('items.destroy');
+                });
+
+            Route::prefix('/mur-questions')
+                ->name('question-wall.')
+                ->group(function () {
+                    Route::get('/notification-status', [QuestionWallController::class, 'notificationStatus'])->name('notification-status');
                 });
 
             Route::post('/profil/store', [UserController::class, 'UserProfilStore'])

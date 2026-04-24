@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Formateur;
 
 use App\Http\Controllers\Controller;
 use App\Models\Group;
+use App\Models\QuestionWall;
 use App\Models\WordCloud;
 use Illuminate\View\View;
 
@@ -26,6 +27,14 @@ class OutilsNumeriquesController extends Controller
             ->orderBy('name')
             ->get();
 
-        return view('formateur.outils.index', compact('recentWordclouds', 'groups'));
+        $recentQuestionWalls = QuestionWall::query()
+            ->where('formateur_id', $formateurId)
+            ->with('group')
+            ->withCount('questions')
+            ->latest()
+            ->limit(5)
+            ->get();
+
+        return view('formateur.outils.index', compact('recentWordclouds', 'groups', 'recentQuestionWalls'));
     }
 }

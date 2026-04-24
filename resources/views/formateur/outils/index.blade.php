@@ -35,7 +35,7 @@
   </header>
 
   {{-- Grille des outils --}}
-  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
+  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5 gap-6 mb-8">
 
     {{-- ── NUAGE DE MOTS ──────────────────────────────────────────────── --}}
     <div class="flex flex-col bg-white rounded-[20px] shadow-md overflow-hidden">
@@ -167,6 +167,60 @@
           </p>
         </div>
       @endif
+    </div>
+
+    {{-- ── MUR DE QUESTIONS ANONYME ─────────────────────────────────── --}}
+    <div class="flex flex-col bg-white rounded-[20px] shadow-md overflow-hidden">
+      <div class="bg-indigo-600 px-6 py-5 flex items-center gap-3">
+        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/20">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h8m-8 4h5m-9 5h16a2 2 0 002-2V7a2 2 0 00-2-2h-3.586a1 1 0 01-.707-.293l-1.414-1.414A1 1 0 0013.586 3h-3.172a1 1 0 00-.707.293L8.293 4.707A1 1 0 017.586 5H4a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+          </svg>
+        </div>
+        <h2 class="text-lg font-bold text-white">Mur de questions</h2>
+      </div>
+      <div class="flex-1 px-6 py-5 space-y-3">
+        <p class="text-sm text-gray-600 leading-relaxed">
+          Les stagiaires posent leurs questions avec ou sans anonymat. Le groupe vote pour les blocages prioritaires et vous qualifiez chaque question en direct.
+        </p>
+        <div class="flex flex-wrap gap-2 text-[11px]">
+          <span class="rounded-full bg-green-100 px-2.5 py-0.5 font-semibold text-green-700">Presentiel</span>
+          <span class="rounded-full bg-blue-100 px-2.5 py-0.5 font-semibold text-blue-700">Distanciel</span>
+          <span class="rounded-full bg-indigo-100 px-2.5 py-0.5 font-semibold text-indigo-700">Priorisation</span>
+        </div>
+      </div>
+
+      @if($recentQuestionWalls->isNotEmpty())
+        <div class="border-t border-gray-100 px-6 py-4">
+          <p class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">Murs recents</p>
+          <div class="space-y-2">
+            @foreach($recentQuestionWalls as $wall)
+              <div class="flex items-center justify-between gap-2">
+                <div class="min-w-0">
+                  <p class="text-xs font-semibold text-gray-800 truncate">{{ $wall->title }}</p>
+                  <p class="text-[10px] text-gray-400">
+                    {{ $wall->questions_count }} question{{ $wall->questions_count > 1 ? 's' : '' }} · {{ $wall->group?->name }}
+                  </p>
+                </div>
+                <a href="{{ route('formateur.questions.show', $wall) }}"
+                   class="shrink-0 rounded-[6px] bg-indigo-100 px-2 py-1 text-[10px] font-bold text-indigo-700 hover:bg-indigo-200 transition">
+                  Ouvrir
+                </a>
+              </div>
+            @endforeach
+          </div>
+        </div>
+      @endif
+
+      <div class="border-t border-gray-100 px-6 py-4 mt-auto">
+        <a href="{{ route('formateur.questions.index') }}"
+           class="w-full inline-flex items-center justify-center gap-2 rounded-[10px] bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-indigo-700 transition">
+          Gerer les murs de questions
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+          </svg>
+        </a>
+      </div>
     </div>
 
     {{-- ── ROUE ALÉATOIRE ─────────────────────────────────────────────── --}}
