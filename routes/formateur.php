@@ -21,6 +21,8 @@ use App\Http\Controllers\Formateur\MesFormationsController;
 use App\Http\Controllers\Formateur\WordCloudController as FormateurWordCloudController;
 use App\Http\Controllers\Formateur\GroupeWordCloudController;
 use App\Http\Controllers\Formateur\OutilsNumeriquesController;
+use App\Http\Controllers\Formateur\OutilsPagesCollaborativesController;
+use App\Http\Controllers\Formateur\OutilsSondageController;
 use App\Http\Controllers\Formateur\OutilsLiveQuizController;
 use App\Http\Controllers\Formateur\QuestionWallController;
 use App\Http\Controllers\Formateur\RoueAleatoireController;
@@ -120,6 +122,17 @@ Route::middleware(['auth', 'role:formateur'])
 
     Route::get('/quiz-en-direct', [OutilsLiveQuizController::class, 'index'])
         ->name('outils.quiz.index');
+
+    Route::prefix('/sondages')->name('sondages.')->group(function () {
+        Route::get('/', [OutilsSondageController::class, 'index'])->name('index');
+        Route::post('/', [OutilsSondageController::class, 'store'])->name('store');
+        Route::get('/{pollSession}', [OutilsSondageController::class, 'show'])->name('show');
+        Route::post('/{pollSession}/toggle', [OutilsSondageController::class, 'toggle'])->name('toggle');
+        Route::get('/{pollSession}/state', [OutilsSondageController::class, 'state'])->name('state');
+    });
+
+    Route::get('/pages-collaboratives', [OutilsPagesCollaborativesController::class, 'index'])
+        ->name('pages-collaboratives.index');
 
     Route::prefix('/roue-aleatoire')->name('roue.')->group(function () {
         Route::get('/',                [RoueAleatoireController::class, 'index'])->name('index');

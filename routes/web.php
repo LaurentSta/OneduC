@@ -10,6 +10,7 @@ use App\Http\Controllers\Backend\StagiaireController;
 use App\Http\Controllers\WordCloudParticipationController;
 use App\Http\Controllers\RoueAleatoireParticipationController;
 use App\Http\Controllers\QuestionWallParticipationController;
+use App\Http\Controllers\PollParticipationController;
 
 // -------------------------------------------------------------------------
 // Fichier de routes publiques de l'application. Les routes des différents
@@ -132,6 +133,19 @@ Route::post('/oneduc/questions/{code}/questions', [QuestionWallParticipationCont
 Route::post('/oneduc/questions/{code}/questions/{question}/vote', [QuestionWallParticipationController::class, 'toggleVote'])
     ->middleware(['auth', 'throttle:60,1'])
     ->name('questions.vote.toggle');
+
+// ----------------------------------------------------------
+// 📊 Sondage (participation)
+// ----------------------------------------------------------
+Route::middleware(['auth'])->group(function () {
+    Route::get('/oneduc/sondage', [PollParticipationController::class, 'home'])->name('sondages.join');
+    Route::post('/oneduc/sondage', [PollParticipationController::class, 'resolveCode'])->name('sondages.resolve');
+    Route::get('/oneduc/sondage/{code}', [PollParticipationController::class, 'joinByCode'])->name('sondages.join.code');
+    Route::post('/oneduc/sondage/{code}/reponses', [PollParticipationController::class, 'submit'])
+        ->middleware('throttle:60,1')
+        ->name('sondages.submit');
+    Route::get('/oneduc/sondage/{code}/data', [PollParticipationController::class, 'data'])->name('sondages.data');
+});
 
 
 

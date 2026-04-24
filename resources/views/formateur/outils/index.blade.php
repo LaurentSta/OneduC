@@ -35,7 +35,7 @@
   </header>
 
   {{-- Grille des outils --}}
-  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5 gap-6 mb-8">
+  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-7 gap-6 mb-8">
 
     {{-- ── NUAGE DE MOTS ──────────────────────────────────────────────── --}}
     <div class="flex flex-col bg-white rounded-[20px] shadow-md overflow-hidden">
@@ -223,6 +223,65 @@
       </div>
     </div>
 
+    {{-- ── SONDAGE ─────────────────────────────────────────────────────── --}}
+    <div class="flex flex-col bg-white rounded-[20px] shadow-md overflow-hidden">
+      <div class="bg-teal-600 px-6 py-5 flex items-center gap-3">
+        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/20">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+          </svg>
+        </div>
+        <h2 class="text-lg font-bold text-white">Sondage</h2>
+      </div>
+      <div class="flex-1 px-6 py-5 space-y-3">
+        <p class="text-sm text-gray-600 leading-relaxed">
+          Créez des questions à choix multiples dans vos parcours formateur. Les stagiaires répondent pendant l'activité et vous animez la session autour de leurs réponses.
+        </p>
+        <div class="flex flex-wrap gap-2 text-[11px]">
+          <span class="rounded-full bg-green-100 px-2.5 py-0.5 font-semibold text-green-700">Présentiel</span>
+          <span class="rounded-full bg-blue-100 px-2.5 py-0.5 font-semibold text-blue-700">Distanciel</span>
+          <span class="rounded-full bg-teal-100 px-2.5 py-0.5 font-semibold text-teal-700">Interaction</span>
+        </div>
+      </div>
+
+      @if($recentPolls->isNotEmpty())
+        <div class="border-t border-gray-100 px-6 py-4">
+          <p class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">Sondages récents</p>
+          <div class="space-y-2">
+            @foreach($recentPolls as $poll)
+              @php
+                $firstQuestion = collect($poll->questions ?? [])->first();
+              @endphp
+              <div class="flex items-center justify-between gap-2">
+                <div class="min-w-0">
+                  <p class="text-xs font-semibold text-gray-800 truncate">
+                    {{ $firstQuestion['question'] ?? 'Sondage sans question' }}
+                  </p>
+                  <p class="text-[10px] text-gray-400 truncate">
+                    {{ $poll->group?->name }} · {{ $poll->responses_count }} réponse{{ $poll->responses_count > 1 ? 's' : '' }}
+                  </p>
+                </div>
+                <a href="{{ route('formateur.sondages.show', $poll) }}"
+                   class="shrink-0 rounded-[6px] bg-teal-100 px-2 py-1 text-[10px] font-bold text-teal-700 hover:bg-teal-200 transition">
+                  Ouvrir
+                </a>
+              </div>
+            @endforeach
+          </div>
+        </div>
+      @endif
+
+      <div class="border-t border-gray-100 px-6 py-4 mt-auto">
+        <a href="{{ route('formateur.sondages.index') }}"
+           class="w-full inline-flex items-center justify-center gap-2 rounded-[10px] bg-teal-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-teal-700 transition">
+          Gérer les sondages
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+          </svg>
+        </a>
+      </div>
+    </div>
+
     {{-- ── ROUE ALÉATOIRE ─────────────────────────────────────────────── --}}
     <div class="flex flex-col bg-white rounded-[20px] shadow-md overflow-hidden">
       <div class="bg-violet-600 px-6 py-5 flex items-center gap-3">
@@ -247,6 +306,37 @@
         <a href="{{ route('formateur.roue.index') }}"
            class="w-full inline-flex items-center justify-center gap-2 rounded-[10px] bg-violet-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-violet-700 transition">
           Gérer les roues
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+          </svg>
+        </a>
+      </div>
+    </div>
+
+    {{-- ── PAGE COLLABORATIVE (HEDGEDOC) ─────────────────────────────── --}}
+    <div class="flex flex-col bg-white rounded-[20px] shadow-md overflow-hidden">
+      <div class="bg-cyan-600 px-6 py-5 flex items-center gap-3">
+        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/20">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+        </div>
+        <h2 class="text-lg font-bold text-white">Page collaborative</h2>
+      </div>
+      <div class="flex-1 px-6 py-5 space-y-3">
+        <p class="text-sm text-gray-600 leading-relaxed">
+          Éditez un document Markdown à plusieurs en temps réel (texte, tableaux, images, listes, etc.), avec partage d'un lien d'édition et d'un lien lecture seule.
+        </p>
+        <div class="flex flex-wrap gap-2 text-[11px]">
+          <span class="rounded-full bg-green-100 px-2.5 py-0.5 font-semibold text-green-700">Présentiel</span>
+          <span class="rounded-full bg-blue-100 px-2.5 py-0.5 font-semibold text-blue-700">Distanciel</span>
+          <span class="rounded-full bg-cyan-100 px-2.5 py-0.5 font-semibold text-cyan-700">Markdown</span>
+        </div>
+      </div>
+      <div class="border-t border-gray-100 px-6 py-4 mt-auto">
+        <a href="{{ route('formateur.pages-collaboratives.index') }}"
+           class="w-full inline-flex items-center justify-center gap-2 rounded-[10px] bg-cyan-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-cyan-700 transition">
+          Ouvrir l'outil
           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
           </svg>

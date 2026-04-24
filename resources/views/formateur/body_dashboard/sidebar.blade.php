@@ -13,6 +13,8 @@
 
     $isOutilsActive = request()->routeIs('formateur.outils.*')
         || request()->routeIs('formateur.nuages.*')
+        || request()->routeIs('formateur.sondages.*')
+        || request()->routeIs('formateur.pages-collaboratives.*')
         || request()->routeIs('formateur.live-quiz.*')
         || request()->routeIs('formateur.groupes.whiteboard.*');
 

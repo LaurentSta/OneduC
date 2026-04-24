@@ -126,4 +126,9 @@ class Group extends Model
     {
         return $this->hasMany(LiveQuizSession::class);
     }
+
+    public function pollSessions()
+    {
+        return $this->hasMany(PollSession::class);
+    }
 }

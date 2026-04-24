@@ -46,5 +46,10 @@ return [
         'server_id' => env('DISCORD_SERVER_ID', ''),
     ],
 
+    'hedgedoc' => [
+        'base_url' => env('HEDGEDOC_BASE_URL', ''),
+        'new_path' => env('HEDGEDOC_NEW_PATH', '/new'),
+    ],
+
 
 ];
