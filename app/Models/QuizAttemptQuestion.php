@@ -6,7 +6,17 @@ use Illuminate\Database\Eloquent\Model;
 
 class QuizAttemptQuestion extends Model
 {
-    protected $guarded = [];
+    protected $fillable = [
+        'attempt_id',
+        'question_id',
+        'position',
+        'question_started_at',
+        'answered_at',
+        'time_seconds',
+        'answer_option_ids',
+        'given_answer',
+        'is_correct',
+    ];
 
     protected $casts = [
         'given_answer' => 'array', // Pour stocker [1, 2] si choix multiple, ou "texte"

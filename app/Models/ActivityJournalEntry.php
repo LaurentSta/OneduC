@@ -11,7 +11,15 @@ class ActivityJournalEntry extends Model
 
     public const UPDATED_AT = null;
 
-    protected $guarded = [];
+    protected $fillable = [
+        'user_id',
+        'action',
+        'route_name',
+        'method',
+        'url',
+        'context',
+        'ip_address',
+    ];
 
     protected function casts(): array
     {

@@ -9,7 +9,12 @@ class QuizOption extends Model
 {
     use HasFactory;
 
-    protected $guarded = [];
+    protected $fillable = [
+        'question_id',
+        'option_text',
+        'is_correct',
+        'position',
+    ];
 
     protected $casts = [
         'is_correct'  => 'boolean',

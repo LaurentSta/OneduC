@@ -28,8 +28,24 @@ class User extends Authenticatable
         });
     }
 
-    // ✅ Autorise tous les champs dans les requêtes mass assignable
-    protected $guarded = [];
+    protected $fillable = [
+        'prenom',
+        'name',
+        'username',
+        'email',
+        'password',
+        'photo',
+        'phone',
+        'address',
+        'societe',
+        'role',
+        'status',
+        'formateur_id',
+        'code_acces',
+        'total_site_time',
+        'password_changed_at',
+        'email_verified_at',
+    ];
 
     protected $hidden = [
         'password',

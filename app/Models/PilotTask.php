@@ -41,7 +41,21 @@ class PilotTask extends Model
         'comment_added' => 'Nouveau commentaire',
     ];
 
-    protected $guarded = [];
+    protected $fillable = [
+        'project_id',
+        'module_id',
+        'title',
+        'description',
+        'status',
+        'priority',
+        'due_date',
+        'responsible_id',
+        'task_type',
+        'internal_url',
+        'attachment_path',
+        'position',
+        'created_by',
+    ];
 
     protected function casts(): array
     {

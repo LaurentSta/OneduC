@@ -7,7 +7,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class LiveQuizSessionParticipant extends Model
 {
-    protected $guarded = [];
+    protected $fillable = [
+        'live_quiz_session_id',
+        'user_id',
+        'attempt_id',
+        'joined_at',
+        'last_seen_at',
+    ];
 
     protected $casts = [
         'joined_at' => 'datetime',

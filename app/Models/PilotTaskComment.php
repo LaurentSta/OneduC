@@ -9,7 +9,11 @@ class PilotTaskComment extends Model
 {
     use HasFactory;
 
-    protected $guarded = [];
+    protected $fillable = [
+        'task_id',
+        'user_id',
+        'body',
+    ];
 
     public function task()
     {

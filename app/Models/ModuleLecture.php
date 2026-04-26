@@ -14,7 +14,29 @@ class ModuleLecture extends Model
 {
     use HasFactory;
 
-    protected $guarded = [];
+    protected $fillable = [
+        'module_id',
+        'section_id',
+        'lecture_title',
+        'url',
+        'position',
+        'scorm_path',
+        'scorm_package_id',
+        'scorm_package_version_id',
+        'use_active_scorm_version',
+        'content_type',
+        'duration',
+        'slide_count',
+        'question_count',
+        'quiz_enabled',
+        'quiz_questions_per_attempt',
+        'live_quiz_entry_enabled',
+        'slides_status',
+        'slides_path',
+        'slides_source_path',
+        'slides_error',
+        'slides_converted_at',
+    ];
 
     protected $casts = [
         'duration' => 'integer',

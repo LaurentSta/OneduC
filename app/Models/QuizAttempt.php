@@ -6,7 +6,17 @@ use Illuminate\Database\Eloquent\Model;
 
 class QuizAttempt extends Model
 {
-    protected $guarded = []; // Plus simple que fillable pour le dev
+    protected $fillable = [
+        'user_id',
+        'lecture_id',
+        'started_at',
+        'finished_at',
+        'total_questions',
+        'score',
+        'percent',
+        'passed',
+        'total_time_seconds',
+    ];
 
     protected $casts = [
         'started_at'  => 'datetime',

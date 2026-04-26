@@ -15,7 +15,13 @@ class PilotNotificationPreference extends Model
         'weekly' => 'Hebdomadaire',
     ];
 
-    protected $guarded = [];
+    protected $fillable = [
+        'user_id',
+        'in_app_enabled',
+        'email_enabled',
+        'frequency',
+        'event_types',
+    ];
 
     protected function casts(): array
     {

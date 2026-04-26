@@ -9,7 +9,14 @@ class PilotSubscription extends Model
 {
     use HasFactory;
 
-    protected $guarded = [];
+    protected $fillable = [
+        'user_id',
+        'project_id',
+        'task_id',
+        'notify_in_app',
+        'notify_mail',
+        'frequency',
+    ];
 
     protected function casts(): array
     {

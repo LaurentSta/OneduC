@@ -13,7 +13,20 @@ class LiveQuizSession extends Model
     public const STATUS_ANSWER_REVEALED = 'answer_revealed';
     public const STATUS_CLOSED = 'closed';
 
-    protected $guarded = [];
+    protected $fillable = [
+        'formateur_id',
+        'module_id',
+        'section_id',
+        'lecture_id',
+        'group_id',
+        'access_code',
+        'status',
+        'current_position',
+        'total_questions',
+        'answer_revealed_at',
+        'started_at',
+        'ended_at',
+    ];
 
     protected $casts = [
         'answer_revealed_at' => 'datetime',

@@ -9,7 +9,13 @@ class PilotProject extends Model
 {
     use HasFactory;
 
-    protected $guarded = [];
+    protected $fillable = [
+        'name',
+        'description',
+        'module_id',
+        'due_date',
+        'created_by',
+    ];
 
     protected function casts(): array
     {

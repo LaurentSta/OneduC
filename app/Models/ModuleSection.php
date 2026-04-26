@@ -9,7 +9,16 @@ class ModuleSection extends Model
 {
     use HasFactory;
 
-    protected $guarded = [];
+    protected $fillable = [
+        'module_id',
+        'section_title',
+        'section_html',
+        'objectif',
+        'methode',
+        'contexte',
+        'scorm_video_path',
+        'video_url',
+    ];
 
     public function lectures()
     {

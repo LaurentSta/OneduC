@@ -10,7 +10,12 @@ use Illuminate\Support\Str;
 class Category extends Model
 {
     use HasFactory;
-    protected $guarded = [];
+    protected $fillable = [
+        'category_name',
+        'category_description',
+        'category_slug',
+        'category_image',
+    ];
 
     public function subcategories()
     {

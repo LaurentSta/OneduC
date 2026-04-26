@@ -9,7 +9,20 @@ class QuizQuestion extends Model
 {
     use HasFactory;
 
-    protected $guarded = [];
+    protected $fillable = [
+        'lecture_id',
+        'type',
+        'question_text',
+        'image_path',
+        'image_alt',
+        'audio_path',
+        'audio_transcript',
+        'is_active',
+        'created_by',
+        'position',
+        'points',
+        'payload',
+    ];
 
     protected $casts = [
         'position'   => 'integer',

@@ -11,7 +11,17 @@ class LessonResource extends Model
 {
     use HasFactory;
 
-    protected $guarded = [];
+    protected $fillable = [
+        'lecture_id',
+        'module_id',
+        'title',
+        'file_path',
+        'original_name',
+        'mime_type',
+        'file_size',
+        'is_visible_to_stagiaire',
+        'position',
+    ];
 
     protected $casts = [
         'is_visible_to_stagiaire' => 'boolean',
