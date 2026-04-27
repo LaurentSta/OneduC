@@ -107,4 +107,25 @@ trait InteractsWithGroupWhiteboards
             'updated_at' => $whiteboard->updated_at?->toIso8601String(),
         ]);
     }
+
+    protected function saveExcalidrawDataRequest(Request $request, GroupWhiteboard $whiteboard): JsonResponse
+    {
+        $request->validate([
+            'elements' => ['required', 'array'],
+            'app_state' => ['nullable', 'array'],
+        ]);
+
+        $whiteboard->saveExcalidrawData(
+            $request->input('elements', []),
+            $request->input('app_state', []),
+            auth()->user(),
+        );
+
+        $whiteboard->refresh();
+
+        return response()->json([
+            'version' => (int) $whiteboard->version,
+            'saved_at' => $whiteboard->updated_at?->toIso8601String(),
+        ]);
+    }
 }

@@ -42,16 +42,12 @@
             </div>
         </div>
 
-        <div class="border-b border-slate-200 bg-slate-50 px-6 py-4 md:px-8">
-            <div class="grid gap-3 text-sm text-slate-600 md:grid-cols-3">
-                <p>Outils disponibles : selection, notes, texte libre, rectangle, cercle et dessin a main levee.</p>
-                <p>Les notes et croquis se deplacent facilement a la souris, puis se sauvegardent automatiquement.</p>
-                <p>Le panneau de droite permet d'editer le contenu, la couleur et de supprimer un element selectionne.</p>
-            </div>
+        <div class="border-b border-slate-200 bg-slate-50 px-6 py-3 md:px-8">
+            <p class="text-xs text-slate-500">Dessinez, annotez, insérez des formes et du texte. Tout est sauvegardé automatiquement et partagé avec le groupe en temps réel.</p>
         </div>
 
-        <div class="p-4 md:p-6">
-            <div data-whiteboard-app class="min-h-[72vh]"></div>
+        <div class="p-0">
+            <div data-whiteboard-app></div>
             <script type="application/json" data-whiteboard-config>{!! $whiteboardConfigJson !!}</script>
         </div>
     </section>

@@ -30,7 +30,7 @@ function loadParcoursBuilderWhenNeeded() {
 
 function loadGroupWhiteboardWhenNeeded() {
   if (!document.querySelector('[data-whiteboard-app]')) return;
-  import('./group-whiteboard').then(({ mountGroupWhiteboard }) => mountGroupWhiteboard());
+  import('./group-whiteboard-excalidraw.jsx').then(({ mountGroupWhiteboardExcalidraw }) => mountGroupWhiteboardExcalidraw());
 }
 
 function initPublicPageTransitions() {

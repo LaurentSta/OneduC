@@ -313,6 +313,51 @@
       </div>
     </div>
 
+    {{-- ── MINUTEUR COLLABORATIF ──────────────────────────────────────── --}}
+    <div class="flex flex-col bg-white rounded-[20px] shadow-md overflow-hidden">
+      <div class="bg-rose-600 px-6 py-5 flex items-center gap-3">
+        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/20">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+        <h2 class="text-lg font-bold text-white">Minuteur</h2>
+      </div>
+      <div class="flex-1 px-6 py-5 space-y-3">
+        <p class="text-sm text-gray-600 leading-relaxed">
+          Lancez un compte à rebours visible en temps réel par tous les stagiaires du groupe. Présets Pomodoro, pause, exercice — avec contrôle total pour le formateur.
+        </p>
+        <div class="flex flex-wrap gap-2 text-[11px]">
+          <span class="rounded-full bg-green-100 px-2.5 py-0.5 font-semibold text-green-700">Présentiel</span>
+          <span class="rounded-full bg-blue-100 px-2.5 py-0.5 font-semibold text-blue-700">Distanciel</span>
+          <span class="rounded-full bg-rose-100 px-2.5 py-0.5 font-semibold text-rose-700">Synchrone</span>
+        </div>
+      </div>
+
+      @if($groups->isNotEmpty())
+        <div class="border-t border-gray-100 px-6 py-4">
+          <p class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">Mes groupes</p>
+          <div class="space-y-2">
+            @foreach($groups->take(4) as $group)
+              <div class="flex items-center justify-between gap-2">
+                <p class="text-xs font-semibold text-gray-800 truncate">{{ $group->name }}</p>
+                <a href="{{ route('formateur.groupes.timer.show', $group) }}"
+                   class="shrink-0 rounded-[6px] bg-rose-100 px-2 py-1 text-[10px] font-bold text-rose-700 hover:bg-rose-200 transition">
+                  Ouvrir
+                </a>
+              </div>
+            @endforeach
+          </div>
+        </div>
+      @else
+        <div class="border-t border-gray-100 px-6 py-4">
+          <p class="text-xs text-gray-500">
+            Créez un <a href="{{ route('formateur.groupes.create') }}" class="text-rose-600 hover:underline font-semibold">groupe</a> pour accéder au minuteur.
+          </p>
+        </div>
+      @endif
+    </div>
+
     {{-- ── PAGE COLLABORATIVE (HEDGEDOC) ─────────────────────────────── --}}
     <div class="flex flex-col bg-white rounded-[20px] shadow-md overflow-hidden">
       <div class="bg-cyan-600 px-6 py-5 flex items-center gap-3">

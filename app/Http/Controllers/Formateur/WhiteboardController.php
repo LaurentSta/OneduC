@@ -42,6 +42,11 @@ class WhiteboardController extends Controller
         return $this->clearWhiteboard($this->whiteboardForInstructor($group));
     }
 
+    public function save(Request $request, Group $group): JsonResponse
+    {
+        return $this->saveExcalidrawDataRequest($request, $this->whiteboardForInstructor($group));
+    }
+
     private function whiteboardForInstructor(Group $group): GroupWhiteboard
     {
         $group = Group::query()
@@ -80,6 +85,7 @@ class WhiteboardController extends Controller
                 ],
                 'routes' => [
                     'snapshot' => route('formateur.groupes.whiteboard.snapshot', ['group' => $group->id]),
+                    'save' => route('formateur.groupes.whiteboard.excalidraw.save', ['group' => $group->id]),
                     'upsert' => route('formateur.groupes.whiteboard.items.upsert', ['group' => $group->id]),
                     'destroy_item_pattern' => route('formateur.groupes.whiteboard.items.destroy', [
                         'group' => $group->id,

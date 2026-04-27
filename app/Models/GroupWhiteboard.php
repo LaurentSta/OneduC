@@ -12,6 +12,7 @@ class GroupWhiteboard extends Model
         'group_id',
         'title',
         'settings',
+        'excalidraw_data',
         'version',
         'created_by',
         'updated_by',
@@ -19,6 +20,7 @@ class GroupWhiteboard extends Model
 
     protected $casts = [
         'settings' => 'array',
+        'excalidraw_data' => 'array',
         'version' => 'integer',
     ];
 
@@ -78,6 +80,7 @@ class GroupWhiteboard extends Model
             'title' => (string) ($this->title ?? 'Tableau blanc'),
             'version' => (int) $this->version,
             'settings' => $this->settings ?? [],
+            'excalidraw_data' => $this->excalidraw_data,
             'group' => [
                 'id' => (int) $this->group->id,
                 'name' => (string) $this->group->name,
@@ -88,5 +91,17 @@ class GroupWhiteboard extends Model
                 ->all(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];
+    }
+
+    public function saveExcalidrawData(array $elements, array $appState, ?User $actor = null): void
+    {
+        $this->forceFill([
+            'excalidraw_data' => [
+                'elements' => $elements,
+                'app_state' => $appState,
+            ],
+            'version' => ((int) $this->version) + 1,
+            'updated_by' => $actor?->id,
+        ])->save();
     }
 }

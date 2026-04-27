@@ -9,6 +9,7 @@ use App\Http\Controllers\Stagiaire\LiveQuizSessionController;
 use App\Http\Controllers\Stagiaire\QuizController;
 use App\Http\Controllers\Stagiaire\FirstLoginController; // ✅ Import du nouveau contrôleur
 use App\Http\Controllers\Stagiaire\WhiteboardController;
+use App\Http\Controllers\Stagiaire\TimerController;
 use App\Http\Controllers\Stagiaire\ParcoursWordCloudController;
 use App\Http\Controllers\Stagiaire\QuestionWallController;
 
@@ -54,6 +55,13 @@ Route::middleware(['auth', 'role:stagiaire', 'track.time'])
             Route::get('/documentation', fn () => view('stagiaire.documentation'))
                 ->name('documentation');
 
+            Route::prefix('/minuteur')
+                ->name('timer.')
+                ->group(function () {
+                    Route::get('/groupes/{group}', [TimerController::class, 'show'])->name('show');
+                    Route::get('/groupes/{group}/status', [TimerController::class, 'status'])->name('status');
+                });
+
             Route::prefix('/tableau-blanc')
                 ->name('whiteboard.')
                 ->group(function () {
@@ -61,6 +69,7 @@ Route::middleware(['auth', 'role:stagiaire', 'track.time'])
                     Route::get('/notification-status', [WhiteboardController::class, 'notificationStatus'])->name('notification-status');
                     Route::get('/groupes/{group}', [WhiteboardController::class, 'show'])->name('show');
                     Route::get('/groupes/{group}/snapshot', [WhiteboardController::class, 'snapshot'])->name('snapshot');
+                    Route::post('/groupes/{group}/excalidraw-save', [WhiteboardController::class, 'save'])->name('excalidraw.save');
                     Route::post('/groupes/{group}/items', [WhiteboardController::class, 'upsert'])->name('items.upsert');
                     Route::delete('/groupes/{group}/items/{item}', [WhiteboardController::class, 'destroy'])->name('items.destroy');
                 });

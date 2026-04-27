@@ -72,6 +72,11 @@ class WhiteboardController extends Controller
         return $this->destroyWhiteboardItem($this->whiteboardForStudent($group), $item);
     }
 
+    public function save(Request $request, Group $group): JsonResponse
+    {
+        return $this->saveExcalidrawDataRequest($request, $this->whiteboardForStudent($group));
+    }
+
     private function whiteboardForStudent(Group $group): GroupWhiteboard
     {
         abort_unless((bool) $group->is_active, 404);
@@ -113,6 +118,7 @@ class WhiteboardController extends Controller
                 ],
                 'routes' => [
                     'snapshot' => route('stagiaire.whiteboard.snapshot', ['group' => $group->id]),
+                    'save' => route('stagiaire.whiteboard.excalidraw.save', ['group' => $group->id]),
                     'upsert' => route('stagiaire.whiteboard.items.upsert', ['group' => $group->id]),
                     'destroy_item_pattern' => route('stagiaire.whiteboard.items.destroy', [
                         'group' => $group->id,

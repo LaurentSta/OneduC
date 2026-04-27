@@ -27,6 +27,7 @@ use App\Http\Controllers\Formateur\OutilsLiveQuizController;
 use App\Http\Controllers\Formateur\QuestionWallController;
 use App\Http\Controllers\Formateur\RoueAleatoireController;
 use App\Http\Controllers\Formateur\WhiteboardController;
+use App\Http\Controllers\Formateur\TimerController;
 use App\Http\Controllers\Backend\ModuleController;
 // use App\Http\Controllers\Stagiaire\QuizAttemptController;
 use App\Http\Controllers\Stagiaire\QuizController;
@@ -76,11 +77,23 @@ Route::middleware(['auth', 'role:formateur'])
     Route::get('/groupes/{id}/edit', [GroupeController::class, 'edit'])->name('groupes.edit');
     Route::put('/groupes/{id}', [GroupeController::class, 'update'])->name('groupes.update');
     Route::delete('/groupes/{id}', [GroupeController::class, 'destroy'])->name('groupes.destroy');
+    Route::prefix('/groupes/{group}/minuteur')
+        ->name('groupes.timer.')
+        ->group(function () {
+            Route::get('/', [TimerController::class, 'show'])->name('show');
+            Route::get('/status', [TimerController::class, 'status'])->name('status');
+            Route::post('/configure', [TimerController::class, 'configure'])->name('configure');
+            Route::post('/start', [TimerController::class, 'start'])->name('start');
+            Route::post('/pause', [TimerController::class, 'pause'])->name('pause');
+            Route::post('/reset', [TimerController::class, 'reset'])->name('reset');
+        });
+
     Route::prefix('/groupes/{group}/tableau-blanc')
         ->name('groupes.whiteboard.')
         ->group(function () {
             Route::get('/', [WhiteboardController::class, 'show'])->name('show');
             Route::get('/snapshot', [WhiteboardController::class, 'snapshot'])->name('snapshot');
+            Route::post('/excalidraw-save', [WhiteboardController::class, 'save'])->name('excalidraw.save');
             Route::post('/items', [WhiteboardController::class, 'upsert'])->name('items.upsert');
             Route::delete('/items/{item}', [WhiteboardController::class, 'destroy'])->name('items.destroy');
             Route::post('/clear', [WhiteboardController::class, 'clear'])->name('clear');
