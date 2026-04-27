@@ -58,7 +58,7 @@
   </div>
 
 <script>
-const ALL_ENTRIES = @json($session->entries);
+let allEntries = @json($session->entries);
 const PALETTE = ['#7C3AED','#0F766E','#1D4ED8','#B45309','#BE123C','#0E7490','#15803D','#A16207'];
 const STATE_URL = @json($stateUrl);
 
@@ -73,7 +73,7 @@ let currentPickId = @json($currentPick['id'] ?? null);
 let activeEntryIds = @json($activeEntryIds);
 
 function getActiveEntries() {
-  return ALL_ENTRIES.filter((entry) => activeEntryIds.includes(Number(entry.id)));
+  return allEntries.filter((entry) => activeEntryIds.includes(Number(entry.id)));
 }
 
 function setWaitingBanner() {
@@ -84,6 +84,44 @@ function setWaitingBanner() {
     ? 'En attente du prochain tirage…'
     : 'Aucun stagiaire actif pour le moment.';
   nameEl.className = 'text-sm text-gray-400';
+}
+
+function fitWheelText(text, maxWidth) {
+  const cleanText = String(text || '').trim();
+  if (ctx.measureText(cleanText).width <= maxWidth) {
+    return cleanText;
+  }
+
+  let fitted = cleanText;
+  while (fitted.length > 1 && ctx.measureText(`${fitted}...`).width > maxWidth) {
+    fitted = fitted.slice(0, -1).trimEnd();
+  }
+
+  return `${fitted}...`;
+}
+
+function wheelLabelLines(name, count) {
+  const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+  if (parts.length >= 2 && count <= 16) {
+    return [parts[0], parts.slice(1).join(' ')];
+  }
+
+  return [parts.join(' ')];
+}
+
+function drawWheelLabel(entry, count, isPicked) {
+  const fontSize = Math.max(10, Math.min(15, Math.round(210 / Math.max(count, 1))));
+  const maxWidth = Math.max(68, R - 54);
+  const lines = wheelLabelLines(entry.name, count);
+  const lineHeight = fontSize + 2;
+  const firstY = lines.length === 1 ? fontSize / 3 : -lineHeight / 2 + fontSize / 3;
+
+  ctx.font = `bold ${fontSize}px "Varela Round", Arial, sans-serif`;
+  ctx.fillStyle = isPicked ? '#9ca3af' : '#fff';
+
+  lines.forEach((line, index) => {
+    ctx.fillText(fitWheelText(line, maxWidth), R - 8, firstY + index * lineHeight, maxWidth);
+  });
 }
 
 function drawWheel(angle, picks) {
@@ -113,12 +151,7 @@ function drawWheel(angle, picks) {
     ctx.translate(CX, CY);
     ctx.rotate(startA + segAngle / 2);
     ctx.textAlign = 'right';
-    const fontSize = Math.max(10, Math.min(15, Math.round(180 / n)));
-    ctx.font = `bold ${fontSize}px "Varela Round", Arial, sans-serif`;
-    ctx.fillStyle = isPicked ? '#9ca3af' : '#fff';
-    const maxChars = Math.max(8, Math.round(40 / n));
-    const label = entry.name.length > maxChars ? entry.name.slice(0, maxChars) + '…' : entry.name;
-    ctx.fillText(label, R - 8, fontSize / 3);
+    drawWheelLabel(entry, n, isPicked);
     ctx.restore();
   });
 
@@ -151,7 +184,7 @@ function spinTo(winnerIndex) {
   if (n === 0 || winnerIndex < 0 || winnerIndex >= n) return;
   const segAngle = (2 * Math.PI) / n;
   const winnerCenter = winnerIndex * segAngle + segAngle / 2;
-  const targetNorm   = -winnerCenter - Math.PI / 2;
+  const targetNorm   = -winnerCenter;
   const spins        = 5 * 2 * Math.PI;
   const normalizedCurrent = currentAngle % (2 * Math.PI);
   let diff = (targetNorm - normalizedCurrent + 2 * Math.PI) % (2 * Math.PI);
@@ -176,7 +209,7 @@ function updatePicksList(picks) {
   const list = document.getElementById('picks-list');
   if (!picks.length) { list.innerHTML = ''; return; }
   list.innerHTML = picks.map((id, i) => {
-    const entry = ALL_ENTRIES.find((e) => Number(e.id) === Number(id));
+    const entry = allEntries.find((e) => Number(e.id) === Number(id));
     if (!entry) return '';
     const isCurrent = Number(id) === Number(currentPickId);
     return `<div class="bg-white rounded-[12px] shadow-sm px-4 py-2.5 flex items-center gap-3
@@ -204,6 +237,7 @@ async function poll() {
     if (data.state_key === lastStateKey) return;
     lastStateKey = data.state_key;
 
+    allEntries = Array.isArray(data.entries) ? data.entries : allEntries;
     currentPicks  = data.picks || [];
     currentPickId = data.current_pick?.id ?? null;
     activeEntryIds = (data.active_entry_ids || []).map((id) => Number(id));

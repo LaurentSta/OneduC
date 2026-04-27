@@ -100,10 +100,12 @@ class RandomWheelSession extends Model
 
     public function stateKey(): string
     {
+        $entriesHash = md5(json_encode($this->entries ?? []));
         $picksHash = md5(json_encode(array_values($this->picks ?? [])));
         $activeHash = md5(json_encode($this->activeEntryIds()));
 
         return implode('|', [
+            $entriesHash,
             $this->current_pick_id ?? 'null',
             $picksHash,
             $this->spun_at?->toISOString() ?? 'null',

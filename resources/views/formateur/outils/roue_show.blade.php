@@ -84,18 +84,16 @@
           <span id="btn-spin-label">{{ $spinLabel }}</span>
         </button>
 
-        @if($picksCount > 0)
-          <form method="POST" action="{{ $resetUrl }}">
-            @csrf
-            <button type="submit"
-                    class="w-full inline-flex items-center justify-center gap-2 rounded-[10px] border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-              </svg>
-              Réinitialiser
-            </button>
-          </form>
-        @endif
+        <form id="reset-form" method="POST" action="{{ $resetUrl }}" class="{{ $picksCount > 0 ? '' : 'hidden' }}">
+          @csrf
+          <button type="submit"
+                  class="w-full inline-flex items-center justify-center gap-2 rounded-[10px] border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+            </svg>
+            Réinitialiser
+          </button>
+        </form>
 
         <p id="spin-help" class="text-center text-xs text-gray-400">
           @if(! $hasActiveEntries)
@@ -217,6 +215,7 @@ const CSRF_TOKEN = @json(csrf_token());
 const spinButton = document.getElementById('btn-spin');
 const spinButtonLabel = document.getElementById('btn-spin-label');
 const spinHelp = document.getElementById('spin-help');
+const resetForm = document.getElementById('reset-form');
 const participantsCount = document.getElementById('participants-count');
 const participantsStatus = document.getElementById('participants-status');
 const headerActiveSummary = document.getElementById('header-active-summary');
@@ -305,6 +304,11 @@ function updateSpinButtonState() {
   spinHelp.textContent = '';
 }
 
+function updateResetButtonState() {
+  if (!resetForm) return;
+  resetForm.classList.toggle('hidden', PICKS.length === 0);
+}
+
 function setBannerWaiting() {
   resultBanner.className = 'w-full max-w-[480px] rounded-[14px] bg-gray-50 border border-dashed border-gray-200 px-6 py-4 text-center transition-all';
   if (activeEntryIds.length > 0) {
@@ -319,6 +323,44 @@ function setBannerWinner(name) {
   resultBanner.className = 'w-full max-w-[480px] rounded-[14px] bg-violet-600 px-6 py-4 text-center transition-all';
   resultName.textContent = name;
   resultName.className = 'text-3xl font-bold text-white';
+}
+
+function fitWheelText(text, maxWidth) {
+  const cleanText = String(text || '').trim();
+  if (ctx.measureText(cleanText).width <= maxWidth) {
+    return cleanText;
+  }
+
+  let fitted = cleanText;
+  while (fitted.length > 1 && ctx.measureText(`${fitted}...`).width > maxWidth) {
+    fitted = fitted.slice(0, -1).trimEnd();
+  }
+
+  return `${fitted}...`;
+}
+
+function wheelLabelLines(name, count) {
+  const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+  if (parts.length >= 2 && count <= 16) {
+    return [parts[0], parts.slice(1).join(' ')];
+  }
+
+  return [parts.join(' ')];
+}
+
+function drawWheelLabel(entry, count, isPicked) {
+  const fontSize = Math.max(10, Math.min(16, Math.round(220 / Math.max(count, 1))));
+  const maxWidth = Math.max(72, R - 58);
+  const lines = wheelLabelLines(entry.name, count);
+  const lineHeight = fontSize + 2;
+  const firstY = lines.length === 1 ? fontSize / 3 : -lineHeight / 2 + fontSize / 3;
+
+  ctx.font = `bold ${fontSize}px "Varela Round", Arial, sans-serif`;
+  ctx.fillStyle = isPicked ? '#9ca3af' : '#ffffff';
+
+  lines.forEach((line, index) => {
+    ctx.fillText(fitWheelText(line, maxWidth), R - 10, firstY + index * lineHeight, maxWidth);
+  });
 }
 
 function drawWheel(angle) {
@@ -353,14 +395,7 @@ function drawWheel(angle) {
     ctx.translate(CX, CY);
     ctx.rotate(startA + segAngle / 2);
     ctx.textAlign = 'right';
-
-    const fontSize = Math.max(10, Math.min(16, Math.round(200 / n)));
-    ctx.font = `bold ${fontSize}px "Varela Round", Arial, sans-serif`;
-    ctx.fillStyle = isPicked ? '#9ca3af' : '#ffffff';
-
-    const maxChars = Math.max(8, Math.round(40 / n));
-    const label = entry.name.length > maxChars ? entry.name.slice(0, maxChars) + '…' : entry.name;
-    ctx.fillText(label, R - 10, fontSize / 3);
+    drawWheelLabel(entry, n, isPicked);
     ctx.restore();
   });
 
@@ -411,7 +446,7 @@ function spinTo(winnerIndex) {
 
   const segAngle = (2 * Math.PI) / n;
   const winnerCenter = winnerIndex * segAngle + segAngle / 2;
-  const targetNorm = -winnerCenter - Math.PI / 2;
+  const targetNorm = -winnerCenter;
   const spins = 5 * 2 * Math.PI;
   const normalizedCurrent = currentAngle % (2 * Math.PI);
   let diff = (targetNorm - normalizedCurrent + 2 * Math.PI) % (2 * Math.PI);
@@ -488,6 +523,7 @@ drawWheel(currentAngle);
 updateParticipantRows();
 updateCounters();
 updateSpinButtonState();
+updateResetButtonState();
 
 spinButton.addEventListener('click', async function () {
   if (spinning) return;
@@ -521,6 +557,7 @@ spinButton.addEventListener('click', async function () {
     if (!PICKS.includes(data.winner.id)) {
       PICKS.push(data.winner.id);
     }
+    updateResetButtonState();
 
     const fallbackIndex = getActiveEntries().findIndex((entry) => Number(entry.id) === Number(data.winner.id));
     const winnerIndex = Number.isInteger(data.winner_index) ? data.winner_index : fallbackIndex;

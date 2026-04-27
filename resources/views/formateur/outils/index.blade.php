@@ -1,7 +1,7 @@
 @extends('formateur.dashboard')
 
 @section('formateur')
-<div class="w-full px-6 lg:px-8">
+<div class="w-full px-6 lg:px-8" x-data="{ filtre: 'all' }">
 
   {{-- En-tête --}}
   <header class="bg-white rounded-[20px] shadow-md px-8 pt-5 pb-6 my-6">
@@ -34,11 +34,40 @@
     </div>
   </header>
 
+  {{-- Barre de filtres --}}
+  <div class="bg-white rounded-[16px] shadow-sm px-5 py-3 mb-6 flex flex-wrap items-center gap-2">
+    <span class="text-xs font-bold text-gray-400 uppercase tracking-wider shrink-0 mr-1">Famille</span>
+
+    <button @click="filtre = 'all'"
+      :class="filtre === 'all' ? 'bg-bleuone text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+      class="rounded-full px-4 py-1.5 text-sm font-semibold transition">
+      Tous les outils
+    </button>
+
+    <button @click="filtre = 'interaction'"
+      :class="filtre === 'interaction' ? 'bg-bleuone text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+      class="rounded-full px-4 py-1.5 text-sm font-semibold transition">
+      🗣 Interaction &amp; Feedback
+    </button>
+
+    <button @click="filtre = 'collaboration'"
+      :class="filtre === 'collaboration' ? 'bg-bleuone text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+      class="rounded-full px-4 py-1.5 text-sm font-semibold transition">
+      🤝 Collaboration
+    </button>
+
+    <button @click="filtre = 'animation'"
+      :class="filtre === 'animation' ? 'bg-bleuone text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+      class="rounded-full px-4 py-1.5 text-sm font-semibold transition">
+      ⚡ Animation de session
+    </button>
+  </div>
+
   {{-- Grille des outils --}}
-  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-7 gap-6 mb-8">
+  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6 mb-8">
 
     {{-- ── NUAGE DE MOTS ──────────────────────────────────────────────── --}}
-    <div class="flex flex-col bg-white rounded-[20px] shadow-md overflow-hidden">
+    <div x-show="filtre === 'all' || filtre === 'interaction'" class="flex flex-col bg-white rounded-[20px] shadow-md overflow-hidden">
       <div class="bg-amber-500 px-6 py-5 flex items-center gap-3">
         <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/20">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -91,7 +120,7 @@
     </div>
 
     {{-- ── QUIZ EN DIRECT ─────────────────────────────────────────────── --}}
-    <div class="flex flex-col bg-white rounded-[20px] shadow-md overflow-hidden">
+    <div x-show="filtre === 'all' || filtre === 'interaction'" class="flex flex-col bg-white rounded-[20px] shadow-md overflow-hidden">
       <div class="bg-[#004461] px-6 py-5 flex items-center gap-3">
         <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/20">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -122,7 +151,7 @@
     </div>
 
     {{-- ── TABLEAU BLANC ──────────────────────────────────────────────── --}}
-    <div class="flex flex-col bg-white rounded-[20px] shadow-md overflow-hidden">
+    <div x-show="filtre === 'all' || filtre === 'collaboration'" class="flex flex-col bg-white rounded-[20px] shadow-md overflow-hidden">
       <div class="bg-[#E94D2A] px-6 py-5 flex items-center gap-3">
         <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/20">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -170,7 +199,7 @@
     </div>
 
     {{-- ── MUR DE QUESTIONS ANONYME ─────────────────────────────────── --}}
-    <div class="flex flex-col bg-white rounded-[20px] shadow-md overflow-hidden">
+    <div x-show="filtre === 'all' || filtre === 'interaction'" class="flex flex-col bg-white rounded-[20px] shadow-md overflow-hidden">
       <div class="bg-indigo-600 px-6 py-5 flex items-center gap-3">
         <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/20">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -224,7 +253,7 @@
     </div>
 
     {{-- ── SONDAGE ─────────────────────────────────────────────────────── --}}
-    <div class="flex flex-col bg-white rounded-[20px] shadow-md overflow-hidden">
+    <div x-show="filtre === 'all' || filtre === 'interaction'" class="flex flex-col bg-white rounded-[20px] shadow-md overflow-hidden">
       <div class="bg-teal-600 px-6 py-5 flex items-center gap-3">
         <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/20">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -283,7 +312,7 @@
     </div>
 
     {{-- ── ROUE ALÉATOIRE ─────────────────────────────────────────────── --}}
-    <div class="flex flex-col bg-white rounded-[20px] shadow-md overflow-hidden">
+    <div x-show="filtre === 'all' || filtre === 'animation'" class="flex flex-col bg-white rounded-[20px] shadow-md overflow-hidden">
       <div class="bg-violet-600 px-6 py-5 flex items-center gap-3">
         <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/20">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -314,7 +343,7 @@
     </div>
 
     {{-- ── MINUTEUR COLLABORATIF ──────────────────────────────────────── --}}
-    <div class="flex flex-col bg-white rounded-[20px] shadow-md overflow-hidden">
+    <div x-show="filtre === 'all' || filtre === 'animation'" class="flex flex-col bg-white rounded-[20px] shadow-md overflow-hidden">
       <div class="bg-rose-600 px-6 py-5 flex items-center gap-3">
         <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/20">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -359,7 +388,7 @@
     </div>
 
     {{-- ── PAGE COLLABORATIVE (HEDGEDOC) ─────────────────────────────── --}}
-    <div class="flex flex-col bg-white rounded-[20px] shadow-md overflow-hidden">
+    <div x-show="filtre === 'all' || filtre === 'collaboration'" class="flex flex-col bg-white rounded-[20px] shadow-md overflow-hidden">
       <div class="bg-cyan-600 px-6 py-5 flex items-center gap-3">
         <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/20">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">

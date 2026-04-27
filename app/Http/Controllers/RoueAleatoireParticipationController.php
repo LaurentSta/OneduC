@@ -14,6 +14,7 @@ class RoueAleatoireParticipationController extends Controller
         $session = RandomWheelSession::where('access_code', strtoupper($code))
             ->with('group')
             ->firstOrFail();
+        RoueAleatoireController::syncEntriesFromGroup($session);
 
         $stateUrl = route('roue.state', $code);
 
@@ -23,7 +24,9 @@ class RoueAleatoireParticipationController extends Controller
     public function state(string $code): JsonResponse
     {
         $session = RandomWheelSession::where('access_code', strtoupper($code))
+            ->with('group')
             ->firstOrFail();
+        RoueAleatoireController::syncEntriesFromGroup($session);
 
         return response()->json(RoueAleatoireController::buildState($session));
     }
