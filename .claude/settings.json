@@ -6,7 +6,11 @@
       "Bash(php -l app/Http/Controllers/Formateur/WordCloudController.php)",
       "Bash(php -l app/Http/Controllers/WordCloudParticipationController.php)",
       "Bash(php -l /var/www/Oneduc_Dev/app/Http/Controllers/WordCloudParticipationController.php)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(php -v)",
+      "Bash(nginx -v)",
+      "Bash(mysql --version)",
+      "Read(//etc/nginx/**)"
     ]
   }
 }
