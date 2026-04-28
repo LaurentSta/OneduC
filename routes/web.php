@@ -11,6 +11,7 @@ use App\Http\Controllers\WordCloudParticipationController;
 use App\Http\Controllers\RoueAleatoireParticipationController;
 use App\Http\Controllers\QuestionWallParticipationController;
 use App\Http\Controllers\PollParticipationController;
+use App\Http\Controllers\ScaleParticipationController;
 
 // -------------------------------------------------------------------------
 // Fichier de routes publiques de l'application. Les routes des différents
@@ -149,6 +150,19 @@ Route::middleware(['auth'])->group(function () {
 
 
 
+
+// ----------------------------------------------------------
+// 📏 Échelle de positionnement (participation)
+// ----------------------------------------------------------
+Route::middleware(['auth'])->group(function () {
+    Route::get('/oneduc/echelle', [ScaleParticipationController::class, 'home'])->name('echelle.join');
+    Route::post('/oneduc/echelle', [ScaleParticipationController::class, 'resolveCode'])->name('echelle.resolve');
+    Route::get('/oneduc/echelle/{code}', [ScaleParticipationController::class, 'joinByCode'])->name('echelle.join.code');
+    Route::post('/oneduc/echelle/{code}/reponses', [ScaleParticipationController::class, 'submit'])
+        ->middleware('throttle:60,1')
+        ->name('echelle.submit');
+    Route::get('/oneduc/echelle/{code}/data', [ScaleParticipationController::class, 'data'])->name('echelle.data');
+});
 
 // ----------------------------------------------------------
 // 🔐 Authentification

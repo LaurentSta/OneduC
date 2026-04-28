@@ -10,6 +10,8 @@
     $isProgressionActive = request()->routeIs('stagiaire.resultats')
         || request()->routeIs('stagiaire.progression.*');
 
+    $isOutilsActive = request()->routeIs('stagiaire.outils');
+
     $isDocumentationActive = request()->routeIs('stagiaire.documentation');
 
     $navBaseClasses = 'flex flex-col items-center rounded-xl px-4 py-3 transition-all duration-200';
@@ -53,12 +55,14 @@
                     </a>
 
                     <a
-                        href="#"
-                        class="{{ $navBaseClasses }} {{ $navIdleClasses }} cursor-not-allowed opacity-70"
-                        aria-disabled="true"
+                        href="{{ route('stagiaire.outils') }}"
+                        class="{{ $navBaseClasses }} {{ $isOutilsActive ? $navActiveClasses : $navIdleClasses }}"
+                        aria-current="{{ $isOutilsActive ? 'page' : 'false' }}"
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mb-2 lucide lucide-chart-pie-icon lucide-chart-pie"><path d="M21 12c.552 0 1.005-.449.95-.998a10 10 0 0 0-8.953-8.951c-.55-.055-.998.398-.998.95v8a1 1 0 0 0 1 1z"/><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/></svg>
-                        <span class="text-[17px] font-medium">Compétences</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mb-2">
+                            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+                        </svg>
+                        <span class="text-[17px] font-medium">Outils</span>
                     </a>
                 </div>
             </nav>

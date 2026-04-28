@@ -109,6 +109,9 @@ Route::middleware(['auth', 'role:stagiaire', 'track.time'])
             Route::get('/resultats', [StagiaireController::class, 'StagiaireResultats'])
                 ->name('resultats');
 
+            Route::get('/outils', [StagiaireController::class, 'StagiaireOutils'])
+                ->name('outils');
+
             Route::get('/progression/detailmodule', [StagiaireController::class, 'ProgressionDetailModule'])
                 ->name('progression.detailmodule');
 

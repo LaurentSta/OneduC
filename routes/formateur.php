@@ -28,6 +28,7 @@ use App\Http\Controllers\Formateur\QuestionWallController;
 use App\Http\Controllers\Formateur\RoueAleatoireController;
 use App\Http\Controllers\Formateur\WhiteboardController;
 use App\Http\Controllers\Formateur\TimerController;
+use App\Http\Controllers\Formateur\OutilsEchelleController;
 use App\Http\Controllers\Backend\ModuleController;
 // use App\Http\Controllers\Stagiaire\QuizAttemptController;
 use App\Http\Controllers\Stagiaire\QuizController;
@@ -142,6 +143,14 @@ Route::middleware(['auth', 'role:formateur'])
         Route::get('/{pollSession}', [OutilsSondageController::class, 'show'])->name('show');
         Route::post('/{pollSession}/toggle', [OutilsSondageController::class, 'toggle'])->name('toggle');
         Route::get('/{pollSession}/state', [OutilsSondageController::class, 'state'])->name('state');
+    });
+
+    Route::prefix('/echelle')->name('echelle.')->group(function () {
+        Route::get('/', [OutilsEchelleController::class, 'index'])->name('index');
+        Route::post('/', [OutilsEchelleController::class, 'store'])->name('store');
+        Route::get('/{scaleSession}', [OutilsEchelleController::class, 'show'])->name('show');
+        Route::post('/{scaleSession}/toggle', [OutilsEchelleController::class, 'toggle'])->name('toggle');
+        Route::get('/{scaleSession}/state', [OutilsEchelleController::class, 'state'])->name('state');
     });
 
     Route::get('/pages-collaboratives', [OutilsPagesCollaborativesController::class, 'index'])

@@ -17,6 +17,20 @@ use App\Models\User;
 use App\Models\QuizAttempt;            
 use App\Models\ModuleLecture;
 use App\Models\Progression;
+use App\Models\WordCloud;
+use App\Models\WordCloudEntry;
+use App\Models\PollSession;
+use App\Models\PollSessionResponse;
+use App\Models\LiveQuizSession;
+use App\Models\LiveQuizSessionParticipant;
+use App\Models\QuestionWall;
+use App\Models\QuestionWallQuestion;
+use App\Models\GroupWhiteboard;
+use App\Models\GroupWhiteboardItem;
+use App\Models\GroupTimer;
+use App\Models\RandomWheelSession;
+use App\Models\ScaleSession;
+use App\Models\ScaleSessionResponse;
 
 class StagiaireController extends Controller
 {
@@ -625,6 +639,140 @@ class StagiaireController extends Controller
             'videoStats',
             'consolidatedQuestions'
         ));
+    }
+
+    /** ========= OUTILS NUMÉRIQUES ========= */
+    public function StagiaireOutils()
+    {
+        $user   = auth()->user();
+        $userId = $user->id;
+
+        $group = Group::active()
+            ->whereHas('students', fn ($q) => $q->where('email', $user->email))
+            ->first();
+
+        if (! $group) {
+            return view('stagiaire.stagiaire_outils', [
+                'tools'     => collect(),
+                'group'     => null,
+                'formateur' => null,
+            ]);
+        }
+
+        $groupId   = $group->id;
+        $formateur = $group->instructor;
+        $tools     = collect();
+
+        // Nuage de mots
+        $wordClouds = WordCloud::where('group_id', $groupId)->get();
+        if ($wordClouds->count() > 0) {
+            $wcIds = $wordClouds->pluck('id');
+            $tools->push((object)[
+                'key'          => 'wordcloud',
+                'label'        => 'Nuage de mots',
+                'sessions'     => $wordClouds->count(),
+                'participated' => WordCloudEntry::whereIn('word_cloud_id', $wcIds)->where('user_id', $userId)->distinct('word_cloud_id')->count('word_cloud_id'),
+                'trackable'    => true,
+                'last_used'    => $wordClouds->max('opened_at') ?? $wordClouds->max('created_at'),
+            ]);
+        }
+
+        // Sondage
+        $polls = PollSession::where('group_id', $groupId)->get();
+        if ($polls->count() > 0) {
+            $pollIds = $polls->pluck('id');
+            $tools->push((object)[
+                'key'          => 'poll',
+                'label'        => 'Sondage',
+                'sessions'     => $polls->count(),
+                'participated' => PollSessionResponse::whereIn('poll_session_id', $pollIds)->where('user_id', $userId)->distinct('poll_session_id')->count('poll_session_id'),
+                'trackable'    => true,
+                'last_used'    => $polls->max('opened_at') ?? $polls->max('created_at'),
+            ]);
+        }
+
+        // Quiz en direct
+        $liveQuizzes = LiveQuizSession::where('group_id', $groupId)->get();
+        if ($liveQuizzes->count() > 0) {
+            $lqIds = $liveQuizzes->pluck('id');
+            $tools->push((object)[
+                'key'          => 'live_quiz',
+                'label'        => 'Quiz en direct',
+                'sessions'     => $liveQuizzes->count(),
+                'participated' => LiveQuizSessionParticipant::whereIn('live_quiz_session_id', $lqIds)->where('user_id', $userId)->distinct('live_quiz_session_id')->count('live_quiz_session_id'),
+                'trackable'    => true,
+                'last_used'    => $liveQuizzes->max('ended_at') ?? $liveQuizzes->max('started_at') ?? $liveQuizzes->max('created_at'),
+            ]);
+        }
+
+        // Mur de questions
+        $questionWalls = QuestionWall::where('group_id', $groupId)->get();
+        if ($questionWalls->count() > 0) {
+            $qwIds = $questionWalls->pluck('id');
+            $tools->push((object)[
+                'key'          => 'question_wall',
+                'label'        => 'Mur de questions',
+                'sessions'     => $questionWalls->count(),
+                'participated' => QuestionWallQuestion::whereIn('question_wall_id', $qwIds)->where('user_id', $userId)->distinct('question_wall_id')->count('question_wall_id'),
+                'trackable'    => true,
+                'last_used'    => $questionWalls->max('updated_at') ?? $questionWalls->max('created_at'),
+            ]);
+        }
+
+        // Tableau blanc (1 par groupe)
+        $whiteboard = GroupWhiteboard::where('group_id', $groupId)->first();
+        if ($whiteboard) {
+            $tools->push((object)[
+                'key'          => 'whiteboard',
+                'label'        => 'Tableau blanc',
+                'sessions'     => 1,
+                'participated' => GroupWhiteboardItem::where('group_whiteboard_id', $whiteboard->id)->where('created_by', $userId)->exists() ? 1 : 0,
+                'trackable'    => true,
+                'last_used'    => $whiteboard->updated_at ?? $whiteboard->created_at,
+            ]);
+        }
+
+        // Minuteur (1 par groupe, pas de participation individuelle)
+        $timer = GroupTimer::where('group_id', $groupId)->first();
+        if ($timer) {
+            $tools->push((object)[
+                'key'          => 'timer',
+                'label'        => 'Minuteur',
+                'sessions'     => 1,
+                'participated' => null,
+                'trackable'    => false,
+                'last_used'    => $timer->updated_at ?? $timer->created_at,
+            ]);
+        }
+
+        // Roue aléatoire (pas de participation individuelle)
+        $randomWheels = RandomWheelSession::where('group_id', $groupId)->get();
+        if ($randomWheels->count() > 0) {
+            $tools->push((object)[
+                'key'          => 'random_wheel',
+                'label'        => 'Roue aléatoire',
+                'sessions'     => $randomWheels->count(),
+                'participated' => null,
+                'trackable'    => false,
+                'last_used'    => $randomWheels->max('spun_at') ?? $randomWheels->max('created_at'),
+            ]);
+        }
+
+        // Échelle de positionnement
+        $scales = ScaleSession::where('group_id', $groupId)->get();
+        if ($scales->count() > 0) {
+            $scaleIds = $scales->pluck('id');
+            $tools->push((object)[
+                'key'          => 'scale',
+                'label'        => 'Échelle de positionnement',
+                'sessions'     => $scales->count(),
+                'participated' => ScaleSessionResponse::whereIn('scale_session_id', $scaleIds)->where('user_id', $userId)->distinct('scale_session_id')->count('scale_session_id'),
+                'trackable'    => true,
+                'last_used'    => $scales->max('opened_at') ?? $scales->max('created_at'),
+            ]);
+        }
+
+        return view('stagiaire.stagiaire_outils', compact('tools', 'group', 'formateur'));
     }
 
     /** ========= HELPER PROGRESSION =========

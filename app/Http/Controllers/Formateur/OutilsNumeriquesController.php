@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Group;
 use App\Models\PollSession;
 use App\Models\QuestionWall;
+use App\Models\ScaleSession;
 use App\Models\WordCloud;
 use Illuminate\View\View;
 
@@ -44,6 +45,14 @@ class OutilsNumeriquesController extends Controller
             ->limit(5)
             ->get();
 
-        return view('formateur.outils.index', compact('recentWordclouds', 'groups', 'recentQuestionWalls', 'recentPolls'));
+        $recentScales = ScaleSession::query()
+            ->where('formateur_id', $formateurId)
+            ->with('group:id,name')
+            ->withCount('responses')
+            ->latest()
+            ->limit(5)
+            ->get();
+
+        return view('formateur.outils.index', compact('recentWordclouds', 'groups', 'recentQuestionWalls', 'recentPolls', 'recentScales'));
     }
 }
