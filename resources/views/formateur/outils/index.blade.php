@@ -47,19 +47,19 @@
     <button @click="filtre = 'interaction'"
       :class="filtre === 'interaction' ? 'bg-bleuone text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
       class="rounded-full px-4 py-1.5 text-sm font-semibold transition">
-      Interaction &amp; Feedback
+      🗣 Interaction &amp; Feedback
     </button>
 
     <button @click="filtre = 'collaboration'"
       :class="filtre === 'collaboration' ? 'bg-bleuone text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
       class="rounded-full px-4 py-1.5 text-sm font-semibold transition">
-      Collaboration
+      🤝 Collaboration
     </button>
 
     <button @click="filtre = 'animation'"
       :class="filtre === 'animation' ? 'bg-bleuone text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
       class="rounded-full px-4 py-1.5 text-sm font-semibold transition">
-      Animation de session
+      ⚡ Animation de session
     </button>
   </div>
 
