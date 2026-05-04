@@ -79,6 +79,27 @@
           </ul>
         </div>
 
+        {{-- Accessibilité : réglage de la taille du texte (A / A+ / A++) --}}
+        <div class="flex items-center gap-1" role="group" aria-label="Taille du texte">
+          <button type="button" data-text-size="normal" onclick="setTextSize('normal')"
+            class="text-xs font-bold px-2 py-1 rounded border border-gray-300 hover:border-bleuone hover:text-bleuone transition focus:outline-none focus:ring-2 focus:ring-bleuone"
+            aria-label="Taille de texte normale">A</button>
+          <button type="button" data-text-size="large" onclick="setTextSize('large')"
+            class="text-sm font-bold px-2 py-1 rounded border border-gray-300 hover:border-bleuone hover:text-bleuone transition focus:outline-none focus:ring-2 focus:ring-bleuone"
+            aria-label="Texte agrandi">A+</button>
+          <button type="button" data-text-size="xlarge" onclick="setTextSize('xlarge')"
+            class="text-base font-bold px-2 py-1 rounded border border-gray-300 hover:border-bleuone hover:text-bleuone transition focus:outline-none focus:ring-2 focus:ring-bleuone"
+            aria-label="Texte très agrandi">A++</button>
+        </div>
+
+        {{-- Bouton version FALC (Facile à Lire et à Comprendre) --}}
+        <button type="button"
+          onclick="document.dispatchEvent(new CustomEvent('open-falc'))"
+          class="px-3 py-1.5 rounded border border-bleuone text-bleuone text-sm font-varela hover:bg-bleuone hover:text-white transition focus:outline-none focus:ring-2 focus:ring-bleuone"
+          aria-label="Ouvrir la version Facile à Lire et à Comprendre">
+          FALC
+        </button>
+
         @auth
           @php
               $role = Auth::user()->role;

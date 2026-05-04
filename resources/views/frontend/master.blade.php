@@ -123,6 +123,105 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 
+{{-- Bouton d'aide flottant : présent sur toute la page publique --}}
+<a href="{{ route('contact') }}"
+  class="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-orangeone text-white shadow-xl flex items-center justify-center hover:scale-110 transition-transform focus:outline-none focus:ring-4 focus:ring-orangeone focus:ring-offset-2"
+  aria-label="Besoin d'aide ? Contactez-nous">
+  <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+  </svg>
+</a>
+
+{{-- Modal FALC (Facile à Lire et à Comprendre) --}}
+<div id="falc-modal"
+  class="fixed inset-0 hidden items-center justify-center bg-black bg-opacity-60 z-50 p-4"
+  role="dialog" aria-modal="true" aria-labelledby="falc-title" aria-hidden="true">
+  <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full mx-auto p-8 space-y-6 overflow-y-auto max-h-[90vh]">
+    <div class="flex justify-between items-start gap-4">
+      <h2 id="falc-title" class="text-2xl font-raleway font-bold text-bleuone">Onéduc — Version facile à lire</h2>
+      <button type="button" id="falc-close" class="flex-shrink-0 text-gray-400 hover:text-gray-700 transition focus:outline-none focus:ring-2 focus:ring-bleuone rounded" aria-label="Fermer">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="space-y-4 font-lisible text-xl leading-relaxed text-gray-800">
+      <p><strong>Onéduc</strong> est un outil pour les <strong>formateurs</strong>.</p>
+      <p>Les formateurs aident des personnes à apprendre.</p>
+      <p>Avec Onéduc, un formateur peut :</p>
+      <ul class="list-disc pl-6 space-y-2">
+        <li>Créer des cours en ligne.</li>
+        <li>Voir les progrès de ses apprenants.</li>
+        <li>Utiliser des jeux et des activités interactives.</li>
+      </ul>
+      <p>C'est <strong>gratuit</strong>.</p>
+      <p>Il n'y a <strong>rien à installer</strong> sur l'ordinateur.</p>
+      <p>Pour commencer, cliquez sur <strong class="text-orangeone">« Je suis formateur »</strong>.</p>
+      <p>Si vous avez reçu un <strong>code d'accès</strong> de votre formateur,<br>cliquez sur <strong class="text-bleuone">« J'ai un code d'accès »</strong>.</p>
+    </div>
+    <div class="flex justify-center pt-2">
+      <button type="button" id="falc-close-btn" class="btn-oneduc">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Gestion de la taille du texte pour l'accessibilité
+(function () {
+  const sizes = { normal: '100%', large: '112.5%', xlarge: '125%' };
+
+  function applyTextSize(size) {
+    document.documentElement.style.fontSize = sizes[size] || '100%';
+    document.querySelectorAll('[data-text-size]').forEach(function (btn) {
+      var isActive = btn.dataset.textSize === size;
+      btn.classList.toggle('bg-bleuone',    isActive);
+      btn.classList.toggle('text-white',    isActive);
+      btn.classList.toggle('border-bleuone', isActive);
+    });
+  }
+
+  window.setTextSize = function (size) {
+    try { localStorage.setItem('a11y-text-size', size); } catch (_) {}
+    applyTextSize(size);
+  };
+
+  document.addEventListener('DOMContentLoaded', function () {
+    var saved = 'normal';
+    try { saved = localStorage.getItem('a11y-text-size') || 'normal'; } catch (_) {}
+    applyTextSize(saved);
+  });
+})();
+
+// Gestion du modal FALC
+(function () {
+  document.addEventListener('DOMContentLoaded', function () {
+    var modal      = document.getElementById('falc-modal');
+    var closeBtn   = document.getElementById('falc-close');
+    var closeBtnOk = document.getElementById('falc-close-btn');
+    if (!modal) return;
+
+    function openFalc() {
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      modal.setAttribute('aria-hidden', 'false');
+      document.body.classList.add('overflow-hidden');
+      if (closeBtn) closeBtn.focus();
+    }
+
+    function closeFalc() {
+      modal.classList.remove('flex');
+      modal.classList.add('hidden');
+      modal.setAttribute('aria-hidden', 'true');
+      document.body.classList.remove('overflow-hidden');
+    }
+
+    document.addEventListener('open-falc', openFalc);
+    if (closeBtn)   closeBtn.addEventListener('click',   closeFalc);
+    if (closeBtnOk) closeBtnOk.addEventListener('click', closeFalc);
+    modal.addEventListener('click', function (e) { if (e.target === modal) closeFalc(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeFalc(); });
+  });
+})();
+</script>
+
 @stack('scripts')
 </body>
 </html>

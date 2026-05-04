@@ -61,12 +61,12 @@
           <h3 class="text-lg font-semibold font-varela">Liens utiles</h3>
           <ul class="space-y-2">
 
-            <li><a href="{{ route('formateur.inscription.form') }}" class="text-white/80 hover:text-white transition">Devenir formateur</a>
+            <li><a href="{{ route('formateur.inscription.form') }}" class="text-white hover:text-white/80 transition underline-offset-2 hover:underline">Devenir formateur</a>
             </li>
-            <li><a href="{{ route('association') }}" class="text-white/80 hover:text-white transition">À propos</a></li>
-            <li><a href="{{ route('charte-graphique') }}" class="text-white/80 hover:text-white transition">Charte graphique</a></li>
-            <li><a href="{{ route('categories.all') }}" class="text-white/80 hover:text-white transition">Formations</a></li>
-            <li><a href="{{ route('contact') }}" class="text-white/80 hover:text-white transition">Contact</a></li>
+            <li><a href="{{ route('association') }}" class="text-white hover:text-white/80 transition underline-offset-2 hover:underline">À propos</a></li>
+            <li><a href="{{ route('charte-graphique') }}" class="text-white hover:text-white/80 transition underline-offset-2 hover:underline">Charte graphique</a></li>
+            <li><a href="{{ route('categories.all') }}" class="text-white hover:text-white/80 transition underline-offset-2 hover:underline">Formations</a></li>
+            <li><a href="{{ route('contact') }}" class="text-white hover:text-white/80 transition underline-offset-2 hover:underline">Contact</a></li>
           </ul>
         </div>
 
@@ -74,7 +74,22 @@
         <div class="space-y-4">
           <h3 class="text-lg font-semibold font-varela">Fonctionnalités</h3>
           <ul class="space-y-2">
-            <li><a href="{{ route('stagiaire.code.form') }}" class="text-white/80 hover:text-white transition">Code d'accès stagiaire </a></li>
+            {{-- Tooltip explicatif : le code d'accès est peu connu des nouveaux visiteurs --}}
+            <li class="relative" x-data="{ tip: false }">
+              <a href="{{ route('stagiaire.code.form') }}" class="text-white hover:text-white/80 transition underline-offset-2 hover:underline inline-flex items-center gap-1.5">
+                Code d'accès stagiaire
+              </a>
+              <button type="button"
+                @mouseenter="tip=true" @mouseleave="tip=false"
+                @focus="tip=true"      @blur="tip=false"
+                class="ml-1 w-4 h-4 rounded-full border border-white/60 text-white/80 text-xs leading-none inline-flex items-center justify-center hover:border-white hover:text-white transition"
+                aria-describedby="tooltip-code-acces"
+                aria-label="En savoir plus sur le code d'accès stagiaire">?</button>
+              <span id="tooltip-code-acces" role="tooltip" x-show="tip" x-transition
+                class="absolute bottom-full left-0 mb-2 w-64 bg-bleuone text-white text-sm rounded-lg p-3 shadow-lg z-10 font-lisible leading-relaxed pointer-events-none">
+                Le code d'accès est donné par votre formateur. Il vous permet de rejoindre une formation sans créer de compte.
+              </span>
+            </li>
 
 
 
@@ -82,30 +97,30 @@
         </div>
 
 
-{{-- <li><a href="{{ route('stagiaire.code.form') }}" class="text-white/80 hover:text-white transition">Code d'accès stagiaire </a></li>
-           <li><a href="{{ route('mentions-legales') }}" class="underline">Mentions légales</a></li>
-    <li><a href="{{ route('conditions-utilisation') }}" class="underline">Conditions d’utilisation</a></li>
-    <li><a href="{{ route('confidentialite') }}" class="underline">Confidentialité</a></li>
-    <li><a href="{{ route('cookies') }}" class="underline">Cookies</a></li> --}}
         <!-- Bloc 4 : Contact -->
         <div class="space-y-4">
           <h3 class="text-lg font-semibold font-varela">Nous contacter</h3>
-          <address class="not-italic text-white/80 space-y-1">
+          <address class="not-italic text-white space-y-2">
             <p>Association Oneduc</p>
-            <p>contact@oneduc.fr</p>
-            <p>01 23 45 67 89</p>
+            {{-- Numéro de téléphone supprimé (était fictif : 01 23 45 67 89) --}}
+            <p>
+              <a href="mailto:contact@oneduc.fr" class="hover:underline underline-offset-2">
+                contact@oneduc.fr
+              </a>
+            </p>
           </address>
         </div>
 
       </div>
 
-      <div class="border-t border-white/30 pt-6 flex flex-col md:flex-row justify-between items-center text-sm text-white/70">
+      {{-- WCAG AA : text-white/70 → text-white/90 pour améliorer le contraste sur fond orange --}}
+      <div class="border-t border-white/30 pt-6 flex flex-col md:flex-row justify-between items-center text-sm text-white/90">
         <p class="mb-4 md:mb-0">© 2025 Oneduc. Tous droits réservés.</p>
-        <div class="flex space-x-6">
-          <a href="{{ route('mentions-legales') }}" class="hover:text-white transition">Mentions légales</a>
-          <a href="{{ route('confidentialite') }}" class="hover:text-white transition">Politique de confidentialité</a>
-          <a href="{{ route('conditions-utilisation') }}" class="hover:text-white transition">Conditions d’utilisation</a>
-          <a href="{{ route('cookies') }}" class="hover:text-white transition">Cookies</a>
+        <div class="flex flex-wrap gap-x-6 gap-y-2">
+          <a href="{{ route('mentions-legales') }}" class="hover:text-white underline underline-offset-2 transition">Mentions légales</a>
+          <a href="{{ route('confidentialite') }}" class="hover:text-white underline underline-offset-2 transition">Politique de confidentialité</a>
+          <a href="{{ route('conditions-utilisation') }}" class="hover:text-white underline underline-offset-2 transition">Conditions d'utilisation</a>
+          <a href="{{ route('cookies') }}" class="hover:text-white underline underline-offset-2 transition">Cookies</a>
         </div>
       </div>
     </div>
