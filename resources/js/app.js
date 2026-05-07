@@ -33,6 +33,11 @@ function loadGroupWhiteboardWhenNeeded() {
   import('./group-whiteboard-excalidraw.jsx').then(({ mountGroupWhiteboardExcalidraw }) => mountGroupWhiteboardExcalidraw());
 }
 
+function loadAkeneHeroWhenNeeded() {
+  if (!document.querySelector('[data-akene-hero]')) return;
+  import('./frontend/akene-hero.js').then(({ initAkeneHero }) => initAkeneHero());
+}
+
 function initPublicPageTransitions() {
   const body = document.body;
 
@@ -90,6 +95,7 @@ if (document.readyState === 'loading') {
     loadGroupLessonFlowWhenNeeded();
     loadParcoursBuilderWhenNeeded();
     loadGroupWhiteboardWhenNeeded();
+    loadAkeneHeroWhenNeeded();
     initPublicPageTransitions();
   }, { once: true });
 } else {
@@ -98,6 +104,7 @@ if (document.readyState === 'loading') {
   loadGroupLessonFlowWhenNeeded();
   loadParcoursBuilderWhenNeeded();
   loadGroupWhiteboardWhenNeeded();
+  loadAkeneHeroWhenNeeded();
   initPublicPageTransitions();
 }
 

@@ -79,26 +79,89 @@
           </ul>
         </div>
 
-        {{-- Accessibilité : réglage de la taille du texte (A / A+ / A++) --}}
-        <div class="flex items-center gap-1" role="group" aria-label="Taille du texte">
-          <button type="button" data-text-size="normal" onclick="setTextSize('normal')"
-            class="text-xs font-bold px-2 py-1 rounded border border-gray-300 hover:border-bleuone hover:text-bleuone transition focus:outline-none focus:ring-2 focus:ring-bleuone"
-            aria-label="Taille de texte normale">A</button>
-          <button type="button" data-text-size="large" onclick="setTextSize('large')"
-            class="text-sm font-bold px-2 py-1 rounded border border-gray-300 hover:border-bleuone hover:text-bleuone transition focus:outline-none focus:ring-2 focus:ring-bleuone"
-            aria-label="Texte agrandi">A+</button>
-          <button type="button" data-text-size="xlarge" onclick="setTextSize('xlarge')"
-            class="text-base font-bold px-2 py-1 rounded border border-gray-300 hover:border-bleuone hover:text-bleuone transition focus:outline-none focus:ring-2 focus:ring-bleuone"
-            aria-label="Texte très agrandi">A++</button>
-        </div>
+        {{-- Accessibilité : FALC et réglage de la taille du texte --}}
+        <div
+          x-data="{
+            open: false,
+            toggle() {
+              this.open = !this.open;
+            },
+            close() {
+              this.open = false;
+            }
+          }"
+          x-ref="accessibilityMenu"
+          class="relative"
+          @keydown.escape.window="close()"
+          @click.window="if (open && !$refs.accessibilityMenu.contains($event.target)) close()"
+          @focusin.window="if (open && !$refs.accessibilityMenu.contains($event.target)) close()"
+        >
+          <button
+            type="button"
+            @click="toggle()"
+            :aria-expanded="open.toString()"
+            aria-haspopup="true"
+            class="inline-flex items-center gap-2 rounded-full border border-bleuone/20 bg-white px-3 py-2 text-sm font-varela text-bleuone transition hover:border-orangeone hover:text-orangeone focus:outline-none focus:ring-2 focus:ring-bleuone focus:ring-offset-2"
+            aria-label="Ouvrir les options d'accessibilité"
+          >
+            <span class="font-bold leading-none">Aa</span>
+            <span class="hidden lg:inline">Accessibilité</span>
+            <svg :class="{ 'rotate-180': open }" class="h-4 w-4 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
 
-        {{-- Bouton version FALC (Facile à Lire et à Comprendre) --}}
-        <button type="button"
-          onclick="document.dispatchEvent(new CustomEvent('open-falc'))"
-          class="px-3 py-1.5 rounded border border-bleuone text-bleuone text-sm font-varela hover:bg-bleuone hover:text-white transition focus:outline-none focus:ring-2 focus:ring-bleuone"
-          aria-label="Ouvrir la version Facile à Lire et à Comprendre">
-          FALC
-        </button>
+          <div
+            x-cloak
+            x-show="open"
+            x-transition:enter="transition ease-out duration-180"
+            x-transition:enter-start="opacity-0 -translate-y-1 scale-95"
+            x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+            x-transition:leave="transition ease-in duration-120"
+            x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+            x-transition:leave-end="opacity-0 -translate-y-1 scale-95"
+            class="absolute right-0 z-50 mt-3 w-72 rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-xl shadow-bleuone/10"
+          >
+            <p class="text-sm font-semibold text-bleuone">Options d'accessibilité</p>
+            <button
+              type="button"
+              @click="close(); document.dispatchEvent(new CustomEvent('open-falc'))"
+              class="mt-3 flex w-full items-center justify-between rounded-xl border border-orangeone/20 bg-orangeone/10 px-4 py-3 text-left font-varela text-sm font-semibold text-orangeone transition hover:border-orangeone hover:bg-orangeone hover:text-white focus:outline-none focus:ring-2 focus:ring-orangeone"
+            >
+              <span>Lire en FALC</span>
+              <span class="text-xs font-bold uppercase">FALC</span>
+            </button>
+
+            <div class="mt-4">
+              <p class="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Taille du texte</p>
+              <div class="grid grid-cols-3 gap-2" role="group" aria-label="Taille du texte">
+                <button type="button" data-text-size="normal" onclick="setTextSize('normal')"
+                  class="rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-bleuone transition hover:border-bleuone hover:bg-bleuone/5 focus:outline-none focus:ring-2 focus:ring-bleuone"
+                  aria-label="Taille de texte normale">A</button>
+                <button type="button" data-text-size="large" onclick="setTextSize('large')"
+                  class="rounded-lg border border-slate-200 px-3 py-2 text-sm font-bold text-bleuone transition hover:border-bleuone hover:bg-bleuone/5 focus:outline-none focus:ring-2 focus:ring-bleuone"
+                  aria-label="Texte agrandi">A+</button>
+                <button type="button" data-text-size="xlarge" onclick="setTextSize('xlarge')"
+                  class="rounded-lg border border-slate-200 px-3 py-2 text-base font-bold text-bleuone transition hover:border-bleuone hover:bg-bleuone/5 focus:outline-none focus:ring-2 focus:ring-bleuone"
+                  aria-label="Texte très agrandi">A++</button>
+              </div>
+            </div>
+
+            <div class="mt-4 border-t border-slate-100 pt-4">
+              <p class="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Police de lecture</p>
+              <button
+                type="button"
+                data-dyslexic-toggle
+                onclick="toggleDyslexicFont()"
+                class="flex w-full items-center justify-between rounded-xl border border-slate-200 px-4 py-3 text-left font-varela text-sm font-semibold text-bleuone transition hover:border-bleuone hover:bg-bleuone/5 focus:outline-none focus:ring-2 focus:ring-bleuone"
+                aria-pressed="false"
+              >
+                <span>OpenDyslexic</span>
+                <span data-dyslexic-status class="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-500">Off</span>
+              </button>
+            </div>
+          </div>
+        </div>
 
         @auth
           @php

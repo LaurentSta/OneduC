@@ -14,6 +14,22 @@
    Base & Typography
    ========================= */
 @layer base {
+  @font-face {
+    font-family: "OpenDyslexic";
+    src: url("../../public/fonts/OpenDyslexic/OpenDyslexic3-Regular.woff") format("woff");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+  }
+
+  @font-face {
+    font-family: "OpenDyslexic";
+    src: url("../../public/fonts/OpenDyslexic/OpenDyslexic3-Bold.woff") format("woff");
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+  }
+
   /* Suppression globale des ombres sur les éléments interactifs si nécessaire */
   *, ::before, ::after {
     --tw-shadow: 0 0 #0000 !important;
@@ -36,6 +52,11 @@
   p { @apply font-lisible; }
   h1 { @apply font-raleway text-4xl md:text-5xl font-medium text-bleuone mb-6; }
   h2 { @apply font-varela; }
+
+  html.a11y-dyslexic-font body,
+  html.a11y-dyslexic-font body *:not(svg):not(svg *) {
+    font-family: "OpenDyslexic", Arial, sans-serif !important;
+  }
 
   body.oneduc-public {
     --page-enter-duration: 260ms;
@@ -93,6 +114,52 @@
    Composants Oneduc
    ========================= */
 @layer components {
+  .oneduc-hero-akene {
+    position: relative;
+    min-height: 430px;
+    padding: clamp(1rem, 3vw, 2.75rem) 0;
+  }
+
+  .oneduc-akene-stage {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding-left: clamp(1rem, 5vw, 5.5rem);
+    pointer-events: none;
+  }
+
+  .oneduc-akene-svg,
+  .oneduc-akene-fallback {
+    width: min(960px, 78vw);
+    height: auto;
+    opacity: 0.32;
+    transform: translate3d(0, 0, 0);
+  }
+
+  .oneduc-akene-svg {
+    overflow: visible;
+  }
+
+  .oneduc-akene-fallback--hidden {
+    opacity: 0;
+  }
+
+  .oneduc-akene-ghost path {
+    fill: rgba(233, 77, 42, 0.06);
+  }
+
+  .oneduc-akene-live path {
+    fill: rgba(233, 77, 42, 0.22);
+  }
+
+  .oneduc-akene-svg--settled {
+    animation: oneduc-akene-breathe 8s ease-in-out infinite;
+    transform-origin: center;
+  }
+
   .btn-oneduc {
     @apply inline-flex items-center justify-center gap-2 rounded-full border-2 border-orangeone
            bg-orangeone px-5 py-2 text-lg font-varela text-white
@@ -134,5 +201,40 @@
   .whiteboard-item-content {
     white-space: pre-wrap;
     word-break: break-word;
+  }
+}
+
+@keyframes oneduc-akene-breathe {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  50% {
+    transform: translate3d(1.5%, -1.5%, 0) scale(1.025);
+  }
+}
+
+@media (max-width: 640px) {
+  .oneduc-hero-akene {
+    min-height: 380px;
+    padding: 1rem 0 2rem;
+  }
+
+  .oneduc-akene-stage {
+    padding-left: 0;
+  }
+
+  .oneduc-akene-svg,
+  .oneduc-akene-fallback {
+    width: 720px;
+    opacity: 0.24;
+    transform: translate3d(-22%, 0, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .oneduc-akene-svg--settled {
+    animation: none;
   }
 }

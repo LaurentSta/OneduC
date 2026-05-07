@@ -190,6 +190,39 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 })();
 
+// Gestion de la police OpenDyslexic pour l'accessibilité
+(function () {
+  function applyDyslexicFont(enabled) {
+    document.documentElement.classList.toggle('a11y-dyslexic-font', enabled);
+
+    document.querySelectorAll('[data-dyslexic-toggle]').forEach(function (btn) {
+      btn.setAttribute('aria-pressed', enabled ? 'true' : 'false');
+      btn.classList.toggle('border-bleuone', enabled);
+      btn.classList.toggle('bg-bleuone/5', enabled);
+    });
+
+    document.querySelectorAll('[data-dyslexic-status]').forEach(function (status) {
+      status.textContent = enabled ? 'On' : 'Off';
+      status.classList.toggle('bg-bleuone', enabled);
+      status.classList.toggle('text-white', enabled);
+      status.classList.toggle('bg-slate-100', !enabled);
+      status.classList.toggle('text-slate-500', !enabled);
+    });
+  }
+
+  window.toggleDyslexicFont = function () {
+    var enabled = !document.documentElement.classList.contains('a11y-dyslexic-font');
+    try { localStorage.setItem('a11y-dyslexic-font', enabled ? '1' : '0'); } catch (_) {}
+    applyDyslexicFont(enabled);
+  };
+
+  document.addEventListener('DOMContentLoaded', function () {
+    var enabled = false;
+    try { enabled = localStorage.getItem('a11y-dyslexic-font') === '1'; } catch (_) {}
+    applyDyslexicFont(enabled);
+  });
+})();
+
 // Gestion du modal FALC
 (function () {
   document.addEventListener('DOMContentLoaded', function () {

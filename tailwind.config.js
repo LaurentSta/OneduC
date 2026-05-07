@@ -17,7 +17,7 @@ export default {
       fontFamily: {
         raleway: ["Raleway", ...defaultTheme.fontFamily.sans],
         varela: ["Varela Round", "sans-serif"],
-        lisible: ["OpenDyslexic", "Arial", "sans-serif"],
+        lisible: ["Arial", "sans-serif"],
       },
       fontSize: {
         titre: ["55px", { lineHeight: "1.1", fontWeight: "500" }],
