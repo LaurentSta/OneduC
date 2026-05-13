@@ -40,6 +40,10 @@ class User extends Authenticatable
         'societe',
         'role',
         'status',
+        'adhesion_status',
+        'adhesion_valid_until',
+        'adhesion_verified_at',
+        'adhesion_verified_by',
         'formateur_id',
         'code_acces',
         'total_site_time',
@@ -58,6 +62,8 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'status' => 'boolean',
+            'adhesion_valid_until' => 'date',
+            'adhesion_verified_at' => 'datetime',
             'password_changed_at' => 'datetime', // <--- AJOUTER CETTE LIGNE
         ];
     }
@@ -135,6 +141,44 @@ class User extends Authenticatable
     public function getStatutAttribute()
     {
         return $this->status ? 'Actif' : 'Inactif';
+    }
+
+    public function hasValidAssociationMembership(): bool
+    {
+        if ($this->role !== 'formateur') {
+            return true;
+        }
+
+        if ($this->adhesion_status !== 'active') {
+            return false;
+        }
+
+        return $this->adhesion_valid_until === null
+            || $this->adhesion_valid_until->greaterThanOrEqualTo(today());
+    }
+
+    public function associationGraceEndsAt()
+    {
+        return $this->created_at?->copy()->addMonth();
+    }
+
+    public function hasActiveAssociationGracePeriod(): bool
+    {
+        if ($this->role !== 'formateur') {
+            return true;
+        }
+
+        if ($this->adhesion_status !== 'pending') {
+            return false;
+        }
+
+        return $this->associationGraceEndsAt()?->isFuture() ?? false;
+    }
+
+    public function canUsePlatformWithAssociationPolicy(): bool
+    {
+        return $this->hasValidAssociationMembership()
+            || $this->hasActiveAssociationGracePeriod();
     }
     // ✅ Helper pour savoir si l'utilisateur doit changer son mot de passe
     public function getMustChangePasswordAttribute(): bool

@@ -295,17 +295,18 @@
                     placeholder="Objectifs, public, période…">{{ old('description', $group->description) }}</textarea>
         </div>
 
-        <details class="mb-6" {{ $showOptionsPanel ? 'open' : '' }}>
-          <summary class="inline-flex cursor-pointer items-center gap-3 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-800 shadow-sm marker:hidden">
-            <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-bleuone/10 text-bleuone">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M7 12h10M10 18h4" />
-              </svg>
-            </span>
-            <span>Options</span>
-          </summary>
+        <div class="mb-6 flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+          <details class="min-w-0 flex-1" {{ $showOptionsPanel ? 'open' : '' }}>
+            <summary class="inline-flex cursor-pointer items-center gap-3 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-800 shadow-sm marker:hidden">
+              <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-bleuone/10 text-bleuone">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M7 12h10M10 18h4" />
+                </svg>
+              </span>
+              <span>Options</span>
+            </summary>
 
-          <div class="mt-3 rounded-[18px] border border-gray-200 bg-white px-4 py-4">
+            <div class="mt-3 rounded-[18px] border border-gray-200 bg-white px-4 py-4">
             <div class="grid gap-4 lg:grid-cols-2 lg:items-stretch">
               <div class="space-y-4 rounded-[18px] border {{ $errors->has('is_active') || $errors->has('start_date') || $errors->has('end_date') ? 'border-sky-300 bg-sky-100/80' : 'border-sky-200 bg-sky-50/80' }} px-4 py-4">
                 <div class="rounded-[18px] border {{ $errors->has('is_active') ? 'border-red-300 bg-red-50/70' : 'border-white/70 bg-white/80' }} px-4 py-3">
@@ -383,8 +384,13 @@
                 'panelClass' => 'border-orange-200 bg-orange-50/80',
               ])
             </div>
-          </div>
-        </details>
+            </div>
+          </details>
+
+          <button type="submit" class="btn-oneduc w-full md:w-auto px-8 py-3 text-lg shadow-lg shadow-orangeone/20">
+            Enregistrer les modifications
+          </button>
+        </div>
       </section>
 
       {{-- SECTION 2 : Stagiaires --}}
@@ -550,6 +556,12 @@
             @enderror
           </div>
         </div>
+
+        <div class="mt-6 flex justify-end">
+          <button type="submit" class="btn-oneduc w-full md:w-auto px-8 py-3 text-lg shadow-lg shadow-orangeone/20">
+            Enregistrer les modifications
+          </button>
+        </div>
       </section>
 
       {{-- Modale import CSV (discrète, sans sortir du wizard) --}}
@@ -665,6 +677,12 @@ Lucas;Bernard;lucas.bernard@entreprise.fr</pre>
            ℹ️ L'ordre défini ici sera celui présenté à l'apprenant dans son espace.
         </p>
 
+        <div class="mt-6 flex justify-end">
+          <button type="submit" class="btn-oneduc w-full md:w-auto px-8 py-3 text-lg shadow-lg shadow-orangeone/20">
+            Enregistrer les modifications
+          </button>
+        </div>
+
       </section>
 
       {{-- ── ACTIVITÉS INTERACTIVES DU PARCOURS ──────────────────────────────── --}}
@@ -717,9 +735,6 @@ Lucas;Bernard;lucas.bernard@entreprise.fr</pre>
           Annuler
         </a>
         
-        <button type="submit" class="btn-oneduc w-full md:w-auto px-8 py-3 text-lg shadow-lg shadow-orangeone/20">
-            Enregistrer les modifications
-        </button>
       </div>
 
     </form>

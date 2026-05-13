@@ -99,3 +99,12 @@ storage/*.key
 /public/upload/
 /public/phpmyadmin
 /public/test.php
+
+############################################
+# ==============================
+# OUTILS DEV LOCAL
+# ==============================
+############################################
+
+/.claude/settings.local.json
+/temps/

@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -15,6 +16,19 @@ class UserFactory extends Factory
      * The current password being used by the factory.
      */
     protected static ?string $password;
+
+    public function configure(): static
+    {
+        return $this->afterMaking(function (User $user): void {
+            if ($user->role !== 'formateur' || filled($user->adhesion_status)) {
+                return;
+            }
+
+            $user->adhesion_status = 'active';
+            $user->adhesion_valid_until = now()->addYear()->toDateString();
+            $user->adhesion_verified_at = now();
+        });
+    }
 
     /**
      * Define the model's default state.

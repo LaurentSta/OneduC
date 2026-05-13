@@ -44,6 +44,9 @@ class DatabaseSeeder extends Seeder
                 'password' => Hash::make('111'),
                 'role' => 'formateur',
                 'status' => 1,
+                'adhesion_status' => 'active',
+                'adhesion_valid_until' => now()->addYear()->toDateString(),
+                'adhesion_verified_at' => now(),
             ]
         );
 
@@ -193,6 +196,154 @@ class DatabaseSeeder extends Seeder
                     ],
                 ],
             ],
+            [
+                'category_name' => 'Hygiene alimentaire 2026',
+                'category_description' => 'Modules de demonstration pour construire un parcours autour de l hygiene, de l alimentation et du nettoyage.',
+                'subcategories' => [
+                    [
+                        'subcategory_name' => 'Alimentation et hygiene',
+                        'subcategory_description' => 'Reperes pratiques pour former aux bonnes pratiques d hygiene alimentaire.',
+                        'modules' => [
+                            [
+                                'module_title' => 'Securite alimentaire 2026',
+                                'module_name' => 'Securite alimentaire 2026',
+                                'description' => 'Identifier les risques alimentaires et appliquer les principes de securite attendus en restauration.',
+                                'objectifs' => [
+                                    'Reconnaitre les principaux dangers alimentaires',
+                                    'Appliquer les gestes de prevention',
+                                    'Savoir reagir face a une situation a risque',
+                                ],
+                                'label' => 'Essentiel',
+                                'duree' => '2 heures',
+                                'resources' => 'Fiches pratiques, quiz, cas de situation',
+                                'prerequi' => 'Aucun prerequis.',
+                                'certificat' => true,
+                                'status' => 1,
+                            ],
+                            [
+                                'module_title' => 'Hygiene en cuisine professionnelle',
+                                'module_name' => 'Hygiene en cuisine professionnelle',
+                                'description' => 'Mettre en place les gestes d hygiene personnelle, materielle et organisationnelle en cuisine.',
+                                'objectifs' => [
+                                    'Respecter les regles d hygiene personnelle',
+                                    'Organiser un poste de travail propre',
+                                    'Limiter les contaminations pendant la production',
+                                ],
+                                'label' => 'Essentiel',
+                                'duree' => '2 heures',
+                                'resources' => 'Checklist, video de gestes, mise en pratique',
+                                'prerequi' => 'Aucun prerequis.',
+                                'status' => 1,
+                            ],
+                            [
+                                'module_title' => 'Nettoyage et desinfection des espaces',
+                                'module_name' => 'Nettoyage et desinfection des espaces',
+                                'description' => 'Choisir les bons produits, appliquer un protocole et controler l efficacite du nettoyage.',
+                                'objectifs' => [
+                                    'Distinguer nettoyage et desinfection',
+                                    'Respecter les dosages et temps de contact',
+                                    'Completer un plan de nettoyage',
+                                ],
+                                'label' => 'Pratique',
+                                'duree' => '1 heure 30',
+                                'resources' => 'Plan de nettoyage, fiche protocole',
+                                'prerequi' => 'Aucun prerequis.',
+                                'status' => 1,
+                            ],
+                            [
+                                'module_title' => 'Conservation et chaine du froid',
+                                'module_name' => 'Conservation et chaine du froid',
+                                'description' => 'Maitriser les temperatures, les durees de conservation et les controles de la chaine du froid.',
+                                'objectifs' => [
+                                    'Identifier les temperatures critiques',
+                                    'Controler les equipements frigorifiques',
+                                    'Reagir en cas de rupture de chaine du froid',
+                                ],
+                                'label' => 'Essentiel',
+                                'duree' => '1 heure 30',
+                                'resources' => 'Tableau de temperatures, cas pratiques',
+                                'prerequi' => 'Aucun prerequis.',
+                                'status' => 1,
+                            ],
+                            [
+                                'module_title' => 'Allergenes et information client',
+                                'module_name' => 'Allergenes et information client',
+                                'description' => 'Identifier les allergenes majeurs et transmettre une information fiable au client.',
+                                'objectifs' => [
+                                    'Reconnaitre les allergenes reglementaires',
+                                    'Securiser l information client',
+                                    'Limiter les risques de contamination croisee',
+                                ],
+                                'label' => 'Reglementaire',
+                                'duree' => '1 heure',
+                                'resources' => 'Fiche allergenes, quiz de reperage',
+                                'prerequi' => 'Aucun prerequis.',
+                                'status' => 1,
+                            ],
+                            [
+                                'module_title' => 'Reception et stockage des denrees',
+                                'module_name' => 'Reception et stockage des denrees',
+                                'description' => 'Controler les livraisons, ranger les denrees et assurer une rotation adaptee des stocks.',
+                                'objectifs' => [
+                                    'Verifier une livraison',
+                                    'Organiser le stockage par famille de produits',
+                                    'Appliquer la methode premier entre premier sorti',
+                                ],
+                                'label' => 'Pratique',
+                                'duree' => '1 heure 30',
+                                'resources' => 'Grille de controle, exercice de classement',
+                                'prerequi' => 'Aucun prerequis.',
+                                'status' => 1,
+                            ],
+                            [
+                                'module_title' => 'Prevention des contaminations croisees',
+                                'module_name' => 'Prevention des contaminations croisees',
+                                'description' => 'Organiser les flux, separer les produits sensibles et reduire les contaminations croisees.',
+                                'objectifs' => [
+                                    'Reperer les situations a risque',
+                                    'Separer les circuits propres et sales',
+                                    'Choisir le materiel adapte a chaque usage',
+                                ],
+                                'label' => 'Essentiel',
+                                'duree' => '1 heure 30',
+                                'resources' => 'Scenarios, schema de circulation',
+                                'prerequi' => 'Aucun prerequis.',
+                                'status' => 1,
+                            ],
+                            [
+                                'module_title' => 'Equilibre alimentaire et menus',
+                                'module_name' => 'Equilibre alimentaire et menus',
+                                'description' => 'Composer des menus simples en tenant compte des familles d aliments et des besoins des publics.',
+                                'objectifs' => [
+                                    'Identifier les familles d aliments',
+                                    'Composer un menu equilibre',
+                                    'Adapter une proposition aux besoins d un public',
+                                ],
+                                'label' => 'Approfondissement',
+                                'duree' => '2 heures',
+                                'resources' => 'Fiches menus, atelier de composition',
+                                'prerequi' => 'Aucun prerequis.',
+                                'status' => 1,
+                            ],
+                            [
+                                'module_title' => 'Gestion des dechets alimentaires',
+                                'module_name' => 'Gestion des dechets alimentaires',
+                                'description' => 'Mettre en place le tri, limiter le gaspillage et appliquer les gestes de gestion des dechets.',
+                                'objectifs' => [
+                                    'Identifier les types de dechets',
+                                    'Mettre en place un tri adapte',
+                                    'Reduire le gaspillage alimentaire',
+                                ],
+                                'label' => 'Pratique',
+                                'duree' => '1 heure',
+                                'resources' => 'Affichage de tri, activite de diagnostic',
+                                'prerequi' => 'Aucun prerequis.',
+                                'status' => 1,
+                            ],
+                        ],
+                    ],
+                ],
+            ],
         ];
 
         foreach ($catalogue as $categoryData) {
@@ -330,6 +481,38 @@ class DatabaseSeeder extends Seeder
                     'updated_at' => $now,
                 ]
             );
+        }
+
+        $hygieneModules = Module::query()
+            ->where('formateur_id', $formateur->id)
+            ->whereIn('module_name', [
+                'Securite alimentaire 2026',
+                'Hygiene en cuisine professionnelle',
+                'Nettoyage et desinfection des espaces',
+                'Conservation et chaine du froid',
+                'Allergenes et information client',
+                'Reception et stockage des denrees',
+                'Prevention des contaminations croisees',
+                'Equilibre alimentaire et menus',
+                'Gestion des dechets alimentaires',
+            ])
+            ->orderBy('id')
+            ->get();
+
+        if ($hygieneModules->isNotEmpty()) {
+            foreach ($hygieneModules as $position => $module) {
+                DB::table('group_module')->updateOrInsert(
+                    [
+                        'group_id' => $group->id,
+                        'module_id' => $module->id,
+                    ],
+                    [
+                        'position' => $position + 1,
+                    ]
+                );
+            }
+
+            return;
         }
 
         $module = Module::query()

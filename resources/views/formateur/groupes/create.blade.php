@@ -274,17 +274,18 @@
             >{{ old('description') }}</textarea>
           </div>
 
-          <details class="mb-6" {{ $showOptionsPanel ? 'open' : '' }}>
-            <summary class="inline-flex cursor-pointer items-center gap-3 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-800 shadow-sm marker:hidden">
-              <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-bleuone/10 text-bleuone">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M7 12h10M10 18h4" />
-                </svg>
-              </span>
-              <span>Options</span>
-            </summary>
+          <div class="mb-6 flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+            <details class="min-w-0 flex-1" {{ $showOptionsPanel ? 'open' : '' }}>
+              <summary class="inline-flex cursor-pointer items-center gap-3 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-800 shadow-sm marker:hidden">
+                <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-bleuone/10 text-bleuone">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M7 12h10M10 18h4" />
+                  </svg>
+                </span>
+                <span>Options</span>
+              </summary>
 
-            <div class="mt-3 rounded-[18px] border border-gray-200 bg-white px-4 py-4">
+              <div class="mt-3 rounded-[18px] border border-gray-200 bg-white px-4 py-4">
               <div class="grid gap-4 lg:grid-cols-2 lg:items-stretch">
                 <div class="space-y-4 rounded-[18px] border {{ $errors->has('is_active') || $errors->has('start_date') || $errors->has('end_date') ? 'border-sky-300 bg-sky-100/80' : 'border-sky-200 bg-sky-50/80' }} px-4 py-4">
                   <div class="rounded-[18px] border {{ $errors->has('is_active') ? 'border-red-300 bg-red-50/70' : 'border-white/70 bg-white/80' }} px-4 py-3">
@@ -362,8 +363,13 @@
                   'panelClass' => 'border-orange-200 bg-orange-50/80',
                 ])
               </div>
-            </div>
-          </details>
+              </div>
+            </details>
+
+            <button type="button" id="step1NextBtn" class="btn-oneduc w-full md:w-auto px-8 py-3 text-lg shadow-lg shadow-orangeone/20">
+              Suivant
+            </button>
+          </div>
         </section>
       </fieldset>
 
@@ -652,6 +658,7 @@ Lucas;Bernard;lucas.bernard@entreprise.fr</pre>
   const form = document.getElementById('multi-step-form');
   const prevBtn = document.getElementById('prevBtn');
   const nextBtn = document.getElementById('nextBtn');
+  const step1NextBtn = document.getElementById('step1NextBtn');
   const submitBtn = document.getElementById('submitBtn');
   const progressBar = document.getElementById('progress-bar');
   const progressLabel = document.getElementById('progress-label');
@@ -774,7 +781,8 @@ Lucas;Bernard;lucas.bernard@entreprise.fr</pre>
     progressLive.textContent = progressText;
 
     prevBtn.classList.toggle('hidden', step === 1);
-    nextBtn.classList.toggle('hidden', step === TOTAL_STEPS);
+    nextBtn.classList.toggle('hidden', step === 1 || step === TOTAL_STEPS);
+    step1NextBtn?.classList.toggle('hidden', step !== 1);
     submitBtn.classList.toggle('hidden', step !== TOTAL_STEPS);
 
     hideWizardClientErrors();
@@ -842,6 +850,15 @@ Lucas;Bernard;lucas.bernard@entreprise.fr</pre>
   }
 
   nextBtn.addEventListener('click', (event) => {
+    event.preventDefault();
+
+    if (validateStep(currentStep)) {
+      currentStep++;
+      showStep(currentStep);
+    }
+  });
+
+  step1NextBtn?.addEventListener('click', (event) => {
     event.preventDefault();
 
     if (validateStep(currentStep)) {

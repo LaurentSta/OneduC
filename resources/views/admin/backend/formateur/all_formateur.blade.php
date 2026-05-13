@@ -26,11 +26,21 @@
                         <th class="px-4 py-3">Stagiaires</th>
                         <th class="px-4 py-3">Statut</th>
                         <th class="px-4 py-3 text-center">Activer</th>
+                        <th class="px-4 py-3">Adhésion</th>
                         <th class="px-4 py-3 text-center">Supprimer</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach ($allFormateur as $key => $item)
+                        @php
+                            $adhesionIsValid = $item->hasValidAssociationMembership();
+                            $adhesionHasExpired = $item->adhesion_status === 'active'
+                                && $item->adhesion_valid_until
+                                && $item->adhesion_valid_until->lt(today());
+                            $adhesionGraceEndsAt = $item->associationGraceEndsAt();
+                            $adhesionGraceIsActive = $item->hasActiveAssociationGracePeriod();
+                            $adhesionDate = $item->adhesion_valid_until?->format('Y-m-d') ?? now()->addYear()->format('Y-m-d');
+                        @endphp
                         <tr class="border-b border-gray-100 transition">
                             <td class="px-4 py-3">{{ $key + 1 }}</td>
                             <td class="px-4 py-3 font-medium text-gray-900">{{ $item->name }}</td>
@@ -55,6 +65,56 @@
                                     <label for="toggle-{{ $item->id }}" class="relative flex h-6 w-11 cursor-pointer items-center rounded-full bg-gray-400 px-0.5 transition-colors before:h-5 before:w-5 before:rounded-full before:bg-white before:shadow before:transition-transform before:duration-300 peer-checked:bg-green-500 peer-checked:before:translate-x-full">
                                         <span class="sr-only">Activer ou désactiver</span>
                                     </label>
+                                </div>
+                            </td>
+                            <td class="px-4 py-3 min-w-[280px]">
+                                <div class="space-y-3">
+                                    @if ($adhesionIsValid)
+                                        <span class="inline-flex items-center px-3 py-1 rounded-full bg-orange-50 text-orange-700 text-xs font-bold">
+                                            Adhésion validée
+                                            @if ($item->adhesion_valid_until)
+                                                jusqu'au {{ $item->adhesion_valid_until->format('d/m/Y') }}
+                                            @endif
+                                        </span>
+                                    @elseif ($item->adhesion_status === 'expired' || $adhesionHasExpired)
+                                        <span class="inline-flex items-center px-3 py-1 rounded-full bg-red-50 text-red-700 text-xs font-bold">Adhésion expirée</span>
+                                    @elseif ($adhesionGraceIsActive)
+                                        <span class="inline-flex items-center px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold">
+                                            Accès découverte jusqu'au {{ $adhesionGraceEndsAt->format('d/m/Y') }}
+                                        </span>
+                                    @else
+                                        <span class="inline-flex items-center px-3 py-1 rounded-full bg-amber-50 text-amber-700 text-xs font-bold">
+                                            Adhésion à relancer
+                                        </span>
+                                        <p class="mt-2 text-xs leading-relaxed text-slate-500">
+                                            Vous pouvez couper l'accès avec le bouton d'activation.
+                                        </p>
+                                    @endif
+
+                                    <form method="POST" action="{{ route('admin.formateurs.adhesion.update', $item) }}" class="flex flex-wrap items-center gap-2">
+                                        @csrf
+                                        @method('PATCH')
+                                        <input type="hidden" name="adhesion_status" value="active">
+                                        <input type="date"
+                                               name="adhesion_valid_until"
+                                               value="{{ $adhesionDate }}"
+                                               class="h-9 rounded-lg border border-slate-300 px-2 text-xs text-slate-700 focus:border-orangeone focus:ring-orangeone/20">
+                                        <button type="submit" class="inline-flex items-center gap-1 rounded-lg bg-orangeone px-3 py-2 text-xs font-varela font-semibold text-white transition hover:bg-orangeone-hover">
+                                            <i class="ti ti-check"></i>
+                                            Valider
+                                        </button>
+                                    </form>
+
+                                    @if ($item->adhesion_status !== 'pending')
+                                        <form method="POST" action="{{ route('admin.formateurs.adhesion.update', $item) }}">
+                                            @csrf
+                                            @method('PATCH')
+                                            <input type="hidden" name="adhesion_status" value="pending">
+                                            <button type="submit" class="text-xs font-varela font-semibold text-slate-500 underline-offset-4 hover:text-red-700 hover:underline">
+                                                Remettre en attente
+                                            </button>
+                                        </form>
+                                    @endif
                                 </div>
                             </td>
                             <td class="px-4 py-3 text-center">
@@ -101,7 +161,8 @@
             columnDefs: [
                 { targets: 0, orderable: false },
                 { targets: -1, orderable: false },
-                { targets: -2, orderable: false }
+                { targets: -2, orderable: false },
+                { targets: -3, orderable: false }
             ]
         });
     });

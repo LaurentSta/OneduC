@@ -2,6 +2,21 @@
 
 @php
     $customPresentation = $currentLesson['custom_presentation'] ?? null;
+    $lessonLayout = $currentLesson['layout'] ?? 'default';
+    $isMixedScormForm = $lessonLayout === 'scorm_form';
+    $activeLessonPart = $activeLessonPart ?? null;
+    $mixedParts = $currentLesson['scorm_parts'] ?? [];
+    $mixedPartKeys = array_keys($mixedParts);
+    $mixedPartUrls = $currentLesson['part_urls'] ?? [];
+    $mixedCurrentIndex = array_search($activeLessonPart, $mixedPartKeys, true);
+    $mixedNextPart = $mixedCurrentIndex !== false ? ($mixedPartKeys[$mixedCurrentIndex + 1] ?? null) : null;
+    $mixedActivePartConfig = $activeLessonPart ? ($mixedParts[$activeLessonPart] ?? []) : [];
+    $mixedActiveScormUrl = $activeLessonPart ? ($currentLesson['scorm_part_urls'][$activeLessonPart] ?? null) : null;
+    $mixedNextUrl = $mixedNextPart
+        ? ($mixedPartUrls[$mixedNextPart] ?? '#')
+        : ($nextLesson['url'] ?? '#');
+    $mixedIsFullPart = ($mixedActivePartConfig['height'] ?? null) === 'full';
+    $mixedHasForm = !empty($mixedActivePartConfig['form']);
     $editorial = $currentLesson['editorial'] ?? [
         'intro' => [
             $currentLesson['objective'],
@@ -29,14 +44,86 @@
 @endphp
 
 @section('parcours_content')
-    <div class="px-4 sm:px-6 lg:px-8 pt-4">
-        <x-formateur.hierarchy-breadcrumb
-            :module="['label' => 'Module', 'title' => $currentModule['title'], 'url' => $currentModule['url']]"
-            :chapter="['label' => $currentChapter['label'] ?? 'Chapitre', 'title' => $currentChapter['title'], 'url' => $currentChapter['url']]"
-            :lesson="['label' => $currentLesson['code'] ?? 'Leçon', 'title' => $currentLesson['title'], 'url' => null]"
-        />
-    </div>
-    @if (!empty($currentLesson['scorm_url']))
+    <div
+        x-data="{
+            sidebarOpen: window.innerWidth >= 1024,
+            sidebarClosing: false,
+            fullscreenSupported: false,
+            fullscreenActive: false,
+            toggleSidebar() {
+                if (this.sidebarOpen) {
+                    this.sidebarClosing = true;
+                    this.sidebarOpen = false;
+                    window.setTimeout(() => {
+                        this.sidebarClosing = false;
+                    }, 260);
+                    return;
+                }
+
+                this.sidebarOpen = true;
+            },
+            async toggleFullscreen() {
+                const target = this.$refs.lessonViewport;
+
+                if (!target || !this.fullscreenSupported) {
+                    return;
+                }
+
+                try {
+                    if (document.fullscreenElement) {
+                        await document.exitFullscreen();
+                        return;
+                    }
+
+                    if (typeof target.requestFullscreen === 'function') {
+                        await target.requestFullscreen();
+                    }
+                } catch (error) {
+                    console.error('Impossible de basculer en plein ecran.', error);
+                }
+            },
+            syncFullscreenState() {
+                this.fullscreenActive = !!document.fullscreenElement;
+            },
+            init() {
+                this.fullscreenSupported = !!document.fullscreenEnabled;
+                this.syncFullscreenState();
+
+                document.addEventListener('fullscreenchange', () => this.syncFullscreenState());
+                window.addEventListener('resize', () => {
+                    if (window.innerWidth >= 1024) {
+                        this.sidebarOpen = true;
+                    }
+                });
+            }
+        }"
+        class="space-y-4"
+    >
+        <div class="flex items-start gap-3 px-4 pt-4 sm:px-6 lg:px-8">
+            <button
+                type="button"
+                @click="toggleSidebar()"
+                class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 shadow-sm transition hover:border-orangeone hover:text-orangeone"
+                :aria-pressed="sidebarOpen.toString()"
+                aria-label="Afficher ou masquer le plan"
+                title="Afficher ou masquer le plan"
+            >
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M4 6h16" />
+                    <path d="M4 12h16" />
+                    <path d="M4 18h16" />
+                </svg>
+            </button>
+
+            <div class="min-w-0 flex-1">
+                <x-formateur.hierarchy-breadcrumb
+                    :module="['label' => 'Module', 'title' => $currentModule['title'], 'url' => $currentModule['url']]"
+                    :chapter="['label' => $currentChapter['label'] ?? 'Chapitre', 'title' => $currentChapter['title'], 'url' => $currentChapter['url']]"
+                    :lesson="['label' => 'Lecon', 'title' => $currentLesson['title'], 'url' => null]"
+                />
+            </div>
+        </div>
+	    @if (!empty($currentLesson['scorm_url']) || !empty($currentLesson['intro_scorm_url']) || !empty($mixedActiveScormUrl))
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
         <script src="{{ asset('scorm_core/js/API.js') }}"></script>
@@ -45,7 +132,7 @@
                 lecture_id: 0,
                 module_id: @json($activeModuleKey),
                 section_id: @json($activeChapterKey),
-                next_url: @json($nextLesson['url'] ?? '#'),
+	                next_url: @json($mixedNextUrl),
                 final_url: @json($currentChapter['url']),
                 is_already_done: false,
                 anonymous: false,
@@ -53,7 +140,7 @@
                 force_next_lesson: @json(empty($nextActivity)),
                 quiz_start_url: @json($nextActivity['url'] ?? null),
                 quiz_button_label: @json($nextActivity['button_label'] ?? null),
-                next_button_label: @json($nextLesson ? 'Leçon suivante' : 'Retour au chapitre'),
+		                next_button_label: @json($mixedNextPart ? 'Continuer' : ($nextLesson ? 'Leçon suivante' : 'Retour au chapitre')),
                 quiz_tester_url: null,
 
                 goToNextLesson: function () {
@@ -94,67 +181,16 @@
     @endif
 
     <div
-        x-data="{
-            sidebarOpen: window.innerWidth >= 1024,
-            fullscreenSupported: false,
-            fullscreenActive: false,
-            async toggleFullscreen() {
-                const target = this.$refs.lessonViewport;
-
-                if (!target || !this.fullscreenSupported) {
-                    return;
-                }
-
-                try {
-                    if (document.fullscreenElement) {
-                        await document.exitFullscreen();
-                        return;
-                    }
-
-                    if (typeof target.requestFullscreen === 'function') {
-                        await target.requestFullscreen();
-                    }
-                } catch (error) {
-                    console.error('Impossible de basculer en plein ecran.', error);
-                }
-            },
-            syncFullscreenState() {
-                this.fullscreenActive = !!document.fullscreenElement;
-            },
-            init() {
-                this.fullscreenSupported = !!document.fullscreenEnabled;
-                this.syncFullscreenState();
-
-                document.addEventListener('fullscreenchange', () => this.syncFullscreenState());
-                window.addEventListener('resize', () => {
-                    if (window.innerWidth >= 1024) {
-                        this.sidebarOpen = true;
-                    }
-                });
-            }
-        }"
-        class="grid items-start gap-6 lg:grid-cols-[19rem_minmax(0,1fr)]"
+        class="grid items-start gap-6"
+        :class="(sidebarOpen || sidebarClosing) ? 'lg:grid-cols-[19rem_minmax(0,1fr)]' : 'lg:grid-cols-[minmax(0,1fr)]'"
     >
         @include('formateur.parcours.partials.sidebar')
 
         <section
             x-ref="lessonViewport"
-            class="relative h-[calc(100vh-13rem)] min-h-[calc(100vh-13rem)] overflow-hidden rounded-[28px] border border-gray-100 bg-gray-100 shadow-sm"
+            class="relative h-[calc(100vh-13rem)] min-h-[calc(100vh-13rem)] rounded-[28px] border border-gray-100 bg-gray-100 shadow-sm {{ $isMixedScormForm ? 'overflow-y-auto' : 'overflow-hidden' }}"
         >
             <div class="pointer-events-none absolute left-4 top-4 z-20 flex flex-wrap items-center gap-2">
-                <button
-                    type="button"
-                    @click="sidebarOpen = !sidebarOpen"
-                    class="pointer-events-auto inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/95 px-3 py-2 text-[11px] font-bold uppercase tracking-wide text-slate-700 shadow-sm backdrop-blur transition hover:bg-white lg:hidden"
-                >
-                    <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <path d="M4 7h16" />
-                        <path d="M4 12h16" />
-                        <path d="M4 17h16" />
-                    </svg>
-                    <span>Plan</span>
-                </button>
-
                 <button
                     type="button"
                     x-show="fullscreenSupported"
@@ -177,7 +213,52 @@
                 </button>
             </div>
 
-            @if (!empty($currentLesson['scorm_url']))
+            @if ($isMixedScormForm)
+                <div class="{{ $mixedIsFullPart ? 'h-full' : 'space-y-4 p-4 md:p-5' }}">
+                    @if ($mixedIsFullPart)
+                        <div class="h-full overflow-hidden bg-white">
+                            <div class="h-full min-h-[calc(100vh-13rem)] bg-slate-100">
+                                <iframe
+                                    id="scorm-iframe-{{ $activeLessonPart }}"
+                                    title="{{ $currentLesson['title'] }}"
+                                    src="{{ $mixedActiveScormUrl }}"
+                                    frameborder="0"
+                                    allowfullscreen
+                                    class="block h-full w-full bg-white"
+                                ></iframe>
+                            </div>
+                        </div>
+                    @else
+                    <div class="overflow-hidden rounded-[24px] border border-gray-100 bg-white shadow-sm">
+                        <div class="h-[38vh] min-h-[300px] bg-slate-100">
+                            @if (!empty($mixedActiveScormUrl))
+                                <iframe
+                                    id="scorm-iframe-{{ $activeLessonPart }}"
+                                    title="{{ $currentLesson['title'] }}"
+                                    src="{{ $mixedActiveScormUrl }}"
+                                    frameborder="0"
+                                    allowfullscreen
+                                    class="block h-full w-full bg-white"
+                                ></iframe>
+                            @else
+                                <div class="flex h-full items-center justify-center p-6 text-center">
+                                    <div class="max-w-xl">
+                                        <p class="text-xs font-black uppercase tracking-[0.24em] text-orangeone">SCORM a integrer</p>
+                                        <p class="mt-3 text-sm leading-7 text-slate-600">
+                                            Deposez le paquet Storyline dans le dossier prevu pour afficher le contenu ici.
+                                        </p>
+                                    </div>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+
+                    @if ($mixedHasForm)
+                        @include('formateur.parcours.partials.lessons.group-creation-form')
+                    @endif
+                    @endif
+                </div>
+            @elseif (!empty($currentLesson['scorm_url']))
                 <iframe
                     id="scorm-iframe"
                     title="{{ $currentLesson['title'] }}"
@@ -195,14 +276,17 @@
                     <article class="mx-auto max-w-5xl overflow-hidden rounded-[28px] border border-gray-100 bg-white shadow-sm">
                         <div class="border-b border-gray-100 px-6 py-6 md:px-8 md:py-8">
                             <div class="flex flex-wrap items-center gap-3">
-                                <span class="inline-flex rounded-full border border-orange-200 bg-orange-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-orangeone">
-                                    {{ $currentLesson['code'] }}
-                                </span>
                                 <span class="inline-flex rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
                                     {{ $currentLesson['duration_label'] }}
                                 </span>
                                 <span class="inline-flex rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
                                     {{ $currentChapter['title'] }}
+                                </span>
+                                <span
+                                    class="inline-flex rounded-full border border-bleuone/10 bg-bleuone/5 px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-bleuone"
+                                    data-parcours-tooltip="{{ ($currentLesson['type'] ?? 'objectif') === 'bilan' ? 'Bilan' : 'Objectif operationnel' }}"
+                                >
+	                                    {{ ($currentLesson['type'] ?? 'objectif') === 'bilan' ? 'Bilan' : 'Lecon' }}
                                 </span>
                             </div>
 
@@ -215,83 +299,50 @@
                             </p>
                         </div>
 
-                        <div class="space-y-10 px-6 py-6 md:px-8 md:py-8">
-                            <section class="space-y-4 text-sm leading-8 text-slate-700 md:text-base">
-                                @foreach ($editorial['intro'] as $paragraph)
-                                    <p>{{ $paragraph }}</p>
-                                @endforeach
+                        <div class="space-y-6 px-6 py-6 md:px-8 md:py-8">
+                            <section class="rounded-[28px] border-2 border-dashed border-orange-200 bg-orange-50/40 p-8 text-center">
+                                <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-white text-orangeone shadow-sm">
+                                    <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M7 4h10a2 2 0 012 2v12a2 2 0 01-2 2H7a2 2 0 01-2-2V6a2 2 0 012-2z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 9h6M9 13h4" />
+                                    </svg>
+                                </div>
+                                <p class="mt-5 text-xs font-black uppercase tracking-[0.24em] text-orangeone">
+                                    {{ $currentLesson['scorm_slot_label'] ?? 'Contenu de lecon' }}
+                                </p>
+                                <h2 class="mt-3 font-raleway text-2xl font-medium leading-tight text-bleuone">
+                                    Contenu de lecon a integrer
+                                </h2>
+                                <p class="mx-auto mt-3 max-w-2xl text-sm leading-7 text-slate-600 md:text-base">
+	                                    Cet emplacement reste volontairement vide pour accueillir le contenu de cette lecon.
+                                </p>
                             </section>
 
                             <section class="grid gap-4 md:grid-cols-2">
-                                @foreach ($editorial['focus_cards'] as $card)
-                                    <article class="rounded-[22px] border border-slate-200 bg-white p-5 shadow-sm">
-                                        <p class="text-xs font-semibold uppercase tracking-[0.24em] text-orangeone">{{ $loop->iteration < 10 ? '0' . $loop->iteration : $loop->iteration }}</p>
-                                        <h2 class="mt-3 text-xl font-bold leading-tight text-bleuone">{{ $card['title'] }}</h2>
-                                        <p class="mt-3 text-sm leading-7 text-slate-600 md:text-base">{{ $card['body'] }}</p>
-                                    </article>
-                                @endforeach
-                            </section>
+                                <article class="rounded-[24px] border border-slate-200 bg-white p-6">
+                                    <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Activite prevue</p>
+                                    <p class="mt-3 text-sm leading-7 text-slate-600">{{ $currentLesson['activity'] ?: 'Activite a creer ulterieurement.' }}</p>
 
-                            <section class="grid gap-5 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
-                                <article class="rounded-[24px] border border-slate-200 bg-slate-50/70 p-6">
-                                    <div class="flex items-center gap-3">
-                                        <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-orangeone text-white shadow-md">
-                                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            </svg>
-                                        </span>
-                                        <h2 class="text-xl font-black text-bleuone">Le deroule conseille</h2>
-                                    </div>
-
-                                    <ol class="mt-6 space-y-4">
-                                        @foreach ($editorial['steps'] as $step)
-                                            <li class="flex items-start gap-4">
-                                                <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-sm font-black text-orangeone shadow-sm ring-1 ring-orange-100">
-                                                    {{ $loop->iteration }}
-                                                </span>
-                                                <p class="pt-0.5 text-sm leading-7 text-slate-600 md:text-base">{{ $step }}</p>
-                                            </li>
-                                        @endforeach
-                                    </ol>
+                                    @if (!empty($nextActivity))
+                                        <a href="{{ $nextActivity['url'] }}" class="mt-5 inline-flex items-center justify-center rounded-full bg-orangeone px-5 py-3 text-sm font-bold text-white transition hover:bg-orange-600">
+                                            {{ $nextActivity['button_label'] ?? 'Realiser l activite' }}
+                                        </a>
+                                    @endif
                                 </article>
 
                                 <article class="rounded-[24px] border border-slate-200 bg-white p-6">
-                                    <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Repere pedagogique</p>
-                                    <div class="mt-4 space-y-4 text-sm leading-7 text-slate-600">
-                                        <p><span class="font-semibold text-bleuone">Intention :</span> {{ $currentLesson['pedagogical_intention'] }}</p>
-                                        <p><span class="font-semibold text-bleuone">Methode :</span> {{ $currentLesson['method'] }}</p>
-                                        <p><span class="font-semibold text-bleuone">Processus :</span> {{ $currentLesson['learning_process'] }}</p>
-                                        <p><span class="font-semibold text-bleuone">Sujet :</span> {{ $currentLesson['subject'] }}</p>
-                                    </div>
+                                    <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Evaluation / validation</p>
+                                    <p class="mt-3 text-sm leading-7 text-slate-600">{{ $currentLesson['evaluation'] ?: 'Critere de validation a preciser.' }}</p>
                                 </article>
                             </section>
 
-                            <section class="rounded-[24px] border border-orange-200 bg-orange-50/60 p-6">
-                                <p class="text-xs font-semibold uppercase tracking-[0.24em] text-orangeone">A verifier a la fin de la lecon</p>
-                                <div class="mt-5 grid gap-3 md:grid-cols-2">
-                                    @foreach ($editorial['checklist'] as $item)
-                                        <div class="flex items-start gap-3 rounded-[18px] bg-white/80 px-4 py-4">
-                                            <svg class="mt-0.5 h-5 w-5 shrink-0 text-orangeone" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                                            </svg>
-                                            <p class="text-sm leading-7 text-slate-700">{{ $item }}</p>
-                                        </div>
-                                    @endforeach
-                                </div>
-                            </section>
-
-                            <section class="rounded-[24px] border border-slate-200 bg-white p-6">
-                                <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">En attendant le SCORM</p>
-                                <p class="mt-3 text-sm leading-7 text-slate-600 md:text-base">{{ $editorial['placeholder_note'] }}</p>
-                                <div class="mt-5 grid gap-4 md:grid-cols-2">
-                                    <article class="rounded-[20px] border border-slate-200 bg-slate-50/70 p-5">
-                                        <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Activite prevue</p>
-                                        <p class="mt-3 text-sm leading-7 text-slate-600">{{ $currentLesson['activity'] }}</p>
-                                    </article>
-                                    <article class="rounded-[20px] border border-slate-200 bg-slate-50/70 p-5">
-                                        <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Ressources a preparer</p>
-                                        <p class="mt-3 text-sm leading-7 text-slate-600">{{ $currentLesson['resources'] }}</p>
-                                    </article>
+                            <section class="rounded-[24px] border border-slate-200 bg-slate-50/70 p-6">
+                                <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Repere pedagogique</p>
+                                <div class="mt-4 grid gap-4 text-sm leading-7 text-slate-600 md:grid-cols-2">
+                                    <p><span class="font-semibold text-bleuone">Intention :</span> {{ $currentLesson['pedagogical_intention'] }}</p>
+                                    <p><span class="font-semibold text-bleuone">Methode :</span> {{ $currentLesson['method'] }}</p>
+                                    <p><span class="font-semibold text-bleuone">Processus :</span> {{ $currentLesson['learning_process'] }}</p>
+                                    <p><span class="font-semibold text-bleuone">Sujet :</span> {{ $currentLesson['subject'] }}</p>
                                 </div>
                             </section>
                         </div>
@@ -332,8 +383,9 @@
             @endif
         </section>
     </div>
+    </div>
 
-    @if (!empty($currentLesson['scorm_url']))
+    @if (!empty($currentLesson['scorm_url']) && ! $isMixedScormForm)
         <div
             id="next-lesson-wrapper"
             class="hidden pointer-events-none fixed bottom-10 z-50 transition-all duration-300"

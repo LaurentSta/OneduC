@@ -238,6 +238,35 @@ public function AdminSecuriteUpdate(Request $request)
             'new_status' => $user->status ? 'Actif' : 'Inactif'
         ]);
     }
+
+    public function UpdateFormateurAdhesion(Request $request, User $user)
+    {
+        if ($user->role !== 'formateur') {
+            return $this->deny('Action non autorisée.');
+        }
+
+        $validated = $request->validate([
+            'adhesion_status' => ['required', 'in:pending,active,expired'],
+            'adhesion_valid_until' => ['nullable', 'date'],
+        ]);
+
+        $user->adhesion_status = $validated['adhesion_status'];
+
+        if ($validated['adhesion_status'] === 'active') {
+            $user->adhesion_valid_until = $validated['adhesion_valid_until'] ?? now()->addYear()->toDateString();
+            $user->adhesion_verified_at = now();
+            $user->adhesion_verified_by = auth()->id();
+        } else {
+            $user->adhesion_valid_until = $validated['adhesion_valid_until'] ?? null;
+            $user->adhesion_verified_at = null;
+            $user->adhesion_verified_by = null;
+        }
+
+        $user->save();
+
+        return back()->with('success', "L'adhésion du formateur a été mise à jour.");
+    }
+
     public function DestroyFormateur(\App\Models\User $user)
     {
         if ($user->id === auth()->id())          return $this->deny('Vous ne pouvez pas vous supprimer.');

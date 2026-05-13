@@ -6,15 +6,17 @@
 
   @include('formateur.mes-formations._tabs')
 
-  <div class="flex justify-end mb-4">
-    <a href="{{ route('formateur.mes-formations.create') }}"
-       class="inline-flex items-center gap-2 px-5 py-3 rounded-[10px] bg-[#E94D2A] text-white font-medium hover:bg-[#cf4121] transition">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-      </svg>
-      Créer un parcours
-    </a>
-  </div>
+  @if ($parcours->total() > 0)
+    <div class="flex justify-end mb-4">
+      <a href="{{ route('formateur.mes-formations.create') }}"
+         class="inline-flex items-center gap-2 px-5 py-3 rounded-[10px] bg-[#E94D2A] text-white font-medium hover:bg-[#cf4121] transition">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
+        Créer un parcours
+      </a>
+    </div>
+  @endif
 
   @if (session('success'))
     <div class="mb-4 px-4 py-3 rounded-[10px] bg-green-50 text-green-800 border border-green-200 text-sm">
@@ -22,15 +24,15 @@
     </div>
   @endif
 
-  @if ($parcours->isEmpty())
+  @if ($parcours->total() === 0)
     <div class="bg-white rounded-[20px] shadow-md px-8 py-16 text-center">
       <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
       </svg>
-      <p class="text-gray-500 mb-6">Vous n'avez pas encore créé de formation.</p>
+      <p class="text-gray-500 mb-6">Vous n'avez pas encore créé de parcours.</p>
       <a href="{{ route('formateur.mes-formations.create') }}"
          class="inline-flex items-center gap-2 px-5 py-3 rounded-[10px] bg-[#E94D2A] text-white font-medium hover:bg-[#cf4121] transition">
-        Créer ma première formation
+        Créer mon premier parcours
       </a>
     </div>
   @else

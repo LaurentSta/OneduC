@@ -18,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'track.time' => \App\Http\Middleware\TrackSessionTime::class, // (Et celui-ci vu tes logs)
             'force.password.change' => \App\Http\Middleware\ForcePasswordChange::class, // ✅ C'est celui-ci qui manque !
             'admin.activity' => \App\Http\Middleware\RecordAdminActivity::class,
+            'association.member' => \App\Http\Middleware\EnsureAssociationMembership::class,
         ]);
         // 👆 FIN DE L'AJOUT 👆
 

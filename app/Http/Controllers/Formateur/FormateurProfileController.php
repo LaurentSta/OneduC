@@ -180,6 +180,7 @@ class FormateurProfileController extends Controller
             'societe'  => $validated['societe'] ?? null,
             'password' => Hash::make($validated['password']),
             'role'     => 'formateur',
+            'adhesion_status' => 'pending',
         ]);
 
         Auth::login($formateur);
@@ -200,6 +201,6 @@ class FormateurProfileController extends Controller
 
         return redirect()
             ->route('formateur.dashboard')
-            ->with('success', 'Bienvenue sur Oneduc !');
+            ->with('success', "Bienvenue sur Oneduc ! Votre espace formateur est ouvert. L'adhésion à l'association vous sera proposée pour soutenir le projet.");
     }
 }

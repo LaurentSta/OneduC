@@ -18,12 +18,13 @@
 @php
     $overviewModules = collect($parcoursModules ?? [])
         ->values()
-        ->map(fn ($module) => [
-            'label' => $module['label'] ?? 'Etape',
-            'title' => $module['title'] ?? '',
-            'description' => $module['description'] ?? null,
-            'time_label' => $module['duration_label'] ?? null,
-            'url' => $module['url'] ?? '#',
+	        ->map(fn ($module) => [
+	            'label' => $module['label'] ?? 'Module',
+	            'title' => $module['title'] ?? '',
+	            'full_title' => $module['full_title'] ?? ($module['title'] ?? ''),
+	            'description' => $module['description'] ?? null,
+	            'time_label' => $module['duration_label'] ?? null,
+	            'url' => $module['url'] ?? '#',
             'is_current' => isset($activeModuleKey) && isset($module['url']) && $activeModuleKey !== null && str_contains($module['url'], '/' . $activeModuleKey),
         ])
         ->values();
@@ -82,17 +83,17 @@
                                 @endif
 
                                 @foreach ($overviewModules as $module)
-                                    <a
-                                        href="{{ $module['url'] }}"
-                                        class="flex w-[176px] flex-none flex-col rounded-[20px] border-2 px-4 py-3 transition hover:-translate-y-0.5 hover:shadow-md xl:w-[176px] {{ $module['is_current'] ? 'border-orangeone bg-orange-50/60' : 'border-bleuone bg-white' }}"
-                                        data-parcours-tooltip="{{ $module['description'] }}"
-                                    >
+	                                    <a
+	                                        href="{{ $module['url'] }}"
+	                                        class="flex w-[176px] flex-none flex-col rounded-[20px] border-2 px-4 py-3 transition hover:-translate-y-0.5 hover:shadow-md xl:w-[176px] {{ $module['is_current'] ? 'border-orangeone bg-orange-50/60' : 'border-bleuone bg-white' }}"
+	                                        data-parcours-tooltip="{{ $module['full_title'] }}"
+	                                    >
                                         <div class="flex items-center justify-between gap-2">
                                             <span class="text-[10px] font-semibold uppercase tracking-[0.24em] text-orangeone">{{ $module['label'] }}</span>
                                             <span class="text-[10px] font-semibold text-slate-500">{{ $module['time_label'] }}</span>
                                         </div>
-                                        <span class="mt-2 text-[17px] leading-5 font-semibold text-bleuone">{{ $module['title'] }}</span>
-                                    </a>
+	                                        <span class="mt-2 text-[18px] leading-5 font-semibold text-bleuone">{{ $module['title'] }}</span>
+	                                    </a>
 
                                     @if (! $loop->last)
                                         <div class="flex w-[32px] flex-none items-center text-orangeone" aria-hidden="true">

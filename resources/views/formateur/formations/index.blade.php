@@ -3,7 +3,23 @@
 
 @section('formateur')
 
-<div class="max-w-[1285px] mx-auto px-8" x-data="{ tab: '{{ request('tab', 'catalogue') }}' }">
+<div
+  class="max-w-[1285px] mx-auto px-8"
+  x-data="{
+    tab: '{{ request('tab') === 'parcours' ? 'parcours' : 'catalogue' }}',
+    filtersOpen: {{ request()->filled('search') ? 'true' : 'false' }},
+    setTab(value) {
+      this.tab = value;
+      const url = new URL(window.location.href);
+      if (value === 'parcours') {
+        url.searchParams.set('tab', 'parcours');
+      } else {
+        url.searchParams.delete('tab');
+      }
+      window.history.replaceState({}, '', url);
+    }
+  }"
+>
 
   {{-- EN-TÊTE --}}
   <header class="bg-white rounded-[20px] shadow-md px-8 pt-4 pb-6 w-full mb-6">
@@ -46,63 +62,83 @@
   </header>
 
   {{-- ONGLETS --}}
-  <div class="flex gap-2 mb-6">
-    <button
-      type="button"
-      @click="tab = 'catalogue'"
-      :class="tab === 'catalogue' ? 'bg-[#E94D2A] text-white shadow' : 'bg-white text-gray-600 border border-gray-200 hover:border-[#E94D2A] hover:text-[#E94D2A]'"
-      class="px-4 py-2 rounded-full text-sm font-medium transition"
-    >
-      Catalogue des modules
-    </button>
-    <button
-      type="button"
-      @click="tab = 'parcours'"
-      :class="tab === 'parcours' ? 'bg-[#E94D2A] text-white shadow' : 'bg-white text-gray-600 border border-gray-200 hover:border-[#E94D2A] hover:text-[#E94D2A]'"
-      class="px-4 py-2 rounded-full text-sm font-medium transition"
-    >
-      Mes parcours de formation
-    </button>
+  <div class="mb-4 rounded-t-[14px] border border-gray-200 border-b-2 border-b-bleuone/15 bg-white px-3 pt-3 shadow-sm">
+    <div class="flex flex-wrap items-end justify-between gap-3">
+      <div role="tablist" aria-label="Vue des formations">
+        <button
+          type="button"
+          role="tab"
+          @click="setTab('catalogue')"
+          :aria-selected="tab === 'catalogue'"
+          :class="tab === 'catalogue' ? 'border-[#E94D2A] text-[#E94D2A]' : 'border-transparent text-gray-500 hover:text-bleuone'"
+          class="-mb-[2px] inline-flex items-center gap-2 border-b-2 px-4 pb-3 pt-2 text-sm font-semibold transition"
+        >
+          Catalogue des modules
+          <span class="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{{ $modules->total() }}</span>
+        </button>
+        <button
+          type="button"
+          role="tab"
+          @click="setTab('parcours')"
+          :aria-selected="tab === 'parcours'"
+          :class="tab === 'parcours' ? 'border-[#E94D2A] text-[#E94D2A]' : 'border-transparent text-gray-500 hover:text-bleuone'"
+          class="-mb-[2px] inline-flex items-center gap-2 border-b-2 px-4 pb-3 pt-2 text-sm font-semibold transition"
+        >
+          Mes parcours de formation
+          <span class="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{{ $mesParcours->count() }}</span>
+        </button>
+      </div>
+
+      <button
+        type="button"
+        x-show="tab === 'catalogue'"
+        x-cloak
+        @click="filtersOpen = !filtersOpen"
+        :aria-expanded="filtersOpen"
+        class="mb-2 inline-flex h-9 items-center gap-2 rounded-md border border-gray-200 bg-white px-3 text-sm font-medium text-gray-600 transition hover:border-orangeone/50 hover:text-orangeone"
+      >
+        <x-icons.filter-iconify class="h-4 w-4" />
+        Filtrer
+      </button>
+    </div>
   </div>
+
+  {{-- Barre de recherche --}}
+  <form method="GET" x-show="tab === 'catalogue' && filtersOpen" x-cloak class="mb-6">
+    <div class="flex flex-wrap items-end gap-3 rounded-[10px] border border-gray-200 bg-white p-3 shadow-sm">
+      <div class="w-full md:w-1/2">
+        <label for="search" class="sr-only">Recherche</label>
+        <input type="text"
+               id="search"
+               name="search"
+               value="{{ $search ?? request('search') }}"
+               placeholder="Rechercher un titre de module"
+               class="h-10 w-full rounded-md border border-gray-300 px-4 text-sm font-lisible shadow-sm focus:border-orangeone focus:ring-orangeone">
+      </div>
+
+      <button type="submit" class="btn-oneduc h-10 !text-sm">
+        Rechercher
+      </button>
+
+      @if(request()->filled('search'))
+        <a href="{{ route('formateur.formations.index') }}"
+           class="btn-oneduc-outline h-10 !text-sm">
+          Réinitialiser
+        </a>
+      @endif
+    </div>
+
+    @if(request('search'))
+      <p class="pt-2 text-sm text-gray-600 font-varela">
+        Recherche active :
+        <span class="text-orangeone font-semibold">{{ request('search') }}</span>
+      </p>
+    @endif
+  </form>
 
   {{-- ── CATALOGUE ─────────────────────────────────────────────────────────── --}}
   <section x-show="tab === 'catalogue'" x-cloak>
     <div class="space-y-8">
-
-      {{-- Barre de recherche --}}
-      <form method="GET" class="space-y-3">
-        <div class="flex flex-wrap items-end gap-3">
-          <div class="w-full md:w-1/2">
-            <label for="search" class="sr-only">Recherche</label>
-            <input type="text"
-                   id="search"
-                   name="search"
-                   value="{{ $search ?? request('search') }}"
-                   placeholder="Recherche titre du module"
-                   class="h-10 w-full rounded-md border border-gray-300 px-4 text-sm font-lisible shadow-sm focus:border-orangeone focus:ring-orangeone">
-          </div>
-
-          <button type="submit" class="btn-oneduc h-10 !text-sm">
-            <x-icons.filter-iconify class="h-4 w-4" />
-            Filtrer
-          </button>
-
-          @if(request()->filled('search'))
-            <a href="{{ route('formateur.formations.index') }}"
-               class="btn-oneduc-outline h-10 !text-sm">
-              Réinitialiser
-            </a>
-          @endif
-        </div>
-
-        @if(request('search'))
-          <p class="pt-1 text-sm text-gray-600 font-varela">
-            Recherche active :
-            <span class="text-orangeone font-semibold">{{ request('search') }}</span>
-          </p>
-        @endif
-      </form>
-
       {{-- Tableau des modules --}}
       <div class="overflow-x-auto bg-white shadow-md rounded-[20px] border-2 border-bleuone/20">
         <table class="min-w-full bg-white text-sm text-left text-gray-800 font-lisible">
@@ -218,15 +254,17 @@
   {{-- ── MES PARCOURS ──────────────────────────────────────────────────────── --}}
   <section x-show="tab === 'parcours'" x-cloak>
 
-    <div class="flex justify-end mb-4">
-      <a href="{{ route('formateur.mes-formations.create') }}"
-         class="inline-flex items-center gap-2 px-5 py-3 rounded-[10px] bg-[#E94D2A] text-white font-medium hover:bg-[#cf4121] transition">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-        </svg>
-        Créer un parcours
-      </a>
-    </div>
+    @if ($mesParcours->isNotEmpty())
+      <div class="flex justify-end mb-4">
+        <a href="{{ route('formateur.mes-formations.create') }}"
+           class="inline-flex items-center gap-2 px-5 py-3 rounded-[10px] bg-[#E94D2A] text-white font-medium hover:bg-[#cf4121] transition">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+          </svg>
+          Créer un parcours
+        </a>
+      </div>
+    @endif
 
     @if (session('success'))
       <div class="mb-4 px-4 py-3 rounded-[10px] bg-green-50 text-green-800 border border-green-200 text-sm">

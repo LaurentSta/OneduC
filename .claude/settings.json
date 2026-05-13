@@ -14,7 +14,10 @@
       "Bash(php -l /var/www/Oneduc_Dev/resources/views/frontend/index.blade.php)",
       "Bash(php -l /var/www/Oneduc_Dev/storage/framework/views/671a80ea036c49f7179eabed0d6fca65.php)",
       "Bash(python3 -c ' *)",
-      "Bash(php -l /var/www/Oneduc_Dev/resources/views/frontend/body/footer.blade.php)"
+      "Bash(php -l /var/www/Oneduc_Dev/resources/views/frontend/body/footer.blade.php)",
+      "Bash(git -C /var/www/Oneduc_Dev diff --stat HEAD)",
+      "Bash(git -C /var/www/Oneduc_Dev status --short)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }

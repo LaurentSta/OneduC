@@ -25,7 +25,7 @@
                 <article class="rounded-[24px] border border-slate-200 bg-white p-6">
                     <h2 class="text-2xl font-semibold leading-tight text-bleuone">Une navigation libre</h2>
                     <p class="mt-4 text-base leading-8 text-slate-600">
-                        Chaque etape reste accessible sans imposer un ordre rigide.
+	                        Chaque lecon reste accessible sans imposer un ordre rigide.
                     </p>
                 </article>
                 <article class="rounded-[24px] border border-slate-200 bg-white p-6">
@@ -46,7 +46,7 @@
                 <article class="rounded-[24px] border border-slate-200 bg-white p-6">
                     <h2 class="text-2xl font-semibold leading-tight text-bleuone">Comment utiliser ce parcours</h2>
                     <p class="mt-4 text-base leading-8 text-slate-600">
-                        Vous pouvez commencer par le module 1 puis revenir plus tard sur les autres parties, ou naviguer directement vers l etape qui vous aide le plus.
+	                        Vous pouvez commencer par le module 1 puis revenir plus tard sur les autres parties, ou naviguer directement vers la lecon qui vous aide le plus.
                     </p>
                 </article>
                 <article class="rounded-[24px] border border-slate-200 bg-white p-6">
@@ -82,7 +82,7 @@
                 <p class="text-xs font-semibold uppercase tracking-[0.26em] text-orangeone">Navigation libre</p>
                 <h2 class="mt-4 font-raleway text-3xl font-semibold text-bleuone">Chemin du formateur</h2>
                 <p class="mt-4 text-lg leading-9 text-slate-600">
-                    Le parcours visuel ci-dessus vous laisse circuler librement entre les etapes. Vous n etes pas oblige de tout suivre dans l ordre.
+	                    Le parcours visuel ci-dessus vous laisse circuler librement entre les lecons. Vous n etes pas oblige de tout suivre dans l ordre.
                 </p>
 
                 <a
@@ -90,7 +90,7 @@
                     class="mt-8 flex items-center justify-between rounded-[24px] border border-orange-200 bg-orange-50/60 px-6 py-5 transition hover:border-orangeone/50 hover:bg-orange-50"
                 >
                     <div>
-                        <p class="text-xs font-semibold uppercase tracking-[0.26em] text-orangeone">Etape suivante</p>
+	                        <p class="text-xs font-semibold uppercase tracking-[0.26em] text-orangeone">Module suivant</p>
                         <p class="mt-2 text-2xl font-semibold text-bleuone">Module 1</p>
                     </div>
                     <span class="text-3xl leading-none text-orangeone">→</span>

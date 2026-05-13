@@ -18,7 +18,7 @@
             <span>Inscription formateur</span>
           </h1>
           <p class="mt-5 max-w-[58ch] font-lisible text-lg leading-relaxed text-slate-600">
-            Créez votre espace Onéduc pour organiser vos parcours, accompagner vos groupes et suivre les progrès de vos apprenants.
+            Créez votre espace Onéduc pour organiser vos parcours, accompagner vos groupes et suivre les progrès de vos apprenants dès votre inscription.
           </p>
         </div>
 
@@ -33,12 +33,12 @@
 
         <div class="grid gap-3 font-lisible sm:grid-cols-3 lg:grid-cols-1">
           <div class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm shadow-slate-200/60">
-            <p class="font-semibold text-bleuone">Compte gratuit</p>
-            <p class="mt-1 text-sm leading-relaxed text-slate-600">Aucune carte bancaire demandée pour démarrer.</p>
+            <p class="font-semibold text-bleuone">Accès immédiat</p>
+            <p class="mt-1 text-sm leading-relaxed text-slate-600">Votre espace formateur est ouvert automatiquement après inscription.</p>
           </div>
           <div class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm shadow-slate-200/60">
             <p class="font-semibold text-bleuone">Prise en main rapide</p>
-            <p class="mt-1 text-sm leading-relaxed text-slate-600">Créez vos premiers groupes après validation du compte.</p>
+            <p class="mt-1 text-sm leading-relaxed text-slate-600">Créez vos premiers groupes et testez la plateforme simplement.</p>
           </div>
           <div class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm shadow-slate-200/60">
             <p class="font-semibold text-bleuone">Pensé terrain</p>
@@ -156,6 +156,13 @@
                        class="mt-2 block w-full rounded-lg border border-slate-300 bg-white px-4 py-3 font-lisible text-base text-slate-800 shadow-sm outline-none transition focus:border-orangeone focus:ring-4 focus:ring-orangeone/10">
               </div>
             </div>
+          </div>
+
+          <div class="rounded-lg border border-orangeone/20 bg-orange-50/60 p-4">
+            <p class="font-lisible text-sm leading-relaxed text-slate-700">
+              Après la création du compte, l’adhésion à l’association Onéduc vous sera proposée pour soutenir le projet et sa continuité.
+              <a href="{{ route('adhesion') }}" class="font-semibold text-orangeone underline-offset-4 hover:underline">Voir la page d’adhésion</a>.
+            </p>
           </div>
 
           {{-- reCAPTCHA --}}

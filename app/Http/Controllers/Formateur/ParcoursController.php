@@ -26,10 +26,10 @@ class ParcoursController extends Controller
         ]);
     }
 
-    public function showModule(string $module)
-    {
-        $catalogue = $this->catalogue();
-        abort_unless(isset($catalogue[$module]), 404);
+	    public function showModule(string $module)
+	    {
+	        $catalogue = $this->catalogue();
+	        abort_unless(isset($catalogue[$module]), 404);
 
         $currentModule = $catalogue[$module];
 
@@ -44,8 +44,31 @@ class ParcoursController extends Controller
                 ['label' => 'Parcours formateur', 'url' => route('formateur.parcours.index')],
                 ['label' => $currentModule['title'], 'url' => $currentModule['url']],
             ],
-        ]);
-    }
+	        ]);
+	    }
+
+	    public function showModuleIntroduction(string $module)
+	    {
+	        $catalogue = $this->catalogue();
+	        abort_unless(isset($catalogue[$module]), 404);
+
+	        $currentModule = $catalogue[$module];
+
+        return view('formateur.parcours.introduction', [
+            'pageTitle' => 'Introduction - ' . $currentModule['title'],
+            'parcoursModules' => $catalogue,
+	            'activeModuleKey' => $module,
+	            'activeChapterKey' => null,
+            'activeLessonKey' => null,
+            'currentModule' => $currentModule,
+            'introductionScormUrl' => $this->resolveScormUrl($currentModule['introduction_scorm_directory'] ?? null),
+            'breadcrumbs' => [
+                ['label' => 'Parcours formateur', 'url' => route('formateur.parcours.index')],
+                ['label' => $currentModule['title'], 'url' => $currentModule['url']],
+	                ['label' => 'Introduction', 'url' => $currentModule['introduction_url']],
+	            ],
+	        ]);
+	    }
 
     public function showChapter(string $module, string $chapter)
     {
@@ -74,8 +97,20 @@ class ParcoursController extends Controller
 
     public function showLesson(string $module, string $chapter, string $lesson)
     {
+        return $this->renderLesson($module, $chapter, $lesson);
+    }
+
+    public function showLessonPart(string $module, string $chapter, string $lesson, string $part)
+    {
+        return $this->renderLesson($module, $chapter, $lesson, $part);
+    }
+
+    private function renderLesson(string $module, string $chapter, string $lesson, ?string $part = null)
+    {
         $catalogue = $this->catalogue();
         $context = $this->resolveLessonContext($catalogue, $module, $chapter, $lesson);
+        $currentPart = $this->resolveLessonPart($context['currentLesson'], $part);
+        $this->markLessonPartCompleted($module, $chapter, $lesson, $context['currentLesson'], $currentPart);
 
         return view('formateur.parcours.lesson', [
             'pageTitle' => $context['currentLesson']['title'],
@@ -90,6 +125,7 @@ class ParcoursController extends Controller
             'previousLesson' => $context['previousLesson'],
             'nextLesson' => $context['nextLesson'],
             'nextActivity' => $context['nextActivity'],
+            'activeLessonPart' => $currentPart,
             'activityStatusMap' => $this->loadActivityStatusMap($module),
             'breadcrumbs' => [
                 ['label' => 'Parcours formateur', 'url' => route('formateur.parcours.index')],
@@ -98,6 +134,64 @@ class ParcoursController extends Controller
                 ['label' => $context['currentLesson']['code'], 'url' => $context['currentLesson']['url']],
             ],
         ]);
+    }
+
+    private function resolveLessonPart(array $lesson, ?string $part): ?string
+    {
+        if (($lesson['layout'] ?? null) !== 'scorm_form') {
+            abort_if($part !== null, 404);
+
+            return null;
+        }
+
+        $availableParts = array_keys($lesson['scorm_parts'] ?? []);
+        $part ??= $availableParts[0] ?? null;
+        abort_unless($part && in_array($part, $availableParts, true), 404);
+
+        return $part;
+    }
+
+    private function markLessonPartCompleted(string $module, string $chapter, string $lessonKey, array $lesson, ?string $part): void
+    {
+        if (! auth()->check() || $part === null) {
+            return;
+        }
+
+        $partConfig = $lesson['scorm_parts'][$part] ?? null;
+        $activityKey = $lesson['completion_activity_key'] ?? null;
+
+        if (! is_array($partConfig) || empty($partConfig['marks_completion']) || ! is_string($activityKey) || $activityKey === '') {
+            return;
+        }
+
+        $now = now();
+
+        DB::table('trainer_path_activity_attempts')->updateOrInsert(
+            [
+                'user_id' => auth()->id(),
+                'module_key' => $module,
+                'chapter_key' => $chapter,
+                'lesson_key' => $lessonKey,
+                'activity_key' => $activityKey,
+            ],
+            [
+                'activity_type' => 'guided_group_creation',
+                'total_items' => 1,
+                'correct_items' => 1,
+                'is_success' => true,
+                'submitted_answer' => json_encode([
+                    'completed_part' => $part,
+                    'completed_at' => $now->toIso8601String(),
+                ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+                'expected_answer' => json_encode([
+                    'required_part' => $part,
+                ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+                'wrong_items' => json_encode([], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+                'submitted_at' => $now,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]
+        );
     }
 
     public function showActivity(string $module, string $chapter, string $lesson, string $activity)
@@ -293,19 +387,21 @@ class ParcoursController extends Controller
     {
         $modules = ParcoursFormateur::rawModules();
 
-        foreach ($modules as $moduleKey => &$module) {
-            $module['url'] = route('formateur.parcours.modules.show', ['module' => $moduleKey]);
-            $module['chapter_count'] = count($module['chapters']);
+	        foreach ($modules as $moduleKey => &$module) {
+	            $module['url'] = route('formateur.parcours.modules.show', ['module' => $moduleKey]);
+	            $module['introduction_url'] = route('formateur.parcours.modules.introduction', ['module' => $moduleKey]);
+	            $module['chapter_count'] = count($module['chapters']);
             $module['lesson_count'] = array_reduce(
                 $module['chapters'],
                 fn (int $carry, array $chapter): int => $carry + count($chapter['lessons'] ?? []),
                 0
             );
 
-            $firstChapterKey = array_key_first($module['chapters']);
-            $module['first_chapter_url'] = $firstChapterKey
-                ? route('formateur.parcours.chapters.show', ['module' => $moduleKey, 'chapter' => $firstChapterKey])
-                : $module['url'];
+	            $firstChapterKey = array_key_first($module['chapters']);
+	            $module['first_chapter_url'] = $firstChapterKey
+	                ? route('formateur.parcours.chapters.show', ['module' => $moduleKey, 'chapter' => $firstChapterKey])
+	                : $module['url'];
+	            $module['entry_url'] = $firstChapterKey ? $module['introduction_url'] : $module['url'];
 
             foreach ($module['chapters'] as $chapterKey => &$chapter) {
                 $chapter['url'] = route('formateur.parcours.chapters.show', [
@@ -330,6 +426,24 @@ class ParcoursController extends Controller
                         'lesson' => $lessonKey,
                     ]);
 
+                    if (($lesson['layout'] ?? null) === 'scorm_form') {
+                        $lesson['part_urls'] = [];
+                        $lesson['scorm_part_urls'] = [];
+
+                        foreach ($lesson['scorm_parts'] ?? [] as $partKey => $partConfig) {
+                            $lesson['part_urls'][$partKey] = route('formateur.parcours.lessons.part', [
+                                'module' => $moduleKey,
+                                'chapter' => $chapterKey,
+                                'lesson' => $lessonKey,
+                                'part' => $partKey,
+                            ]);
+                            $lesson['scorm_part_urls'][$partKey] = $this->resolveScormUrl($partConfig['directory'] ?? null);
+                        }
+
+                        $firstPartKey = array_key_first($lesson['part_urls']);
+                        $lesson['url'] = $firstPartKey ? $lesson['part_urls'][$firstPartKey] : $lesson['url'];
+                    }
+
                     if (! empty($lesson['activity_page'])) {
                         $lesson['activity_page']['key'] = $lesson['activity_page']['key'] ?? 'activite';
                         $lesson['activity_page']['url'] = route('formateur.parcours.activities.show', [
@@ -340,14 +454,8 @@ class ParcoursController extends Controller
                         ]);
                     }
 
-                    if (!empty($lesson['scorm_directory'])) {
-                        $publicScormIndex = public_path(trim($lesson['scorm_directory'], '/') . '/index_lms.html');
-                        $lesson['scorm_url'] = file_exists($publicScormIndex)
-                            ? asset(trim($lesson['scorm_directory'], '/') . '/index_lms.html')
-                            : null;
-                    } else {
-                        $lesson['scorm_url'] = null;
-                    }
+                    $lesson['intro_scorm_url'] = $this->resolveScormUrl($lesson['intro_scorm_directory'] ?? null);
+                    $lesson['scorm_url'] = $this->resolveScormUrl($lesson['scorm_directory'] ?? null);
                 }
                 unset($lesson);
             }
@@ -356,6 +464,20 @@ class ParcoursController extends Controller
         unset($module);
 
         return $modules;
+    }
+
+    private function resolveScormUrl(?string $directory): ?string
+    {
+        if (empty($directory)) {
+            return null;
+        }
+
+        $directory = trim($directory, '/');
+        $publicScormIndex = public_path($directory . '/index_lms.html');
+
+        return file_exists($publicScormIndex)
+            ? asset($directory . '/index_lms.html')
+            : null;
     }
 
     /**

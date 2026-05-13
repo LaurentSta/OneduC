@@ -5,25 +5,68 @@
 @endphp
 
 @section('parcours_content')
-    <div class="px-4 sm:px-6 lg:px-8 pt-4">
-        <x-formateur.hierarchy-breadcrumb
-            :module="['label' => 'Module', 'title' => $currentModule['title'], 'url' => $currentModule['url']]"
-            :chapter="['label' => $currentChapter['label'] ?? 'Chapitre', 'title' => $currentChapter['title'], 'url' => null]"
-        />
-    </div>
     <div
-        x-data="{ sidebarOpen: window.innerWidth >= 1024 }"
-        class="grid items-start gap-6 lg:grid-cols-[24rem_minmax(0,1fr)]"
-    >
-        @include('formateur.parcours.partials.sidebar')
+        x-data="{
+            sidebarOpen: window.innerWidth >= 1024,
+            sidebarClosing: false,
+            toggleSidebar() {
+                if (this.sidebarOpen) {
+                    this.sidebarClosing = true;
+                    this.sidebarOpen = false;
+                    window.setTimeout(() => {
+                        this.sidebarClosing = false;
+                    }, 260);
+                    return;
+                }
 
-        <main id="lesson-shell-main" class="min-w-0">
+                this.sidebarOpen = true;
+            }
+        }"
+        class="space-y-4"
+    >
+        <div class="flex items-start gap-3 px-4 pt-4 sm:px-6 lg:px-8">
+            <button
+                type="button"
+                @click="toggleSidebar()"
+                class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 shadow-sm transition hover:border-orangeone hover:text-orangeone"
+                :aria-pressed="sidebarOpen.toString()"
+                aria-label="Afficher ou masquer le plan"
+                title="Afficher ou masquer le plan"
+            >
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M4 6h16" />
+                    <path d="M4 12h16" />
+                    <path d="M4 18h16" />
+                </svg>
+            </button>
+
+            <div class="min-w-0 flex-1">
+                <x-formateur.hierarchy-breadcrumb
+                    :module="['label' => 'Module', 'title' => $currentModule['title'], 'url' => $currentModule['url']]"
+                    :chapter="['label' => $currentChapter['label'] ?? 'Chapitre', 'title' => $currentChapter['title'], 'url' => null]"
+                />
+            </div>
+        </div>
+
+        <div
+            class="grid items-start gap-6"
+            :class="(sidebarOpen || sidebarClosing) ? 'lg:grid-cols-[24rem_minmax(0,1fr)]' : 'lg:grid-cols-[minmax(0,1fr)]'"
+        >
+            @include('formateur.parcours.partials.sidebar')
+
+            <main id="lesson-shell-main" class="min-w-0">
             <div class="px-0 lg:px-0 py-0">
                 <main class="w-full px-4 sm:px-6 lg:px-8 py-8">
                     <div class="mb-8 border-b border-gray-100 pb-6">
-                        <h1 class="text-3xl md:text-4xl font-raleway font-medium text-bleuone leading-tight">
-                            {{ $currentChapter['label'] }} - {{ $currentChapter['title'] }}
+                        <h1
+                            class="text-3xl md:text-4xl font-raleway font-medium text-bleuone leading-tight"
+                            data-parcours-tooltip="{{ $currentChapter['pedagogical_label'] ?? 'Objectif pedagogique' }}"
+                        >
+                            {{ $currentChapter['title'] }}
                         </h1>
+                        <p class="mt-4 max-w-4xl text-base leading-8 text-slate-600">
+                            {{ $currentChapter['objective'] }}
+                        </p>
                     </div>
 
                     <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -46,7 +89,7 @@
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
                                             </svg>
                                         </div>
-                                        <span class="text-lg font-bold text-bleuone">Objectifs du chapitre</span>
+	                                        <span class="text-lg font-bold text-bleuone">Lecons du chapitre</span>
                                     </div>
 
                                     <div
@@ -62,19 +105,25 @@
                                 <div x-show="openObjectives" x-collapse>
                                     <div class="p-5 pt-0 text-gray-600 leading-relaxed">
                                         <div class="space-y-8">
-                                            @foreach ($currentChapter['lessons'] as $lesson)
-                                                <div class="pl-4 border-l-2 border-orange-100">
-                                                    <h4 class="mb-3 text-sm font-bold uppercase tracking-wide text-bleuone">
+	                                            @foreach ($currentChapter['lessons'] as $lesson)
+	                                                <div class="pl-4 border-l-2 border-orange-100">
+	                                                    @if (($lesson['type'] ?? 'objectif') === 'bilan')
+	                                                        <div class="mb-3 flex flex-wrap items-center gap-2">
+	                                                            <span
+	                                                                class="rounded-full border border-bleuone/20 bg-bleuone/5 px-3 py-1 text-[10px] font-black uppercase tracking-wide text-bleuone"
+	                                                                data-parcours-tooltip="Bilan"
+	                                                            >
+	                                                                Bilan
+	                                                            </span>
+	                                                        </div>
+	                                                    @endif
+		                                                    <h4
+		                                                        class="mb-2 text-sm font-bold uppercase tracking-wide text-bleuone"
+		                                                        data-parcours-tooltip="{{ ($lesson['type'] ?? 'objectif') === 'bilan' ? 'Bilan' : 'Objectif operationnel' }}"
+	                                                    >
                                                         {{ \Illuminate\Support\Str::upper($lesson['title']) }}
                                                     </h4>
-                                                    <ul class="space-y-2">
-                                                        <li class="flex items-start gap-3 text-sm md:text-base">
-                                                            <svg class="size-5 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                                                            </svg>
-                                                            <span>{{ $lesson['objective'] }}</span>
-                                                        </li>
-                                                    </ul>
+                                                    <p class="text-sm leading-7 text-slate-600 md:text-base">{{ $lesson['objective'] }}</p>
                                                 </div>
                                             @endforeach
                                         </div>
@@ -100,7 +149,7 @@
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                             </svg>
                                         </div>
-                                        <span class="text-lg font-bold text-bleuone">Les questions que l'on se pose souvent</span>
+                                        <span class="text-lg font-bold text-bleuone">Activites et bilans</span>
                                     </div>
 
                                     <div
@@ -117,10 +166,12 @@
                                     <div class="p-5 pt-0 text-gray-600 leading-relaxed">
                                         <div class="prose prose-sm max-w-none prose-p:text-gray-600 prose-li:text-gray-600 prose-strong:text-bleuone">
                                             <p>{{ $currentChapter['description'] }}</p>
-                                            <p>{{ $currentChapter['objective'] }}</p>
                                             <ul>
                                                 @foreach ($currentChapter['lessons'] as $lesson)
-                                                    <li>{{ $lesson['title'] }}</li>
+                                                    <li>
+                                                        <strong>{{ $lesson['title'] }}</strong> :
+                                                        {{ ($lesson['type'] ?? 'objectif') === 'bilan' ? 'bilan prevu' : ($lesson['activity'] ?: 'activite a creer') }}
+                                                    </li>
                                                 @endforeach
                                             </ul>
                                         </div>
@@ -138,7 +189,7 @@
                                             <div class="flex h-[160px] items-center justify-center rounded-[24px] bg-white shadow-[0_18px_40px_-24px_rgba(0,68,97,0.35)]">
                                                 <div class="px-4 text-center">
                                                     <p class="text-sm font-bold uppercase tracking-[0.18em] text-orangeone">On educ</p>
-                                                    <p class="mt-3 text-2xl font-black leading-8 text-bleuone">{{ $currentChapter['label'] }}</p>
+                                                    <p class="mt-3 text-2xl font-black leading-8 text-bleuone">Chapitre</p>
                                                 </div>
                                             </div>
                                             <div>
@@ -176,6 +227,7 @@
                     </div>
                 </main>
             </div>
-        </main>
+            </main>
+        </div>
     </div>
 @endsection

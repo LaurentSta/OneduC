@@ -4,18 +4,30 @@
     $progressPercentage = $currentModule['progress_percentage'] ?? 0;
     $chapterCount = $currentModule['chapter_count'] ?? count($currentModule['chapters'] ?? []);
     $lessonCount = $currentModule['lesson_count'] ?? 0;
-    $ctaUrl = $currentModule['first_chapter_url'] ?? $currentModule['url'];
-    $presentationVideoEmbedUrl = $currentModule['presentation_video_embed_url']
-        ?? 'https://www.youtube.com/embed/Bw4_SlnqZj8?rel=0&modestbranding=1';
+    $ctaUrl = $currentModule['entry_url'] ?? $currentModule['first_chapter_url'] ?? $currentModule['url'];
+    $presentationVideoEmbedUrl = $currentModule['presentation_video_embed_url'] ?? null;
     $presentationVideoTitle = $currentModule['presentation_video_title'] ?? ('Video de presentation - ' . $currentModule['title']);
+    $presentationVideoNote = $currentModule['presentation_video_note'] ?? 'Video de presentation a ajouter.';
+    $specificObjective = $currentModule['specific_objective'] ?? $currentModule['description'];
+    $activityCount = 0;
+    $bilanCount = 0;
+
+    foreach (($currentModule['chapters'] ?? []) as $chapter) {
+        foreach (($chapter['lessons'] ?? []) as $lesson) {
+            if (!empty($lesson['activity_page'])) {
+                $activityCount++;
+            }
+
+            if (($lesson['type'] ?? 'objectif') === 'bilan') {
+                $bilanCount++;
+            }
+        }
+    }
 @endphp
 
 @section('parcours_content')
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 
-        <x-formateur.hierarchy-breadcrumb
-            :module="['label' => 'Module', 'title' => $currentModule['title'], 'url' => null]"
-        />
         <div
             x-data="{
                 activeTab: 'presentation',
@@ -32,7 +44,7 @@
 
                 <div class="border-b border-gray-200 mb-6">
                     <nav class="flex space-x-6" aria-label="Tabs">
-                        @foreach (['presentation' => 'Presentation', 'objectifs' => 'Objectifs', 'prerequis' => 'Prerequis'] as $tabId => $tabLabel)
+                        @foreach (['presentation' => 'Presentation', 'objectifs' => 'But du module', 'prerequis' => 'Prerequis'] as $tabId => $tabLabel)
                             <button
                                 @click="activeTab = '{{ $tabId }}'"
                                 :class="activeTab === '{{ $tabId }}' ? 'border-orangeone text-orangeone' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
@@ -52,6 +64,10 @@
                     </div>
 
                     <div x-show="activeTab === 'objectifs'" x-cloak>
+                        <div class="mb-5 rounded-2xl border border-orange-100 bg-orange-50/60 p-5">
+                            <p class="text-xs font-black uppercase tracking-[0.22em] text-orangeone">But du module</p>
+                            <p class="mt-2 text-base font-semibold leading-7 text-bleuone">{{ $specificObjective }}</p>
+                        </div>
                         <ul class="space-y-3">
                             @foreach ($currentModule['goals'] as $goal)
                                 <li class="flex items-start gap-3">
@@ -86,7 +102,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                             </svg>
                         </span>
-                        Programme detaille
+                        Programme du module
                     </h2>
 
                     <div class="space-y-3">
@@ -96,7 +112,7 @@
                                     <p class="text-[10px] font-black uppercase tracking-widest text-orangeone">Preparation</p>
                                     <h3 class="mt-3 font-bold text-gray-800 text-base md:text-lg">Le module detail est pret</h3>
                                     <p class="mt-4 text-sm leading-7 text-slate-600">
-                                        Le contenu de detail de ce module sera ajoute des que les chapitres, les lecons et les SCORM associes seront disponibles.
+	                                        Le contenu de detail de ce module sera ajoute des que les chapitres, les lecons et les contenus interactifs seront disponibles.
                                     </p>
                                 </div>
                             </div>
@@ -104,24 +120,40 @@
                             @foreach ($currentModule['chapters'] as $chapter)
                                 @php
                                     $chapterProgress = $chapter['progress_percentage'] ?? 0;
+                                    $chapterLessons = $chapter['lessons'] ?? [];
+                                    $chapterActivityCount = collect($chapterLessons)->filter(fn ($lesson) => !empty($lesson['activity_page']))->count();
                                 @endphp
                                 <div class="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow">
                                     <button
                                         @click="openSection = (openSection === {{ $loop->index }} ? -1 : {{ $loop->index }})"
-                                        class="w-full flex items-center justify-between p-4 text-left transition-colors hover:bg-gray-50"
+	                                        class="group w-full flex items-start justify-between gap-4 p-4 text-left transition-colors hover:bg-gray-50"
                                     >
-                                        <div>
-                                            <span class="text-[10px] font-black uppercase tracking-widest text-orangeone">Chapitre {{ $loop->iteration }}</span>
-                                            <h3 class="font-bold text-gray-800 text-base md:text-lg">{{ $chapter['title'] }}</h3>
+	                                        <div class="min-w-0">
+	                                            <h3
+	                                                class="font-bold text-gray-800 text-base md:text-lg"
+	                                                data-parcours-tooltip="{{ $chapter['pedagogical_label'] ?? 'Objectif pedagogique' }}"
+	                                            >
+                                                {{ $chapter['title'] }}
+                                            </h3>
+                                            <p class="mt-2 text-sm leading-6 text-slate-600">{{ $chapter['objective'] }}</p>
                                         </div>
-                                        <div class="flex items-center gap-3">
-                                            <span class="text-xs text-gray-400 font-semibold hidden sm:inline-block">
-                                                {{ $chapter['lesson_count'] }} lecon{{ $chapter['lesson_count'] > 1 ? 's' : '' }}
+                                        <div class="flex shrink-0 items-center gap-3">
+                                            <span class="hidden text-right text-xs font-semibold text-gray-400 sm:inline-block">
+	                                                {{ $chapter['lesson_count'] }} lecon{{ $chapter['lesson_count'] > 1 ? 's' : '' }}
+                                                @if ($chapterActivityCount > 0)
+                                                    <br>{{ $chapterActivityCount }} activite{{ $chapterActivityCount > 1 ? 's' : '' }}
+                                                @endif
                                             </span>
-                                            <svg :class="openSection === {{ $loop->index }} ? 'rotate-180' : ''" class="size-5 text-gray-400 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                                            </svg>
-                                        </div>
+	                                            <span
+	                                                class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 border-orange-200 bg-orange-50 text-orangeone shadow-sm transition group-hover:border-orangeone group-hover:bg-orangeone group-hover:text-white"
+	                                                :class="openSection === {{ $loop->index }} ? 'border-orangeone bg-orangeone text-white' : ''"
+	                                                aria-hidden="true"
+	                                            >
+	                                                <svg :class="openSection === {{ $loop->index }} ? 'rotate-180' : ''" class="h-7 w-7 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+	                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.7" d="M19 9l-7 7-7-7" />
+	                                                </svg>
+	                                            </span>
+	                                        </div>
                                     </button>
 
                                     <div class="w-full bg-gray-100 h-1.5">
@@ -129,21 +161,51 @@
                                     </div>
 
                                     <div x-show="openSection === {{ $loop->index }}" x-cloak class="border-t border-gray-100">
-                                        @foreach ($chapter['lessons'] as $lesson)
+                                        @foreach ($chapterLessons as $lesson)
+                                            @php
+                                                $isBilan = ($lesson['type'] ?? 'objectif') === 'bilan';
+                                                $hasActivity = !empty($lesson['activity_page']);
+                                            @endphp
                                             <a
                                                 href="{{ $lesson['url'] }}"
-                                                class="flex items-center justify-between p-3 pl-6 hover:bg-orange-50/50 transition-colors border-b border-gray-50 last:border-0 group"
+                                                class="flex items-start justify-between gap-4 p-4 pl-6 hover:bg-orange-50/50 transition-colors border-b border-gray-50 last:border-0 group"
                                             >
-                                                <div class="flex items-center gap-4">
-                                                    <div class="text-gray-300 group-hover:text-orangeone transition-colors">
+                                                <div class="flex min-w-0 items-start gap-4">
+                                                    <div class="{{ $isBilan ? 'text-bleuone' : 'text-gray-300' }} group-hover:text-orangeone transition-colors pt-1">
                                                         <svg class="size-4" fill="currentColor" viewBox="0 0 24 24">
                                                             <path d="M8 5v14l11-7z" />
                                                         </svg>
                                                     </div>
-                                                    <span class="text-sm font-semibold text-gray-700 group-hover:text-bleuone transition-colors">{{ $lesson['title'] }}</span>
+	                                                    <div class="min-w-0">
+	                                                        @if ($isBilan)
+	                                                            <div class="flex flex-wrap items-center gap-2">
+	                                                                <span
+	                                                                    class="rounded-full border border-bleuone/20 bg-bleuone/5 px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-bleuone"
+	                                                                    data-parcours-tooltip="Bilan"
+	                                                                >
+	                                                                    Bilan
+	                                                                </span>
+	                                                            </div>
+	                                                        @endif
+		                                                        <span
+		                                                            class="{{ $isBilan ? 'mt-2' : '' }} block text-sm font-semibold text-gray-700 group-hover:text-bleuone transition-colors"
+		                                                            data-parcours-tooltip="{{ $isBilan ? 'Bilan' : 'Objectif operationnel' }}"
+		                                                        >
+                                                            {{ $lesson['title'] }}
+                                                        </span>
+                                                        <p class="mt-1 text-sm leading-6 text-slate-500">{{ $lesson['objective'] }}</p>
+                                                        <div class="mt-3 flex flex-wrap gap-2">
+                                                            <span class="rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-bold text-slate-500">
+	                                                                {{ $lesson['scorm_slot_label'] ?? 'Contenu de lecon' }}
+                                                            </span>
+                                                            <span class="rounded-full border {{ $hasActivity ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-white text-slate-500' }} px-3 py-1 text-[11px] font-bold">
+                                                                {{ $hasActivity ? 'Activite disponible' : ($lesson['activity_slot_label'] ?? 'Activite a creer') }}
+                                                            </span>
+                                                        </div>
+                                                    </div>
                                                 </div>
 
-                                                <div class="text-sm font-medium text-slate-400 group-hover:text-orangeone transition-colors">
+                                                <div class="shrink-0 text-sm font-medium text-slate-400 group-hover:text-orangeone transition-colors">
                                                     Ouvrir
                                                 </div>
                                             </a>
@@ -189,13 +251,13 @@
                         </div>
 
                         <div class="p-6">
-                            @if ($presentationVideoEmbedUrl)
-                                <div class="mb-6 border-b border-gray-100 pb-6">
-                                    <p class="text-[10px] font-black uppercase tracking-[0.2em] text-orangeone">{{ $currentModule['label'] }}</p>
-                                    <p class="mt-2 font-raleway text-2xl font-medium leading-tight text-bleuone">{{ $currentModule['title'] }}</p>
-                                    <p class="mt-2 text-sm text-slate-500 font-lisible">Video de presentation</p>
-                                </div>
-                            @endif
+                            <div class="mb-6 border-b border-gray-100 pb-6">
+                                <p class="text-[10px] font-black uppercase tracking-[0.2em] text-orangeone">{{ $currentModule['label'] }}</p>
+                                <p class="mt-2 font-raleway text-2xl font-medium leading-tight text-bleuone">{{ $currentModule['title'] }}</p>
+                                <p class="mt-2 text-sm text-slate-500 font-lisible">
+                                    {{ $presentationVideoEmbedUrl ? 'Video de presentation' : $presentationVideoNote }}
+                                </p>
+                            </div>
 
                             <div class="mb-6">
                                 <div class="flex justify-between items-end mb-2">
@@ -259,7 +321,16 @@
                                     </div>
                                     <div>
                                         <p class="text-[10px] text-gray-400 font-bold uppercase">Contenu</p>
-                                        <p class="font-bold text-gray-900">{{ $lessonCount }} lecon{{ $lessonCount > 1 ? 's' : '' }}</p>
+	                                        <p class="font-bold text-gray-900">{{ $chapterCount }} chapitre{{ $chapterCount > 1 ? 's' : '' }}</p>
+	                                        <p class="mt-1 text-xs font-semibold text-slate-500">
+	                                            {{ $lessonCount }} lecon{{ $lessonCount > 1 ? 's' : '' }}
+                                            @if ($activityCount > 0)
+                                                · {{ $activityCount }} activite{{ $activityCount > 1 ? 's' : '' }}
+                                            @endif
+                                            @if ($bilanCount > 0)
+                                                · {{ $bilanCount }} bilan{{ $bilanCount > 1 ? 's' : '' }}
+                                            @endif
+                                        </p>
                                     </div>
                                 </div>
                             </div>
