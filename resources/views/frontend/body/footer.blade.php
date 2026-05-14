@@ -38,6 +38,12 @@
             </svg>
           </a>
 
+          <a href="https://github.com/LaurentSta/Oneduc" target="_blank" rel="noopener noreferrer" class="group flex h-11 w-11 items-center justify-center rounded-full border border-white/35 bg-white/[0.10] transition hover:border-white hover:bg-white" aria-label="GitHub">
+            <svg class="h-5 w-5 text-white transition group-hover:text-gray-950" fill="currentColor" viewBox="0 0 24 24">
+              <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.48 2 2 6.58 2 12.24c0 4.52 2.87 8.36 6.84 9.72.5.09.68-.22.68-.49 0-.24-.01-.88-.01-1.73-2.78.62-3.37-1.37-3.37-1.37-.45-1.19-1.11-1.51-1.11-1.51-.91-.64.07-.63.07-.63 1 .07 1.53 1.06 1.53 1.06.9 1.56 2.35 1.11 2.92.85.09-.66.35-1.11.63-1.37-2.22-.26-4.55-1.14-4.55-5.05 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.3.1-2.71 0 0 .84-.28 2.75 1.05A9.34 9.34 0 0 1 12 6.98c.85 0 1.7.12 2.5.34 1.9-1.33 2.74-1.05 2.74-1.05.55 1.41.2 2.45.1 2.71.64.72 1.03 1.63 1.03 2.75 0 3.92-2.34 4.79-4.57 5.04.36.32.68.94.68 1.9 0 1.37-.01 2.48-.01 2.82 0 .27.18.59.69.49A10.13 10.13 0 0 0 22 12.24C22 6.58 17.52 2 12 2z"/>
+            </svg>
+          </a>
+
           <a href="https://www.linkedin.com" target="_blank" rel="noopener noreferrer" class="group flex h-11 w-11 items-center justify-center rounded-full border border-white/35 bg-white/[0.10] transition hover:border-white hover:bg-white" aria-label="LinkedIn">
             <svg class="h-5 w-5 text-white transition group-hover:text-[#0077B5]" fill="currentColor" viewBox="0 0 24 24">
               <path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-4 0v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z"/>
@@ -56,6 +62,7 @@
           <li><a href="{{ route('formateur.inscription.form') }}" class="inline-flex underline-offset-4 transition hover:text-white hover:underline">Devenir formateur</a></li>
           <li><a href="{{ route('projet') }}" class="inline-flex underline-offset-4 transition hover:text-white hover:underline">Le projet Oneduc</a></li>
           <li><a href="{{ route('association') }}" class="inline-flex underline-offset-4 transition hover:text-white hover:underline">Association</a></li>
+          <li><a href="https://github.com/LaurentSta/Oneduc" target="_blank" rel="noopener noreferrer" class="inline-flex underline-offset-4 transition hover:text-white hover:underline">Code source GitHub</a></li>
           <li><a href="{{ route('categories.all') }}" class="inline-flex underline-offset-4 transition hover:text-white hover:underline">Formations</a></li>
           <li><a href="{{ route('contact') }}" class="inline-flex underline-offset-4 transition hover:text-white hover:underline">Contact</a></li>
         </ul>
