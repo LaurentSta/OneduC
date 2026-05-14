@@ -11,6 +11,19 @@ class LessonResource extends Model
 {
     use HasFactory;
 
+    protected static function booted(): void
+    {
+        static::creating(function (LessonResource $resource): void {
+            if (filled($resource->module_id) || blank($resource->lecture_id)) {
+                return;
+            }
+
+            $resource->module_id = ModuleLecture::query()
+                ->whereKey($resource->lecture_id)
+                ->value('module_id');
+        });
+    }
+
     protected $fillable = [
         'lecture_id',
         'module_id',

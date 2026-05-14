@@ -54,19 +54,7 @@ class AuthenticatedSessionController extends Controller
             'alert-type' => 'success'
         ];
 
-        // Redirection selon le rôle
-        $role = $request->user()->role;
-
-        $url = match ($role) {
-            'admin'     => route('admin.dashboard'),
-            'formateur' => route('formateur.dashboard'),
-            'observateur' => route('observateur.dashboard'),
-            'stagiaire' => route('stagiaire.dashboard'),
-            default     => route('index'),
-        };
-
-
-        return redirect()->intended($url)->with($notification);
+        return redirect()->intended(route('dashboard', absolute: false))->with($notification);
     }
     public function destroy(Request $request): RedirectResponse
 {

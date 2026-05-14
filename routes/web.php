@@ -178,6 +178,25 @@ Route::get('/inscription', [\App\Http\Controllers\UserController::class, 'Regist
 
 // Envoi de feedback sur une leçon (uniquement pour les utilisateurs connectés)
 Route::middleware(['auth'])->group(function () {
+    Route::get('/dashboard', function () {
+        $user = auth()->user();
+
+        return match ($user?->role) {
+            'admin' => redirect()->route('admin.dashboard'),
+            'formateur' => redirect()->route('formateur.dashboard'),
+            'observateur' => redirect()->route('observateur.dashboard'),
+            'stagiaire' => redirect()->route('stagiaire.dashboard'),
+            default => redirect()->route('index'),
+        };
+    })->name('dashboard');
+
+    Route::get('/profile', [\App\Http\Controllers\ProfileController::class, 'edit'])
+        ->name('profile.edit');
+    Route::patch('/profile', [\App\Http\Controllers\ProfileController::class, 'update'])
+        ->name('profile.update');
+    Route::delete('/profile', [\App\Http\Controllers\ProfileController::class, 'destroy'])
+        ->name('profile.destroy');
+
     Route::post('/lecture/{id}/valider', [\App\Http\Controllers\Frontend\LectureController::class, 'valider'])->name('lecture.valider');
     Route::post('/feedback', [\App\Http\Controllers\LessonFeedbackController::class, 'store'])->name('feedback.store');
     Route::get('/feedback/{lesson}', [\App\Http\Controllers\LessonFeedbackController::class, 'index'])->name('feedback.index');

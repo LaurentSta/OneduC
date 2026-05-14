@@ -1,7 +1,7 @@
 # Parcours formateur Oneduc
 
 Date : 2026-05-08  
-URL locale : `http://192.168.1.18:8090/formateur/parcours-formateur`
+URL : `/formateur/parcours-formateur`
 
 ## Utilite du parcours
 
@@ -13,7 +13,7 @@ Il a trois roles principaux :
 - guider la mise en place d un premier environnement de formation ;
 - preparer l integration progressive des contenus de lecon, activites et bilans.
 
-Ce parcours est pense comme un support de presentation et de formation pour le projet CAFEL 41. Il permet de montrer une logique pedagogique claire sans surcharger l interface avec trop de texte. Les objectifs pedagogiques et operationnels restent presents dans la structure, mais l affichage web privilegie des titres courts, lisibles et faciles a parcourir.
+Ce parcours sert de support de demonstration de la logique pedagogique d Oneduc : il permet de montrer une structuration claire sans surcharger l interface avec trop de texte. Les objectifs pedagogiques et operationnels restent presents dans la structure, mais l affichage web privilegie des titres courts, lisibles et faciles a parcourir.
 
 ## Principe de structuration
 

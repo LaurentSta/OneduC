@@ -9,6 +9,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rules;
 use Illuminate\View\View;
 
@@ -36,9 +37,13 @@ class RegisteredUserController extends Controller
         ]);
 
         $user = User::create([
+            'prenom' => $request->name,
             'name' => $request->name,
+            'username' => Str::slug($request->name).'-'.Str::lower(Str::random(6)),
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'role' => 'stagiaire',
+            'status' => true,
         ]);
 
         event(new Registered($user));

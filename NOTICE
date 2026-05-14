@@ -1,0 +1,47 @@
+Oneduc
+======
+
+Copyright © 2024-2026 Association Oneduc (loi 1901)
+
+Oneduc est une plateforme LMS dédiée à l'inclusion numérique et à la formation accompagnée.
+Le projet est distribué sous licence GNU Affero General Public License v3.0 ou toute version ultérieure, sauf mention contraire explicite dans un fichier source, un paquet tiers ou une documentation associée.
+
+Identifiant de licence recommandé : AGPL-3.0-or-later
+
+Titulaire des droits
+--------------------
+
+Association Oneduc
+Contact officiel : contact@oneduc.fr
+Site : https://oneduc.fr
+
+Contributions
+-------------
+
+Les contributions externes sont acceptées sous réserve du Contributor License Agreement du projet Oneduc.
+Le contributeur conserve ses droits d'auteur sur sa contribution, mais accorde à l'Association Oneduc les droits nécessaires pour intégrer, maintenir, distribuer, sublicencier et éventuellement relicencier cette contribution dans le cadre du projet.
+
+Dépendances et composants tiers
+-------------------------------
+
+Oneduc s'appuie notamment sur des composants tiers qui conservent leurs propres licences :
+
+- Laravel Framework
+- PHP et l'écosystème Composer
+- Tailwind CSS
+- Vite
+- Alpine.js
+- Pest / PHPUnit
+- MySQL ou MariaDB
+- Bibliothèques JavaScript utilisées par l'interface et les tableaux de bord
+- Excalidraw, si le tableau blanc collaboratif est activé
+- Packages SCORM importés par les administrateurs, qui peuvent relever de droits distincts et ne doivent pas être ajoutés au dépôt Git sans autorisation
+
+Chaque dépendance reste soumise à sa licence propre. Les fichiers de licences présents dans `vendor/`, `node_modules/` ou dans les distributions officielles des dépendances font foi.
+
+Contenus pédagogiques
+---------------------
+
+Sauf mention contraire, la licence AGPL couvre le code source du logiciel Oneduc. Les contenus pédagogiques, vidéos, modules SCORM, images, supports de formation et ressources importées dans la plateforme peuvent relever de licences ou de droits distincts.
+
+Avant publication publique du dépôt, vérifier qu'aucun contenu pédagogique non libre, package SCORM sous droits, fichier client, donnée personnelle, fichier `.env`, dump SQL ou secret technique n'est présent dans l'historique Git.

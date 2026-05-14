@@ -36,11 +36,18 @@ yarn-error.log
 /bootstrap/cache/
 /storage/*
 !/storage/app
+!/storage/app/.gitignore
 !/storage/app/public
+!/storage/app/public/.gitignore
 !/storage/framework
+!/storage/framework/.gitignore
 !/storage/framework/cache
+!/storage/framework/cache/.gitignore
 !/storage/framework/sessions
+!/storage/framework/sessions/.gitignore
 !/storage/framework/views
+!/storage/framework/views/.gitignore
+!/storage/logs
 !/storage/logs/.gitignore
 storage/*.key
 

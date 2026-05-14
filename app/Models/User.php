@@ -16,6 +16,16 @@ class User extends Authenticatable
 
     protected static function booted(): void
     {
+        static::creating(function (User $user): void {
+            if ($user->role !== 'formateur' || filled($user->adhesion_status)) {
+                return;
+            }
+
+            $user->adhesion_status = 'active';
+            $user->adhesion_valid_until = now()->addYear()->toDateString();
+            $user->adhesion_verified_at = now();
+        });
+
         static::deleting(function (User $user): void {
             if ($user->role === 'stagiaire') {
                 $user->cleanupRelatedStagiaireData();
