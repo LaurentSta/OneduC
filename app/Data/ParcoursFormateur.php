@@ -390,18 +390,21 @@ class ParcoursFormateur
                                 ],
                             ]
                         ),
-                        'rendre-la-progresson-lisible-pour-lapprenant' => self::lesson(
+                        'creation-parcours' => self::lesson(
                             '2.2.2',
-                            'Organiser les modules',
+                            'Creer un parcours',
                             '8 min',
-                            'Ordonner les modules dans une progression claire.',
+                            'Creer un parcours clair avant de l associer au groupe.',
                             [
-                                'pedagogical_intention' => 'Permettre au formateur de choisir entre un parcours autonome reutilisable et une construction directe depuis le groupe.',
-                                'method' => 'Interrogative puis active',
+                                'pedagogical_intention' => 'Faire comprendre l interet de construire un parcours reutilisable avant de l affecter a un groupe.',
+                                'method' => 'Demonstrative puis active guidee',
                                 'learning_process' => 'Analyser, produire',
-                                'subject' => 'Distinction module/parcours, construction autonome via Formation ou construction directe depuis le groupe.',
-                                'activity' => 'Puzzle des modules : ordonner des modules selon une logique pedagogique.',
-                                'evaluation' => 'Distinguer parcours et modules, puis ordonner les modules selon une logique coherente.',
+                                'subject' => 'Creation d un parcours, choix des modules, ordre de progression et verification de la lisibilite pour l apprenant.',
+                                'activity' => 'Simulateur de creation de parcours : construire une progression a partir de modules disponibles.',
+                                'evaluation' => 'Creer un parcours coherent, lisible et pret a etre associe a un groupe.',
+                                'scorm_directory' => 'modules/parcours_formateur/module_2_organiser_ses_parcours/chapitre_2_structurer_la_progression/lecon_2_2_creation_parcours',
+                                'scorm_slot_label' => 'SCORM pleine page',
+                                'activity_slot_label' => 'Simulateur a creer',
                             ]
                         ),
                     ],
