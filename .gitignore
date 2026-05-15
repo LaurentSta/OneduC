@@ -118,5 +118,8 @@ storage/*.key
 # ==============================
 ############################################
 
-/.claude/settings.local.json
+/.agents/
+/.codex/
+/.claude/
+/.vscode/
 /temps/
