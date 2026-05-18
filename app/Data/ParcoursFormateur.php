@@ -366,30 +366,26 @@ class ParcoursFormateur
                                 'completion_activity_key' => 'creation-groupe-finalisee',
                                 'scorm_parts' => [
                                     'introduction' => [
-                                        'directory' => 'modules/parcours_formateur/module_2_organiser_ses_parcours/chapitre_2_structurer_la_progression/lecon_2_1_entete_creation_groupe_de_formation',
+                                        'directory' => 'modules/parcours_formateur/module_2_organiser_ses_parcours/chapitre_2_structurer_la_progression/lecon_2_1_a_entete_creation_groupe_de_formation',
                                         'height' => 'full',
                                     ],
-                                    'mise-en-pratique' => [
-                                        'directory' => 'modules/parcours_formateur/module_2_organiser_ses_parcours/chapitre_2_structurer_la_progression/lecon_2_1_creation_groupe_de_formation_mise_en_pratique',
-                                        'height' => 'compact',
-                                    ],
                                     'informations' => [
-                                        'directory' => 'modules/parcours_formateur/module_2_organiser_ses_parcours/chapitre_2_structurer_la_progression/lecon_2_1_creation_groupe_de_formation_informations',
+                                        'directory' => 'modules/parcours_formateur/module_2_organiser_ses_parcours/chapitre_2_structurer_la_progression/lecon_2_1_b_creation_groupe_de_formation_informations',
                                         'height' => 'compact',
                                         'form' => 'group_creation',
                                     ],
                                     'stagiaires' => [
-                                        'directory' => 'modules/parcours_formateur/module_2_organiser_ses_parcours/chapitre_2_structurer_la_progression/lecon_2_1_creation_groupe_de_formation_stagiaires',
+                                        'directory' => 'modules/parcours_formateur/module_2_organiser_ses_parcours/chapitre_2_structurer_la_progression/lecon_2_1_c_creation_groupe_de_formation_stagiaires',
                                         'height' => 'compact',
                                         'form' => 'group_creation',
                                     ],
                                     'modules' => [
-                                        'directory' => 'modules/parcours_formateur/module_2_organiser_ses_parcours/chapitre_2_structurer_la_progression/lecon_2_1_creation_groupe_de_formation_modules',
+                                        'directory' => 'modules/parcours_formateur/module_2_organiser_ses_parcours/chapitre_2_structurer_la_progression/lecon_2_1_d_creation_groupe_de_formation_modules',
                                         'height' => 'compact',
                                         'form' => 'group_creation',
                                     ],
                                     'finalisation' => [
-                                        'directory' => 'modules/parcours_formateur/module_2_organiser_ses_parcours/chapitre_2_structurer_la_progression/lecon_2_1_creation_groupe_de_formation_finalisation',
+                                        'directory' => 'modules/parcours_formateur/module_2_organiser_ses_parcours/chapitre_2_structurer_la_progression/lecon_2_1_e_creation_groupe_de_formation_finalisation',
                                         'height' => 'compact',
                                         'form' => 'group_creation',
                                         'marks_completion' => true,
@@ -409,8 +405,26 @@ class ParcoursFormateur
                                 'subject' => 'Creation d un parcours, choix des modules, ordre de progression et verification de la lisibilite pour l apprenant.',
                                 'activity' => 'Simulateur de creation de parcours : construire une progression a partir de modules disponibles.',
                                 'evaluation' => 'Creer un parcours coherent, lisible et pret a etre associe a un groupe.',
-                                'scorm_directory' => 'modules/parcours_formateur/module_2_organiser_ses_parcours/chapitre_2_structurer_la_progression/lecon_2_2_creation_parcours',
-                                'scorm_slot_label' => 'SCORM pleine page',
+                                'layout' => 'scorm_form',
+                                'embedded_form' => 'path_creation',
+                                'completion_activity_key' => 'creation-parcours-finalisee',
+                                'scorm_parts' => [
+                                    'ouvrir-formulaire' => [
+                                        'directory' => 'modules/parcours_formateur/module_2_organiser_ses_parcours/chapitre_2_structurer_la_progression/lecon_2_2_a_creation_parcours',
+                                        'height' => 'full',
+                                    ],
+                                    'remplir-formulaire' => [
+                                        'directory' => 'modules/parcours_formateur/module_2_organiser_ses_parcours/chapitre_2_structurer_la_progression/lecon_2_2_b_remplir_formulaire_creation_parcours',
+                                        'height' => 'compact',
+                                        'form' => 'path_creation',
+                                    ],
+                                    'felicitations' => [
+                                        'directory' => 'modules/parcours_formateur/module_2_organiser_ses_parcours/chapitre_2_structurer_la_progression/lecon_2_2_c_creation_parcours_finalisation',
+                                        'height' => 'compact',
+                                        'marks_completion' => true,
+                                    ],
+                                ],
+                                'scorm_slot_label' => 'SCORM et simulateur',
                                 'activity_slot_label' => 'Simulateur a creer',
                             ]
                         ),

@@ -254,7 +254,11 @@
                     </div>
 
                     @if ($mixedHasForm)
-                        @include('formateur.parcours.partials.lessons.group-creation-form')
+                        @if (($mixedActivePartConfig['form'] ?? null) === 'group_creation')
+                            @include('formateur.parcours.partials.lessons.group-creation-form')
+                        @elseif (($mixedActivePartConfig['form'] ?? null) === 'path_creation')
+                            @include('formateur.parcours.partials.lessons.path-creation-form')
+                        @endif
                     @endif
                     @endif
                 </div>

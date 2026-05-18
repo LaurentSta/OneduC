@@ -28,16 +28,62 @@
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-4">
     <div class="lg:col-span-2">
       <div class="bg-white rounded-[20px] shadow-md p-8 w-full">
-        <h2 class="text-lg font-semibold mb-2">Qu'est-ce qu'un cookie ?</h2>
-        <p>Un cookie est un petit fichier texte déposé sur votre appareil lorsque vous visitez un site web.</p>
+        <h2 class="text-lg font-semibold mb-2">Qu’est-ce qu’un cookie ?</h2>
+        <p>Un cookie est un petit fichier texte déposé sur votre appareil lorsque vous visitez un site web. Il permet au site de mémoriser certaines informations entre vos visites.</p>
 
-        <h2 class="text-lg font-semibold mt-6 mb-2">Pourquoi utilisons-nous des cookies ?</h2>
-        <p>Les cookies nous permettent d’améliorer votre expérience utilisateur, de mesurer l’audience du site et de sécuriser votre navigation.</p>
+        <h2 class="text-lg font-semibold mt-6 mb-2">Cookies utilisés sur Oneduc.fr</h2>
+        <p>Oneduc.fr utilise uniquement des cookies strictement nécessaires au fonctionnement de la plateforme. Aucun cookie de suivi publicitaire ni d’outil d’analyse tiers n’est déposé.</p>
 
-        <h2 class="text-lg font-semibold mt-6 mb-2">Comment gérer vos cookies ?</h2>
-        <p>Vous pouvez paramétrer votre navigateur pour accepter ou refuser tout ou partie des cookies.</p>
+        <div class="mt-4 overflow-x-auto">
+          <table class="w-full text-sm border-collapse">
+            <thead>
+              <tr class="bg-gray-50">
+                <th class="text-left p-3 border border-gray-200 font-semibold">Nom</th>
+                <th class="text-left p-3 border border-gray-200 font-semibold">Finalité</th>
+                <th class="text-left p-3 border border-gray-200 font-semibold">Type</th>
+                <th class="text-left p-3 border border-gray-200 font-semibold">Durée</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="p-3 border border-gray-200 font-mono text-xs">laravel_session</td>
+                <td class="p-3 border border-gray-200">Maintien de votre session de connexion</td>
+                <td class="p-3 border border-gray-200">Essentiel</td>
+                <td class="p-3 border border-gray-200">Fin de session</td>
+              </tr>
+              <tr class="bg-gray-50">
+                <td class="p-3 border border-gray-200 font-mono text-xs">XSRF-TOKEN</td>
+                <td class="p-3 border border-gray-200">Protection contre les attaques CSRF (sécurité des formulaires)</td>
+                <td class="p-3 border border-gray-200">Essentiel</td>
+                <td class="p-3 border border-gray-200">Fin de session</td>
+              </tr>
+              <tr>
+                <td class="p-3 border border-gray-200 font-mono text-xs">laravel_cookie_consent</td>
+                <td class="p-3 border border-gray-200">Mémorise votre accord sur l’utilisation des cookies</td>
+                <td class="p-3 border border-gray-200">Fonctionnel</td>
+                <td class="p-3 border border-gray-200">13 mois</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
-        <p class="mt-6 text-sm text-gray-500">Dernière mise à jour : 28 mai 2025</p>
+        <h2 class="text-lg font-semibold mt-6 mb-2">Ces cookies nécessitent-ils mon consentement ?</h2>
+        <p>
+          Les cookies <strong>essentiels</strong> (session et sécurité) sont indispensables au fonctionnement du site et ne requièrent pas votre consentement préalable.
+          Le cookie de mémorisation du consentement est déposé uniquement après votre accord.
+        </p>
+
+        <h2 class="text-lg font-semibold mt-6 mb-2">Comment gérer ou supprimer vos cookies ?</h2>
+        <p>Vous pouvez à tout moment configurer votre navigateur pour refuser ou supprimer les cookies :</p>
+        <ul class="list-disc list-inside mt-2 space-y-1">
+          <li><strong>Chrome :</strong> Paramètres → Confidentialité et sécurité → Cookies</li>
+          <li><strong>Firefox :</strong> Paramètres → Vie privée et sécurité → Cookies</li>
+          <li><strong>Safari :</strong> Préférences → Confidentialité → Gérer les données du site</li>
+          <li><strong>Edge :</strong> Paramètres → Cookies et autorisations de site</li>
+        </ul>
+        <p class="mt-2 text-sm text-gray-600">Attention : la suppression des cookies essentiels peut empêcher le bon fonctionnement de la plateforme (déconnexion automatique, etc.).</p>
+
+        <p class="mt-6 text-sm text-gray-500">Dernière mise à jour : 16 mai 2026</p>
       </div>
     </div>
 

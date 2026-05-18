@@ -36,9 +36,11 @@
             <div class="bg-white rounded-[20px] shadow-md p-8 w-full">
                 <h2 class="text-lg font-semibold mb-2">Éditeur du site</h2>
                 <p>
-                    <strong>Oneduc.fr</strong> est édité par Oneduc SASU, immatriculée au RCS de Bobigny.<br>
-                    <strong>Adresse :</strong> 78 rue Danton, 93310 Le Pré-Saint-Gervais, France<br>
+                    <strong>Oneduc.fr</strong> est édité par l'Association Onéduc, déclarée en préfecture conformément à la loi du 1<sup>er</sup> juillet 1901.<br>
+                    <strong>SIREN :</strong> 904 800 661<br>
+                    <strong>Adresse :</strong> 78 rue Danton, boîte n°10, 93310 Le Pré-Saint-Gervais, France<br>
                     <strong>Email :</strong> contact@oneduc.fr<br>
+                    <strong>Présidente :</strong> Anne-Sophie FRANVILLE<br>
                     <strong>Directeur de la publication :</strong> Laurent Staelens
                 </p>
 
