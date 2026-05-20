@@ -81,6 +81,7 @@
     </div>
 
     @stack('scripts')
+@include('partials.a11y-scripts')
 </body>
 
 </html>

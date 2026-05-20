@@ -12,6 +12,8 @@
 
     $isOutilsActive = request()->routeIs('stagiaire.outils');
 
+    $isMessagesActive = request()->routeIs('stagiaire.messages.*');
+
     $isDocumentationActive = request()->routeIs('stagiaire.documentation');
 
     $navBaseClasses = 'flex flex-col items-center rounded-xl px-4 py-3 transition-all duration-200';
@@ -63,6 +65,25 @@
                             <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
                         </svg>
                         <span class="text-[17px] font-medium">Outils</span>
+                    </a>
+
+                    @php
+                        $unreadMessages = \App\Models\FormateurMessage::where('stagiaire_id', auth()->id())->count();
+                    @endphp
+                    <a
+                        href="{{ route('stagiaire.messages.index') }}"
+                        class="{{ $navBaseClasses }} {{ $isMessagesActive ? $navActiveClasses : $navIdleClasses }} relative"
+                        aria-current="{{ $isMessagesActive ? 'page' : 'false' }}"
+                    >
+                        @if($unreadMessages > 0)
+                          <span class="absolute top-2 right-3 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-orangeone text-white text-[10px] font-bold">
+                            {{ $unreadMessages > 9 ? '9+' : $unreadMessages }}
+                          </span>
+                        @endif
+                        <svg xmlns="http://www.w3.org/2000/svg" width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mb-2">
+                            <path d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"/>
+                        </svg>
+                        <span class="text-[17px] font-medium">Messages</span>
                     </a>
                 </div>
             </nav>

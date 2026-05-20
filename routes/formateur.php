@@ -71,6 +71,7 @@ Route::middleware(['auth', 'role:formateur', 'association.member'])
     Route::get('/stagiaires/{id}/edit', [FormateurStagiaireController::class, 'editStagiaire'])->name('stagiaires.edit');
     Route::put('/stagiaires/{id}', [FormateurStagiaireController::class, 'updateStagiaire'])->name('stagiaires.update');
     Route::delete('/stagiaires/{id}', [FormateurStagiaireController::class, 'destroyStagiaire'])->name('stagiaires.destroy');
+    Route::post('/stagiaires/{id}/message', [FormateurStagiaireController::class, 'sendMessage'])->name('stagiaires.message.send');
 
     // 🧑‍🤝‍🧑 Groupes
     Route::get('/groupes', [GroupeController::class, 'index'])->name('groupes.index');

@@ -30,6 +30,7 @@ use App\Models\GroupWhiteboardItem;
 use App\Models\GroupTimer;
 use App\Models\RandomWheelSession;
 use App\Models\ScaleSession;
+use App\Models\FormateurMessage;
 use App\Models\ScaleSessionResponse;
 
 class StagiaireController extends Controller
@@ -899,5 +900,17 @@ class StagiaireController extends Controller
 
         return $hasStarted ? 'incomplete' : 'not_started';
     }
-    
+
+    /** ========= MESSAGES ========= */
+    public function StagiaireMessages()
+    {
+        $stagiaireId = auth()->id();
+
+        $messages = FormateurMessage::with('formateur')
+            ->where('stagiaire_id', $stagiaireId)
+            ->latest()
+            ->get();
+
+        return view('stagiaire.messages.index', compact('messages'));
+    }
 }

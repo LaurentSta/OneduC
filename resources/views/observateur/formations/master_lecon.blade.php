@@ -53,5 +53,6 @@
       </div>
     </div>
   </div>
+@include('partials.a11y-scripts')
 </body>
 </html>

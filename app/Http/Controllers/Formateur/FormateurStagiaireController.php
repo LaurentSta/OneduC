@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Formateur;
 
 use App\Http\Controllers\Controller;
+use App\Models\FormateurMessage;
 use App\Models\Group;
 use App\Models\User;
+use App\Notifications\FormateurMessageNotification;
 use App\Services\CodeGeneratorService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -164,8 +166,13 @@ class FormateurStagiaireController extends Controller
             ]);
         }
 
+        $redirectTo = (string) $request->input('redirect_to', '');
+        $redirectTarget = str_starts_with($redirectTo, url('/formateur/parcours-formateur/'))
+            ? $redirectTo
+            : route('formateur.stagiaires.index');
+
         return redirect()
-            ->route('formateur.stagiaires.index')
+            ->to($redirectTarget)
             ->with('success', $user->wasRecentlyCreated
                 ? 'Stagiaire créé et rattaché si un groupe a été fourni.'
                 : 'Stagiaire existant réutilisé et rattaché si un groupe a été fourni.');
@@ -194,7 +201,12 @@ class FormateurStagiaireController extends Controller
             }])
             ->findOrFail($id);
 
-        return view('formateur.backend.stagiaires.edit_stagiaire', compact('stagiaire', 'groupes'));
+        $messages = FormateurMessage::where('stagiaire_id', $stagiaire->id)
+            ->where('formateur_id', $formateurId)
+            ->latest()
+            ->get();
+
+        return view('formateur.backend.stagiaires.edit_stagiaire', compact('stagiaire', 'groupes', 'messages'));
     }
 
     public function updateStagiaire(Request $request, $id)
@@ -271,6 +283,59 @@ class FormateurStagiaireController extends Controller
         return redirect()
             ->route('formateur.stagiaires.index')
             ->with('success', 'Stagiaire modifié avec succès.');
+    }
+
+    public function sendMessage(Request $request, $id)
+    {
+        $formateurId = auth()->id();
+        $accessibleGroupIds = $this->accessibleTrainerGroupIds($formateurId);
+
+        $stagiaire = User::query()
+            ->where('role', 'stagiaire')
+            ->where(function ($query) use ($accessibleGroupIds, $formateurId) {
+                $query->where('formateur_id', $formateurId)
+                    ->orWhereHas('groupesStagiaire', function ($q) use ($accessibleGroupIds) {
+                        $q->whereIn('groups.id', $accessibleGroupIds->all());
+                    });
+            })
+            ->findOrFail($id);
+
+        $request->validate([
+            'subject'           => ['nullable', 'string', 'max:255'],
+            'body'              => ['required', 'string', 'max:5000'],
+            'send_notification' => ['nullable', 'boolean'],
+            'send_email'        => ['nullable', 'boolean'],
+        ]);
+
+        $sendNotification = (bool) $request->input('send_notification', false);
+        $sendEmail = (bool) $request->input('send_email', false);
+
+        if (!$sendNotification && !$sendEmail) {
+            return back()
+                ->withErrors(['channels' => 'Veuillez sélectionner au moins un canal d\'envoi (notification ou email).'])
+                ->withInput();
+        }
+
+        $message = FormateurMessage::create([
+            'formateur_id'        => $formateurId,
+            'stagiaire_id'        => $stagiaire->id,
+            'subject'             => $request->input('subject') ?: null,
+            'body'                => $request->input('body'),
+            'sent_as_notification' => $sendNotification,
+            'sent_as_email'       => $sendEmail,
+        ]);
+
+        $channels = [];
+        if ($sendNotification) {
+            $channels[] = 'database';
+        }
+        if ($sendEmail) {
+            $channels[] = 'mail';
+        }
+
+        $stagiaire->notify(new FormateurMessageNotification($message, $channels));
+
+        return back()->with('message_sent', 'Message envoyé à ' . trim($stagiaire->prenom . ' ' . $stagiaire->name) . '.');
     }
 
     public function destroyStagiaire($id)

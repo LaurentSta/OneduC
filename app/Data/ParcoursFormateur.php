@@ -421,6 +421,7 @@ class ParcoursFormateur
                                     'felicitations' => [
                                         'directory' => 'modules/parcours_formateur/module_2_organiser_ses_parcours/chapitre_2_structurer_la_progression/lecon_2_2_c_creation_parcours_finalisation',
                                         'height' => 'compact',
+                                        'form' => 'path_creation_finalisation',
                                         'marks_completion' => true,
                                     ],
                                 ],
@@ -452,6 +453,30 @@ class ParcoursFormateur
                                 'subject' => 'Onglet Stagiaires global, edition du groupe, saisie manuelle, import CSV et modes de connexion.',
                                 'activity' => 'Une demande d ajustement : traiter des changements de date, de stagiaire et d ajout.',
                                 'evaluation' => 'Effectuer les ajustements demandes et ajouter les stagiaires par les deux modes.',
+                                'layout' => 'scorm_form',
+                                'completion_activity_key' => 'ajustement-groupe-finalise',
+                                'scorm_parts' => [
+                                    'ajustement-groupe' => [
+                                        'directory' => 'modules/parcours_formateur/module_2_organiser_ses_parcours/chapitre_3_ajuster_un_groupe/lecon_3_1_a_ajustement_groupe',
+                                        'height' => 'full',
+                                    ],
+                                    'ajustement-groupe-suite' => [
+                                        'directory' => 'modules/parcours_formateur/module_2_organiser_ses_parcours/chapitre_3_ajuster_un_groupe/lecon_3_1_b_ajustement_groupe',
+                                        'height' => 'compact',
+                                        'form' => 'stagiaires_index',
+                                    ],
+                                    'ajouter-stagiaire' => [
+                                        'directory' => 'modules/parcours_formateur/module_2_organiser_ses_parcours/chapitre_3_ajuster_un_groupe/lecon_3_1_c_ajustement_groupe',
+                                        'height' => 'compact',
+                                        'form' => 'stagiaire_create',
+                                    ],
+                                    'ajustement-groupe-finalisation' => [
+                                        'directory' => 'modules/parcours_formateur/module_2_organiser_ses_parcours/chapitre_3_ajuster_un_groupe/lecon_3_1_d_ajustement_groupe_finalisation',
+                                        'height' => 'compact',
+                                        'form' => 'stagiaires_index',
+                                        'marks_completion' => true,
+                                    ],
+                                ],
                             ]
                         ),
                         'controler-le-parcours-avant-diffusion' => self::lesson(

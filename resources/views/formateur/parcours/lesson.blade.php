@@ -258,6 +258,12 @@
                             @include('formateur.parcours.partials.lessons.group-creation-form')
                         @elseif (($mixedActivePartConfig['form'] ?? null) === 'path_creation')
                             @include('formateur.parcours.partials.lessons.path-creation-form')
+                        @elseif (($mixedActivePartConfig['form'] ?? null) === 'path_creation_finalisation')
+                            @include('formateur.parcours.partials.lessons.path-creation-finalisation')
+                        @elseif (($mixedActivePartConfig['form'] ?? null) === 'stagiaires_index')
+                            @include('formateur.parcours.partials.lessons.stagiaires-index')
+                        @elseif (($mixedActivePartConfig['form'] ?? null) === 'stagiaire_create')
+                            @include('formateur.parcours.partials.lessons.stagiaire-create')
                         @endif
                     @endif
                     @endif

@@ -7,7 +7,7 @@
   <header class="bg-white rounded-[20px] shadow-md px-8 pt-4 pb-6 w-full mb-6">
     <div class="flex items-center justify-between">
       <div>
-        <x-typography variant="titre">Créer une formation</x-typography>
+        <x-typography variant="titre">Créer un parcours de formation</x-typography>
         <nav class="text-sm font-varela text-gray-600 mt-2" aria-label="Fil d'Ariane">
           <ol class="inline-flex items-center space-x-1">
             <li class="flex items-center">

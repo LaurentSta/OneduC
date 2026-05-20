@@ -58,6 +58,73 @@
     font-family: "OpenDyslexic", Arial, sans-serif !important;
   }
 
+  /* Contrast: Sombre — invert then rotate hue so images re-invert */
+  html.a11y-contrast-dark body {
+    filter: invert(1) hue-rotate(180deg);
+  }
+  html.a11y-contrast-dark body img,
+  html.a11y-contrast-dark body video,
+  html.a11y-contrast-dark body svg:not([data-keep-color]) {
+    filter: invert(1) hue-rotate(180deg);
+  }
+
+  /* Contrast: Sépia */
+  html.a11y-contrast-sepia body {
+    background-color: #f4e9d4 !important;
+    color: #3e2c1a !important;
+  }
+  html.a11y-contrast-sepia body nav,
+  html.a11y-contrast-sepia body .bg-white {
+    background-color: #f9f1e1 !important;
+  }
+  html.a11y-contrast-sepia body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: rgba(180, 110, 40, 0.06);
+    pointer-events: none;
+    z-index: 9998;
+  }
+
+  /* Contrast: Haut contraste */
+  html.a11y-contrast-high body {
+    filter: contrast(170%) brightness(1.05);
+  }
+
+  /* Interlignage */
+  html.a11y-line-height-large body *:not(svg):not(svg *) {
+    line-height: 1.9 !important;
+  }
+  html.a11y-line-height-xlarge body *:not(svg):not(svg *) {
+    line-height: 2.4 !important;
+  }
+
+  /* Espacement des lettres */
+  html.a11y-letter-spacing-large body p,
+  html.a11y-letter-spacing-large body li,
+  html.a11y-letter-spacing-large body h1,
+  html.a11y-letter-spacing-large body h2,
+  html.a11y-letter-spacing-large body h3,
+  html.a11y-letter-spacing-large body span,
+  html.a11y-letter-spacing-large body a,
+  html.a11y-letter-spacing-large body button,
+  html.a11y-letter-spacing-large body label {
+    letter-spacing: 0.06em !important;
+    word-spacing: 0.14em !important;
+  }
+  html.a11y-letter-spacing-xlarge body p,
+  html.a11y-letter-spacing-xlarge body li,
+  html.a11y-letter-spacing-xlarge body h1,
+  html.a11y-letter-spacing-xlarge body h2,
+  html.a11y-letter-spacing-xlarge body h3,
+  html.a11y-letter-spacing-xlarge body span,
+  html.a11y-letter-spacing-xlarge body a,
+  html.a11y-letter-spacing-xlarge body button,
+  html.a11y-letter-spacing-xlarge body label {
+    letter-spacing: 0.13em !important;
+    word-spacing: 0.22em !important;
+  }
+
   body.oneduc-public {
     --page-enter-duration: 260ms;
     --page-leave-duration: 180ms;
