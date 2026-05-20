@@ -36,7 +36,7 @@
 
 @if(count($items) > 0)
 <nav
-    class="flex flex-wrap items-center gap-x-1.5 gap-y-2 rounded-xl border border-gray-100 bg-white px-4 py-2.5 shadow-sm"
+    class="flex flex-wrap items-center gap-x-1.5 gap-y-1 rounded-xl border border-gray-100 bg-white px-3 py-1.5 shadow-sm lg:px-4 lg:py-2"
     aria-label="Position dans la hiérarchie"
 >
     @foreach($items as $i => $item)
@@ -55,7 +55,7 @@
 
         <div class="flex min-w-0 items-center gap-2">
             {{-- Badge de niveau --}}
-            <span class="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider {{ $badgeClass }}">
+            <span class="shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider lg:text-[10px] {{ $badgeClass }}">
                 {{ $item['label'] }}
             </span>
 
@@ -63,12 +63,12 @@
             @if($hasUrl)
                 <a
                     href="{{ $item['url'] }}"
-                    class="min-w-0 truncate text-sm font-medium text-gray-500 hover:text-[#004461] hover:underline"
+                    class="min-w-0 truncate text-xs font-medium text-gray-500 hover:text-[#004461] hover:underline lg:text-sm"
                     title="{{ $item['title'] }}"
                 >{{ $item['title'] }}</a>
             @else
                 <span
-                    class="min-w-0 truncate text-sm font-semibold {{ $isCurrent ? 'text-gray-900' : 'text-gray-500' }}"
+                    class="min-w-0 truncate text-xs font-semibold lg:text-sm {{ $isCurrent ? 'text-gray-900' : 'text-gray-500' }}"
                     title="{{ $item['title'] }}"
                 >{{ $item['title'] }}</span>
             @endif

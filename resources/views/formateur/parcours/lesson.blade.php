@@ -1,5 +1,7 @@
 @extends('formateur.parcours.layout')
 
+@section('hide_parcours_header', 'true')
+
 @php
     $customPresentation = $currentLesson['custom_presentation'] ?? null;
     $lessonLayout = $currentLesson['layout'] ?? 'default';
@@ -16,6 +18,7 @@
         ? ($mixedPartUrls[$mixedNextPart] ?? '#')
         : ($nextLesson['url'] ?? '#');
     $mixedIsFullPart = ($mixedActivePartConfig['height'] ?? null) === 'full';
+    $mixedIsFormOnlyPart = ($mixedActivePartConfig['height'] ?? null) === 'form_only';
     $mixedHasForm = !empty($mixedActivePartConfig['form']);
     $editorial = $currentLesson['editorial'] ?? [
         'intro' => [
@@ -97,18 +100,18 @@
                 });
             }
         }"
-        class="space-y-4"
+        class="space-y-2 lg:space-y-3"
     >
-        <div class="flex items-start gap-3 px-4 pt-4 sm:px-6 lg:px-8">
+        <div class="flex items-start gap-2 px-2 pt-1 sm:px-3 lg:px-4">
             <button
                 type="button"
                 @click="toggleSidebar()"
-                class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 shadow-sm transition hover:border-orangeone hover:text-orangeone"
+                class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 shadow-sm transition hover:border-orangeone hover:text-orangeone lg:h-9 lg:w-9"
                 :aria-pressed="sidebarOpen.toString()"
                 aria-label="Afficher ou masquer le plan"
                 title="Afficher ou masquer le plan"
             >
-                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <svg class="h-3.5 w-3.5 lg:h-4 lg:w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path d="M4 6h16" />
                     <path d="M4 12h16" />
                     <path d="M4 18h16" />
@@ -188,7 +191,7 @@
 
         <section
             x-ref="lessonViewport"
-            class="relative h-[calc(100vh-13rem)] min-h-[calc(100vh-13rem)] rounded-[28px] border border-gray-100 bg-gray-100 shadow-sm {{ $isMixedScormForm ? 'overflow-y-auto' : 'overflow-hidden' }}"
+            class="relative h-[calc(100vh-4rem)] min-h-[calc(100vh-4rem)] rounded-[28px] border border-gray-100 bg-gray-100 shadow-sm lg:h-[calc(100vh-4.5rem)] lg:min-h-[calc(100vh-4.5rem)] {{ $isMixedScormForm ? 'overflow-y-auto' : 'overflow-hidden' }}"
         >
             <div class="pointer-events-none absolute left-4 top-4 z-20 flex flex-wrap items-center gap-2">
                 <button
@@ -217,17 +220,30 @@
                 <div class="{{ $mixedIsFullPart ? 'h-full' : 'space-y-4 p-4 md:p-5' }}">
                     @if ($mixedIsFullPart)
                         <div class="h-full overflow-hidden bg-white">
-                            <div class="h-full min-h-[calc(100vh-13rem)] bg-slate-100">
-                                <iframe
-                                    id="scorm-iframe-{{ $activeLessonPart }}"
-                                    title="{{ $currentLesson['title'] }}"
-                                    src="{{ $mixedActiveScormUrl }}"
-                                    frameborder="0"
-                                    allowfullscreen
-                                    class="block h-full w-full bg-white"
-                                ></iframe>
+                            <div class="h-full min-h-[calc(100vh-4rem)] bg-slate-100 lg:min-h-[calc(100vh-4.5rem)]">
+                                @if (!empty($mixedActiveScormUrl))
+                                    <iframe
+                                        id="scorm-iframe-{{ $activeLessonPart }}"
+                                        title="{{ $currentLesson['title'] }}"
+                                        src="{{ $mixedActiveScormUrl }}"
+                                        frameborder="0"
+                                        allowfullscreen
+                                        class="block h-full w-full bg-white"
+                                    ></iframe>
+                                @else
+                                    <div class="flex h-full items-center justify-center p-6 text-center">
+                                        <div class="max-w-xl rounded-[24px] border border-orangeone/20 bg-white px-8 py-7 shadow-sm">
+                                            <p class="text-xs font-black uppercase tracking-[0.24em] text-orangeone">SCORM a integrer</p>
+                                            <p class="mt-3 text-sm leading-7 text-slate-600">
+                                                Deposez le paquet Storyline dans le dossier prevu pour afficher le contenu ici.
+                                            </p>
+                                        </div>
+                                    </div>
+                                @endif
                             </div>
                         </div>
+                    @elseif ($mixedIsFormOnlyPart)
+                        {{-- Partie simulateur pur : le SCORM precedent porte les consignes audio. --}}
                     @else
                     <div class="overflow-hidden rounded-[24px] border border-gray-100 bg-white shadow-sm">
                         <div class="h-[38vh] min-h-[300px] bg-slate-100">
@@ -253,6 +269,8 @@
                         </div>
                     </div>
 
+                    @endif
+
                     @if ($mixedHasForm)
                         @if (($mixedActivePartConfig['form'] ?? null) === 'group_creation')
                             @include('formateur.parcours.partials.lessons.group-creation-form')
@@ -264,8 +282,19 @@
                             @include('formateur.parcours.partials.lessons.stagiaires-index')
                         @elseif (($mixedActivePartConfig['form'] ?? null) === 'stagiaire_create')
                             @include('formateur.parcours.partials.lessons.stagiaire-create')
+                        @elseif (($mixedActivePartConfig['form'] ?? null) === 'marc_unlock_simulator')
+                            @include('formateur.parcours.partials.lessons.marc-unlock-simulator')
+                        @elseif (($mixedActivePartConfig['form'] ?? null) === 'marc_students_table')
+                            @include('formateur.parcours.partials.lessons.marc-students-table')
+                        @elseif (($mixedActivePartConfig['form'] ?? null) === 'marc_profile_message')
+                            @include('formateur.parcours.partials.lessons.marc-profile-message')
+                        @elseif (($mixedActivePartConfig['form'] ?? null) === 'marc_unlock_results')
+                            @include('formateur.parcours.partials.lessons.marc-unlock-results')
+                        @elseif (($mixedActivePartConfig['form'] ?? null) === 'content_modification_intro')
+                            @include('formateur.parcours.partials.lessons.content-modification-intro')
+                        @elseif (($mixedActivePartConfig['form'] ?? null) === 'content_modification_group_edit')
+                            @include('formateur.parcours.partials.lessons.content-modification-group-edit')
                         @endif
-                    @endif
                     @endif
                 </div>
             @elseif (!empty($currentLesson['scorm_url']))

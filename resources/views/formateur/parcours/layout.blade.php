@@ -29,73 +29,57 @@
         ])
         ->values();
     $isOverviewHomeActive = ($activeModuleKey ?? null) === null;
+    $hideParcoursHeader = trim($__env->yieldContent('hide_parcours_header')) === 'true';
+    $hideParcoursBrandHeader = $hideParcoursHeader || trim($__env->yieldContent('hide_parcours_brand_header')) === 'true';
+    $hideParcoursOverview = $hideParcoursHeader || trim($__env->yieldContent('hide_parcours_overview')) === 'true';
 @endphp
 <body class="min-h-screen bg-slate-50 text-slate-900">
-    <header class="sticky top-0 z-40 border-b border-slate-200 bg-white">
-        <div class="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-4 lg:px-8">
-            <a href="{{ route('formateur.dashboard') }}" class="inline-flex items-center">
-                <img src="{{ asset('frontend/assets/img/front-pages/branding/LogoOneducPositionG.svg') }}" alt="Logo Oneduc" class="h-11 w-auto">
-            </a>
-
-            <div class="flex flex-wrap items-center justify-end gap-3">
-                <a href="{{ route('formateur.dashboard') }}" class="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-orangeone hover:text-orangeone">
-                    Retour au tableau de bord
+    @unless ($hideParcoursBrandHeader)
+        <header class="sticky top-0 z-40 border-b border-slate-200 bg-white">
+            <div class="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-4 lg:px-8">
+                <a href="{{ route('formateur.dashboard') }}" class="inline-flex items-center">
+                    <img src="{{ asset('frontend/assets/img/front-pages/branding/LogoOneducPositionG.svg') }}" alt="Logo Oneduc" class="h-11 w-auto">
                 </a>
-            </div>
-        </div>
-    </header>
 
-    <div class="relative z-30 border-t border-orange-100 bg-white">
-        <div class="mx-auto max-w-7xl px-5 lg:px-8">
-            <section
-                aria-labelledby="parcours-overview-title"
-                class="relative z-30 h-0 overflow-visible"
-                style="width: 100vw; margin-left: calc(50% - 50vw);"
-            >
-                <div
-                    id="parcours-overview-shell"
-                    class="absolute inset-x-0 top-0 z-30 will-change-transform transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
-                    style="visibility: hidden;"
+                <div class="flex flex-wrap items-center justify-end gap-3">
+                    <a href="{{ route('formateur.dashboard') }}" class="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-orangeone hover:text-orangeone">
+                        Retour au tableau de bord
+                    </a>
+                </div>
+            </div>
+        </header>
+    @endunless
+
+    @unless ($hideParcoursOverview)
+        <div class="relative z-30 border-t border-orange-100 bg-white">
+            <div class="mx-auto max-w-7xl px-5 lg:px-8">
+                <section
+                    aria-labelledby="parcours-overview-title"
+                    class="relative z-30 h-0 overflow-visible"
+                    style="width: 100vw; margin-left: calc(50% - 50vw);"
                 >
                     <div
-                        id="parcours-overview-drawer"
-                        class="overflow-hidden border-b-2 border-b-orangeone bg-white shadow-[0_24px_54px_-26px_rgba(0,68,97,0.42)]"
+                        id="parcours-overview-shell"
+                        class="absolute inset-x-0 top-0 z-30 will-change-transform transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
+                        style="visibility: hidden;"
                     >
-                        <div id="parcours-overview-panel" class="overflow-x-auto bg-white py-3">
-                            <div class="mx-auto flex w-max items-stretch gap-0 px-5 lg:max-w-7xl lg:px-8 xl:min-w-0 xl:w-full xl:justify-between">
-                                <a
-                                    href="{{ route('formateur.parcours.index') }}"
-                                    class="flex h-[128px] w-[56px] flex-none items-center justify-center rounded-[20px] border-2 px-3 py-4 text-center transition hover:-translate-y-0.5 hover:shadow-md {{ $isOverviewHomeActive ? 'border-orangeone bg-orange-50/60' : 'border-bleuone bg-white' }}"
-                                    aria-label="Accueil du parcours"
-                                >
-                                    <span style="writing-mode: vertical-rl; transform: rotate(180deg);" class="text-[14px] font-semibold tracking-[0.18em] text-bleuone uppercase">
-                                        Accueil
-                                    </span>
-                                </a>
+                        <div
+                            id="parcours-overview-drawer"
+                            class="overflow-hidden border-b-2 border-b-orangeone bg-white shadow-[0_24px_54px_-26px_rgba(0,68,97,0.42)]"
+                        >
+                            <div id="parcours-overview-panel" class="overflow-x-auto bg-white py-3">
+                                <div class="mx-auto flex w-max items-stretch gap-0 px-5 lg:max-w-7xl lg:px-8 xl:min-w-0 xl:w-full xl:justify-between">
+                                    <a
+                                        href="{{ route('formateur.parcours.index') }}"
+                                        class="flex h-[128px] w-[56px] flex-none items-center justify-center rounded-[20px] border-2 px-3 py-4 text-center transition hover:-translate-y-0.5 hover:shadow-md {{ $isOverviewHomeActive ? 'border-orangeone bg-orange-50/60' : 'border-bleuone bg-white' }}"
+                                        aria-label="Accueil du parcours"
+                                    >
+                                        <span style="writing-mode: vertical-rl; transform: rotate(180deg);" class="text-[14px] font-semibold tracking-[0.18em] text-bleuone uppercase">
+                                            Accueil
+                                        </span>
+                                    </a>
 
-                                @if ($overviewModules->isNotEmpty())
-                                    <div class="flex w-[32px] flex-none items-center text-orangeone" aria-hidden="true">
-                                        <span class="h-0.5 flex-1 bg-orangeone"></span>
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="-ml-1 h-8 w-8 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 12h16m-5-5 5 5-5 5" />
-                                        </svg>
-                                    </div>
-                                @endif
-
-                                @foreach ($overviewModules as $module)
-	                                    <a
-	                                        href="{{ $module['url'] }}"
-	                                        class="flex w-[176px] flex-none flex-col rounded-[20px] border-2 px-4 py-3 transition hover:-translate-y-0.5 hover:shadow-md xl:w-[176px] {{ $module['is_current'] ? 'border-orangeone bg-orange-50/60' : 'border-bleuone bg-white' }}"
-	                                        data-parcours-tooltip="{{ $module['full_title'] }}"
-	                                    >
-                                        <div class="flex items-center justify-between gap-2">
-                                            <span class="text-[10px] font-semibold uppercase tracking-[0.24em] text-orangeone">{{ $module['label'] }}</span>
-                                            <span class="text-[10px] font-semibold text-slate-500">{{ $module['time_label'] }}</span>
-                                        </div>
-	                                        <span class="mt-2 text-[18px] leading-5 font-semibold text-bleuone">{{ $module['title'] }}</span>
-	                                    </a>
-
-                                    @if (! $loop->last)
+                                    @if ($overviewModules->isNotEmpty())
                                         <div class="flex w-[32px] flex-none items-center text-orangeone" aria-hidden="true">
                                             <span class="h-0.5 flex-1 bg-orangeone"></span>
                                             <svg xmlns="http://www.w3.org/2000/svg" class="-ml-1 h-8 w-8 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
@@ -103,31 +87,54 @@
                                             </svg>
                                         </div>
                                     @endif
-                                @endforeach
+
+                                    @foreach ($overviewModules as $module)
+	                                    <a
+	                                        href="{{ $module['url'] }}"
+	                                        class="flex w-[176px] flex-none flex-col rounded-[20px] border-2 px-4 py-3 transition hover:-translate-y-0.5 hover:shadow-md xl:w-[176px] {{ $module['is_current'] ? 'border-orangeone bg-orange-50/60' : 'border-bleuone bg-white' }}"
+	                                        data-parcours-tooltip="{{ $module['full_title'] }}"
+	                                    >
+                                            <div class="flex items-center justify-between gap-2">
+                                                <span class="text-[10px] font-semibold uppercase tracking-[0.24em] text-orangeone">{{ $module['label'] }}</span>
+                                                <span class="text-[10px] font-semibold text-slate-500">{{ $module['time_label'] }}</span>
+                                            </div>
+	                                        <span class="mt-2 text-[18px] leading-5 font-semibold text-bleuone">{{ $module['title'] }}</span>
+	                                    </a>
+
+                                        @if (! $loop->last)
+                                            <div class="flex w-[32px] flex-none items-center text-orangeone" aria-hidden="true">
+                                                <span class="h-0.5 flex-1 bg-orangeone"></span>
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="-ml-1 h-8 w-8 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 12h16m-5-5 5 5-5 5" />
+                                                </svg>
+                                            </div>
+                                        @endif
+                                    @endforeach
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div class="relative h-0 overflow-visible">
-                        <button
-                            type="button"
-                            id="parcours-overview-toggle"
-                            class="absolute right-5 top-0 z-10 inline-flex items-center gap-3 rounded-b-[18px] border-2 border-t-0 border-orangeone bg-white px-5 py-2 text-sm font-semibold text-bleuone shadow-[0_14px_30px_-18px_rgba(0,68,97,0.5)] transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] lg:right-8"
-                            aria-expanded="false"
-                            aria-controls="parcours-overview-drawer"
-                        >
-                            <span id="parcours-overview-title">Vue d'ensemble du parcours</span>
-                            <svg id="parcours-overview-icon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-orangeone transition-transform duration-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6" />
-                            </svg>
-                        </button>
+                        <div class="relative h-0 overflow-visible">
+                            <button
+                                type="button"
+                                id="parcours-overview-toggle"
+                                class="absolute right-5 top-0 z-10 inline-flex items-center gap-3 rounded-b-[18px] border-2 border-t-0 border-orangeone bg-white px-5 py-2 text-sm font-semibold text-bleuone shadow-[0_14px_30px_-18px_rgba(0,68,97,0.5)] transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] lg:right-8"
+                                aria-expanded="false"
+                                aria-controls="parcours-overview-drawer"
+                            >
+                                <span id="parcours-overview-title">Vue d'ensemble du parcours</span>
+                                <svg id="parcours-overview-icon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-orangeone transition-transform duration-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6" />
+                                </svg>
+                            </button>
+                        </div>
                     </div>
-                </div>
-            </section>
+                </section>
+            </div>
         </div>
-    </div>
+    @endunless
 
-    <main class="relative z-10 w-full px-0 py-6">
+    <main class="relative z-10 w-full px-0 {{ $hideParcoursBrandHeader ? 'py-0' : 'py-6' }}">
         @yield('parcours_content')
     </main>
 

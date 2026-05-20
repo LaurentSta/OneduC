@@ -1,5 +1,7 @@
 @extends('formateur.parcours.layout')
 
+@section('hide_parcours_brand_header', 'true')
+
 @php
     $firstChapterUrl = $currentModule['first_chapter_url'] ?? $currentModule['url'];
     $introItems = $currentModule['intro_items'] ?? [
@@ -109,11 +111,11 @@
                     document.addEventListener('fullscreenchange', () => this.syncFullscreenState());
                 }
             }"
-            class="px-4 pt-4 sm:px-6 lg:px-8"
+            class="px-2 pt-12 sm:px-3 lg:px-4"
         >
             <section
                 x-ref="lessonViewport"
-                class="relative h-[calc(100vh-7rem)] min-h-[680px] overflow-hidden rounded-[24px] border border-gray-100 bg-white shadow-sm"
+                class="relative h-[calc(100vh-4rem)] min-h-[520px] overflow-hidden rounded-[24px] border border-gray-100 bg-white shadow-sm"
             >
                 <div class="pointer-events-none absolute left-4 top-4 z-20 flex flex-wrap items-center gap-2">
                     <button
@@ -151,7 +153,7 @@
         </div>
 
     @else
-    <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+    <div class="mx-auto max-w-6xl px-2 pt-12 sm:px-3 lg:px-4">
         <section class="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
             <div class="grid gap-8 px-6 py-8 md:px-8 lg:grid-cols-[minmax(0,1fr)_320px] lg:px-10 lg:py-10">
                 <div>

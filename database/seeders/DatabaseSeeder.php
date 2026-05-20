@@ -76,6 +76,7 @@ class DatabaseSeeder extends Seeder
                 'password' => Hash::make('111'),
                 'role' => 'stagiaire',
                 'status' => 1,
+                'code_acces' => 'LAURA1',
             ]
         );
 
@@ -405,18 +406,21 @@ class DatabaseSeeder extends Seeder
                 'prenom' => 'Laura',
                 'name' => 'Stagiaire',
                 'username' => 'stagiaire',
+                'code_acces' => 'LAURA1',
             ],
             [
                 'email' => 'amina.stagiaire@gmail.com',
                 'prenom' => 'Amina',
                 'name' => 'Diallo',
                 'username' => 'amina_stagiaire',
+                'code_acces' => 'AMINA1',
             ],
             [
                 'email' => 'youssef.stagiaire@gmail.com',
                 'prenom' => 'Youssef',
                 'name' => 'Benali',
                 'username' => 'youssef_stagiaire',
+                'code_acces' => 'YUSF01',
             ],
         ];
 

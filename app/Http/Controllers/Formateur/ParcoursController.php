@@ -26,10 +26,10 @@ class ParcoursController extends Controller
         ]);
     }
 
-	    public function showModule(string $module)
-	    {
-	        $catalogue = $this->catalogue();
-	        abort_unless(isset($catalogue[$module]), 404);
+    public function showModule(string $module)
+    {
+        $catalogue = $this->catalogue();
+        abort_unless(isset($catalogue[$module]), 404);
 
         $currentModule = $catalogue[$module];
 
@@ -44,31 +44,31 @@ class ParcoursController extends Controller
                 ['label' => 'Parcours formateur', 'url' => route('formateur.parcours.index')],
                 ['label' => $currentModule['title'], 'url' => $currentModule['url']],
             ],
-	        ]);
-	    }
+        ]);
+    }
 
-	    public function showModuleIntroduction(string $module)
-	    {
-	        $catalogue = $this->catalogue();
-	        abort_unless(isset($catalogue[$module]), 404);
+    public function showModuleIntroduction(string $module)
+    {
+        $catalogue = $this->catalogue();
+        abort_unless(isset($catalogue[$module]), 404);
 
-	        $currentModule = $catalogue[$module];
+        $currentModule = $catalogue[$module];
 
         return view('formateur.parcours.introduction', [
             'pageTitle' => 'Introduction - ' . $currentModule['title'],
             'parcoursModules' => $catalogue,
-	            'activeModuleKey' => $module,
-	            'activeChapterKey' => null,
+            'activeModuleKey' => $module,
+            'activeChapterKey' => null,
             'activeLessonKey' => null,
             'currentModule' => $currentModule,
             'introductionScormUrl' => $this->resolveScormUrl($currentModule['introduction_scorm_directory'] ?? null),
             'breadcrumbs' => [
                 ['label' => 'Parcours formateur', 'url' => route('formateur.parcours.index')],
                 ['label' => $currentModule['title'], 'url' => $currentModule['url']],
-	                ['label' => 'Introduction', 'url' => $currentModule['introduction_url']],
-	            ],
-	        ]);
-	    }
+                ['label' => 'Introduction', 'url' => $currentModule['introduction_url']],
+            ],
+        ]);
+    }
 
     public function showChapter(string $module, string $chapter)
     {
@@ -387,21 +387,21 @@ class ParcoursController extends Controller
     {
         $modules = ParcoursFormateur::rawModules();
 
-	        foreach ($modules as $moduleKey => &$module) {
-	            $module['url'] = route('formateur.parcours.modules.show', ['module' => $moduleKey]);
-	            $module['introduction_url'] = route('formateur.parcours.modules.introduction', ['module' => $moduleKey]);
-	            $module['chapter_count'] = count($module['chapters']);
+        foreach ($modules as $moduleKey => &$module) {
+            $module['url'] = route('formateur.parcours.modules.show', ['module' => $moduleKey]);
+            $module['introduction_url'] = route('formateur.parcours.modules.introduction', ['module' => $moduleKey]);
+            $module['chapter_count'] = count($module['chapters']);
             $module['lesson_count'] = array_reduce(
                 $module['chapters'],
                 fn (int $carry, array $chapter): int => $carry + count($chapter['lessons'] ?? []),
                 0
             );
 
-	            $firstChapterKey = array_key_first($module['chapters']);
-	            $module['first_chapter_url'] = $firstChapterKey
-	                ? route('formateur.parcours.chapters.show', ['module' => $moduleKey, 'chapter' => $firstChapterKey])
-	                : $module['url'];
-	            $module['entry_url'] = $firstChapterKey ? $module['introduction_url'] : $module['url'];
+            $firstChapterKey = array_key_first($module['chapters']);
+            $module['first_chapter_url'] = $firstChapterKey
+                ? route('formateur.parcours.chapters.show', ['module' => $moduleKey, 'chapter' => $firstChapterKey])
+                : $module['url'];
+            $module['entry_url'] = $firstChapterKey ? $module['introduction_url'] : $module['url'];
 
             foreach ($module['chapters'] as $chapterKey => &$chapter) {
                 $chapter['url'] = route('formateur.parcours.chapters.show', [

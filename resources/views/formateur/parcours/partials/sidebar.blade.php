@@ -35,17 +35,17 @@
 	        class="flex-1 overflow-y-auto custom-scrollbar bg-gray-50/30"
 	    >
         <div class="px-3 py-4">
-            <div class="mb-4 rounded-2xl border border-orange-100 bg-white p-4 shadow-sm">
-                <p class="text-[11px] font-black uppercase tracking-[0.22em] text-orangeone">
+            <div class="mb-3 rounded-xl border border-orange-100 bg-white px-3 py-2.5 shadow-sm">
+                <p class="text-[9px] font-black uppercase tracking-[0.18em] text-orangeone">
                     {{ $currentModule['label'] }}
                 </p>
 
-                <a href="{{ $currentModule['url'] }}" class="mt-2 block">
-                    <h2 class="text-lg font-black leading-tight text-bleuone">
+                <a href="{{ $currentModule['url'] }}" class="mt-1 block">
+                    <h2 class="text-[15px] font-black leading-tight text-bleuone">
                         {{ $currentModule['title'] }}
                     </h2>
 
-                    <p class="mt-2 text-[11px] font-semibold text-slate-500">
+                    <p class="mt-1 text-[10px] font-semibold text-slate-500">
                         {{ $moduleChapterCount }} chapitre{{ $moduleChapterCount > 1 ? 's' : '' }}
                         ·
                         {{ $moduleLessonCount }} lecon{{ $moduleLessonCount > 1 ? 's' : '' }}

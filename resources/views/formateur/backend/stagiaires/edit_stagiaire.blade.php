@@ -90,6 +90,14 @@
                      class="w-full rounded-lg border {{ $errors->has('password') ? 'border-red-400' : 'border-gray-300' }} bg-gray-50 px-4 py-2.5 text-sm focus:border-orangeone focus:ring-orangeone"
                      placeholder="Laisser vide si inchangé">
             </div>
+
+            <div class="md:col-span-2">
+              <label for="code_acces" class="block mb-2 text-sm font-medium text-gray-900">Code d'accès</label>
+              <input id="code_acces" type="text" name="code_acces" value="{{ old('code_acces', $stagiaire->code_acces) }}"
+                     maxlength="6"
+                     class="w-full rounded-lg border {{ $errors->has('code_acces') ? 'border-red-400' : 'border-gray-300' }} bg-gray-50 px-4 py-2.5 font-mono text-sm uppercase tracking-widest text-orangeone focus:border-orangeone focus:ring-orangeone"
+                     placeholder="Ex : CODE12">
+            </div>
           </div>
         </div>
 
@@ -231,6 +239,30 @@
           @error('body')
             <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
           @enderror
+        </div>
+
+        <div
+          x-data="{ checked: {{ old('include_access_code') ? 'true' : 'false' }} }"
+          @click="checked = !checked"
+          class="rounded-xl border border-orangeone/20 bg-orangeone/5 px-4 py-3 cursor-pointer select-none"
+        >
+          <div class="flex items-start gap-3">
+            <input type="checkbox" name="include_access_code" value="1" x-model="checked" class="hidden">
+            <div class="mt-0.5 w-4 h-4 rounded border-2 transition-colors flex items-center justify-center shrink-0"
+                 :class="checked ? 'bg-orangeone border-orangeone' : 'bg-white border-orangeone/40'">
+              <svg x-show="checked" class="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 10 10" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2 2l6 6M8 2l-6 6"/>
+              </svg>
+            </div>
+            <div>
+              <p class="text-sm font-semibold text-bleuone">Inclure le lien et le code d'accès du stagiaire</p>
+              <p class="mt-1 text-xs leading-5 text-gray-500">
+                Ajoute automatiquement le lien de connexion et le code
+                <span class="font-mono font-semibold text-orangeone">{{ $stagiaire->code_acces ?: 'à générer' }}</span>
+                à la fin du message envoyé.
+              </p>
+            </div>
+          </div>
         </div>
 
         {{-- Cases à cocher canaux --}}

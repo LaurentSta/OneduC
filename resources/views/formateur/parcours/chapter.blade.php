@@ -1,5 +1,7 @@
 @extends('formateur.parcours.layout')
 
+@section('hide_parcours_header', 'true')
+
 @php
     $firstLesson = array_values($currentChapter['lessons'])[0] ?? null;
 @endphp
@@ -22,18 +24,18 @@
                 this.sidebarOpen = true;
             }
         }"
-        class="space-y-4"
+        class="space-y-2 lg:space-y-3"
     >
-        <div class="flex items-start gap-3 px-4 pt-4 sm:px-6 lg:px-8">
+        <div class="flex items-start gap-2 px-2 pt-1 sm:px-3 lg:px-4">
             <button
                 type="button"
                 @click="toggleSidebar()"
-                class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 shadow-sm transition hover:border-orangeone hover:text-orangeone"
+                class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 shadow-sm transition hover:border-orangeone hover:text-orangeone lg:h-9 lg:w-9"
                 :aria-pressed="sidebarOpen.toString()"
                 aria-label="Afficher ou masquer le plan"
                 title="Afficher ou masquer le plan"
             >
-                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <svg class="h-3.5 w-3.5 lg:h-4 lg:w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path d="M4 6h16" />
                     <path d="M4 12h16" />
                     <path d="M4 18h16" />

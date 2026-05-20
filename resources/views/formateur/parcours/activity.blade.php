@@ -1,5 +1,7 @@
 @extends('formateur.parcours.layout')
 
+@section('hide_parcours_header', 'true')
+
 @php
     $activityDropzones = $currentActivity['dropzones'] ?? [];
     $activityCards = $currentActivity['items'] ?? [];
@@ -174,16 +176,16 @@
         </div>
         {{-- ===== FIN MODAL ===== --}}
 
-        <div class="flex items-start gap-3 px-4 pt-4 sm:px-6 lg:px-8">
+        <div class="flex items-start gap-2 px-2 pt-1 sm:px-3 lg:px-4">
             <button
                 type="button"
                 @click="toggleSidebar()"
-                class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 shadow-sm transition hover:border-orangeone hover:text-orangeone"
+                class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 shadow-sm transition hover:border-orangeone hover:text-orangeone lg:h-9 lg:w-9"
                 :aria-pressed="sidebarOpen.toString()"
                 aria-label="Afficher ou masquer le plan"
                 title="Afficher ou masquer le plan"
             >
-                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <svg class="h-3.5 w-3.5 lg:h-4 lg:w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path d="M4 6h16" />
                     <path d="M4 12h16" />
                     <path d="M4 18h16" />
@@ -208,7 +210,7 @@
 
             <section
                 x-ref="lessonViewport"
-                class="relative h-[calc(100vh-13rem)] min-h-[calc(100vh-13rem)] overflow-hidden rounded-[28px] border border-gray-100 bg-gray-100 shadow-sm"
+                class="relative h-[calc(100vh-4rem)] min-h-[calc(100vh-4rem)] overflow-hidden rounded-[28px] border border-gray-100 bg-gray-100 shadow-sm lg:h-[calc(100vh-4.5rem)] lg:min-h-[calc(100vh-4.5rem)]"
             >
                 <div class="pointer-events-none absolute left-4 top-4 z-20 flex flex-wrap items-center gap-2">
                     <button

@@ -46,6 +46,9 @@ class ParcoursFormateur
             'specific_objective' => 'Prendre ses reperes dans l espace formateur.',
             'duration_label' => '38 a 39 min',
             'status_label' => 'Disponible',
+            'is_under_construction' => true,
+            'construction_label' => 'En cours de construction',
+            'construction_note' => 'Ce module est en cours de construction. Certains contenus, exercices ou liens peuvent encore etre ajustes.',
             'trainer_name' => 'Equipe Oneduc',
             'level_label' => 'Tous niveaux',
             'cta_label' => 'Entrer dans le module',
@@ -243,32 +246,9 @@ class ParcoursFormateur
                                 'activity' => 'Tri du fil rouge : classer des cartes-info dans les trois zones du formulaire.',
                                 'evaluation' => 'Placer les cartes-info dans les bonnes zones du formulaire.',
                                 'scorm_directory' => 'modules/parcours_formateur/module_2_organiser_ses_parcours/chapitre_1_preparer_lenvironnement_de_formation/lecon_1_1_les_composants_indispensables/IdentifieLesElementsEssentiel',
-                                'activity_page' => [
-                                    'key' => 'classer-les-elements',
-                                    'code' => 'Activite',
-                                    'title' => 'Classer les elements de preparation',
-                                    'button_label' => 'Realiser l activite',
-                                    'scenario' => 'Vous preparez la creation d un groupe de formation. Voici 11 donnees reelles collectees en amont. Chacune appartient a une zone du formulaire Oneduc — a vous de les placer au bon endroit.',
-                                    'instruction' => 'Classez chaque element dans la bonne categorie : Information, Stagiaire ou Module.',
-                                    'success_message' => 'Bravo, vous avez correctement classe les elements utiles a la preparation du parcours.',
-                                    'dropzones' => [
-                                        [
-                                            'id' => 'information',
-                                            'label' => 'Information',
-                                            'description' => 'Parametres, dates et reperes generaux utiles a la preparation.',
-                                        ],
-                                        [
-                                            'id' => 'stagiaire',
-                                            'label' => 'Stagiaire',
-                                            'description' => 'Donnees d identification et de contact du participant.',
-                                        ],
-                                        [
-                                            'id' => 'module',
-                                            'label' => 'Module',
-                                            'description' => 'Elements lies au contenu, a son activation et a son encadrement.',
-                                        ],
-                                    ],
-                                    'items' => [
+                                'activity_page' => self::classificationActivity(
+                                    'Vous preparez la creation d un groupe de formation. Voici 11 donnees reelles collectees en amont. Chacune appartient a une zone du formulaire Oneduc — a vous de les placer au bon endroit.',
+                                    [
                                         ['id' => 'date_ouverture', 'label' => '1er avril 2026', 'category' => 'information'],
                                         ['id' => 'date_debut', 'label' => '8 avril 2026', 'category' => 'information'],
                                         ['id' => 'visible', 'label' => 'Visible', 'category' => 'information'],
@@ -280,8 +260,8 @@ class ParcoursFormateur
                                         ['id' => 'module_excel_avance', 'label' => 'Module Excel avance', 'category' => 'module'],
                                         ['id' => 'active', 'label' => 'Active', 'category' => 'module'],
                                         ['id' => 'desactive', 'label' => 'Desactive', 'category' => 'module'],
-                                    ],
-                                ],
+                                    ]
+                                ),
                             ]
                         ),
                         'distinguer-contenu-ressource-et-structure' => self::lesson(
@@ -297,32 +277,9 @@ class ParcoursFormateur
                                 'activity' => 'Fiche de mise en route completee a partir du cas Hygiene alimentaire 2026.',
                                 'evaluation' => 'Completer les 4 sections de la fiche de mise en route.',
                                 'scorm_directory' => 'modules/parcours_formateur/module_2_organiser_ses_parcours/chapitre_1_preparer_lenvironnement_de_formation/lecon_1_2_distinguer_contenu_ressource_et_structure',
-                                'activity_page' => [
-                                    'key' => 'classer-les-elements',
-                                    'code' => 'Activite',
-                                    'title' => 'Classer les elements de preparation',
-                                    'button_label' => 'Realiser l activite',
-                                    'scenario' => 'Vous preparez la creation d un groupe de formation. Voici 10 donnees reelles collectees en amont. Chacune appartient a une zone du formulaire Oneduc — a vous de les placer au bon endroit.',
-                                    'instruction' => 'Classez chaque element dans la bonne categorie : Information, Stagiaire ou Module.',
-                                    'success_message' => 'Bravo, vous avez correctement classe les elements utiles a la preparation du parcours.',
-                                    'dropzones' => [
-                                        [
-                                            'id' => 'information',
-                                            'label' => 'Information',
-                                            'description' => 'Parametres, dates et reperes generaux utiles a la preparation.',
-                                        ],
-                                        [
-                                            'id' => 'stagiaire',
-                                            'label' => 'Stagiaire',
-                                            'description' => 'Donnees d identification et de contact du participant.',
-                                        ],
-                                        [
-                                            'id' => 'module',
-                                            'label' => 'Module',
-                                            'description' => 'Elements lies au contenu, a son activation et a son encadrement.',
-                                        ],
-                                    ],
-                                    'items' => [
+                                'activity_page' => self::classificationActivity(
+                                    'Vous preparez la creation d un groupe de formation. Voici 10 donnees reelles collectees en amont. Chacune appartient a une zone du formulaire Oneduc — a vous de les placer au bon endroit.',
+                                    [
                                         ['id' => 'date_ouverture', 'label' => '1er avril 2026', 'category' => 'information'],
                                         ['id' => 'date_debut', 'label' => '8 avril 2026', 'category' => 'information'],
                                         ['id' => 'visible', 'label' => 'Visible', 'category' => 'information'],
@@ -333,8 +290,8 @@ class ParcoursFormateur
                                         ['id' => 'module_excel_avance', 'label' => 'Module Excel avance', 'category' => 'module'],
                                         ['id' => 'parcours', 'label' => 'Parcours Certification TOSA', 'category' => 'module'],
                                         ['id' => 'module_sensibilisation', 'label' => 'Module Internet', 'category' => 'module'],
-                                    ],
-                                ],
+                                    ]
+                                ),
                             ]
                         ),
                     ],
@@ -479,7 +436,7 @@ class ParcoursFormateur
                                 ],
                             ]
                         ),
-                        'controler-le-parcours-avant-diffusion' => self::lesson(
+                        'traiter-les-cas-particuliers' => self::lesson(
                             '2.3.2',
                             'Traiter les cas particuliers',
                             '10 min',
@@ -488,9 +445,38 @@ class ParcoursFormateur
                                 'pedagogical_intention' => 'Installer deux reflexes : resoudre un blocage et inscrire a un groupe complementaire quand le besoin le demande.',
                                 'method' => 'Active par resolution de probleme et differenciation',
                                 'learning_process' => 'Observer, analyser, corriger, differencier',
-                                'subject' => 'Procedure a 4 niveaux face a un blocage d acces et inscription a un groupe complementaire.',
+                                'subject' => 'Procedure a 5 niveaux face a un blocage d acces et inscription a un groupe complementaire.',
                                 'activity' => 'Cas Marc et cas Sofia : resoudre un blocage puis inscrire a un second groupe.',
-                                'evaluation' => 'Appliquer la procedure a 4 niveaux et inscrire Sofia a un second groupe.',
+                                'evaluation' => 'Appliquer la procedure a 5 niveaux et inscrire Sofia a un second groupe.',
+                                'layout' => 'scorm_form',
+                                'scorm_parts' => [
+                                    'cas-particulier' => [
+                                        'directory' => 'modules/parcours_formateur/module_2_organiser_ses_parcours/chapitre_3_ajuster_un_groupe/lecon_3_2_a_cas_particulier',
+                                        'height' => 'full',
+                                    ],
+                                    'debloquer-marc' => [
+                                        'height' => 'form_only',
+                                        'form' => 'marc_students_table',
+                                    ],
+                                    'modifier-profil-marc' => [
+                                        'height' => 'form_only',
+                                        'form' => 'marc_profile_message',
+                                    ],
+                                    'validation' => [
+                                        'directory' => 'modules/parcours_formateur/module_2_organiser_ses_parcours/chapitre_3_ajuster_un_groupe/lecon_3_2_c_cas_particulier_finalisation',
+                                        'height' => 'compact',
+                                        'form' => 'marc_unlock_results',
+                                        'marks_completion' => true,
+                                    ],
+                                    'modifier-contenu' => [
+                                        'height' => 'form_only',
+                                        'form' => 'content_modification_intro',
+                                    ],
+                                    'modifier-contenu-groupe' => [
+                                        'height' => 'form_only',
+                                        'form' => 'content_modification_group_edit',
+                                    ],
+                                ],
                             ]
                         ),
                         'bilan-module-2' => self::lesson(
@@ -511,6 +497,37 @@ class ParcoursFormateur
                     ],
                 ],
             ],
+        ];
+    }
+
+    /**
+     * @param  array<array{id: string, label: string, category: string}>  $items
+     * @return array<string, mixed>
+     */
+    private static function classificationActivity(string $scenario, array $items): array
+    {
+        return [
+            'key' => 'classer-les-elements',
+            'code' => 'Activite',
+            'title' => 'Classer les elements de preparation',
+            'button_label' => 'Realiser l activite',
+            'scenario' => $scenario,
+            'instruction' => 'Classez chaque element dans la bonne categorie : Information, Stagiaire ou Module.',
+            'success_message' => 'Bravo, vous avez correctement classe les elements utiles a la preparation du parcours.',
+            'dropzones' => self::preparationDropzones(),
+            'items' => $items,
+        ];
+    }
+
+    /**
+     * @return array<array{id: string, label: string, description: string}>
+     */
+    private static function preparationDropzones(): array
+    {
+        return [
+            ['id' => 'information', 'label' => 'Information', 'description' => 'Parametres, dates et reperes generaux utiles a la preparation.'],
+            ['id' => 'stagiaire', 'label' => 'Stagiaire', 'description' => 'Donnees d identification et de contact du participant.'],
+            ['id' => 'module', 'label' => 'Module', 'description' => 'Elements lies au contenu, a son activation et a son encadrement.'],
         ];
     }
 
@@ -550,7 +567,10 @@ class ParcoursFormateur
             'description' => 'Ce module sera structure dans une prochaine phase.',
             'specific_objective' => $fullTitle . '.',
             'duration_label' => $duration,
-            'status_label' => 'En preparation',
+            'status_label' => 'En cours de construction',
+            'is_under_construction' => true,
+            'construction_label' => 'En cours de construction',
+            'construction_note' => 'Ce module est en cours de construction. Certains contenus, exercices ou liens peuvent encore etre ajustes.',
             'trainer_name' => 'Equipe Oneduc',
             'level_label' => 'Tous niveaux',
             'cta_label' => 'Voir le parcours',

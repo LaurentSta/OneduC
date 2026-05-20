@@ -228,6 +228,7 @@ class FormateurStagiaireController extends Controller
             'prenom'      => 'required|string|max:255',
             'name'        => 'required|string|max:255',
             'email'       => 'required|email|unique:users,email,' . $stagiaire->id,
+            'code_acces'  => ['nullable', 'string', 'size:6', Rule::unique('users', 'code_acces')->ignore($stagiaire->id)],
             'password'    => 'nullable|string|min:8',
             'group_ids'   => ['nullable', 'array'],
             'group_ids.*' => [
@@ -251,6 +252,9 @@ class FormateurStagiaireController extends Controller
             $stagiaire->prenom = $request->prenom;
             $stagiaire->name   = $request->name;
             $stagiaire->email  = strtolower(trim((string) $request->email));
+            $stagiaire->code_acces = $request->filled('code_acces')
+                ? strtoupper(trim((string) $request->code_acces))
+                : null;
 
             if ($request->filled('password')) {
                 $stagiaire->password = Hash::make($request->password);
@@ -305,10 +309,12 @@ class FormateurStagiaireController extends Controller
             'body'              => ['required', 'string', 'max:5000'],
             'send_notification' => ['nullable', 'boolean'],
             'send_email'        => ['nullable', 'boolean'],
+            'include_access_code' => ['nullable', 'boolean'],
         ]);
 
         $sendNotification = (bool) $request->input('send_notification', false);
         $sendEmail = (bool) $request->input('send_email', false);
+        $includeAccessCode = (bool) $request->input('include_access_code', false);
 
         if (!$sendNotification && !$sendEmail) {
             return back()
@@ -316,11 +322,26 @@ class FormateurStagiaireController extends Controller
                 ->withInput();
         }
 
+        $body = $request->input('body');
+
+        if ($includeAccessCode) {
+            if (blank($stagiaire->code_acces)) {
+                $stagiaire->forceFill([
+                    'code_acces' => CodeGeneratorService::generateUniqueAccessCode(),
+                ])->save();
+            }
+
+            $body .= "\n\n---\n";
+            $body .= "Votre accès Onéduc\n";
+            $body .= 'Lien de connexion : ' . route('stagiaire.code.form.legacy') . "\n";
+            $body .= "Code d'accès : " . $stagiaire->code_acces;
+        }
+
         $message = FormateurMessage::create([
             'formateur_id'        => $formateurId,
             'stagiaire_id'        => $stagiaire->id,
             'subject'             => $request->input('subject') ?: null,
-            'body'                => $request->input('body'),
+            'body'                => $body,
             'sent_as_notification' => $sendNotification,
             'sent_as_email'       => $sendEmail,
         ]);
