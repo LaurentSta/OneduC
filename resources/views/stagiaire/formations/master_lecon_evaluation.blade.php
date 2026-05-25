@@ -149,5 +149,6 @@
     document.addEventListener('DOMContentLoaded', syncAppHeaderOffset);
     document.addEventListener('DOMContentLoaded', ajusterPositionBouton);
     </script>
+@include('partials.a11y-scripts')
 </body>
 </html>

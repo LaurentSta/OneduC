@@ -51,6 +51,7 @@ Route::middleware(['auth', 'role:formateur', 'association.member'])
             Route::get('/modules/{module}/introduction', [ParcoursController::class, 'showModuleIntroduction'])->name('modules.introduction');
             Route::get('/modules/{module}/chapitres/{chapter}', [ParcoursController::class, 'showChapter'])->name('chapters.show');
             Route::get('/modules/{module}/chapitres/{chapter}/lecons/{lesson}/parties/{part}', [ParcoursController::class, 'showLessonPart'])->name('lessons.part');
+            Route::post('/modules/{module}/chapitres/{chapter}/lecons/{lesson}/parties/{part}/validation', [ParcoursController::class, 'completeGuidedLessonPart'])->name('lessons.part.complete');
             Route::get('/modules/{module}/chapitres/{chapter}/lecons/{lesson}', [ParcoursController::class, 'showLesson'])->name('lessons.show');
             Route::get('/modules/{module}/chapitres/{chapter}/lecons/{lesson}/activites/{activity}', [ParcoursController::class, 'showActivity'])->name('activities.show');
             Route::post('/modules/{module}/chapitres/{chapter}/lecons/{lesson}/activites/{activity}', [ParcoursController::class, 'submitActivity'])->name('activities.submit');
@@ -71,6 +72,7 @@ Route::middleware(['auth', 'role:formateur', 'association.member'])
     Route::get('/stagiaires/{id}/edit', [FormateurStagiaireController::class, 'editStagiaire'])->name('stagiaires.edit');
     Route::put('/stagiaires/{id}', [FormateurStagiaireController::class, 'updateStagiaire'])->name('stagiaires.update');
     Route::delete('/stagiaires/{id}', [FormateurStagiaireController::class, 'destroyStagiaire'])->name('stagiaires.destroy');
+    Route::post('/stagiaires/{id}/message', [FormateurStagiaireController::class, 'sendMessage'])->name('stagiaires.message.send');
 
     // 🧑‍🤝‍🧑 Groupes
     Route::get('/groupes', [GroupeController::class, 'index'])->name('groupes.index');

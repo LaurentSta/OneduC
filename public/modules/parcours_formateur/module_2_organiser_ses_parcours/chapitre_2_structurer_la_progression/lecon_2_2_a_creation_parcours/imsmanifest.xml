@@ -1,0 +1,134 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<manifest identifier="_6NqkV9v29B6" version="1.0" xmlns="http://www.imsproject.org/xsd/imscp_rootv1p1p2" xmlns:adlcp="http://www.adlnet.org/xsd/adlcp_rootv1p2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.imsproject.org/xsd/imscp_rootv1p1p2 imscp_rootv1p1p2.xsd http://www.imsglobal.org/xsd/imsmd_rootv1p2p1 imsmd_rootv1p2p1.xsd http://www.adlnet.org/xsd/adlcp_rootv1p2 adlcp_rootv1p2.xsd">
+  <metadata>
+    <schema>ADL SCORM</schema>
+    <schemaversion>1.2</schemaversion>
+    <lom xmlns="http://www.imsglobal.org/xsd/imsmd_rootv1p2p1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.imsglobal.org/xsd/imsmd_rootv1p2p1 imsmd_rootv1p2p1.xsd">
+      <general>
+        <title>
+          <langstring xml:lang="x-none">CreerUnParcours</langstring>
+        </title>
+      </general>
+      <lifecycle>
+        <version>
+          <langstring xml:lang="x-none">1</langstring>
+        </version>
+        <status>
+          <source>
+            <langstring xml:lang="x-none">LOMv1.0</langstring>
+          </source>
+          <value>
+            <langstring xml:lang="x-none">Final</langstring>
+          </value>
+        </status>
+      </lifecycle>
+      <metametadata>
+        <metadatascheme>ADL SCORM 1.2</metadatascheme>
+      </metametadata>
+      <educational>
+        <typicallearningtime>
+          <datetime>PT0H0M0S</datetime>
+        </typicallearningtime>
+      </educational>
+      <rights>
+        <cost>
+          <source>
+            <langstring xml:lang="x-none">LOMv1.0</langstring>
+          </source>
+          <value>
+            <langstring xml:lang="x-none">yes</langstring>
+          </value>
+        </cost>
+        <copyrightandotherrestrictions>
+          <source>
+            <langstring xml:lang="x-none">LOMv1.0</langstring>
+          </source>
+          <value>
+            <langstring xml:lang="x-none">yes</langstring>
+          </value>
+        </copyrightandotherrestrictions>
+      </rights>
+    </lom>
+  </metadata>
+  <organizations default="CreerUnParcours_ORG">
+    <organization identifier="CreerUnParcours_ORG">
+      <title>CreerUnParcours</title>
+      <item identifier="CreerUnParcours_SCO" isvisible="true" identifierref="__6NqkV9v29B6_RES">
+        <title>CreerUnParcours</title>
+      </item>
+    </organization>
+  </organizations>
+  <resources>
+    <resource identifier="__6NqkV9v29B6_RES" type="webcontent" href="index_lms.html" adlcp:scormtype="sco">
+      <file href="story_content/thumbnail.jpg" />
+      <file href="mobile/6Kjrs4Qbt29.png" />
+      <file href="mobile/5cuspxltJoC.png" />
+      <file href="mobile/6bvCoIaN5uX.png" />
+      <file href="mobile/5X1OmYyAm1g.png" />
+      <file href="mobile/6qGlDizWBr3.png" />
+      <file href="mobile/5rdKulJsTVu.png" />
+      <file href="mobile/5VbwkT2NUid.png" />
+      <file href="mobile/63AhB2hZf1g.png" />
+      <file href="mobile/5cUh3njgH4p.png" />
+      <file href="story_content/video_66bUWhmxmcO_9_56_322x322.mp4" />
+      <file href="mobile/5zUAtpikNbs.png" />
+      <file href="mobile/5ckBkPcJvTI.png" />
+      <file href="mobile/6h81f4RfJRB.png" />
+      <file href="mobile/5uz5jsHgo70.png" />
+      <file href="mobile/6O7s0AoL6T3.png" />
+      <file href="mobile/6K9zUDp6A1J.png" />
+      <file href="mobile/5bWGfyrQUmf.png" />
+      <file href="mobile/6mPqutJOQDT.png" />
+      <file href="mobile/68uMZzBxXrc_X.png" />
+      <file href="mobile/5enu8pHRStn.png" />
+      <file href="mobile/6qb1VTmNg3r.png" />
+      <file href="mobile/5oT6UwLkSer.png" />
+      <file href="mobile/6JIlnJZLrgG.png" />
+      <file href="mobile/6QkEi5Bx3BC.png" />
+      <file href="mobile/6DX3n3CySvR.png" />
+      <file href="mobile/5sgKJ4WVGos.png" />
+      <file href="story_content/video_6IDJW7b0kte_9_56_302x302.mp4" />
+      <file href="story_content/6gm9jwi95Sz.js" />
+      <file href="mobile/6PfZSnaHq7V.png" />
+      <file href="mobile/5kUerQaHr2v.png" />
+      <file href="mobile/5nZstIl5fjo.png" />
+      <file href="mobile/6DgWXRim1tT.png" />
+      <file href="story_content/video_6SwhMqqcvNN_9_56_316x316.mp4" />
+      <file href="mobile/5eGtB9dW97G.png" />
+      <file href="mobile/6JkL4wzgbUb.png" />
+      <file href="mobile/5Zq6GqdvJzf.png" />
+      <file href="meta.xml" />
+      <file href="story_content/triggers.js" />
+      <file href="story_content/user.js" />
+      <file href="mobile/Slide6nyrjNqJncL.jpg" />
+      <file href="mobile/Shape5dkugcHDhTR.png" />
+      <file href="mobile/Shape5hVC3a4whDH.png" />
+      <file href="mobile/Shape5yDV4B7Ytpt.png" />
+      <file href="html5/data/css/output.min.css" />
+      <file href="html5/data/js/5iMGUZdS0XT.js" />
+      <file href="html5/data/js/5x6QL75Dvat.js" />
+      <file href="html5/data/js/5ygzQ269UTT.js" />
+      <file href="html5/data/js/6lKlACGD8CB.js" />
+      <file href="html5/data/js/data.js" />
+      <file href="html5/data/js/frame.js" />
+      <file href="html5/data/js/paths.js" />
+      <file href="html5/lib/scripts/bootstrapper.min.js" />
+      <file href="html5/lib/scripts/frame.desktop.min.js" />
+      <file href="html5/lib/scripts/frame.mobile.min.js" />
+      <file href="html5/lib/scripts/slides.min.js" />
+      <file href="html5/lib/stylesheets/desktop.min.css" />
+      <file href="html5/lib/stylesheets/mobile.min.css" />
+      <file href="html5/lib/stylesheets/mobile-fonts/open-sans-bold.woff" />
+      <file href="html5/lib/stylesheets/mobile-fonts/open-sans-light.woff" />
+      <file href="html5/lib/stylesheets/mobile-fonts/open-sans-regular.woff" />
+      <file href="analytics-frame.html" />
+      <file href="story.html" />
+      <file href="index_lms.html" />
+      <file href="lms/AICCComm.html" />
+      <file href="lms/blank.html" />
+      <file href="lms/browsersniff.js" />
+      <file href="lms/goodbye.html" />
+      <file href="lms/scormdriver.js" />
+    </resource>
+  </resources>
+</manifest>

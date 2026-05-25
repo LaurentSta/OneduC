@@ -179,9 +179,26 @@ function GroupModuleFlow({
     [normalizedAvailableModules],
   );
 
-  const [selectedModules, setSelectedModules] = useState(() =>
-    normalizeSelectedModules(initialModules, availableModuleMap),
-  );
+  const storageKey = String(mountNode?.dataset?.storageKey || '');
+
+  const readStoredModules = useCallback(() => {
+    if (!storageKey) return [];
+
+    try {
+      const storedData = JSON.parse(window.localStorage.getItem(storageKey) || '{}');
+      return Array.isArray(storedData.modules) ? storedData.modules : [];
+    } catch (error) {
+      return [];
+    }
+  }, [storageKey]);
+
+  const [selectedModules, setSelectedModules] = useState(() => {
+    const storedModules = readStoredModules();
+    return normalizeSelectedModules(
+      storedModules.length > 0 ? storedModules : initialModules,
+      availableModuleMap,
+    );
+  });
 
   const [pickerTab, setPickerTab] = useState('modules');
   const [loadedParcours, setLoadedParcours] = useState(() => {
@@ -222,6 +239,23 @@ function GroupModuleFlow({
     () => new Set(selectedModules.map((module) => module.id)),
     [selectedModules],
   );
+
+  useEffect(() => {
+    if (!storageKey) return;
+
+    try {
+      const storedData = JSON.parse(window.localStorage.getItem(storageKey) || '{}');
+      window.localStorage.setItem(storageKey, JSON.stringify({
+        ...storedData,
+        modules: selectedModules.map((module) => ({
+          id: module.id,
+          title: module.title,
+        })),
+      }));
+    } catch (error) {
+      // Ignore localStorage failures: the form can still be completed.
+    }
+  }, [selectedModules, storageKey]);
 
   const selectableModules = useMemo(
     () => normalizedAvailableModules.filter((module) => !selectedIds.has(module.id)),

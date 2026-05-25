@@ -117,18 +117,37 @@
                             Ajoutez un ou plusieurs formateurs actifs deja inscrits pour coanimer ce groupe.
                         </p>
 
-                        <label for="training-co-trainer-search" class="mt-5 block text-sm font-semibold text-gray-900">Rechercher par email</label>
+                        <label for="training-co-trainer-search" class="mt-5 block text-sm font-semibold text-gray-900">Rechercher par nom ou email</label>
                         <input
                             id="training-co-trainer-search"
-                            type="email"
+                            type="search"
+                            autocomplete="off"
                             class="mt-2 block w-full rounded-lg border border-gray-300 bg-white p-2.5 text-sm text-gray-900 focus:border-orangeone focus:ring-orangeone"
-                            placeholder="Saisissez les 3 premiers caracteres de l'email"
+                            placeholder="Saisissez Karim ou son email"
                         >
+                        <div id="training-co-trainer-suggestions" class="mt-2 hidden overflow-hidden rounded-xl border border-orange-200 bg-white shadow-sm">
+                            <button
+                                type="button"
+                                class="flex w-full items-center justify-between gap-4 px-4 py-3 text-left transition hover:bg-orange-50"
+                                data-co-trainer-name="Karim Benali"
+                                data-co-trainer-email="karim.benali@oneduc-demo.fr"
+                            >
+                                <span>
+                                    <span class="block text-sm font-bold text-gray-900">Karim Benali</span>
+                                    <span class="block text-xs font-semibold text-gray-500">karim.benali@oneduc-demo.fr</span>
+                                </span>
+                                <span class="rounded-full bg-orange-100 px-3 py-1 text-xs font-bold text-orangeone">Ajouter</span>
+                            </button>
+                        </div>
                         <p class="mt-2 text-xs text-gray-500">Seuls les formateurs actifs deja inscrits sont proposes.</p>
 
                         <p class="mt-6 text-xs font-bold uppercase tracking-[0.24em] text-gray-500">Formateurs associes</p>
-                        <div class="mt-3 inline-flex rounded-lg border border-dashed border-gray-300 bg-white/70 px-4 py-3 text-sm text-gray-500">
+                        <div id="training-co-trainers-empty" class="mt-3 inline-flex rounded-lg border border-dashed border-gray-300 bg-white/70 px-4 py-3 text-sm text-gray-500">
                             Aucun co-formateur ajoute pour le moment.
+                        </div>
+                        <div id="training-co-trainers-selected" class="mt-3 hidden rounded-lg border border-orange-200 bg-white px-4 py-3">
+                            <span class="block text-sm font-bold text-gray-900">Karim Benali</span>
+                            <span class="block text-xs font-semibold text-gray-500">karim.benali@oneduc-demo.fr</span>
                         </div>
                     </div>
                 </div>
@@ -160,16 +179,75 @@
 
             const nameInput = document.getElementById('training-group-name');
             const descriptionInput = document.getElementById('training-group-description');
+            const coTrainerSearch = document.getElementById('training-co-trainer-search');
+            const coTrainerSuggestions = document.getElementById('training-co-trainer-suggestions');
+            const coTrainerSuggestionButton = coTrainerSuggestions?.querySelector('[data-co-trainer-email]');
+            const coTrainerEmpty = document.getElementById('training-co-trainers-empty');
+            const coTrainerSelected = document.getElementById('training-co-trainers-selected');
             const invalidClasses = ['border-red-500', 'bg-red-50'];
             const storageKey = 'oneduc_training_group_creation';
+            const karimCoTrainer = {
+                name: 'Karim Benali',
+                email: 'karim.benali@oneduc-demo.fr',
+            };
+            const readSavedData = () => JSON.parse(window.localStorage.getItem(storageKey) || '{}');
+            const writeSavedData = (data) => {
+                const savedData = readSavedData();
+                window.localStorage.setItem(storageKey, JSON.stringify({
+                    ...savedData,
+                    ...data,
+                }));
+            };
 
             const clearFieldState = (field) => {
                 field.classList.remove(...invalidClasses);
             };
 
             [nameInput, descriptionInput].forEach((field) => {
-                field?.addEventListener('input', () => clearFieldState(field));
+                field?.addEventListener('input', () => {
+                    clearFieldState(field);
+                    writeSavedData({
+                        name: nameInput.value.trim(),
+                        description: descriptionInput.value.trim(),
+                        coTrainer: coTrainerSelected?.dataset.email || '',
+                    });
+                });
             });
+
+            const updateCoTrainerSuggestion = () => {
+                if (!coTrainerSearch || !coTrainerSuggestions) {
+                    return;
+                }
+
+                const query = coTrainerSearch.value.trim().toLowerCase();
+                const searchableText = `${karimCoTrainer.name} ${karimCoTrainer.email}`.toLowerCase();
+                coTrainerSuggestions.classList.toggle('hidden', query.length === 0 || !searchableText.includes(query));
+            };
+
+            coTrainerSearch?.addEventListener('input', updateCoTrainerSuggestion);
+
+            coTrainerSuggestionButton?.addEventListener('click', () => {
+                coTrainerSearch.value = karimCoTrainer.email;
+                coTrainerSuggestions.classList.add('hidden');
+                coTrainerEmpty?.classList.add('hidden');
+                coTrainerSelected?.classList.remove('hidden');
+                coTrainerSelected?.setAttribute('data-email', karimCoTrainer.email);
+                writeSavedData({ coTrainer: karimCoTrainer.email });
+            });
+
+            const savedData = readSavedData();
+            if (savedData.name) {
+                nameInput.value = savedData.name;
+            }
+            if (savedData.description) {
+                descriptionInput.value = savedData.description;
+            }
+            if (savedData.coTrainer === karimCoTrainer.email) {
+                coTrainerSearch.value = karimCoTrainer.email;
+                coTrainerEmpty?.classList.add('hidden');
+                coTrainerSelected?.classList.remove('hidden');
+                coTrainerSelected?.setAttribute('data-email', karimCoTrainer.email);
+            }
 
             nextButton.addEventListener('click', (event) => {
                 const missingFields = [];
@@ -180,12 +258,11 @@
                 }
 
                 if (missingFields.length === 0) {
-                    const savedData = JSON.parse(window.localStorage.getItem(storageKey) || '{}');
-                    window.localStorage.setItem(storageKey, JSON.stringify({
-                        ...savedData,
+                    writeSavedData({
                         name: nameInput.value.trim(),
                         description: descriptionInput.value.trim(),
-                    }));
+                        coTrainer: coTrainerSelected?.dataset.email || '',
+                    });
                     errorBox.classList.add('hidden');
                     errorList.innerHTML = '';
                     return;
@@ -358,11 +435,27 @@
             const errorBox = document.getElementById('training-group-students-errors');
             const errorList = errorBox?.querySelector('[data-role="messages"]');
             const invalidClasses = ['border-red-500', 'bg-red-50'];
+            const storageKey = 'oneduc_training_group_creation';
             const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 
             if (!container || !addButton || !nextButton || !passwordInput || !errorBox || !errorList) {
                 return;
             }
+
+            const readSavedData = () => JSON.parse(window.localStorage.getItem(storageKey) || '{}');
+            const collectStudents = () => Array.from(container.querySelectorAll('.training-student-row')).map((row) => ({
+                firstname: row.querySelector('[data-field="firstname"], input[id*="firstname"]')?.value.trim() || '',
+                lastname: row.querySelector('[data-field="lastname"], input[id*="lastname"]')?.value.trim() || '',
+                email: row.querySelector('[data-field="email"], input[type="email"], input[id*="email"]')?.value.trim() || '',
+            })).filter((student) => student.firstname || student.lastname || student.email);
+            const writeSavedData = () => {
+                const savedData = readSavedData();
+                window.localStorage.setItem(storageKey, JSON.stringify({
+                    ...savedData,
+                    students: collectStudents(),
+                    temporaryPassword: passwordInput.value.trim(),
+                }));
+            };
 
             const renumberRows = () => {
                 container.querySelectorAll('.training-student-row').forEach((row, index) => {
@@ -393,16 +486,49 @@
                     if (container.querySelectorAll('.training-student-row').length > 1) {
                         row.remove();
                         renumberRows();
+                        writeSavedData();
                     }
                 });
 
                 row.querySelectorAll('input').forEach((input) => {
-                    input.addEventListener('input', () => input.classList.remove(...invalidClasses));
+                    input.addEventListener('input', () => {
+                        input.classList.remove(...invalidClasses);
+                        writeSavedData();
+                    });
                 });
             };
 
             container.querySelectorAll('.training-student-row').forEach(bindRow);
-            passwordInput.addEventListener('input', () => passwordInput.classList.remove(...invalidClasses));
+            passwordInput.addEventListener('input', () => {
+                passwordInput.classList.remove(...invalidClasses);
+                writeSavedData();
+            });
+
+            const hydrateSavedStudents = () => {
+                const savedData = readSavedData();
+                const savedStudents = Array.isArray(savedData.students) ? savedData.students : [];
+                const template = container.querySelector('.training-student-row');
+
+                if (savedStudents.length > 0 && template) {
+                    container.innerHTML = '';
+                    savedStudents.forEach((student) => {
+                        const row = template.cloneNode(true);
+                        row.querySelector('[data-field="firstname"], input[id*="firstname"]').value = student.firstname || '';
+                        row.querySelector('[data-field="lastname"], input[id*="lastname"]').value = student.lastname || '';
+                        row.querySelector('[data-field="email"], input[type="email"], input[id*="email"]').value = student.email || '';
+                        row.querySelectorAll('input').forEach((input) => input.classList.remove(...invalidClasses));
+                        container.appendChild(row);
+                        bindRow(row);
+                    });
+                    renumberRows();
+                }
+
+                if (savedData.temporaryPassword) {
+                    passwordInput.value = savedData.temporaryPassword;
+                }
+            };
+
+            hydrateSavedStudents();
 
             addButton.addEventListener('click', () => {
                 const template = container.querySelector('.training-student-row');
@@ -416,6 +542,7 @@
                 container.appendChild(clone);
                 bindRow(clone);
                 renumberRows();
+                writeSavedData();
             });
 
             window.validateTrainingGroupStudents = (event, form) => {
@@ -474,18 +601,7 @@
 
                 const uniqueMessages = [...new Set(messages)];
                 if (uniqueMessages.length === 0) {
-                    const savedData = JSON.parse(window.localStorage.getItem('oneduc_training_group_creation') || '{}');
-                    const students = Array.from(container.querySelectorAll('.training-student-row')).map((row) => ({
-                        firstname: row.querySelector('[data-field="firstname"], input[id*="firstname"]')?.value.trim() || '',
-                        lastname: row.querySelector('[data-field="lastname"], input[id*="lastname"]')?.value.trim() || '',
-                        email: row.querySelector('[data-field="email"], input[type="email"], input[id*="email"]')?.value.trim() || '',
-                    })).filter((student) => student.firstname || student.lastname || student.email);
-
-                    window.localStorage.setItem('oneduc_training_group_creation', JSON.stringify({
-                        ...savedData,
-                        students,
-                        temporaryPassword: passwordInput.value.trim(),
-                    }));
+                    writeSavedData();
                     errorBox.classList.add('hidden');
                     if (event?.type === 'click') {
                         window.location.assign(form?.getAttribute('action') || nextButton.form?.getAttribute('action') || nextButton.dataset.nextUrl);
@@ -574,9 +690,22 @@
             'duration_label' => '30 min',
         ],
     ];
+    $trainingGroupCompletionUrl = route('formateur.parcours.lessons.part.complete', [
+        'module' => $activeModuleKey,
+        'chapter' => $activeChapterKey,
+        'lesson' => $activeLessonKey,
+        'part' => 'finalisation',
+    ]);
 @endphp
 <article class="mx-auto w-full max-w-[1285px] rounded-[24px] border border-gray-100 bg-white p-5 shadow-sm md:p-6">
-    <form id="training-group-modules-form" action="{{ $mixedPartUrls['finalisation'] ?? '#' }}" class="space-y-6" onsubmit="return window.validateTrainingGroupModules ? window.validateTrainingGroupModules(event, this) : false;">
+    <form
+        id="training-group-modules-form"
+        action="{{ $mixedPartUrls['finalisation'] ?? '#' }}"
+        data-completion-url="{{ $trainingGroupCompletionUrl }}"
+        data-csrf-token="{{ csrf_token() }}"
+        class="space-y-6"
+        onsubmit="window.validateTrainingGroupModules ? window.validateTrainingGroupModules(event, this) : event.preventDefault(); return false;"
+    >
         <div id="training-group-modules-errors" class="hidden rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-700">
             <div class="flex items-start gap-3">
                 <span class="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-700">
@@ -611,6 +740,9 @@
                 <p class="mt-2 text-sm text-gray-600">
                     Le rendu reprend déjà la même logique d’organisation que sur la fiche d’édition.
                 </p>
+                <p class="mt-2 text-sm font-semibold text-orangeone">
+                    Pour valider l’activité, le groupe doit contenir les modules attendus, dans la bonne quantité et dans le bon ordre.
+                </p>
             </div>
 
             <div
@@ -619,6 +751,7 @@
                 data-available-modules='@json($trainingAvailableModules)'
                 data-available-parcours='[]'
                 data-selected-modules='[]'
+                data-storage-key="oneduc_training_group_creation"
                 class="space-y-6"
             ></div>
 
@@ -653,8 +786,9 @@
             const errorBox = document.getElementById('training-group-modules-errors');
             const errorList = errorBox?.querySelector('[data-role="messages"]');
             const successBox = document.getElementById('training-group-modules-success');
+            const submitButton = document.getElementById('training-group-modules-submit');
 
-            if (!form || !errorBox || !errorList || !successBox) {
+            if (!form || !errorBox || !errorList || !successBox || !submitButton) {
                 return;
             }
 
@@ -662,38 +796,76 @@
                 window.dispatchEvent(new CustomEvent('oneduc:group-flow-refresh'));
             });
 
-            window.validateTrainingGroupModules = (event) => {
+            const showMessages = (messages) => {
+                errorList.innerHTML = '';
+                messages.forEach((message) => {
+                    const item = document.createElement('li');
+                    item.textContent = message;
+                    errorList.appendChild(item);
+                });
+                errorBox.classList.remove('hidden');
+                errorBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            };
+
+            window.validateTrainingGroupModules = async (event) => {
+                event.preventDefault();
+
                 const selectedModules = form.querySelectorAll('input[name="modules[]"]');
                 errorList.innerHTML = '';
                 successBox.classList.add('hidden');
 
-                if (selectedModules.length > 0) {
-                    const savedData = JSON.parse(window.localStorage.getItem('oneduc_training_group_creation') || '{}');
-                    const selectedModuleData = Array.from(selectedModules).map((input) => {
-                        const row = input.closest('tr');
-                        return {
-                            id: input.value,
-                            title: row?.querySelector('td:nth-child(2)')?.textContent.trim() || `Module #${input.value}`,
-                        };
-                    });
-
-                    window.localStorage.setItem('oneduc_training_group_creation', JSON.stringify({
-                        ...savedData,
-                        modules: selectedModuleData,
-                    }));
-                    errorBox.classList.add('hidden');
-                    successBox.classList.remove('hidden');
-                    event.preventDefault();
-                    window.location.assign(form.getAttribute('action') || '#');
+                if (selectedModules.length === 0) {
+                    showMessages(['Ajoutez au moins un module au parcours.']);
                     return false;
                 }
 
-                event.preventDefault();
-                const item = document.createElement('li');
-                item.textContent = 'Ajoutez au moins un module au parcours.';
-                errorList.appendChild(item);
-                errorBox.classList.remove('hidden');
-                errorBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                const savedData = JSON.parse(window.localStorage.getItem('oneduc_training_group_creation') || '{}');
+                const selectedModuleData = Array.from(selectedModules).map((input) => {
+                    const row = input.closest('tr');
+                    return {
+                        id: input.value,
+                        title: row?.querySelector('td:nth-child(2)')?.textContent.trim() || `Module #${input.value}`,
+                    };
+                });
+                const completionPayload = {
+                    ...savedData,
+                    modules: selectedModuleData,
+                };
+
+                submitButton.disabled = true;
+                submitButton.classList.add('cursor-wait', 'opacity-70');
+
+                try {
+                    const response = await fetch(form.dataset.completionUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': form.dataset.csrfToken,
+                        },
+                        body: JSON.stringify(completionPayload),
+                    });
+                    const data = await response.json();
+
+                    if (!response.ok || !data.success) {
+                        showMessages(Array.isArray(data.messages) && data.messages.length > 0
+                            ? data.messages
+                            : ['La création du groupe n’est pas encore complète.']);
+                        return false;
+                    }
+
+                    window.localStorage.setItem('oneduc_training_group_creation', JSON.stringify(completionPayload));
+                    errorBox.classList.add('hidden');
+                    successBox.classList.remove('hidden');
+                    window.location.assign(data.redirect_url || form.getAttribute('action') || '#');
+                    return false;
+                } catch (error) {
+                    showMessages(['Impossible de valider l’activité pour le moment. Réessayez dans quelques instants.']);
+                } finally {
+                    submitButton.disabled = false;
+                    submitButton.classList.remove('cursor-wait', 'opacity-70');
+                }
+
                 return false;
             };
         })();
@@ -734,16 +906,7 @@
                                             1 co-formateur
                                         </span>
                                         <div class="pointer-events-none absolute right-0 top-full z-20 mt-2 hidden w-max max-w-xs rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 shadow-lg group-hover:block group-focus-within:block">
-                                            <div>instructor@gmail.com</div>
-                                        </div>
-                                    </div>
-
-                                    <div class="relative inline-flex group">
-                                        <span class="inline-flex cursor-default items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
-                                            Groupe suivi
-                                        </span>
-                                        <div class="pointer-events-none absolute right-0 top-full z-20 mt-2 hidden w-max max-w-xs rounded-lg border border-blue-200 bg-white px-3 py-2 text-xs text-blue-900 shadow-lg group-hover:block group-focus-within:block">
-                                            <div>Claire Observatrice</div>
+                                            <div>Karim Ben Ali</div>
                                         </div>
                                     </div>
                                 </div>

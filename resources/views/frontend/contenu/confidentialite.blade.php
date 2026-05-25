@@ -28,19 +28,67 @@
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-4">
     <div class="lg:col-span-2">
       <div class="bg-white rounded-[20px] shadow-md p-8 w-full">
-        <h2 class="text-lg font-semibold mb-2">Quelles données sont collectées ?</h2>
-        <p>Nous collectons uniquement les données nécessaires à l’accès et à l’amélioration de nos services de formation.</p>
+        <h2 class="text-lg font-semibold mb-2">Responsable de traitement</h2>
+        <p>
+          L’Association Onéduc (SIREN 904 800 661), dont le siège est situé au 78 rue Danton, boîte n°10, 93310 Le Pré-Saint-Gervais,
+          est responsable du traitement des données personnelles collectées via la plateforme Oneduc.fr.<br>
+          Contact : <a href="mailto:contact@oneduc.fr" class="underline text-blue-600">contact@oneduc.fr</a>
+        </p>
 
-        <h2 class="text-lg font-semibold mt-6 mb-2">À quoi servent vos données ?</h2>
-        <p>Les données servent à gérer votre accès à la plateforme, personnaliser les contenus et suivre votre progression pédagogique.</p>
+        <h2 class="text-lg font-semibold mt-6 mb-2">Quelles données sont collectées ?</h2>
+        <p>Nous collectons uniquement les données nécessaires au fonctionnement de la plateforme :</p>
+        <ul class="list-disc list-inside mt-2 space-y-1">
+          <li><strong>Données de compte :</strong> nom, prénom, adresse e-mail, mot de passe (chiffré)</li>
+          <li><strong>Données pédagogiques :</strong> scores aux modules SCORM, résultats de quiz, temps de connexion, progression dans les parcours</li>
+          <li><strong>Données techniques :</strong> adresse IP (journaux serveur), cookies de session</li>
+        </ul>
+
+        <h2 class="text-lg font-semibold mt-6 mb-2">Bases légales des traitements</h2>
+        <ul class="list-disc list-inside mt-2 space-y-1">
+          <li><strong>Gestion du compte et accès à la plateforme :</strong> exécution du contrat (art. 6.1.b RGPD)</li>
+          <li><strong>Suivi de la progression pédagogique :</strong> exécution du contrat (art. 6.1.b RGPD)</li>
+          <li><strong>Sécurité et journaux techniques :</strong> intérêt légitime (art. 6.1.f RGPD)</li>
+        </ul>
+
+        <h2 class="text-lg font-semibold mt-6 mb-2">Durées de conservation</h2>
+        <ul class="list-disc list-inside mt-2 space-y-1">
+          <li><strong>Données de compte :</strong> durée de l’inscription, puis 3 ans après clôture du compte</li>
+          <li><strong>Données pédagogiques :</strong> durée de la formation, puis 5 ans (justificatif de suivi)</li>
+          <li><strong>Journaux techniques :</strong> 12 mois</li>
+        </ul>
+
+        <h2 class="text-lg font-semibold mt-6 mb-2">Destinataires des données</h2>
+        <p>
+          Vos données sont hébergées par <strong>IONOS SARL</strong> (sous-traitant), qui agit exclusivement selon nos instructions.
+          Aucun transfert de données n’est effectué en dehors de l’Union européenne.
+          Vos données ne sont jamais vendues ni cédées à des tiers à des fins commerciales.
+        </p>
 
         <h2 class="text-lg font-semibold mt-6 mb-2">Comment vos données sont-elles protégées ?</h2>
-        <p>Nous mettons en œuvre des mesures techniques et organisationnelles pour assurer la sécurité de vos données personnelles.</p>
+        <p>
+          Nous mettons en œuvre des mesures techniques et organisationnelles adaptées : chiffrement des mots de passe,
+          connexions sécurisées (HTTPS), accès restreint aux données selon les rôles, sauvegardes régulières.
+        </p>
 
-        <h2 class="text-lg font-semibold mt-6 mb-2">Quels sont vos droits ?</h2>
-        <p>Vous pouvez accéder, rectifier ou supprimer vos données. Pour cela, contactez-nous à l’adresse <a href="mailto:contact@oneduc.fr" class="underline text-blue-600">contact@oneduc.fr</a>.</p>
+        <h2 class="text-lg font-semibold mt-6 mb-2">Vos droits</h2>
+        <p>Conformément au RGPD, vous disposez des droits suivants sur vos données personnelles :</p>
+        <ul class="list-disc list-inside mt-2 space-y-1">
+          <li><strong>Droit d’accès :</strong> obtenir une copie de vos données</li>
+          <li><strong>Droit de rectification :</strong> corriger des données inexactes</li>
+          <li><strong>Droit à l’effacement :</strong> demander la suppression de vos données</li>
+          <li><strong>Droit à la portabilité :</strong> recevoir vos données dans un format structuré</li>
+          <li><strong>Droit d’opposition et de limitation :</strong> limiter ou vous opposer à certains traitements</li>
+        </ul>
+        <p class="mt-2">
+          Pour exercer ces droits, écrivez à <a href="mailto:contact@oneduc.fr" class="underline text-blue-600">contact@oneduc.fr</a>.
+          Nous nous engageons à répondre dans un délai d’un mois.
+        </p>
+        <p class="mt-2">
+          Si vous estimez que vos droits ne sont pas respectés, vous pouvez adresser une réclamation à la
+          <strong>CNIL</strong> : <a href="https://www.cnil.fr" class="underline text-blue-600" target="_blank">www.cnil.fr</a>.
+        </p>
 
-        <p class="mt-6 text-sm text-gray-500">Dernière mise à jour : 28 mai 2025</p>
+        <p class="mt-6 text-sm text-gray-500">Dernière mise à jour : 16 mai 2026</p>
       </div>
     </div>
 

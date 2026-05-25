@@ -3,6 +3,10 @@
   Variables attendues : $parcours (optionnel), $availableModules, $selectedModules, $storeUrl, $method
 --}}
 
+@php
+  $builderMode = $builderMode ?? 'edit';
+@endphp
+
 <div class="bg-white rounded-[20px] shadow-md px-8 py-6 mb-6">
   <h2 class="text-base font-semibold text-gray-800 mb-4">Informations générales</h2>
 
@@ -39,6 +43,6 @@
   data-csrf-token="{{ csrf_token() }}"
   data-store-url="{{ $storeUrl }}"
   data-method="{{ $method }}"
-  data-mode="edit"
+  data-mode="{{ $builderMode }}"
   class="min-h-[520px]"
 ></div>

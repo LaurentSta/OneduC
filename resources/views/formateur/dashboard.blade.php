@@ -57,5 +57,6 @@
     window.addEventListener('resize', syncAppHeaderOffset);
   </script>
 
+@include('partials.a11y-scripts')
 </body>
 </html>

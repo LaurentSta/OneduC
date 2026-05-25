@@ -40,6 +40,52 @@ function nodePosition(index) {
   return { x: col * FLOW_HORIZONTAL_GAP, y: row * FLOW_VERTICAL_GAP + 40 };
 }
 
+function normalizeForMatch(value) {
+  return String(value ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+function moduleTitleMatches(item, expectedTitle) {
+  if (item?.type !== 'module') return false;
+
+  const title = normalizeForMatch(item.title);
+  const expected = normalizeForMatch(expectedTitle);
+
+  return title === expected || title.includes(expected);
+}
+
+function validateSimulationPathItems(items) {
+  if (items.length !== 5) {
+    return 'Le parcours doit contenir exactement 5 étapes : un nuage de mots, trois modules, puis un sondage.';
+  }
+
+  if (items[0]?.type !== 'wordcloud') {
+    return 'La première étape doit être un nuage de mots.';
+  }
+
+  if (!moduleTitleMatches(items[1], 'Securite alimentaire 2026')) {
+    return 'La deuxième étape doit être le module Sécurité alimentaire 2026.';
+  }
+
+  if (!moduleTitleMatches(items[2], 'Hygiene en cuisine professionnelle')) {
+    return 'La troisième étape doit être le module Hygiène en cuisine professionnelle.';
+  }
+
+  if (!moduleTitleMatches(items[3], 'Nettoyage et desinfection des espaces')) {
+    return 'La quatrième étape doit être le module Nettoyage et désinfection des espaces.';
+  }
+
+  if (items[4]?.type !== 'poll') {
+    return 'La cinquième étape doit être un sondage.';
+  }
+
+  return '';
+}
+
 // ─── Normalize incoming data ──────────────────────────────────────────────────
 
 function normalizeAvailableModules(rawModules) {
@@ -139,6 +185,28 @@ function PollIcon({ className = 'h-4 w-4' }) {
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8"
         d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
     </svg>
+  );
+}
+
+function pollTitle(item) {
+  return item.poll_questions?.[0]?.question || item.poll_question || 'Sondage';
+}
+
+function pollChoices(item) {
+  return item.poll_questions?.[0]?.choices || item.poll_choices || [];
+}
+
+function ToolButton({ label, className, onClick, disabled = false }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-disabled={disabled}
+      className={`inline-flex w-full items-center justify-center rounded-[10px] px-4 py-2.5 text-sm font-bold text-white shadow-sm transition ${className} ${disabled ? 'cursor-not-allowed opacity-45 grayscale hover:opacity-45' : ''}`}
+    >
+      {label}
+    </button>
   );
 }
 
@@ -402,6 +470,7 @@ function PollForm({ onAdd, onCancel, initialValues = null }) {
 
 function ParcoursBuilder({ availableModules = [], initialItems = [], csrfToken, storeUrl, method, mode }) {
   const isPreview = mode === 'preview';
+  const isSimulation = mode === 'simulation';
 
   const normalizedAvailableModules = useMemo(() => normalizeAvailableModules(availableModules), [availableModules]);
   const availableModuleMap = useMemo(
@@ -469,19 +538,19 @@ function ParcoursBuilder({ availableModules = [], initialItems = [], csrfToken, 
             <div className="flex items-start gap-2">
               <PollIcon className="mt-0.5 h-4 w-4 shrink-0 text-teal-600" />
               <span className="text-[12px] font-semibold leading-snug text-teal-900">
-                {`${item.position}. ${item.poll_question || 'Sondage'}`}
+                {`${item.position}. ${pollTitle(item)}`}
               </span>
             </div>
-            {item.poll_choices?.length > 0 && (
+            {pollChoices(item).length > 0 && (
               <ul className="mt-2 space-y-0.5">
-                {item.poll_choices.slice(0, 3).map((c, i) => (
+                {pollChoices(item).slice(0, 3).map((c, i) => (
                   <li key={i} className="text-[10px] text-teal-700 flex items-center gap-1">
                     <span className="inline-block h-1.5 w-1.5 rounded-full bg-teal-400 shrink-0" />
                     {c}
                   </li>
                 ))}
-                {item.poll_choices.length > 3 && (
-                  <li className="text-[10px] text-teal-500 italic">+{item.poll_choices.length - 3} choix…</li>
+                {pollChoices(item).length > 3 && (
+                  <li className="text-[10px] text-teal-500 italic">+{pollChoices(item).length - 3} choix…</li>
                 )}
               </ul>
             )}
@@ -584,10 +653,18 @@ function ParcoursBuilder({ availableModules = [], initialItems = [], csrfToken, 
     setShowWcForm(false);
   };
 
-  const addPoll = ({ poll_question, poll_choices }) => {
+  const addPoll = ({ poll_question, poll_choices, poll_questions, poll_duration }) => {
     setItems((current) => renumber([
       ...current,
-      { type: 'poll', id: newPollId(), position: current.length + 1, poll_question, poll_choices },
+      {
+        type: 'poll',
+        id: newPollId(),
+        position: current.length + 1,
+        poll_question,
+        poll_choices,
+        poll_questions: poll_questions ?? [],
+        poll_duration: poll_duration ?? null,
+      },
     ]));
     setShowPollForm(false);
   };
@@ -625,9 +702,31 @@ function ParcoursBuilder({ availableModules = [], initialItems = [], csrfToken, 
         items: items.map((item) => {
           if (item.type === 'module')    return { type: 'module',    module_id: item.id, position: item.position };
           if (item.type === 'wordcloud') return { type: 'wordcloud', wc_title: item.wc_title, wc_questions: item.wc_questions ?? [], wc_duration: item.wc_duration ?? null, position: item.position };
-          return { type: 'poll', poll_question: item.poll_question, poll_choices: item.poll_choices, position: item.position };
+          return { type: 'poll', poll_questions: item.poll_questions ?? [], poll_duration: item.poll_duration ?? null, position: item.position };
         }),
       };
+
+      if (isSimulation) {
+        if (!payload.title.trim()) {
+          setSaveError('Le titre est obligatoire.');
+          return;
+        }
+
+        const simulationError = validateSimulationPathItems(items);
+        if (simulationError) {
+          setSaveError(simulationError);
+          return;
+        }
+
+        window.localStorage.setItem('oneduc_training_path_creation', JSON.stringify(payload));
+
+        if (storeUrl) {
+          window.location.href = storeUrl;
+        }
+
+        return;
+      }
+
       const resp = await fetch(storeUrl, {
         method,
         headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' },
@@ -648,8 +747,172 @@ function ParcoursBuilder({ availableModules = [], initialItems = [], csrfToken, 
 
   // ── Render ────────────────────────────────────────────────────────────────
 
+  if (isSimulation && !isPreview) {
+    return (
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_18rem]">
+        <div className="space-y-4">
+          {showWcForm && (
+            <WordCloudForm onAdd={addWordCloud} onCancel={() => setShowWcForm(false)} />
+          )}
+          {showPollForm && (
+            <PollForm onAdd={addPoll} onCancel={() => setShowPollForm(false)} />
+          )}
+
+          <div className="bg-white rounded-[20px] shadow-md px-8 py-6 space-y-4">
+            <h2 className="text-base font-semibold text-gray-800">Étapes du parcours</h2>
+
+            <div className="flex flex-col gap-3 md:flex-row md:items-end">
+              <div className="w-full">
+                <select
+                  value={newModuleId}
+                  onChange={(e) => { setAddError(''); setNewModuleId(e.target.value); }}
+                  className="w-full rounded-[10px] border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E94D2A]"
+                >
+                  <option value="">— Sélectionner un module à ajouter —</option>
+                  {selectableModules.map((m) => (
+                    <option key={`opt-${m.id}`} value={m.id}>{m.title}</option>
+                  ))}
+                </select>
+                {addError && <p className="mt-1 text-sm text-red-600">{addError}</p>}
+              </div>
+              <button type="button" onClick={addModule} disabled={!newModuleId}
+                className="inline-flex items-center gap-2 rounded-[10px] bg-[#004461] px-4 py-2 text-sm font-bold text-white hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition md:shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                </svg>
+                Ajouter un module
+              </button>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-[20px] shadow-md overflow-hidden">
+            {items.length === 0 ? (
+              <div className="px-8 py-10 text-center text-gray-400">
+                Ajoutez des modules ci-dessus.
+              </div>
+            ) : (
+              <table className="min-w-full text-left text-sm text-gray-800">
+                <thead className="bg-[#004461] text-xs uppercase text-white">
+                  <tr>
+                    <th className="w-[64px] px-4 py-3 text-center">#</th>
+                    <th className="px-4 py-3">Étape</th>
+                    <th className="px-4 py-3">Détail</th>
+                    <th className="px-4 py-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.map((item, index) => {
+                    const isWc = item.type === 'wordcloud';
+                    const isPoll = item.type === 'poll';
+
+                    return (
+                    <tr key={item.id} className={`${index % 2 === 0 ? 'bg-white' : isWc ? 'bg-amber-50/40' : isPoll ? 'bg-teal-50/40' : 'bg-slate-50/40'} border-t transition-colors`}>
+                      <td className="px-4 py-3 text-center font-bold text-[#004461]">{item.position}</td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          {isWc
+                            ? <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-700"><CloudIcon className="h-3 w-3" />Nuage de mots</span>
+                            : isPoll
+                              ? <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-teal-100 text-teal-700"><PollIcon className="h-3 w-3" />Sondage</span>
+                              : <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 text-[#004461]"><OpenBookIcon className="h-3 w-3" />Module</span>
+                          }
+                          <span className="font-medium">
+                            {isWc ? item.wc_title : isPoll ? pollTitle(item) : item.title}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-gray-500 text-xs max-w-[260px] truncate">
+                        {item.type === 'wordcloud'
+                          ? item.wc_questions?.length > 0 ? `« ${item.wc_questions[0]} »${item.wc_questions.length > 1 ? ` +${item.wc_questions.length - 1}` : ''}` : '—'
+                          : item.type === 'poll'
+                            ? pollChoices(item).join(' / ')
+                            : `${item.lesson_count} leç. — ${item.duration_label}`
+                        }
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <div className="inline-flex gap-2">
+                          <button type="button" onClick={() => moveItem(item.id, -1)} disabled={index === 0}
+                            aria-label="Monter"
+                            className="inline-flex h-8 w-8 items-center justify-center rounded border border-gray-300 text-[#004461] hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                              <path d="m18 15-6-6-6 6" />
+                            </svg>
+                          </button>
+                          <button type="button" onClick={() => moveItem(item.id, +1)} disabled={index === items.length - 1}
+                            aria-label="Descendre"
+                            className="inline-flex h-8 w-8 items-center justify-center rounded border border-gray-300 text-[#004461] hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                              <path d="m6 9 6 6 6-6" />
+                            </svg>
+                          </button>
+                          <button type="button" onClick={() => removeItem(item.id)}
+                            className="rounded border border-gray-300 px-2 py-1 text-xs text-gray-600 hover:border-red-300 hover:text-red-600 transition">
+                            Retirer
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+          </div>
+
+          <div className="overflow-hidden rounded-[20px] border border-gray-200 bg-white shadow-md">
+            <div ref={canvasRef} className="h-[360px] w-full">
+              <ReactFlow
+                nodes={flowNodes}
+                edges={flowEdges}
+                onInit={(instance) => setFlowInstance(instance)}
+                nodesDraggable={false}
+                nodesConnectable={false}
+                elementsSelectable={false}
+                zoomOnDoubleClick={false}
+                proOptions={{ hideAttribution: true }}
+              >
+                <Controls showInteractive={false} position="bottom-right" />
+                <Background gap={18} size={1} color="#ddd" />
+              </ReactFlow>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-end gap-4 py-2">
+            {saveError && <p className="text-sm text-red-600">{saveError}</p>}
+            <button type="button" onClick={handleSave}
+              disabled={saving || items.length === 0}
+              className="inline-flex items-center gap-2 rounded-[10px] bg-[#E94D2A] px-6 py-3 text-sm font-bold text-white shadow hover:bg-[#cf4121] disabled:opacity-50 disabled:cursor-not-allowed transition">
+              {saving ? (
+                <svg className="h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                </svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                </svg>
+              )}
+              {saving ? 'Enregistrement…' : 'Créer le parcours'}
+            </button>
+          </div>
+        </div>
+
+        <aside className="space-y-3 self-start rounded-[20px] bg-white px-5 py-5 shadow-md xl:sticky xl:top-4">
+          <h2 className="text-base font-semibold text-gray-800">Outils numériques</h2>
+          <ToolButton label="Nuage de mots" className="bg-amber-500 hover:bg-amber-600" onClick={() => { setShowWcForm((v) => !v); setShowPollForm(false); }} />
+          <ToolButton label="Sondage" className="bg-teal-600 hover:bg-teal-700" onClick={() => { setShowPollForm((v) => !v); setShowWcForm(false); }} />
+          <ToolButton label="Roue aléatoire" className="bg-violet-600 hover:bg-violet-700" disabled />
+          <ToolButton label="Échelle de positionnement" className="bg-indigo-600 hover:bg-indigo-700" disabled />
+          <ToolButton label="Page collaborative" className="bg-cyan-600 hover:bg-cyan-700" disabled />
+          <ToolButton label="Mur de question" className="bg-indigo-600 hover:bg-indigo-700" disabled />
+        </aside>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-4">
+    <div className={!isPreview ? 'grid gap-4 xl:grid-cols-[minmax(0,1fr)_18rem]' : 'space-y-4'}>
+      <div className="space-y-4">
 
       {/* Toolbar add */}
       {!isPreview && (
@@ -678,22 +941,12 @@ function ParcoursBuilder({ availableModules = [], initialItems = [], csrfToken, 
               </svg>
               Ajouter un module
             </button>
-            <button type="button" onClick={() => { setShowWcForm((v) => !v); setShowPollForm(false); }}
-              className="inline-flex items-center gap-2 rounded-[10px] bg-amber-500 px-4 py-2 text-sm font-bold text-white hover:bg-amber-600 transition md:shrink-0">
-              <CloudIcon className="h-4 w-4" />
-              Nuage de mots
-            </button>
-            <button type="button" onClick={() => { setShowPollForm((v) => !v); setShowWcForm(false); }}
-              className="inline-flex items-center gap-2 rounded-[10px] bg-teal-600 px-4 py-2 text-sm font-bold text-white hover:bg-teal-700 transition md:shrink-0">
-              <PollIcon className="h-4 w-4" />
-              Sondage
-            </button>
           </div>
 
-          {showWcForm && (
+          {!isSimulation && showWcForm && (
             <WordCloudForm onAdd={addWordCloud} onCancel={() => setShowWcForm(false)} />
           )}
-          {showPollForm && (
+          {!isSimulation && showPollForm && (
             <PollForm onAdd={addPoll} onCancel={() => setShowPollForm(false)} />
           )}
         </div>
@@ -703,7 +956,7 @@ function ParcoursBuilder({ availableModules = [], initialItems = [], csrfToken, 
       <div className="bg-white rounded-[20px] shadow-md overflow-hidden">
         {items.length === 0 ? (
           <div className="px-8 py-10 text-center text-gray-400">
-            {isPreview ? 'Aucune étape dans ce parcours.' : 'Ajoutez des modules ou des nuages de mots ci-dessus.'}
+            {isPreview ? 'Aucune étape dans ce parcours.' : (isSimulation ? 'Ajoutez des modules ci-dessus.' : 'Ajoutez des modules, des nuages de mots ou des sondages ci-dessus.')}
           </div>
         ) : (
           <table className="min-w-full text-left text-sm text-gray-800">
@@ -733,7 +986,7 @@ function ParcoursBuilder({ availableModules = [], initialItems = [], csrfToken, 
                             : <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 text-[#004461]"><OpenBookIcon className="h-3 w-3" />Module</span>
                         }
                         <span className="font-medium">
-                          {isWc ? item.wc_title : isPoll ? item.poll_question : item.title}
+                          {isWc ? item.wc_title : isPoll ? pollTitle(item) : item.title}
                         </span>
                       </div>
                     </td>
@@ -741,7 +994,7 @@ function ParcoursBuilder({ availableModules = [], initialItems = [], csrfToken, 
                       {isWc
                         ? item.wc_questions?.length > 0 ? `« ${item.wc_questions[0]} »${item.wc_questions.length > 1 ? ` +${item.wc_questions.length - 1}` : ''}` : '—'
                         : isPoll
-                          ? item.poll_choices?.join(' / ')
+                          ? pollChoices(item).join(' / ')
                           : `${item.lesson_count} leç. — ${item.duration_label}`
                       }
                     </td>
@@ -851,9 +1104,26 @@ function ParcoursBuilder({ availableModules = [], initialItems = [], csrfToken, 
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
               </svg>
             )}
-            {saving ? 'Enregistrement…' : 'Enregistrer la formation'}
+            {saving ? 'Enregistrement…' : (isSimulation ? 'Créer le parcours' : 'Enregistrer la formation')}
           </button>
         </div>
+      )}
+      </div>
+
+      {!isPreview && (
+        <aside className="space-y-3 self-start rounded-[20px] bg-white px-5 py-5 shadow-md xl:sticky xl:top-4">
+          <h2 className="text-base font-semibold text-gray-800">Outils numériques</h2>
+          <ToolButton
+            label="Nuage de mots"
+            className="bg-amber-500 hover:bg-amber-600"
+            onClick={() => { setShowWcForm((v) => !v); setShowPollForm(false); }}
+          />
+          <ToolButton
+            label="Sondage"
+            className="bg-teal-600 hover:bg-teal-700"
+            onClick={() => { setShowPollForm((v) => !v); setShowWcForm(false); }}
+          />
+        </aside>
       )}
     </div>
   );
@@ -864,10 +1134,23 @@ function ParcoursBuilder({ availableModules = [], initialItems = [], csrfToken, 
 function mountParcoursBuilder() {
   document.querySelectorAll('[data-parcours-builder]').forEach((mount) => {
     if (mount.dataset.builderMounted === '1') return;
+    let initialItems = parseJsonDataset(mount, 'selectedItems', []);
+
+    if (initialItems.length === 0 && mount.dataset.localStorageKey) {
+      try {
+        const storedPayload = JSON.parse(window.localStorage.getItem(mount.dataset.localStorageKey) || '{}');
+        if (Array.isArray(storedPayload.items)) {
+          initialItems = storedPayload.items;
+        }
+      } catch {
+        initialItems = [];
+      }
+    }
+
     createRoot(mount).render(
       <ParcoursBuilder
         availableModules={parseJsonDataset(mount, 'availableModules', [])}
-        initialItems={parseJsonDataset(mount, 'selectedItems', [])}
+        initialItems={initialItems}
         csrfToken={mount.dataset.csrfToken ?? ''}
         storeUrl={mount.dataset.storeUrl ?? ''}
         method={mount.dataset.method ?? 'POST'}

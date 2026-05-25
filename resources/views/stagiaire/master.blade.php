@@ -54,6 +54,7 @@
 </script>
 
 <script src="https://vjs.zencdn.net/7.21.1/video.min.js"></script>
+@include('partials.a11y-scripts')
 </body>
 </html>
 

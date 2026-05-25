@@ -50,6 +50,22 @@
     const boutons = Array.from(parentDoc?.querySelectorAll("#next-lesson-button") ?? []);
     const textesBouton = Array.from(parentDoc?.querySelectorAll("#next-button-text") ?? []);
 
+    if (context?.hide_next_button === true) {
+      wrappers.forEach((wrapper) => {
+        wrapper.classList.add("hidden");
+        wrapper.style.pointerEvents = "none";
+      });
+
+      boutons.forEach((bouton) => {
+        bouton.style.opacity = "0";
+        bouton.style.pointerEvents = "none";
+        bouton.style.cursor = "default";
+      });
+
+      nextButtonShown = true;
+      return;
+    }
+
     wrappers.forEach((wrapper) => {
       wrapper.classList.remove("hidden");
       wrapper.style.pointerEvents = "auto";

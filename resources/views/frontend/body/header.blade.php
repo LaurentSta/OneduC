@@ -101,14 +101,10 @@
             @click="toggle()"
             :aria-expanded="open.toString()"
             aria-haspopup="true"
-            class="inline-flex items-center gap-2 rounded-full border border-bleuone/20 bg-white px-3 py-2 text-sm font-varela text-bleuone transition hover:border-orangeone hover:text-orangeone focus:outline-none focus:ring-2 focus:ring-bleuone focus:ring-offset-2"
+            class="inline-flex items-center justify-center rounded-full border border-bleuone/20 bg-white w-10 h-10 text-bleuone transition hover:border-orangeone hover:text-orangeone focus:outline-none focus:ring-2 focus:ring-bleuone focus:ring-offset-2"
             aria-label="Ouvrir les options d'accessibilité"
           >
-            <span class="font-bold leading-none">Aa</span>
-            <span class="hidden lg:inline">Accessibilité</span>
-            <svg :class="{ 'rotate-180': open }" class="h-4 w-4 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-            </svg>
+            <span class="text-lg font-bold leading-none select-none" style="font-family: 'OpenDyslexic', serif;">Aa</span>
           </button>
 
           <div
@@ -120,7 +116,7 @@
             x-transition:leave="transition ease-in duration-120"
             x-transition:leave-start="opacity-100 translate-y-0 scale-100"
             x-transition:leave-end="opacity-0 -translate-y-1 scale-95"
-            class="absolute right-0 z-50 mt-3 w-72 rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-xl shadow-bleuone/10"
+            class="absolute right-0 z-50 mt-3 w-72 rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-xl shadow-bleuone/10 max-h-[85vh] overflow-y-auto"
           >
             <p class="text-sm font-semibold text-bleuone">Options d'accessibilité</p>
             <button
@@ -158,6 +154,72 @@
               >
                 <span>OpenDyslexic</span>
                 <span data-dyslexic-status class="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-500">Off</span>
+              </button>
+            </div>
+
+            {{-- Interlignage --}}
+            <div class="mt-4 border-t border-slate-100 pt-4">
+              <p class="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Interlignage</p>
+              <div class="grid grid-cols-3 gap-2" role="group" aria-label="Interlignage">
+                <button type="button" data-line-height="normal" onclick="setLineHeight('normal')"
+                  class="rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-bleuone transition hover:border-bleuone hover:bg-bleuone/5 focus:outline-none focus:ring-2 focus:ring-bleuone"
+                  aria-label="Interlignage normal">Normal</button>
+                <button type="button" data-line-height="large" onclick="setLineHeight('large')"
+                  class="rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-bleuone transition hover:border-bleuone hover:bg-bleuone/5 focus:outline-none focus:ring-2 focus:ring-bleuone"
+                  aria-label="Interlignage large">Large</button>
+                <button type="button" data-line-height="xlarge" onclick="setLineHeight('xlarge')"
+                  class="rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-bleuone transition hover:border-bleuone hover:bg-bleuone/5 focus:outline-none focus:ring-2 focus:ring-bleuone"
+                  aria-label="Interlignage très large">Max</button>
+              </div>
+            </div>
+
+            {{-- Espacement des lettres --}}
+            <div class="mt-4 border-t border-slate-100 pt-4">
+              <p class="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Espacement</p>
+              <div class="grid grid-cols-3 gap-2" role="group" aria-label="Espacement des lettres">
+                <button type="button" data-letter-spacing="normal" onclick="setLetterSpacing('normal')"
+                  class="rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-bleuone transition hover:border-bleuone hover:bg-bleuone/5 focus:outline-none focus:ring-2 focus:ring-bleuone"
+                  aria-label="Espacement normal">Normal</button>
+                <button type="button" data-letter-spacing="large" onclick="setLetterSpacing('large')"
+                  class="rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-bleuone transition hover:border-bleuone hover:bg-bleuone/5 focus:outline-none focus:ring-2 focus:ring-bleuone"
+                  aria-label="Espacement large">Large</button>
+                <button type="button" data-letter-spacing="xlarge" onclick="setLetterSpacing('xlarge')"
+                  class="rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-bleuone transition hover:border-bleuone hover:bg-bleuone/5 focus:outline-none focus:ring-2 focus:ring-bleuone"
+                  aria-label="Espacement très large">Max</button>
+              </div>
+            </div>
+
+            {{-- Contraste --}}
+            <div class="mt-4 border-t border-slate-100 pt-4">
+              <p class="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Contraste</p>
+              <div class="grid grid-cols-2 gap-2" role="group" aria-label="Mode de contraste">
+                <button type="button" data-contrast="normal" onclick="setContrast('normal')"
+                  class="rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-bleuone transition hover:border-bleuone hover:bg-bleuone/5 focus:outline-none focus:ring-2 focus:ring-bleuone">
+                  Normal
+                </button>
+                <button type="button" data-contrast="dark" onclick="setContrast('dark')"
+                  class="rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-bleuone transition hover:border-bleuone hover:bg-bleuone/5 focus:outline-none focus:ring-2 focus:ring-bleuone">
+                  Sombre
+                </button>
+                <button type="button" data-contrast="sepia" onclick="setContrast('sepia')"
+                  class="rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-bleuone transition hover:border-bleuone hover:bg-bleuone/5 focus:outline-none focus:ring-2 focus:ring-bleuone">
+                  Sépia
+                </button>
+                <button type="button" data-contrast="high" onclick="setContrast('high')"
+                  class="rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-bleuone transition hover:border-bleuone hover:bg-bleuone/5 focus:outline-none focus:ring-2 focus:ring-bleuone">
+                  Contraste ++
+                </button>
+              </div>
+            </div>
+
+            {{-- Réinitialiser --}}
+            <div class="mt-4 border-t border-slate-100 pt-4">
+              <button type="button" onclick="resetA11y()"
+                class="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-500 transition hover:border-orangeone hover:text-orangeone focus:outline-none focus:ring-2 focus:ring-orangeone">
+                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h5M20 20v-5h-5M4.5 9A8.5 8.5 0 0119.5 15M19.5 15A8.5 8.5 0 014.5 9" />
+                </svg>
+                Réinitialiser
               </button>
             </div>
           </div>

@@ -37,6 +37,17 @@
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
                 <main class="lg:col-span-8">
                 <header class="border-b border-gray-100 pb-2 mb-4">
+                    @if (!empty($currentModule['is_under_construction']))
+                        <div class="mb-4 rounded-[18px] border border-amber-200 bg-amber-50 px-5 py-4 text-amber-900">
+                            <p class="text-xs font-black uppercase tracking-[0.22em] text-amber-700">
+                                {{ $currentModule['construction_label'] ?? 'En cours de construction' }}
+                            </p>
+                            <p class="mt-2 text-sm leading-6">
+                                {{ $currentModule['construction_note'] ?? 'Ce module est en cours de construction.' }}
+                            </p>
+                        </div>
+                    @endif
+
                     <h1 class="font-raleway text-2xl md:text-3xl font-medium text-bleuone leading-tight">
                         {{ $currentModule['title'] }}
                     </h1>
@@ -253,6 +264,11 @@
                         <div class="p-6">
                             <div class="mb-6 border-b border-gray-100 pb-6">
                                 <p class="text-[10px] font-black uppercase tracking-[0.2em] text-orangeone">{{ $currentModule['label'] }}</p>
+                                @if (!empty($currentModule['is_under_construction']))
+                                    <span class="mt-2 inline-flex rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[10px] font-black uppercase tracking-wide text-amber-700">
+                                        {{ $currentModule['construction_label'] ?? 'En cours de construction' }}
+                                    </span>
+                                @endif
                                 <p class="mt-2 font-raleway text-2xl font-medium leading-tight text-bleuone">{{ $currentModule['title'] }}</p>
                                 <p class="mt-2 text-sm text-slate-500 font-lisible">
                                     {{ $presentationVideoEmbedUrl ? 'Video de presentation' : $presentationVideoNote }}
