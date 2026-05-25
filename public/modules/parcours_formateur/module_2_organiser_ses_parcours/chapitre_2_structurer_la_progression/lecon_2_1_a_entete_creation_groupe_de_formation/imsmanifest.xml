@@ -53,7 +53,7 @@
   <organizations default="EnteteCreerUnGroupeDeFormation_ORG">
     <organization identifier="EnteteCreerUnGroupeDeFormation_ORG">
       <title>EnteteCreerUnGroupeDeFormation</title>
-      <item identifier="PreparerLesInformationsUtiles_SCO" isvisible="true" identifierref="__6A4iXxYTZHN_RES">
+      <item identifier="EnteteCreerUnGroupeDeFormation_SCO" isvisible="true" identifierref="__6A4iXxYTZHN_RES">
         <title>EnteteCreerUnGroupeDeFormation</title>
       </item>
     </organization>
@@ -70,8 +70,7 @@
       <file href="mobile/5VbwkT2NUid.png" />
       <file href="mobile/63AhB2hZf1g.png" />
       <file href="mobile/5cUh3njgH4p.png" />
-      <file href="mobile/6W9ctW0GDGf.png" />
-      <file href="story_content/6HO9bG4xdGc_44100_56_0.mp3" />
+      <file href="story_content/video_6CwIKzi9h2C_9_56_302x302.mp4" />
       <file href="mobile/6pFQC8xjTZd.png" />
       <file href="meta.xml" />
       <file href="story_content/triggers.js" />

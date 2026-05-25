@@ -143,6 +143,7 @@
                 force_next_lesson: @json(empty($nextActivity)),
                 quiz_start_url: @json($nextActivity['url'] ?? null),
                 quiz_button_label: @json($nextActivity['button_label'] ?? null),
+                hide_next_button: @json((bool) ($currentLesson['hide_scorm_next_button'] ?? false)),
 		                next_button_label: @json($mixedNextPart ? 'Continuer' : ($nextLesson ? 'Leçon suivante' : 'Retour au chapitre')),
                 quiz_tester_url: null,
 
@@ -294,6 +295,10 @@
                             @include('formateur.parcours.partials.lessons.content-modification-intro')
                         @elseif (($mixedActivePartConfig['form'] ?? null) === 'content_modification_group_edit')
                             @include('formateur.parcours.partials.lessons.content-modification-group-edit')
+                        @elseif (($mixedActivePartConfig['form'] ?? null) === 'content_modification_results')
+                            @include('formateur.parcours.partials.lessons.content-modification-results')
+                        @elseif (($mixedActivePartConfig['form'] ?? null) === 'module_2_final_results')
+                            @include('formateur.parcours.partials.lessons.module-2-final-results')
                         @endif
                     @endif
                 </div>

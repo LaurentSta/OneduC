@@ -1,12 +1,12 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<manifest identifier="_5yzFBbmqlEr" version="1.0" xmlns="http://www.imsproject.org/xsd/imscp_rootv1p1p2" xmlns:adlcp="http://www.adlnet.org/xsd/adlcp_rootv1p2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.imsproject.org/xsd/imscp_rootv1p1p2 imscp_rootv1p1p2.xsd http://www.imsglobal.org/xsd/imsmd_rootv1p2p1 imsmd_rootv1p2p1.xsd http://www.adlnet.org/xsd/adlcp_rootv1p2 adlcp_rootv1p2.xsd">
+<manifest identifier="_6GTOWEGKjC5" version="1.0" xmlns="http://www.imsproject.org/xsd/imscp_rootv1p1p2" xmlns:adlcp="http://www.adlnet.org/xsd/adlcp_rootv1p2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.imsproject.org/xsd/imscp_rootv1p1p2 imscp_rootv1p1p2.xsd http://www.imsglobal.org/xsd/imsmd_rootv1p2p1 imsmd_rootv1p2p1.xsd http://www.adlnet.org/xsd/adlcp_rootv1p2 adlcp_rootv1p2.xsd">
   <metadata>
     <schema>ADL SCORM</schema>
     <schemaversion>1.2</schemaversion>
     <lom xmlns="http://www.imsglobal.org/xsd/imsmd_rootv1p2p1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.imsglobal.org/xsd/imsmd_rootv1p2p1 imsmd_rootv1p2p1.xsd">
       <general>
         <title>
-          <langstring xml:lang="x-none">CreerPacours_Finalisation</langstring>
+          <langstring xml:lang="x-none">CreerUnParcoursFinalisation</langstring>
         </title>
       </general>
       <lifecycle>
@@ -50,22 +50,18 @@
       </rights>
     </lom>
   </metadata>
-  <organizations default="CreerPacours_Finalisation_ORG">
-    <organization identifier="CreerPacours_Finalisation_ORG">
-      <title>CreerPacours_Finalisation</title>
-      <item identifier="CreerPacours_Finalisation_SCO" isvisible="true" identifierref="__5yzFBbmqlEr_RES">
-        <title>CreerPacours_Finalisation</title>
+  <organizations default="CreerUnParcoursFinalisation_ORG">
+    <organization identifier="CreerUnParcoursFinalisation_ORG">
+      <title>CreerUnParcoursFinalisation</title>
+      <item identifier="CreerUnParcoursFinalisation_SCO" isvisible="true" identifierref="__6GTOWEGKjC5_RES">
+        <title>CreerUnParcoursFinalisation</title>
       </item>
     </organization>
   </organizations>
   <resources>
-    <resource identifier="__5yzFBbmqlEr_RES" type="webcontent" href="index_lms.html" adlcp:scormtype="sco">
+    <resource identifier="__6GTOWEGKjC5_RES" type="webcontent" href="index_lms.html" adlcp:scormtype="sco">
       <file href="story_content/thumbnail.jpg" />
-      <file href="mobile/5VbwkT2NUid.png" />
-      <file href="mobile/63AhB2hZf1g.png" />
-      <file href="mobile/5cUh3njgH4p.png" />
-      <file href="mobile/6W9ctW0GDGf.png" />
-      <file href="story_content/65NWDPewi3k_44100_56_0.mp3" />
+      <file href="story_content/video_6SgM4WBomJ3_9_56_250x250.mp4" />
       <file href="mobile/5cuspxltJoC.png" />
       <file href="mobile/6qGlDizWBr3.png" />
       <file href="mobile/5rdKulJsTVu.png" />

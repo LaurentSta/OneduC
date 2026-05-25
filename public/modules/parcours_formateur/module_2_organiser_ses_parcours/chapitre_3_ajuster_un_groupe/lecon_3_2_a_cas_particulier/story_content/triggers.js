@@ -2,17 +2,14 @@ function ExecuteScript(strId)
 {
   switch (strId)
   {
-      case "6P6KH3Gb6Tj":
+      case "5xSM56mh3z8":
         Script1();
         break;
-      case "5tKkm43AGXG":
+      case "6TowKQMeNO5":
         Script2();
         break;
-      case "6Zm0CALx0KZ":
+      case "69oLEFQ3pI9":
         Script3();
-        break;
-      case "6irCxTgHoNo":
-        Script4();
         break;
   }
 }
@@ -75,27 +72,6 @@ target.animate(
 }
 
 window.Script3 = function()
-{
-  const target = object('5mbhug46oE1');
-const duration = 500;
-const easing = 'ease-out';
-const id = '5mOuvSYX5aY';
-const pulseAmount = 0.1;
-player.addForTriggers(
-id,
-target.animate(
-[ {scale: '1' }, 
-{scale: `${1 + pulseAmount}` }, 
-{scale: '1' }, 
-{scale: `${1 + pulseAmount}` }, 
-{scale: '1' } ]
-,
-  { fill: 'forwards', duration, easing }
-)
-);
-}
-
-window.Script4 = function()
 {
   const target = object('5mbhug46oE1');
 const duration = 500;

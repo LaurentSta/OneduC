@@ -31,7 +31,7 @@
     $isOverviewHomeActive = ($activeModuleKey ?? null) === null;
     $hideParcoursHeader = trim($__env->yieldContent('hide_parcours_header')) === 'true';
     $hideParcoursBrandHeader = $hideParcoursHeader || trim($__env->yieldContent('hide_parcours_brand_header')) === 'true';
-    $hideParcoursOverview = $hideParcoursHeader || trim($__env->yieldContent('hide_parcours_overview')) === 'true';
+    $hideParcoursOverview = trim($__env->yieldContent('hide_parcours_overview')) === 'true';
 @endphp
 <body class="min-h-screen bg-slate-50 text-slate-900">
     @unless ($hideParcoursBrandHeader)
@@ -61,7 +61,7 @@
                     <div
                         id="parcours-overview-shell"
                         class="absolute inset-x-0 top-0 z-30 will-change-transform transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
-                        style="visibility: hidden;"
+                        style="transform: translateY(-100%);"
                     >
                         <div
                             id="parcours-overview-drawer"
@@ -170,7 +170,6 @@
                 shell.style.transform = isExpanded
                     ? 'translateY(0px)'
                     : `translateY(-${closedOffset}px)`;
-                shell.style.visibility = 'visible';
 
                 toggle.setAttribute('aria-expanded', String(isExpanded));
                 icon.classList.toggle('rotate-180', isExpanded);

@@ -164,6 +164,10 @@ class ParcoursController extends Controller
             return;
         }
 
+        if (! empty($partConfig['completion_requires_payload'])) {
+            return;
+        }
+
         $now = now();
 
         DB::table('trainer_path_activity_attempts')->updateOrInsert(
@@ -194,6 +198,113 @@ class ParcoursController extends Controller
         );
     }
 
+    public function completeGuidedLessonPart(Request $request, string $module, string $chapter, string $lesson, string $part): JsonResponse
+    {
+        $catalogue = $this->catalogue();
+        $context = $this->resolveLessonContext($catalogue, $module, $chapter, $lesson);
+        $currentLesson = $context['currentLesson'];
+        $partConfig = $currentLesson['scorm_parts'][$part] ?? null;
+        $completionConfig = $currentLesson['completion_validation'] ?? [];
+        $activityKey = $currentLesson['completion_activity_key'] ?? null;
+
+        abort_unless(
+            is_array($partConfig)
+            && ! empty($partConfig['marks_completion'])
+            && is_string($activityKey)
+            && $activityKey !== '',
+            404
+        );
+
+        $messages = $this->validateGuidedGroupCreationPayload($request, $completionConfig);
+
+        if (! empty($messages)) {
+            return response()->json([
+                'success' => false,
+                'messages' => $messages,
+            ], 422);
+        }
+
+        $submittedModules = collect($request->input('modules', []))
+            ->map(fn ($module): array => [
+                'id' => (int) (is_array($module) ? ($module['id'] ?? 0) : 0),
+                'title' => (string) (is_array($module) ? ($module['title'] ?? '') : ''),
+            ])
+            ->values()
+            ->all();
+
+        $now = now();
+
+        DB::table('trainer_path_activity_attempts')->updateOrInsert(
+            [
+                'user_id' => auth()->id(),
+                'module_key' => $module,
+                'chapter_key' => $chapter,
+                'lesson_key' => $lesson,
+                'activity_key' => $activityKey,
+            ],
+            [
+                'activity_type' => (string) ($completionConfig['type'] ?? 'guided_group_creation'),
+                'total_items' => 3,
+                'correct_items' => 3,
+                'is_success' => true,
+                'submitted_answer' => json_encode([
+                    'completed_part' => $part,
+                    'completed_at' => $now->toIso8601String(),
+                    'group_name' => (string) $request->input('name', ''),
+                    'students' => $request->input('students', []),
+                    'modules' => $submittedModules,
+                ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+                'expected_answer' => json_encode([
+                    'required_part' => $part,
+                    'required_module_ids' => $completionConfig['required_module_ids'] ?? [],
+                ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+                'wrong_items' => json_encode([], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+                'submitted_at' => $now,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]
+        );
+
+        return response()->json([
+            'success' => true,
+            'redirect_url' => route('formateur.parcours.lessons.part', [
+                'module' => $module,
+                'chapter' => $chapter,
+                'lesson' => $lesson,
+                'part' => $part,
+            ]),
+        ]);
+    }
+
+    private function validateGuidedGroupCreationPayload(Request $request, array $completionConfig): array
+    {
+        $messages = [];
+        $modules = $request->input('modules', []);
+        $expectedModuleIds = array_map('intval', $completionConfig['required_module_ids'] ?? []);
+
+        if (! is_array($modules)) {
+            $modules = [];
+        }
+
+        $submittedModuleIds = collect($modules)
+            ->map(fn ($module): int => (int) (is_array($module) ? ($module['id'] ?? 0) : 0))
+            ->filter()
+            ->values()
+            ->all();
+
+        if ($expectedModuleIds !== [] && $submittedModuleIds !== $expectedModuleIds) {
+            if (count($submittedModuleIds) !== count($expectedModuleIds)) {
+                $messages[] = 'Sélectionnez exactement les modules attendus pour le groupe Hygiène alimentaire 2026.';
+            } elseif (array_diff($expectedModuleIds, $submittedModuleIds) || array_diff($submittedModuleIds, $expectedModuleIds)) {
+                $messages[] = 'Les modules sélectionnés ne correspondent pas tous au scénario demandé.';
+            } else {
+                $messages[] = 'Les bons modules sont présents, mais ils ne sont pas dans le bon ordre.';
+            }
+        }
+
+        return array_values(array_unique($messages));
+    }
+
     public function showActivity(string $module, string $chapter, string $lesson, string $activity)
     {
         $catalogue = $this->catalogue();
@@ -205,18 +316,20 @@ class ParcoursController extends Controller
             404
         );
 
+        $activityType = (string) ($currentActivity['type'] ?? 'sorting');
+
         $latestSuccessfulAttempt = DB::table('trainer_path_activity_attempts')
             ->where('user_id', auth()->id())
             ->where('module_key', $module)
             ->where('chapter_key', $chapter)
             ->where('lesson_key', $lesson)
             ->where('activity_key', $activity)
+            ->where('activity_type', $activityType)
             ->where('is_success', true)
             ->latest('submitted_at')
             ->first();
 
         $initialPlacements = [];
-
         if ($latestSuccessfulAttempt) {
             $submittedAnswer = $this->decodeJsonColumn($latestSuccessfulAttempt->submitted_answer ?? null);
             $initialPlacements = is_array($submittedAnswer['placements'] ?? null)
@@ -275,12 +388,19 @@ class ParcoursController extends Controller
 
         $items = collect($currentActivity['items'] ?? []);
         $dropzones = collect($currentActivity['dropzones'] ?? []);
+        $activityType = (string) ($currentActivity['type'] ?? 'sorting');
         $validItemIds = $items->pluck('id')->map(fn ($id) => (string) $id)->all();
         $expectedCategories = $items->mapWithKeys(
             fn (array $item): array => [(string) $item['id'] => (string) $item['category']]
         )->all();
         $labelsByItem = $items->mapWithKeys(
             fn (array $item): array => [(string) $item['id'] => (string) $item['label']]
+        )->all();
+        $typeLabelsByItem = $items->mapWithKeys(
+            fn (array $item): array => [(string) $item['id'] => (string) ($item['type_label'] ?? '')]
+        )->all();
+        $feedbackByItem = $items->mapWithKeys(
+            fn (array $item): array => [(string) $item['id'] => (string) ($item['feedback'] ?? '')]
         )->all();
 
         $placements = [];
@@ -320,8 +440,10 @@ class ParcoursController extends Controller
             $wrongItems[] = [
                 'id' => $itemId,
                 'label' => $labelsByItem[$itemId] ?? $itemId,
+                'type_label' => $typeLabelsByItem[$itemId] ?? '',
                 'expected' => $expectedCategory,
                 'actual' => $actualCategory,
+                'feedback' => $feedbackByItem[$itemId] ?? '',
             ];
         }
 
@@ -345,7 +467,7 @@ class ParcoursController extends Controller
             'chapter_key' => $chapter,
             'lesson_key' => $lesson,
             'activity_key' => $activity,
-            'activity_type' => 'sorting',
+            'activity_type' => $activityType,
             'total_items' => count($expectedCategories),
             'correct_items' => count($correctItemIds),
             'is_success' => $isSuccess,
@@ -536,17 +658,37 @@ class ParcoursController extends Controller
             return [];
         }
 
+        $expectedActivityTypes = [];
+        $rawModule = ParcoursFormateur::rawModules()[$moduleKey] ?? null;
+
+        foreach (($rawModule['chapters'] ?? []) as $chapterKey => $chapter) {
+            foreach (($chapter['lessons'] ?? []) as $lessonKey => $lesson) {
+                $activity = $lesson['activity_page'] ?? null;
+
+                if (! is_array($activity) || empty($activity['key'])) {
+                    continue;
+                }
+
+                $expectedActivityTypes[$this->activityStatusKey((string) $chapterKey, (string) $lessonKey, (string) $activity['key'])] = (string) ($activity['type'] ?? 'sorting');
+            }
+        }
+
         return DB::table('trainer_path_activity_attempts')
             ->where('user_id', auth()->id())
             ->where('module_key', $moduleKey)
             ->where('is_success', true)
-            ->get(['chapter_key', 'lesson_key', 'activity_key'])
-            ->mapWithKeys(fn ($row): array => [
-                $this->activityStatusKey(
+            ->get(['chapter_key', 'lesson_key', 'activity_key', 'activity_type'])
+            ->filter(function ($row) use ($expectedActivityTypes): bool {
+                $statusKey = $this->activityStatusKey(
                     (string) $row->chapter_key,
                     (string) $row->lesson_key,
                     (string) $row->activity_key
-                ) => true,
+                );
+
+                return ($expectedActivityTypes[$statusKey] ?? 'sorting') === (string) $row->activity_type;
+            })
+            ->mapWithKeys(fn ($row): array => [
+                $this->activityStatusKey((string) $row->chapter_key, (string) $row->lesson_key, (string) $row->activity_key) => true,
             ])
             ->all();
     }

@@ -1,5 +1,6 @@
 @php
     $introUrl = $mixedPartUrls['modifier-contenu'] ?? '#';
+    $finalisationUrl = $mixedPartUrls['modifier-contenu-finalisation'] ?? '#';
     $students = [
         ['prenom' => 'Amina', 'nom' => 'Diallo', 'email' => 'amina.diallo@example.fr', 'created_at' => '12/01/2026'],
         ['prenom' => 'Lucas', 'nom' => 'Moreau', 'email' => 'lucas.moreau@example.fr', 'created_at' => '13/01/2026'],
@@ -7,72 +8,158 @@
         ['prenom' => 'Sofia', 'nom' => 'Martin', 'email' => 'sofia.martin@example.fr', 'created_at' => '15/01/2026'],
         ['prenom' => 'Youssef', 'nom' => 'Benali', 'email' => 'youssef.benali@example.fr', 'created_at' => '16/01/2026'],
     ];
+    $targetModuleId = 104;
+    $availableModulesForFlow = [
+        [
+            'id' => 101,
+            'title' => 'Hygiene alimentaire',
+            'lesson_count' => 4,
+            'question_count' => 0,
+            'duration_label' => '25 min',
+        ],
+        [
+            'id' => 102,
+            'title' => 'Bonnes pratiques',
+            'lesson_count' => 3,
+            'question_count' => 0,
+            'duration_label' => '20 min',
+        ],
+        [
+            'id' => 103,
+            'title' => 'Evaluation finale',
+            'lesson_count' => 1,
+            'question_count' => 5,
+            'duration_label' => '10 min',
+        ],
+        [
+            'id' => $targetModuleId,
+            'title' => 'Conservation des aliments et DLC',
+            'lesson_count' => 2,
+            'question_count' => 4,
+            'duration_label' => '12 min',
+        ],
+    ];
+    $selectedModulesForFlow = [
+        [
+            'id' => 101,
+            'title' => 'Hygiene alimentaire',
+            'position' => 1,
+            'persisted' => true,
+            'manage_url' => '',
+            'lesson_count' => 4,
+            'question_count' => 0,
+            'duration_label' => '25 min',
+        ],
+        [
+            'id' => 102,
+            'title' => 'Bonnes pratiques',
+            'position' => 2,
+            'persisted' => true,
+            'manage_url' => '',
+            'lesson_count' => 3,
+            'question_count' => 0,
+            'duration_label' => '20 min',
+        ],
+        [
+            'id' => 103,
+            'title' => 'Evaluation finale',
+            'position' => 3,
+            'persisted' => true,
+            'manage_url' => '',
+            'lesson_count' => 1,
+            'question_count' => 5,
+            'duration_label' => '10 min',
+        ],
+    ];
 @endphp
 
 <div
     x-data="{
         activeTab: 'general',
-        addedContent: false,
         saved: false,
-        chooseContent() {
-            this.addedContent = true;
-            this.activeTab = 'parcours';
-        },
+        feedback: null,
+        showInstructions: false,
         save() {
-            this.saved = true;
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            const selectedTargetModule = document.querySelector('input[name=&quot;modules[]&quot;][value=&quot;{{ $targetModuleId }}&quot;]');
+
+            if (!selectedTargetModule) {
+                this.feedback = {
+                    title: 'Module non ajoute',
+                    body: 'Dans l onglet Modules, selectionnez Conservation des aliments et DLC puis cliquez sur Ajouter un module avant d enregistrer.'
+                };
+                this.activeTab = 'parcours';
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                return;
+            }
+
+            window.location.href = @js($finalisationUrl);
         }
     }"
     class="mx-auto w-full max-w-[1285px] space-y-6"
 >
-    <header class="rounded-[20px] bg-white px-8 py-6 shadow-md">
-        <div class="grid grid-cols-12 gap-6 items-center">
-            <div class="col-span-12 md:col-span-9">
-                <h1 class="font-raleway text-3xl font-semibold leading-tight text-bleuone">
-                    Modification du groupe : <br>
-                    <span class="text-orangeone">Hygiene alimentaire 2026</span>
-                </h1>
-                <p class="mt-3 font-varela text-gray-600">
-                    Gere la configuration, la liste des apprenants et l'ordre pedagogique des modules.
+    <header class="rounded-[20px] border border-bleuone/10 bg-white px-6 py-5 shadow-sm">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <p class="text-xs font-black uppercase tracking-[0.22em] text-orangeone">Etape 2</p>
+                <h1 class="mt-1 font-raleway text-2xl font-semibold text-bleuone">Reconstruire un groupe</h1>
+                <p class="mt-1 text-sm font-semibold text-slate-500">
+                    Modifier un contenu pour pouvoir rajouter un module
                 </p>
-
-                <div class="mt-4 flex flex-wrap items-center gap-3 font-varela text-sm">
-                    <div class="inline-flex items-center gap-2 rounded-full border border-vertone/20 bg-vertone/10 px-3 py-1 text-vertone">
-                        <span class="font-bold">18</span> Stagiaires
-                    </div>
-                    <div class="inline-flex items-center gap-2 rounded-full border border-orangeone/20 bg-orangeone/10 px-3 py-1 text-orangeone">
-                        <span class="font-bold" x-text="addedContent ? 4 : 3"></span> Modules
-                    </div>
-                    <div class="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-blue-700">
-                        Groupe suivi
-                    </div>
-                </div>
-
-                <nav class="mt-4 text-sm font-varela text-gray-600" aria-label="Fil d'Ariane">
-                    <ol class="inline-flex items-center space-x-1">
-                        <li class="flex items-center">
-                            <a href="{{ $introUrl }}" class="text-bleuone hover:underline">Mes groupes</a>
-                            <span class="mx-2 text-gray-400">/</span>
-                        </li>
-                        <li class="text-gray-400">Modifier Hygiene alimentaire 2026</li>
-                    </ol>
-                </nav>
             </div>
 
-            <div class="col-span-12 md:col-span-3 flex justify-center md:justify-end">
-                <img src="{{ asset('images/svg/Groupes.svg') }}" alt="Illustration" class="h-auto max-w-[220px] opacity-80">
-            </div>
+            <button
+                type="button"
+                @click="showInstructions = true"
+                class="inline-flex h-12 items-center justify-center gap-3 rounded-full border-2 border-orangeone/30 bg-orangeone/10 px-6 text-base font-bold text-orangeone shadow-sm transition hover:border-orangeone hover:bg-orangeone hover:text-white"
+            >
+                <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                </svg>
+                Consigne
+            </button>
         </div>
     </header>
 
+    <div x-show="showInstructions" x-cloak class="fixed inset-0 z-50">
+        <div class="absolute inset-0 bg-slate-900/45" @click="showInstructions = false"></div>
+        <section
+            x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="opacity-0 scale-95"
+            x-transition:enter-end="opacity-100 scale-100"
+            x-transition:leave="transition ease-in duration-150"
+            x-transition:leave-start="opacity-100 scale-100"
+            x-transition:leave-end="opacity-0 scale-95"
+            class="relative mx-auto mt-24 w-[calc(100%-2rem)] max-w-lg rounded-[20px] border border-orangeone/20 bg-white p-6 shadow-[0_28px_80px_-24px_rgba(0,68,97,0.55),0_18px_36px_-22px_rgba(239,75,43,0.55)]"
+        >
+            <div class="flex items-start justify-between gap-4">
+                <div>
+                    <p class="text-sm font-black uppercase tracking-[0.22em] text-orangeone">Consigne</p>
+                    <h2 class="mt-1 font-raleway text-2xl font-semibold text-bleuone">Ajouter un module</h2>
+                </div>
+                <button type="button" @click="showInstructions = false" class="rounded-lg p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600">
+                    <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
+                    </svg>
+                </button>
+            </div>
+
+            <ol class="mt-5 list-decimal space-y-3 pl-5 text-base leading-7 text-slate-700">
+                <li>Cliquez sur l'onglet Modules.</li>
+                <li>Ajoutez le module <span class="font-bold text-orangeone">Conservation des aliments et DLC</span>.</li>
+                <li>Verifiez qu'il apparait dans le flow du parcours.</li>
+                <li>Enregistrez les modifications.</li>
+            </ol>
+        </section>
+    </div>
+
     <main class="rounded-[20px] bg-white px-8 py-8 shadow-md">
         <div
-            x-show="saved"
+            x-show="feedback"
             x-cloak
-            class="mb-6 rounded-[18px] border border-vertone/20 bg-vertone/10 px-5 py-4 text-sm leading-6 text-vertone"
+            class="mb-6 rounded-[18px] border border-orangeone/25 bg-orangeone/10 px-5 py-4 text-sm leading-6 text-orangeone"
         >
-            <p class="font-bold">Modification enregistree dans le simulateur.</p>
-            <p class="mt-1">Le contenu complementaire est maintenant associe au groupe Hygiene alimentaire 2026.</p>
+            <p class="font-bold" x-text="feedback ? feedback.title : ''"></p>
+            <p class="mt-1" x-text="feedback ? feedback.body : ''"></p>
         </div>
 
         <nav aria-label="Sections du groupe">
@@ -223,77 +310,24 @@
                 <div>
                     <h3 class="font-raleway text-xl font-bold text-bleuone">Organisation des modules</h3>
                     <p class="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-                        Le groupe a termine plus vite que prevu. Ajoutez un contenu complementaire utile, puis enregistrez.
+                        Le groupe a termine plus vite que prevu. Ajoutez un module complementaire utile, puis verifiez le flow du parcours.
                     </p>
                 </div>
-                <button type="button" @click="chooseContent()" class="btn-oneduc px-6 py-3">
-                    Ajouter le contenu choisi
-                </button>
             </div>
 
-            <div class="grid gap-6 lg:grid-cols-[1fr_360px]">
-                <div class="rounded-[18px] border border-gray-200 bg-white p-5">
-                    <h4 class="mb-4 text-sm font-black uppercase tracking-[0.16em] text-gray-500">Parcours actuel</h4>
+            <div
+                data-group-module-flow
+                data-mode="edit"
+                data-available-modules='@json($availableModulesForFlow)'
+                data-available-parcours='[]'
+                data-selected-modules='@json($selectedModulesForFlow)'
+                data-initial-parcours-id=""
+                data-manage-lessons-label="Gerer les lecons"
+                class="space-y-6"
+            ></div>
 
-                    <div class="space-y-3">
-                        <div class="flex items-center gap-4 rounded-[16px] border border-gray-200 bg-slate-50 px-4 py-4">
-                            <span class="flex h-9 w-9 items-center justify-center rounded-full bg-bleuone text-sm font-bold text-white">1</span>
-                            <div class="min-w-0 flex-1">
-                                <p class="font-bold text-bleuone">Hygiene alimentaire</p>
-                                <p class="text-xs text-slate-500">4 lecons · 25 min</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-4 rounded-[16px] border border-gray-200 bg-slate-50 px-4 py-4">
-                            <span class="flex h-9 w-9 items-center justify-center rounded-full bg-bleuone text-sm font-bold text-white">2</span>
-                            <div class="min-w-0 flex-1">
-                                <p class="font-bold text-bleuone">Bonnes pratiques</p>
-                                <p class="text-xs text-slate-500">3 lecons · 20 min</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-4 rounded-[16px] border border-gray-200 bg-slate-50 px-4 py-4">
-                            <span class="flex h-9 w-9 items-center justify-center rounded-full bg-bleuone text-sm font-bold text-white">3</span>
-                            <div class="min-w-0 flex-1">
-                                <p class="font-bold text-bleuone">Evaluation finale</p>
-                                <p class="text-xs text-slate-500">1 quiz · 10 min</p>
-                            </div>
-                        </div>
-
-                        <div
-                            x-show="addedContent"
-                            x-cloak
-                            class="flex items-center gap-4 rounded-[16px] border border-vertone/30 bg-vertone/10 px-4 py-4"
-                        >
-                            <span class="flex h-9 w-9 items-center justify-center rounded-full bg-vertone text-sm font-bold text-white">4</span>
-                            <div class="min-w-0 flex-1">
-                                <p class="font-bold text-bleuone">Conservation des aliments et DLC</p>
-                                <p class="text-xs text-slate-500">Contenu complementaire · 12 min</p>
-                            </div>
-                            <span class="rounded-full bg-white px-3 py-1 text-xs font-bold text-vertone">Ajoute</span>
-                        </div>
-                    </div>
-                </div>
-
-                <aside class="rounded-[18px] border border-orangeone/20 bg-orangeone/5 p-5">
-                    <h4 class="font-raleway text-lg font-bold text-bleuone">Contenu propose</h4>
-                    <p class="mt-2 text-sm leading-6 text-slate-600">
-                        Le contenu le plus pertinent ici est une sequence courte sur la conservation des aliments et les dates limites.
-                    </p>
-
-                    <div class="mt-5 rounded-[16px] border border-white bg-white p-4 shadow-sm">
-                        <p class="font-bold text-bleuone">Conservation des aliments et DLC</p>
-                        <p class="mt-2 text-sm leading-6 text-slate-600">
-                            Rappel utile pour approfondir la formation sans refaire le programme deja acquis.
-                        </p>
-                        <div class="mt-4 flex flex-wrap gap-2">
-                            <span class="rounded-full bg-vertone/10 px-3 py-1 text-xs font-bold text-vertone">12 min</span>
-                            <span class="rounded-full bg-bleuone/10 px-3 py-1 text-xs font-bold text-bleuone">Approfondissement</span>
-                        </div>
-                    </div>
-
-                    <button type="button" @click="chooseContent()" class="btn-oneduc mt-5 w-full py-3">
-                        Selectionner ce contenu
-                    </button>
-                </aside>
+            <div class="mt-4 rounded-[14px] border border-blue-100 bg-blue-50 px-4 py-3 text-sm leading-6 text-slate-600">
+                Selectionnez <span class="font-bold text-bleuone">Conservation des aliments et DLC</span> dans la liste des modules, ajoutez-le, puis controlez sa place dans le flow.
             </div>
 
             <div class="mt-6 flex justify-end">

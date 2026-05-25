@@ -40,6 +40,52 @@ function nodePosition(index) {
   return { x: col * FLOW_HORIZONTAL_GAP, y: row * FLOW_VERTICAL_GAP + 40 };
 }
 
+function normalizeForMatch(value) {
+  return String(value ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+function moduleTitleMatches(item, expectedTitle) {
+  if (item?.type !== 'module') return false;
+
+  const title = normalizeForMatch(item.title);
+  const expected = normalizeForMatch(expectedTitle);
+
+  return title === expected || title.includes(expected);
+}
+
+function validateSimulationPathItems(items) {
+  if (items.length !== 5) {
+    return 'Le parcours doit contenir exactement 5 étapes : un nuage de mots, trois modules, puis un sondage.';
+  }
+
+  if (items[0]?.type !== 'wordcloud') {
+    return 'La première étape doit être un nuage de mots.';
+  }
+
+  if (!moduleTitleMatches(items[1], 'Securite alimentaire 2026')) {
+    return 'La deuxième étape doit être le module Sécurité alimentaire 2026.';
+  }
+
+  if (!moduleTitleMatches(items[2], 'Hygiene en cuisine professionnelle')) {
+    return 'La troisième étape doit être le module Hygiène en cuisine professionnelle.';
+  }
+
+  if (!moduleTitleMatches(items[3], 'Nettoyage et desinfection des espaces')) {
+    return 'La quatrième étape doit être le module Nettoyage et désinfection des espaces.';
+  }
+
+  if (items[4]?.type !== 'poll') {
+    return 'La cinquième étape doit être un sondage.';
+  }
+
+  return '';
+}
+
 // ─── Normalize incoming data ──────────────────────────────────────────────────
 
 function normalizeAvailableModules(rawModules) {
@@ -666,8 +712,9 @@ function ParcoursBuilder({ availableModules = [], initialItems = [], csrfToken, 
           return;
         }
 
-        if (items.length === 0) {
-          setSaveError('Ajoutez au moins une étape au parcours.');
+        const simulationError = validateSimulationPathItems(items);
+        if (simulationError) {
+          setSaveError(simulationError);
           return;
         }
 

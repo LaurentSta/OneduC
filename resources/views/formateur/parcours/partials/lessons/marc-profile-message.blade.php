@@ -6,17 +6,17 @@
     x-data="{
         drawerOpen: false,
         showInstructions: false,
-        codeIncluded: true,
-        notification: true,
-        email: true,
+        codeIncluded: false,
+        notification: false,
+        email: false,
         sent: false,
         feedback: null,
         sendMessage() {
-            if (!this.notification && !this.email) {
+            if (!this.codeIncluded || !this.email) {
                 this.feedback = {
                     type: 'warning',
-                    title: 'Canal obligatoire',
-                    body: 'Selectionnez au moins Notification ou Email pour envoyer le message.'
+                    title: 'Options obligatoires',
+                    body: 'Cochez Inclure le lien et le code d acces, puis Email, avant d envoyer le message a Marc.'
                 };
                 return;
             }
@@ -29,6 +29,15 @@
             };
         },
         save() {
+            if (!this.codeIncluded || !this.email) {
+                this.feedback = {
+                    type: 'warning',
+                    title: 'Options obligatoires',
+                    body: 'Cochez Inclure le lien et le code d acces, puis Email, avant d enregistrer les modifications.'
+                };
+                return;
+            }
+
             if (!this.sent) {
                 this.feedback = {
                     type: 'warning',
@@ -177,9 +186,9 @@
 
             <ol class="mt-5 list-decimal space-y-3 pl-5 text-base leading-7 text-slate-700">
                 <li>Cliquez sur l'enveloppe pour ouvrir le volet message.</li>
-                <li>Gardez le code d'acces coche dans le message.</li>
-                <li>Envoyez le message a Marc.</li>
-                <li>Enregistrez les modifications pour acceder a la validation.</li>
+                <li>Cochez Inclure le lien et le code d'acces.</li>
+                <li>Cochez Email pour envoyer le message par mail a Marc.</li>
+                <li>Envoyez le message, puis enregistrez les modifications pour acceder a la validation.</li>
             </ol>
         </section>
     </div>

@@ -1,12 +1,12 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<manifest identifier="_5z0vPMJaWB8" version="1.0" xmlns="http://www.imsproject.org/xsd/imscp_rootv1p1p2" xmlns:adlcp="http://www.adlnet.org/xsd/adlcp_rootv1p2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.imsproject.org/xsd/imscp_rootv1p1p2 imscp_rootv1p1p2.xsd http://www.imsglobal.org/xsd/imsmd_rootv1p2p1 imsmd_rootv1p2p1.xsd http://www.adlnet.org/xsd/adlcp_rootv1p2 adlcp_rootv1p2.xsd">
+<manifest identifier="_6XRnUnv67Pj" version="1.0" xmlns="http://www.imsproject.org/xsd/imscp_rootv1p1p2" xmlns:adlcp="http://www.adlnet.org/xsd/adlcp_rootv1p2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.imsproject.org/xsd/imscp_rootv1p1p2 imscp_rootv1p1p2.xsd http://www.imsglobal.org/xsd/imsmd_rootv1p2p1 imsmd_rootv1p2p1.xsd http://www.adlnet.org/xsd/adlcp_rootv1p2 adlcp_rootv1p2.xsd">
   <metadata>
     <schema>ADL SCORM</schema>
     <schemaversion>1.2</schemaversion>
     <lom xmlns="http://www.imsglobal.org/xsd/imsmd_rootv1p2p1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.imsglobal.org/xsd/imsmd_rootv1p2p1 imsmd_rootv1p2p1.xsd">
       <general>
         <title>
-          <langstring xml:lang="x-none">RemplirLeFormulaire</langstring>
+          <langstring xml:lang="x-none">02_remplirFormulaire</langstring>
         </title>
       </general>
       <lifecycle>
@@ -50,24 +50,22 @@
       </rights>
     </lom>
   </metadata>
-  <organizations default="RemplirLeFormulaire_ORG">
-    <organization identifier="RemplirLeFormulaire_ORG">
-      <title>RemplirLeFormulaire</title>
-      <item identifier="RemplirLeFormulaire_SCO" isvisible="true" identifierref="__5z0vPMJaWB8_RES">
-        <title>RemplirLeFormulaire</title>
+  <organizations default="02_remplirFormulaire_ORG">
+    <organization identifier="02_remplirFormulaire_ORG">
+      <title>02_remplirFormulaire</title>
+      <item identifier="_02_remplirFormulaire_SCO" isvisible="true" identifierref="__6XRnUnv67Pj_RES">
+        <title>02_remplirFormulaire</title>
       </item>
     </organization>
   </organizations>
   <resources>
-    <resource identifier="__5z0vPMJaWB8_RES" type="webcontent" href="index_lms.html" adlcp:scormtype="sco">
+    <resource identifier="__6XRnUnv67Pj_RES" type="webcontent" href="index_lms.html" adlcp:scormtype="sco">
       <file href="story_content/thumbnail.jpg" />
-      <file href="mobile/5VbwkT2NUid.png" />
-      <file href="mobile/63AhB2hZf1g.png" />
-      <file href="mobile/5cUh3njgH4p.png" />
-      <file href="mobile/6W9ctW0GDGf.png" />
-      <file href="mobile/5cuspxltJoC.png" />
-      <file href="mobile/6qGlDizWBr3.png" />
-      <file href="mobile/5rdKulJsTVu.png" />
+      <file href="story_content/video_5obhFeYPcuD_9_56_250x250.mp4" />
+      <file href="mobile/6ILKCW4EvFG.png" />
+      <file href="mobile/6X4R2o8Chcu.png" />
+      <file href="mobile/6DHfW5Civ6q.png" />
+      <file href="mobile/5Y0D2KW9BCk.png" />
       <file href="meta.xml" />
       <file href="story_content/triggers.js" />
       <file href="story_content/user.js" />

@@ -70,66 +70,8 @@
     ];
 @endphp
 
-<div class="mx-auto w-full max-w-[1285px]" x-data="{ selectedGroup: false, showInstructions: false }">
-    <section class="rounded-[20px] bg-white px-6 py-6 shadow-md sm:px-8">
-        <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-            <div>
-                <p class="text-xs font-black uppercase tracking-[0.22em] text-orangeone">Etape 1</p>
-                <h1 class="mt-1 font-raleway text-2xl font-semibold text-bleuone">Modifier le contenu d'un groupe</h1>
-                <p class="mt-2 max-w-3xl text-sm leading-7 text-slate-600">
-                    Retrouvez le groupe concerne, puis ouvrez sa fiche pour ajuster le contenu associe.
-                </p>
-            </div>
-
-            <button
-                type="button"
-                @click="showInstructions = true"
-                class="inline-flex h-12 items-center justify-center gap-3 rounded-full border-2 border-orangeone/30 bg-orangeone/10 px-6 text-base font-bold text-orangeone shadow-sm transition hover:border-orangeone hover:bg-orangeone hover:text-white"
-            >
-                <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                </svg>
-                Consigne
-            </button>
-        </div>
-    </section>
-
-    <div x-show="showInstructions" x-cloak class="fixed inset-0 z-50">
-        <div class="absolute inset-0 bg-slate-900/45" @click="showInstructions = false"></div>
-        <section
-            x-transition:enter="transition ease-out duration-200"
-            x-transition:enter-start="opacity-0 scale-95"
-            x-transition:enter-end="opacity-100 scale-100"
-            x-transition:leave="transition ease-in duration-150"
-            x-transition:leave-start="opacity-100 scale-100"
-            x-transition:leave-end="opacity-0 scale-95"
-            class="relative mx-auto mt-24 w-[calc(100%-2rem)] max-w-lg rounded-[20px] border border-orangeone/20 bg-white p-6 shadow-[0_28px_80px_-24px_rgba(0,68,97,0.55),0_18px_36px_-22px_rgba(239,75,43,0.55)]"
-        >
-            <div class="flex items-start justify-between gap-5">
-                <div>
-                    <p class="text-sm font-black uppercase tracking-[0.22em] text-orangeone">Consigne</p>
-                    <h2 class="mt-1 font-raleway text-2xl font-semibold text-bleuone">Ajouter un contenu au groupe</h2>
-                </div>
-                <button type="button" @click="showInstructions = false" class="rounded-lg p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600">
-                    <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
-                    </svg>
-                </button>
-            </div>
-
-            <div class="mt-5 space-y-4 text-base leading-7 text-slate-700">
-                <p>
-                    Vous etes formateur. Le groupe que vous avez eu a termine plus vite que prevu le programme de formation
-                    <span class="font-bold text-orangeone">Hygiene alimentaire 2026</span>.
-                </p>
-                <p>
-                    Vous devez rajouter un contenu. A vous de trouver un contenu pertinent a ajouter.
-                </p>
-            </div>
-        </section>
-    </div>
-
-    <section class="mt-6 rounded-[20px] bg-white px-6 py-6 shadow-md sm:px-8" aria-labelledby="simulation-groups-title">
+<div class="mx-auto w-full max-w-[1285px]" x-data="{ selectedGroup: false }">
+    <section class="rounded-[20px] bg-white px-6 py-6 shadow-md sm:px-8" aria-labelledby="simulation-groups-title">
         <div class="mb-6">
             <div>
                 <h2 id="simulation-groups-title" class="font-raleway text-2xl font-semibold text-bleuone">

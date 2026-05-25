@@ -14,7 +14,7 @@
         <options>
           <option name="title_enabled" value="false">
             <options>
-              <option name="title_text" value="RemplirLeFormulaire" />
+              <option name="title_text" value="02_remplirFormulaire" />
             </options>
           </option>
           <option name="logo_enabled" value="false">
@@ -1647,7 +1647,7 @@
       <links>
         <slidelink slideid="_player.5ga9z0jv1pf" displaytext="04_ReconnaitreLesConnecteurs_v1" expand="true" type="slide">
           <links>
-            <slidelink slideid="_player.5ga9z0jv1pf.5iMGUZdS0XT" displaytext="Remplir le formulaire" expand="false" type="slide" />
+            <slidelink slideid="_player.5ga9z0jv1pf.5iMGUZdS0XT" displaytext="Remplir le formulaire " expand="false" type="slide" />
           </links>
         </slidelink>
       </links>

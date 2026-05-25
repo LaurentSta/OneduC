@@ -29,6 +29,36 @@
             'border' => 'border-orange-200',
             'well'   => 'border-orange-200/80 bg-orange-50/60',
         ],
+        'cadrage' => [
+            'header' => 'bg-bleuone',
+            'border' => 'border-sky-200',
+            'well'   => 'border-sky-200/80 bg-sky-50/60',
+        ],
+        'participants' => [
+            'header' => 'bg-vertone',
+            'border' => 'border-teal-200',
+            'well'   => 'border-teal-200/80 bg-teal-50/60',
+        ],
+        'contenus' => [
+            'header' => 'bg-orangeone',
+            'border' => 'border-orange-200',
+            'well'   => 'border-orange-200/80 bg-orange-50/60',
+        ],
+        'encadrement' => [
+            'header' => 'bg-slate-700',
+            'border' => 'border-slate-200',
+            'well'   => 'border-slate-200 bg-slate-50/60',
+        ],
+        'essentiel' => [
+            'header' => 'bg-bleuone',
+            'border' => 'border-sky-200',
+            'well'   => 'border-sky-200/80 bg-sky-50/60',
+        ],
+        'facultatif' => [
+            'header' => 'bg-orangeone',
+            'border' => 'border-orange-200',
+            'well'   => 'border-orange-200/80 bg-orange-50/60',
+        ],
     ];
 @endphp
 
@@ -43,6 +73,7 @@
             initialPlacements: @js($initialPlacements ?? []),
             completed: @js($activityCompleted ?? false),
             successMessage: @js($currentActivity['success_message'] ?? 'Bravo, l activite est validee.'),
+            feedbackMessages: @js($currentActivity['feedback_messages'] ?? []),
         })"
         class="space-y-4"
     >
@@ -121,19 +152,13 @@
                     {{-- Message voix-off --}}
                     <div class="mt-4 text-sm leading-7 text-white/90">
                         <p x-show="completionVariant === 'A'">
-                            Bravo, vous avez identifié du premier coup les 3 grandes étapes pour démarrer dans Onéduc.
-                            Les informations posent le cadre. Les stagiaires donnent vie au groupe. Les modules organisent le contenu.
-                            Vous êtes prêt pour la suite.
+                            <span x-text="completionMessage('A')"></span>
                         </p>
                         <p x-show="completionVariant === 'B'" x-cloak>
-                            C'est noté ! Vous avez identifié les 3 grandes étapes pour démarrer dans Onéduc.
-                            Quelques cartes vous ont fait hésiter — c'est normal, elles seront détaillées dans la prochaine leçon.
-                            Les informations posent le cadre. Les stagiaires donnent vie au groupe. Les modules organisent le contenu.
+                            <span x-text="completionMessage('B')"></span>
                         </p>
                         <p x-show="completionVariant === 'C'" x-cloak>
-                            Pas de souci, ces 3 étapes ne sont pas toujours évidentes au premier coup.
-                            Reprenons ensemble : les informations posent le cadre du groupe, les stagiaires sont les participants, les modules sont les contenus à proposer.
-                            Vous pouvez refaire l'activité, ou continuer — la prochaine leçon va tout éclaircir.
+                            <span x-text="completionMessage('C')"></span>
                         </p>
                     </div>
                 </div>
@@ -175,6 +200,45 @@
             </div>
         </div>
         {{-- ===== FIN MODAL ===== --}}
+
+        {{-- ===== MODAL CONSIGNE ===== --}}
+        <div x-show="showInstructions" x-cloak class="fixed inset-0 z-50">
+            <div class="absolute inset-0 bg-slate-900/45" @click="showInstructions = false"></div>
+            <section
+                x-transition:enter="transition ease-out duration-200"
+                x-transition:enter-start="opacity-0 scale-95"
+                x-transition:enter-end="opacity-100 scale-100"
+                x-transition:leave="transition ease-in duration-150"
+                x-transition:leave-start="opacity-100 scale-100"
+                x-transition:leave-end="opacity-0 scale-95"
+                class="relative mx-auto mt-24 w-[calc(100%-2rem)] max-w-2xl rounded-[20px] border border-orangeone/20 bg-white p-6 shadow-[0_28px_80px_-24px_rgba(0,68,97,0.55),0_18px_36px_-22px_rgba(239,75,43,0.55)]"
+            >
+                <div class="flex items-start justify-between gap-4">
+                    <div>
+                        <p class="text-sm font-black uppercase tracking-[0.22em] text-orangeone">Consigne</p>
+                        <h2 class="mt-1 font-raleway text-2xl font-semibold text-bleuone">{{ $currentActivity['title'] }}</h2>
+                    </div>
+                    <button type="button" @click="showInstructions = false" class="rounded-lg p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600">
+                        <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
+                        </svg>
+                    </button>
+                </div>
+
+                @if (!empty($currentActivity['scenario']))
+                    <div class="mt-5 rounded-[16px] border border-orangeone/20 bg-orangeone/5 px-4 py-3 text-base leading-7 text-slate-700">
+                        <span class="font-bold text-orangeone">Cas concret :</span>
+                        {{ $currentActivity['scenario'] }}
+                    </div>
+                @endif
+
+                <div class="mt-4 rounded-[16px] border border-bleuone/15 bg-bleuone/[0.04] px-4 py-3 text-base leading-7 text-slate-700">
+                    <span class="font-bold text-bleuone">Objectif :</span>
+                    {{ $currentActivity['instruction'] ?? 'Glissez ou sélectionnez chaque élément, puis déposez-le dans la bonne catégorie. Rangez tous les éléments avant de valider.' }}
+                </div>
+            </section>
+        </div>
+        {{-- ===== FIN MODAL CONSIGNE ===== --}}
 
         <div class="flex items-start gap-2 px-2 pt-1 sm:px-3 lg:px-4">
             <button
@@ -240,62 +304,44 @@
 
                         {{-- En-tête --}}
                         <div class="border-b border-gray-100 px-6 pb-3 pt-6 md:px-8 md:pb-4 md:pt-8">
-                            <h1 class="font-raleway text-2xl font-medium leading-tight text-bleuone md:text-3xl">
-                                {{ $currentActivity['title'] }}
-                            </h1>
+                            <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                                <div>
+                                    <h1 class="font-raleway text-2xl font-medium leading-tight text-bleuone md:text-3xl">
+                                        {{ $currentActivity['title'] }}
+                                    </h1>
+                                    <span
+                                        class="mt-3 inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-semibold transition"
+                                        :class="completed
+                                            ? 'border-teal-200 bg-teal-50 text-teal-700'
+                                            : (failedAttempts >= 2
+                                                ? 'border-orange-200 bg-orange-50 text-orangeone'
+                                                : 'border-bleuone/20 bg-white text-bleuone')"
+                                    >
+                                        <svg class="h-3 w-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                        </svg>
+                                        <span x-show="!completed" x-text="(3 - failedAttempts) > 0 ? (3 - failedAttempts) + ' essai(s) restant(s)' : 'Aucun essai restant'"></span>
+                                        <span x-show="completed" x-cloak>Activité réussie</span>
+                                    </span>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    @click="showInstructions = true"
+                                    class="inline-flex h-12 items-center justify-center gap-3 rounded-full border-2 border-orangeone/30 bg-orangeone/10 px-6 text-base font-bold text-orangeone shadow-sm transition hover:border-orangeone hover:bg-orangeone hover:text-white"
+                                >
+                                    <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                                    </svg>
+                                    Consigne
+                                </button>
+                            </div>
                         </div>
 
                         <div class="space-y-6 px-6 pb-6 pt-5 md:px-8 md:pb-8">
 
-                            {{-- Scénario fil rouge (optionnel) --}}
-                            @if (!empty($currentActivity['scenario']))
-                                <section class="flex items-start gap-3 rounded-[20px] border border-orangeone/20 bg-orange-50/60 px-5 py-4">
-                                    <span class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-orangeone text-white shadow-sm">
-                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                        </svg>
-                                    </span>
-                                    <div>
-                                        <p class="text-sm font-bold text-orangeone uppercase tracking-wide">Cas concret</p>
-                                        <p class="mt-1 text-base leading-7 text-slate-700">{{ $currentActivity['scenario'] }}</p>
-                                    </div>
-                                </section>
-                            @endif
-
-                            {{-- Consigne --}}
-                            <section class="flex items-start gap-3 rounded-[20px] border border-bleuone/15 bg-bleuone/[0.04] px-5 py-4">
-                                <span class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-bleuone text-white shadow-sm">
-                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7h16M4 12h10M4 17h7" />
-                                    </svg>
-                                </span>
-                                <div class="flex-1">
-                                    <div class="flex items-center justify-between gap-4">
-                                        <p class="text-base font-bold text-bleuone">Consigne</p>
-                                        <span
-                                            class="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-semibold transition"
-                                            :class="completed
-                                                ? 'border-teal-200 bg-teal-50 text-teal-700'
-                                                : (failedAttempts >= 2
-                                                    ? 'border-orange-200 bg-orange-50 text-orangeone'
-                                                    : 'border-bleuone/20 bg-white text-bleuone')"
-                                        >
-                                            <svg class="h-3 w-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                            </svg>
-                                            <span x-show="!completed" x-text="(3 - failedAttempts) > 0 ? (3 - failedAttempts) + ' essai(s) restant(s)' : 'Aucun essai restant'"></span>
-                                            <span x-show="completed" x-cloak>Activité réussie</span>
-                                        </span>
-                                    </div>
-                                    <p class="mt-1 text-base leading-7 text-slate-600">
-                                        Glissez ou sélectionnez chaque élément, puis déposez-le dans la bonne catégorie.
-                                        Rangez tous les éléments avant de valider.
-                                    </p>
-                                </div>
-                            </section>
-
                             {{-- Zones de tri --}}
-                            <section class="grid gap-4 xl:grid-cols-3">
+                            <section class="grid gap-4 {{ count($activityDropzones) === 2 ? 'xl:grid-cols-2' : 'xl:grid-cols-3' }}">
                                 @foreach ($activityDropzones as $dropzone)
                                     @php
                                         $theme = $zoneThemes[$dropzone['id']] ?? [
@@ -336,7 +382,9 @@
                                                         class="inline-flex min-h-[44px] items-center gap-2 rounded-[16px] border px-4 py-2.5 text-left text-[15px] font-semibold shadow-sm transition"
                                                         :class="cardClasses(card.id, false)"
                                                     >
-                                                        <span class="min-w-0 flex-1" x-text="card.label"></span>
+                                                        <span class="min-w-0 flex-1">
+                                                            <strong x-show="card.type_label" x-text="card.type_label + ' : '"></strong><span x-text="card.label"></span>
+                                                        </span>
                                                         <span
                                                             x-show="!completed"
                                                             x-cloak
@@ -403,7 +451,9 @@
                                                 class="inline-flex min-h-[44px] items-center rounded-[16px] border px-4 py-2.5 text-left text-[15px] font-semibold shadow-sm transition"
                                                 :class="cardClasses(card.id, true)"
                                             >
-                                                <span x-text="card.label"></span>
+                                                <span>
+                                                    <strong x-show="card.type_label" x-text="card.type_label + ' : '"></strong><span x-text="card.label"></span>
+                                                </span>
                                             </button>
                                         </template>
                                     </div>
@@ -428,15 +478,18 @@
 
                                         {{-- Détail des éléments mal classés --}}
                                         <template x-if="!completed && wrongItems.length > 0">
-                                            <div class="mt-3 flex flex-wrap gap-2">
+                                            <div class="mt-3 grid gap-2">
                                                 <template x-for="item in wrongItems" :key="item.id">
-                                                    <span class="inline-flex items-center gap-1.5 rounded-full border border-orange-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700">
-                                                        <span x-text="item.label"></span>
-                                                        <svg class="h-3 w-3 shrink-0 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                                                        </svg>
-                                                        <span class="font-bold text-bleuone" x-text="zoneLabelById(item.expected)"></span>
-                                                    </span>
+                                                    <div class="rounded-2xl border border-orange-200 bg-white px-4 py-3 text-sm text-slate-700">
+                                                        <div class="flex flex-wrap items-center gap-1.5 font-semibold">
+                                                            <span><strong x-show="item.type_label" x-text="item.type_label + ' : '"></strong><span x-text="item.label"></span></span>
+                                                            <svg class="h-3 w-3 shrink-0 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                                            </svg>
+                                                            <span class="font-bold text-bleuone" x-text="zoneLabelById(item.expected)"></span>
+                                                        </div>
+                                                        <p x-show="item.feedback" class="mt-1 leading-5 text-slate-600" x-text="item.feedback"></p>
+                                                    </div>
                                                 </template>
                                             </div>
                                         </template>
@@ -469,9 +522,9 @@
                                         type="button"
                                         @click="validate()"
                                         class="btn-oneduc !rounded-full !px-6 !py-3 !text-sm disabled:!cursor-not-allowed disabled:!opacity-60"
-                                        :disabled="submitting"
+                                        :disabled="submitting || pool.length > 0"
                                     >
-                                        <span x-text="submitting ? 'Validation...' : 'Valider l activite'"></span>
+                                        <span x-text="submitting ? 'Validation...' : (pool.length > 0 ? 'Classez tous les elements' : 'Valider l activite')"></span>
                                     </button>
                                 </div>
 
@@ -529,6 +582,7 @@
                 nextUrl: config.nextUrl || '#',
                 lessonUrl: config.lessonUrl || '#',
                 successMessage: config.successMessage || 'Bravo, l activite est validee.',
+                feedbackMessages: config.feedbackMessages || {},
                 placements: {},
                 pool: [],
                 selectedCardId: null,
@@ -542,6 +596,7 @@
                 failedAttempts: 0,
                 completionVariant: 'A',
                 wrongItems: [],
+                showInstructions: false,
 
                 toggleSidebar() {
                     if (this.sidebarOpen) {
@@ -576,6 +631,16 @@
 
                 closeModal() {
                     this.showCompletionModal = false;
+                },
+
+                completionMessage(variant) {
+                    const defaults = {
+                        A: 'Bravo, vous avez identifie du premier coup les 3 grandes etapes pour demarrer dans Oneduc. Les informations posent le cadre. Les stagiaires donnent vie au groupe. Les modules organisent le contenu. Vous etes pret pour la suite.',
+                        B: 'C est note ! Vous avez identifie les 3 grandes etapes pour demarrer dans Oneduc. Quelques cartes vous ont fait hesiter, c est normal : elles seront detaillees dans la prochaine lecon.',
+                        C: 'Pas de souci, ces 3 etapes ne sont pas toujours evidentes au premier coup. Reprenons ensemble : les informations posent le cadre du groupe, les stagiaires sont les participants, les modules sont les contenus a proposer.',
+                    };
+
+                    return this.feedbackMessages[variant] || defaults[variant] || this.successMessage;
                 },
 
                 zoneLabelById(zoneId) {
@@ -629,7 +694,11 @@
 
                 selectedCardLabel() {
                     const card = this.cardById(this.selectedCardId);
-                    return card ? card.label : '';
+                    if (!card) {
+                        return '';
+                    }
+
+                    return card.type_label ? `${card.type_label} : ${card.label}` : card.label;
                 },
 
                 cardById(cardId) {

@@ -1,12 +1,12 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<manifest identifier="_5fkzy8Cmedv" version="1.0" xmlns="http://www.imsproject.org/xsd/imscp_rootv1p1p2" xmlns:adlcp="http://www.adlnet.org/xsd/adlcp_rootv1p2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.imsproject.org/xsd/imscp_rootv1p1p2 imscp_rootv1p1p2.xsd http://www.imsglobal.org/xsd/imsmd_rootv1p2p1 imsmd_rootv1p2p1.xsd http://www.adlnet.org/xsd/adlcp_rootv1p2 adlcp_rootv1p2.xsd">
+<manifest identifier="_5s4IbkeM55a" version="1.0" xmlns="http://www.imsproject.org/xsd/imscp_rootv1p1p2" xmlns:adlcp="http://www.adlnet.org/xsd/adlcp_rootv1p2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.imsproject.org/xsd/imscp_rootv1p1p2 imscp_rootv1p1p2.xsd http://www.imsglobal.org/xsd/imsmd_rootv1p2p1 imsmd_rootv1p2p1.xsd http://www.adlnet.org/xsd/adlcp_rootv1p2 adlcp_rootv1p2.xsd">
   <metadata>
     <schema>ADL SCORM</schema>
     <schemaversion>1.2</schemaversion>
     <lom xmlns="http://www.imsglobal.org/xsd/imsmd_rootv1p2p1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.imsglobal.org/xsd/imsmd_rootv1p2p1 imsmd_rootv1p2p1.xsd">
       <general>
         <title>
-          <langstring xml:lang="x-none">AjustementStagiaire</langstring>
+          <langstring xml:lang="x-none">01_AjusterLeGroupe</langstring>
         </title>
       </general>
       <lifecycle>
@@ -50,16 +50,16 @@
       </rights>
     </lom>
   </metadata>
-  <organizations default="AjustementStagiaire_ORG">
-    <organization identifier="AjustementStagiaire_ORG">
-      <title>AjustementStagiaire</title>
-      <item identifier="AjustementStagiaire_SCO" isvisible="true" identifierref="__5fkzy8Cmedv_RES">
-        <title>AjustementStagiaire</title>
+  <organizations default="01_AjusterLeGroupe_ORG">
+    <organization identifier="01_AjusterLeGroupe_ORG">
+      <title>01_AjusterLeGroupe</title>
+      <item identifier="_01AjusterLeGroupe_SCO" isvisible="true" identifierref="__5s4IbkeM55a_RES">
+        <title>01AjusterLeGroupe</title>
       </item>
     </organization>
   </organizations>
   <resources>
-    <resource identifier="__5fkzy8Cmedv_RES" type="webcontent" href="index_lms.html" adlcp:scormtype="sco">
+    <resource identifier="__5s4IbkeM55a_RES" type="webcontent" href="index_lms.html" adlcp:scormtype="sco">
       <file href="story_content/thumbnail.jpg" />
       <file href="mobile/6Kjrs4Qbt29.png" />
       <file href="mobile/5cuspxltJoC.png" />
@@ -67,19 +67,21 @@
       <file href="mobile/5X1OmYyAm1g.png" />
       <file href="mobile/6qGlDizWBr3.png" />
       <file href="mobile/5rdKulJsTVu.png" />
+      <file href="story_content/video_5Y8IsnQt7Ag_9_56_302x302.mp4" />
       <file href="mobile/5VbwkT2NUid.png" />
       <file href="mobile/63AhB2hZf1g.png" />
       <file href="mobile/5cUh3njgH4p.png" />
-      <file href="mobile/6W9ctW0GDGf.png" />
-      <file href="story_content/63Ho8UtBjBe_44100_56_0.mp3" />
       <file href="mobile/5cYOBTOYHmF.png" />
+      <file href="mobile/5pkde1QnBLk.png" />
       <file href="mobile/6qTR2IXf2lw.png" />
       <file href="mobile/6oAkoJJo15U.png" />
-      <file href="mobile/5pkde1QnBLk.png" />
       <file href="mobile/6qLv7AERpV7.png" />
+      <file href="story_content/video_6bSDwlkBPmv_9_56_322x322.mp4" />
       <file href="mobile/6OHnbCaGl2C.png" />
       <file href="mobile/6NqnYP0zVM5.png" />
+      <file href="mobile/5cdyWjsAlE6.png" />
       <file href="story_content/6gm9jwi95Sz.js" />
+      <file href="mobile/6kPtAJYnFlU.png" />
       <file href="meta.xml" />
       <file href="story_content/triggers.js" />
       <file href="story_content/user.js" />

@@ -245,21 +245,21 @@ class ParcoursFormateur
                                 'subject' => 'Composantes du formulaire Oneduc : informations, stagiaires et modules.',
                                 'activity' => 'Tri du fil rouge : classer des cartes-info dans les trois zones du formulaire.',
                                 'evaluation' => 'Placer les cartes-info dans les bonnes zones du formulaire.',
-                                'scorm_directory' => 'modules/parcours_formateur/module_2_organiser_ses_parcours/chapitre_1_preparer_lenvironnement_de_formation/lecon_1_1_les_composants_indispensables/IdentifieLesElementsEssentiel',
+                                'scorm_directory' => 'modules/parcours_formateur/module_2_organiser_ses_parcours/chapitre_1_preparer_lenvironnement_de_formation/lecon_1_1_les_composants_indispensables',
+                                'hide_scorm_next_button' => true,
                                 'activity_page' => self::classificationActivity(
-                                    'Vous preparez la creation d un groupe de formation. Voici 11 donnees reelles collectees en amont. Chacune appartient a une zone du formulaire Oneduc — a vous de les placer au bon endroit.',
+                                    'Vous preparez la creation d un groupe de formation. Voici 10 donnees reelles collectees en amont. Chacune appartient a une zone du formulaire Oneduc — a vous de les placer au bon endroit.',
                                     [
                                         ['id' => 'date_ouverture', 'label' => '1er avril 2026', 'category' => 'information'],
-                                        ['id' => 'date_debut', 'label' => '8 avril 2026', 'category' => 'information'],
-                                        ['id' => 'visible', 'label' => 'Visible', 'category' => 'information'],
-                                        ['id' => 'ouvert', 'label' => 'Ouvert', 'category' => 'information'],
-                                        ['id' => 'nom', 'label' => 'Lefebvre', 'category' => 'stagiaire'],
+                                        ['id' => 'module_excel_avance', 'label' => 'Excel avance', 'category' => 'module'],
                                         ['id' => 'prenom', 'label' => 'Thomas', 'category' => 'stagiaire'],
+                                        ['id' => 'visible', 'label' => 'Visible', 'category' => 'information'],
+                                        ['id' => 'module_word_debutant', 'label' => 'Word debutant', 'category' => 'module'],
                                         ['id' => 'adresse_mail', 'label' => 't.lefebvre@esa2.fr', 'category' => 'stagiaire'],
-                                        ['id' => 'coformateur', 'label' => 'Co-formateur', 'category' => 'module'],
-                                        ['id' => 'module_excel_avance', 'label' => 'Module Excel avance', 'category' => 'module'],
-                                        ['id' => 'active', 'label' => 'Active', 'category' => 'module'],
-                                        ['id' => 'desactive', 'label' => 'Desactive', 'category' => 'module'],
+                                        ['id' => 'date_debut', 'label' => '8 avril 2026', 'category' => 'information'],
+                                        ['id' => 'module_powerpoint', 'label' => 'PowerPoint', 'category' => 'module'],
+                                        ['id' => 'nom', 'label' => 'Lefebvre', 'category' => 'stagiaire'],
+                                        ['id' => 'desactive', 'label' => 'Desactive', 'category' => 'information'],
                                     ]
                                 ),
                             ]
@@ -277,21 +277,8 @@ class ParcoursFormateur
                                 'activity' => 'Fiche de mise en route completee a partir du cas Hygiene alimentaire 2026.',
                                 'evaluation' => 'Completer les 4 sections de la fiche de mise en route.',
                                 'scorm_directory' => 'modules/parcours_formateur/module_2_organiser_ses_parcours/chapitre_1_preparer_lenvironnement_de_formation/lecon_1_2_distinguer_contenu_ressource_et_structure',
-                                'activity_page' => self::classificationActivity(
-                                    'Vous preparez la creation d un groupe de formation. Voici 10 donnees reelles collectees en amont. Chacune appartient a une zone du formulaire Oneduc — a vous de les placer au bon endroit.',
-                                    [
-                                        ['id' => 'date_ouverture', 'label' => '1er avril 2026', 'category' => 'information'],
-                                        ['id' => 'date_debut', 'label' => '8 avril 2026', 'category' => 'information'],
-                                        ['id' => 'visible', 'label' => 'Visible', 'category' => 'information'],
-                                        ['id' => 'ouvert', 'label' => 'Ouvert', 'category' => 'information'],
-                                        ['id' => 'nom', 'label' => 'Lefebvre', 'category' => 'stagiaire'],
-                                        ['id' => 'prenom', 'label' => 'Thomas', 'category' => 'stagiaire'],
-                                        ['id' => 'adresse_mail', 'label' => 't.lefebvre@esa2.fr', 'category' => 'stagiaire'],
-                                        ['id' => 'module_excel_avance', 'label' => 'Module Excel avance', 'category' => 'module'],
-                                        ['id' => 'parcours', 'label' => 'Parcours Certification TOSA', 'category' => 'module'],
-                                        ['id' => 'module_sensibilisation', 'label' => 'Module Internet', 'category' => 'module'],
-                                    ]
-                                ),
+                                'hide_scorm_next_button' => true,
+                                'activity_page' => self::informationPreparationActivity(),
                             ]
                         ),
                     ],
@@ -321,6 +308,10 @@ class ParcoursFormateur
                                 'layout' => 'scorm_form',
                                 'embedded_form' => 'group_creation',
                                 'completion_activity_key' => 'creation-groupe-finalisee',
+                                'completion_validation' => [
+                                    'type' => 'guided_group_creation',
+                                    'required_module_ids' => [101, 102, 103],
+                                ],
                                 'scorm_parts' => [
                                     'introduction' => [
                                         'directory' => 'modules/parcours_formateur/module_2_organiser_ses_parcours/chapitre_2_structurer_la_progression/lecon_2_1_a_entete_creation_groupe_de_formation',
@@ -346,6 +337,7 @@ class ParcoursFormateur
                                         'height' => 'compact',
                                         'form' => 'group_creation',
                                         'marks_completion' => true,
+                                        'completion_requires_payload' => true,
                                     ],
                                 ],
                             ]
@@ -365,6 +357,7 @@ class ParcoursFormateur
                                 'layout' => 'scorm_form',
                                 'embedded_form' => 'path_creation',
                                 'completion_activity_key' => 'creation-parcours-finalisee',
+                                'hide_scorm_next_button' => true,
                                 'scorm_parts' => [
                                     'ouvrir-formulaire' => [
                                         'directory' => 'modules/parcours_formateur/module_2_organiser_ses_parcours/chapitre_2_structurer_la_progression/lecon_2_2_a_creation_parcours',
@@ -469,12 +462,19 @@ class ParcoursFormateur
                                         'marks_completion' => true,
                                     ],
                                     'modifier-contenu' => [
-                                        'height' => 'form_only',
+                                        'directory' => 'modules/parcours_formateur/module_2_organiser_ses_parcours/chapitre_3_ajuster_un_groupe/lecon_3_2_d_cas_particulier_modifier_contenu',
+                                        'height' => 'compact',
                                         'form' => 'content_modification_intro',
                                     ],
                                     'modifier-contenu-groupe' => [
                                         'height' => 'form_only',
                                         'form' => 'content_modification_group_edit',
+                                    ],
+                                    'modifier-contenu-finalisation' => [
+                                        'directory' => 'modules/parcours_formateur/module_2_organiser_ses_parcours/chapitre_3_ajuster_un_groupe/lecon_3_2_e_cas_particulier_modifier_contenu_finalisation',
+                                        'height' => 'compact',
+                                        'form' => 'content_modification_results',
+                                        'marks_completion' => true,
                                     ],
                                 ],
                             ]
@@ -492,6 +492,19 @@ class ParcoursFormateur
                                 'subject' => 'Synthese des capacites acquises : preparation, creation, organisation, ajustement et acces.',
                                 'activity' => 'Vignette de synthese et check-list de mise en route.',
                                 'evaluation' => 'Telecharger la check-list et acceder a la page de bilan native Oneduc.',
+                                'layout' => 'scorm_form',
+                                'completion_activity_key' => 'bilan-module-2-finalise',
+                                'scorm_parts' => [
+                                    'bilan' => [
+                                        'directory' => 'modules/parcours_formateur/module_2_organiser_ses_parcours/chapitre_3_ajuster_un_groupe/lecon_3_3_bilan',
+                                        'height' => 'full',
+                                    ],
+                                    'resultat-final' => [
+                                        'height' => 'form_only',
+                                        'form' => 'module_2_final_results',
+                                        'marks_completion' => true,
+                                    ],
+                                ],
                             ]
                         ),
                     ],
@@ -516,6 +529,42 @@ class ParcoursFormateur
             'success_message' => 'Bravo, vous avez correctement classe les elements utiles a la preparation du parcours.',
             'dropzones' => self::preparationDropzones(),
             'items' => $items,
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function informationPreparationActivity(): array
+    {
+        return [
+            'key' => 'preparer-informations-utiles',
+            'type' => 'essential_sorting',
+            'code' => 'Activite',
+            'title' => 'Essentiel ou facultatif ?',
+            'button_label' => 'Realiser l activite',
+            'scenario' => 'Vous vous apprêtez à ouvrir le groupe Hygiène alimentaire 2026. Avant de créer quoi que ce soit, faites le tri : parmi les éléments que vous avez sous la main, lesquels sont indispensables pour lancer la formation, et lesquels sont utiles mais peuvent attendre ?',
+            'instruction' => 'Glissez chaque élément dans la bonne colonne : Essentiel ou Facultatif. Rangez les huit éléments avant de valider.',
+            'success_message' => 'Parfait. Vous avez vu l essentiel : pour lancer une formation, il suffit d un nom, d un stagiaire et d un module — un élément pour chacune des trois composantes. Tout le reste enrichit, mais n empêche jamais de démarrer.',
+            'feedback_messages' => [
+                'A' => 'Parfait. Vous avez vu l essentiel : pour lancer une formation, il suffit d un nom, d un stagiaire et d un module — un élément pour chacune des trois composantes. Tout le reste enrichit, mais n empêche jamais de démarrer.',
+                'B' => 'C est juste. Quelques éléments vous ont fait hésiter — c est normal, la frontière entre l utile et l indispensable n est pas toujours évidente. Retenez la règle simple : l essentiel, c est un nom, un stagiaire, un module. Le reste peut attendre.',
+                'C' => 'Reprenons calmement. Pour qu une formation existe vraiment, il faut trois choses, et trois seulement : un nom pour l identifier, au moins un stagiaire pour la suivre, au moins un module à lui proposer. Tout le reste — description, co-formateur, dates, ressources — est utile, mais s ajoute ou s ajuste plus tard. Reprenez l activité avec ce repère.',
+            ],
+            'dropzones' => [
+                ['id' => 'essentiel', 'label' => 'Essentiel', 'description' => 'Sans cet élément, impossible de lancer la formation.'],
+                ['id' => 'facultatif', 'label' => 'Facultatif', 'description' => 'Utile, mais on peut l ajouter ou l ajuster plus tard.'],
+            ],
+            'items' => [
+                ['id' => 'description', 'type_label' => 'Description', 'label' => 'Formation pour les nouveaux salariés', 'category' => 'facultatif', 'feedback' => 'La description est facultative : elle clarifie le cadre, mais le groupe existe très bien sans.'],
+                ['id' => 'module', 'type_label' => 'Module', 'label' => 'Sécurité alimentaire 2026', 'category' => 'essentiel', 'feedback' => 'Le module est essentiel : sans au moins un module, la formation n a aucun contenu à proposer.'],
+                ['id' => 'dates', 'type_label' => 'Dates', 'label' => 'du 8 janvier au 31 mars 2026', 'category' => 'facultatif', 'feedback' => 'Les dates sont facultatives ici : elles précisent le calendrier, mais s ajustent ensuite et ne bloquent pas le démarrage.'],
+                ['id' => 'stagiaire', 'type_label' => 'Stagiaire', 'label' => 'Marie Dupont (marie.dupont@email.fr)', 'category' => 'essentiel', 'feedback' => 'Le stagiaire est essentiel : sans au moins un stagiaire et son adresse mail, il n y a personne à former — et personne à inviter.'],
+                ['id' => 'ressource', 'type_label' => 'Ressource', 'label' => 'fiche PDF Bonnes pratiques HACCP', 'category' => 'facultatif', 'feedback' => 'La ressource est facultative : c est un bonus, jamais nécessaire pour ouvrir le groupe.'],
+                ['id' => 'intitule', 'type_label' => 'Intitulé', 'label' => 'Hygiène alimentaire 2026 — Promo 1', 'category' => 'essentiel', 'feedback' => 'L intitulé est essentiel : c est le seul champ obligatoire du formulaire. Sans nom, le groupe ne peut pas être créé.'],
+                ['id' => 'statut', 'type_label' => 'Statut', 'label' => 'en attente', 'category' => 'facultatif', 'feedback' => 'Le statut est facultatif : un statut par défaut existe déjà, ce réglage reste optionnel.'],
+                ['id' => 'coformateur', 'type_label' => 'Co-formateur', 'label' => 'Karim Benali', 'category' => 'facultatif', 'feedback' => 'Le co-formateur est facultatif : on peut animer seul, puis l ajouter à tout moment.'],
+            ],
         ];
     }
 
