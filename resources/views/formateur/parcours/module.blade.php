@@ -1,7 +1,6 @@
 @extends('formateur.parcours.layout')
 
 @php
-    $progressPercentage = $currentModule['progress_percentage'] ?? 0;
     $chapterCount = $currentModule['chapter_count'] ?? count($currentModule['chapters'] ?? []);
     $lessonCount = $currentModule['lesson_count'] ?? 0;
     $ctaUrl = $currentModule['entry_url'] ?? $currentModule['first_chapter_url'] ?? $currentModule['url'];
@@ -9,13 +8,31 @@
     $presentationVideoTitle = $currentModule['presentation_video_title'] ?? ('Video de presentation - ' . $currentModule['title']);
     $presentationVideoNote = $currentModule['presentation_video_note'] ?? 'Video de presentation a ajouter.';
     $specificObjective = $currentModule['specific_objective'] ?? $currentModule['description'];
+    $activityStatusMap = $activityStatusMap ?? [];
     $activityCount = 0;
+    $completedActivityCount = 0;
     $bilanCount = 0;
 
-    foreach (($currentModule['chapters'] ?? []) as $chapter) {
-        foreach (($chapter['lessons'] ?? []) as $lesson) {
-            if (!empty($lesson['activity_page'])) {
+    $activityStatusKeyFor = static function (string $chapterKey, string $lessonKey, array $lesson): ?string {
+        if (($lesson['type'] ?? 'objectif') === 'bilan') {
+            return null;
+        }
+
+        $activityKey = $lesson['activity_page']['key'] ?? ($lesson['completion_activity_key'] ?? null);
+
+        return $activityKey ? implode('.', [$chapterKey, $lessonKey, $activityKey]) : null;
+    };
+
+    foreach (($currentModule['chapters'] ?? []) as $moduleChapterKey => $chapter) {
+        foreach (($chapter['lessons'] ?? []) as $moduleLessonKey => $lesson) {
+            $activityStatusKey = $activityStatusKeyFor((string) $moduleChapterKey, (string) $moduleLessonKey, $lesson);
+
+            if ($activityStatusKey) {
                 $activityCount++;
+
+                if (($activityStatusMap[$activityStatusKey] ?? false) === true) {
+                    $completedActivityCount++;
+                }
             }
 
             if (($lesson['type'] ?? 'objectif') === 'bilan') {
@@ -23,6 +40,8 @@
             }
         }
     }
+
+    $progressPercentage = $activityCount > 0 ? (int) round(($completedActivityCount / $activityCount) * 100) : 0;
 @endphp
 
 @section('parcours_content')
@@ -128,11 +147,29 @@
                                 </div>
                             </div>
                         @else
-                            @foreach ($currentModule['chapters'] as $chapter)
+                            @foreach ($currentModule['chapters'] as $chapterKey => $chapter)
                                 @php
-                                    $chapterProgress = $chapter['progress_percentage'] ?? 0;
                                     $chapterLessons = $chapter['lessons'] ?? [];
-                                    $chapterActivityCount = collect($chapterLessons)->filter(fn ($lesson) => !empty($lesson['activity_page']))->count();
+                                    $chapterActivityCount = 0;
+                                    $chapterCompletedActivityCount = 0;
+
+                                    foreach ($chapterLessons as $chapterLessonKey => $chapterLesson) {
+                                        $chapterStatusKey = $activityStatusKeyFor((string) $chapterKey, (string) $chapterLessonKey, $chapterLesson);
+
+                                        if (! $chapterStatusKey) {
+                                            continue;
+                                        }
+
+                                        $chapterActivityCount++;
+
+                                        if (($activityStatusMap[$chapterStatusKey] ?? false) === true) {
+                                            $chapterCompletedActivityCount++;
+                                        }
+                                    }
+
+                                    $chapterProgress = $chapterActivityCount > 0
+                                        ? (int) round(($chapterCompletedActivityCount / $chapterActivityCount) * 100)
+                                        : 0;
                                 @endphp
                                 <div class="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow">
                                     <button
@@ -172,10 +209,21 @@
                                     </div>
 
                                     <div x-show="openSection === {{ $loop->index }}" x-cloak class="border-t border-gray-100">
-                                        @foreach ($chapterLessons as $lesson)
+                                        @foreach ($chapterLessons as $lessonKey => $lesson)
                                             @php
                                                 $isBilan = ($lesson['type'] ?? 'objectif') === 'bilan';
                                                 $hasActivity = !empty($lesson['activity_page']);
+                                                $lessonActivityStatusKey = $activityStatusKeyFor((string) $chapterKey, (string) $lessonKey, $lesson);
+                                                $isActivityCompleted = $lessonActivityStatusKey
+                                                    ? (($activityStatusMap[$lessonActivityStatusKey] ?? false) === true)
+                                                    : false;
+                                                $hasActivitySlot = !empty($lessonActivityStatusKey);
+                                                $activityPillClass = $isActivityCompleted
+                                                    ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                                                    : ($hasActivitySlot ? 'border-orange-200 bg-orange-50 text-orange-700' : 'border-slate-200 bg-white text-slate-500');
+                                                $activityPillLabel = $isActivityCompleted
+                                                    ? 'Activité validée'
+                                                    : ($hasActivitySlot ? 'Activité disponible' : ($lesson['activity_slot_label'] ?? 'Activité à créer'));
                                             @endphp
                                             <a
                                                 href="{{ $lesson['url'] }}"
@@ -209,9 +257,11 @@
                                                             <span class="rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-bold text-slate-500">
 	                                                                {{ $lesson['scorm_slot_label'] ?? 'Contenu de lecon' }}
                                                             </span>
-                                                            <span class="rounded-full border {{ $hasActivity ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-white text-slate-500' }} px-3 py-1 text-[11px] font-bold">
-                                                                {{ $hasActivity ? 'Activite disponible' : ($lesson['activity_slot_label'] ?? 'Activite a creer') }}
-                                                            </span>
+                                                            @unless ($isBilan)
+                                                                <span class="rounded-full border {{ $activityPillClass }} px-3 py-1 text-[11px] font-bold">
+                                                                    {{ $activityPillLabel }}
+                                                                </span>
+                                                            @endunless
                                                         </div>
                                                     </div>
                                                 </div>

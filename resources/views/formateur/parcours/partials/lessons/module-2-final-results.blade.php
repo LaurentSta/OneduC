@@ -1,5 +1,6 @@
 @php
     $moduleUrl = $currentModule['url'] ?? route('formateur.parcours.index');
+    $moduleThreeUrl = route('formateur.parcours.modules.show', ['module' => 'gerer-ses-groupes']);
     $dashboardUrl = route('formateur.dashboard');
     $completedItems = [
         'Creer un groupe de formation',
@@ -10,15 +11,15 @@
     ];
 @endphp
 
-<div class="mx-auto flex min-h-full w-full max-w-[1285px] items-center px-4 py-8 sm:px-6 lg:px-8">
-    <section class="w-full overflow-hidden rounded-[28px] border border-gray-100 bg-white shadow-md">
-        <div class="grid items-center gap-8 px-6 py-8 md:grid-cols-[minmax(0,1fr)_360px] md:px-10 lg:px-12">
-            <div>
+<div class="mx-auto flex min-h-full w-full max-w-[1285px] items-center px-4 py-6 sm:px-6 lg:px-8">
+    <section class="w-full overflow-hidden rounded-[26px] border border-gray-100 bg-white shadow-md">
+        <div class="grid min-h-[620px] lg:grid-cols-[minmax(0,0.94fr)_minmax(420px,1.06fr)]">
+            <div class="order-2 flex flex-col justify-center px-6 py-8 sm:px-8 lg:order-1 lg:px-10 xl:px-12">
                 <p class="text-xs font-black uppercase tracking-[0.24em] text-vertone">
                     Module 2 termine
                 </p>
 
-                <h1 class="mt-3 font-raleway text-3xl font-semibold leading-tight text-bleuone md:text-4xl">
+                <h1 class="mt-3 max-w-3xl font-raleway text-3xl font-semibold leading-tight text-bleuone md:text-4xl">
                     Bravo, vous avez termine le module Organiser ses parcours
                 </h1>
 
@@ -27,7 +28,7 @@
                     ajuster un groupe et traiter les cas particuliers sans perdre la lisibilite du parcours.
                 </p>
 
-                <div class="mt-7 grid gap-4 sm:grid-cols-3">
+                <div class="mt-7 grid gap-3 sm:grid-cols-3">
                     <article class="rounded-[18px] border border-bleuone/10 bg-bleuone/5 px-4 py-4">
                         <p class="text-[11px] font-black uppercase tracking-[0.18em] text-bleuone">Chapitres</p>
                         <p class="mt-2 text-3xl font-black text-bleuone">3</p>
@@ -65,7 +66,7 @@
 
                 <div class="mt-7 flex flex-col gap-3 sm:flex-row">
                     <a href="{{ $moduleUrl }}" class="btn-oneduc-outline justify-center !px-6 !py-3 !text-sm">
-                        Revenir au module 2
+                        Revoir le module 2
                     </a>
                     <a href="{{ $dashboardUrl }}" class="btn-oneduc justify-center !px-6 !py-3 !text-sm">
                         Retour au tableau de bord
@@ -73,13 +74,25 @@
                 </div>
             </div>
 
-            <div class="flex justify-center md:justify-end">
-                <div class="relative w-full max-w-[340px] rounded-[28px] border border-orangeone/10 bg-orangeone/5 p-8">
+            <div class="order-1 flex min-h-[360px] items-center justify-center overflow-hidden border-b border-orangeone/10 bg-orangeone/5 px-6 py-8 lg:order-2 lg:min-h-full lg:border-b-0 lg:border-l lg:px-10">
+                <div class="w-full max-w-[640px]">
+                    <div class="mb-5 flex justify-center lg:justify-start">
+                        <span class="inline-flex items-center rounded-full border border-vertone/20 bg-white px-4 py-2 text-sm font-black uppercase tracking-[0.18em] text-vertone shadow-sm">
+                            Parcours valide
+                        </span>
+                    </div>
+
                     <img
                         src="{{ asset('images/svg/Finish.svg') }}"
                         alt="Module termine"
-                        class="mx-auto h-auto w-full max-w-[280px]"
+                        class="mx-auto h-auto w-full max-w-[560px] drop-shadow-[0_26px_28px_rgba(0,68,97,0.16)]"
                     >
+
+                    <div class="mt-7 flex justify-center lg:justify-start">
+                        <a href="{{ $moduleThreeUrl }}" class="btn-oneduc justify-center !px-7 !py-3 !text-sm">
+                            Aller au module 3
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>

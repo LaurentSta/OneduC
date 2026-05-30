@@ -184,7 +184,18 @@
                         <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                         </svg>
-                        Recommencer l activite
+                        Recommencer l’activité
+                    </button>
+
+                    <button
+                        type="button"
+                        @click="closeModal(); showInstructions = true"
+                        class="inline-flex w-full items-center justify-center gap-2 rounded-full border border-orangeone/30 bg-orangeone/10 px-5 py-3 text-sm font-bold text-orangeone transition hover:border-orangeone hover:bg-orangeone hover:text-white"
+                    >
+                        <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                        </svg>
+                        Revoir la consigne
                     </button>
 
                     <a
@@ -229,6 +240,21 @@
                     <div class="mt-5 rounded-[16px] border border-orangeone/20 bg-orangeone/5 px-4 py-3 text-base leading-7 text-slate-700">
                         <span class="font-bold text-orangeone">Cas concret :</span>
                         {{ $currentActivity['scenario'] }}
+                    </div>
+                @endif
+
+                @if (!empty($currentActivity['instruction_sections']) && is_array($currentActivity['instruction_sections']))
+                    <div class="mt-4 grid gap-3">
+                        @foreach ($currentActivity['instruction_sections'] as $section)
+                            <div class="rounded-[16px] border border-slate-200 bg-white px-4 py-3 text-base leading-7 text-slate-700">
+                                <p class="font-bold text-bleuone">{{ $section['label'] ?? '' }}</p>
+                                @if (!empty($section['body_html']))
+                                    <p class="mt-1">{!! $section['body_html'] !!}</p>
+                                @else
+                                    <p class="mt-1">{{ $section['body'] ?? '' }}</p>
+                                @endif
+                            </div>
+                        @endforeach
                     </div>
                 @endif
 
@@ -357,7 +383,7 @@
                                 <button
                                     type="button"
                                     @click="showInstructions = true"
-                                    class="inline-flex h-12 items-center justify-center gap-3 rounded-full border-2 border-orangeone/30 bg-orangeone/10 px-6 text-base font-bold text-orangeone shadow-sm transition hover:border-orangeone hover:bg-orangeone hover:text-white"
+                                    class="consigne-invite inline-flex h-12 items-center justify-center gap-3 rounded-full border-2 border-orangeone/30 bg-orangeone/10 px-6 text-base font-bold text-orangeone shadow-sm transition hover:border-orangeone hover:bg-orangeone hover:text-white"
                                 >
                                     <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
@@ -397,7 +423,7 @@
                                             <div class="flex flex-wrap gap-2">
                                                 <template x-if="itemsForZone('{{ $dropzone['id'] }}').length === 0">
                                                     <div class="rounded-[16px] border border-dashed border-slate-200 bg-white px-4 py-3 text-base text-slate-400">
-                                                        Deposez les elements ici.
+                                                        Déposez les éléments ici.
                                                     </div>
                                                 </template>
 
@@ -439,7 +465,7 @@
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
                                             </svg>
                                         </span>
-                                        <p class="text-base font-bold text-bleuone">Elements a classer</p>
+                                        <p class="text-base font-bold text-bleuone">Éléments à classer</p>
                                         <span class="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-sm font-semibold text-slate-500 ring-1 ring-slate-200">
                                             <span x-text="pool.length"></span>&nbsp;en attente
                                         </span>
@@ -453,7 +479,7 @@
                                         <svg class="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                                         </svg>
-                                        Reinitialiser
+                                        Réinitialiser
                                     </button>
                                 </div>
 
@@ -466,7 +492,7 @@
                                     <div class="flex flex-wrap gap-2">
                                         <template x-if="pool.length === 0">
                                             <div class="rounded-[16px] border border-dashed border-slate-200 bg-white px-4 py-3 text-base text-slate-500">
-                                                Tous les elements ont ete deplaces. Verifiez les trois zones puis validez.
+                                                Tous les éléments ont été déplacés. Vérifiez les trois zones puis validez.
                                             </div>
                                         </template>
 
@@ -502,7 +528,7 @@
                                         <span x-text="completed ? '✓' : '!'"></span>
                                     </span>
                                     <div class="min-w-0 w-full">
-                                        <p class="text-sm font-bold" x-text="completed ? 'Activite validee' : 'Ajustement necessaire'"></p>
+                                        <p class="text-sm font-bold" x-text="completed ? 'Activité validée' : 'Ajustement nécessaire'"></p>
                                         <p class="mt-1 text-sm leading-6" x-text="message"></p>
 
                                         {{-- Détail des éléments mal classés --}}
@@ -538,14 +564,14 @@
                                         href="{{ $currentLesson['url'] }}"
                                         class="inline-flex items-center justify-center rounded-full border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-orangeone hover:text-orangeone"
                                     >
-                                        Revenir a la lecon
+                                        Revenir à la leçon
                                     </a>
                                 </div>
 
                                 {{-- Droite : état normal --}}
                                 <div x-show="!completed" class="flex flex-wrap items-center gap-3">
                                     <p class="text-sm text-slate-500" x-show="selectedCardId" x-cloak>
-                                        Selectionne : <span class="font-semibold text-bleuone" x-text="selectedCardLabel()"></span>
+                                        Sélectionné : <span class="font-semibold text-bleuone" x-text="selectedCardLabel()"></span>
                                     </p>
                                     <button
                                         type="button"
@@ -553,7 +579,7 @@
                                         class="btn-oneduc !rounded-full !px-6 !py-3 !text-sm disabled:!cursor-not-allowed disabled:!opacity-60"
                                         :disabled="submitting || pool.length > 0"
                                     >
-                                        <span x-text="submitting ? 'Validation...' : (pool.length > 0 ? 'Classez tous les elements' : 'Valider l activite')"></span>
+                                        <span x-text="submitting ? 'Validation...' : 'Vérifier mon classement'"></span>
                                     </button>
                                 </div>
 
@@ -610,7 +636,7 @@
                 submitUrl: config.submitUrl || '',
                 nextUrl: config.nextUrl || '#',
                 lessonUrl: config.lessonUrl || '#',
-                successMessage: config.successMessage || 'Bravo, l activite est validee.',
+                successMessage: config.successMessage || 'Bravo, l’activité est validée.',
                 feedbackMessages: config.feedbackMessages || {},
                 placements: {},
                 pool: [],
@@ -664,9 +690,9 @@
 
                 completionMessage(variant) {
                     const defaults = {
-                        A: 'Bravo, vous avez identifie du premier coup les 3 grandes etapes pour demarrer dans Oneduc. Les informations posent le cadre. Les stagiaires donnent vie au groupe. Les modules organisent le contenu. Vous etes pret pour la suite.',
-                        B: 'C est note ! Vous avez identifie les 3 grandes etapes pour demarrer dans Oneduc. Quelques cartes vous ont fait hesiter, c est normal : elles seront detaillees dans la prochaine lecon.',
-                        C: 'Pas de souci, ces 3 etapes ne sont pas toujours evidentes au premier coup. Reprenons ensemble : les informations posent le cadre du groupe, les stagiaires sont les participants, les modules sont les contenus a proposer.',
+                        A: 'Bravo, vous avez identifié du premier coup les 3 grandes étapes pour démarrer dans Onéduc. Les informations posent le cadre. Les stagiaires donnent vie au groupe. Les modules organisent le contenu. Vous êtes prêt pour la suite.',
+                        B: 'C’est noté ! Vous avez identifié les 3 grandes étapes pour démarrer dans Onéduc. Quelques cartes vous ont fait hésiter, c’est normal : elles seront détaillées dans la prochaine leçon.',
+                        C: 'Pas de souci, ces 3 étapes ne sont pas toujours évidentes au premier coup. Reprenons ensemble : les informations posent le cadre du groupe, les stagiaires sont les participants, les modules sont les contenus à proposer.',
                     };
 
                     return this.feedbackMessages[variant] || defaults[variant] || this.successMessage;
