@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<bwFrame xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" default_layout="npnxabnsnfns10110000111" textdirection="ltr" textengine="DirectWrite" device="false" fontscale="100" captionFontScale="100" kbshortcuts="false" skip_nav_enabled="true" chromeless="false" preventUpscale="false" outputtype="undefined" theme="unified" themeAccentColor="0xE94D2A">
+<bwFrame xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" default_layout="npnxabnsnfns10110000111" textdirection="ltr" textengine="DirectWrite" device="false" fontscale="100" captionFontScale="100" kbshortcuts="false" skip_nav_enabled="true" chromeless="false" preventUpscale="true" outputtype="undefined" theme="unified" themeAccentColor="0xE94D2A">
   <layouts>
     <layout name="npnxnanbsnfns10110000111" font="Lato" controllayout="npnxnanbsnfns10110000111" colorscheme="npnxabnsnfns10110000111" string_table="npnxabnsnfns10110000111" />
     <layout name="pxabnsnfns10110000111" font="Lato" controllayout="pxabnsnfns10110000111" colorscheme="npnxabnsnfns10110000111" string_table="npnxabnsnfns10110000111" />

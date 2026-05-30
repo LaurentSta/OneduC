@@ -308,6 +308,7 @@ class ParcoursFormateur
                                 'layout' => 'scorm_form',
                                 'embedded_form' => 'group_creation',
                                 'completion_activity_key' => 'creation-groupe-finalisee',
+                                'hide_scorm_next_button' => true,
                                 'completion_validation' => [
                                     'type' => 'guided_group_creation',
                                     'required_module_ids' => [101, 102, 103],

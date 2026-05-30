@@ -240,6 +240,35 @@
         </div>
         {{-- ===== FIN MODAL CONSIGNE ===== --}}
 
+        <div
+            x-show="completed"
+            x-cloak
+            x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="translate-y-4 opacity-0"
+            x-transition:enter-end="translate-y-0 opacity-100"
+            x-transition:leave="transition ease-in duration-150"
+            x-transition:leave-start="translate-y-0 opacity-100"
+            x-transition:leave-end="translate-y-4 opacity-0"
+            class="fixed bottom-4 left-1/2 z-40 w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 rounded-[22px] border border-slate-200 bg-white/95 p-3 shadow-2xl backdrop-blur md:bottom-6"
+        >
+            <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-center">
+                <a
+                    :href="lessonUrl"
+                    class="inline-flex items-center justify-center rounded-full border border-slate-300 px-5 py-3 text-sm font-bold text-slate-700 transition hover:border-orangeone hover:text-orangeone"
+                >
+                    Revoir la leçon
+                </a>
+
+                <button
+                    type="button"
+                    @click="resetActivity()"
+                    class="inline-flex items-center justify-center rounded-full bg-orangeone px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-orange-600"
+                >
+                    Refaire l’exercice
+                </button>
+            </div>
+        </div>
+
         <div class="flex items-start gap-2 px-2 pt-1 sm:px-3 lg:px-4">
             <button
                 type="button"

@@ -665,11 +665,15 @@ class ParcoursController extends Controller
             foreach (($chapter['lessons'] ?? []) as $lessonKey => $lesson) {
                 $activity = $lesson['activity_page'] ?? null;
 
-                if (! is_array($activity) || empty($activity['key'])) {
-                    continue;
+                if (is_array($activity) && ! empty($activity['key'])) {
+                    $expectedActivityTypes[$this->activityStatusKey((string) $chapterKey, (string) $lessonKey, (string) $activity['key'])] = (string) ($activity['type'] ?? 'sorting');
                 }
 
-                $expectedActivityTypes[$this->activityStatusKey((string) $chapterKey, (string) $lessonKey, (string) $activity['key'])] = (string) ($activity['type'] ?? 'sorting');
+                $completionActivityKey = $lesson['completion_activity_key'] ?? null;
+
+                if (is_string($completionActivityKey) && $completionActivityKey !== '') {
+                    $expectedActivityTypes[$this->activityStatusKey((string) $chapterKey, (string) $lessonKey, $completionActivityKey)] = (string) ($lesson['completion_activity_type'] ?? 'guided_group_creation');
+                }
             }
         }
 

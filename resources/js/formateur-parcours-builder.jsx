@@ -210,6 +210,48 @@ function ToolButton({ label, className, onClick, disabled = false }) {
   );
 }
 
+function SimulationFeedbackModal({ message, onClose }) {
+  if (!message) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/45 px-4 py-6"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="simulation-feedback-title"
+    >
+      <div className="w-full max-w-xl rounded-[20px] border border-orange-100 bg-white p-6 shadow-2xl">
+        <div className="flex items-start gap-4">
+          <div className="mt-1 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-orange-100 text-orange-700">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v4m0 4h.01M10.29 3.86l-7.5 13A1 1 0 003.66 18h16.68a1 1 0 00.87-1.5l-7.5-13a1 1 0 00-1.74 0z" />
+            </svg>
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <h2 id="simulation-feedback-title" className="font-raleway text-2xl font-bold text-[#004461]">
+              Ajustement nécessaire
+            </h2>
+            <p className="mt-3 text-base leading-7 text-slate-700">
+              {message}
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-6 flex justify-end">
+          <button
+            type="button"
+            onClick={onClose}
+            className="inline-flex items-center justify-center rounded-full bg-[#E94D2A] px-6 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[#cf4121]"
+          >
+            Corriger le parcours
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Metric({ label, value }) {
   return (
     <div className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-center">
@@ -485,6 +527,7 @@ function ParcoursBuilder({ availableModules = [], initialItems = [], csrfToken, 
   const [showPollForm, setShowPollForm]   = useState(false);
   const [editingItemId, setEditingItemId] = useState(null);
   const [saveError, setSaveError]         = useState('');
+  const [simulationFeedback, setSimulationFeedback] = useState('');
   const [saving, setSaving]               = useState(false);
   const [flowInstance, setFlowInstance]   = useState(null);
   const canvasRef = useRef(null);
@@ -694,6 +737,7 @@ function ParcoursBuilder({ availableModules = [], initialItems = [], csrfToken, 
 
   const handleSave = async () => {
     setSaveError('');
+    setSimulationFeedback('');
     setSaving(true);
     try {
       const payload = {
@@ -708,13 +752,13 @@ function ParcoursBuilder({ availableModules = [], initialItems = [], csrfToken, 
 
       if (isSimulation) {
         if (!payload.title.trim()) {
-          setSaveError('Le titre est obligatoire.');
+          setSimulationFeedback('Le titre du parcours est obligatoire avant de créer le parcours.');
           return;
         }
 
         const simulationError = validateSimulationPathItems(items);
         if (simulationError) {
-          setSaveError(simulationError);
+          setSimulationFeedback(simulationError);
           return;
         }
 
@@ -750,6 +794,11 @@ function ParcoursBuilder({ availableModules = [], initialItems = [], csrfToken, 
   if (isSimulation && !isPreview) {
     return (
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_18rem]">
+        <SimulationFeedbackModal
+          message={simulationFeedback}
+          onClose={() => setSimulationFeedback('')}
+        />
+
         <div className="space-y-4">
           {showWcForm && (
             <WordCloudForm onAdd={addWordCloud} onCancel={() => setShowWcForm(false)} />
@@ -878,7 +927,6 @@ function ParcoursBuilder({ availableModules = [], initialItems = [], csrfToken, 
           </div>
 
           <div className="flex items-center justify-end gap-4 py-2">
-            {saveError && <p className="text-sm text-red-600">{saveError}</p>}
             <button type="button" onClick={handleSave}
               disabled={saving || items.length === 0}
               className="inline-flex items-center gap-2 rounded-[10px] bg-[#E94D2A] px-6 py-3 text-sm font-bold text-white shadow hover:bg-[#cf4121] disabled:opacity-50 disabled:cursor-not-allowed transition">

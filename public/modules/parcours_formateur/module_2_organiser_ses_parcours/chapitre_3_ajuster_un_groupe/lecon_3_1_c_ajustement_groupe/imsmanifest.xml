@@ -6,7 +6,7 @@
     <lom xmlns="http://www.imsglobal.org/xsd/imsmd_rootv1p2p1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.imsglobal.org/xsd/imsmd_rootv1p2p1 imsmd_rootv1p2p1.xsd">
       <general>
         <title>
-          <langstring xml:lang="x-none">FormulaireStagiaires</langstring>
+          <langstring xml:lang="x-none">03_FormulaireStagiaires</langstring>
         </title>
       </general>
       <lifecycle>
@@ -50,9 +50,9 @@
       </rights>
     </lom>
   </metadata>
-  <organizations default="FormulaireStagiaires_ORG">
-    <organization identifier="FormulaireStagiaires_ORG">
-      <title>FormulaireStagiaires</title>
+  <organizations default="03_FormulaireStagiaires_ORG">
+    <organization identifier="03_FormulaireStagiaires_ORG">
+      <title>03_FormulaireStagiaires</title>
       <item identifier="_03_FormulaireStagiaires_SCO" isvisible="true" identifierref="__6YoCFeGaFSS_RES">
         <title>03_FormulaireStagiaires</title>
       </item>
@@ -61,10 +61,7 @@
   <resources>
     <resource identifier="__6YoCFeGaFSS_RES" type="webcontent" href="index_lms.html" adlcp:scormtype="sco">
       <file href="story_content/thumbnail.jpg" />
-      <file href="mobile/5VbwkT2NUid.png" />
-      <file href="mobile/63AhB2hZf1g.png" />
-      <file href="mobile/5cUh3njgH4p.png" />
-      <file href="mobile/6W9ctW0GDGf.png" />
+      <file href="story_content/video_6KAIw2SWHAW_9_56_250x250.mp4" />
       <file href="meta.xml" />
       <file href="story_content/triggers.js" />
       <file href="story_content/user.js" />

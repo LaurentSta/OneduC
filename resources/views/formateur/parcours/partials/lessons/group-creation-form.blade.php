@@ -872,7 +872,29 @@
     </script>
 </article>
 @elseif (($activeLessonPart ?? null) === 'finalisation')
-<article class="mx-auto w-full max-w-[1285px] rounded-[24px] border border-gray-100 bg-white p-5 shadow-sm md:p-6">
+@php
+    $trainingGroupCompletionUrl = route('formateur.parcours.lessons.part.complete', [
+        'module' => $activeModuleKey,
+        'chapter' => $activeChapterKey,
+        'lesson' => $activeLessonKey,
+        'part' => 'finalisation',
+    ]);
+    $trainingGroupActivityKey = $currentLesson['completion_activity_key'] ?? null;
+    $trainingGroupActivityStatusKey = $trainingGroupActivityKey
+        ? implode('.', [$activeChapterKey, $activeLessonKey, $trainingGroupActivityKey])
+        : null;
+    $trainingGroupActivityCompleted = $trainingGroupActivityStatusKey
+        ? (($activityStatusMap[$trainingGroupActivityStatusKey] ?? false) === true)
+        : false;
+    $trainingGroupReviewUrl = $currentLesson['url'] ?? ($mixedPartUrls['introduction'] ?? '#');
+    $trainingGroupRestartUrl = $mixedPartUrls['informations'] ?? ($currentLesson['url'] ?? '#');
+@endphp
+<article
+    class="mx-auto w-full max-w-[1285px] rounded-[24px] border border-gray-100 bg-white p-5 shadow-sm md:p-6"
+    data-completion-url="{{ $trainingGroupCompletionUrl }}"
+    data-csrf-token="{{ csrf_token() }}"
+    data-activity-completed="{{ $trainingGroupActivityCompleted ? 'true' : 'false' }}"
+>
     <main class="space-y-8">
         <section aria-labelledby="training-created-groups-title">
             <h2 id="training-created-groups-title" class="sr-only">Liste des groupes</h2>
@@ -949,15 +971,42 @@
                 </article>
             </div>
         </section>
+
+        <div class="flex flex-col gap-3 border-t border-gray-100 pt-6 sm:flex-row sm:items-center sm:justify-end">
+            <a
+                href="{{ $trainingGroupReviewUrl }}"
+                class="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-bold text-slate-700 transition hover:border-orangeone hover:text-orangeone"
+            >
+                Revoir la leçon
+            </a>
+
+            <button
+                type="button"
+                id="training-group-restart-activity"
+                data-restart-url="{{ $trainingGroupRestartUrl }}"
+                class="inline-flex items-center justify-center rounded-full border border-orangeone bg-white px-5 py-3 text-sm font-bold text-orangeone transition hover:bg-orange-50"
+            >
+                Recommencer l’activité
+            </button>
+
+            @if (!empty($nextLesson['url'] ?? null))
+                <a href="{{ $nextLesson['url'] }}" class="btn-oneduc !rounded-full !px-7 !py-3">
+                    Leçon suivante
+                </a>
+            @endif
+        </div>
     </main>
 
     <script>
         (() => {
+            const container = document.currentScript.closest('article');
             const savedData = JSON.parse(window.localStorage.getItem('oneduc_training_group_creation') || '{}');
             const groupName = document.getElementById('training-final-group-name');
             const description = document.getElementById('training-final-group-description');
             const modulesList = document.getElementById('training-final-group-modules');
             const studentsCount = document.getElementById('training-final-group-students-count');
+            const restartButton = document.getElementById('training-group-restart-activity');
+            const completionReloadKey = 'oneduc_training_group_finalisation_reloaded';
 
             if (groupName && savedData.name) {
                 groupName.textContent = savedData.name;
@@ -990,6 +1039,45 @@
                 const count = Array.isArray(savedData.students) ? savedData.students.length : 0;
                 studentsCount.textContent = `${Math.max(1, count)} stagiaire${Math.max(1, count) > 1 ? 's' : ''}`;
             }
+
+            const markFinalisationCompleted = async () => {
+                if (!container || container.dataset.activityCompleted === 'true') {
+                    window.sessionStorage.removeItem(completionReloadKey);
+                    return;
+                }
+
+                if (!container.dataset.completionUrl || !Array.isArray(savedData.modules) || savedData.modules.length === 0) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch(container.dataset.completionUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': container.dataset.csrfToken,
+                        },
+                        body: JSON.stringify(savedData),
+                    });
+                    const data = await response.json();
+
+                    if (response.ok && data.success && window.sessionStorage.getItem(completionReloadKey) !== 'done') {
+                        window.sessionStorage.setItem(completionReloadKey, 'done');
+                        window.location.reload();
+                    }
+                } catch (error) {
+                    // Le bouton suivant reste disponible : la validation principale se fait deja a la creation.
+                }
+            };
+
+            restartButton?.addEventListener('click', () => {
+                window.localStorage.removeItem('oneduc_training_group_creation');
+                window.sessionStorage.removeItem(completionReloadKey);
+                window.location.assign(restartButton.dataset.restartUrl || window.location.href);
+            });
+
+            markFinalisationCompleted();
         })();
     </script>
 

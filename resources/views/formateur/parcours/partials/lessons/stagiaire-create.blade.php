@@ -1,22 +1,10 @@
 @if (($activeLessonPart ?? null) === 'ajouter-stagiaire')
 @php
-    $formateurId = (int) auth()->id();
-    $accessibleGroupIds = \App\Models\Group::query()
-        ->accessibleByTrainer($formateurId)
-        ->pluck('groups.id')
-        ->map(fn ($groupId) => (int) $groupId)
-        ->values();
+    $groupes = collect([
+        (object) ['id' => 1, 'name' => 'Hygiène alimentaire 2026 - promo 1'],
+    ]);
 
-    $groupes = \App\Models\Group::query()
-        ->whereIn('id', $accessibleGroupIds->all())
-        ->orderBy('name')
-        ->get(['id', 'name']);
-
-    $selectedGroupId = request()->integer('group_id') ?: null;
-
-    if ($selectedGroupId && ! $groupes->contains('id', $selectedGroupId)) {
-        $selectedGroupId = null;
-    }
+    $selectedGroupId = null;
 @endphp
 
 <div class="mx-auto w-full max-w-[1285px]">
@@ -67,7 +55,7 @@
                         @if($groupes->isNotEmpty())
                             <select id="lesson_stagiaire_group_id" name="group_id"
                                     class="w-full rounded-lg border {{ $errors->has('group_id') ? 'border-red-400' : 'border-gray-300' }} bg-gray-50 px-4 py-2.5 text-sm focus:border-orangeone focus:ring-orangeone">
-                                <option value="">Aucun groupe pour le moment</option>
+                                <option value="">Sélectionner un groupe</option>
                                 @foreach($groupes as $groupe)
                                     <option value="{{ $groupe->id }}" @selected((string) old('group_id', $selectedGroupId) === (string) $groupe->id)>
                                         {{ $groupe->name }}

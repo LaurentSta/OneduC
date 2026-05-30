@@ -32,6 +32,8 @@
         })
         ->values()
         ->all();
+    $pathCreationReviewUrl = $currentLesson['url'] ?? ($mixedPartUrls['ouvrir-formulaire'] ?? '#');
+    $pathCreationRestartUrl = $mixedPartUrls['remplir-formulaire'] ?? ($currentLesson['url'] ?? '#');
 @endphp
 
 <div class="mx-auto w-full max-w-[1285px] space-y-6">
@@ -98,6 +100,30 @@
         data-mode="preview"
         class="min-h-[520px]"
     ></div>
+
+    <div class="flex flex-col gap-3 border-t border-gray-100 pt-6 sm:flex-row sm:items-center sm:justify-end">
+        <a
+            href="{{ $pathCreationReviewUrl }}"
+            class="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-bold text-slate-700 transition hover:border-orangeone hover:text-orangeone"
+        >
+            Revoir la leçon
+        </a>
+
+        <button
+            type="button"
+            id="path-creation-restart-activity"
+            data-restart-url="{{ $pathCreationRestartUrl }}"
+            class="inline-flex items-center justify-center rounded-full border border-orangeone bg-white px-5 py-3 text-sm font-bold text-orangeone transition hover:bg-orange-50"
+        >
+            Refaire l’activité
+        </button>
+
+        @if (!empty($nextLesson['url'] ?? null))
+            <a href="{{ $nextLesson['url'] }}" class="btn-oneduc !rounded-full !px-7 !py-3">
+                Leçon suivante
+            </a>
+        @endif
+    </div>
 </div>
 
 <script>
@@ -134,6 +160,12 @@
         Object.entries(statValues).forEach(([key, value]) => {
             const target = summary.querySelector(`[data-path-stat="${key}"]`);
             if (target) target.textContent = value;
+        });
+
+        const restartButton = document.getElementById('path-creation-restart-activity');
+        restartButton?.addEventListener('click', function () {
+            window.localStorage.removeItem('oneduc_training_path_creation');
+            window.location.assign(restartButton.dataset.restartUrl || window.location.href);
         });
     });
 </script>
