@@ -1,6 +1,7 @@
 @if (in_array(($activeLessonPart ?? null), ['ajustement-groupe-suite', 'ajustement-groupe-finalisation'], true))
 @php
     $isFinalisation = ($activeLessonPart ?? null) === 'ajustement-groupe-finalisation';
+    $isSuiteSimulation = ($activeLessonPart ?? null) === 'ajustement-groupe-suite';
     $formateurId = (int) auth()->id();
     $allowedPerPage = [10, 25, 50, 100];
     $perPage = (int) request('per_page', 10);
@@ -9,48 +10,94 @@
         $perPage = 10;
     }
 
-    $accessibleGroupIds = \App\Models\Group::query()
-        ->accessibleByTrainer($formateurId)
-        ->pluck('groups.id')
-        ->map(fn ($groupId) => (int) $groupId)
-        ->values();
+    if ($isSuiteSimulation) {
+        $groupes = collect([
+            (object) ['id' => 1, 'name' => 'Hygiene alimentaire 2026'],
+        ]);
 
-    $groupes = \App\Models\Group::query()
-        ->whereIn('id', $accessibleGroupIds->all())
-        ->orderBy('name')
-        ->get(['id', 'name']);
+        $simulatedStudents = collect([
+            (object) [
+                'prenom' => 'Marie',
+                'name' => 'Dupont',
+                'email' => 'marie.dupont@email.fr',
+                'code_acces' => 'MARIE1',
+                'groupesStagiaire' => collect([(object) ['name' => 'Hygiene alimentaire 2026']]),
+            ],
+            (object) [
+                'prenom' => 'Jean',
+                'name' => 'Martin',
+                'email' => 'jean.martin@email.fr',
+                'code_acces' => 'JEANM1',
+                'groupesStagiaire' => collect([(object) ['name' => 'Hygiene alimentaire 2026']]),
+            ],
+        ]);
 
-    $stagiairesQuery = \App\Models\User::query()
-        ->where('role', 'stagiaire')
-        ->where(function ($query) use ($accessibleGroupIds, $formateurId) {
-            $query->where('formateur_id', $formateurId)
-                ->orWhereHas('groupesStagiaire', function ($groupQuery) use ($accessibleGroupIds) {
-                    $groupQuery->whereIn('groups.id', $accessibleGroupIds->all());
-                });
-        });
+        if ($search = request('search')) {
+            $normalizedSearch = mb_strtolower($search);
+            $simulatedStudents = $simulatedStudents->filter(function ($student) use ($normalizedSearch) {
+                return str_contains(mb_strtolower($student->prenom), $normalizedSearch)
+                    || str_contains(mb_strtolower($student->name), $normalizedSearch)
+                    || str_contains(mb_strtolower($student->email), $normalizedSearch);
+            })->values();
+        }
 
-    if ($groupId = request('group_id')) {
-        $stagiairesQuery->whereHas('groupesStagiaire', function ($groupQuery) use ($groupId, $accessibleGroupIds) {
-            $groupQuery->where('groups.id', $groupId)
-                ->whereIn('groups.id', $accessibleGroupIds->all());
-        });
+        if (request('group_id') && (string) request('group_id') !== '1') {
+            $simulatedStudents = collect();
+        }
+
+        $currentPage = (int) request('stagiaires_page', 1);
+        $stagiaires = new \Illuminate\Pagination\LengthAwarePaginator(
+            $simulatedStudents->forPage($currentPage, $perPage)->values(),
+            $simulatedStudents->count(),
+            $perPage,
+            $currentPage,
+            ['path' => url()->current(), 'pageName' => 'stagiaires_page']
+        );
+        $stagiaires->appends(request()->query());
+    } else {
+        $accessibleGroupIds = \App\Models\Group::query()
+            ->accessibleByTrainer($formateurId)
+            ->pluck('groups.id')
+            ->map(fn ($groupId) => (int) $groupId)
+            ->values();
+
+        $groupes = \App\Models\Group::query()
+            ->whereIn('id', $accessibleGroupIds->all())
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        $stagiairesQuery = \App\Models\User::query()
+            ->where('role', 'stagiaire')
+            ->where(function ($query) use ($accessibleGroupIds, $formateurId) {
+                $query->where('formateur_id', $formateurId)
+                    ->orWhereHas('groupesStagiaire', function ($groupQuery) use ($accessibleGroupIds) {
+                        $groupQuery->whereIn('groups.id', $accessibleGroupIds->all());
+                    });
+            });
+
+        if ($groupId = request('group_id')) {
+            $stagiairesQuery->whereHas('groupesStagiaire', function ($groupQuery) use ($groupId, $accessibleGroupIds) {
+                $groupQuery->where('groups.id', $groupId)
+                    ->whereIn('groups.id', $accessibleGroupIds->all());
+            });
+        }
+
+        if ($search = request('search')) {
+            $stagiairesQuery->where(function ($query) use ($search) {
+                $query->where('prenom', 'like', "%{$search}%")
+                    ->orWhere('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        $stagiaires = $stagiairesQuery
+            ->with(['groupesStagiaire' => function ($query) use ($accessibleGroupIds) {
+                $query->whereIn('groups.id', $accessibleGroupIds->all())->orderBy('name');
+            }])
+            ->orderBy('name')
+            ->paginate($perPage, ['*'], 'stagiaires_page')
+            ->withQueryString();
     }
-
-    if ($search = request('search')) {
-        $stagiairesQuery->where(function ($query) use ($search) {
-            $query->where('prenom', 'like', "%{$search}%")
-                ->orWhere('name', 'like', "%{$search}%")
-                ->orWhere('email', 'like', "%{$search}%");
-        });
-    }
-
-    $stagiaires = $stagiairesQuery
-        ->with(['groupesStagiaire' => function ($query) use ($accessibleGroupIds) {
-            $query->whereIn('groups.id', $accessibleGroupIds->all())->orderBy('name');
-        }])
-        ->orderBy('name')
-        ->paginate($perPage, ['*'], 'stagiaires_page')
-        ->withQueryString();
 @endphp
 
 <div class="mx-auto w-full max-w-[1285px] space-y-6">
@@ -63,13 +110,20 @@
                     Retrouvez la liste des stagiaires et les actions principales comme sur la page formateur.
                 </p>
             </div>
-            @unless($isFinalisation)
+            @if($isFinalisation)
+                @if (!empty($nextLesson['url'] ?? null))
+                    <a href="{{ $nextLesson['url'] }}"
+                       class="btn-oneduc h-10 w-full sm:w-auto !px-5 !text-sm">
+                        Leçon suivante
+                    </a>
+                @endif
+            @else
                 <a href="{{ $mixedPartUrls['ajouter-stagiaire'] ?? '#' }}"
                    class="btn-oneduc h-10 w-full sm:w-auto !px-5 !text-sm">
                     <x-icons.add-stagiaire-button-iconify class="h-4 w-4 shrink-0" />
                     Ajouter un stagiaire
                 </a>
-            @endunless
+            @endif
         </div>
     </header>
 
