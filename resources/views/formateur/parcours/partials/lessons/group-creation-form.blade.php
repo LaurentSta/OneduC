@@ -1210,9 +1210,9 @@
             <p class="text-xs leading-5 text-slate-500">
                 Ce formulaire est integre au parcours pour l entrainement. La creation definitive se fera ensuite dans l espace groupes.
             </p>
-            <a href="{{ route('formateur.groupes.create') }}" class="inline-flex items-center justify-center rounded-full bg-orangeone px-5 py-3 text-sm font-bold text-white transition hover:bg-orange-600">
-                Ouvrir le vrai formulaire
-            </a>
+            <span class="inline-flex cursor-not-allowed items-center justify-center rounded-full bg-slate-200 px-5 py-3 text-sm font-bold text-slate-500" aria-disabled="true">
+                Simulation uniquement
+            </span>
         </div>
     </form>
 </article>

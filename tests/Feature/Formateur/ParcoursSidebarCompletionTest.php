@@ -77,3 +77,32 @@ it('keeps the final chapter in progress until cases and bilan are completed', fu
     $bilanFinal->assertSee('3/3 étapes validées');
     $bilanFinal->assertSee('Chapitre validé');
 });
+
+it('adds a student inside the group adjustment simulator without writing to the database', function () {
+    $formateur = createSidebarProgressFormateur();
+    $finalisationUrl = sidebarLessonPartRoute('associer-le-bon-parcours-au-bon-contexte', 'ajustement-groupe-finalisation');
+
+    $form = $this
+        ->actingAs($formateur)
+        ->get(sidebarLessonPartRoute('associer-le-bon-parcours-au-bon-contexte', 'ajouter-stagiaire'));
+
+    $form->assertOk();
+    $form->assertSee('action="' . $finalisationUrl . '" method="GET"', false);
+    $form->assertDontSee(route('formateur.stagiaires.store'), false);
+
+    $finalisation = $this
+        ->actingAs($formateur)
+        ->get($finalisationUrl . '?' . http_build_query([
+            'prenom' => 'Sophie',
+            'name' => 'Durand',
+            'email' => 'sophie.durand@example.test',
+            'group_id' => 1,
+        ]));
+
+    $finalisation->assertOk();
+    $finalisation->assertSee('Sophie');
+    $finalisation->assertSee('Durand');
+    $finalisation->assertSee('sophie.durand@example.test');
+    $finalisation->assertSee('Hygiène alimentaire 2026 - promo 1');
+    $this->assertDatabaseMissing('users', ['email' => 'sophie.durand@example.test']);
+});
