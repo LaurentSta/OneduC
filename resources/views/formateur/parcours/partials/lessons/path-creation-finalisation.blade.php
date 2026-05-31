@@ -44,7 +44,7 @@
     >
         <div class="grid grid-cols-12 gap-6 items-start">
             <div class="col-span-12 lg:col-span-8">
-                <p class="text-xs font-bold uppercase tracking-widest text-orangeone">Parcours etabli dans le simulateur</p>
+                <p class="text-xs font-bold uppercase tracking-widest text-orangeone" data-path-summary-kicker>Parcours etabli dans le simulateur</p>
                 <h2 class="mt-2 font-raleway text-2xl font-medium leading-tight text-[#004461]" data-path-summary-title>
                     Votre parcours de formation
                 </h2>
@@ -144,8 +144,15 @@
 
         const title = summary.querySelector('[data-path-summary-title]');
         const description = summary.querySelector('[data-path-summary-description]');
-        if (title && payload.title) title.textContent = payload.title;
-        if (description && payload.description) description.textContent = payload.description;
+        const kicker = summary.querySelector('[data-path-summary-kicker]');
+        if (payload.stopped) {
+            if (kicker) kicker.textContent = 'Activite stoppee apres 3 essais';
+            if (title) title.textContent = payload.title || 'Parcours non finalise';
+            if (description) description.textContent = 'Vous avez utilise les trois essais disponibles. Vous pouvez refaire l activite pour reconstruire le parcours attendu.';
+        } else {
+            if (title && payload.title) title.textContent = payload.title;
+            if (description && payload.description) description.textContent = payload.description;
+        }
 
         const moduleItems = items.filter((item) => item.type === 'module');
         const statValues = {
