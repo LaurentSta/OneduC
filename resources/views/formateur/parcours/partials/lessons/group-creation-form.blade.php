@@ -1,4 +1,13 @@
 @if (($activeLessonPart ?? null) === 'informations')
+@php
+    $trainingGroupActivityKey = $currentLesson['completion_activity_key'] ?? null;
+    $trainingGroupActivityStatusKey = $trainingGroupActivityKey
+        ? implode('.', [$activeChapterKey, $activeLessonKey, $trainingGroupActivityKey])
+        : null;
+    $trainingGroupActivityCompleted = $trainingGroupActivityStatusKey
+        ? (($activityStatusMap[$trainingGroupActivityStatusKey] ?? false) === true)
+        : false;
+@endphp
 <article class="mx-auto w-full max-w-[1285px] rounded-[24px] border border-gray-100 bg-white p-5 shadow-sm md:p-6">
     <form id="training-group-information-form" class="space-y-7" novalidate>
         <div id="training-group-information-errors" class="hidden rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-700">
@@ -186,16 +195,27 @@
             const coTrainerSelected = document.getElementById('training-co-trainers-selected');
             const invalidClasses = ['border-red-500', 'bg-red-50'];
             const storageKey = 'oneduc_training_group_creation';
+            const activityCompleted = @json($trainingGroupActivityCompleted);
             const karimCoTrainer = {
                 name: 'Karim Benali',
                 email: 'karim.benali@oneduc-demo.fr',
             };
-            const readSavedData = () => JSON.parse(window.localStorage.getItem(storageKey) || '{}');
+            const readSavedData = () => {
+                const savedData = JSON.parse(window.localStorage.getItem(storageKey) || '{}');
+
+                if (!activityCompleted && savedData.__activityCompleted !== false) {
+                    window.localStorage.removeItem(storageKey);
+                    return { __activityCompleted: false };
+                }
+
+                return savedData;
+            };
             const writeSavedData = (data) => {
                 const savedData = readSavedData();
                 window.localStorage.setItem(storageKey, JSON.stringify({
                     ...savedData,
                     ...data,
+                    __activityCompleted: false,
                 }));
             };
 
@@ -1063,6 +1083,10 @@
                     const data = await response.json();
 
                     if (response.ok && data.success && window.sessionStorage.getItem(completionReloadKey) !== 'done') {
+                        window.localStorage.setItem('oneduc_training_group_creation', JSON.stringify({
+                            ...savedData,
+                            __activityCompleted: true,
+                        }));
                         window.sessionStorage.setItem(completionReloadKey, 'done');
                         window.location.reload();
                     }

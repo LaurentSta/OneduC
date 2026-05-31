@@ -227,10 +227,11 @@ class ParcoursFormateur
                     'label' => 'Chapitre',
                     'pedagogical_label' => 'Objectif pedagogique',
                     'code' => '2.1',
-                    'title' => 'Preparer l environnement',
-                    'description' => 'Reperer les elements indispensables avant de creer le groupe.',
+                    'title' => 'Preparer avant de creer',
+                    'description' => 'Ce chapitre installe le reflexe de preparation : reconnaitre les zones du formulaire, distinguer ce qui releve des informations, des stagiaires et des modules, puis identifier ce qui bloque vraiment la creation d un groupe.',
                     'duration_label' => '11 min',
-                    'objective' => 'Savoir quoi preparer avant de creer.',
+                    'objective' => 'Verifier que les informations indispensables sont pretes avant d ouvrir un groupe dans Oneduc.',
+                    'tip' => 'Avant de creer, le formateur gagne du temps en separant trois choses : les parametres du groupe, les personnes a inscrire et les contenus a proposer.',
                     'progress_percentage' => 0,
                     'lessons' => [
                         'retrouver-les-espaces-de-preparation' => self::lesson(
@@ -248,18 +249,18 @@ class ParcoursFormateur
                                 'scorm_directory' => 'modules/parcours_formateur/module_2_organiser_ses_parcours/chapitre_1_preparer_lenvironnement_de_formation/lecon_1_1_les_composants_indispensables',
                                 'hide_scorm_next_button' => true,
                                 'activity_page' => self::classificationActivity(
-                                    'Vous preparez la creation d un groupe de formation. Voici 10 donnees reelles collectees en amont. Chacune appartient a une zone du formulaire Oneduc — a vous de les placer au bon endroit.',
+                                    'vous préparez la création d’un groupe de formation. Voici 10 données collectées en amont. Chacune appartient à une zone du formulaire Onéduc : à vous de la placer au bon endroit.',
                                     [
                                         ['id' => 'date_ouverture', 'label' => '1er avril 2026', 'category' => 'information'],
-                                        ['id' => 'module_excel_avance', 'label' => 'Excel avance', 'category' => 'module'],
+                                        ['id' => 'module_excel_avance', 'label' => 'Excel avancé', 'category' => 'module'],
                                         ['id' => 'prenom', 'label' => 'Thomas', 'category' => 'stagiaire'],
-                                        ['id' => 'visible', 'label' => 'Visible', 'category' => 'information'],
-                                        ['id' => 'module_word_debutant', 'label' => 'Word debutant', 'category' => 'module'],
+                                        ['id' => 'visible', 'label' => 'Statut : visible', 'category' => 'information'],
+                                        ['id' => 'module_word_debutant', 'label' => 'Word débutant', 'category' => 'module'],
                                         ['id' => 'adresse_mail', 'label' => 't.lefebvre@esa2.fr', 'category' => 'stagiaire'],
                                         ['id' => 'date_debut', 'label' => '8 avril 2026', 'category' => 'information'],
                                         ['id' => 'module_powerpoint', 'label' => 'PowerPoint', 'category' => 'module'],
                                         ['id' => 'nom', 'label' => 'Lefebvre', 'category' => 'stagiaire'],
-                                        ['id' => 'desactive', 'label' => 'Desactive', 'category' => 'information'],
+                                        ['id' => 'desactive', 'label' => 'Statut : désactivé', 'category' => 'information'],
                                     ]
                                 ),
                             ]
@@ -288,9 +289,10 @@ class ParcoursFormateur
                     'pedagogical_label' => 'Objectif pedagogique',
                     'code' => '2.2',
                     'title' => 'Creer et organiser',
-                    'description' => 'Creer le groupe et organiser les modules dans le bon ordre.',
+                    'description' => 'Ce chapitre transforme la preparation en action : creer le groupe Hygiene alimentaire 2026, renseigner les stagiaires, organiser les modules attendus, puis construire un parcours lisible avec des outils numeriques places au bon moment.',
                     'duration_label' => '16 min',
-                    'objective' => 'Creer le groupe et organiser ses modules.',
+                    'objective' => 'Creer un groupe puis construire un parcours coherent, dans le bon ordre, avec les modules et activites attendus.',
+                    'tip' => 'La progression ne se limite pas a une liste de modules : elle raconte l ordre dans lequel l apprenant va avancer, avec des respirations et des activites utiles.',
                     'progress_percentage' => 0,
                     'lessons' => [
                         'creation-groupe-de-formation' => self::lesson(
@@ -387,9 +389,10 @@ class ParcoursFormateur
                     'pedagogical_label' => 'Objectif pedagogique',
                     'code' => '2.3',
                     'title' => 'Ajuster et securiser',
-                    'description' => 'Associer les stagiaires et traiter les problemes d acces.',
+                    'description' => 'Ce chapitre travaille les ajustements de terrain : ajouter un stagiaire, verifier son rattachement, debloquer Marc en lui renvoyant ses acces, puis modifier le contenu d un groupe lorsque le rythme de formation evolue.',
                     'duration_label' => '21 a 24 min',
-                    'objective' => 'Corriger le groupe et securiser les acces.',
+                    'objective' => 'Ajuster un groupe existant, securiser les acces des stagiaires et modifier le contenu lorsque la situation change.',
+                    'tip' => 'Quand un parcours est lance, le travail du formateur continue : il controle les acces, corrige les profils et ajuste les contenus sans casser la logique du groupe.',
                     'progress_percentage' => 0,
                     'lessons' => [
                         'associer-le-bon-parcours-au-bon-contexte' => self::lesson(
@@ -522,12 +525,12 @@ class ParcoursFormateur
     {
         return [
             'key' => 'classer-les-elements',
-            'code' => 'Activite',
-            'title' => 'Classer les elements de preparation',
-            'button_label' => 'Realiser l activite',
+            'code' => 'Activité',
+            'title' => 'Classer les éléments de préparation',
+            'button_label' => 'Réaliser l’activité',
             'scenario' => $scenario,
-            'instruction' => 'Classez chaque element dans la bonne categorie : Information, Stagiaire ou Module.',
-            'success_message' => 'Bravo, vous avez correctement classe les elements utiles a la preparation du parcours.',
+            'instruction' => 'classez chaque élément dans la bonne catégorie : Informations, Stagiaires ou Modules.',
+            'success_message' => 'Bravo, vous avez correctement classé les éléments utiles à la préparation du parcours.',
             'dropzones' => self::preparationDropzones(),
             'items' => $items,
         ];
@@ -541,30 +544,44 @@ class ParcoursFormateur
         return [
             'key' => 'preparer-informations-utiles',
             'type' => 'essential_sorting',
-            'code' => 'Activite',
-            'title' => 'Essentiel ou facultatif ?',
-            'button_label' => 'Realiser l activite',
-            'scenario' => 'Vous vous apprêtez à ouvrir le groupe Hygiène alimentaire 2026. Avant de créer quoi que ce soit, faites le tri : parmi les éléments que vous avez sous la main, lesquels sont indispensables pour lancer la formation, et lesquels sont utiles mais peuvent attendre ?',
-            'instruction' => 'Glissez chaque élément dans la bonne colonne : Essentiel ou Facultatif. Rangez les huit éléments avant de valider.',
-            'success_message' => 'Parfait. Vous avez vu l essentiel : pour lancer une formation, il suffit d un nom, d un stagiaire et d un module — un élément pour chacune des trois composantes. Tout le reste enrichit, mais n empêche jamais de démarrer.',
+            'code' => 'Activité',
+            'title' => 'Obligatoire ou ajoutable plus tard ?',
+            'button_label' => 'Réaliser l’activité',
+            'scenario' => 'vous vous apprêtez à créer le groupe Hygiène alimentaire 2026 — Promo 1 dans Onéduc.',
+            'instruction_sections' => [
+                [
+                    'label' => 'Votre tâche',
+                    'body' => 'Avant de valider le formulaire, distinguer les éléments qui bloquent la création du groupe. De ceux qui pourront être à ajouter ensuite.',
+                ],
+                [
+                    'label' => 'Critère de tri',
+                    'body' => 'Posez vous la seule question, si cet élément manque, est ce que vous pouvez créer le groupe ?',
+                ],
+                [
+                    'label' => 'Exemple',
+                    'body_html' => '<strong>L’intitulé du groupe est obligatoire</strong> Son nom ? Vous ne pouvez pas créer de groupe. <strong>Une description peut attendre</strong> Vous pourrez la compléter après la création.',
+                ],
+            ],
+            'instruction' => 'glissez chaque élément dans la bonne colonne : Obligatoire pour créer le groupe ou Peut être ajouté plus tard.',
+            'success_message' => 'Parfait. Vous avez raisonné avec le bon critère : est-ce que l’absence de cet élément bloque la création du groupe dans Onéduc ? Un intitulé, au moins un stagiaire et au moins un module sont nécessaires. Le reste peut être ajouté ou ajusté ensuite.',
             'feedback_messages' => [
-                'A' => 'Parfait. Vous avez vu l essentiel : pour lancer une formation, il suffit d un nom, d un stagiaire et d un module — un élément pour chacune des trois composantes. Tout le reste enrichit, mais n empêche jamais de démarrer.',
-                'B' => 'C est juste. Quelques éléments vous ont fait hésiter — c est normal, la frontière entre l utile et l indispensable n est pas toujours évidente. Retenez la règle simple : l essentiel, c est un nom, un stagiaire, un module. Le reste peut attendre.',
-                'C' => 'Reprenons calmement. Pour qu une formation existe vraiment, il faut trois choses, et trois seulement : un nom pour l identifier, au moins un stagiaire pour la suivre, au moins un module à lui proposer. Tout le reste — description, co-formateur, dates, ressources — est utile, mais s ajoute ou s ajuste plus tard. Reprenez l activité avec ce repère.',
+                'A' => 'Parfait. Vous avez repéré ce qui bloque réellement la création du groupe dans Onéduc : un intitulé, au moins un stagiaire et au moins un module.',
+                'B' => 'C’est juste. Quelques éléments peuvent faire hésiter, car ils sont utiles pédagogiquement. Retenez le critère : est-ce que leur absence empêche Onéduc de créer le groupe ?',
+                'C' => 'Petit détour par la case consigne, et ça repart. Pour créer le groupe, il faut les trois indispensables : un intitulé, au moins un stagiaire et au moins un module. Les dates, le statut, la description, le coformateur et les ressources peuvent patienter gentiment.',
             ],
             'dropzones' => [
-                ['id' => 'essentiel', 'label' => 'Essentiel', 'description' => 'Sans cet élément, impossible de lancer la formation.'],
-                ['id' => 'facultatif', 'label' => 'Facultatif', 'description' => 'Utile, mais on peut l ajouter ou l ajuster plus tard.'],
+                ['id' => 'essentiel', 'label' => 'Obligatoire pour créer le groupe', 'description' => 'Sans cet élément, Onéduc ne peut pas créer le groupe.'],
+                ['id' => 'facultatif', 'label' => 'Peut être ajouté plus tard', 'description' => 'Onéduc peut créer le groupe sans cet élément. Vous pourrez l’ajouter ou l’ajuster ensuite.'],
             ],
             'items' => [
-                ['id' => 'description', 'type_label' => 'Description', 'label' => 'Formation pour les nouveaux salariés', 'category' => 'facultatif', 'feedback' => 'La description est facultative : elle clarifie le cadre, mais le groupe existe très bien sans.'],
-                ['id' => 'module', 'type_label' => 'Module', 'label' => 'Sécurité alimentaire 2026', 'category' => 'essentiel', 'feedback' => 'Le module est essentiel : sans au moins un module, la formation n a aucun contenu à proposer.'],
-                ['id' => 'dates', 'type_label' => 'Dates', 'label' => 'du 8 janvier au 31 mars 2026', 'category' => 'facultatif', 'feedback' => 'Les dates sont facultatives ici : elles précisent le calendrier, mais s ajustent ensuite et ne bloquent pas le démarrage.'],
-                ['id' => 'stagiaire', 'type_label' => 'Stagiaire', 'label' => 'Marie Dupont (marie.dupont@email.fr)', 'category' => 'essentiel', 'feedback' => 'Le stagiaire est essentiel : sans au moins un stagiaire et son adresse mail, il n y a personne à former — et personne à inviter.'],
-                ['id' => 'ressource', 'type_label' => 'Ressource', 'label' => 'fiche PDF Bonnes pratiques HACCP', 'category' => 'facultatif', 'feedback' => 'La ressource est facultative : c est un bonus, jamais nécessaire pour ouvrir le groupe.'],
-                ['id' => 'intitule', 'type_label' => 'Intitulé', 'label' => 'Hygiène alimentaire 2026 — Promo 1', 'category' => 'essentiel', 'feedback' => 'L intitulé est essentiel : c est le seul champ obligatoire du formulaire. Sans nom, le groupe ne peut pas être créé.'],
-                ['id' => 'statut', 'type_label' => 'Statut', 'label' => 'en attente', 'category' => 'facultatif', 'feedback' => 'Le statut est facultatif : un statut par défaut existe déjà, ce réglage reste optionnel.'],
-                ['id' => 'coformateur', 'type_label' => 'Co-formateur', 'label' => 'Karim Benali', 'category' => 'facultatif', 'feedback' => 'Le co-formateur est facultatif : on peut animer seul, puis l ajouter à tout moment.'],
+                ['id' => 'description', 'type_label' => 'Description', 'label' => 'Formation pour les nouveaux salariés', 'category' => 'facultatif', 'feedback' => 'La description aide à comprendre le groupe, mais elle n’est pas bloquante. Elle peut être complétée ensuite.'],
+                ['id' => 'module', 'type_label' => 'Module', 'label' => 'Sécurité alimentaire 2026', 'category' => 'essentiel', 'feedback' => 'Au moins un module est nécessaire pour associer un contenu de formation au groupe.'],
+                ['id' => 'dates', 'type_label' => 'Dates', 'label' => 'du 8 janvier au 31 mars 2026', 'category' => 'facultatif', 'feedback' => 'Les dates sont utiles pour cadrer la formation, mais Onéduc peut créer le groupe sans dates précises. Elles peuvent être ajustées ensuite.'],
+                ['id' => 'stagiaire', 'type_label' => 'Stagiaire', 'label' => 'Marie Dupont', 'category' => 'essentiel', 'feedback' => 'Au moins un stagiaire est nécessaire pour préparer l’accès au groupe.'],
+                ['id' => 'ressource', 'type_label' => 'Ressource', 'label' => 'fiche PDF Bonnes pratiques HACCP', 'category' => 'facultatif', 'feedback' => 'La ressource enrichit la formation, mais elle n’est pas indispensable à la création du groupe.'],
+                ['id' => 'intitule', 'type_label' => 'Intitulé', 'label' => 'Hygiène alimentaire 2026 — Promo 1', 'category' => 'essentiel', 'feedback' => 'L’intitulé est obligatoire : sans nom, Onéduc ne peut pas créer le groupe.'],
+                ['id' => 'statut', 'type_label' => 'Statut', 'label' => 'en attente', 'category' => 'facultatif', 'feedback' => 'Le statut permet de préparer ou d’activer le groupe, mais il peut être modifié après la création.'],
+                ['id' => 'coformateur', 'type_label' => 'Coformateur', 'label' => 'Karim Benali', 'category' => 'facultatif', 'feedback' => 'Le coformateur facilite l’encadrement, mais il n’est pas nécessaire pour créer le groupe. Il peut être ajouté plus tard.'],
             ],
         ];
     }
@@ -575,9 +592,9 @@ class ParcoursFormateur
     private static function preparationDropzones(): array
     {
         return [
-            ['id' => 'information', 'label' => 'Information', 'description' => 'Parametres, dates et reperes generaux utiles a la preparation.'],
-            ['id' => 'stagiaire', 'label' => 'Stagiaire', 'description' => 'Donnees d identification et de contact du participant.'],
-            ['id' => 'module', 'label' => 'Module', 'description' => 'Elements lies au contenu, a son activation et a son encadrement.'],
+            ['id' => 'information', 'label' => 'Informations', 'description' => 'Paramètres, dates et repères généraux utiles à la préparation.'],
+            ['id' => 'stagiaire', 'label' => 'Stagiaires', 'description' => 'Données d’identification et de contact des participants.'],
+            ['id' => 'module', 'label' => 'Modules', 'description' => 'Contenus pédagogiques que les stagiaires vont suivre.'],
         ];
     }
 

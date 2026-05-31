@@ -20,6 +20,8 @@
         $perPage = 10;
     }
 
+    $currentPage = max(1, (int) request('stagiaires_page', 1));
+
     $students = [];
 
     foreach ($firstNames as $index => $firstName) {
@@ -56,7 +58,14 @@
         })
         ->values();
     $filteredStudentsCount = $visibleStudents->count();
-    $visibleStudents = $visibleStudents->take($perPage)->values();
+    $visibleStudents = new \Illuminate\Pagination\LengthAwarePaginator(
+        $visibleStudents->forPage($currentPage, $perPage)->values(),
+        $filteredStudentsCount,
+        $perPage,
+        $currentPage,
+        ['path' => url()->current(), 'pageName' => 'stagiaires_page']
+    );
+    $visibleStudents->appends(request()->except('stagiaires_page'));
 @endphp
 
 <div
@@ -73,7 +82,7 @@
             <button
                 type="button"
                 @click="showInstructions = true"
-                class="inline-flex h-12 items-center justify-center gap-3 rounded-full border-2 border-orangeone/30 bg-orangeone/10 px-6 text-base font-bold text-orangeone shadow-sm transition hover:border-orangeone hover:bg-orangeone hover:text-white"
+                class="consigne-invite inline-flex h-12 items-center justify-center gap-3 rounded-full border-2 border-orangeone/30 bg-orangeone/10 px-6 text-base font-bold text-orangeone shadow-sm transition hover:border-orangeone hover:bg-orangeone hover:text-white"
             >
                 <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
@@ -174,11 +183,11 @@
                 <tbody>
                     @forelse ($visibleStudents as $index => $student)
                         @php
-                            $canOpenMarc = $student['active'] && ($hasSearchedMarc || $hasSelectedMarcGroup);
+                            $canOpenMarc = $student['active'];
                         @endphp
 
                         <tr class="border-t {{ $canOpenMarc ? 'bg-orangeone/10' : ($index % 2 === 0 ? 'bg-white' : 'bg-orangeone/5') }}">
-                            <td class="px-6 py-4 font-medium">{{ $index + 1 }}</td>
+                            <td class="px-6 py-4 font-medium">{{ $visibleStudents->firstItem() + $index }}</td>
                             <td class="px-6 py-4 font-semibold {{ $canOpenMarc ? 'text-orangeone' : '' }}">{{ $student['prenom'] }}</td>
                             <td class="px-6 py-4">{{ $student['nom'] }}</td>
                             <td class="px-6 py-4 font-mono text-xs">{{ $student['email'] }}</td>
@@ -236,7 +245,14 @@
                     <span>Resultats filtres :</span>
                     <span class="font-bold text-orangeone">{{ $filteredStudentsCount }}</span>
                 </div>
+
             </div>
+
+            @if ($visibleStudents->hasPages())
+                <div class="marc-pagination mt-5">
+                    {{ $visibleStudents->onEachSide(1)->links('pagination::tailwind') }}
+                </div>
+            @endif
         </main>
     </div>
 

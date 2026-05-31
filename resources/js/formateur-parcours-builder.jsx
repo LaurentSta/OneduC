@@ -210,7 +210,7 @@ function ToolButton({ label, className, onClick, disabled = false }) {
   );
 }
 
-function SimulationFeedbackModal({ message, onClose }) {
+function SimulationFeedbackModal({ message, attemptsLeft = null, canStop = false, onClose, onRestart, onStop }) {
   if (!message) return null;
 
   return (
@@ -235,10 +235,33 @@ function SimulationFeedbackModal({ message, onClose }) {
             <p className="mt-3 text-base leading-7 text-slate-700">
               {message}
             </p>
+            {attemptsLeft !== null && (
+              <p className={`mt-4 inline-flex rounded-full px-3 py-1 text-sm font-bold ${canStop ? 'bg-red-50 text-red-700' : 'bg-orange-50 text-orange-700'}`}>
+                {canStop ? '3 essais utilisés' : `${attemptsLeft} essai${attemptsLeft > 1 ? 's' : ''} restant${attemptsLeft > 1 ? 's' : ''}`}
+              </p>
+            )}
           </div>
         </div>
 
-        <div className="mt-6 flex justify-end">
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            onClick={onRestart}
+            className="inline-flex items-center justify-center rounded-full border border-orange-200 bg-white px-6 py-3 text-sm font-bold text-orange-700 shadow-sm transition hover:border-orange-400 hover:bg-orange-50"
+          >
+            Recommencer l'activité
+          </button>
+
+          {canStop && (
+            <button
+              type="button"
+              onClick={onStop}
+              className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-slate-800 px-6 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-slate-900"
+            >
+              Stopper l'activité
+            </button>
+          )}
+
           <button
             type="button"
             onClick={onClose}
@@ -528,6 +551,7 @@ function ParcoursBuilder({ availableModules = [], initialItems = [], csrfToken, 
   const [editingItemId, setEditingItemId] = useState(null);
   const [saveError, setSaveError]         = useState('');
   const [simulationFeedback, setSimulationFeedback] = useState('');
+  const [simulationAttempts, setSimulationAttempts] = useState(0);
   const [saving, setSaving]               = useState(false);
   const [flowInstance, setFlowInstance]   = useState(null);
   const canvasRef = useRef(null);
@@ -733,6 +757,48 @@ function ParcoursBuilder({ availableModules = [], initialItems = [], csrfToken, 
     });
   };
 
+  const resetSimulationActivity = () => {
+    if (!isSimulation) return;
+    setItems([]);
+    setNewModuleId('');
+    setAddError('');
+    setSaveError('');
+    setSimulationFeedback('');
+    setSimulationAttempts(0);
+    setShowWcForm(false);
+    setShowPollForm(false);
+    setEditingItemId(null);
+    const titleInput = document.querySelector('[name="title"]');
+    const descriptionInput = document.querySelector('[name="description"]');
+    if (titleInput) titleInput.value = '';
+    if (descriptionInput) descriptionInput.value = '';
+    window.localStorage.removeItem('oneduc_training_path_creation');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const simulationPayload = () => ({
+    title:       document.querySelector('[name="title"]')?.value ?? '',
+    description: document.querySelector('[name="description"]')?.value ?? '',
+    items: items.map((item) => {
+      if (item.type === 'module')    return { type: 'module',    module_id: item.id, position: item.position };
+      if (item.type === 'wordcloud') return { type: 'wordcloud', wc_title: item.wc_title, wc_questions: item.wc_questions ?? [], wc_duration: item.wc_duration ?? null, position: item.position };
+      return { type: 'poll', poll_questions: item.poll_questions ?? [], poll_duration: item.poll_duration ?? null, position: item.position };
+    }),
+  });
+
+  const stopSimulationActivity = () => {
+    if (!isSimulation) return;
+    const payload = {
+      ...simulationPayload(),
+      stopped: true,
+      attempts: Math.max(simulationAttempts, 3),
+    };
+    window.localStorage.setItem('oneduc_training_path_creation', JSON.stringify(payload));
+    if (storeUrl) {
+      window.location.href = storeUrl;
+    }
+  };
+
   // ── Save ──────────────────────────────────────────────────────────────────
 
   const handleSave = async () => {
@@ -740,24 +806,18 @@ function ParcoursBuilder({ availableModules = [], initialItems = [], csrfToken, 
     setSimulationFeedback('');
     setSaving(true);
     try {
-      const payload = {
-        title:       document.querySelector('[name="title"]')?.value ?? '',
-        description: document.querySelector('[name="description"]')?.value ?? '',
-        items: items.map((item) => {
-          if (item.type === 'module')    return { type: 'module',    module_id: item.id, position: item.position };
-          if (item.type === 'wordcloud') return { type: 'wordcloud', wc_title: item.wc_title, wc_questions: item.wc_questions ?? [], wc_duration: item.wc_duration ?? null, position: item.position };
-          return { type: 'poll', poll_questions: item.poll_questions ?? [], poll_duration: item.poll_duration ?? null, position: item.position };
-        }),
-      };
+      const payload = simulationPayload();
 
       if (isSimulation) {
         if (!payload.title.trim()) {
+          setSimulationAttempts((current) => current + 1);
           setSimulationFeedback('Le titre du parcours est obligatoire avant de créer le parcours.');
           return;
         }
 
         const simulationError = validateSimulationPathItems(items);
         if (simulationError) {
+          setSimulationAttempts((current) => current + 1);
           setSimulationFeedback(simulationError);
           return;
         }
@@ -796,7 +856,11 @@ function ParcoursBuilder({ availableModules = [], initialItems = [], csrfToken, 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_18rem]">
         <SimulationFeedbackModal
           message={simulationFeedback}
+          attemptsLeft={Math.max(0, 3 - simulationAttempts)}
+          canStop={simulationAttempts >= 3}
           onClose={() => setSimulationFeedback('')}
+          onRestart={resetSimulationActivity}
+          onStop={stopSimulationActivity}
         />
 
         <div className="space-y-4">

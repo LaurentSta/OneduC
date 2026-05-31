@@ -59,47 +59,85 @@
                         $chapterPosition++;
                         $isActiveChapter = ($activeChapterKey ?? null) === $chapterKey;
                         $hasActiveLessonInChapter = $isActiveChapter && !empty($activeLessonKey);
-                        $completedLabel = '0/' . $chapter['lesson_count'] . ' lecon' . ($chapter['lesson_count'] > 1 ? 's' : '') . ' terminee' . ($chapter['lesson_count'] > 1 ? 's' : '');
+                        $chapterActivityTotal = 0;
+                        $chapterActivityCompleted = 0;
+
+                        foreach (($chapter['lessons'] ?? []) as $chapterLessonKey => $chapterLesson) {
+                            if (($chapterLesson['type'] ?? 'objectif') === 'bilan') {
+                                continue;
+                            }
+
+                            $chapterLessonHasActivity = !empty($chapterLesson['activity_page']);
+                            $chapterLessonHasCompletionActivity = !empty($chapterLesson['completion_activity_key']);
+                            $chapterLessonActivityKey = $chapterLesson['activity_page']['key'] ?? ($chapterLesson['completion_activity_key'] ?? null);
+
+                            if (! ($chapterLessonHasActivity || $chapterLessonHasCompletionActivity) || ! $chapterLessonActivityKey) {
+                                continue;
+                            }
+
+                            $chapterActivityTotal++;
+                            $chapterStatusKey = implode('.', [$chapterKey, $chapterLessonKey, $chapterLessonActivityKey]);
+
+                            if (($activityStatusMap[$chapterStatusKey] ?? false) === true) {
+                                $chapterActivityCompleted++;
+                            }
+                        }
+
+                        $isChapterCompleted = $chapterActivityTotal > 0 && $chapterActivityCompleted >= $chapterActivityTotal;
+                        $completedLabel = $chapterActivityTotal > 0
+                            ? $chapterActivityCompleted . '/' . $chapterActivityTotal . ' activité' . ($chapterActivityTotal > 1 ? 's' : '') . ' validée' . ($chapterActivityTotal > 1 ? 's' : '')
+                            : '0/' . $chapter['lesson_count'] . ' lecon' . ($chapter['lesson_count'] > 1 ? 's' : '') . ' terminee' . ($chapter['lesson_count'] > 1 ? 's' : '');
+                        $chapterButtonClass = $isChapterCompleted
+                            ? 'bg-teal-50/70 border-vertone'
+                            : ($isActiveChapter ? ($hasActiveLessonInChapter ? 'bg-blue-50/40 border-bleuone' : 'bg-orange-50 border-orangeone') : 'hover:bg-gray-50 border-transparent');
+                        $chapterNumberClass = $isChapterCompleted
+                            ? 'bg-vertone text-white border-vertone'
+                            : ($isActiveChapter ? ($hasActiveLessonInChapter ? 'bg-bleuone text-white border-bleuone' : 'bg-orangeone text-white border-orangeone') : 'bg-gray-100 text-gray-500 border-gray-200');
+                        $chapterKickerClass = $isChapterCompleted ? 'text-vertone' : ($isActiveChapter ? ($hasActiveLessonInChapter ? 'text-bleuone' : 'text-orangeone') : 'text-orangeone');
+                        $chapterTitleClass = $isChapterCompleted ? 'text-vertone' : ($isActiveChapter ? ($hasActiveLessonInChapter ? 'text-bleuone' : 'text-orangeone') : 'text-bleuone');
+                        $chapterCounterClass = $isChapterCompleted ? 'text-vertone' : 'text-gray-400';
+                        $chapterChevronBaseClass = $isChapterCompleted ? 'border-teal-100 bg-teal-50 text-vertone' : 'border-orange-100 bg-orange-50 text-orangeone';
+                        $chapterChevronOpenClass = $isChapterCompleted ? 'bg-vertone text-white border-vertone' : 'bg-orangeone text-white border-orangeone';
                     @endphp
 
 	                    <li class="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
 	                        <button
 	                            type="button"
 	                            @click="openSidebarChapter = openSidebarChapter === '{{ $chapterKey }}' ? null : '{{ $chapterKey }}'"
-	                            class="col-span-2 grid w-full items-center py-4 text-left border-l-4 transition {{ $isActiveChapter ? ($hasActiveLessonInChapter ? 'bg-blue-50/40 border-bleuone' : 'bg-orange-50 border-orangeone') : 'hover:bg-gray-50 border-transparent' }}"
+	                            class="col-span-2 grid w-full items-center py-4 text-left border-l-4 transition {{ $chapterButtonClass }}"
 	                            style="grid-template-columns: 44px 1fr 42px;"
 	                            :aria-expanded="(openSidebarChapter === '{{ $chapterKey }}').toString()"
 	                            aria-controls="sidebar-chapter-{{ $chapterKey }}"
 	                        >
 	                            <div class="flex justify-center">
-	                                <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-black border {{ $isActiveChapter ? ($hasActiveLessonInChapter ? 'bg-bleuone text-white border-bleuone' : 'bg-orangeone text-white border-orangeone') : 'bg-gray-100 text-gray-500 border-gray-200' }}">
+	                                <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-black border {{ $chapterNumberClass }}">
 	                                    {{ $chapterPosition }}
 	                                </div>
 	                            </div>
 
                             <div class="min-w-0 pr-4 relative">
 	                                <p
-	                                    class="text-[10px] font-black uppercase tracking-wide {{ $isActiveChapter ? ($hasActiveLessonInChapter ? 'text-bleuone' : 'text-orangeone') : 'text-orangeone' }}"
+	                                    class="text-[10px] font-black uppercase tracking-wide {{ $chapterKickerClass }}"
 	                                    data-parcours-tooltip="{{ $chapter['pedagogical_label'] ?? 'Objectif pedagogique' }}"
 	                                >
-	                                    Chapitre
+	                                    {{ $isChapterCompleted ? 'Chapitre validé' : 'Chapitre' }}
 	                                </p>
 	                                <h3
-	                                    class="mt-1 text-[14px] font-bold leading-tight truncate max-w-[220px] {{ $isActiveChapter ? ($hasActiveLessonInChapter ? 'text-bleuone' : 'text-orangeone') : 'text-bleuone' }}"
+	                                    class="mt-1 text-[14px] font-bold leading-tight truncate max-w-[220px] {{ $chapterTitleClass }}"
 	                                    title="{{ $chapter['title'] }}"
 	                                    data-parcours-tooltip="{{ $chapter['pedagogical_label'] ?? 'Objectif pedagogique' }}"
 	                                >
                                     {{ $chapter['title'] }}
                                 </h3>
 
-	                                <span class="text-[11px] font-bold text-gray-400 mt-1 block italic">
+	                                <span class="text-[11px] font-bold {{ $chapterCounterClass }} mt-1 block italic">
 	                                    {{ $completedLabel }}
 	                                </span>
 	                            </div>
 	                            <div class="flex justify-center pr-3">
 	                                <span
-	                                    class="flex h-8 w-8 items-center justify-center rounded-full border border-orange-100 bg-orange-50 text-orangeone transition"
-	                                    :class="openSidebarChapter === '{{ $chapterKey }}' ? 'bg-orangeone text-white border-orangeone' : ''"
+	                                    class="flex h-8 w-8 items-center justify-center rounded-full border transition {{ $chapterChevronBaseClass }}"
+	                                    :class="openSidebarChapter === '{{ $chapterKey }}' ? '{{ $chapterChevronOpenClass }}' : ''"
 	                                >
 	                                    <svg
 	                                        :class="openSidebarChapter === '{{ $chapterKey }}' ? 'rotate-180' : ''"
@@ -125,10 +163,10 @@
 	                            <ul class="py-1">
 	                                @foreach ($chapter['lessons'] as $lessonKey => $lesson)
 	                                    @php
+                                            $isBilan = ($lesson['type'] ?? 'objectif') === 'bilan';
 	                                        $hasActivity = !empty($lesson['activity_page']);
-	                                        $hasCompletionActivity = !empty($lesson['completion_activity_key']);
+	                                        $hasCompletionActivity = ! $isBilan && !empty($lesson['completion_activity_key']);
 	                                        $hasActivitySlot = $hasActivity || $hasCompletionActivity;
-	                                        $isBilan = ($lesson['type'] ?? 'objectif') === 'bilan';
 	                                        $lessonTypeLabel = $isBilan ? 'Bilan' : 'Objectif operationnel';
 	                                        $activityKey = $lesson['activity_page']['key'] ?? ($lesson['completion_activity_key'] ?? null);
 	                                        $activityStatusKey = $hasActivitySlot && $activityKey

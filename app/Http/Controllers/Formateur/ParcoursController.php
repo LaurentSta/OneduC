@@ -40,6 +40,7 @@ class ParcoursController extends Controller
             'activeChapterKey' => null,
             'activeLessonKey' => null,
             'currentModule' => $currentModule,
+            'activityStatusMap' => $this->loadActivityStatusMap($module),
             'breadcrumbs' => [
                 ['label' => 'Parcours formateur', 'url' => route('formateur.parcours.index')],
                 ['label' => $currentModule['title'], 'url' => $currentModule['url']],
@@ -87,6 +88,7 @@ class ParcoursController extends Controller
             'activeLessonKey' => null,
             'currentModule' => $currentModule,
             'currentChapter' => $currentChapter,
+            'activityStatusMap' => $this->loadActivityStatusMap($module),
             'breadcrumbs' => [
                 ['label' => 'Parcours formateur', 'url' => route('formateur.parcours.index')],
                 ['label' => $currentModule['title'], 'url' => $currentModule['url']],

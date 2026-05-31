@@ -222,7 +222,7 @@
                                 </svg>
                                 <div class="text-sm text-bleuone/80">
                                     <span class="font-bold block text-bleuone">Le saviez-vous ?</span>
-                                    Vous pouvez ouvrir ce chapitre comme un stagiaire, tout en gardant votre logique formateur pour preparer ensuite les contenus et les ressources.
+                                    {{ $currentChapter['tip'] ?? 'Vous pouvez ouvrir ce chapitre comme un stagiaire, tout en gardant votre logique formateur pour preparer ensuite les contenus et les ressources.' }}
                                 </div>
                             </div>
                         </div>

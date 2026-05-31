@@ -13,7 +13,37 @@
     <style>
         [x-cloak] { display: none !important; }
         .font-lisible { font-family: 'Open Sans', system-ui, sans-serif; }
+        @keyframes consigne-invite {
+            0%, 100% {
+                box-shadow: 0 0 0 0 rgba(233, 77, 42, 0.42), 0 8px 18px -16px rgba(233, 77, 42, 0.8);
+                border-color: rgba(233, 77, 42, 0.45);
+            }
+
+            50% {
+                box-shadow: 0 0 0 10px rgba(233, 77, 42, 0.16), 0 16px 30px -18px rgba(233, 77, 42, 0.95);
+                border-color: rgba(233, 77, 42, 0.9);
+            }
+        }
+
+        @keyframes consigne-nudge {
+            0%, 100% { transform: translateX(0); }
+            8% { transform: translateX(-2px); }
+            16% { transform: translateX(2px); }
+            24% { transform: translateX(0); }
+        }
+
+        .consigne-invite {
+            animation: consigne-invite 1.45s ease-in-out infinite, consigne-nudge 4s ease-in-out infinite;
+        }
+
+        .marc-pagination span[aria-current="page"] > span {
+            border-color: #004461 !important;
+            background-color: #004461 !important;
+            color: #fff !important;
+            font-weight: 800;
+        }
     </style>
+    @stack('styles')
 </head>
 @php
     $overviewModules = collect($parcoursModules ?? [])
