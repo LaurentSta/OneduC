@@ -92,9 +92,9 @@ it('stores a successful parcours activity attempt and reopens the activity as va
         ->postJson(parcoursActivityRoute('formateur.parcours.activities.submit'), [
             '_token' => $token,
             'placements' => [
-                'information' => ['date_ouverture', 'date_debut', 'visible', 'ouvert'],
+                'information' => ['date_ouverture', 'date_debut', 'visible', 'desactive'],
                 'stagiaire' => ['nom', 'prenom', 'adresse_mail'],
-                'module' => ['coformateur', 'module_excel_avance', 'active', 'desactive'],
+                'module' => ['module_excel_avance', 'module_word_debutant', 'module_powerpoint'],
             ],
         ]);
 
@@ -107,7 +107,7 @@ it('stores a successful parcours activity attempt and reopens the activity as va
 
     expect($attempt)->not->toBeNull();
     expect((bool) $attempt->is_success)->toBeTrue();
-    expect((int) $attempt->correct_items)->toBe(11);
+    expect((int) $attempt->correct_items)->toBe(10);
 
     $page = $this
         ->actingAs($formateur)

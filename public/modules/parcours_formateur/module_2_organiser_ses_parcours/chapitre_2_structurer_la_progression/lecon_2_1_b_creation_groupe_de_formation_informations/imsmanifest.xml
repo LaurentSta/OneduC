@@ -61,9 +61,6 @@
   <resources>
     <resource identifier="__6LahHm1xbhe_RES" type="webcontent" href="index_lms.html" adlcp:scormtype="sco">
       <file href="story_content/thumbnail.jpg" />
-      <file href="mobile/5VbwkT2NUid.png" />
-      <file href="mobile/63AhB2hZf1g.png" />
-      <file href="mobile/5cUh3njgH4p.png" />
       <file href="story_content/video_6mR1dHdqAnS_9_56_250x250.mp4" />
       <file href="meta.xml" />
       <file href="story_content/triggers.js" />

@@ -63,10 +63,6 @@
                         $chapterActivityCompleted = 0;
 
                         foreach (($chapter['lessons'] ?? []) as $chapterLessonKey => $chapterLesson) {
-                            if (($chapterLesson['type'] ?? 'objectif') === 'bilan') {
-                                continue;
-                            }
-
                             $chapterLessonHasActivity = !empty($chapterLesson['activity_page']);
                             $chapterLessonHasCompletionActivity = !empty($chapterLesson['completion_activity_key']);
                             $chapterLessonActivityKey = $chapterLesson['activity_page']['key'] ?? ($chapterLesson['completion_activity_key'] ?? null);
@@ -85,7 +81,7 @@
 
                         $isChapterCompleted = $chapterActivityTotal > 0 && $chapterActivityCompleted >= $chapterActivityTotal;
                         $completedLabel = $chapterActivityTotal > 0
-                            ? $chapterActivityCompleted . '/' . $chapterActivityTotal . ' activité' . ($chapterActivityTotal > 1 ? 's' : '') . ' validée' . ($chapterActivityTotal > 1 ? 's' : '')
+                            ? $chapterActivityCompleted . '/' . $chapterActivityTotal . ' étape' . ($chapterActivityTotal > 1 ? 's' : '') . ' validée' . ($chapterActivityTotal > 1 ? 's' : '')
                             : '0/' . $chapter['lesson_count'] . ' lecon' . ($chapter['lesson_count'] > 1 ? 's' : '') . ' terminee' . ($chapter['lesson_count'] > 1 ? 's' : '');
                         $chapterButtonClass = $isChapterCompleted
                             ? 'bg-teal-50/70 border-vertone'
