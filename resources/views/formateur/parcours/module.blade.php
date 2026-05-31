@@ -14,10 +14,6 @@
     $bilanCount = 0;
 
     $activityStatusKeyFor = static function (string $chapterKey, string $lessonKey, array $lesson): ?string {
-        if (($lesson['type'] ?? 'objectif') === 'bilan') {
-            return null;
-        }
-
         $activityKey = $lesson['activity_page']['key'] ?? ($lesson['completion_activity_key'] ?? null);
 
         return $activityKey ? implode('.', [$chapterKey, $lessonKey, $activityKey]) : null;
@@ -187,9 +183,9 @@
                                         </div>
                                         <div class="flex shrink-0 items-center gap-3">
                                             <span class="hidden text-right text-xs font-semibold text-gray-400 sm:inline-block">
-	                                                {{ $chapter['lesson_count'] }} lecon{{ $chapter['lesson_count'] > 1 ? 's' : '' }}
+                                                {{ $chapter['lesson_count'] }} lecon{{ $chapter['lesson_count'] > 1 ? 's' : '' }}
                                                 @if ($chapterActivityCount > 0)
-                                                    <br>{{ $chapterActivityCount }} activite{{ $chapterActivityCount > 1 ? 's' : '' }}
+                                                    <br>{{ $chapterActivityCount }} etape{{ $chapterActivityCount > 1 ? 's' : '' }} suivie{{ $chapterActivityCount > 1 ? 's' : '' }}
                                                 @endif
                                             </span>
 	                                            <span

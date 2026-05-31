@@ -35,7 +35,7 @@
             $isCompleted = $statusKey !== null && (($activityStatusMap[$statusKey] ?? false) === true);
             $minutes = $durationToMinutes($lesson['duration'] ?? $lesson['duration_label'] ?? '');
 
-            if ($isTracked && ! $isBilan) {
+            if ($isTracked) {
                 $chapterTracked++;
                 $chapterEstimatedMinutes += $minutes;
 
@@ -49,7 +49,7 @@
                 'title' => $lesson['title'] ?? 'Lecon',
                 'duration' => $lesson['duration'] ?? '',
                 'is_bilan' => $isBilan,
-                'is_tracked' => $isTracked && ! $isBilan,
+                'is_tracked' => $isTracked,
                 'is_completed' => $isCompleted,
             ];
         }
@@ -117,7 +117,7 @@
                     <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                         <div>
                             <h2 class="font-raleway text-xl font-bold text-bleuone">Detail par chapitre</h2>
-                            <p class="mt-1 text-sm leading-6 text-slate-500">Les bilans ne sont pas comptes comme activites a valider.</p>
+                            <p class="mt-1 text-sm leading-6 text-slate-500">Chaque etape, bilan compris, doit etre terminee pour valider le module.</p>
                         </div>
                         <span class="rounded-full bg-white px-3 py-1 text-xs font-bold text-slate-500 shadow-sm">
                             {{ $totalTracked - $totalCompleted }} restant(s)
@@ -148,10 +148,10 @@
                                                 <p class="truncate text-sm font-semibold text-slate-700">{{ $lessonResult['title'] }}</p>
                                                 <p class="text-xs text-slate-400">{{ $lessonResult['duration'] }}</p>
                                             </div>
-                                            @if ($lessonResult['is_bilan'])
-                                                <span class="shrink-0 rounded-full bg-bleuone/10 px-3 py-1 text-xs font-bold text-bleuone">Bilan</span>
-                                            @elseif ($lessonResult['is_completed'])
+                                            @if ($lessonResult['is_completed'])
                                                 <span class="shrink-0 rounded-full bg-vertone/10 px-3 py-1 text-xs font-bold text-vertone">Validee</span>
+                                            @elseif ($lessonResult['is_bilan'])
+                                                <span class="shrink-0 rounded-full bg-orangeone/10 px-3 py-1 text-xs font-bold text-orangeone">Bilan a terminer</span>
                                             @else
                                                 <span class="shrink-0 rounded-full bg-orangeone/10 px-3 py-1 text-xs font-bold text-orangeone">A terminer</span>
                                             @endif

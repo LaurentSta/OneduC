@@ -446,6 +446,7 @@ class ParcoursFormateur
                                 'activity' => 'Cas Marc et cas Sofia : resoudre un blocage puis inscrire a un second groupe.',
                                 'evaluation' => 'Appliquer la procedure a 5 niveaux et inscrire Sofia a un second groupe.',
                                 'layout' => 'scorm_form',
+                                'completion_activity_key' => 'cas-particuliers-finalises',
                                 'scorm_parts' => [
                                     'cas-particulier' => [
                                         'directory' => 'modules/parcours_formateur/module_2_organiser_ses_parcours/chapitre_3_ajuster_un_groupe/lecon_3_2_a_cas_particulier',
@@ -463,7 +464,6 @@ class ParcoursFormateur
                                         'directory' => 'modules/parcours_formateur/module_2_organiser_ses_parcours/chapitre_3_ajuster_un_groupe/lecon_3_2_c_cas_particulier_finalisation',
                                         'height' => 'compact',
                                         'form' => 'marc_unlock_results',
-                                        'marks_completion' => true,
                                     ],
                                     'modifier-contenu' => [
                                         'directory' => 'modules/parcours_formateur/module_2_organiser_ses_parcours/chapitre_3_ajuster_un_groupe/lecon_3_2_d_cas_particulier_modifier_contenu',
@@ -513,6 +513,80 @@ class ParcoursFormateur
                         ),
                     ],
                 ],
+            ],
+        ];
+    }
+
+    /**
+     * Modules fictifs proposés dans le simulateur de création de parcours.
+     *
+     * @return array<int, array{id: int, title: string, lesson_count: int, question_count: int, duration_label: string}>
+     */
+    public static function pathCreationSimulationModules(): array
+    {
+        return [
+            [
+                'id' => 101,
+                'title' => 'Securite alimentaire 2026',
+                'lesson_count' => 5,
+                'question_count' => 8,
+                'duration_label' => '45 min',
+            ],
+            [
+                'id' => 102,
+                'title' => 'Hygiene en cuisine professionnelle',
+                'lesson_count' => 4,
+                'question_count' => 6,
+                'duration_label' => '40 min',
+            ],
+            [
+                'id' => 103,
+                'title' => 'Nettoyage et desinfection des espaces',
+                'lesson_count' => 4,
+                'question_count' => 7,
+                'duration_label' => '50 min',
+            ],
+            [
+                'id' => 104,
+                'title' => 'Conservation et chaine du froid',
+                'lesson_count' => 4,
+                'question_count' => 6,
+                'duration_label' => '40 min',
+            ],
+            [
+                'id' => 105,
+                'title' => 'Allergenes et information client',
+                'lesson_count' => 3,
+                'question_count' => 5,
+                'duration_label' => '35 min',
+            ],
+            [
+                'id' => 106,
+                'title' => 'Reception et stockage des denrees',
+                'lesson_count' => 4,
+                'question_count' => 6,
+                'duration_label' => '45 min',
+            ],
+            [
+                'id' => 107,
+                'title' => 'Prevention des contaminations croisees',
+                'lesson_count' => 5,
+                'question_count' => 8,
+                'duration_label' => '55 min',
+            ],
+            [
+                'id' => 108,
+                'title' => 'Equilibre alimentaire et menus',
+                'lesson_count' => 3,
+                'question_count' => 5,
+                'duration_label' => '30 min',
+            ],
+            [
+                'id' => 109,
+                'title' => 'Gestion des dechets alimentaires',
+                'lesson_count' => 3,
+                'question_count' => 4,
+                'duration_label' => '30 min',
             ],
         ];
     }
