@@ -46,24 +46,26 @@
     @stack('styles')
 </head>
 @php
+    $moduleCompletionMap = $moduleCompletionMap ?? [];
     $overviewModules = collect($parcoursModules ?? [])
-        ->values()
-	        ->map(fn ($module) => [
+	        ->map(fn ($module, $moduleKey) => [
 	            'label' => $module['label'] ?? 'Module',
 	            'title' => $module['title'] ?? '',
 	            'full_title' => $module['full_title'] ?? ($module['title'] ?? ''),
 	            'description' => $module['description'] ?? null,
 	            'time_label' => $module['duration_label'] ?? null,
 	            'url' => $module['url'] ?? '#',
+            'is_completed' => ($moduleCompletionMap[$moduleKey] ?? false) === true,
             'is_current' => isset($activeModuleKey) && isset($module['url']) && $activeModuleKey !== null && str_contains($module['url'], '/' . $activeModuleKey),
         ])
         ->values();
     $isOverviewHomeActive = ($activeModuleKey ?? null) === null;
+    $isCurrentOverviewModuleCompleted = ($moduleCompletionMap[$activeModuleKey ?? null] ?? false) === true;
     $hideParcoursHeader = trim($__env->yieldContent('hide_parcours_header')) === 'true';
     $hideParcoursBrandHeader = $hideParcoursHeader || trim($__env->yieldContent('hide_parcours_brand_header')) === 'true';
     $hideParcoursOverview = trim($__env->yieldContent('hide_parcours_overview')) === 'true';
 @endphp
-<body class="min-h-screen bg-slate-50 text-slate-900">
+<body class="min-h-screen bg-[#f8f7fa] text-slate-900">
     @unless ($hideParcoursBrandHeader)
         <header class="sticky top-0 z-40 border-b border-slate-200 bg-white">
             <div class="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-4 lg:px-8">
@@ -121,12 +123,16 @@
                                     @foreach ($overviewModules as $module)
 	                                    <a
 	                                        href="{{ $module['url'] }}"
-	                                        class="flex w-[176px] flex-none flex-col rounded-[20px] border-2 px-4 py-3 transition hover:-translate-y-0.5 hover:shadow-md xl:w-[176px] {{ $module['is_current'] ? 'border-orangeone bg-orange-50/60' : 'border-bleuone bg-white' }}"
+	                                        class="flex w-[176px] flex-none flex-col rounded-[20px] border-2 px-4 py-3 transition hover:-translate-y-0.5 hover:shadow-md xl:w-[176px] {{ $module['is_completed'] ? 'border-vertone bg-teal-50/70' : ($module['is_current'] ? 'border-orangeone bg-orange-50/60' : 'border-bleuone bg-white') }}"
 	                                        data-parcours-tooltip="{{ $module['full_title'] }}"
 	                                    >
                                             <div class="flex items-center justify-between gap-2">
                                                 <span class="text-[10px] font-semibold uppercase tracking-[0.24em] text-orangeone">{{ $module['label'] }}</span>
-                                                <span class="text-[10px] font-semibold text-slate-500">{{ $module['time_label'] }}</span>
+                                                @if ($module['is_completed'])
+                                                    <span class="text-[10px] font-bold uppercase tracking-[0.12em] text-vertone">Validé</span>
+                                                @else
+                                                    <span class="text-[10px] font-semibold text-slate-500">{{ $module['time_label'] }}</span>
+                                                @endif
                                             </div>
 	                                        <span class="mt-2 text-[18px] leading-5 font-semibold text-bleuone">{{ $module['title'] }}</span>
 	                                    </a>
@@ -148,12 +154,12 @@
                             <button
                                 type="button"
                                 id="parcours-overview-toggle"
-                                class="absolute right-5 top-0 z-10 inline-flex items-center gap-3 rounded-b-[18px] border-2 border-t-0 border-orangeone bg-white px-5 py-2 text-sm font-semibold text-bleuone shadow-[0_14px_30px_-18px_rgba(0,68,97,0.5)] transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] lg:right-8"
+                                class="absolute right-5 top-0 z-10 inline-flex items-center gap-3 rounded-b-[18px] border-2 border-t-0 {{ $isCurrentOverviewModuleCompleted ? 'border-vertone' : 'border-orangeone' }} bg-white px-5 py-2 text-sm font-semibold text-bleuone shadow-[0_14px_30px_-18px_rgba(0,68,97,0.5)] transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] lg:right-8"
                                 aria-expanded="false"
                                 aria-controls="parcours-overview-drawer"
                             >
                                 <span id="parcours-overview-title">Vue d'ensemble du parcours</span>
-                                <svg id="parcours-overview-icon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-orangeone transition-transform duration-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                                <svg id="parcours-overview-icon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 {{ $isCurrentOverviewModuleCompleted ? 'text-vertone' : 'text-orangeone' }} transition-transform duration-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6" />
                                 </svg>
                             </button>

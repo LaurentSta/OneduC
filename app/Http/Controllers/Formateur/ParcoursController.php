@@ -20,6 +20,7 @@ class ParcoursController extends Controller
             'activeModuleKey' => null,
             'activeChapterKey' => null,
             'activeLessonKey' => null,
+            'moduleCompletionMap' => $this->loadModuleCompletionMap(),
             'breadcrumbs' => [
                 ['label' => 'Parcours formateur', 'url' => route('formateur.parcours.index')],
             ],
@@ -41,6 +42,7 @@ class ParcoursController extends Controller
             'activeLessonKey' => null,
             'currentModule' => $currentModule,
             'activityStatusMap' => $this->loadActivityStatusMap($module),
+            'moduleCompletionMap' => $this->loadModuleCompletionMap(),
             'breadcrumbs' => [
                 ['label' => 'Parcours formateur', 'url' => route('formateur.parcours.index')],
                 ['label' => $currentModule['title'], 'url' => $currentModule['url']],
@@ -63,6 +65,7 @@ class ParcoursController extends Controller
             'activeLessonKey' => null,
             'currentModule' => $currentModule,
             'introductionScormUrl' => $this->resolveScormUrl($currentModule['introduction_scorm_directory'] ?? null),
+            'moduleCompletionMap' => $this->loadModuleCompletionMap(),
             'breadcrumbs' => [
                 ['label' => 'Parcours formateur', 'url' => route('formateur.parcours.index')],
                 ['label' => $currentModule['title'], 'url' => $currentModule['url']],
@@ -89,6 +92,7 @@ class ParcoursController extends Controller
             'currentModule' => $currentModule,
             'currentChapter' => $currentChapter,
             'activityStatusMap' => $this->loadActivityStatusMap($module),
+            'moduleCompletionMap' => $this->loadModuleCompletionMap(),
             'breadcrumbs' => [
                 ['label' => 'Parcours formateur', 'url' => route('formateur.parcours.index')],
                 ['label' => $currentModule['title'], 'url' => $currentModule['url']],
@@ -129,6 +133,7 @@ class ParcoursController extends Controller
             'nextActivity' => $context['nextActivity'],
             'activeLessonPart' => $currentPart,
             'activityStatusMap' => $this->loadActivityStatusMap($module),
+            'moduleCompletionMap' => $this->loadModuleCompletionMap(),
             'breadcrumbs' => [
                 ['label' => 'Parcours formateur', 'url' => route('formateur.parcours.index')],
                 ['label' => $context['currentModule']['title'], 'url' => $context['currentModule']['url']],
@@ -352,6 +357,7 @@ class ParcoursController extends Controller
             'currentActivity' => $currentActivity,
             'nextLesson' => $context['nextLesson'],
             'activityStatusMap' => $this->loadActivityStatusMap($module),
+            'moduleCompletionMap' => $this->loadModuleCompletionMap(),
             'activityCompleted' => ! is_null($latestSuccessfulAttempt),
             'initialPlacements' => $initialPlacements,
             'breadcrumbs' => [
@@ -660,24 +666,7 @@ class ParcoursController extends Controller
             return [];
         }
 
-        $expectedActivityTypes = [];
-        $rawModule = ParcoursFormateur::rawModules()[$moduleKey] ?? null;
-
-        foreach (($rawModule['chapters'] ?? []) as $chapterKey => $chapter) {
-            foreach (($chapter['lessons'] ?? []) as $lessonKey => $lesson) {
-                $activity = $lesson['activity_page'] ?? null;
-
-                if (is_array($activity) && ! empty($activity['key'])) {
-                    $expectedActivityTypes[$this->activityStatusKey((string) $chapterKey, (string) $lessonKey, (string) $activity['key'])] = (string) ($activity['type'] ?? 'sorting');
-                }
-
-                $completionActivityKey = $lesson['completion_activity_key'] ?? null;
-
-                if (is_string($completionActivityKey) && $completionActivityKey !== '') {
-                    $expectedActivityTypes[$this->activityStatusKey((string) $chapterKey, (string) $lessonKey, $completionActivityKey)] = (string) ($lesson['completion_activity_type'] ?? 'guided_group_creation');
-                }
-            }
-        }
+        $expectedActivityTypes = $this->expectedActivityTypesForModule($moduleKey);
 
         return DB::table('trainer_path_activity_attempts')
             ->where('user_id', auth()->id())
@@ -697,6 +686,79 @@ class ParcoursController extends Controller
                 $this->activityStatusKey((string) $row->chapter_key, (string) $row->lesson_key, (string) $row->activity_key) => true,
             ])
             ->all();
+    }
+
+    /**
+     * @return array<string, bool>
+     */
+    private function loadModuleCompletionMap(): array
+    {
+        $rawModules = ParcoursFormateur::rawModules();
+        $completionMap = array_fill_keys(array_keys($rawModules), false);
+
+        if (! auth()->check()) {
+            return $completionMap;
+        }
+
+        $successfulAttempts = DB::table('trainer_path_activity_attempts')
+            ->where('user_id', auth()->id())
+            ->where('is_success', true)
+            ->get(['module_key', 'chapter_key', 'lesson_key', 'activity_key', 'activity_type']);
+
+        foreach ($rawModules as $moduleKey => $module) {
+            $expectedActivityTypes = $this->expectedActivityTypesForModule((string) $moduleKey);
+
+            if (empty($expectedActivityTypes)) {
+                continue;
+            }
+
+            $completedActivityKeys = $successfulAttempts
+                ->where('module_key', $moduleKey)
+                ->filter(function ($row) use ($expectedActivityTypes): bool {
+                    $statusKey = $this->activityStatusKey(
+                        (string) $row->chapter_key,
+                        (string) $row->lesson_key,
+                        (string) $row->activity_key
+                    );
+
+                    return ($expectedActivityTypes[$statusKey] ?? null) === (string) $row->activity_type;
+                })
+                ->mapWithKeys(fn ($row): array => [
+                    $this->activityStatusKey((string) $row->chapter_key, (string) $row->lesson_key, (string) $row->activity_key) => true,
+                ])
+                ->all();
+
+            $completionMap[$moduleKey] = empty(array_diff_key($expectedActivityTypes, $completedActivityKeys));
+        }
+
+        return $completionMap;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function expectedActivityTypesForModule(string $moduleKey): array
+    {
+        $expectedActivityTypes = [];
+        $rawModule = ParcoursFormateur::rawModules()[$moduleKey] ?? null;
+
+        foreach (($rawModule['chapters'] ?? []) as $chapterKey => $chapter) {
+            foreach (($chapter['lessons'] ?? []) as $lessonKey => $lesson) {
+                $activity = $lesson['activity_page'] ?? null;
+
+                if (is_array($activity) && ! empty($activity['key'])) {
+                    $expectedActivityTypes[$this->activityStatusKey((string) $chapterKey, (string) $lessonKey, (string) $activity['key'])] = (string) ($activity['type'] ?? 'sorting');
+                }
+
+                $completionActivityKey = $lesson['completion_activity_key'] ?? null;
+
+                if (is_string($completionActivityKey) && $completionActivityKey !== '') {
+                    $expectedActivityTypes[$this->activityStatusKey((string) $chapterKey, (string) $lessonKey, $completionActivityKey)] = (string) ($lesson['completion_activity_type'] ?? 'guided_group_creation');
+                }
+            }
+        }
+
+        return $expectedActivityTypes;
     }
 
     private function activityStatusKey(string $chapterKey, string $lessonKey, string $activityKey): string

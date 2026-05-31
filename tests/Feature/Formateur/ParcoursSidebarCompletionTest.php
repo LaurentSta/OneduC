@@ -19,15 +19,31 @@ function createSidebarProgressFormateur(): User
 
 function recordSidebarProgress(User $formateur, string $lesson, string $activity): void
 {
+    recordModuleTwoProgress(
+        $formateur,
+        'mettre-en-place-un-parcours-coherent',
+        $lesson,
+        $activity
+    );
+}
+
+function recordModuleTwoProgress(
+    User $formateur,
+    string $chapter,
+    string $lesson,
+    string $activity,
+    string $activityType = 'guided_group_creation'
+): void
+{
     $now = now();
 
     DB::table('trainer_path_activity_attempts')->insert([
         'user_id' => $formateur->id,
         'module_key' => 'organiser-ses-parcours',
-        'chapter_key' => 'mettre-en-place-un-parcours-coherent',
+        'chapter_key' => $chapter,
         'lesson_key' => $lesson,
         'activity_key' => $activity,
-        'activity_type' => 'guided_group_creation',
+        'activity_type' => $activityType,
         'total_items' => 1,
         'correct_items' => 1,
         'is_success' => true,
@@ -105,4 +121,31 @@ it('adds a student inside the group adjustment simulator without writing to the 
     $finalisation->assertSee('sophie.durand@example.test');
     $finalisation->assertSee('Hygiène alimentaire 2026 - promo 1');
     $this->assertDatabaseMissing('users', ['email' => 'sophie.durand@example.test']);
+});
+
+it('shows a green overview border once every module step is completed', function () {
+    $formateur = createSidebarProgressFormateur();
+
+    recordModuleTwoProgress($formateur, 'preparer-les-contenus', 'retrouver-les-espaces-de-preparation', 'classer-les-elements', 'sorting');
+    recordModuleTwoProgress($formateur, 'preparer-les-contenus', 'distinguer-contenu-ressource-et-structure', 'preparer-informations-utiles', 'essential_sorting');
+    recordModuleTwoProgress($formateur, 'structurer-la-progression', 'creation-groupe-de-formation', 'creation-groupe-finalisee');
+    recordModuleTwoProgress($formateur, 'structurer-la-progression', 'creation-parcours', 'creation-parcours-finalisee');
+    recordSidebarProgress($formateur, 'associer-le-bon-parcours-au-bon-contexte', 'ajustement-groupe-finalise');
+    recordSidebarProgress($formateur, 'traiter-les-cas-particuliers', 'cas-particuliers-finalises');
+
+    $beforeBilan = $this
+        ->actingAs($formateur)
+        ->get(sidebarLessonPartRoute('bilan-module-2', 'bilan'));
+
+    $beforeBilan->assertOk();
+    $beforeBilan->assertDontSee('border-t-0 border-vertone bg-white', false);
+
+    $completedModule = $this
+        ->actingAs($formateur)
+        ->get(sidebarLessonPartRoute('bilan-module-2', 'resultat-final'));
+
+    $completedModule->assertOk();
+    $completedModule->assertSee('border-vertone bg-teal-50/70', false);
+    $completedModule->assertSee('border-t-0 border-vertone bg-white', false);
+    $completedModule->assertSee('Validé');
 });
