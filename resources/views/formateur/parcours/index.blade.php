@@ -1,119 +1,125 @@
 @extends('formateur.parcours.layout')
 
 @section('parcours_content')
-    <div class="grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px]">
-        <section class="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
-            <div class="px-8 py-8 md:px-10 md:py-10">
-                <p class="inline-flex rounded-full border border-orange-200 bg-orange-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.26em] text-orangeone">
-                    Premiers pas
-                </p>
-                <h1 class="mt-5 font-raleway text-4xl font-semibold leading-tight text-bleuone">
-                    Bienvenue dans votre parcours formateur
-                </h1>
-                <p class="mt-6 max-w-4xl text-lg leading-9 text-slate-600">
-                    Cette page sert de point d entree. Vous gardez votre posture de formateur, avec un chemin simple pour avancer librement entre les modules.
-                </p>
-            </div>
+<div class="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 pb-16">
 
-            <div class="grid gap-4 border-t border-slate-100 bg-slate-50/70 px-8 py-8 md:grid-cols-3 md:px-10">
-                <article class="rounded-[24px] border border-slate-200 bg-white p-6">
-                    <h2 class="text-2xl font-semibold leading-tight text-bleuone">Un parcours visible</h2>
-                    <p class="mt-4 text-base leading-8 text-slate-600">
-                        Le chemin orange vous montre ou vous etes et ce qui vient ensuite.
-                    </p>
-                </article>
-                <article class="rounded-[24px] border border-slate-200 bg-white p-6">
-                    <h2 class="text-2xl font-semibold leading-tight text-bleuone">Une navigation libre</h2>
-                    <p class="mt-4 text-base leading-8 text-slate-600">
-	                        Chaque lecon reste accessible sans imposer un ordre rigide.
-                    </p>
-                </article>
-                <article class="rounded-[24px] border border-slate-200 bg-white p-6">
-                    <h2 class="text-2xl font-semibold leading-tight text-bleuone">Une aide progressive</h2>
-                    <p class="mt-4 text-base leading-8 text-slate-600">
-                        La vue stagiaire n apparait qu en apercu, quand elle est utile.
-                    </p>
-                </article>
-            </div>
+    <header class="mb-12 flex flex-col items-center text-center">
+        <img
+            src="{{ asset('frontend/assets/img/front-pages/branding/LogoOneducPositionG.svg') }}"
+            alt="Logo Oneduc"
+            class="mb-6 h-10 w-auto opacity-80"
+        >
+        <span class="inline-flex items-center rounded-full border border-orangeone/20 bg-orangeone/10 px-4 py-1.5 text-sm font-varela text-orangeone">
+            Parcours formateur
+        </span>
+        <h1 class="mt-5 font-raleway text-3xl font-medium leading-tight text-bleuone md:text-4xl">
+            Formation à l'utilisation d'Oneduc
+        </h1>
+        <p class="mt-4 max-w-xl font-lisible text-lg leading-relaxed text-slate-600">
+            Prenez vos repères, organisez vos groupes et accompagnez vos apprenants grâce à ce parcours conçu pour les formateurs.
+        </p>
+    </header>
 
-            <div class="grid gap-4 border-t border-slate-100 px-8 py-8 md:grid-cols-3 md:px-10">
-                <article class="rounded-[24px] border border-slate-200 bg-white p-6">
-                    <h2 class="text-2xl font-semibold leading-tight text-bleuone">Ce que vous allez trouver ici</h2>
-                    <p class="mt-4 text-base leading-8 text-slate-600">
-                        Des reperes clairs pour comprendre la plateforme, organiser vos groupes et suivre vos apprenants sans vous perdre dans le site.
-                    </p>
-                </article>
-                <article class="rounded-[24px] border border-slate-200 bg-white p-6">
-                    <h2 class="text-2xl font-semibold leading-tight text-bleuone">Comment utiliser ce parcours</h2>
-                    <p class="mt-4 text-base leading-8 text-slate-600">
-	                        Vous pouvez commencer par le module 1 puis revenir plus tard sur les autres parties, ou naviguer directement vers la lecon qui vous aide le plus.
-                    </p>
-                </article>
-                <article class="rounded-[24px] border border-slate-200 bg-white p-6">
-                    <h2 class="text-2xl font-semibold leading-tight text-bleuone">Vue stagiaire</h2>
-                    <p class="mt-4 text-base leading-8 text-slate-600">
-                        Elle sera montree sous forme d apercus cibles, sans vous basculer dans un vrai compte stagiaire.
-                    </p>
-                </article>
-            </div>
+    <section class="space-y-4" aria-label="Modules du parcours">
+        @foreach ($parcoursModules as $moduleKey => $module)
+            @php
+                $isUnderConstruction = !empty($module['is_under_construction']);
+                $isCompleted = ($moduleCompletionMap[$moduleKey] ?? false) === true;
+                $moduleUrl = $module['url'] ?? '#';
+            @endphp
 
-            <div class="px-8 pb-8 md:px-10 md:pb-10">
-                <article class="rounded-[28px] border border-orange-200 bg-orange-50/60 p-8">
-                    <p class="text-xs font-semibold uppercase tracking-[0.26em] text-orangeone">Focus</p>
-                    <h2 class="mt-4 font-raleway text-3xl font-semibold text-[#d54b18]">Le compromis choisi</h2>
-                    <p class="mt-4 text-lg leading-9 text-[#d54b18]">
-                        Vous restez dans un espace formateur, mais vous pouvez voir la logique cote stagiaire au moment opportun. Cela evite une demonstration trop lourde des le depart.
-                    </p>
-                </article>
-
-                <div class="mt-8 flex flex-col gap-4 sm:flex-row">
-                    <a href="{{ route('formateur.parcours.modules.show', ['module' => 'prendre-ses-reperes']) }}" class="btn-oneduc !px-7 !py-4">
-                        Commencer le module 1
-                    </a>
-                    <a href="{{ route('formateur.dashboard') }}" class="btn-oneduc-outline !px-7 !py-4">
-                        Retour au tableau de bord
-                    </a>
+            <article class="flex items-center gap-5 rounded-[28px] border bg-white p-6 transition-all duration-200
+                @if ($isCompleted)
+                    border-vertone/40 shadow-md
+                @elseif (!$isUnderConstruction)
+                    border-orangeone/30 shadow-md hover:-translate-y-0.5 hover:shadow-lg
+                @else
+                    border-slate-200 shadow-sm
+                @endif
+            ">
+                {{-- Numéro --}}
+                <div class="flex size-12 shrink-0 items-center justify-center rounded-[18px] text-base font-varela font-bold
+                    @if ($isCompleted) bg-teal-50 text-vertone
+                    @elseif (!$isUnderConstruction) bg-orangeone/10 text-orangeone
+                    @else bg-slate-100 text-slate-300
+                    @endif
+                ">
+                    {{ $loop->iteration }}
                 </div>
-            </div>
-        </section>
 
-        <aside class="space-y-6">
-            <article class="rounded-[28px] border border-slate-200 bg-white p-8 shadow-sm">
-                <p class="text-xs font-semibold uppercase tracking-[0.26em] text-orangeone">Navigation libre</p>
-                <h2 class="mt-4 font-raleway text-3xl font-semibold text-bleuone">Chemin du formateur</h2>
-                <p class="mt-4 text-lg leading-9 text-slate-600">
-	                    Le parcours visuel ci-dessus vous laisse circuler librement entre les lecons. Vous n etes pas oblige de tout suivre dans l ordre.
-                </p>
-
-                <a
-                    href="{{ route('formateur.parcours.modules.show', ['module' => 'prendre-ses-reperes']) }}"
-                    class="mt-8 flex items-center justify-between rounded-[24px] border border-orange-200 bg-orange-50/60 px-6 py-5 transition hover:border-orangeone/50 hover:bg-orange-50"
-                >
-                    <div>
-	                        <p class="text-xs font-semibold uppercase tracking-[0.26em] text-orangeone">Module suivant</p>
-                        <p class="mt-2 text-2xl font-semibold text-bleuone">Module 1</p>
+                {{-- Contenu --}}
+                <div class="min-w-0 flex-1">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="text-sm font-varela uppercase tracking-[0.24em]
+                            {{ $isUnderConstruction ? 'text-slate-400' : 'text-orangeone' }}
+                        ">
+                            {{ $module['label'] }}
+                        </span>
+                        @if ($isCompleted)
+                            <span class="rounded-full border border-vertone/30 bg-teal-50 px-3 py-0.5 text-xs font-varela text-vertone">
+                                Validé
+                            </span>
+                        @elseif (!$isUnderConstruction)
+                            <span class="rounded-full border border-orangeone/20 bg-orangeone/10 px-3 py-0.5 text-xs font-varela text-orangeone">
+                                Disponible
+                            </span>
+                        @else
+                            <span class="rounded-full border border-slate-200 bg-slate-50 px-3 py-0.5 text-xs font-varela text-slate-400">
+                                À venir
+                            </span>
+                        @endif
                     </div>
-                    <span class="text-3xl leading-none text-orangeone">→</span>
-                </a>
-            </article>
 
-            <article class="rounded-[28px] border border-slate-200 bg-white p-8 shadow-sm">
-                <p class="text-xs font-semibold uppercase tracking-[0.26em] text-slate-500">Acces rapides</p>
-                <div class="mt-5 space-y-4">
-                    <a href="{{ route('formateur.formations.index') }}" class="flex items-center justify-between rounded-[20px] border border-slate-200 px-5 py-4 transition hover:border-orangeone/30 hover:bg-orange-50/30">
-                        <span class="text-lg font-medium text-bleuone">Mes formations</span>
-                        <span class="text-sky-500">↗</span>
-                    </a>
-                    <a href="{{ route('formateur.groupes.index') }}" class="flex items-center justify-between rounded-[20px] border border-slate-200 px-5 py-4 transition hover:border-orangeone/30 hover:bg-orange-50/30">
-                        <span class="text-lg font-medium text-bleuone">Mes groupes</span>
-                        <span class="text-sky-500">↗</span>
-                    </a>
-                    <a href="{{ route('formateur.documentation') }}" class="flex items-center justify-between rounded-[20px] border border-slate-200 px-5 py-4 transition hover:border-orangeone/30 hover:bg-orange-50/30">
-                        <span class="text-lg font-medium text-bleuone">Documentation</span>
-                        <span class="text-sky-500">↗</span>
-                    </a>
+                    <h2 class="mt-1 font-raleway text-lg font-semibold leading-tight
+                        {{ $isUnderConstruction ? 'text-slate-400' : 'text-bleuone' }}
+                    ">
+                        {{ $module['title'] }}
+                    </h2>
+
+                    <p class="mt-1 font-lisible text-sm leading-6
+                        {{ $isUnderConstruction ? 'text-slate-400' : 'text-slate-600' }}
+                    ">
+                        {{ $module['description'] }}
+                    </p>
+
+                    <p class="mt-2 font-varela text-xs
+                        {{ $isUnderConstruction ? 'text-slate-300' : 'text-slate-400' }}
+                    ">
+                        {{ $module['duration_label'] }}
+                    </p>
+                </div>
+
+                {{-- CTA --}}
+                <div class="shrink-0">
+                    @if ($isCompleted)
+                        <a href="{{ $moduleUrl }}" class="btn-oneduc-blue !rounded-full !px-5 !py-2.5 !text-sm whitespace-nowrap">
+                            Reprendre
+                        </a>
+                    @elseif (!$isUnderConstruction)
+                        <a href="{{ $moduleUrl }}" class="btn-oneduc !rounded-full !px-5 !py-2.5 !text-sm whitespace-nowrap">
+                            {{ $module['cta_label'] ?? 'Accéder' }}
+                        </a>
+                    @else
+                        <a
+                            href="{{ $moduleUrl }}"
+                            class="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-4 py-2.5 font-varela text-xs text-slate-400 transition hover:border-slate-300"
+                        >
+                            <svg class="size-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                            </svg>
+                            Bientôt
+                        </a>
+                    @endif
                 </div>
             </article>
-        </aside>
+        @endforeach
+    </section>
+
+    <div class="mt-10 flex justify-center">
+        <a href="{{ route('formateur.dashboard') }}" class="btn-oneduc-outline !px-7 !py-3">
+            Retour au tableau de bord
+        </a>
     </div>
+
+</div>
 @endsection

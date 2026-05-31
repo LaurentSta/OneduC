@@ -201,6 +201,7 @@ class ParcoursFormateur
             'presentation_video_title' => 'Video de presentation du module 2',
             'presentation_video_note' => 'Emplacement prevu pour une courte video de presentation du module.',
             'introduction_scorm_directory' => 'modules/parcours_formateur/module_2_organiser_ses_parcours/introduction',
+            'illustration_path' => 'images/svg/ImageModule2.svg',
             'status_label' => 'Disponible',
             'trainer_name' => 'Equipe Oneduc',
             'level_label' => 'Tous niveaux',

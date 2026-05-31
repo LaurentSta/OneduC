@@ -85,7 +85,7 @@
                 </p>
 
                 <h1 class="mt-3 max-w-3xl font-raleway text-3xl font-semibold leading-tight text-bleuone md:text-4xl">
-                    Votre progression dans Organiser ses parcours
+                    Votre progression dans le module 2
                 </h1>
 
                 <p class="mt-4 max-w-3xl text-base leading-8 text-slate-600">
@@ -107,9 +107,9 @@
                     </article>
 
                     <article class="rounded-[18px] border border-vertone/10 bg-vertone/10 px-4 py-4">
-                        <p class="text-[11px] font-black uppercase tracking-[0.18em] text-vertone">Temps estime</p>
+                        <p class="text-[11px] font-black uppercase tracking-[0.18em] text-vertone">Durée indicative</p>
                         <p class="mt-2 text-3xl font-black text-vertone">{{ $formatMinutes($completedEstimatedMinutes) }}</p>
-                        <p class="mt-1 text-sm text-slate-600">min validees / {{ $formatMinutes($totalEstimatedMinutes) }}</p>
+                        <p class="mt-1 text-sm text-slate-600">min couvertes sur {{ $formatMinutes($totalEstimatedMinutes) }} min prévues</p>
                     </article>
                 </div>
 
@@ -196,13 +196,17 @@
                     <div class="mt-8 rounded-[20px] border border-white/70 bg-white/80 p-5 shadow-sm">
                         <div class="flex items-center justify-between gap-4">
                             <div>
-                                <p class="text-xs font-black uppercase tracking-[0.18em] text-bleuone">Temps estime valide</p>
+                                <p class="text-xs font-black uppercase tracking-[0.18em] text-bleuone">Durées indicatives couvertes</p>
                                 <p class="mt-2 text-3xl font-black text-bleuone">{{ $completedTimePercent }}%</p>
                             </div>
                             <div class="relative h-24 w-24 shrink-0 rounded-full" style="background: conic-gradient(#20c997 {{ $completedTimePercent }}%, #e2e8f0 0);">
                                 <div class="absolute inset-3 rounded-full bg-white"></div>
                             </div>
                         </div>
+
+                        <p class="mt-4 text-sm leading-6 text-slate-600">
+                            Ces durées correspondent au temps prévu pour les étapes validées. Elles ne mesurent pas votre temps réel de connexion.
+                        </p>
 
                         <div class="mt-5 space-y-3">
                             @foreach ($chapterResults as $chapterResult)
