@@ -22,6 +22,15 @@
           <div class="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4 font-lisible text-amber-800" role="alert">{{ session('warning') }}</div>
         @endif
 
+        @auth
+          <form method="POST" action="{{ route('logout') }}" class="mb-6">
+            @csrf
+            <button type="submit" class="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-bleuone shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-blue-100">
+              Se déconnecter
+            </button>
+          </form>
+        @endauth
+
         <h1 class="flex items-center gap-4 font-raleway text-[36px] font-extrabold leading-tight text-bleuone md:text-[48px]">
           <img src="{{ asset('frontend/assets/img/front-pages/icons/etoile8.gif') }}" width="60" height="61" alt="" aria-hidden="true" class="h-[60px] w-[60px] flex-none object-contain">
           <span>Adhérer à l’association Onéduc</span>
