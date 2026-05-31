@@ -5,23 +5,12 @@
     ]);
 
     $selectedGroupId = null;
+    $finalisationUrl = $mixedPartUrls['ajustement-groupe-finalisation'] ?? '#';
 @endphp
 
 <div class="mx-auto w-full max-w-[1285px]">
     <main class="rounded-[20px] bg-white px-8 py-8 shadow-md">
-        @if ($errors->any())
-            <div class="mx-auto mb-6 max-w-4xl rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                <ul class="list-inside list-disc space-y-1">
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
-
-        <form action="{{ route('formateur.stagiaires.store') }}" method="POST" class="mx-auto max-w-4xl space-y-6">
-            @csrf
-            <input type="hidden" name="redirect_to" value="{{ $mixedPartUrls['ajustement-groupe-finalisation'] ?? '' }}">
+        <form action="{{ $finalisationUrl }}" method="GET" class="mx-auto max-w-4xl space-y-6">
 
             <section class="rounded-[16px] border border-gray-200 p-6 md:p-8">
                 <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
@@ -53,8 +42,8 @@
                     <div class="md:col-span-2">
                         <label for="lesson_stagiaire_group_id" class="mb-2 block text-sm font-medium text-gray-900">Groupe</label>
                         @if($groupes->isNotEmpty())
-                            <select id="lesson_stagiaire_group_id" name="group_id"
-                                    class="w-full rounded-lg border {{ $errors->has('group_id') ? 'border-red-400' : 'border-gray-300' }} bg-gray-50 px-4 py-2.5 text-sm focus:border-orangeone focus:ring-orangeone">
+                            <select id="lesson_stagiaire_group_id" name="group_id" required
+                                    class="w-full rounded-lg border border-gray-300 bg-gray-50 px-4 py-2.5 text-sm focus:border-orangeone focus:ring-orangeone">
                                 <option value="">Sélectionner un groupe</option>
                                 @foreach($groupes as $groupe)
                                     <option value="{{ $groupe->id }}" @selected((string) old('group_id', $selectedGroupId) === (string) $groupe->id)>
@@ -77,14 +66,14 @@
                     <div class="mt-4 grid grid-cols-1 gap-5 md:grid-cols-2">
                         <div>
                             <label for="lesson_stagiaire_password" class="mb-2 block text-sm font-medium text-gray-900">Mot de passe</label>
-                            <input id="lesson_stagiaire_password" name="password" type="password"
-                                   class="w-full rounded-lg border {{ $errors->has('password') ? 'border-red-400' : 'border-gray-300' }} bg-gray-50 px-4 py-2.5 text-sm focus:border-orangeone focus:ring-orangeone"
+                            <input id="lesson_stagiaire_password" type="password"
+                                   class="w-full rounded-lg border border-gray-300 bg-gray-50 px-4 py-2.5 text-sm focus:border-orangeone focus:ring-orangeone"
                                    placeholder="Minimum 8 caracteres">
                         </div>
 
                         <div>
                             <label for="lesson_stagiaire_password_confirmation" class="mb-2 block text-sm font-medium text-gray-900">Confirmation</label>
-                            <input id="lesson_stagiaire_password_confirmation" name="password_confirmation" type="password"
+                            <input id="lesson_stagiaire_password_confirmation" type="password"
                                    class="w-full rounded-lg border border-gray-300 bg-gray-50 px-4 py-2.5 text-sm focus:border-orangeone focus:ring-orangeone"
                                    placeholder="Retapez le mot de passe">
                         </div>

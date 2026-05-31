@@ -1,8 +1,6 @@
 @if (in_array(($activeLessonPart ?? null), ['ajustement-groupe-suite', 'ajustement-groupe-finalisation'], true))
 @php
     $isFinalisation = ($activeLessonPart ?? null) === 'ajustement-groupe-finalisation';
-    $isSuiteSimulation = ($activeLessonPart ?? null) === 'ajustement-groupe-suite';
-    $formateurId = (int) auth()->id();
     $allowedPerPage = [10, 25, 50, 100];
     $perPage = (int) request('per_page', 10);
 
@@ -10,94 +8,59 @@
         $perPage = 10;
     }
 
-    if ($isSuiteSimulation) {
-        $groupes = collect([
-            (object) ['id' => 1, 'name' => 'Hygiene alimentaire 2026'],
+    $groupes = collect([
+        (object) ['id' => 1, 'name' => 'Hygiène alimentaire 2026 - promo 1'],
+    ]);
+
+    $simulatedStudents = collect([
+        (object) [
+            'prenom' => 'Marie',
+            'name' => 'Dupont',
+            'email' => 'marie.dupont@email.fr',
+            'code_acces' => 'MARIE1',
+            'groupesStagiaire' => collect([(object) ['name' => 'Hygiène alimentaire 2026 - promo 1']]),
+        ],
+        (object) [
+            'prenom' => 'Jean',
+            'name' => 'Martin',
+            'email' => 'jean.martin@email.fr',
+            'code_acces' => 'JEANM1',
+            'groupesStagiaire' => collect([(object) ['name' => 'Hygiène alimentaire 2026 - promo 1']]),
+        ],
+    ]);
+
+    if ($isFinalisation) {
+        $simulatedStudents->push((object) [
+            'prenom' => (string) request('prenom', 'Camille'),
+            'name' => (string) request('name', 'Martin'),
+            'email' => (string) request('email', 'camille.martin@entreprise.fr'),
+            'code_acces' => 'CAMIM1',
+            'groupesStagiaire' => collect([(object) ['name' => 'Hygiène alimentaire 2026 - promo 1']]),
         ]);
-
-        $simulatedStudents = collect([
-            (object) [
-                'prenom' => 'Marie',
-                'name' => 'Dupont',
-                'email' => 'marie.dupont@email.fr',
-                'code_acces' => 'MARIE1',
-                'groupesStagiaire' => collect([(object) ['name' => 'Hygiene alimentaire 2026']]),
-            ],
-            (object) [
-                'prenom' => 'Jean',
-                'name' => 'Martin',
-                'email' => 'jean.martin@email.fr',
-                'code_acces' => 'JEANM1',
-                'groupesStagiaire' => collect([(object) ['name' => 'Hygiene alimentaire 2026']]),
-            ],
-        ]);
-
-        if ($search = request('search')) {
-            $normalizedSearch = mb_strtolower($search);
-            $simulatedStudents = $simulatedStudents->filter(function ($student) use ($normalizedSearch) {
-                return str_contains(mb_strtolower($student->prenom), $normalizedSearch)
-                    || str_contains(mb_strtolower($student->name), $normalizedSearch)
-                    || str_contains(mb_strtolower($student->email), $normalizedSearch);
-            })->values();
-        }
-
-        if (request('group_id') && (string) request('group_id') !== '1') {
-            $simulatedStudents = collect();
-        }
-
-        $currentPage = (int) request('stagiaires_page', 1);
-        $stagiaires = new \Illuminate\Pagination\LengthAwarePaginator(
-            $simulatedStudents->forPage($currentPage, $perPage)->values(),
-            $simulatedStudents->count(),
-            $perPage,
-            $currentPage,
-            ['path' => url()->current(), 'pageName' => 'stagiaires_page']
-        );
-        $stagiaires->appends(request()->query());
-    } else {
-        $accessibleGroupIds = \App\Models\Group::query()
-            ->accessibleByTrainer($formateurId)
-            ->pluck('groups.id')
-            ->map(fn ($groupId) => (int) $groupId)
-            ->values();
-
-        $groupes = \App\Models\Group::query()
-            ->whereIn('id', $accessibleGroupIds->all())
-            ->orderBy('name')
-            ->get(['id', 'name']);
-
-        $stagiairesQuery = \App\Models\User::query()
-            ->where('role', 'stagiaire')
-            ->where(function ($query) use ($accessibleGroupIds, $formateurId) {
-                $query->where('formateur_id', $formateurId)
-                    ->orWhereHas('groupesStagiaire', function ($groupQuery) use ($accessibleGroupIds) {
-                        $groupQuery->whereIn('groups.id', $accessibleGroupIds->all());
-                    });
-            });
-
-        if ($groupId = request('group_id')) {
-            $stagiairesQuery->whereHas('groupesStagiaire', function ($groupQuery) use ($groupId, $accessibleGroupIds) {
-                $groupQuery->where('groups.id', $groupId)
-                    ->whereIn('groups.id', $accessibleGroupIds->all());
-            });
-        }
-
-        if ($search = request('search')) {
-            $stagiairesQuery->where(function ($query) use ($search) {
-                $query->where('prenom', 'like', "%{$search}%")
-                    ->orWhere('name', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%");
-            });
-        }
-
-        $stagiaires = $stagiairesQuery
-            ->with(['groupesStagiaire' => function ($query) use ($accessibleGroupIds) {
-                $query->whereIn('groups.id', $accessibleGroupIds->all())->orderBy('name');
-            }])
-            ->orderBy('name')
-            ->paginate($perPage, ['*'], 'stagiaires_page')
-            ->withQueryString();
     }
+
+    if ($search = request('search')) {
+        $normalizedSearch = mb_strtolower($search);
+        $simulatedStudents = $simulatedStudents->filter(function ($student) use ($normalizedSearch) {
+            return str_contains(mb_strtolower($student->prenom), $normalizedSearch)
+                || str_contains(mb_strtolower($student->name), $normalizedSearch)
+                || str_contains(mb_strtolower($student->email), $normalizedSearch);
+        })->values();
+    }
+
+    if (request('group_id') && (string) request('group_id') !== '1') {
+        $simulatedStudents = collect();
+    }
+
+    $currentPage = (int) request('stagiaires_page', 1);
+    $stagiaires = new \Illuminate\Pagination\LengthAwarePaginator(
+        $simulatedStudents->forPage($currentPage, $perPage)->values(),
+        $simulatedStudents->count(),
+        $perPage,
+        $currentPage,
+        ['path' => url()->current(), 'pageName' => 'stagiaires_page']
+    );
+    $stagiaires->appends(request()->query());
 @endphp
 
 <div class="mx-auto w-full max-w-[1285px] space-y-6">
