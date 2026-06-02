@@ -47,6 +47,9 @@ Route::middleware(['auth', 'role:formateur', 'association.member'])
         ->name('parcours.')
         ->group(function () {
             Route::get('/', [ParcoursController::class, 'index'])->name('index');
+            Route::post('/modules/{module}/questionnaire', [ParcoursController::class, 'submitModuleQuestionnaire'])
+                ->middleware('throttle:10,1')
+                ->name('questionnaire.submit');
             Route::get('/modules/{module}', [ParcoursController::class, 'showModule'])->name('modules.show');
             Route::get('/modules/{module}/introduction', [ParcoursController::class, 'showModuleIntroduction'])->name('modules.introduction');
             Route::get('/modules/{module}/chapitres/{chapter}', [ParcoursController::class, 'showChapter'])->name('chapters.show');

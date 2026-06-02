@@ -34,6 +34,62 @@ class ParcoursFormateur
     }
 
     /**
+     * Modules présentés dans le suivi administrateur du parcours formateur.
+     *
+     * @return array<int, array{number: int, key: string, label: string, title: string}>
+     */
+    public static function trainerPathModules(): array
+    {
+        $trainerPathModules = [];
+
+        foreach (self::rawModules() as $moduleKey => $module) {
+            $moduleNumber = count($trainerPathModules) + 1;
+            $trainerPathModules[] = [
+                'number' => $moduleNumber,
+                'key' => $moduleKey,
+                'label' => (string) ($module['label'] ?? 'Module '.$moduleNumber),
+                'title' => (string) ($module['title'] ?? ''),
+            ];
+        }
+
+        return $trainerPathModules;
+    }
+
+    /**
+     * Étapes obligatoires utilisées pour déterminer si un module est terminé.
+     *
+     * @return array<string, string>
+     */
+    public static function moduleCompletionRequirements(string $moduleKey): array
+    {
+        $requirements = [];
+        $module = self::rawModules()[$moduleKey] ?? null;
+
+        foreach (($module['chapters'] ?? []) as $chapterKey => $chapter) {
+            foreach (($chapter['lessons'] ?? []) as $lessonKey => $lesson) {
+                $activity = $lesson['activity_page'] ?? null;
+
+                if (is_array($activity) && ! empty($activity['key'])) {
+                    $requirements[self::activityStatusKey((string) $chapterKey, (string) $lessonKey, (string) $activity['key'])] = (string) ($activity['type'] ?? 'sorting');
+                }
+
+                $completionActivityKey = $lesson['completion_activity_key'] ?? null;
+
+                if (is_string($completionActivityKey) && $completionActivityKey !== '') {
+                    $requirements[self::activityStatusKey((string) $chapterKey, (string) $lessonKey, $completionActivityKey)] = (string) ($lesson['completion_activity_type'] ?? 'guided_group_creation');
+                }
+            }
+        }
+
+        return $requirements;
+    }
+
+    public static function activityStatusKey(string $chapterKey, string $lessonKey, string $activityKey): string
+    {
+        return implode('.', [$chapterKey, $lessonKey, $activityKey]);
+    }
+
+    /**
      * @return array<string, mixed>
      */
     private static function moduleOne(): array
@@ -518,6 +574,103 @@ class ParcoursFormateur
                         ),
                     ],
                 ],
+            ],
+        ];
+    }
+
+    /**
+     * Retourne le questionnaire d'évaluation disponible pour un module.
+     * Les modules 1, 3 et 4 pourront être ajoutés ici lorsqu'ils disposeront de leur formulaire.
+     *
+     * @return array<string, mixed>|null
+     */
+    public static function moduleUsabilityQuestionnaire(string $moduleKey): ?array
+    {
+        return match ($moduleKey) {
+            'organiser-ses-parcours' => self::moduleTwoUsabilityQuestionnaire(),
+            default => null,
+        };
+    }
+
+    /**
+     * Référentiel du questionnaire d'évaluation affiché à la fin du module 2.
+     *
+     * @return array<string, mixed>
+     */
+    private static function moduleTwoUsabilityQuestionnaire(): array
+    {
+        return [
+            'module' => [
+                'number' => 2,
+                'key' => 'organiser-ses-parcours',
+                'code' => 'module-2',
+                'title' => 'Mettre en place un environnement de formation',
+            ],
+            'questionnaire' => [
+                'key' => 'utilisabilite-percue',
+                'version' => 1,
+            ],
+            'dimensions' => [
+                [
+                    'id' => 'contenu_percu',
+                    'title' => 'Contenu perçu',
+                    'items' => [
+                        ['number' => 1, 'label' => 'Le libellé des textes était clair.'],
+                        ['number' => 2, 'label' => 'Le contenu (textes, images, voix off, vidéos) était facile à comprendre.'],
+                        ['number' => 3, 'label' => 'Le contenu m’a paru utile pour mon métier de formateur.'],
+                        ['number' => 4, 'label' => 'Le contenu correspondait à ce que j’attendais.'],
+                    ],
+                ],
+                [
+                    'id' => 'effort_cognitif_percu',
+                    'title' => 'Effort cognitif perçu',
+                    'items' => [
+                        ['number' => 5, 'label' => 'J’ai appris à utiliser le module rapidement.'],
+                        ['number' => 6, 'label' => 'Suivre le module s’est fait sans effort.'],
+                        // Cet item inversé doit être recodé lors de l'analyse.
+                        ['number' => 7, 'label' => 'Suivre le module m’a fatigué.', 'reversed' => true],
+                    ],
+                ],
+                [
+                    'id' => 'guidage_visuel_percu',
+                    'title' => 'Guidage visuel perçu',
+                    'items' => [
+                        ['number' => 8, 'label' => 'Les couleurs m’ont aidé à distinguer les différents éléments à l’écran.'],
+                        ['number' => 9, 'label' => 'Les éléments mis en évidence m’ont aidé à repérer ce qui était important.'],
+                        ['number' => 10, 'label' => 'Le style des illustrations a soutenu ma compréhension.'],
+                    ],
+                ],
+                [
+                    'id' => 'reperage_dans_le_parcours',
+                    'title' => 'Repérage dans le parcours',
+                    'items' => [
+                        ['number' => 11, 'label' => 'Je savais toujours où j’en étais dans le parcours.'],
+                        ['number' => 12, 'label' => 'Je comprenais comment passer d’un écran au suivant.'],
+                        ['number' => 13, 'label' => 'L’enchaînement des leçons m’a paru logique.'],
+                    ],
+                ],
+                [
+                    'id' => 'activites_et_simulateurs',
+                    'title' => 'Activités et simulateurs',
+                    'items' => [
+                        ['number' => 14, 'label' => 'Les consignes des activités étaient claires.'],
+                        ['number' => 15, 'label' => 'Je comprenais ce qu’on attendait de moi dans chaque activité.'],
+                        ['number' => 16, 'label' => 'Les simulateurs reflétaient bien l’usage réel d’Onéduc.'],
+                        ['number' => 17, 'label' => 'Le retour après chaque activité m’a aidé à savoir si j’avais réussi.'],
+                    ],
+                ],
+            ],
+            'scale' => [
+                ['value' => '1', 'short' => '1', 'label' => 'Pas du tout d’accord'],
+                ['value' => '2', 'short' => '2', 'label' => 'Plutôt pas d’accord'],
+                ['value' => '3', 'short' => '3', 'label' => 'Ni d’accord ni pas d’accord'],
+                ['value' => '4', 'short' => '4', 'label' => 'Plutôt d’accord'],
+                ['value' => '5', 'short' => '5', 'label' => 'Tout à fait d’accord'],
+                ['value' => 'NA', 'short' => 'NA', 'label' => 'Non applicable'],
+            ],
+            'open_questions' => [
+                ['item_number' => 18, 'label' => 'Qu’est-ce qui vous a le plus aidé dans ce module ?'],
+                ['item_number' => 19, 'label' => 'Qu’est-ce qui mériterait d’être clarifié ou amélioré ?'],
             ],
         ];
     }

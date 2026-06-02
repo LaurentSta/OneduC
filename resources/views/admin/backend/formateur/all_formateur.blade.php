@@ -6,7 +6,7 @@
         <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-gray-100 pb-4 mb-4">
             <div>
                 <h1 class="text-[20px] font-varela text-bleuone">Formateurs</h1>
-                <p class="text-sm text-gray-600">Gestion des comptes formateurs, activation et suivi des stagiaires.</p>
+                <p class="text-sm text-gray-600">Gestion des comptes formateurs, activation, stagiaires et progression dans le parcours.</p>
             </div>
             <a href="{{ route('formateur.inscription.form') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-orangeone text-white text-sm font-varela rounded-lg hover:bg-orangeone-hover transition cursor-pointer">
                 <i class="ti ti-plus"></i>
@@ -24,6 +24,7 @@
                         <th class="px-4 py-3">Email</th>
                         <th class="px-4 py-3">Téléphone</th>
                         <th class="px-4 py-3">Stagiaires</th>
+                        <th class="px-4 py-3 min-w-[250px]">Parcours formateur</th>
                         <th class="px-4 py-3">Statut</th>
                         <th class="px-4 py-3 text-center">Activer</th>
                         <th class="px-4 py-3">Adhésion</th>
@@ -40,6 +41,7 @@
                             $adhesionGraceEndsAt = $item->associationGraceEndsAt();
                             $adhesionGraceIsActive = $item->hasActiveAssociationGracePeriod();
                             $adhesionDate = $item->adhesion_valid_until?->format('Y-m-d') ?? now()->addYear()->format('Y-m-d');
+                            $receivedQuestionnaireModules = $questionnaireSubmissionModules[$item->id] ?? [];
                         @endphp
                         <tr class="border-b border-gray-100 transition">
                             <td class="px-4 py-3">{{ $key + 1 }}</td>
@@ -51,6 +53,46 @@
                                 <span class="inline-flex items-center px-2 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold">
                                     {{ $item->stagiaires_count }} stagiaires
                                 </span>
+                            </td>
+                            <td class="px-4 py-3">
+                                <div class="flex flex-wrap gap-1.5" aria-label="Progression du parcours formateur">
+                                    @foreach ($trainerPathModules as $trainerPathModule)
+                                        @php
+                                            $moduleCompletion = $trainerPathCompletionMap[$item->id][$trainerPathModule['key']];
+                                            $completionStatus = $moduleCompletion['is_completed']
+                                                ? 'completed'
+                                                : ($moduleCompletion['is_trackable'] ? 'in_progress' : 'coming_soon');
+                                            $completionTitle = match ($completionStatus) {
+                                                'completed' => $trainerPathModule['label'].' terminé',
+                                                'in_progress' => $trainerPathModule['label'].' en cours : '.$moduleCompletion['completed_steps'].'/'.$moduleCompletion['total_steps'].' étapes',
+                                                default => $trainerPathModule['label'].' : suivi à venir',
+                                            };
+                                            $completionClasses = match ($completionStatus) {
+                                                'completed' => 'border-green-200 bg-green-50 text-green-700',
+                                                'in_progress' => 'border-orange-200 bg-orange-50 text-orange-700',
+                                                default => 'border-gray-200 bg-gray-50 text-gray-400',
+                                            };
+                                        @endphp
+                                        <span
+                                            class="inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[11px] font-bold {{ $completionClasses }}"
+                                            data-trainer-path-module="{{ $item->id }}:{{ $trainerPathModule['number'] }}"
+                                            data-completion-status="{{ $completionStatus }}"
+                                            data-trainer-path-module-status="{{ $item->id }}:{{ $trainerPathModule['number'] }}:{{ $completionStatus }}"
+                                            title="{{ $completionTitle }}"
+                                        >
+                                            M{{ $trainerPathModule['number'] }}
+                                            @if ($moduleCompletion['is_completed'])
+                                                <i class="ti ti-check" aria-hidden="true"></i>
+                                            @endif
+                                            <span class="sr-only">{{ $completionTitle }}</span>
+                                        </span>
+                                    @endforeach
+                                </div>
+                                @if (! empty($receivedQuestionnaireModules))
+                                    <p class="mt-2 text-[11px] font-semibold text-bleuone">
+                                        Questionnaire M{{ implode(', M', $receivedQuestionnaireModules) }} reçu
+                                    </p>
+                                @endif
                             </td>
                             <td class="px-4 py-3">
                                 @if ($item->status == 1)
