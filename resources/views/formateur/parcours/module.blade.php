@@ -218,7 +218,7 @@
                                             <div class="min-w-0">
                                                 <h3
                                                     class="font-raleway font-semibold text-bleuone text-base md:text-lg"
-                                                    data-parcours-tooltip="{{ $chapter['pedagogical_label'] ?? 'Objectif pedagogique' }}"
+                                                    data-parcours-tooltip="{{ $chapter['pedagogical_label'] ?? 'Objectif pédagogique' }}"
                                                 >
                                                     {{ $chapter['title'] }}
                                                 </h3>
@@ -502,7 +502,7 @@
                     {{ $currentModule['construction_note'] ?? 'Ce module est en cours de construction. Certains contenus peuvent encore être ajustés.' }}
                 </p>
                 <p class="mt-3 text-center text-sm leading-7 text-slate-600">
-                    Pour l'instant, seul le <strong class="font-semibold text-bleuone">Module 2 — Créer son environnement</strong> est entièrement disponible.
+                    Pour l'instant, seul le <strong class="font-semibold text-bleuone">Module 2 — Mettre en place un environnement de formation</strong> est entièrement disponible.
                 </p>
 
                 <div class="mt-8 flex flex-col gap-3">

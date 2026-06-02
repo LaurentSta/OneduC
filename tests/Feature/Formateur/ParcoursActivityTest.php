@@ -39,8 +39,8 @@ it('shows the linked activity directly after the lesson in the parcours sidebar'
         ]));
 
     $response->assertOk();
-    $response->assertSee('Activite');
-    $response->assertDontSee('Activite - Classer les elements de preparation');
+    $response->assertSee('Activité');
+    $response->assertDontSee('Activité - Classer les éléments de préparation');
     $response->assertDontSee('1 page');
     $response->assertSee(route('formateur.parcours.activities.show', [
         'module' => 'organiser-ses-parcours',
@@ -114,6 +114,6 @@ it('stores a successful parcours activity attempt and reopens the activity as va
         ->get(parcoursActivityRoute('formateur.parcours.activities.show'));
 
     $page->assertOk();
-    $page->assertSee('Activite validee');
+    $page->assertSee('Activité validée');
     $page->assertSee('Leçon suivante');
 });

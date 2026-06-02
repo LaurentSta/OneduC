@@ -72,7 +72,7 @@
             lessonUrl: @js($currentLesson['url']),
             initialPlacements: @js($initialPlacements ?? []),
             completed: @js($activityCompleted ?? false),
-            successMessage: @js($currentActivity['success_message'] ?? 'Bravo, l activite est validee.'),
+            successMessage: @js($currentActivity['success_message'] ?? 'Bravo, l’activité est validée.'),
             feedbackMessages: @js($currentActivity['feedback_messages'] ?? []),
         })"
         class="space-y-4"
@@ -140,7 +140,7 @@
                         </div>
 
                         <div class="min-w-0 flex-1 pr-8">
-                            <p class="text-xs font-semibold uppercase tracking-widest text-white/65">Resultat</p>
+                            <p class="text-xs font-semibold uppercase tracking-widest text-white/65">Résultat</p>
                             <h2 class="font-raleway text-xl font-bold leading-tight">
                                 <span x-show="completionVariant === 'A'">Bravo !</span>
                                 <span x-show="completionVariant === 'B'" x-cloak>C'est noté !</span>
@@ -173,7 +173,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                             <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                        Revoir la lecon
+                        Revoir la leçon
                     </a>
 
                     <button
@@ -315,8 +315,8 @@
                 <x-formateur.hierarchy-breadcrumb
                     :module="['label' => 'Module', 'title' => $currentModule['title'], 'url' => $currentModule['url']]"
                     :chapter="['label' => $currentChapter['label'] ?? 'Chapitre', 'title' => $currentChapter['title'], 'url' => $currentChapter['url']]"
-                    :lesson="['label' => 'Lecon', 'title' => $currentLesson['title'], 'url' => $currentLesson['url']]"
-                    :activity="['label' => 'Activite', 'title' => $currentActivity['title'], 'url' => null]"
+                    :lesson="['label' => 'Leçon', 'title' => $currentLesson['title'], 'url' => $currentLesson['url']]"
+                    :activity="['label' => 'Activité', 'title' => $currentActivity['title'], 'url' => null]"
                 />
             </div>
         </div>
@@ -350,7 +350,7 @@
                             <path x-show="fullscreenActive" x-cloak d="M9 20H4v-5" style="display: none;" />
                             <path x-show="fullscreenActive" x-cloak d="M15 20h5v-5" style="display: none;" />
                         </svg>
-                        <span x-text="fullscreenActive ? 'Quitter mode plein ecran' : 'Mode plein ecran'"></span>
+                        <span x-text="fullscreenActive ? 'Quitter mode plein écran' : 'Mode plein écran'"></span>
                     </button>
                 </div>
 
@@ -720,7 +720,7 @@
                             await target.requestFullscreen();
                         }
                     } catch (error) {
-                        console.error('Impossible de basculer en plein ecran.', error);
+                        console.error('Impossible de basculer en plein écran.', error);
                     }
                 },
 

@@ -31,7 +31,7 @@
                 'body' => $currentLesson['subject'],
             ],
             [
-                'title' => 'Activite prevue',
+                'title' => 'Activité prévue',
                 'body' => $currentLesson['activity'],
             ],
         ],
@@ -42,7 +42,7 @@
         'checklist' => [
             $currentLesson['resources'],
         ],
-        'placeholder_note' => 'Cette lecon est actuellement proposee sous une forme editoriale provisoire.',
+        'placeholder_note' => 'Cette leçon est actuellement proposée sous une forme éditoriale provisoire.',
     ];
 @endphp
 
@@ -82,7 +82,7 @@
                         await target.requestFullscreen();
                     }
                 } catch (error) {
-                    console.error('Impossible de basculer en plein ecran.', error);
+                    console.error('Impossible de basculer en plein écran.', error);
                 }
             },
             syncFullscreenState() {
@@ -122,7 +122,7 @@
                 <x-formateur.hierarchy-breadcrumb
                     :module="['label' => 'Module', 'title' => $currentModule['title'], 'url' => $currentModule['url']]"
                     :chapter="['label' => $currentChapter['label'] ?? 'Chapitre', 'title' => $currentChapter['title'], 'url' => $currentChapter['url']]"
-                    :lesson="['label' => 'Lecon', 'title' => $currentLesson['title'], 'url' => null]"
+                    :lesson="['label' => 'Leçon', 'title' => $currentLesson['title'], 'url' => null]"
                 />
             </div>
         </div>
@@ -213,7 +213,7 @@
                         <path x-show="fullscreenActive" x-cloak d="M9 20H4v-5" style="display: none;" />
                         <path x-show="fullscreenActive" x-cloak d="M15 20h5v-5" style="display: none;" />
                     </svg>
-                    <span x-text="fullscreenActive ? 'Quitter mode plein ecran' : 'Mode plein ecran'"></span>
+                    <span x-text="fullscreenActive ? 'Quitter mode plein écran' : 'Mode plein écran'"></span>
                 </button>
             </div>
 
@@ -236,7 +236,7 @@
                                         <div class="max-w-xl rounded-[24px] border border-orangeone/20 bg-white px-8 py-7 shadow-sm">
                                             <p class="text-xs font-black uppercase tracking-[0.24em] text-orangeone">SCORM a integrer</p>
                                             <p class="mt-3 text-sm leading-7 text-slate-600">
-                                                Deposez le paquet Storyline dans le dossier prevu pour afficher le contenu ici.
+                                                Déposez le paquet Storyline dans le dossier prévu pour afficher le contenu ici.
                                             </p>
                                         </div>
                                     </div>
@@ -262,7 +262,7 @@
                                     <div class="max-w-xl">
                                         <p class="text-xs font-black uppercase tracking-[0.24em] text-orangeone">SCORM a integrer</p>
                                         <p class="mt-3 text-sm leading-7 text-slate-600">
-                                            Deposez le paquet Storyline dans le dossier prevu pour afficher le contenu ici.
+                                            Déposez le paquet Storyline dans le dossier prévu pour afficher le contenu ici.
                                         </p>
                                     </div>
                                 </div>
@@ -299,6 +299,8 @@
                             @include('formateur.parcours.partials.lessons.content-modification-results')
                         @elseif (($mixedActivePartConfig['form'] ?? null) === 'module_2_final_results')
                             @include('formateur.parcours.partials.lessons.module-2-final-results')
+                        @elseif (($mixedActivePartConfig['form'] ?? null) === 'module_2_usability_questionnaire')
+                            @include('formateur.parcours.partials.lessons.module-2-usability-questionnaire')
                         @endif
                     @endif
                 </div>
@@ -328,9 +330,9 @@
                                 </span>
                                 <span
                                     class="inline-flex rounded-full border border-bleuone/10 bg-bleuone/5 px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-bleuone"
-                                    data-parcours-tooltip="{{ ($currentLesson['type'] ?? 'objectif') === 'bilan' ? 'Bilan' : 'Objectif operationnel' }}"
+                                    data-parcours-tooltip="{{ ($currentLesson['type'] ?? 'objectif') === 'bilan' ? 'Bilan' : 'Objectif opérationnel' }}"
                                 >
-	                                    {{ ($currentLesson['type'] ?? 'objectif') === 'bilan' ? 'Bilan' : 'Lecon' }}
+	                                    {{ ($currentLesson['type'] ?? 'objectif') === 'bilan' ? 'Bilan' : 'Leçon' }}
                                 </span>
                             </div>
 
@@ -352,24 +354,24 @@
                                     </svg>
                                 </div>
                                 <p class="mt-5 text-xs font-black uppercase tracking-[0.24em] text-orangeone">
-                                    {{ $currentLesson['scorm_slot_label'] ?? 'Contenu de lecon' }}
+                                    {{ $currentLesson['scorm_slot_label'] ?? 'Contenu de leçon' }}
                                 </p>
                                 <h2 class="mt-3 font-raleway text-2xl font-medium leading-tight text-bleuone">
-                                    Contenu de lecon a integrer
+                                    Contenu de leçon à intégrer
                                 </h2>
                                 <p class="mx-auto mt-3 max-w-2xl text-sm leading-7 text-slate-600 md:text-base">
-	                                    Cet emplacement reste volontairement vide pour accueillir le contenu de cette lecon.
+	                                    Cet emplacement reste volontairement vide pour accueillir le contenu de cette leçon.
                                 </p>
                             </section>
 
                             <section class="grid gap-4 md:grid-cols-2">
                                 <article class="rounded-[24px] border border-slate-200 bg-white p-6">
-                                    <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Activite prevue</p>
-                                    <p class="mt-3 text-sm leading-7 text-slate-600">{{ $currentLesson['activity'] ?: 'Activite a creer ulterieurement.' }}</p>
+                                    <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Activité prévue</p>
+                                    <p class="mt-3 text-sm leading-7 text-slate-600">{{ $currentLesson['activity'] ?: 'Activité à créer ultérieurement.' }}</p>
 
                                     @if (!empty($nextActivity))
                                         <a href="{{ $nextActivity['url'] }}" class="mt-5 inline-flex items-center justify-center rounded-full bg-orangeone px-5 py-3 text-sm font-bold text-white transition hover:bg-orange-600">
-                                            {{ $nextActivity['button_label'] ?? 'Realiser l activite' }}
+                                            {{ $nextActivity['button_label'] ?? 'Réaliser l’activité' }}
                                         </a>
                                     @endif
                                 </article>
@@ -406,18 +408,18 @@
                                             href="{{ $previousLesson['url'] }}"
                                             class="inline-flex items-center justify-center rounded-full border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-orangeone hover:text-orangeone"
                                         >
-                                            Lecon precedente
+                                            Leçon précédente
                                         </a>
                                     @endif
                                 </div>
 
                                 @if ($nextActivity)
                                     <a href="{{ $nextActivity['url'] }}" class="btn-oneduc !rounded-full !px-6 !py-3 !text-sm">
-                                        {{ $nextActivity['button_label'] ?? 'Realiser l activite' }}
+                                        {{ $nextActivity['button_label'] ?? 'Réaliser l’activité' }}
                                     </a>
                                 @elseif ($nextLesson)
                                     <a href="{{ $nextLesson['url'] }}" class="btn-oneduc !rounded-full !px-6 !py-3 !text-sm">
-                                        Lecon suivante
+                                        Leçon suivante
                                     </a>
                                 @endif
                             </div>

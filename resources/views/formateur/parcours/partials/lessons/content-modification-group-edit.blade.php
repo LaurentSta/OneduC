@@ -146,7 +146,7 @@
             <ol class="mt-5 list-decimal space-y-3 pl-5 text-base leading-7 text-slate-700">
                 <li>Cliquez sur l'onglet Modules.</li>
                 <li>Ajoutez le module <span class="font-bold text-orangeone">Conservation des aliments et DLC</span>.</li>
-                <li>Verifiez qu'il apparait dans le flow du parcours.</li>
+                <li>Vérifiez qu'il apparaît dans l’enchaînement du parcours.</li>
                 <li>Enregistrez les modifications.</li>
             </ol>
         </section>
@@ -310,7 +310,7 @@
                 <div>
                     <h3 class="font-raleway text-xl font-bold text-bleuone">Organisation des modules</h3>
                     <p class="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-                        Le groupe a termine plus vite que prevu. Ajoutez un module complementaire utile, puis verifiez le flow du parcours.
+                        Le groupe a terminé plus vite que prévu. Ajoutez un module complémentaire utile, puis vérifiez l’enchaînement du parcours.
                     </p>
                 </div>
             </div>
@@ -322,12 +322,12 @@
                 data-available-parcours='[]'
                 data-selected-modules='@json($selectedModulesForFlow)'
                 data-initial-parcours-id=""
-                data-manage-lessons-label="Gerer les lecons"
+                data-manage-lessons-label="Gérer les leçons"
                 class="space-y-6"
             ></div>
 
             <div class="mt-4 rounded-[14px] border border-blue-100 bg-blue-50 px-4 py-3 text-sm leading-6 text-slate-600">
-                Selectionnez <span class="font-bold text-bleuone">Conservation des aliments et DLC</span> dans la liste des modules, ajoutez-le, puis controlez sa place dans le flow.
+                Sélectionnez <span class="font-bold text-bleuone">Conservation des aliments et DLC</span> dans la liste des modules, ajoutez-le, puis contrôlez sa place dans l’enchaînement.
             </div>
 
             <div class="mt-6 flex justify-end">
