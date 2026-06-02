@@ -1,8 +1,10 @@
 <?php
 
+use App\Mail\ModuleQuestionnaireSubmitted;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 
 function createSidebarProgressFormateur(): User
 {
@@ -64,6 +66,29 @@ function sidebarLessonPartRoute(string $lesson, string $part): string
         'lesson' => $lesson,
         'part' => $part,
     ]);
+}
+
+function moduleTwoQuestionnairePayload(): array
+{
+    return [
+        'submission_uuid' => 'd1bf4fe5-d025-4ed1-bb58-32e1a72be5ab',
+        'closed_items' => collect(range(1, 17))
+            ->map(fn (int $itemNumber): array => [
+                'item_number' => $itemNumber,
+                'value' => $itemNumber === 17 ? 'NA' : (($itemNumber - 1) % 5) + 1,
+            ])
+            ->all(),
+        'open_questions' => [
+            [
+                'item_number' => 18,
+                'text' => 'Les simulateurs et les consignes.',
+            ],
+            [
+                'item_number' => 19,
+                'text' => 'Préciser le vocabulaire utilisé.',
+            ],
+        ],
+    ];
 }
 
 it('keeps the final chapter in progress until cases and bilan are completed', function () {
@@ -176,9 +201,86 @@ it('offers the module two usability questionnaire after the final overview', fun
     $questionnaire->assertSee('Qu’est-ce qui mériterait d’être clarifié ou amélioré ?');
     $questionnaire->assertSee('Envoyer mes réponses');
     $questionnaire->assertSee('aria-label="NA — Non applicable"', false);
-    $questionnaire->assertSee('window.handleModule2QuestionnaireSubmit', false);
+    $questionnaire->assertSee('const questionnaireSubmitUrl =', false);
+    $questionnaire->assertSee('submission_uuid: submissionUuid', false);
+    $questionnaire->assertSee('fetch(questionnaireSubmitUrl', false);
 
     foreach (range(1, 17) as $itemNumber) {
         $questionnaire->assertSee('name="item_' . $itemNumber . '"', false);
     }
+});
+
+it('emails the completed module two questionnaire to Oneduc', function () {
+    Mail::fake();
+
+    $formateur = createSidebarProgressFormateur();
+    $token = 'csrf-module-two-questionnaire-complete';
+    $payload = moduleTwoQuestionnairePayload();
+    $payload['_token'] = $token;
+
+    $response = $this
+        ->withSession(['_token' => $token])
+        ->withHeader('X-CSRF-TOKEN', $token)
+        ->actingAs($formateur)
+        ->postJson(route('formateur.parcours.questionnaire.submit', ['module' => 'organiser-ses-parcours']), $payload);
+
+    $response
+        ->assertOk()
+        ->assertJson([
+            'success' => true,
+            'message' => 'Vos réponses ont bien été enregistrées et envoyées à l’équipe Onéduc.',
+        ]);
+
+    $this->assertDatabaseHas('trainer_module_questionnaire_submissions', [
+        'submission_uuid' => 'd1bf4fe5-d025-4ed1-bb58-32e1a72be5ab',
+        'user_id' => $formateur->id,
+        'module_number' => 2,
+        'module_key' => 'organiser-ses-parcours',
+        'questionnaire_key' => 'utilisabilite-percue',
+        'questionnaire_version' => 1,
+    ]);
+
+    Mail::assertSent(ModuleQuestionnaireSubmitted::class, function (ModuleQuestionnaireSubmitted $mail): bool {
+        return $mail->hasTo('contact@oneduc.fr')
+            && $mail->questionnaire['trainer']['email'] === 'lina.formatrice@example.test'
+            && $mail->questionnaire['closed_items'][6]['reversed'] === true
+            && $mail->questionnaire['closed_items'][16]['answer_label'] === 'Non applicable'
+            && $mail->questionnaire['open_questions'][0]['text'] === 'Les simulateurs et les consignes.'
+            && str_contains($mail->render(), 'item inversé à recoder lors de l’analyse');
+    });
+
+    expect(DB::table('trainer_module_questionnaire_submissions')->value('emailed_at'))->not->toBeNull();
+
+    $retry = $this
+        ->withSession(['_token' => $token])
+        ->withHeader('X-CSRF-TOKEN', $token)
+        ->actingAs($formateur)
+        ->postJson(route('formateur.parcours.questionnaire.submit', ['module' => 'organiser-ses-parcours']), $payload);
+
+    $retry->assertOk();
+
+    expect(DB::table('trainer_module_questionnaire_submissions')->count())->toBe(1);
+    Mail::assertSent(ModuleQuestionnaireSubmitted::class, 1);
+});
+
+it('rejects an incomplete module two questionnaire without sending an email', function () {
+    Mail::fake();
+
+    $formateur = createSidebarProgressFormateur();
+    $token = 'csrf-module-two-questionnaire-incomplete';
+    $payload = moduleTwoQuestionnairePayload();
+    array_pop($payload['closed_items']);
+    $payload['_token'] = $token;
+
+    $response = $this
+        ->withSession(['_token' => $token])
+        ->withHeader('X-CSRF-TOKEN', $token)
+        ->actingAs($formateur)
+        ->postJson(route('formateur.parcours.questionnaire.submit', ['module' => 'organiser-ses-parcours']), $payload);
+
+    $response
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('closed_items');
+
+    Mail::assertNothingSent();
 });
