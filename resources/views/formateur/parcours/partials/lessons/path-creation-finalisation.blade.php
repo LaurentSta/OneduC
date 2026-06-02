@@ -115,9 +115,9 @@
         const description = summary.querySelector('[data-path-summary-description]');
         const kicker = summary.querySelector('[data-path-summary-kicker]');
         if (payload.stopped) {
-            if (kicker) kicker.textContent = 'Activite stoppee apres 3 essais';
-            if (title) title.textContent = payload.title || 'Parcours non finalise';
-            if (description) description.textContent = 'Vous avez utilise les trois essais disponibles. Vous pouvez refaire l activite pour reconstruire le parcours attendu.';
+            if (kicker) kicker.textContent = 'Activité stoppée après 3 essais';
+            if (title) title.textContent = payload.title || 'Parcours non finalisé';
+            if (description) description.textContent = 'Vous avez utilisé les trois essais disponibles. Vous pouvez refaire l’activité pour reconstruire le parcours attendu.';
         } else {
             if (title && payload.title) title.textContent = payload.title;
             if (description && payload.description) description.textContent = payload.description;

@@ -6,33 +6,33 @@
     $firstChapterUrl = $currentModule['first_chapter_url'] ?? $currentModule['url'];
     $introItems = $currentModule['intro_items'] ?? [
         [
-            'title' => 'Derouler un chapitre',
-            'body' => 'Utilisez la fleche orange pour afficher les lecons.',
+            'title' => 'Dérouler un chapitre',
+            'body' => 'Utilisez la flèche orange pour afficher les leçons.',
             'icon' => 'chevron',
         ],
         [
-            'title' => 'Ouvrir une lecon',
-            'body' => 'Cliquez sur une lecon pour acceder a son contenu.',
+            'title' => 'Ouvrir une leçon',
+            'body' => 'Cliquez sur une leçon pour accéder à son contenu.',
             'icon' => 'play',
         ],
         [
             'title' => 'Suivre le contenu',
-            'body' => 'Le contenu principal de la lecon apparaitra dans l espace prevu.',
+            'body' => 'Le contenu principal de la leçon apparaîtra dans l’espace prévu.',
             'icon' => 'screen',
         ],
         [
-            'title' => 'Realiser une activite',
-            'body' => 'Quand une activite est disponible, un bouton vous permet de la lancer.',
+            'title' => 'Réaliser une activité',
+            'body' => 'Quand une activité est disponible, un bouton vous permet de la lancer.',
             'icon' => 'check',
         ],
         [
             'title' => 'Revenir au plan',
-            'body' => 'La sidebar permet de retrouver les chapitres, lecons et bilans.',
+            'body' => 'Le panneau latéral permet de retrouver les chapitres, leçons et bilans.',
             'icon' => 'list',
         ],
         [
-            'title' => 'Avancer a son rythme',
-            'body' => 'Les boutons precedent et suivant facilitent la navigation.',
+            'title' => 'Avancer à son rythme',
+            'body' => 'Les boutons précédent et suivant facilitent la navigation.',
             'icon' => 'arrow',
         ],
     ];
@@ -98,7 +98,7 @@
                             await target.requestFullscreen();
                         }
                     } catch (error) {
-                        console.error('Impossible de basculer en plein ecran.', error);
+                        console.error('Impossible de basculer en plein écran.', error);
                     }
                 },
                 syncFullscreenState() {
@@ -136,7 +136,7 @@
                             <path x-show="fullscreenActive" x-cloak d="M9 20H4v-5" style="display: none;" />
                             <path x-show="fullscreenActive" x-cloak d="M15 20h5v-5" style="display: none;" />
                         </svg>
-                        <span x-text="fullscreenActive ? 'Quitter mode plein ecran' : 'Mode plein ecran'"></span>
+                        <span x-text="fullscreenActive ? 'Quitter mode plein écran' : 'Mode plein écran'"></span>
                     </button>
                 </div>
 
@@ -162,7 +162,7 @@
                         Avant de commencer
                     </h1>
                     <p class="mt-4 max-w-3xl text-base leading-8 text-slate-600">
-                        Cette page presente les principaux boutons et reperes que vous allez utiliser dans le module.
+                        Cette page présente les principaux boutons et repères que vous allez utiliser dans le module.
                     </p>
                 </div>
 

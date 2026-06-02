@@ -149,3 +149,36 @@ it('shows a green overview border once every module step is completed', function
     $completedModule->assertSee('border-t-0 border-vertone bg-white', false);
     $completedModule->assertSee('Validé');
 });
+
+it('offers the module two usability questionnaire after the final overview', function () {
+    $formateur = createSidebarProgressFormateur();
+    $questionnaireUrl = sidebarLessonPartRoute('bilan-module-2', 'questionnaire');
+
+    $overview = $this
+        ->actingAs($formateur)
+        ->get(sidebarLessonPartRoute('bilan-module-2', 'resultat-final'));
+
+    $overview->assertOk();
+    $overview->assertSee('Répondre au questionnaire');
+    $overview->assertSee($questionnaireUrl, false);
+
+    $questionnaire = $this
+        ->actingAs($formateur)
+        ->get($questionnaireUrl);
+
+    $questionnaire->assertOk();
+    $questionnaire->assertSee('Votre avis sur le module 2');
+    $questionnaire->assertSee('Mettre en place un environnement de formation');
+    $questionnaire->assertSee('Effort cognitif perçu');
+    $questionnaire->assertSee('Suivre le module m’a fatigué.');
+    $questionnaire->assertSee('Le retour après chaque activité m’a aidé à savoir si j’avais réussi.');
+    $questionnaire->assertSee('Qu’est-ce qui vous a le plus aidé dans ce module ?');
+    $questionnaire->assertSee('Qu’est-ce qui mériterait d’être clarifié ou amélioré ?');
+    $questionnaire->assertSee('Envoyer mes réponses');
+    $questionnaire->assertSee('aria-label="NA — Non applicable"', false);
+    $questionnaire->assertSee('window.handleModule2QuestionnaireSubmit', false);
+
+    foreach (range(1, 17) as $itemNumber) {
+        $questionnaire->assertSee('name="item_' . $itemNumber . '"', false);
+    }
+});
