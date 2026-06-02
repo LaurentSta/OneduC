@@ -2,6 +2,7 @@
     $moduleUrl = $currentModule['url'] ?? route('formateur.parcours.index');
     $moduleThreeUrl = route('formateur.parcours.modules.show', ['module' => 'gerer-ses-groupes']);
     $dashboardUrl = route('formateur.dashboard');
+    $questionnaireUrl = $mixedPartUrls['questionnaire'] ?? '#';
     $activityStatusMap = $activityStatusMap ?? [];
     $durationToMinutes = function (?string $duration): float {
         preg_match_all('/\d+/', (string) $duration, $matches);
@@ -46,7 +47,7 @@
             }
 
             $lessonResults[] = [
-                'title' => $lesson['title'] ?? 'Lecon',
+                'title' => $lesson['title'] ?? 'Leçon',
                 'duration' => $lesson['duration'] ?? '',
                 'is_bilan' => $isBilan,
                 'is_tracked' => $isTracked,
@@ -89,21 +90,21 @@
                 </h1>
 
                 <p class="mt-4 max-w-3xl text-base leading-8 text-slate-600">
-                    Cette vue reprend les validations enregistrees pendant le module. Elle permet de voir rapidement
-                    ce qui est acquis et ce qui reste a terminer avant de passer au module suivant.
+                    Cette vue reprend les validations enregistrées pendant le module. Elle permet de voir rapidement
+                    ce qui est acquis et ce qui reste à terminer avant de passer au module suivant.
                 </p>
 
                 <div class="mt-7 grid gap-3 sm:grid-cols-3">
                     <article class="rounded-[18px] border border-bleuone/10 bg-bleuone/5 px-4 py-4">
-                        <p class="text-[11px] font-black uppercase tracking-[0.18em] text-bleuone">Activites</p>
+                        <p class="text-[11px] font-black uppercase tracking-[0.18em] text-bleuone">Activités</p>
                         <p class="mt-2 text-3xl font-black text-bleuone">{{ $totalCompleted }}/{{ $totalTracked }}</p>
-                        <p class="mt-1 text-sm text-slate-600">activites validees</p>
+                        <p class="mt-1 text-sm text-slate-600">activités validées</p>
                     </article>
 
                     <article class="rounded-[18px] border border-orangeone/10 bg-orangeone/5 px-4 py-4">
                         <p class="text-[11px] font-black uppercase tracking-[0.18em] text-orangeone">Avancement</p>
                         <p class="mt-2 text-3xl font-black text-orangeone">{{ $moduleProgressPercent }}%</p>
-                        <p class="mt-1 text-sm text-slate-600">du parcours valide</p>
+                        <p class="mt-1 text-sm text-slate-600">du parcours validé</p>
                     </article>
 
                     <article class="rounded-[18px] border border-vertone/10 bg-vertone/10 px-4 py-4">
@@ -116,8 +117,8 @@
                 <div class="mt-7 rounded-[20px] border border-slate-200 bg-slate-50/70 p-5">
                     <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                         <div>
-                            <h2 class="font-raleway text-xl font-bold text-bleuone">Detail par chapitre</h2>
-                            <p class="mt-1 text-sm leading-6 text-slate-500">Chaque etape, bilan compris, doit etre terminee pour valider le module.</p>
+                            <h2 class="font-raleway text-xl font-bold text-bleuone">Détail par chapitre</h2>
+                            <p class="mt-1 text-sm leading-6 text-slate-500">Chaque étape, bilan compris, doit être terminée pour valider le module.</p>
                         </div>
                         <span class="rounded-full bg-white px-3 py-1 text-xs font-bold text-slate-500 shadow-sm">
                             {{ $totalTracked - $totalCompleted }} restant(s)
@@ -133,7 +134,7 @@
                                         <h3 class="mt-1 font-raleway text-lg font-bold text-bleuone">{{ $chapterResult['title'] }}</h3>
                                     </div>
                                     <span class="{{ $chapterResult['percent'] === 100 ? 'bg-vertone/10 text-vertone' : 'bg-orangeone/10 text-orangeone' }} rounded-full px-3 py-1 text-sm font-black">
-                                        {{ $chapterResult['completed'] }}/{{ $chapterResult['tracked'] }} validees
+                                        {{ $chapterResult['completed'] }}/{{ $chapterResult['tracked'] }} validées
                                     </span>
                                 </div>
 
@@ -149,11 +150,11 @@
                                                 <p class="text-xs text-slate-400">{{ $lessonResult['duration'] }}</p>
                                             </div>
                                             @if ($lessonResult['is_completed'])
-                                                <span class="shrink-0 rounded-full bg-vertone/10 px-3 py-1 text-xs font-bold text-vertone">Validee</span>
+                                                <span class="shrink-0 rounded-full bg-vertone/10 px-3 py-1 text-xs font-bold text-vertone">Validée</span>
                                             @elseif ($lessonResult['is_bilan'])
-                                                <span class="shrink-0 rounded-full bg-orangeone/10 px-3 py-1 text-xs font-bold text-orangeone">Bilan a terminer</span>
+                                                <span class="shrink-0 rounded-full bg-orangeone/10 px-3 py-1 text-xs font-bold text-orangeone">Bilan à terminer</span>
                                             @else
-                                                <span class="shrink-0 rounded-full bg-orangeone/10 px-3 py-1 text-xs font-bold text-orangeone">A terminer</span>
+                                                <span class="shrink-0 rounded-full bg-orangeone/10 px-3 py-1 text-xs font-bold text-orangeone">À terminer</span>
                                             @endif
                                         </div>
                                     @endforeach
@@ -169,6 +170,16 @@
                     </a>
                     <a href="{{ $dashboardUrl }}" class="btn-oneduc justify-center !px-6 !py-3 !text-sm">
                         Retour au tableau de bord
+                    </a>
+                </div>
+
+                <div class="mt-7 rounded-[20px] border border-orangeone/20 bg-orangeone/5 p-5">
+                    <p class="text-xs font-black uppercase tracking-[0.18em] text-orangeone">Votre avis compte</p>
+                    <p class="mt-2 text-sm leading-6 text-slate-600">
+                        Prenez quelques minutes pour évaluer l'utilisabilité de ce module et nous aider à l'améliorer.
+                    </p>
+                    <a href="{{ $questionnaireUrl }}" class="btn-oneduc mt-4 justify-center !px-6 !py-3 !text-sm">
+                        Répondre au questionnaire
                     </a>
                 </div>
             </div>

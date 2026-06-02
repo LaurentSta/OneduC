@@ -62,7 +62,7 @@
                     <div class="mb-8 border-b border-gray-100 pb-6">
                         <h1
                             class="text-3xl md:text-4xl font-raleway font-medium text-bleuone leading-tight"
-                            data-parcours-tooltip="{{ $currentChapter['pedagogical_label'] ?? 'Objectif pedagogique' }}"
+                            data-parcours-tooltip="{{ $currentChapter['pedagogical_label'] ?? 'Objectif pédagogique' }}"
                         >
                             {{ $currentChapter['title'] }}
                         </h1>
@@ -121,7 +121,7 @@
 	                                                    @endif
 		                                                    <h4
 		                                                        class="mb-2 text-sm font-bold uppercase tracking-wide text-bleuone"
-		                                                        data-parcours-tooltip="{{ ($lesson['type'] ?? 'objectif') === 'bilan' ? 'Bilan' : 'Objectif operationnel' }}"
+		                                                        data-parcours-tooltip="{{ ($lesson['type'] ?? 'objectif') === 'bilan' ? 'Bilan' : 'Objectif opérationnel' }}"
 	                                                    >
                                                         {{ \Illuminate\Support\Str::upper($lesson['title']) }}
                                                     </h4>
@@ -151,7 +151,7 @@
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                             </svg>
                                         </div>
-                                        <span class="text-lg font-bold text-bleuone">Activites et bilans</span>
+                                        <span class="text-lg font-bold text-bleuone">Activités et bilans</span>
                                     </div>
 
                                     <div
@@ -172,7 +172,7 @@
                                                 @foreach ($currentChapter['lessons'] as $lesson)
                                                     <li>
                                                         <strong>{{ $lesson['title'] }}</strong> :
-                                                        {{ ($lesson['type'] ?? 'objectif') === 'bilan' ? 'bilan prevu' : ($lesson['activity'] ?: 'activite a creer') }}
+                                                        {{ ($lesson['type'] ?? 'objectif') === 'bilan' ? 'bilan prévu' : ($lesson['activity'] ?: 'activité à créer') }}
                                                     </li>
                                                 @endforeach
                                             </ul>

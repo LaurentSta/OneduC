@@ -8,14 +8,14 @@
 
     $statusIcon = function (bool $completed, bool $inProgress): array {
         if ($completed) {
-            return ['icon' => '✗', 'class' => 'text-vertone', 'label' => 'Validee'];
+            return ['icon' => '✗', 'class' => 'text-vertone', 'label' => 'Validée'];
         }
 
         if ($inProgress) {
             return ['icon' => '⏳', 'class' => 'text-orangeone', 'label' => 'En cours'];
         }
 
-        return ['icon' => '✗', 'class' => 'text-gray-300 opacity-60', 'label' => 'Non commence'];
+        return ['icon' => '✗', 'class' => 'text-gray-300 opacity-60', 'label' => 'Non commencé'];
     };
 @endphp
 
@@ -48,7 +48,7 @@
                     <p class="mt-1 text-[10px] font-semibold text-slate-500">
                         {{ $moduleChapterCount }} chapitre{{ $moduleChapterCount > 1 ? 's' : '' }}
                         ·
-                        {{ $moduleLessonCount }} lecon{{ $moduleLessonCount > 1 ? 's' : '' }}
+                        {{ $moduleLessonCount }} leçon{{ $moduleLessonCount > 1 ? 's' : '' }}
                     </p>
                 </a>
             </div>
@@ -82,7 +82,7 @@
                         $isChapterCompleted = $chapterActivityTotal > 0 && $chapterActivityCompleted >= $chapterActivityTotal;
                         $completedLabel = $chapterActivityTotal > 0
                             ? $chapterActivityCompleted . '/' . $chapterActivityTotal . ' étape' . ($chapterActivityTotal > 1 ? 's' : '') . ' validée' . ($chapterActivityTotal > 1 ? 's' : '')
-                            : '0/' . $chapter['lesson_count'] . ' lecon' . ($chapter['lesson_count'] > 1 ? 's' : '') . ' terminee' . ($chapter['lesson_count'] > 1 ? 's' : '');
+                            : '0/' . $chapter['lesson_count'] . ' leçon' . ($chapter['lesson_count'] > 1 ? 's' : '') . ' terminée' . ($chapter['lesson_count'] > 1 ? 's' : '');
                         $chapterButtonClass = $isChapterCompleted
                             ? 'bg-teal-50/70 border-vertone'
                             : ($isActiveChapter ? ($hasActiveLessonInChapter ? 'bg-blue-50/40 border-bleuone' : 'bg-orange-50 border-orangeone') : 'hover:bg-gray-50 border-transparent');
@@ -114,14 +114,14 @@
                             <div class="min-w-0 pr-4 relative">
 	                                <p
 	                                    class="text-[10px] font-black uppercase tracking-wide {{ $chapterKickerClass }}"
-	                                    data-parcours-tooltip="{{ $chapter['pedagogical_label'] ?? 'Objectif pedagogique' }}"
+	                                    data-parcours-tooltip="{{ $chapter['pedagogical_label'] ?? 'Objectif pédagogique' }}"
 	                                >
 	                                    {{ $isChapterCompleted ? 'Chapitre validé' : 'Chapitre' }}
 	                                </p>
 	                                <h3
 	                                    class="mt-1 text-[14px] font-bold leading-tight truncate max-w-[220px] {{ $chapterTitleClass }}"
 	                                    title="{{ $chapter['title'] }}"
-	                                    data-parcours-tooltip="{{ $chapter['pedagogical_label'] ?? 'Objectif pedagogique' }}"
+	                                    data-parcours-tooltip="{{ $chapter['pedagogical_label'] ?? 'Objectif pédagogique' }}"
 	                                >
                                     {{ $chapter['title'] }}
                                 </h3>
@@ -163,7 +163,7 @@
 	                                        $hasActivity = !empty($lesson['activity_page']);
 	                                        $hasCompletionActivity = ! $isBilan && !empty($lesson['completion_activity_key']);
 	                                        $hasActivitySlot = $hasActivity || $hasCompletionActivity;
-	                                        $lessonTypeLabel = $isBilan ? 'Bilan' : 'Objectif operationnel';
+	                                        $lessonTypeLabel = $isBilan ? 'Bilan' : 'Objectif opérationnel';
 	                                        $activityKey = $lesson['activity_page']['key'] ?? ($lesson['completion_activity_key'] ?? null);
 	                                        $activityStatusKey = $hasActivitySlot && $activityKey
 	                                            ? implode('.', [$chapterKey, $lessonKey, $activityKey])
@@ -177,15 +177,15 @@
                                         $isActiveLesson = ($activeLessonKey ?? null) === $lessonKey && !$isActiveActivity;
                                         $lessonStatusIcon = $statusIcon($isActivityCompleted, $isActiveLesson || $isActiveActivity);
 	                                        $lessonStateText = $isActivityCompleted
-	                                            ? 'Activite : validee'
+	                                            ? 'Activité : validée'
 	                                            : ($isActiveActivity
-	                                                ? 'Activite : en cours'
-	                                                : ($isActiveLesson ? 'Contenu de lecon : en cours' : 'Contenu de lecon'));
+	                                                ? 'Activité : en cours'
+	                                                : ($isActiveLesson ? 'Contenu de leçon : en cours' : 'Contenu de leçon'));
                                         $lessonStateClass = $isActivityCompleted
                                             ? 'text-vertone'
                                             : (($isActiveLesson || $isActiveActivity) ? 'text-orangeone' : 'text-gray-500');
 	                                        $activityStatusIcon = $statusIcon($isActivityCompleted, $isActiveActivity);
-	                                        $activitySlotLabel = $isActivityCompleted ? 'Activite validee' : 'Activite';
+	                                        $activitySlotLabel = $isActivityCompleted ? 'Activité validée' : 'Activité';
 	                                    @endphp
 
                                     <li class="space-y-1">
@@ -267,12 +267,12 @@
                                             <div class="ml-6 block py-2 px-3 border-l-4 border-transparent">
                                                 <div class="flex items-center gap-2">
                                                     <div class="w-6 flex justify-center">
-                                                        <span class="text-[16px] font-black text-gray-300" aria-label="Activite a creer">✗</span>
+                                                        <span class="text-[16px] font-black text-gray-300" aria-label="Activité à créer">✗</span>
                                                     </div>
 
                                                     <div class="min-w-0 flex-1">
                                                         <span class="block text-[13px] font-bold leading-snug text-gray-400">
-                                                            Activite a creer
+                                                            Activité à créer
                                                         </span>
                                                     </div>
                                                 </div>
