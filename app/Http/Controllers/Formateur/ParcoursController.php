@@ -4,9 +4,13 @@ namespace App\Http\Controllers\Formateur;
 
 use App\Data\ParcoursFormateur;
 use App\Http\Controllers\Controller;
+use App\Mail\ModuleQuestionnaireSubmitted;
+use App\Models\TrainerModuleQuestionnaireSubmission;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Validation\Rule;
 
 class ParcoursController extends Controller
 {
@@ -310,6 +314,109 @@ class ParcoursController extends Controller
         }
 
         return array_values(array_unique($messages));
+    }
+
+    public function submitModuleQuestionnaire(Request $request, string $module): JsonResponse
+    {
+        $questionnaire = ParcoursFormateur::moduleUsabilityQuestionnaire($module);
+        abort_unless($questionnaire, 404);
+
+        $expectedClosedItemNumbers = collect($questionnaire['dimensions'])
+            ->flatMap(fn (array $dimension): array => collect($dimension['items'])->pluck('number')->all())
+            ->all();
+        $expectedOpenItemNumbers = collect($questionnaire['open_questions'])->pluck('item_number')->all();
+
+        $validated = $request->validate([
+            'submission_uuid' => ['required', 'uuid'],
+            'closed_items' => ['required', 'array', 'size:'.count($expectedClosedItemNumbers)],
+            'closed_items.*.item_number' => ['required', 'integer', Rule::in($expectedClosedItemNumbers), 'distinct'],
+            'closed_items.*.value' => ['required', Rule::in([1, 2, 3, 4, 5, 'NA'])],
+            'open_questions' => ['required', 'array', 'size:'.count($expectedOpenItemNumbers)],
+            'open_questions.*.item_number' => ['required', 'integer', Rule::in($expectedOpenItemNumbers), 'distinct'],
+            'open_questions.*.text' => ['nullable', 'string', 'max:5000'],
+        ]);
+
+        $scaleLabels = collect($questionnaire['scale'])->mapWithKeys(
+            fn (array $option): array => [(string) $option['value'] => (string) $option['label']]
+        );
+        $submittedValues = collect($validated['closed_items'])->mapWithKeys(
+            fn (array $item): array => [(int) $item['item_number'] => $item['value']]
+        );
+        $submittedOpenTexts = collect($validated['open_questions'])->mapWithKeys(
+            fn (array $question): array => [(int) $question['item_number'] => trim((string) ($question['text'] ?? ''))]
+        );
+
+        // Les textes et dimensions proviennent du référentiel serveur afin que le courriel reste fiable.
+        $closedItems = collect($questionnaire['dimensions'])
+            ->flatMap(function (array $dimension) use ($scaleLabels, $submittedValues): array {
+                return collect($dimension['items'])->map(function (array $item) use ($dimension, $scaleLabels, $submittedValues): array {
+                    $value = $submittedValues->get((int) $item['number']);
+
+                    return [
+                        'item_number' => (int) $item['number'],
+                        'dimension' => (string) $dimension['id'],
+                        'dimension_label' => (string) $dimension['title'],
+                        'label' => (string) $item['label'],
+                        'reversed' => (bool) ($item['reversed'] ?? false),
+                        'value' => $value,
+                        'answer_label' => $scaleLabels->get((string) $value, (string) $value),
+                    ];
+                })->all();
+            })
+            ->values()
+            ->all();
+
+        $openQuestions = collect($questionnaire['open_questions'])
+            ->map(fn (array $question): array => [
+                ...$question,
+                'text' => $submittedOpenTexts->get((int) $question['item_number'], ''),
+            ])
+            ->all();
+
+        $trainer = $request->user();
+        $submittedAt = now();
+        $payload = [
+            'module' => $questionnaire['module'],
+            'submitted_at' => $submittedAt->format('d/m/Y à H:i:s'),
+            'trainer' => [
+                'id' => $trainer->id,
+                'full_name' => trim($trainer->prenom.' '.$trainer->name),
+                'username' => (string) ($trainer->username ?? ''),
+                'email' => (string) $trainer->email,
+            ],
+            'closed_items' => $closedItems,
+            'open_questions' => $openQuestions,
+        ];
+
+        $submission = TrainerModuleQuestionnaireSubmission::query()->firstOrCreate(
+            ['submission_uuid' => $validated['submission_uuid']],
+            [
+                'user_id' => $trainer->id,
+                'module_number' => $questionnaire['module']['number'],
+                'module_key' => $questionnaire['module']['key'],
+                'questionnaire_key' => $questionnaire['questionnaire']['key'],
+                'questionnaire_version' => $questionnaire['questionnaire']['version'],
+                'responses' => $payload,
+                'submitted_at' => $submittedAt,
+            ]
+        );
+
+        abort_unless(
+            $submission->user_id === $trainer->id
+            && $submission->module_key === $questionnaire['module']['key'],
+            409
+        );
+
+        if ($submission->emailed_at === null) {
+            Mail::to('contact@oneduc.fr')->send(new ModuleQuestionnaireSubmitted($submission->responses));
+
+            $submission->forceFill(['emailed_at' => now()])->save();
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Vos réponses ont bien été enregistrées et envoyées à l’équipe Onéduc.',
+        ]);
     }
 
     public function showActivity(string $module, string $chapter, string $lesson, string $activity)
@@ -739,31 +846,12 @@ class ParcoursController extends Controller
      */
     private function expectedActivityTypesForModule(string $moduleKey): array
     {
-        $expectedActivityTypes = [];
-        $rawModule = ParcoursFormateur::rawModules()[$moduleKey] ?? null;
-
-        foreach (($rawModule['chapters'] ?? []) as $chapterKey => $chapter) {
-            foreach (($chapter['lessons'] ?? []) as $lessonKey => $lesson) {
-                $activity = $lesson['activity_page'] ?? null;
-
-                if (is_array($activity) && ! empty($activity['key'])) {
-                    $expectedActivityTypes[$this->activityStatusKey((string) $chapterKey, (string) $lessonKey, (string) $activity['key'])] = (string) ($activity['type'] ?? 'sorting');
-                }
-
-                $completionActivityKey = $lesson['completion_activity_key'] ?? null;
-
-                if (is_string($completionActivityKey) && $completionActivityKey !== '') {
-                    $expectedActivityTypes[$this->activityStatusKey((string) $chapterKey, (string) $lessonKey, $completionActivityKey)] = (string) ($lesson['completion_activity_type'] ?? 'guided_group_creation');
-                }
-            }
-        }
-
-        return $expectedActivityTypes;
+        return ParcoursFormateur::moduleCompletionRequirements($moduleKey);
     }
 
     private function activityStatusKey(string $chapterKey, string $lessonKey, string $activityKey): string
     {
-        return implode('.', [$chapterKey, $lessonKey, $activityKey]);
+        return ParcoursFormateur::activityStatusKey($chapterKey, $lessonKey, $activityKey);
     }
 
     /**

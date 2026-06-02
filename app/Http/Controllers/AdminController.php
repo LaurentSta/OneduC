@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Data\ParcoursFormateur;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
@@ -208,7 +210,76 @@ public function AdminSecuriteUpdate(Request $request)
             ->latest()
             ->get();
 
-        return view('admin.backend.formateur.all_formateur', compact('allFormateur'));
+        $trainerPathModules = ParcoursFormateur::trainerPathModules();
+        $trainerPathCompletionMap = $this->trainerPathCompletionMap($allFormateur, $trainerPathModules);
+        $questionnaireSubmissionModules = DB::table('trainer_module_questionnaire_submissions')
+            ->whereIn('user_id', $allFormateur->pluck('id'))
+            ->distinct()
+            ->get(['user_id', 'module_number'])
+            ->groupBy('user_id')
+            ->map(fn ($submissions) => $submissions->pluck('module_number')->map(fn ($moduleNumber): int => (int) $moduleNumber)->all())
+            ->all();
+
+        return view('admin.backend.formateur.all_formateur', compact(
+            'allFormateur',
+            'trainerPathModules',
+            'trainerPathCompletionMap',
+            'questionnaireSubmissionModules'
+        ));
+    }
+
+    /**
+     * @param  \Illuminate\Support\Collection<int, User>  $trainers
+     * @param  array<int, array{number: int, key: string, label: string, title: string}>  $trainerPathModules
+     * @return array<int, array<string, array{is_trackable: bool, is_completed: bool, completed_steps: int, total_steps: int}>>
+     */
+    private function trainerPathCompletionMap($trainers, array $trainerPathModules): array
+    {
+        $requirementsByModule = collect($trainerPathModules)->mapWithKeys(
+            fn (array $module): array => [$module['key'] => ParcoursFormateur::moduleCompletionRequirements($module['key'])]
+        );
+        $successfulAttempts = DB::table('trainer_path_activity_attempts')
+            ->whereIn('user_id', $trainers->pluck('id'))
+            ->where('is_success', true)
+            ->get(['user_id', 'module_key', 'chapter_key', 'lesson_key', 'activity_key', 'activity_type'])
+            ->groupBy('user_id');
+
+        return $trainers->mapWithKeys(function (User $trainer) use ($requirementsByModule, $successfulAttempts, $trainerPathModules): array {
+            $trainerAttempts = $successfulAttempts->get($trainer->id, collect());
+
+            $completionMap = collect($trainerPathModules)->mapWithKeys(function (array $module) use ($requirementsByModule, $trainerAttempts): array {
+                $requirements = $requirementsByModule->get($module['key'], []);
+                $completedActivities = $trainerAttempts
+                    ->where('module_key', $module['key'])
+                    ->filter(function ($attempt) use ($requirements): bool {
+                        $statusKey = ParcoursFormateur::activityStatusKey(
+                            (string) $attempt->chapter_key,
+                            (string) $attempt->lesson_key,
+                            (string) $attempt->activity_key
+                        );
+
+                        return ($requirements[$statusKey] ?? null) === (string) $attempt->activity_type;
+                    })
+                    ->mapWithKeys(fn ($attempt): array => [
+                        ParcoursFormateur::activityStatusKey(
+                            (string) $attempt->chapter_key,
+                            (string) $attempt->lesson_key,
+                            (string) $attempt->activity_key
+                        ) => true,
+                    ])
+                    ->all();
+                $isTrackable = ! empty($requirements);
+
+                return [$module['key'] => [
+                    'is_trackable' => $isTrackable,
+                    'is_completed' => $isTrackable && empty(array_diff_key($requirements, $completedActivities)),
+                    'completed_steps' => count(array_intersect_key($requirements, $completedActivities)),
+                    'total_steps' => count($requirements),
+                ]];
+            })->all();
+
+            return [$trainer->id => $completionMap];
+        })->all();
     }
 
 

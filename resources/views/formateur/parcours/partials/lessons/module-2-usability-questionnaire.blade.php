@@ -2,63 +2,11 @@
     $moduleThreeUrl = route('formateur.parcours.modules.show', ['module' => 'gerer-ses-groupes']);
     $dashboardUrl = route('formateur.dashboard');
     $bilanUrl = $mixedPartUrls['resultat-final'] ?? ($currentModule['url'] ?? route('formateur.parcours.index'));
-    $dimensions = [
-        [
-            'id' => 'contenu_percu',
-            'title' => 'Contenu perçu',
-            'items' => [
-                ['number' => 1, 'label' => 'Le libellé des textes était clair.'],
-                ['number' => 2, 'label' => 'Le contenu (textes, images, voix off, vidéos) était facile à comprendre.'],
-                ['number' => 3, 'label' => 'Le contenu m’a paru utile pour mon métier de formateur.'],
-                ['number' => 4, 'label' => 'Le contenu correspondait à ce que j’attendais.'],
-            ],
-        ],
-        [
-            'id' => 'effort_cognitif_percu',
-            'title' => 'Effort cognitif perçu',
-            'items' => [
-                ['number' => 5, 'label' => 'J’ai appris à utiliser le module rapidement.'],
-                ['number' => 6, 'label' => 'Suivre le module s’est fait sans effort.'],
-                ['number' => 7, 'label' => 'Suivre le module m’a fatigué.', 'reversed' => true],
-            ],
-        ],
-        [
-            'id' => 'guidage_visuel_percu',
-            'title' => 'Guidage visuel perçu',
-            'items' => [
-                ['number' => 8, 'label' => 'Les couleurs m’ont aidé à distinguer les différents éléments à l’écran.'],
-                ['number' => 9, 'label' => 'Les éléments mis en évidence m’ont aidé à repérer ce qui était important.'],
-                ['number' => 10, 'label' => 'Le style des illustrations a soutenu ma compréhension.'],
-            ],
-        ],
-        [
-            'id' => 'reperage_dans_le_parcours',
-            'title' => 'Repérage dans le parcours',
-            'items' => [
-                ['number' => 11, 'label' => 'Je savais toujours où j’en étais dans le parcours.'],
-                ['number' => 12, 'label' => 'Je comprenais comment passer d’un écran au suivant.'],
-                ['number' => 13, 'label' => 'L’enchaînement des leçons m’a paru logique.'],
-            ],
-        ],
-        [
-            'id' => 'activites_et_simulateurs',
-            'title' => 'Activités et simulateurs',
-            'items' => [
-                ['number' => 14, 'label' => 'Les consignes des activités étaient claires.'],
-                ['number' => 15, 'label' => 'Je comprenais ce qu’on attendait de moi dans chaque activité.'],
-                ['number' => 16, 'label' => 'Les simulateurs reflétaient bien l’usage réel d’Onéduc.'],
-                ['number' => 17, 'label' => 'Le retour après chaque activité m’a aidé à savoir si j’avais réussi.'],
-            ],
-        ],
-    ];
-    $scale = [
-        ['value' => '1', 'short' => '1', 'label' => 'Pas du tout d’accord'],
-        ['value' => '2', 'short' => '2', 'label' => 'Plutôt pas d’accord'],
-        ['value' => '3', 'short' => '3', 'label' => 'Ni d’accord ni pas d’accord'],
-        ['value' => '4', 'short' => '4', 'label' => 'Plutôt d’accord'],
-        ['value' => '5', 'short' => '5', 'label' => 'Tout à fait d’accord'],
-        ['value' => 'NA', 'short' => 'NA', 'label' => 'Non applicable'],
-    ];
+    $questionnaire = \App\Data\ParcoursFormateur::moduleUsabilityQuestionnaire('organiser-ses-parcours');
+    $questionnaireSubmitUrl = route('formateur.parcours.questionnaire.submit', ['module' => $questionnaire['module']['key']]);
+    $dimensions = $questionnaire['dimensions'];
+    $scale = $questionnaire['scale'];
+    $openQuestions = $questionnaire['open_questions'];
     $questionnaireItems = collect($dimensions)
         ->flatMap(function (array $dimension): array {
             return array_map(function (array $item) use ($dimension): array {
@@ -89,6 +37,8 @@
         </header>
 
         <form id="module-2-usability-questionnaire" class="space-y-7 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+            @csrf
+
             <section class="rounded-[18px] border border-slate-200 bg-slate-50/70 px-4 py-4">
                 <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <div>
@@ -120,6 +70,15 @@
                 tabindex="-1"
             >
                 Répondez à chaque affirmation avant d’envoyer le questionnaire.
+            </p>
+
+            <p
+                id="module-2-questionnaire-submit-error"
+                class="hidden rounded-[16px] border border-orangeone/30 bg-orangeone/10 px-4 py-3 text-sm font-bold text-orangeone"
+                role="alert"
+                tabindex="-1"
+            >
+                L’envoi n’a pas abouti. Vérifiez votre connexion puis réessayez.
             </p>
 
             @foreach ($dimensions as $dimensionIndex => $dimension)
@@ -213,21 +172,15 @@
                 </header>
 
                 <div class="space-y-5 px-4 py-5 sm:px-6">
-                    <div>
-                        <label for="module-2-open-18" class="block text-base font-semibold leading-7 text-slate-700">
-                            <span class="mr-1 text-orangeone">18.</span>
-                            Qu’est-ce qui vous a le plus aidé dans ce module ?
-                        </label>
-                        <textarea id="module-2-open-18" name="open_18" rows="4" class="mt-2 w-full rounded-[14px] border-slate-300 text-sm leading-6 text-slate-700 shadow-sm focus:border-orangeone focus:ring-orangeone"></textarea>
-                    </div>
-
-                    <div>
-                        <label for="module-2-open-19" class="block text-base font-semibold leading-7 text-slate-700">
-                            <span class="mr-1 text-orangeone">19.</span>
-                            Qu’est-ce qui mériterait d’être clarifié ou amélioré ?
-                        </label>
-                        <textarea id="module-2-open-19" name="open_19" rows="4" class="mt-2 w-full rounded-[14px] border-slate-300 text-sm leading-6 text-slate-700 shadow-sm focus:border-orangeone focus:ring-orangeone"></textarea>
-                    </div>
+                    @foreach ($openQuestions as $question)
+                        <div>
+                            <label for="module-2-open-{{ $question['item_number'] }}" class="block text-base font-semibold leading-7 text-slate-700">
+                                <span class="mr-1 text-orangeone">{{ $question['item_number'] }}.</span>
+                                {{ $question['label'] }}
+                            </label>
+                            <textarea id="module-2-open-{{ $question['item_number'] }}" name="open_{{ $question['item_number'] }}" rows="4" class="mt-2 w-full rounded-[14px] border-slate-300 text-sm leading-6 text-slate-700 shadow-sm focus:border-orangeone focus:ring-orangeone"></textarea>
+                        </div>
+                    @endforeach
                 </div>
             </section>
 
@@ -235,7 +188,7 @@
                 <a href="{{ $bilanUrl }}" class="btn-oneduc-outline justify-center !px-6 !py-3 !text-sm">
                     Retour au bilan
                 </a>
-                <button type="submit" class="btn-oneduc justify-center !px-7 !py-3 !text-sm">
+                <button type="submit" data-questionnaire-submit class="btn-oneduc justify-center !px-7 !py-3 !text-sm disabled:cursor-wait disabled:opacity-60">
                     Envoyer mes réponses
                 </button>
             </div>
@@ -249,7 +202,7 @@
             </div>
             <h2 class="mt-5 font-raleway text-3xl font-semibold text-bleuone">Merci pour votre retour</h2>
             <p class="mx-auto mt-3 max-w-2xl text-base leading-8 text-slate-600">
-                Vos réponses ont bien été préparées. Elles pourront être transmises dès que la gestion de la soumission sera branchée.
+                Vos réponses ont bien été enregistrées et envoyées à l’équipe Onéduc.
             </p>
             <div class="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
                 <a href="{{ $dashboardUrl }}" class="btn-oneduc-outline justify-center !px-6 !py-3 !text-sm">
@@ -268,21 +221,23 @@
         const form = document.getElementById('module-2-usability-questionnaire');
         const confirmation = document.getElementById('module-2-questionnaire-confirmation');
         const errorSummary = document.getElementById('module-2-questionnaire-error-summary');
+        const submitError = document.getElementById('module-2-questionnaire-submit-error');
+        const submitButton = form?.querySelector('[data-questionnaire-submit]');
+        const questionnaireSubmitUrl = @js($questionnaireSubmitUrl);
         const questionnaireItems = @js($questionnaireItems);
+        const openQuestions = @js($openQuestions);
+        const submissionUuid = globalThis.crypto?.randomUUID?.() ?? 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (character) => {
+            const randomValue = Math.random() * 16 | 0;
+            const value = character === 'x' ? randomValue : (randomValue & 0x3 | 0x8);
+
+            return value.toString(16);
+        });
 
         if (!form || !confirmation) {
             return;
         }
 
-        /**
-         * Point d'extension : branchez ici l'enregistrement ou l'envoi des réponses.
-         * L'objet reçu contient les 17 items fermés et les 2 réponses ouvertes.
-         */
-        window.handleModule2QuestionnaireSubmit = window.handleModule2QuestionnaireSubmit || function (questionnaireResponses) {
-            // A compléter lors du branchement de la gestion de la soumission.
-        };
-
-        form.addEventListener('submit', (event) => {
+        form.addEventListener('submit', async (event) => {
             event.preventDefault();
 
             const formData = new FormData(form);
@@ -309,8 +264,10 @@
             }
 
             errorSummary?.classList.add('hidden');
+            submitError?.classList.add('hidden');
 
             const responses = {
+                submission_uuid: submissionUuid,
                 module: {
                     code: 'module-2',
                     title: 'Mettre en place un environnement de formation',
@@ -326,28 +283,49 @@
                         value: rawValue === 'NA' ? 'NA' : Number(rawValue),
                     };
                 }),
-                open_questions: [
-                    {
-                        item_number: 18,
-                        label: 'Qu’est-ce qui vous a le plus aidé dans ce module ?',
-                        text: String(formData.get('open_18') || '').trim(),
-                    },
-                    {
-                        item_number: 19,
-                        label: 'Qu’est-ce qui mériterait d’être clarifié ou amélioré ?',
-                        text: String(formData.get('open_19') || '').trim(),
-                    },
-                ],
+                open_questions: openQuestions.map((question) => ({
+                    ...question,
+                    text: String(formData.get(`open_${question.item_number}`) || '').trim(),
+                })),
             };
 
-            window.handleModule2QuestionnaireSubmit(responses);
-            window.dispatchEvent(new CustomEvent('oneduc:module-2-questionnaire-submitted', {
-                detail: responses,
-            }));
+            if (submitButton) {
+                submitButton.disabled = true;
+                submitButton.textContent = 'Envoi en cours…';
+            }
 
-            form.classList.add('hidden');
-            confirmation.classList.remove('hidden');
-            confirmation.focus();
+            try {
+                const response = await fetch(questionnaireSubmitUrl, {
+                    method: 'POST',
+                    headers: {
+                        Accept: 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': String(formData.get('_token') || ''),
+                    },
+                    body: JSON.stringify(responses),
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Échec de l’envoi du questionnaire (${response.status}).`);
+                }
+
+                window.dispatchEvent(new CustomEvent('oneduc:module-2-questionnaire-submitted', {
+                    detail: responses,
+                }));
+
+                form.classList.add('hidden');
+                confirmation.classList.remove('hidden');
+                confirmation.focus();
+            } catch (error) {
+                console.error(error);
+                submitError?.classList.remove('hidden');
+                submitError?.focus();
+
+                if (submitButton) {
+                    submitButton.disabled = false;
+                    submitButton.textContent = 'Envoyer mes réponses';
+                }
+            }
         });
     })();
 </script>
