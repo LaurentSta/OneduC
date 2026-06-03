@@ -61,8 +61,8 @@ it('stores a failed parcours activity attempt when elements are missing or mispl
         ->postJson(parcoursActivityRoute('formateur.parcours.activities.submit'), [
             '_token' => $token,
             'placements' => [
-                'information' => ['nom', 'date_ouverture'],
-                'stagiaire' => ['prenom'],
+                'information' => ['pierre_dupont', 'date_debut'],
+                'stagiaire' => ['titre_groupe'],
                 'module' => [],
             ],
         ]);
@@ -71,7 +71,7 @@ it('stores a failed parcours activity attempt when elements are missing or mispl
     $response->assertJson([
         'success' => false,
     ]);
-    expect($response->json('wrong_item_ids'))->toContain('nom');
+    expect($response->json('wrong_item_ids'))->toContain('pierre_dupont');
 
     $attempt = DB::table('trainer_path_activity_attempts')->latest('id')->first();
 
@@ -92,9 +92,9 @@ it('stores a successful parcours activity attempt and reopens the activity as va
         ->postJson(parcoursActivityRoute('formateur.parcours.activities.submit'), [
             '_token' => $token,
             'placements' => [
-                'information' => ['date_ouverture', 'date_debut', 'visible', 'desactive'],
-                'stagiaire' => ['nom', 'prenom', 'adresse_mail'],
-                'module' => ['module_excel_avance', 'module_word_debutant', 'module_powerpoint'],
+                'information' => ['titre_groupe', 'date_debut', 'date_fin'],
+                'stagiaire' => ['pierre_dupont', 'aurelie_martin', 'email_stagiaire'],
+                'module' => ['module_word_debutant', 'module_excel_avance', 'module_powerpoint'],
             ],
         ]);
 
@@ -107,7 +107,7 @@ it('stores a successful parcours activity attempt and reopens the activity as va
 
     expect($attempt)->not->toBeNull();
     expect((bool) $attempt->is_success)->toBeTrue();
-    expect((int) $attempt->correct_items)->toBe(10);
+    expect((int) $attempt->correct_items)->toBe(9);
 
     $page = $this
         ->actingAs($formateur)

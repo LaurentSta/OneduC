@@ -185,7 +185,16 @@
             </div>
 
             <ol class="mt-5 list-decimal space-y-3 pl-5 text-base leading-7 text-slate-700">
-                <li>Cliquez sur l'enveloppe pour ouvrir le volet message.</li>
+                <li>
+                    Cliquez sur l'enveloppe
+                    <span class="mx-1 inline-flex h-8 w-8 align-middle items-center justify-center rounded-full border border-orangeone/25 bg-orangeone/10 text-orangeone shadow-sm" aria-hidden="true">
+                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 6h16v12H4z" />
+                            <path d="m4 7 8 6 8-6" />
+                        </svg>
+                    </span>
+                    pour ouvrir le volet message.
+                </li>
                 <li>Cochez Inclure le lien et le code d'acces.</li>
                 <li>Cochez Email pour envoyer le message par mail a Marc.</li>
                 <li>Envoyez le message, puis enregistrez les modifications pour acceder a la validation.</li>

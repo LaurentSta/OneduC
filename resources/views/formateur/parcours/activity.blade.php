@@ -5,6 +5,7 @@
 @php
     $activityDropzones = $currentActivity['dropzones'] ?? [];
     $activityCards = $currentActivity['items'] ?? [];
+    $usesModalFeedback = in_array($currentActivity['key'] ?? '', ['classer-les-elements', 'preparer-informations-utiles'], true);
     $nextNavigationUrl = $nextLesson['url'] ?? $currentChapter['url'];
     $activitySubmitUrl = route('formateur.parcours.activities.submit', [
         'module' => $activeModuleKey,
@@ -73,7 +74,9 @@
             initialPlacements: @js($initialPlacements ?? []),
             completed: @js($activityCompleted ?? false),
             successMessage: @js($currentActivity['success_message'] ?? 'Bravo, l’activité est validée.'),
+            resultTitle: @js($currentActivity['result_title'] ?? 'Résultat'),
             feedbackMessages: @js($currentActivity['feedback_messages'] ?? []),
+            feedbackAsModal: @js($usesModalFeedback),
         })"
         class="space-y-4"
     >
@@ -212,6 +215,103 @@
         </div>
         {{-- ===== FIN MODAL ===== --}}
 
+        {{-- ===== MODAL FEEDBACK DE VÉRIFICATION ===== --}}
+        <div
+            x-show="showFeedbackModal"
+            x-cloak
+            x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100"
+            x-transition:leave="transition ease-in duration-150"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            class="fixed inset-0 z-50 flex items-center justify-center p-4"
+            style="background: rgba(0,44,63,0.55);"
+            @click.self="closeFeedbackModal()"
+        >
+            <section
+                x-transition:enter="transition ease-out duration-200"
+                x-transition:enter-start="opacity-0 scale-95"
+                x-transition:enter-end="opacity-100 scale-100"
+                x-transition:leave="transition ease-in duration-150"
+                x-transition:leave-start="opacity-100 scale-100"
+                x-transition:leave-end="opacity-0 scale-95"
+                class="relative w-full max-w-2xl overflow-hidden rounded-[26px] bg-white shadow-2xl"
+                @click.stop
+            >
+                <button
+                    type="button"
+                    @click="closeFeedbackModal()"
+                    class="absolute right-4 top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/20 text-white transition hover:bg-white/35"
+                    aria-label="Fermer"
+                >
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+
+                <div
+                    class="px-6 pb-5 pt-6 text-white"
+                    :class="completed ? 'bg-vertone' : 'bg-orangeone'"
+                >
+                    <p class="text-xs font-semibold uppercase tracking-widest text-white/70">Résultat</p>
+                    <h2 class="mt-1 pr-10 font-raleway text-2xl font-bold leading-tight" x-text="feedbackModalTitle()"></h2>
+                    <p class="mt-3 text-base leading-7 text-white/90" x-text="message"></p>
+                </div>
+
+                <div x-show="!completed" x-cloak class="max-h-[55vh] overflow-y-auto px-6 py-5">
+                    <template x-if="wrongItems.length > 0">
+                        <div class="grid gap-3">
+                            <template x-for="item in wrongItems" :key="item.id">
+                                <div class="rounded-[18px] border border-orange-200 bg-orange-50/60 px-4 py-3 text-sm text-slate-700">
+                                    <div class="flex flex-wrap items-center gap-2 font-bold">
+                                        <span class="text-bleuone">
+                                            <strong x-show="item.type_label" x-text="item.type_label + ' : '"></strong><span x-text="item.label"></span>
+                                        </span>
+                                        <svg class="h-3.5 w-3.5 shrink-0 text-orangeone" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                        </svg>
+                                        <span class="rounded-full bg-white px-2.5 py-1 text-xs font-black uppercase tracking-wide text-orangeone ring-1 ring-orange-200" x-text="zoneLabelById(item.expected)"></span>
+                                    </div>
+                                    <p x-show="item.feedback" class="mt-2 text-base leading-7 text-slate-700" x-text="item.feedback"></p>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+
+                <div class="grid gap-3 border-t border-slate-100 bg-white px-6 py-5 sm:grid-cols-2">
+                    <a
+                        :href="lessonUrl"
+                        class="inline-flex items-center justify-center rounded-full border-2 border-bleuone bg-white px-5 py-3 text-sm font-bold text-bleuone transition hover:bg-bleuone hover:text-white"
+                    >
+                        Revoir la leçon
+                    </a>
+                    <button
+                        type="button"
+                        @click="resetActivity()"
+                        class="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-600 transition hover:border-orangeone hover:text-orangeone"
+                    >
+                        Recommencer l’activité
+                    </button>
+                    <button
+                        type="button"
+                        @click="closeFeedbackModal(); showInstructions = true"
+                        class="inline-flex items-center justify-center rounded-full border border-orangeone/30 bg-orangeone/10 px-5 py-3 text-sm font-bold text-orangeone transition hover:border-orangeone hover:bg-orangeone hover:text-white"
+                    >
+                        Revoir la consigne
+                    </button>
+                    <a
+                        :href="nextUrl"
+                        class="btn-oneduc !w-full !justify-center !rounded-full !py-3 !text-sm"
+                    >
+                        Leçon suivante
+                    </a>
+                </div>
+            </section>
+        </div>
+        {{-- ===== FIN MODAL FEEDBACK ===== --}}
+
         {{-- ===== MODAL CONSIGNE ===== --}}
         <div x-show="showInstructions" x-cloak class="fixed inset-0 z-50">
             <div class="absolute inset-0 bg-slate-900/45" @click="showInstructions = false"></div>
@@ -258,10 +358,16 @@
                     </div>
                 @endif
 
-                <div class="mt-4 rounded-[16px] border border-bleuone/15 bg-bleuone/[0.04] px-4 py-3 text-base leading-7 text-slate-700">
-                    <span class="font-bold text-bleuone">Objectif :</span>
-                    {{ $currentActivity['instruction'] ?? 'Glissez ou sélectionnez chaque élément, puis déposez-le dans la bonne catégorie. Rangez tous les éléments avant de valider.' }}
-                </div>
+                @if ($usesModalFeedback)
+                    <div class="mt-4 rounded-[16px] border border-bleuone/15 bg-bleuone/[0.04] px-4 py-3 text-base leading-7 text-slate-700">
+                        {{ $currentActivity['instruction'] ?? 'Glissez ou sélectionnez chaque élément, puis déposez-le dans la bonne catégorie. Rangez tous les éléments avant de valider.' }}
+                    </div>
+                @else
+                    <div class="mt-4 rounded-[16px] border border-bleuone/15 bg-bleuone/[0.04] px-4 py-3 text-base leading-7 text-slate-700">
+                        <span class="font-bold text-bleuone">Objectif :</span>
+                        {{ $currentActivity['instruction'] ?? 'Glissez ou sélectionnez chaque élément, puis déposez-le dans la bonne catégorie. Rangez tous les éléments avant de valider.' }}
+                    </div>
+                @endif
             </section>
         </div>
         {{-- ===== FIN MODAL CONSIGNE ===== --}}
@@ -414,7 +520,14 @@
                                     >
                                         {{-- En-tête coloré --}}
                                         <div class="{{ $theme['header'] }} px-5 py-4">
-                                            <h2 class="text-lg font-black text-white">{{ $dropzone['label'] }}</h2>
+                                            <div class="flex flex-wrap items-center gap-2">
+                                                <h2 class="text-lg font-black text-white">{{ $dropzone['label'] }}</h2>
+                                                @if (!empty($dropzone['step_label']))
+                                                    <span class="rounded-full bg-white/20 px-2.5 py-1 text-xs font-black uppercase tracking-wide text-white ring-1 ring-white/25">
+                                                        {{ $dropzone['step_label'] }}
+                                                    </span>
+                                                @endif
+                                            </div>
                                             <p class="mt-0.5 text-sm leading-5 text-white/75">{{ $dropzone['description'] }}</p>
                                         </div>
 
@@ -515,42 +628,44 @@
                                 </div>
                             </section>
 
-                            {{-- Message de feedback --}}
-                            <div
-                                x-show="message"
-                                x-cloak
-                                class="rounded-[20px] border px-5 py-4"
-                                :class="completed ? 'border-teal-200 bg-teal-50 text-teal-800' : 'border-orange-200 bg-orange-50 text-orange-900'"
-                            >
-                                <div class="flex items-start gap-3">
-                                    <span class="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-black"
-                                        :class="completed ? 'bg-vertone text-white' : 'bg-orangeone text-white'">
-                                        <span x-text="completed ? '✓' : '!'"></span>
-                                    </span>
-                                    <div class="min-w-0 w-full">
-                                        <p class="text-sm font-bold" x-text="completed ? 'Activité validée' : 'Ajustement nécessaire'"></p>
-                                        <p class="mt-1 text-sm leading-6" x-text="message"></p>
+                            @unless ($usesModalFeedback)
+                                {{-- Message de feedback --}}
+                                <div
+                                    x-show="message"
+                                    x-cloak
+                                    class="rounded-[20px] border px-5 py-4"
+                                    :class="completed ? 'border-teal-200 bg-teal-50 text-teal-800' : 'border-orange-200 bg-orange-50 text-orange-900'"
+                                >
+                                    <div class="flex items-start gap-3">
+                                        <span class="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-black"
+                                            :class="completed ? 'bg-vertone text-white' : 'bg-orangeone text-white'">
+                                            <span x-text="completed ? '✓' : '!'"></span>
+                                        </span>
+                                        <div class="min-w-0 w-full">
+                                            <p class="text-sm font-bold" x-text="completed ? 'Activité validée' : 'Ajustement nécessaire'"></p>
+                                            <p class="mt-1 text-sm leading-6" x-text="message"></p>
 
-                                        {{-- Détail des éléments mal classés --}}
-                                        <template x-if="!completed && wrongItems.length > 0">
-                                            <div class="mt-3 grid gap-2">
-                                                <template x-for="item in wrongItems" :key="item.id">
-                                                    <div class="rounded-2xl border border-orange-200 bg-white px-4 py-3 text-sm text-slate-700">
-                                                        <div class="flex flex-wrap items-center gap-1.5 font-semibold">
-                                                            <span><strong x-show="item.type_label" x-text="item.type_label + ' : '"></strong><span x-text="item.label"></span></span>
-                                                            <svg class="h-3 w-3 shrink-0 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                                                            </svg>
-                                                            <span class="font-bold text-bleuone" x-text="zoneLabelById(item.expected)"></span>
+                                            {{-- Détail des éléments mal classés --}}
+                                            <template x-if="!completed && wrongItems.length > 0">
+                                                <div class="mt-3 grid gap-2">
+                                                    <template x-for="item in wrongItems" :key="item.id">
+                                                        <div class="rounded-2xl border border-orange-200 bg-white px-4 py-3 text-sm text-slate-700">
+                                                            <div class="flex flex-wrap items-center gap-1.5 font-semibold">
+                                                                <span><strong x-show="item.type_label" x-text="item.type_label + ' : '"></strong><span x-text="item.label"></span></span>
+                                                                <svg class="h-3 w-3 shrink-0 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                                                </svg>
+                                                                <span class="font-bold text-bleuone" x-text="zoneLabelById(item.expected)"></span>
+                                                            </div>
+                                                            <p x-show="item.feedback" class="mt-1 leading-5 text-slate-600" x-text="item.feedback"></p>
                                                         </div>
-                                                        <p x-show="item.feedback" class="mt-1 leading-5 text-slate-600" x-text="item.feedback"></p>
-                                                    </div>
-                                                </template>
-                                            </div>
-                                        </template>
+                                                    </template>
+                                                </div>
+                                            </template>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+                            @endunless
 
                         </div>
 
@@ -637,7 +752,9 @@
                 nextUrl: config.nextUrl || '#',
                 lessonUrl: config.lessonUrl || '#',
                 successMessage: config.successMessage || 'Bravo, l’activité est validée.',
+                resultTitle: config.resultTitle || 'Résultat',
                 feedbackMessages: config.feedbackMessages || {},
+                feedbackAsModal: Boolean(config.feedbackAsModal),
                 placements: {},
                 pool: [],
                 selectedCardId: null,
@@ -648,6 +765,7 @@
                 completed: Boolean(config.completed),
                 submitting: false,
                 showCompletionModal: false,
+                showFeedbackModal: false,
                 failedAttempts: 0,
                 completionVariant: 'A',
                 wrongItems: [],
@@ -686,6 +804,14 @@
 
                 closeModal() {
                     this.showCompletionModal = false;
+                },
+
+                closeFeedbackModal() {
+                    this.showFeedbackModal = false;
+                },
+
+                feedbackModalTitle() {
+                    return this.completed ? this.resultTitle : 'Quelques éléments sont à revoir';
                 },
 
                 completionMessage(variant) {
@@ -942,18 +1068,27 @@
                             this.missingItemIds = [];
                             this.wrongItems = [];
                             this.completionVariant = this.failedAttempts === 0 ? 'A' : (this.failedAttempts < 3 ? 'B' : 'C');
-                            this.showCompletionModal = true;
+                            if (this.feedbackAsModal) {
+                                this.showFeedbackModal = true;
+                            } else {
+                                this.showCompletionModal = true;
+                            }
                         } else {
                             this.wrongItems = Array.isArray(payload.wrong_items) ? payload.wrong_items : [];
                             this.failedAttempts++;
-                            if (this.failedAttempts >= 3) {
+                            if (this.feedbackAsModal) {
+                                this.showFeedbackModal = true;
+                            } else if (this.failedAttempts >= 3) {
                                 this.completionVariant = 'C';
                                 this.showCompletionModal = true;
                             }
                         }
                     } catch (error) {
                         console.error('Impossible de valider l activite.', error);
-                        this.message = 'Une erreur est survenue pendant la validation. Reessayez dans un instant.';
+                        this.message = 'Une erreur est survenue pendant la validation. Réessayez dans un instant.';
+                        if (this.feedbackAsModal) {
+                            this.showFeedbackModal = true;
+                        }
                     } finally {
                         this.submitting = false;
                     }
@@ -961,6 +1096,7 @@
 
                 resetActivity() {
                     this.showCompletionModal = false;
+                    this.showFeedbackModal = false;
                     this.completed = false;
                     this.selectedCardId = null;
                     this.message = '';
