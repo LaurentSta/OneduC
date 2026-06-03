@@ -1649,10 +1649,10 @@
           <links>
             <slidelink slideid="_player.5ga9z0jv1pf.6lKlACGD8CB" displaytext="Diapositive d&amp;apos;introduction" expand="false" type="slide" />
             <slidelink slideid="_player.5ga9z0jv1pf.5iMGUZdS0XT" displaytext="Préparer avant de créer" expand="false" type="slide" />
-            <slidelink slideid="_player.5ga9z0jv1pf.6rfCDWJeona" displaytext="Nommer votre groupe" expand="false" type="slide" />
-            <slidelink slideid="_player.5ga9z0jv1pf.5e3dOC3mCuv" displaytext="Définir les modalités" expand="false" type="slide" />
-            <slidelink slideid="_player.5ga9z0jv1pf.6PwuNksMwAM" displaytext="Lister les stagiaires" expand="false" type="slide" />
-            <slidelink slideid="_player.5ga9z0jv1pf.6UvW6tcYZNd" displaytext="Organiser son parcours" expand="false" type="slide" />
+            <slidelink slideid="_player.5ga9z0jv1pf.6rfCDWJeona" displaytext="Nommer votre groupe — Obligatoire" expand="false" type="slide" />
+            <slidelink slideid="_player.5ga9z0jv1pf.5e3dOC3mCuv" displaytext="Définir les modalités — Non obligatoires" expand="false" type="slide" />
+            <slidelink slideid="_player.5ga9z0jv1pf.6PwuNksMwAM" displaytext="Lister les stagiaires — Obligatoire" expand="false" type="slide" />
+            <slidelink slideid="_player.5ga9z0jv1pf.6UvW6tcYZNd" displaytext="Organiser son parcours — Obligatoire" expand="false" type="slide" />
             <slidelink slideid="_player.5ga9z0jv1pf.5hVVi0ggben" displaytext="L&amp;apos;essentiel d&amp;apos;abord." expand="false" type="slide" />
           </links>
         </slidelink>

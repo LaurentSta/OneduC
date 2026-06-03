@@ -569,10 +569,10 @@ class ParcoursController extends Controller
 
         $isSuccess = empty($wrongItems);
         $message = $isSuccess
-            ? (string) ($currentActivity['success_message'] ?? 'Bravo, l activite est validee.')
+            ? (string) ($currentActivity['success_message'] ?? 'Bravo, l’activité est validée.')
             : (empty($missingItemIds)
-                ? 'Quelques elements sont a revoir avant de poursuivre.'
-                : 'Placez tous les elements dans un bloc avant de valider.');
+                ? 'Quelques éléments sont à revoir avant de poursuivre.'
+                : 'Placez tous les éléments dans un bloc avant de valider.');
 
         $now = now();
 
