@@ -8,8 +8,6 @@
     $presentationVideoTitle = $currentModule['presentation_video_title'] ?? ('Video de presentation - ' . $currentModule['title']);
     $specificObjective = $currentModule['specific_objective'] ?? $currentModule['description'];
     $fullTitle = $currentModule['full_title'] ?? null;
-    $hasIntroduction = !empty($currentModule['introduction_scorm_directory']);
-    $introductionUrl = $currentModule['introduction_url'] ?? null;
     $activityStatusMap = $activityStatusMap ?? [];
     $activityCount = 0;
     $completedActivityCount = 0;
@@ -88,7 +86,7 @@
                                     <button
                                         @click="activeTab = '{{ $tabId }}'"
                                         :class="activeTab === '{{ $tabId }}' ? 'border-orangeone text-orangeone' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
-                                        class="cursor-pointer whitespace-nowrap border-b-2 px-1 py-3 font-varela text-sm outline-none transition-all"
+                                        class="cursor-pointer whitespace-nowrap border-b-2 px-1 py-3 font-varela text-base outline-none transition-all"
                                     >
                                         {{ $tabLabel }}
                                     </button>
@@ -97,7 +95,7 @@
                         </div>
 
                         <div class="mb-8 mt-6 min-h-[100px]">
-                            <div x-show="activeTab === 'presentation'" x-cloak class="space-y-4 font-lisible leading-relaxed text-slate-700 md:text-base">
+                            <div x-show="activeTab === 'presentation'" x-cloak class="space-y-4 font-lisible text-base leading-8 text-slate-700">
                                 @foreach ($currentModule['presentation'] as $paragraph)
                                     <p>{{ $paragraph }}</p>
                                 @endforeach
@@ -105,8 +103,8 @@
 
                             <div x-show="activeTab === 'objectifs'" x-cloak>
                                 <div class="mb-5 rounded-2xl border border-orange-100 bg-orange-50/60 p-5">
-                                    <p class="font-varela text-sm uppercase tracking-[0.24em] text-orangeone">But du module</p>
-                                    <p class="mt-2 font-raleway text-base font-semibold leading-7 text-bleuone">{{ $specificObjective }}</p>
+                                    <p class="font-varela text-base uppercase tracking-[0.18em] text-orangeone">But du module</p>
+                                    <p class="mt-2 font-raleway text-lg font-semibold leading-8 text-bleuone">{{ $specificObjective }}</p>
                                 </div>
                                 <ul class="space-y-3">
                                     @foreach ($currentModule['goals'] as $goal)
@@ -114,20 +112,20 @@
                                             <svg class="mt-0.5 size-5 flex-shrink-0 text-orangeone" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
                                             </svg>
-                                            <span class="font-lisible text-sm leading-relaxed text-slate-700 md:text-base">{{ $goal }}</span>
+                                            <span class="font-lisible text-base leading-8 text-slate-700">{{ $goal }}</span>
                                         </li>
                                     @endforeach
                                 </ul>
                             </div>
 
                             <div x-show="activeTab === 'prerequis'" x-cloak class="rounded-[24px] border border-[#E7EEF3] bg-[#f8f7fa] p-5">
-                                <h4 class="mb-3 flex items-center gap-2 font-varela text-sm text-bleuone">
+                                <h4 class="mb-3 flex items-center gap-2 font-varela text-base text-bleuone">
                                     <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
                                     Prérequis recommandés
                                 </h4>
-                                <div class="space-y-2 pl-6 font-lisible text-sm leading-relaxed text-slate-600">
+                                <div class="space-y-2 pl-6 font-lisible text-base leading-8 text-slate-600">
                                     @foreach ($currentModule['prerequisites'] as $prerequisite)
                                         <p>{{ $prerequisite }}</p>
                                     @endforeach
@@ -138,7 +136,7 @@
 
                     {{-- Programme --}}
                     <section>
-                        <h2 class="mb-5 flex items-center gap-3 font-varela text-xl font-normal text-bleuone">
+                        <h2 class="mb-5 flex items-center gap-3 font-varela text-lg font-normal text-bleuone">
                             <span class="flex size-8 items-center justify-center rounded-lg bg-orangeone text-white shadow-md">
                                 <svg class="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
@@ -148,31 +146,6 @@
                         </h2>
 
                         <div class="space-y-3">
-
-                            {{-- Entrée Introduction SCORM --}}
-                            @if ($hasIntroduction && $introductionUrl)
-                                <div class="overflow-hidden rounded-[24px] border border-bleuone/20 bg-bleuone/5">
-                                    <a
-                                        href="{{ $introductionUrl }}"
-                                        class="group flex items-center justify-between gap-4 p-4 pl-5 transition-colors hover:bg-bleuone/10"
-                                    >
-                                        <div class="flex items-center gap-4">
-                                            <div class="flex size-8 shrink-0 items-center justify-center rounded-full bg-bleuone/10 text-bleuone">
-                                                <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z" />
-                                                </svg>
-                                            </div>
-                                            <div>
-                                                <span class="font-varela text-xs uppercase tracking-[0.24em] text-bleuone/60">Introduction</span>
-                                                <p class="font-varela text-sm text-bleuone">Démarrer ici — présentation du module</p>
-                                            </div>
-                                        </div>
-                                        <span class="whitespace-nowrap text-sm font-medium text-bleuone/40 transition-colors group-hover:text-bleuone">
-                                            Ouvrir →
-                                        </span>
-                                    </a>
-                                </div>
-                            @endif
 
                             @if ($chapterCount === 0)
                                 <div class="overflow-hidden rounded-[28px] border border-gray-200 bg-white shadow-sm">
@@ -217,7 +190,7 @@
                                         >
                                             <div class="min-w-0">
                                                 <h3
-                                                    class="font-raleway font-semibold text-bleuone text-base md:text-lg"
+                                                    class="font-raleway text-base font-semibold text-bleuone"
                                                     data-parcours-tooltip="{{ $chapter['pedagogical_label'] ?? 'Objectif pédagogique' }}"
                                                 >
                                                     {{ $chapter['title'] }}
@@ -354,7 +327,7 @@
                                 <p class="font-varela text-sm uppercase tracking-[0.24em] text-orangeone">
                                     {{ $currentModule['label'] }}
                                 </p>
-                                <p class="mt-1 font-raleway text-xl font-semibold leading-snug text-bleuone">
+                                <p class="mt-1 font-raleway text-lg font-semibold leading-snug text-bleuone">
                                     {{ $currentModule['title'] }}
                                 </p>
                                 <img
@@ -373,7 +346,7 @@
                                         {{ $currentModule['construction_label'] ?? 'En cours de construction' }}
                                     </span>
                                 @endif
-                                <p class="mt-1 font-raleway text-xl font-semibold leading-snug text-bleuone">
+                                <p class="mt-1 font-raleway text-lg font-semibold leading-snug text-bleuone">
                                     {{ $currentModule['title'] }}
                                 </p>
                                 @if ($fullTitle && $fullTitle !== $currentModule['title'])
@@ -388,7 +361,7 @@
                             <div class="mb-6">
                                 <div class="mb-2 flex items-end justify-between">
                                     <span class="font-varela text-xs uppercase tracking-[0.2em] text-gray-500">Votre avancée</span>
-                                    <span class="font-varela text-xl font-bold text-orangeone">{{ $progressPercentage }}%</span>
+                                    <span class="font-varela text-lg font-bold text-orangeone">{{ $progressPercentage }}%</span>
                                 </div>
                                 <div class="h-2 w-full overflow-hidden rounded-full bg-gray-100">
                                     <div class="h-full rounded-full bg-orangeone transition-all duration-1000 ease-out" style="width: {{ $progressPercentage }}%"></div>
@@ -400,7 +373,7 @@
                                 @endif
                             </div>
 
-                            <a href="{{ $ctaUrl }}" class="btn-oneduc w-full !rounded-full !px-6 !py-4 !text-lg !font-varela !font-bold">
+                            <a href="{{ $ctaUrl }}" class="btn-oneduc w-full !rounded-full !px-6 !py-3.5 !text-base !font-varela !font-bold">
                                 {{ $currentModule['cta_label'] }}
                             </a>
 

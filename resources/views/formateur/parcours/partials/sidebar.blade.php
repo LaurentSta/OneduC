@@ -161,7 +161,7 @@
 	                                    @php
                                             $isBilan = ($lesson['type'] ?? 'objectif') === 'bilan';
 	                                        $hasActivity = !empty($lesson['activity_page']);
-	                                        $hasCompletionActivity = ! $isBilan && !empty($lesson['completion_activity_key']);
+		                                        $hasCompletionActivity = !empty($lesson['completion_activity_key']);
 	                                        $hasActivitySlot = $hasActivity || $hasCompletionActivity;
 	                                        $lessonTypeLabel = $isBilan ? 'Bilan' : 'Objectif opérationnel';
 	                                        $activityKey = $lesson['activity_page']['key'] ?? ($lesson['completion_activity_key'] ?? null);
@@ -176,16 +176,20 @@
 	                                            && $activeActivityKey === $activityKey;
                                         $isActiveLesson = ($activeLessonKey ?? null) === $lessonKey && !$isActiveActivity;
                                         $lessonStatusIcon = $statusIcon($isActivityCompleted, $isActiveLesson || $isActiveActivity);
-	                                        $lessonStateText = $isActivityCompleted
-	                                            ? 'Activité : validée'
-	                                            : ($isActiveActivity
-	                                                ? 'Activité : en cours'
-	                                                : ($isActiveLesson ? 'Contenu de leçon : en cours' : 'Contenu de leçon'));
+		                                        $lessonStateText = $isActivityCompleted
+		                                            ? ($isBilan ? 'Bilan et ouverture validés' : 'Activité : validée')
+		                                            : ($isActiveActivity
+		                                                ? ($isBilan ? 'Bilan et ouverture : en cours' : 'Activité : en cours')
+		                                                : ($isActiveLesson
+		                                                    ? ($isBilan ? 'Bilan : en cours' : 'Contenu de leçon : en cours')
+		                                                    : ($isBilan ? 'Bilan et ouverture' : 'Contenu de leçon')));
                                         $lessonStateClass = $isActivityCompleted
                                             ? 'text-vertone'
                                             : (($isActiveLesson || $isActiveActivity) ? 'text-orangeone' : 'text-gray-500');
 	                                        $activityStatusIcon = $statusIcon($isActivityCompleted, $isActiveActivity);
-	                                        $activitySlotLabel = $isActivityCompleted ? 'Activité validée' : 'Activité';
+		                                        $activitySlotLabel = $isBilan
+		                                            ? ($isActivityCompleted ? 'Bilan et ouverture validés' : 'Bilan et ouverture')
+		                                            : ($isActivityCompleted ? 'Activité validée' : 'Activité');
 	                                    @endphp
 
                                     <li class="space-y-1">
@@ -213,8 +217,8 @@
                                                     </div>
 
                                                     <div class="mt-1 flex items-center justify-between gap-2">
-                                                        <span class="text-[11px] font-bold {{ $isBilan ? 'text-bleuone' : $lessonStateClass }}">
-                                                            {{ $isBilan ? 'Bilan' : $lessonStateText }}
+	                                                        <span class="text-[11px] font-bold {{ $lessonStateClass }}">
+	                                                            {{ $lessonStateText }}
                                                         </span>
 
                                                         <span class="text-[11px] font-black text-gray-500 tabular-nums" aria-label="Durée de la leçon">

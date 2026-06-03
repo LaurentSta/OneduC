@@ -117,6 +117,7 @@ it('keeps the final chapter in progress until cases and bilan are completed', fu
     $bilanFinal->assertOk();
     $bilanFinal->assertSee('3/3 étapes validées');
     $bilanFinal->assertSee('Chapitre validé');
+    $bilanFinal->assertSee('Bilan et ouverture validés');
 });
 
 it('adds a student inside the group adjustment simulator without writing to the database', function () {
