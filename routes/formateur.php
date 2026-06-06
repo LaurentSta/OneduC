@@ -22,6 +22,7 @@ use App\Http\Controllers\Formateur\WordCloudController as FormateurWordCloudCont
 use App\Http\Controllers\Formateur\GroupeWordCloudController;
 use App\Http\Controllers\Formateur\OutilsNumeriquesController;
 use App\Http\Controllers\Formateur\OutilsPagesCollaborativesController;
+use App\Http\Controllers\Formateur\OutilsPowerPointController;
 use App\Http\Controllers\Formateur\OutilsSondageController;
 use App\Http\Controllers\Formateur\OutilsLiveQuizController;
 use App\Http\Controllers\Formateur\QuestionWallController;
@@ -140,6 +141,17 @@ Route::middleware(['auth', 'role:formateur', 'association.member'])
     // 🛠️ Outils numériques
     Route::get('/outils-numeriques', [OutilsNumeriquesController::class, 'index'])
         ->name('outils.index');
+
+    Route::prefix('/outils-numeriques/powerpoint')
+        ->name('outils.powerpoint.')
+        ->group(function () {
+            Route::get('/', [OutilsPowerPointController::class, 'index'])->name('index');
+            Route::post('/', [OutilsPowerPointController::class, 'store'])->name('store');
+            Route::get('/{module}', [OutilsPowerPointController::class, 'show'])->name('show');
+            Route::get('/{module}/status', [OutilsPowerPointController::class, 'status'])->name('status');
+            Route::post('/{module}/retry', [OutilsPowerPointController::class, 'retry'])->name('retry');
+            Route::post('/{module}/publish', [OutilsPowerPointController::class, 'publish'])->name('publish');
+        });
 
     Route::get('/quiz-en-direct', [OutilsLiveQuizController::class, 'index'])
         ->name('outils.quiz.index');

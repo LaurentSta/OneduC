@@ -12,7 +12,7 @@
           Animez vos sessions en présentiel ou à distance.
         </p>
         <p class="font-lisible text-base text-gray-700 leading-loose">
-          Nuages de mots, quiz en direct, tableau blanc collaboratif — tous vos outils d'animation interactifs réunis.
+          Créez vos supports pédagogiques et animez vos sessions avec tous les outils Onéduc réunis.
         </p>
         <nav class="text-sm font-varela text-gray-600 mt-3" aria-label="Fil d'Ariane">
           <ol class="inline-flex items-center space-x-1">
@@ -61,10 +61,74 @@
       class="rounded-full px-4 py-1.5 text-sm font-semibold transition">
       Animation de session
     </button>
+
+    <button @click="filtre = 'creation'"
+      :class="filtre === 'creation' ? 'bg-bleuone text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+      class="rounded-full px-4 py-1.5 text-sm font-semibold transition">
+      Création de contenu
+    </button>
   </div>
 
   {{-- Grille des outils --}}
   <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6 mb-8">
+
+    {{-- ── POWERPOINT VERS MODULE ────────────────────────────────────── --}}
+    <div x-show="filtre === 'all' || filtre === 'creation'" class="flex flex-col bg-white rounded-[20px] shadow-md overflow-hidden">
+      <div class="bg-violet-600 px-6 py-5 flex items-center gap-3">
+        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/20">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 3h8a2 2 0 012 2v14a2 2 0 01-2 2H8a2 2 0 01-2-2V5a2 2 0 012-2zm1 4h6m-6 4h6m-6 4h4"/>
+          </svg>
+        </div>
+        <h2 class="text-lg font-bold text-white">PowerPoint vers module</h2>
+      </div>
+      <div class="flex-1 px-6 py-5 space-y-3">
+        <p class="text-sm text-gray-600 leading-relaxed">
+          Importez un fichier PowerPoint ou PDF. Onéduc crée automatiquement un module et transforme chaque diapositive en support navigable, façon SlideShare.
+        </p>
+        <div class="flex flex-wrap gap-2 text-[11px]">
+          <span class="rounded-full bg-violet-100 px-2.5 py-0.5 font-semibold text-violet-700">Création</span>
+          <span class="rounded-full bg-blue-100 px-2.5 py-0.5 font-semibold text-blue-700">Distanciel</span>
+          <span class="rounded-full bg-amber-100 px-2.5 py-0.5 font-semibold text-amber-700">Asynchrone</span>
+        </div>
+      </div>
+
+      @if($recentPowerPointModules->isNotEmpty())
+        <div class="border-t border-gray-100 px-6 py-4">
+          <p class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">Modules récents</p>
+          <div class="space-y-2">
+            @foreach($recentPowerPointModules as $powerPointModule)
+              @php
+                $powerPointLecture = $powerPointModule->lectures->first();
+                $powerPointReady = ($powerPointLecture?->slides_status ?? null) === 'ready';
+              @endphp
+              <div class="flex items-center justify-between gap-2">
+                <div class="min-w-0">
+                  <p class="text-xs font-semibold text-gray-800 truncate">{{ $powerPointModule->module_title }}</p>
+                  <p class="text-[10px] {{ $powerPointReady ? 'text-green-600' : 'text-gray-400' }}">
+                    {{ $powerPointReady ? ($powerPointLecture->slide_count . ' diapositives') : 'Conversion ' . ($powerPointLecture?->slides_status ?? 'en attente') }}
+                  </p>
+                </div>
+                <a href="{{ route('formateur.outils.powerpoint.show', $powerPointModule) }}"
+                   class="shrink-0 rounded-[6px] bg-violet-100 px-2 py-1 text-[10px] font-bold text-violet-700 hover:bg-violet-200 transition">
+                  Ouvrir
+                </a>
+              </div>
+            @endforeach
+          </div>
+        </div>
+      @endif
+
+      <div class="border-t border-gray-100 px-6 py-4 mt-auto">
+        <a href="{{ route('formateur.outils.powerpoint.index') }}"
+           class="w-full inline-flex items-center justify-center gap-2 rounded-[10px] bg-violet-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-violet-700 transition">
+          Créer depuis PowerPoint
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+          </svg>
+        </a>
+      </div>
+    </div>
 
     {{-- ── NUAGE DE MOTS ──────────────────────────────────────────────── --}}
     <div x-show="filtre === 'all' || filtre === 'interaction'" class="flex flex-col bg-white rounded-[20px] shadow-md overflow-hidden">

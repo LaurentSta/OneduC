@@ -51,5 +51,9 @@ return [
         'new_path' => env('HEDGEDOC_NEW_PATH', '/new'),
     ],
 
+    'slides' => [
+        'soffice_binary' => env('SLIDES_SOFFICE_BINARY', 'soffice'),
+        'pdftocairo_binary' => env('SLIDES_PDFTOCAIRO_BINARY', 'pdftocairo'),
+    ],
 
 ];

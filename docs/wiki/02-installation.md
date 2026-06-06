@@ -9,6 +9,14 @@
 | Node.js | 18+ |
 | NPM | 9+ |
 | MySQL / MariaDB | 8.0+ / 10.4+ |
+| LibreOffice Impress | Conversion des fichiers PowerPoint en PDF |
+| Poppler (`pdftocairo`) | Conversion des pages PDF en diapositives |
+
+Sous Debian/Ubuntu, les dépendances de l'outil « PowerPoint vers module » peuvent être installées avec :
+
+```bash
+sudo apt install libreoffice-impress poppler-utils
+```
 
 ---
 
@@ -106,6 +114,8 @@ Mettre à jour cette valeur avec l'IP locale de la machine de développement pou
 | `DISCORD_SUPPORT_WEBHOOK_URL` | Webhook Discord pour les notifications support | Non |
 | `DISCORD_SUPPORT_INVITE_URL` | URL d'invitation Discord affichée aux utilisateurs | Non |
 | `DISCORD_SERVER_ID` | ID du serveur Discord | Non |
+| `SLIDES_SOFFICE_BINARY` | Chemin ou commande LibreOffice utilisée pour convertir les `.ppt/.pptx` | Non (défaut : `soffice`) |
+| `SLIDES_PDFTOCAIRO_BINARY` | Chemin ou commande Poppler utilisée pour générer les images | Non (défaut : `pdftocairo`) |
 
 ---
 
@@ -166,6 +176,7 @@ En production, ces dossiers doivent être sauvegardés séparément du code sour
 - Désactiver `APP_DEBUG=false` obligatoirement
 - Configurer un vrai driver mail (SMTP)
 - Configurer `QUEUE_CONNECTION=database` et lancer un worker queue en continu (`php artisan queue:work`)
+- Installer LibreOffice Impress et Poppler pour activer la création de modules depuis PowerPoint/PDF
 - Configurer le scheduler Laravel dans cron (`php artisan schedule:run`)
 - Vérifier les routes exposées publiquement (voir [Sécurité](10-securite-rgpd.md))
 

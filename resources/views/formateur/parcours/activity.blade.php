@@ -77,6 +77,7 @@
             resultTitle: @js($currentActivity['result_title'] ?? 'Résultat'),
             feedbackMessages: @js($currentActivity['feedback_messages'] ?? []),
             feedbackAsModal: @js($usesModalFeedback),
+            shuffleItems: @js($currentActivity['shuffle_items'] ?? false),
         })"
         class="space-y-4"
     >
@@ -358,7 +359,45 @@
                     </div>
                 @endif
 
-                @if ($usesModalFeedback)
+                @if (!empty($currentActivity['instruction_steps']) && is_array($currentActivity['instruction_steps']))
+                    <div class="mt-5 rounded-[18px] border border-bleuone/15 bg-bleuone/[0.04] px-5 py-4">
+                        <div class="flex items-start gap-3">
+                            <span class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-bleuone text-white">
+                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2" />
+                                    <circle cx="12" cy="12" r="9" />
+                                </svg>
+                            </span>
+                            <div>
+                                <p class="text-sm font-black uppercase tracking-wide text-bleuone">Votre mission</p>
+                                <p class="mt-1 text-base leading-7 text-slate-700">
+                                    {{ $currentActivity['instruction'] }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 grid gap-3 sm:grid-cols-3">
+                        @foreach ($currentActivity['instruction_steps'] as $step)
+                            @php
+                                $stepTheme = $zoneThemes[$step['id'] ?? ''] ?? [
+                                    'header' => 'bg-slate-600',
+                                    'border' => 'border-slate-200',
+                                    'well' => 'border-slate-200 bg-slate-50/60',
+                                ];
+                            @endphp
+                            <article class="overflow-hidden rounded-[18px] border {{ $stepTheme['border'] }}">
+                                <div class="{{ $stepTheme['header'] }} px-4 py-3 text-white">
+                                    <p class="text-xs font-black uppercase tracking-wider text-white/75">{{ $step['step_label'] ?? '' }}</p>
+                                    <h3 class="mt-0.5 text-base font-black">{{ $step['label'] ?? '' }}</h3>
+                                </div>
+                                <p class="h-full border-t px-4 py-3 text-sm leading-6 text-slate-700 {{ $stepTheme['well'] }}">
+                                    {{ $step['body'] ?? '' }}
+                                </p>
+                            </article>
+                        @endforeach
+                    </div>
+                @elseif ($usesModalFeedback)
                     <div class="mt-4 rounded-[16px] border border-bleuone/15 bg-bleuone/[0.04] px-4 py-3 text-base leading-7 text-slate-700">
                         {{ $currentActivity['instruction'] ?? 'Glissez ou sélectionnez chaque élément, puis déposez-le dans la bonne catégorie. Rangez tous les éléments avant de valider.' }}
                     </div>
@@ -755,6 +794,7 @@
                 resultTitle: config.resultTitle || 'Résultat',
                 feedbackMessages: config.feedbackMessages || {},
                 feedbackAsModal: Boolean(config.feedbackAsModal),
+                shuffleItems: Boolean(config.shuffleItems),
                 placements: {},
                 pool: [],
                 selectedCardId: null,
@@ -796,6 +836,9 @@
 
                     this.placements = this.normalizePlacements(config.initialPlacements || {});
                     this.rebuildPool();
+                    if (this.shuffleItems && !this.completed) {
+                        this.shufflePool();
+                    }
                     this.message = this.completed ? this.successMessage : '';
                     if (this.completed) {
                         this.completionVariant = 'A';
@@ -871,6 +914,22 @@
                     this.pool = this.cards
                         .map((card) => card.id)
                         .filter((cardId) => !placedIds.has(cardId));
+                },
+
+                shufflePool() {
+                    const original = [...this.pool];
+                    const shuffled = [...original];
+
+                    for (let index = shuffled.length - 1; index > 0; index--) {
+                        const randomIndex = Math.floor(Math.random() * (index + 1));
+                        [shuffled[index], shuffled[randomIndex]] = [shuffled[randomIndex], shuffled[index]];
+                    }
+
+                    if (shuffled.length > 1 && shuffled.every((cardId, index) => cardId === original[index])) {
+                        shuffled.push(shuffled.shift());
+                    }
+
+                    this.pool = shuffled;
                 },
 
                 selectedCardLabel() {
@@ -1107,6 +1166,9 @@
                     this.wrongItems = [];
                     this.placements = this.normalizePlacements({});
                     this.rebuildPool();
+                    if (this.shuffleItems) {
+                        this.shufflePool();
+                    }
                 },
             };
         };

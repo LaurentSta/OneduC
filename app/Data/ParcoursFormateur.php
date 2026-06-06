@@ -288,7 +288,6 @@ class ParcoursFormateur
                     'description' => 'Ce chapitre installe le réflexe de préparation : reconnaître les zones du formulaire, distinguer ce qui relève des informations, des stagiaires et des modules, puis identifier ce qui bloque vraiment la création d’un groupe.',
                     'duration_label' => '11 min',
                     'objective' => 'Vérifier que les informations indispensables sont prêtes avant d’ouvrir un groupe dans Onéduc.',
-                    'tip' => 'Avant de créer, le formateur gagne du temps en séparant trois choses : les paramètres du groupe, les personnes à inscrire et les contenus à proposer.',
                     'progress_percentage' => 0,
                     'lessons' => [
                         'retrouver-les-espaces-de-preparation' => self::lesson(
@@ -348,7 +347,6 @@ class ParcoursFormateur
                     'description' => 'Ce chapitre transforme la préparation en action : créer le groupe Hygiène alimentaire 2026, renseigner les stagiaires, organiser les modules attendus, puis construire un parcours lisible avec des outils numériques placés au bon moment.',
                     'duration_label' => '16 min',
                     'objective' => 'Créer un groupe puis construire un parcours cohérent, dans le bon ordre, avec les modules et activités attendus.',
-                    'tip' => 'La progression ne se limite pas à une liste de modules : elle raconte l’ordre dans lequel l’apprenant va avancer, avec des respirations et des activités utiles.',
                     'progress_percentage' => 0,
                     'lessons' => [
                         'creation-groupe-de-formation' => self::lesson(
@@ -448,7 +446,6 @@ class ParcoursFormateur
                     'description' => 'Ce chapitre travaille les ajustements de terrain : ajouter un stagiaire, vérifier son rattachement, débloquer Marc en lui renvoyant ses accès, puis modifier le contenu d’un groupe lorsque le rythme de formation évolue.',
                     'duration_label' => '21 à 24 min',
                     'objective' => 'Ajuster un groupe existant, sécuriser les accès des stagiaires et modifier le contenu lorsque la situation change.',
-                    'tip' => 'Quand un parcours est lancé, le travail du formateur continue : il contrôle les accès, corrige les profils et ajuste les contenus sans casser la logique du groupe.',
                     'progress_percentage' => 0,
                     'lessons' => [
                         'associer-le-bon-parcours-au-bon-contexte' => self::lesson(
@@ -760,9 +757,15 @@ class ParcoursFormateur
             'title' => 'Classer les éléments de préparation',
             'button_label' => 'Réaliser l’activité',
             'scenario' => $scenario,
-            'instruction' => 'Faites glisser chaque étiquette dans la bonne étape de préparation. Étape 1, Informations : les paramètres du groupe (titre, dates). Étape 2, Stagiaires : les personnes et leurs coordonnées. Étape 3, Modules : les contenus de formation que suivront les stagiaires.',
+            'instruction' => 'Faites glisser chaque étiquette dans la bonne étape de préparation.',
+            'instruction_steps' => [
+                ['id' => 'information', 'step_label' => 'Étape 1', 'label' => 'Informations', 'body' => 'Les paramètres du groupe : titre et dates.'],
+                ['id' => 'stagiaire', 'step_label' => 'Étape 2', 'label' => 'Stagiaires', 'body' => 'Les personnes à inscrire et leurs coordonnées.'],
+                ['id' => 'module', 'step_label' => 'Étape 3', 'label' => 'Modules', 'body' => 'Les contenus de formation que suivront les stagiaires.'],
+            ],
             'success_message' => 'Vous avez correctement réparti les éléments dans les trois étapes de préparation.',
             'result_title' => "C'est noté !",
+            'shuffle_items' => true,
             'dropzones' => self::preparationDropzones(),
             'items' => $items,
         ];

@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\ModuleLecture;
+use App\Support\Slides\SlideConversionEnvironment;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -31,7 +32,7 @@ class ConvertLectureSlides implements ShouldQueue
     ) {
     }
 
-    public function handle(): void
+    public function handle(SlideConversionEnvironment $environment): void
     {
         $lecture = ModuleLecture::find($this->lectureId);
 
@@ -56,6 +57,11 @@ class ConvertLectureSlides implements ShouldQueue
                 throw new RuntimeException("Format non supporté: .{$extension}");
             }
 
+            $pdfToCairoPath = $environment->pdfToCairoPath();
+            if (!$pdfToCairoPath) {
+                throw new RuntimeException('Le convertisseur PDF pdftocairo est indisponible sur le serveur.');
+            }
+
             $slidesRelativeDir = 'slides/lecture_' . $lecture->id;
             Storage::disk('public')->deleteDirectory($slidesRelativeDir);
             Storage::disk('public')->makeDirectory($slidesRelativeDir);
@@ -67,6 +73,11 @@ class ConvertLectureSlides implements ShouldQueue
             $libreOfficeHomeDir = null;
 
             if (in_array($extension, ['ppt', 'pptx'], true)) {
+                $sofficePath = $environment->sofficePath();
+                if (!$sofficePath) {
+                    throw new RuntimeException('LibreOffice Impress (soffice) est requis pour convertir les fichiers PowerPoint.');
+                }
+
                 $tmpBase = storage_path('app/tmp/libreoffice');
                 File::ensureDirectoryExists($tmpBase, 0755, true);
 
@@ -87,7 +98,7 @@ class ConvertLectureSlides implements ShouldQueue
                         'SAL_USE_VCLPLUGIN' => 'gen',
                     ])
                     ->run([
-                    'soffice',
+                    $sofficePath,
                     '--headless',
                     '--nologo',
                     '--nodefault',
@@ -123,7 +134,7 @@ class ConvertLectureSlides implements ShouldQueue
             }
 
             $convertPdfToImages = Process::timeout(360)->run([
-                'pdftocairo',
+                $pdfToCairoPath,
                 '-jpeg',
                 '-r',
                 '150',
@@ -171,6 +182,10 @@ class ConvertLectureSlides implements ShouldQueue
                 'slides_converted_at' => now(),
                 'slide_count' => count($rawSlideFiles),
             ]);
+
+            $lecture->module()
+                ->whereNull('module_image')
+                ->update(['module_image' => $slidesRelativeDir . '/slide_001.jpg']);
         } catch (Throwable $e) {
             $lecture->update([
                 'slides_status' => 'failed',

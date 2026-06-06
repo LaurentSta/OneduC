@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Formateur;
 
 use App\Http\Controllers\Controller;
 use App\Models\Group;
+use App\Models\Module;
 use App\Models\PollSession;
 use App\Models\QuestionWall;
 use App\Models\ScaleSession;
@@ -53,6 +54,25 @@ class OutilsNumeriquesController extends Controller
             ->limit(5)
             ->get();
 
-        return view('formateur.outils.index', compact('recentWordclouds', 'groups', 'recentQuestionWalls', 'recentPolls', 'recentScales'));
+        $recentPowerPointModules = Module::query()
+            ->where('formateur_id', $formateurId)
+            ->whereHas('lectures', fn ($query) => $query->where('content_type', 'slides'))
+            ->with([
+                'lectures' => fn ($query) => $query
+                    ->where('content_type', 'slides')
+                    ->latest('id'),
+            ])
+            ->latest()
+            ->limit(5)
+            ->get();
+
+        return view('formateur.outils.index', compact(
+            'recentWordclouds',
+            'groups',
+            'recentQuestionWalls',
+            'recentPolls',
+            'recentScales',
+            'recentPowerPointModules'
+        ));
     }
 }
