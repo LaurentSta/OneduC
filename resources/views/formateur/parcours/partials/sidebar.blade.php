@@ -1,21 +1,44 @@
 @php
     $chapterPosition = 0;
     $moduleChapterCount = $currentModule['chapter_count'] ?? count($currentModule['chapters'] ?? []);
-	    $moduleLessonCount = $currentModule['lesson_count'] ?? 0;
-	    $activityStatusMap = $activityStatusMap ?? [];
-	    $activeActivityKey = $activeActivityKey ?? null;
-	    $initialOpenChapterKey = ($activeChapterKey ?? null) ?: array_key_first($currentModule['chapters'] ?? []);
+    $moduleLessonCount = $currentModule['lesson_count'] ?? 0;
+    $activityStatusMap = $activityStatusMap ?? [];
+    $activeActivityKey = $activeActivityKey ?? null;
+    $initialOpenChapterKey = ($activeChapterKey ?? null) ?: array_key_first($currentModule['chapters'] ?? []);
+    $sidebarActivityCount = 0;
+    $sidebarCompletedActivityCount = 0;
+
+    foreach (($currentModule['chapters'] ?? []) as $sidebarChapterKey => $sidebarChapter) {
+        foreach (($sidebarChapter['lessons'] ?? []) as $sidebarLessonKey => $sidebarLesson) {
+            $sidebarActivityKey = $sidebarLesson['activity_page']['key'] ?? ($sidebarLesson['completion_activity_key'] ?? null);
+
+            if (! $sidebarActivityKey) {
+                continue;
+            }
+
+            $sidebarActivityCount++;
+            $sidebarStatusKey = implode('.', [$sidebarChapterKey, $sidebarLessonKey, $sidebarActivityKey]);
+
+            if (($activityStatusMap[$sidebarStatusKey] ?? false) === true) {
+                $sidebarCompletedActivityCount++;
+            }
+        }
+    }
+
+    $sidebarProgressPercentage = $sidebarActivityCount > 0
+        ? (int) round(($sidebarCompletedActivityCount / $sidebarActivityCount) * 100)
+        : 0;
 
     $statusIcon = function (bool $completed, bool $inProgress): array {
         if ($completed) {
-            return ['icon' => '✗', 'class' => 'text-vertone', 'label' => 'Validée'];
+            return ['icon' => '✗', 'class' => 'text-vertone', 'label' => 'Validée', 'type' => 'text'];
         }
 
         if ($inProgress) {
-            return ['icon' => '⏳', 'class' => 'text-orangeone', 'label' => 'En cours'];
+            return ['icon' => asset('images/svg/ri--hourglass-fill.svg'), 'class' => 'text-orangeone', 'label' => 'En cours', 'type' => 'svg'];
         }
 
-        return ['icon' => '✗', 'class' => 'text-gray-300 opacity-60', 'label' => 'Non commencé'];
+        return ['icon' => '✗', 'class' => 'text-gray-300 opacity-60', 'label' => 'Non commencé', 'type' => 'text'];
     };
 @endphp
 
@@ -31,9 +54,9 @@
     class="flex w-full flex-shrink-0 flex-col rounded-[24px] border-r border-gray-100 bg-white shadow-sm lg:sticky lg:top-6 lg:w-80"
 >
 	    <div
-	        x-data="{ openSidebarChapter: @js($initialOpenChapterKey) }"
-	        class="flex-1 overflow-y-auto custom-scrollbar bg-gray-50/30"
-	    >
+        x-data="{ openSidebarChapter: @js($initialOpenChapterKey) }"
+        class="flex-1 overflow-y-auto custom-scrollbar bg-gray-50/30"
+    >
         <div class="px-3 py-4">
             <div class="mb-3 rounded-xl border border-orange-100 bg-white px-3 py-2.5 shadow-sm">
                 <p class="text-[9px] font-black uppercase tracking-[0.18em] text-orangeone">
@@ -45,10 +68,37 @@
                         {{ $currentModule['title'] }}
                     </h2>
 
-                    <p class="mt-1 text-[10px] font-semibold text-slate-500">
-                        {{ $moduleChapterCount }} chapitre{{ $moduleChapterCount > 1 ? 's' : '' }}
-                        ·
-                        {{ $moduleLessonCount }} leçon{{ $moduleLessonCount > 1 ? 's' : '' }}
+                    @if ($sidebarActivityCount > 0)
+                        <div class="mt-2.5">
+                            <div class="mb-1 flex items-end justify-between gap-2">
+                                <span class="font-varela text-[9px] font-black uppercase tracking-[0.16em] text-slate-400">
+                                    Votre avancée
+                                </span>
+                                <span class="font-varela text-[13px] font-black text-orangeone">
+                                    {{ $sidebarProgressPercentage }}%
+                                </span>
+                            </div>
+                            <div class="h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
+                                <div
+                                    class="h-full rounded-full bg-orangeone transition-all duration-1000 ease-out"
+                                    style="width: {{ $sidebarProgressPercentage }}%"
+                                ></div>
+                            </div>
+                        </div>
+                    @endif
+
+                    <p class="mt-1 flex items-center justify-between gap-2 text-[10px] font-semibold text-slate-500">
+                        @if ($sidebarActivityCount > 0)
+                            <span class="whitespace-nowrap text-slate-400">
+                                {{ $sidebarCompletedActivityCount }} / {{ $sidebarActivityCount }} étape{{ $sidebarActivityCount > 1 ? 's' : '' }} complétée{{ $sidebarCompletedActivityCount > 1 ? 's' : '' }}
+                            </span>
+                        @endif
+
+                        <span class="whitespace-nowrap">
+                            {{ $moduleChapterCount }} chapitre{{ $moduleChapterCount > 1 ? 's' : '' }}
+                            ·
+                            {{ $moduleLessonCount }} leçon{{ $moduleLessonCount > 1 ? 's' : '' }}
+                        </span>
                     </p>
                 </a>
             </div>
@@ -201,7 +251,15 @@
                                             <div class="flex items-start gap-2">
                                                 <div class="w-6 flex justify-center pt-[2px]">
                                                     <span class="text-[16px] font-black {{ $lessonStatusIcon['class'] }}" aria-label="{{ $lessonStatusIcon['label'] }}">
-                                                        {{ $lessonStatusIcon['icon'] }}
+	                                                        @if (($lessonStatusIcon['type'] ?? 'text') === 'svg')
+	                                                            <span
+	                                                                class="block h-[1em] w-[1em] bg-current"
+	                                                                style="-webkit-mask: url('{{ $lessonStatusIcon['icon'] }}') center / contain no-repeat; mask: url('{{ $lessonStatusIcon['icon'] }}') center / contain no-repeat;"
+	                                                                aria-hidden="true"
+	                                                            ></span>
+	                                                        @else
+	                                                            {{ $lessonStatusIcon['icon'] }}
+	                                                        @endif
                                                     </span>
                                                 </div>
 
@@ -237,11 +295,19 @@
                                                 aria-current="{{ $isActiveActivity ? 'page' : 'false' }}"
                                             >
                                                 <div class="flex items-center gap-2">
-                                                    <div class="w-6 flex justify-center">
-                                                        <span class="text-[16px] font-black {{ $activityStatusIcon['class'] }}" aria-label="{{ $activityStatusIcon['label'] }}">
-                                                            {{ $activityStatusIcon['icon'] }}
-                                                        </span>
-                                                    </div>
+	                                                    <div class="w-6 flex justify-center">
+	                                                        <span class="text-[16px] font-black {{ $activityStatusIcon['class'] }}" aria-label="{{ $activityStatusIcon['label'] }}">
+	                                                            @if (($activityStatusIcon['type'] ?? 'text') === 'svg')
+	                                                                <span
+	                                                                    class="block h-[1em] w-[1em] bg-current"
+	                                                                    style="-webkit-mask: url('{{ $activityStatusIcon['icon'] }}') center / contain no-repeat; mask: url('{{ $activityStatusIcon['icon'] }}') center / contain no-repeat;"
+	                                                                    aria-hidden="true"
+	                                                                ></span>
+	                                                            @else
+	                                                                {{ $activityStatusIcon['icon'] }}
+	                                                            @endif
+	                                                        </span>
+	                                                    </div>
 
                                                     <div class="min-w-0 flex-1">
 	                                                        <span class="block text-[13px] font-bold leading-snug {{ $isActiveActivity ? 'text-orangeone' : 'text-gray-700' }}">
@@ -255,7 +321,15 @@
 	                                                <div class="flex items-center gap-2">
 	                                                    <div class="w-6 flex justify-center">
 	                                                        <span class="text-[16px] font-black {{ $activityStatusIcon['class'] }}" aria-label="{{ $activityStatusIcon['label'] }}">
-	                                                            {{ $activityStatusIcon['icon'] }}
+	                                                            @if (($activityStatusIcon['type'] ?? 'text') === 'svg')
+	                                                                <span
+	                                                                    class="block h-[1em] w-[1em] bg-current"
+	                                                                    style="-webkit-mask: url('{{ $activityStatusIcon['icon'] }}') center / contain no-repeat; mask: url('{{ $activityStatusIcon['icon'] }}') center / contain no-repeat;"
+	                                                                    aria-hidden="true"
+	                                                                ></span>
+	                                                            @else
+	                                                                {{ $activityStatusIcon['icon'] }}
+	                                                            @endif
 	                                                        </span>
 	                                                    </div>
 	
