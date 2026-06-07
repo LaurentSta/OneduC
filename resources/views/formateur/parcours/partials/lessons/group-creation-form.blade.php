@@ -977,6 +977,17 @@
                                     1 stagiaire
                                 </span>
                             </div>
+
+                            <div
+                                id="training-final-group-students-list"
+                                class="space-y-2"
+                                aria-label="Stagiaires ajoutés au groupe"
+                            >
+                                <div class="rounded-xl border border-white bg-white px-3 py-2 text-sm text-slate-600">
+                                    <span class="font-semibold text-bleuone">Marie Dupont</span>
+                                    <span class="mt-0.5 block text-xs font-medium text-slate-400">marie.dupont@email.fr</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -1025,6 +1036,7 @@
             const description = document.getElementById('training-final-group-description');
             const modulesList = document.getElementById('training-final-group-modules');
             const studentsCount = document.getElementById('training-final-group-students-count');
+            const studentsList = document.getElementById('training-final-group-students-list');
             const restartButton = document.getElementById('training-group-restart-activity');
             const completionReloadKey = 'oneduc_training_group_finalisation_reloaded';
 
@@ -1058,6 +1070,41 @@
             if (studentsCount) {
                 const count = Array.isArray(savedData.students) ? savedData.students.length : 0;
                 studentsCount.textContent = `${Math.max(1, count)} stagiaire${Math.max(1, count) > 1 ? 's' : ''}`;
+            }
+
+            if (studentsList) {
+                const students = Array.isArray(savedData.students)
+                    ? savedData.students.filter((student) => student.firstname || student.lastname || student.email)
+                    : [];
+
+                studentsList.innerHTML = '';
+
+                if (students.length === 0) {
+                    const item = document.createElement('div');
+                    item.className = 'rounded-xl border border-white bg-white px-3 py-2 text-sm text-slate-600';
+                    item.innerHTML = '<span class="font-semibold text-bleuone">Marie Dupont</span><span class="mt-0.5 block text-xs font-medium text-slate-400">marie.dupont@email.fr</span>';
+                    studentsList.appendChild(item);
+                } else {
+                    students.forEach((student) => {
+                        const item = document.createElement('div');
+                        const name = `${student.firstname || ''} ${student.lastname || ''}`.trim() || 'Stagiaire';
+                        const email = student.email || 'Adresse e-mail non renseignée';
+
+                        item.className = 'rounded-xl border border-white bg-white px-3 py-2 text-sm text-slate-600';
+
+                        const nameNode = document.createElement('span');
+                        nameNode.className = 'font-semibold text-bleuone';
+                        nameNode.textContent = name;
+
+                        const emailNode = document.createElement('span');
+                        emailNode.className = 'mt-0.5 block text-xs font-medium text-slate-400';
+                        emailNode.textContent = email;
+
+                        item.appendChild(nameNode);
+                        item.appendChild(emailNode);
+                        studentsList.appendChild(item);
+                    });
+                }
             }
 
             const markFinalisationCompleted = async () => {
