@@ -6,6 +6,22 @@
     $activityDropzones = $currentActivity['dropzones'] ?? [];
     $activityCards = $currentActivity['items'] ?? [];
     $usesModalFeedback = in_array($currentActivity['key'] ?? '', ['classer-les-elements', 'preparer-informations-utiles'], true);
+    $usesShuffledCards = in_array($currentActivity['key'] ?? '', ['classer-les-elements', 'preparer-informations-utiles'], true);
+
+    if ($usesShuffledCards) {
+        $shuffleSeed = implode('|', [
+            $activeModuleKey,
+            $activeChapterKey,
+            $activeLessonKey,
+            $activeActivityKey,
+        ]);
+
+        $activityCards = collect($activityCards)
+            ->sortBy(fn (array $card): int => crc32($shuffleSeed . '|' . ($card['id'] ?? '')))
+            ->values()
+            ->all();
+    }
+
     $nextNavigationUrl = $nextLesson['url'] ?? $currentChapter['url'];
     $activitySubmitUrl = route('formateur.parcours.activities.submit', [
         'module' => $activeModuleKey,
