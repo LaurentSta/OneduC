@@ -30,6 +30,7 @@
       <p class="mt-1 text-sm text-gray-600">Suivi des taches, decisions et blocages.</p>
     </div>
     <div class="flex flex-wrap items-center gap-2">
+      <a href="{{ route('admin.pilotage.qualite-parcours-formateur') }}" class="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Qualité parcours</a>
       <a href="{{ route('admin.pilotage.journal') }}" class="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Journal</a>
       <a href="{{ route('admin.pilotage.notifications.index') }}" class="rounded-md bg-[#004461] px-3 py-2 text-sm font-medium text-white hover:bg-[#00364d]">Centre notifications</a>
     </div>

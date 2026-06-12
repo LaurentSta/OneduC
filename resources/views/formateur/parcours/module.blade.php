@@ -324,16 +324,10 @@
                             </div>
                         @elseif (!empty($currentModule['illustration_path']))
                             <div class="border-b border-gray-100 bg-gradient-to-br from-bleuone/5 via-white to-orange-50/30 px-6 pt-6 pb-0">
-                                <p class="font-varela text-sm uppercase tracking-[0.24em] text-orangeone">
-                                    {{ $currentModule['label'] }}
-                                </p>
-                                <p class="mt-1 font-raleway text-lg font-semibold leading-snug text-bleuone">
-                                    {{ $currentModule['title'] }}
-                                </p>
                                 <img
                                     src="{{ asset($currentModule['illustration_path']) }}"
                                     alt="Illustration {{ $currentModule['title'] }}"
-                                    class="mt-4 w-full"
+                                    class="w-full"
                                 >
                             </div>
                         @else

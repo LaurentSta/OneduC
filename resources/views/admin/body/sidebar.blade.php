@@ -38,8 +38,13 @@
             </a>
 
             <a href="{{ route('admin.pilotage.index') }}"
-               class="{{ $itemBase }} {{ request()->routeIs('admin.pilotage.index') || request()->routeIs('admin.pilotage.tasks.*') || request()->routeIs('admin.pilotage.projects.*') || request()->routeIs('admin.pilotage.notifications.*') ? $itemActive : $itemHover }}">
+               class="{{ $itemBase }} {{ request()->routeIs('admin.pilotage.index') || request()->routeIs('admin.pilotage.tasks.*') || request()->routeIs('admin.pilotage.projects.*') || request()->routeIs('admin.pilotage.notifications.*') || request()->routeIs('admin.pilotage.qualite-parcours-formateur') ? $itemActive : $itemHover }}">
                 <span class="text-base font-medium">Pilotage</span>
+            </a>
+
+            <a href="{{ route('admin.pilotage.qualite-parcours-formateur') }}"
+               class="{{ $itemBase }} {{ request()->routeIs('admin.pilotage.qualite-parcours-formateur') ? $itemActive : $itemHover }}">
+                <span class="text-base font-medium">Qualité parcours</span>
             </a>
 
             <a href="{{ route('admin.pilotage.journal') }}"

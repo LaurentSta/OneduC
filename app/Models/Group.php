@@ -14,6 +14,7 @@ class Group extends Model
         'name',
         'description',
         'is_active',
+        'is_sandbox',
         'start_date',
         'end_date',
         'temporary_password',
@@ -23,6 +24,7 @@ class Group extends Model
 
     protected $casts = [
         'is_active' => 'boolean',
+        'is_sandbox' => 'boolean',
         'start_date' => 'date',
         'end_date' => 'date',
         'temporary_password' => 'encrypted',

@@ -188,6 +188,9 @@
 
             const nameInput = document.getElementById('training-group-name');
             const descriptionInput = document.getElementById('training-group-description');
+            const activeInput = document.getElementById('training-group-active');
+            const startDateInput = document.getElementById('training-group-start-date');
+            const endDateInput = document.getElementById('training-group-end-date');
             const coTrainerSearch = document.getElementById('training-co-trainer-search');
             const coTrainerSuggestions = document.getElementById('training-co-trainer-suggestions');
             const coTrainerSuggestionButton = coTrainerSuggestions?.querySelector('[data-co-trainer-email]');
@@ -218,20 +221,30 @@
                     __activityCompleted: false,
                 }));
             };
+            const informationPayload = () => ({
+                name: nameInput.value.trim(),
+                description: descriptionInput.value.trim(),
+                isActive: Boolean(activeInput?.checked),
+                startDate: startDateInput?.value || '',
+                endDate: endDateInput?.value || '',
+                coTrainer: coTrainerSelected?.dataset.email || '',
+                coTrainerName: coTrainerSelected?.dataset.name || '',
+                coTrainerEmail: coTrainerSelected?.dataset.email || '',
+            });
 
             const clearFieldState = (field) => {
                 field.classList.remove(...invalidClasses);
             };
 
-            [nameInput, descriptionInput].forEach((field) => {
+            [nameInput, descriptionInput, startDateInput, endDateInput].forEach((field) => {
                 field?.addEventListener('input', () => {
                     clearFieldState(field);
-                    writeSavedData({
-                        name: nameInput.value.trim(),
-                        description: descriptionInput.value.trim(),
-                        coTrainer: coTrainerSelected?.dataset.email || '',
-                    });
+                    writeSavedData(informationPayload());
                 });
+            });
+
+            activeInput?.addEventListener('change', () => {
+                writeSavedData(informationPayload());
             });
 
             const updateCoTrainerSuggestion = () => {
@@ -252,7 +265,8 @@
                 coTrainerEmpty?.classList.add('hidden');
                 coTrainerSelected?.classList.remove('hidden');
                 coTrainerSelected?.setAttribute('data-email', karimCoTrainer.email);
-                writeSavedData({ coTrainer: karimCoTrainer.email });
+                coTrainerSelected?.setAttribute('data-name', karimCoTrainer.name);
+                writeSavedData(informationPayload());
             });
 
             const savedData = readSavedData();
@@ -262,11 +276,21 @@
             if (savedData.description) {
                 descriptionInput.value = savedData.description;
             }
+            if (savedData.startDate && startDateInput) {
+                startDateInput.value = savedData.startDate;
+            }
+            if (savedData.endDate && endDateInput) {
+                endDateInput.value = savedData.endDate;
+            }
+            if (typeof savedData.isActive === 'boolean' && activeInput) {
+                activeInput.checked = savedData.isActive;
+            }
             if (savedData.coTrainer === karimCoTrainer.email) {
                 coTrainerSearch.value = karimCoTrainer.email;
                 coTrainerEmpty?.classList.add('hidden');
                 coTrainerSelected?.classList.remove('hidden');
                 coTrainerSelected?.setAttribute('data-email', karimCoTrainer.email);
+                coTrainerSelected?.setAttribute('data-name', karimCoTrainer.name);
             }
 
             nextButton.addEventListener('click', (event) => {
@@ -278,11 +302,7 @@
                 }
 
                 if (missingFields.length === 0) {
-                    writeSavedData({
-                        name: nameInput.value.trim(),
-                        description: descriptionInput.value.trim(),
-                        coTrainer: coTrainerSelected?.dataset.email || '',
-                    });
+                    writeSavedData(informationPayload());
                     errorBox.classList.add('hidden');
                     errorList.innerHTML = '';
                     return;
@@ -338,9 +358,6 @@
                             </div>
                         </div>
                     </div>
-                    <p class="text-sm text-gray-600">
-                        Ajoutez les apprenants ligne par ligne. Le code d'accès provisoire sera reutilise pour leurs comptes.
-                    </p>
                 </div>
 
                 <button
@@ -757,9 +774,6 @@
                         </div>
                     </div>
                 </div>
-                <p class="mt-2 text-sm text-gray-600">
-                    Le rendu reprend déjà la même logique d’organisation que sur la fiche d’édition.
-                </p>
                 <p class="mt-2 text-sm font-semibold text-orangeone">
                     Pour valider l’activité, le groupe doit contenir les modules attendus, dans la bonne quantité et dans le bon ordre.
                 </p>
@@ -938,19 +952,13 @@
                                 </div>
 
                                 <div class="flex flex-wrap items-center gap-2 sm:justify-end">
-                                    <span class="inline-flex items-center gap-2 rounded-full border border-vertone/20 bg-vertone/10 px-3 py-1 text-xs font-bold text-vertone">
+                                    <span
+                                        id="training-final-group-status"
+                                        class="inline-flex items-center gap-2 rounded-full border border-vertone/20 bg-vertone/10 px-3 py-1 text-xs font-bold text-vertone"
+                                    >
                                         <span class="inline-flex h-2.5 w-2.5 rounded-full bg-vertone"></span>
                                         Actif
                                     </span>
-
-                                    <div class="relative inline-flex group">
-                                        <span class="inline-flex cursor-default items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700">
-                                            1 co-formateur
-                                        </span>
-                                        <div class="pointer-events-none absolute right-0 top-full z-20 mt-2 hidden w-max max-w-xs rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 shadow-lg group-hover:block group-focus-within:block">
-                                            <div>Karim Ben Ali</div>
-                                        </div>
-                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -960,6 +968,22 @@
                         </p>
 
                         <div class="space-y-4 rounded-2xl bg-gray-50/80 p-4">
+                            <div class="grid gap-3 border-b border-gray-200 pb-4 sm:grid-cols-2">
+                                <div id="training-final-group-dates-wrapper">
+                                    <h4 class="mb-2 text-[11px] font-bold uppercase tracking-[0.16em] text-gray-500">Période</h4>
+                                    <div id="training-final-group-dates" class="rounded-xl border border-white bg-white px-3 py-2 text-sm font-semibold text-bleuone">
+                                        Dates non renseignées
+                                    </div>
+                                </div>
+
+                                <div id="training-final-group-co-trainer-wrapper">
+                                    <h4 class="mb-2 text-[11px] font-bold uppercase tracking-[0.16em] text-gray-500">Co-formateur</h4>
+                                    <div id="training-final-group-co-trainer" class="rounded-xl border border-white bg-white px-3 py-2 text-sm text-slate-600">
+                                        Aucun co-formateur
+                                    </div>
+                                </div>
+                            </div>
+
                             <div>
                                 <h4 class="mb-2 text-[11px] font-bold uppercase tracking-[0.16em] text-gray-500">Modules associés</h4>
                                 <div id="training-final-group-modules" class="flex flex-wrap gap-2">
@@ -974,19 +998,8 @@
                                     <h4 class="text-[11px] font-bold uppercase tracking-[0.16em] text-gray-500">Stagiaires</h4>
                                 </div>
                                 <span id="training-final-group-students-count" class="shrink-0 cursor-default text-sm font-semibold text-orangeone">
-                                    1 stagiaire
+                                    0 stagiaire
                                 </span>
-                            </div>
-
-                            <div
-                                id="training-final-group-students-list"
-                                class="space-y-2"
-                                aria-label="Stagiaires ajoutés au groupe"
-                            >
-                                <div class="rounded-xl border border-white bg-white px-3 py-2 text-sm text-slate-600">
-                                    <span class="font-semibold text-bleuone">Marie Dupont</span>
-                                    <span class="mt-0.5 block text-xs font-medium text-slate-400">marie.dupont@email.fr</span>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -1031,14 +1044,65 @@
     <script>
         (() => {
             const container = document.currentScript.closest('article');
-            const savedData = JSON.parse(window.localStorage.getItem('oneduc_training_group_creation') || '{}');
+            const serverSavedData = @json($guidedLessonCompletionPayload ?? []);
+            const readBrowserSavedData = () => {
+                try {
+                    return JSON.parse(window.localStorage.getItem('oneduc_training_group_creation') || '{}');
+                } catch (error) {
+                    return {};
+                }
+            };
+            const browserSavedData = readBrowserSavedData();
+            const chooseCollection = (browserCollection, serverCollection) => {
+                if (Array.isArray(browserCollection) && browserCollection.length > 0) {
+                    return browserCollection;
+                }
+
+                return Array.isArray(serverCollection) ? serverCollection : [];
+            };
+            const chooseValue = (browserValue, serverValue, fallback = '') => {
+                if (browserValue !== undefined && browserValue !== null && browserValue !== '') {
+                    return browserValue;
+                }
+
+                return serverValue !== undefined && serverValue !== null && serverValue !== '' ? serverValue : fallback;
+            };
+            const savedData = {
+                ...serverSavedData,
+                ...browserSavedData,
+                name: chooseValue(browserSavedData.name, serverSavedData.name || serverSavedData.group_name),
+                description: chooseValue(browserSavedData.description, serverSavedData.description),
+                isActive: typeof browserSavedData.isActive === 'boolean'
+                    ? browserSavedData.isActive
+                    : (typeof serverSavedData.isActive === 'boolean' ? serverSavedData.isActive : true),
+                startDate: chooseValue(browserSavedData.startDate, serverSavedData.startDate),
+                endDate: chooseValue(browserSavedData.endDate, serverSavedData.endDate),
+                coTrainer: chooseValue(browserSavedData.coTrainer, serverSavedData.coTrainer),
+                coTrainerName: chooseValue(browserSavedData.coTrainerName, serverSavedData.coTrainerName),
+                coTrainerEmail: chooseValue(browserSavedData.coTrainerEmail, serverSavedData.coTrainerEmail),
+                students: chooseCollection(browserSavedData.students, serverSavedData.students),
+                modules: chooseCollection(browserSavedData.modules, serverSavedData.modules),
+            };
             const groupName = document.getElementById('training-final-group-name');
             const description = document.getElementById('training-final-group-description');
+            const statusBadge = document.getElementById('training-final-group-status');
+            const datesWrapper = document.getElementById('training-final-group-dates-wrapper');
+            const datesSummary = document.getElementById('training-final-group-dates');
+            const coTrainerSummary = document.getElementById('training-final-group-co-trainer');
+            const coTrainerWrapper = document.getElementById('training-final-group-co-trainer-wrapper');
             const modulesList = document.getElementById('training-final-group-modules');
             const studentsCount = document.getElementById('training-final-group-students-count');
-            const studentsList = document.getElementById('training-final-group-students-list');
             const restartButton = document.getElementById('training-group-restart-activity');
             const completionReloadKey = 'oneduc_training_group_finalisation_reloaded';
+            const formatDate = (value) => {
+                if (!value) {
+                    return '';
+                }
+
+                const [year, month, day] = value.split('-');
+
+                return year && month && day ? `${day}/${month}/${year}` : value;
+            };
 
             if (groupName && savedData.name) {
                 groupName.textContent = savedData.name;
@@ -1046,6 +1110,51 @@
 
             if (description) {
                 description.textContent = savedData.description || 'Groupe de formation dédié aux bases de l hygiene alimentaire.';
+            }
+
+            if (statusBadge) {
+                const isActive = savedData.isActive !== false;
+                statusBadge.className = isActive
+                    ? 'inline-flex items-center gap-2 rounded-full border border-vertone/20 bg-vertone/10 px-3 py-1 text-xs font-bold text-vertone'
+                    : 'inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600';
+                statusBadge.innerHTML = `<span class="inline-flex h-2.5 w-2.5 rounded-full ${isActive ? 'bg-vertone' : 'bg-slate-400'}"></span>${isActive ? 'Actif' : 'Inactif'}`;
+            }
+
+            if (datesSummary && datesWrapper) {
+                const startDate = formatDate(savedData.startDate || '');
+                const endDate = formatDate(savedData.endDate || '');
+
+                if (!startDate && !endDate) {
+                    datesWrapper.classList.add('hidden');
+                } else {
+                    datesWrapper.classList.remove('hidden');
+                    datesSummary.textContent = startDate && endDate
+                        ? `Du ${startDate} au ${endDate}`
+                        : (startDate ? `À partir du ${startDate}` : `Jusqu’au ${endDate}`);
+                }
+            }
+
+            if (coTrainerSummary && coTrainerWrapper) {
+                if (savedData.coTrainer) {
+                    const name = savedData.coTrainerName || 'Karim Benali';
+                    const email = savedData.coTrainerEmail || savedData.coTrainer;
+
+                    coTrainerWrapper.classList.remove('hidden');
+                    coTrainerSummary.innerHTML = '';
+
+                    const nameNode = document.createElement('span');
+                    nameNode.className = 'font-semibold text-bleuone';
+                    nameNode.textContent = name;
+
+                    const emailNode = document.createElement('span');
+                    emailNode.className = 'mt-0.5 block text-xs font-medium text-slate-400';
+                    emailNode.textContent = email;
+
+                    coTrainerSummary.appendChild(nameNode);
+                    coTrainerSummary.appendChild(emailNode);
+                } else {
+                    coTrainerWrapper.classList.add('hidden');
+                }
             }
 
             if (modulesList) {
@@ -1069,42 +1178,7 @@
 
             if (studentsCount) {
                 const count = Array.isArray(savedData.students) ? savedData.students.length : 0;
-                studentsCount.textContent = `${Math.max(1, count)} stagiaire${Math.max(1, count) > 1 ? 's' : ''}`;
-            }
-
-            if (studentsList) {
-                const students = Array.isArray(savedData.students)
-                    ? savedData.students.filter((student) => student.firstname || student.lastname || student.email)
-                    : [];
-
-                studentsList.innerHTML = '';
-
-                if (students.length === 0) {
-                    const item = document.createElement('div');
-                    item.className = 'rounded-xl border border-white bg-white px-3 py-2 text-sm text-slate-600';
-                    item.innerHTML = '<span class="font-semibold text-bleuone">Marie Dupont</span><span class="mt-0.5 block text-xs font-medium text-slate-400">marie.dupont@email.fr</span>';
-                    studentsList.appendChild(item);
-                } else {
-                    students.forEach((student) => {
-                        const item = document.createElement('div');
-                        const name = `${student.firstname || ''} ${student.lastname || ''}`.trim() || 'Stagiaire';
-                        const email = student.email || 'Adresse e-mail non renseignée';
-
-                        item.className = 'rounded-xl border border-white bg-white px-3 py-2 text-sm text-slate-600';
-
-                        const nameNode = document.createElement('span');
-                        nameNode.className = 'font-semibold text-bleuone';
-                        nameNode.textContent = name;
-
-                        const emailNode = document.createElement('span');
-                        emailNode.className = 'mt-0.5 block text-xs font-medium text-slate-400';
-                        emailNode.textContent = email;
-
-                        item.appendChild(nameNode);
-                        item.appendChild(emailNode);
-                        studentsList.appendChild(item);
-                    });
-                }
+                studentsCount.textContent = `${count} stagiaire${count > 1 ? 's' : ''}`;
             }
 
             const markFinalisationCompleted = async () => {

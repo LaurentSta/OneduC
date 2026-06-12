@@ -389,9 +389,6 @@
                     </div>
                   </div>
                 </div>
-                <p class="text-sm text-gray-600 font-lisible">
-                  La présentation suit la même logique que l’édition pour garder les repères visuels au moment de l’ajout.
-                </p>
               </div>
 
               <div class="flex items-center gap-2 sm:pt-1">

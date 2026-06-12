@@ -89,6 +89,7 @@
             lessonUrl: @js($currentLesson['url']),
             initialPlacements: @js($initialPlacements ?? []),
             completed: @js($activityCompleted ?? false),
+            initialFailedAttempts: @js($failedAttempts ?? 0),
             successMessage: @js($currentActivity['success_message'] ?? 'Bravo, l’activité est validée.'),
             resultTitle: @js($currentActivity['result_title'] ?? 'Résultat'),
             feedbackMessages: @js($currentActivity['feedback_messages'] ?? []),
@@ -372,6 +373,22 @@
                             </div>
                         @endforeach
                     </div>
+                @endif
+
+                @if (!empty($currentActivity['instruction_steps']) && is_array($currentActivity['instruction_steps']))
+                    <ol class="mt-4 grid gap-3">
+                        @foreach ($currentActivity['instruction_steps'] as $step)
+                            <li class="flex gap-3 rounded-[16px] border border-slate-200 bg-white px-4 py-3 text-base leading-7 text-slate-700">
+                                <span class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-orangeone text-sm font-black text-white">
+                                    {{ $loop->iteration }}
+                                </span>
+                                <span>
+                                    <span class="block font-bold text-bleuone">{{ $step['label'] ?? '' }}</span>
+                                    <span class="mt-1 block">{{ $step['body'] ?? '' }}</span>
+                                </span>
+                            </li>
+                        @endforeach
+                    </ol>
                 @endif
 
                 @if ($usesModalFeedback)
@@ -782,7 +799,7 @@
                 submitting: false,
                 showCompletionModal: false,
                 showFeedbackModal: false,
-                failedAttempts: 0,
+                failedAttempts: Number(config.initialFailedAttempts || 0),
                 completionVariant: 'A',
                 wrongItems: [],
                 showInstructions: false,
@@ -1091,7 +1108,9 @@
                             }
                         } else {
                             this.wrongItems = Array.isArray(payload.wrong_items) ? payload.wrong_items : [];
-                            this.failedAttempts++;
+                            this.failedAttempts = Number.isFinite(Number(payload.failed_attempts))
+                                ? Number(payload.failed_attempts)
+                                : this.failedAttempts + 1;
                             if (this.feedbackAsModal) {
                                 this.showFeedbackModal = true;
                             } else if (this.failedAttempts >= 3) {
@@ -1118,7 +1137,6 @@
                     this.message = '';
                     this.wrongItemIds = [];
                     this.missingItemIds = [];
-                    this.failedAttempts = 0;
                     this.completionVariant = 'A';
                     this.wrongItems = [];
                     this.placements = this.normalizePlacements({});
