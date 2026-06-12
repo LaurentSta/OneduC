@@ -19,6 +19,7 @@ use App\Http\Controllers\Backend\CompetencyController;
 use App\Http\Controllers\Backend\BadgeController;
 use App\Http\Controllers\Backend\ObservateurController;
 use App\Http\Controllers\Backend\PilotageController;
+use App\Http\Controllers\Backend\TrainerPathQualityController;
 use App\Http\Controllers\Backend\WordCloudController;
 
 Route::middleware(['auth', 'role:admin', 'admin.activity'])
@@ -180,6 +181,8 @@ Route::middleware(['auth', 'role:admin', 'admin.activity'])
             Route::post('/tasks/{task}/comments', [PilotageController::class, 'storeComment'])->name('tasks.comments.store');
 
             Route::get('/journal', [PilotageController::class, 'journal'])->name('journal');
+            Route::get('/qualite-parcours-formateur', [TrainerPathQualityController::class, 'index'])
+                ->name('qualite-parcours-formateur');
 
             Route::get('/notifications', [PilotageController::class, 'notifications'])->name('notifications.index');
             Route::post('/notifications/read-all', [PilotageController::class, 'markAllNotificationsRead'])->name('notifications.read-all');
