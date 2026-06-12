@@ -463,6 +463,7 @@ class ParcoursController extends Controller
         );
 
         $activityType = (string) ($currentActivity['type'] ?? 'sorting');
+        $limitedAttemptActivities = ['classer-les-elements', 'preparer-informations-utiles'];
 
         $latestSuccessfulAttempt = DB::table('trainer_path_activity_attempts')
             ->where('user_id', auth()->id())
@@ -483,6 +484,15 @@ class ParcoursController extends Controller
                 : [];
         }
 
+        $failedAttempts = 0;
+        if (in_array($activity, $limitedAttemptActivities, true)) {
+            $failedAttempts = DB::table('trainer_path_activity_attempts')
+                ->where('user_id', auth()->id())
+                ->where('activity_key', $activity)
+                ->where('is_success', false)
+                ->count();
+        }
+
         return view('formateur.parcours.activity', [
             'pageTitle' => $currentActivity['title'],
             'parcoursModules' => $catalogue,
@@ -498,6 +508,7 @@ class ParcoursController extends Controller
             'activityStatusMap' => $this->loadActivityStatusMap($module),
             'moduleCompletionMap' => $this->loadModuleCompletionMap(),
             'activityCompleted' => ! is_null($latestSuccessfulAttempt),
+            'failedAttempts' => min($failedAttempts, 3),
             'initialPlacements' => $initialPlacements,
             'breadcrumbs' => [
                 ['label' => 'Parcours formateur', 'url' => route('formateur.parcours.index')],
@@ -536,6 +547,7 @@ class ParcoursController extends Controller
         $items = collect($currentActivity['items'] ?? []);
         $dropzones = collect($currentActivity['dropzones'] ?? []);
         $activityType = (string) ($currentActivity['type'] ?? 'sorting');
+        $limitedAttemptActivities = ['classer-les-elements', 'preparer-informations-utiles'];
         $validItemIds = $items->pluck('id')->map(fn ($id) => (string) $id)->all();
         $expectedCategories = $items->mapWithKeys(
             fn (array $item): array => [(string) $item['id'] => (string) $item['category']]
@@ -600,6 +612,29 @@ class ParcoursController extends Controller
         ));
 
         $isSuccess = empty($wrongItems);
+        $failedAttempts = 0;
+        if (in_array($activity, $limitedAttemptActivities, true)) {
+            $failedAttempts = DB::table('trainer_path_activity_attempts')
+                ->where('user_id', auth()->id())
+                ->where('activity_key', $activity)
+                ->where('is_success', false)
+                ->count();
+
+            if ($failedAttempts >= 3) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Vous avez atteint la limite de 3 essais pour cette activité. Reprenez la leçon avant de continuer.',
+                    'wrong_item_ids' => [],
+                    'missing_item_ids' => [],
+                    'wrong_items' => [],
+                    'correct_item_ids' => [],
+                    'attempts_locked' => true,
+                    'failed_attempts' => 3,
+                    'next_url' => $context['nextLesson']['url'] ?? $context['currentChapter']['url'],
+                ], 422);
+            }
+        }
+
         $message = $isSuccess
             ? (string) ($currentActivity['success_message'] ?? 'Bravo, l’activité est validée.')
             : (empty($missingItemIds)
@@ -607,6 +642,10 @@ class ParcoursController extends Controller
                 : 'Placez tous les éléments dans un bloc avant de valider.');
 
         $now = now();
+        $attemptNumber = DB::table('trainer_path_activity_attempts')
+            ->where('user_id', auth()->id())
+            ->where('activity_key', $activity)
+            ->count() + 1;
 
         DB::table('trainer_path_activity_attempts')->insert([
             'user_id' => auth()->id(),
@@ -615,6 +654,7 @@ class ParcoursController extends Controller
             'lesson_key' => $lesson,
             'activity_key' => $activity,
             'activity_type' => $activityType,
+            'attempt_number' => $attemptNumber,
             'total_items' => count($expectedCategories),
             'correct_items' => count($correctItemIds),
             'is_success' => $isSuccess,
@@ -645,6 +685,8 @@ class ParcoursController extends Controller
             'missing_item_ids' => $missingItemIds,
             'wrong_items' => $wrongItems,
             'correct_item_ids' => $correctItemIds,
+            'failed_attempts' => $isSuccess ? $failedAttempts : min($failedAttempts + 1, 3),
+            'attempts_locked' => ! $isSuccess && in_array($activity, $limitedAttemptActivities, true) && $failedAttempts + 1 >= 3,
             'next_url' => $context['nextLesson']['url'] ?? $context['currentChapter']['url'],
         ]);
     }

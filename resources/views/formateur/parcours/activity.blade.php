@@ -89,6 +89,7 @@
             lessonUrl: @js($currentLesson['url']),
             initialPlacements: @js($initialPlacements ?? []),
             completed: @js($activityCompleted ?? false),
+            initialFailedAttempts: @js($failedAttempts ?? 0),
             successMessage: @js($currentActivity['success_message'] ?? 'Bravo, l’activité est validée.'),
             resultTitle: @js($currentActivity['result_title'] ?? 'Résultat'),
             feedbackMessages: @js($currentActivity['feedback_messages'] ?? []),
@@ -798,7 +799,7 @@
                 submitting: false,
                 showCompletionModal: false,
                 showFeedbackModal: false,
-                failedAttempts: 0,
+                failedAttempts: Number(config.initialFailedAttempts || 0),
                 completionVariant: 'A',
                 wrongItems: [],
                 showInstructions: false,
@@ -1107,7 +1108,9 @@
                             }
                         } else {
                             this.wrongItems = Array.isArray(payload.wrong_items) ? payload.wrong_items : [];
-                            this.failedAttempts++;
+                            this.failedAttempts = Number.isFinite(Number(payload.failed_attempts))
+                                ? Number(payload.failed_attempts)
+                                : this.failedAttempts + 1;
                             if (this.feedbackAsModal) {
                                 this.showFeedbackModal = true;
                             } else if (this.failedAttempts >= 3) {
@@ -1134,7 +1137,6 @@
                     this.message = '';
                     this.wrongItemIds = [];
                     this.missingItemIds = [];
-                    this.failedAttempts = 0;
                     this.completionVariant = 'A';
                     this.wrongItems = [];
                     this.placements = this.normalizePlacements({});
