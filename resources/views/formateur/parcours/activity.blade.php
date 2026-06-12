@@ -374,6 +374,22 @@
                     </div>
                 @endif
 
+                @if (!empty($currentActivity['instruction_steps']) && is_array($currentActivity['instruction_steps']))
+                    <ol class="mt-4 grid gap-3">
+                        @foreach ($currentActivity['instruction_steps'] as $step)
+                            <li class="flex gap-3 rounded-[16px] border border-slate-200 bg-white px-4 py-3 text-base leading-7 text-slate-700">
+                                <span class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-orangeone text-sm font-black text-white">
+                                    {{ $loop->iteration }}
+                                </span>
+                                <span>
+                                    <span class="block font-bold text-bleuone">{{ $step['label'] ?? '' }}</span>
+                                    <span class="mt-1 block">{{ $step['body'] ?? '' }}</span>
+                                </span>
+                            </li>
+                        @endforeach
+                    </ol>
+                @endif
+
                 @if ($usesModalFeedback)
                     <div class="mt-4 rounded-[16px] border border-bleuone/15 bg-bleuone/[0.04] px-4 py-3 text-base leading-7 text-slate-700">
                         {{ $currentActivity['instruction'] ?? 'Glissez ou sélectionnez chaque élément, puis déposez-le dans la bonne catégorie. Rangez tous les éléments avant de valider.' }}

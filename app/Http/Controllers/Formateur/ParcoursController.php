@@ -121,6 +121,7 @@ class ParcoursController extends Controller
         $context = $this->resolveLessonContext($catalogue, $module, $chapter, $lesson);
         $currentPart = $this->resolveLessonPart($context['currentLesson'], $part);
         $this->markLessonPartCompleted($module, $chapter, $lesson, $context['currentLesson'], $currentPart);
+        $guidedLessonCompletionPayload = $this->loadGuidedLessonCompletionPayload($module, $chapter, $lesson, $context['currentLesson']);
 
         return view('formateur.parcours.lesson', [
             'pageTitle' => $context['currentLesson']['title'],
@@ -138,6 +139,7 @@ class ParcoursController extends Controller
             'activeLessonPart' => $currentPart,
             'activityStatusMap' => $this->loadActivityStatusMap($module),
             'moduleCompletionMap' => $this->loadModuleCompletionMap(),
+            'guidedLessonCompletionPayload' => $guidedLessonCompletionPayload,
             'breadcrumbs' => [
                 ['label' => 'Parcours formateur', 'url' => route('formateur.parcours.index')],
                 ['label' => $context['currentModule']['title'], 'url' => $context['currentModule']['url']],
@@ -262,6 +264,15 @@ class ParcoursController extends Controller
                     'completed_part' => $part,
                     'completed_at' => $now->toIso8601String(),
                     'group_name' => (string) $request->input('name', ''),
+                    'name' => (string) $request->input('name', ''),
+                    'description' => (string) $request->input('description', ''),
+                    'isActive' => $request->has('isActive') ? $request->boolean('isActive') : true,
+                    'startDate' => (string) $request->input('startDate', ''),
+                    'endDate' => (string) $request->input('endDate', ''),
+                    'coTrainer' => (string) $request->input('coTrainer', ''),
+                    'coTrainerName' => (string) $request->input('coTrainerName', ''),
+                    'coTrainerEmail' => (string) $request->input('coTrainerEmail', ''),
+                    'temporaryPassword' => (string) $request->input('temporaryPassword', ''),
                     'students' => $request->input('students', []),
                     'modules' => $submittedModules,
                 ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
@@ -285,6 +296,27 @@ class ParcoursController extends Controller
                 'part' => $part,
             ]),
         ]);
+    }
+
+    private function loadGuidedLessonCompletionPayload(string $module, string $chapter, string $lessonKey, array $lesson): array
+    {
+        $activityKey = $lesson['completion_activity_key'] ?? null;
+
+        if (! auth()->check() || ! is_string($activityKey) || $activityKey === '') {
+            return [];
+        }
+
+        $latestSuccessfulAttempt = DB::table('trainer_path_activity_attempts')
+            ->where('user_id', auth()->id())
+            ->where('module_key', $module)
+            ->where('chapter_key', $chapter)
+            ->where('lesson_key', $lessonKey)
+            ->where('activity_key', $activityKey)
+            ->where('is_success', true)
+            ->latest('submitted_at')
+            ->first();
+
+        return $this->decodeJsonColumn($latestSuccessfulAttempt->submitted_answer ?? null);
     }
 
     private function validateGuidedGroupCreationPayload(Request $request, array $completionConfig): array
