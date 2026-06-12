@@ -242,7 +242,7 @@
 
 Voici votre lien de connexion et votre code d'acces pour rejoindre la formation.
 
-Lien : {{ route('stagiaire.code.form.legacy') }}
+Lien : https://oneduc.fr//stagiaire/connexion-code
 Code : MARC01</textarea>
                     </label>
 

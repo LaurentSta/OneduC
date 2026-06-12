@@ -134,16 +134,16 @@
                             ? $chapterActivityCompleted . '/' . $chapterActivityTotal . ' étape' . ($chapterActivityTotal > 1 ? 's' : '') . ' validée' . ($chapterActivityTotal > 1 ? 's' : '')
                             : '0/' . $chapter['lesson_count'] . ' leçon' . ($chapter['lesson_count'] > 1 ? 's' : '') . ' terminée' . ($chapter['lesson_count'] > 1 ? 's' : '');
                         $chapterButtonClass = $isChapterCompleted
-                            ? 'bg-teal-50/70 border-vertone'
+                            ? 'bg-white border-transparent hover:bg-gray-50'
                             : ($isActiveChapter ? ($hasActiveLessonInChapter ? 'bg-blue-50/40 border-bleuone' : 'bg-orange-50 border-orangeone') : 'hover:bg-gray-50 border-transparent');
                         $chapterNumberClass = $isChapterCompleted
                             ? 'bg-vertone text-white border-vertone'
                             : ($isActiveChapter ? ($hasActiveLessonInChapter ? 'bg-bleuone text-white border-bleuone' : 'bg-orangeone text-white border-orangeone') : 'bg-gray-100 text-gray-500 border-gray-200');
-                        $chapterKickerClass = $isChapterCompleted ? 'text-vertone' : ($isActiveChapter ? ($hasActiveLessonInChapter ? 'text-bleuone' : 'text-orangeone') : 'text-orangeone');
-                        $chapterTitleClass = $isChapterCompleted ? 'text-vertone' : ($isActiveChapter ? ($hasActiveLessonInChapter ? 'text-bleuone' : 'text-orangeone') : 'text-bleuone');
-                        $chapterCounterClass = $isChapterCompleted ? 'text-vertone' : 'text-gray-400';
-                        $chapterChevronBaseClass = $isChapterCompleted ? 'border-teal-100 bg-teal-50 text-vertone' : 'border-orange-100 bg-orange-50 text-orangeone';
-                        $chapterChevronOpenClass = $isChapterCompleted ? 'bg-vertone text-white border-vertone' : 'bg-orangeone text-white border-orangeone';
+                        $chapterKickerClass = $isChapterCompleted ? 'text-orangeone' : ($isActiveChapter ? ($hasActiveLessonInChapter ? 'text-bleuone' : 'text-orangeone') : 'text-orangeone');
+                        $chapterTitleClass = $isChapterCompleted ? 'text-bleuone' : ($isActiveChapter ? ($hasActiveLessonInChapter ? 'text-bleuone' : 'text-orangeone') : 'text-bleuone');
+                        $chapterCounterClass = $isChapterCompleted ? 'text-gray-400' : 'text-gray-400';
+                        $chapterChevronBaseClass = $isChapterCompleted ? 'border-orange-100 bg-orange-50 text-orangeone' : 'border-orange-100 bg-orange-50 text-orangeone';
+                        $chapterChevronOpenClass = 'bg-orangeone text-white border-orangeone';
                     @endphp
 
 	                    <li class="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
