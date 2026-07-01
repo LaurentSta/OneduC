@@ -15,6 +15,7 @@ use App\Models\SubCategory;
 use App\Models\ScormResult;
 use App\Models\ModuleLecture;
 use App\Models\ModuleSection;
+use App\Models\TrainerPathActivityAttempt;
 
 class AdminController extends Controller
 {
@@ -238,7 +239,7 @@ public function AdminSecuriteUpdate(Request $request)
         $requirementsByModule = collect($trainerPathModules)->mapWithKeys(
             fn (array $module): array => [$module['key'] => ParcoursFormateur::moduleCompletionRequirements($module['key'])]
         );
-        $successfulAttempts = DB::table('trainer_path_activity_attempts')
+        $successfulAttempts = TrainerPathActivityAttempt::query()
             ->whereIn('user_id', $trainers->pluck('id'))
             ->where('is_success', true)
             ->get(['user_id', 'module_key', 'chapter_key', 'lesson_key', 'activity_key', 'activity_type'])

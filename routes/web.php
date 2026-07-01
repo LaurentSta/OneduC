@@ -6,7 +6,6 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\NotificationController;
-use App\Http\Controllers\Backend\StagiaireController;
 use App\Http\Controllers\WordCloudParticipationController;
 use App\Http\Controllers\RoueAleatoireParticipationController;
 use App\Http\Controllers\QuestionWallParticipationController;
@@ -236,37 +235,6 @@ require __DIR__.'/scorm.php';
 // Endpoints API divers
 require __DIR__.'/api.php';
 
-Route::get('/admin/stagiaires/{id}/debug-progression', function ($id) {
-    // On force l'ID en entier (ici ce sera 6)
-    $userId = (int)$id;
-    
-    // On compte les lignes dans chaque table pour cet utilisateur
-    $tables = [
-        'quiz_attempts (Tentatives)' => DB::table('quiz_attempts')
-            ->where('user_id', $userId)->count(),
-
-        // CORRECTION : on utilise bien 'attempt_id' ici
-        'quiz_questions (Réponses détaillées)' => DB::table('quiz_attempt_questions')
-            ->join('quiz_attempts', 'quiz_attempt_questions.attempt_id', '=', 'quiz_attempts.id')
-            ->where('quiz_attempts.user_id', $userId)->count(),
-
-        'scorm_scores (Scores SCORM)' => DB::table('scorm_scores')
-            ->where('user_id', $userId)->count(),
-        
-        'scorm_interactions (Détails SCORM)' => DB::table('scorm_interactions')
-            ->where('user_id', $userId)->count(),
-        
-        'progressions (Statut manuel)' => DB::table('progressions')
-            ->where('user_id', $userId)->count(),
-        
-        'videos (Suivi vidéo)' => DB::table('video_segment_trackings')
-            ->where('user_id', $userId)->count(),
-    ];
-
-    return $tables;
-});
-
-// ----------------------------------------------------------
 // Inscription formateur
 // ----------------------------------------------------------
 // Formulaire d'inscription dédié aux formateurs
@@ -286,11 +254,8 @@ Route::middleware(['throttle:contact'])->group(function () {
     Route::post('/contact', [ContactController::class, 'send'])->name('contact.send');
 });
 // Affichage du formulaire de contact
-Route::get('/contact', fn () => view('frontend.contenu.contact'))->name('contact.form');
 Route::get('/contact', [ContactController::class, 'index'])->name('contact'); // GET pour la page
 
-Route::post('/admin/stagiaires/{user}/reset-progression', [StagiaireController::class, 'resetProgression'])
-    ->name('admin.stagiaires.reset');
 // Auth Laravel (Jetstream/Breeze)
 // Routes d'authentification fournies par Laravel Breeze/Jetstream
 require __DIR__.'/auth.php';
