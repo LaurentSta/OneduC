@@ -84,6 +84,12 @@
                 <p class="text-xs font-bold text-gray-500 uppercase" x-text="'Question ' + (qi + 1)"></p>
                 <button type="button" @click="removeQuestion(qi)"
                         x-show="questions.length > 1"
+                        x-transition:enter="transition ease-out duration-200"
+                        x-transition:enter-start="opacity-0 scale-95"
+                        x-transition:enter-end="opacity-100 scale-100"
+                        x-transition:leave="transition ease-in duration-150"
+                        x-transition:leave-start="opacity-100 scale-100"
+                        x-transition:leave-end="opacity-0 scale-95"
                         class="text-xs text-red-400 hover:text-red-600 transition">Supprimer</button>
               </div>
 
@@ -129,6 +135,12 @@
 
           <button type="button" @click="addQuestion"
                   x-show="questions.length < 10"
+                  x-transition:enter="transition ease-out duration-200"
+                  x-transition:enter-start="opacity-0 scale-95"
+                  x-transition:enter-end="opacity-100 scale-100"
+                  x-transition:leave="transition ease-in duration-150"
+                  x-transition:leave-start="opacity-100 scale-100"
+                  x-transition:leave-end="opacity-0 scale-95"
                   class="w-full rounded-[10px] border-2 border-dashed border-gray-200 py-2 text-sm font-semibold text-gray-400 hover:border-bleuone hover:text-bleuone transition">
             + Ajouter une question
           </button>

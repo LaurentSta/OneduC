@@ -6,6 +6,7 @@ use App\Http\Controllers\Formateur\FormateurProfileController;
 use App\Http\Controllers\Formateur\FormateurStagiaireController;
 use App\Http\Controllers\Formateur\FormateurModuleController;
 use App\Http\Controllers\Formateur\GroupeController;
+use App\Http\Controllers\Formateur\ModuleBuilderController;
 use App\Http\Controllers\Formateur\GroupeModuleLessonController;
 use App\Http\Controllers\Formateur\ObjectiveController;
 use App\Http\Controllers\Formateur\LessonResourceController;
@@ -213,6 +214,28 @@ Route::middleware(['auth', 'role:formateur', 'association.member'])
 
     Route::delete('/formations/{module}/section/{section}/lesson/{lecture}/resources/{resource}', [LessonResourceController::class, 'destroy'])
         ->name('formations.lesson.resources.destroy');
+
+    // 🧩 Mes modules (module builder formateur)
+    Route::prefix('/mes-modules')->name('modules.builder.')->group(function () {
+        Route::get('/', [ModuleBuilderController::class, 'index'])->name('index');
+        Route::get('/creer', [ModuleBuilderController::class, 'create'])->name('create');
+        Route::post('/', [ModuleBuilderController::class, 'store'])->name('store');
+        Route::post('/depuis-catalogue/{catalogModule}', [ModuleBuilderController::class, 'duplicate'])->name('duplicate');
+        Route::post('/{module}/images', [ModuleBuilderController::class, 'uploadImage'])->name('images.store');
+        Route::get('/{module}/edition', [ModuleBuilderController::class, 'edit'])->name('edit');
+        Route::put('/{module}', [ModuleBuilderController::class, 'update'])->name('update');
+        Route::delete('/{module}', [ModuleBuilderController::class, 'destroy'])->name('destroy');
+
+        Route::post('/{module}/sections', [ModuleBuilderController::class, 'storeSection'])->name('sections.store');
+        Route::put('/sections/{section}', [ModuleBuilderController::class, 'updateSection'])->name('sections.update');
+        Route::delete('/sections/{section}', [ModuleBuilderController::class, 'destroySection'])->name('sections.destroy');
+
+        Route::post('/sections/{section}/lectures', [ModuleBuilderController::class, 'storeLecture'])->name('lectures.store');
+        Route::put('/lectures/{lecture}', [ModuleBuilderController::class, 'updateLecture'])->name('lectures.update');
+        Route::delete('/lectures/{lecture}', [ModuleBuilderController::class, 'destroyLecture'])->name('lectures.destroy');
+
+        Route::put('/{module}/groupes', [ModuleBuilderController::class, 'assignGroups'])->name('groups.sync');
+    });
 
     Route::redirect('/word-clouds', '/formateur/nuages-de-mots', 301);
 

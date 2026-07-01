@@ -138,18 +138,19 @@
                 La suppression est une suppression logique (soft delete).
             </p>
 
-            <form id="delete-domain-form"
-                  action="{{ route('admin.referentiels.domains.destroy', [$referentiel, $domain]) }}"
-                  method="POST">
-                @csrf
-                @method('DELETE')
-
-                <button type="button"
-                        onclick="if(confirm('Supprimer ce domaine ?')) document.getElementById('delete-domain-form').submit();"
-                        class="inline-flex items-center px-4 py-2 bg-red-600 text-white text-sm font-semibold rounded hover:bg-red-700 transition">
-                    Supprimer le domaine
-                </button>
-            </form>
+            <button type="button"
+                    x-data
+                    x-on:click="$dispatch('open-modal', 'delete-domain')"
+                    class="inline-flex items-center px-4 py-2 bg-red-600 text-white text-sm font-semibold rounded hover:bg-red-700 transition">
+                Supprimer le domaine
+            </button>
+            <x-confirm-modal
+                name="delete-domain"
+                title="Supprimer ce domaine ?"
+                :action="route('admin.referentiels.domains.destroy', [$referentiel, $domain])"
+                method="DELETE"
+                confirm-label="Supprimer"
+            />
         </div>
 
     </div>

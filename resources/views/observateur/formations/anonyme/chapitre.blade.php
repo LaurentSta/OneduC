@@ -26,7 +26,7 @@
           <button type="button" @click="openItem = openItem === 1 ? null : 1" class="w-full flex items-center justify-between px-4 py-3 text-left font-varela text-bleuone bg-gray-100 hover:bg-gray-200">
             <span>Objectifs</span>
           </button>
-          <div x-show="openItem === 1" x-collapse class="overflow-hidden p-4 bg-white font-lisible text-[17px] text-gray-800 leading-relaxed">
+          <div x-show="openItem === 1" x-collapse.duration.400ms class="overflow-hidden p-4 bg-white font-lisible text-[17px] text-gray-800 leading-relaxed">
             <div class="space-y-4">
               @foreach($lecturesWithObjectives as $lec)
                 <div class="rounded-xl border border-gray-200 bg-gray-50 p-4">
@@ -47,7 +47,7 @@
         <button type="button" @click="openItem = openItem === 2 ? null : 2" class="w-full flex items-center justify-between px-4 py-3 text-left font-varela text-bleuone bg-gray-100 hover:bg-gray-200">
           <span>Questions pour commencer</span>
         </button>
-        <div x-show="openItem === 2" x-collapse class="overflow-hidden p-4 bg-white font-lisible text-[17px] text-gray-800 leading-relaxed">
+        <div x-show="openItem === 2" x-collapse.duration.400ms class="overflow-hidden p-4 bg-white font-lisible text-[17px] text-gray-800 leading-relaxed">
           @if($rawQuestions !== '')
             @if($isHtml)
               {!! $rawQuestions !!}

@@ -208,18 +208,21 @@
                                         <i class="ti ti-pencil"></i> <span class="hidden md:inline">Éditer</span>
                                     </a>
 
-                                    <form action="{{ route('admin.quiz.questions.destroy', ['lecture' => $lecture->id, 'question' => $q->id]) }}"
-                                          method="POST"
-                                          class="inline-block"
-                                          onsubmit="return confirm('Attention : Cette action est irréversible. Supprimer la question ?');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit"
-                                                class="group flex items-center gap-1 px-2 py-1 bg-white border border-gray-300 text-red-600 rounded-sm hover:border-red-600 hover:bg-red-600 hover:text-white transition text-[9px] font-bold uppercase shadow-sm"
-                                                title="Supprimer">
-                                            <i class="ti ti-trash"></i>
-                                        </button>
-                                    </form>
+                                    <button type="button"
+                                            x-data
+                                            x-on:click="$dispatch('open-modal', 'delete-question-{{ $q->id }}')"
+                                            class="group flex items-center gap-1 px-2 py-1 bg-white border border-gray-300 text-red-600 rounded-sm hover:border-red-600 hover:bg-red-600 hover:text-white transition text-[9px] font-bold uppercase shadow-sm"
+                                            title="Supprimer">
+                                        <i class="ti ti-trash"></i>
+                                    </button>
+                                    <x-confirm-modal
+                                        name="delete-question-{{ $q->id }}"
+                                        title="Attention : Cette action est irréversible."
+                                        message="Supprimer la question ?"
+                                        :action="route('admin.quiz.questions.destroy', ['lecture' => $lecture->id, 'question' => $q->id])"
+                                        method="DELETE"
+                                        confirm-label="Supprimer"
+                                    />
                                 </div>
                             </td>
                         </tr>

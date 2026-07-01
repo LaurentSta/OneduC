@@ -256,7 +256,14 @@
       {{-- 2. ZONES DE CONTENU --}}
       
       {{-- SECTION 1 : Configuration générale --}}
-      <section x-show="activeTab === 'general'" x-cloak class="animate-fade-in-down">
+      <section x-show="activeTab === 'general'" x-cloak
+               x-transition:enter="transition ease-out duration-200"
+               x-transition:enter-start="opacity-0 scale-95"
+               x-transition:enter-end="opacity-100 scale-100"
+               x-transition:leave="transition ease-in duration-150"
+               x-transition:leave-start="opacity-100 scale-100"
+               x-transition:leave-end="opacity-0 scale-95"
+               class="animate-fade-in-down">
         <div class="mb-6">
           <div class="mb-2 flex items-center gap-2">
             <label for="nom" class="block text-base font-medium text-gray-900">Nom du groupe</label>
@@ -394,7 +401,14 @@
       </section>
 
       {{-- SECTION 2 : Stagiaires --}}
-      <section x-show="activeTab === 'stagiaires'" x-cloak class="animate-fade-in-down">
+      <section x-show="activeTab === 'stagiaires'" x-cloak
+               x-transition:enter="transition ease-out duration-200"
+               x-transition:enter-start="opacity-0 scale-95"
+               x-transition:enter-end="opacity-100 scale-100"
+               x-transition:leave="transition ease-in duration-150"
+               x-transition:leave-start="opacity-100 scale-100"
+               x-transition:leave-end="opacity-0 scale-95"
+               class="animate-fade-in-down">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
             <div id="removed-recap" class="hidden text-sm bg-red-50 text-red-700 px-4 py-2 rounded-lg border border-red-100">
                 <span class="font-bold">À retirer :</span>
@@ -613,7 +627,14 @@ Lucas;Bernard;lucas.bernard@entreprise.fr</pre>
 
 
       {{-- SECTION 3 : Parcours / Modules --}}
-      <section x-show="activeTab === 'parcours'" x-cloak class="animate-fade-in-down">
+      <section x-show="activeTab === 'parcours'" x-cloak
+               x-transition:enter="transition ease-out duration-200"
+               x-transition:enter-start="opacity-0 scale-95"
+               x-transition:enter-end="opacity-100 scale-100"
+               x-transition:leave="transition ease-in duration-150"
+               x-transition:leave-start="opacity-100 scale-100"
+               x-transition:leave-end="opacity-0 scale-95"
+               class="animate-fade-in-down">
         
         <div class="mb-6">
             <div class="flex items-center gap-2">

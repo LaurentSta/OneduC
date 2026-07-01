@@ -15,7 +15,14 @@
     {{-- Groupe --}}
     <div class="mb-6 text-center">
         <p class="text-sm font-semibold text-gray-500">{{ $group->name }}</p>
-        <p x-show="label" x-text="label" class="mt-1 text-xl font-bold text-bleuone"></p>
+        <p x-show="label" x-cloak x-text="label"
+            x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="opacity-0 scale-95"
+            x-transition:enter-end="opacity-100 scale-100"
+            x-transition:leave="transition ease-in duration-150"
+            x-transition:leave-start="opacity-100 scale-100"
+            x-transition:leave-end="opacity-0 scale-95"
+            class="mt-1 text-xl font-bold text-bleuone"></p>
     </div>
 
     {{-- Grande horloge --}}
@@ -45,8 +52,22 @@
             </svg>
             <div class="absolute inset-0 flex flex-col items-center justify-center">
                 <span x-text="displayTime" class="font-mono text-6xl font-bold text-bleuone tabular-nums tracking-tight"></span>
-                <span x-show="isFinished" class="mt-2 text-sm font-semibold text-red-500 animate-pulse">Temps écoulé !</span>
-                <span x-show="isIdle" class="mt-2 text-xs text-gray-400">En attente du formateur</span>
+                <span x-show="isFinished" x-cloak
+                    x-transition:enter="transition ease-out duration-200"
+                    x-transition:enter-start="opacity-0 scale-95"
+                    x-transition:enter-end="opacity-100 scale-100"
+                    x-transition:leave="transition ease-in duration-150"
+                    x-transition:leave-start="opacity-100 scale-100"
+                    x-transition:leave-end="opacity-0 scale-95"
+                    class="mt-2 text-sm font-semibold text-red-500 animate-pulse">Temps écoulé !</span>
+                <span x-show="isIdle" x-cloak
+                    x-transition:enter="transition ease-out duration-200"
+                    x-transition:enter-start="opacity-0 scale-95"
+                    x-transition:enter-end="opacity-100 scale-100"
+                    x-transition:leave="transition ease-in duration-150"
+                    x-transition:leave-start="opacity-100 scale-100"
+                    x-transition:leave-end="opacity-0 scale-95"
+                    class="mt-2 text-xs text-gray-400">En attente du formateur</span>
             </div>
         </div>
 

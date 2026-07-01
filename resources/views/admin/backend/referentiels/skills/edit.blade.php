@@ -191,18 +191,19 @@
                 La suppression est une suppression logique (soft delete).
             </p>
 
-            <form id="delete-skill-form"
-                  action="{{ route('admin.referentiels.skills.destroy', [$referentiel, $skill]) }}"
-                  method="POST">
-                @csrf
-                @method('DELETE')
-
-                <button type="button"
-                        onclick="if(confirm('Supprimer cette compétence ?')) document.getElementById('delete-skill-form').submit();"
-                        class="inline-flex items-center px-4 py-2 bg-red-600 text-white text-sm font-semibold rounded hover:bg-red-700 transition">
-                    Supprimer la compétence
-                </button>
-            </form>
+            <button type="button"
+                    x-data
+                    x-on:click="$dispatch('open-modal', 'delete-skill')"
+                    class="inline-flex items-center px-4 py-2 bg-red-600 text-white text-sm font-semibold rounded hover:bg-red-700 transition">
+                Supprimer la compétence
+            </button>
+            <x-confirm-modal
+                name="delete-skill"
+                title="Supprimer cette compétence ?"
+                :action="route('admin.referentiels.skills.destroy', [$referentiel, $skill])"
+                method="DELETE"
+                confirm-label="Supprimer"
+            />
         </div>
 
     </div>

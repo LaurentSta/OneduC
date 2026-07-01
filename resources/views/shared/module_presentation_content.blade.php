@@ -163,9 +163,26 @@
                             <span class="inline-block bg-yellow-100 text-yellow-700 text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded">Valeur sure</span>
                         @endif
                     </div>
-                    <h1 class="text-2xl md:text-3xl font-raleway font-medium text-bleuone leading-tight">
-                        {{ $module->module_title ?? $module->module_name }}
-                    </h1>
+                    <div class="flex flex-wrap items-start justify-between gap-3">
+                        <h1 class="text-2xl md:text-3xl font-raleway font-medium text-bleuone leading-tight">
+                            {{ $module->module_title ?? $module->module_name }}
+                        </h1>
+
+                        @if($isFormateurView && ! $module->is_trainer_authored)
+                            <button type="button" x-data x-on:click="$dispatch('open-modal', 'duplicate-module-{{ $module->id }}')"
+                                    class="inline-flex items-center gap-2 rounded-[10px] border border-emerald-300 bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-700 hover:bg-emerald-100 transition whitespace-nowrap">
+                                Dupliquer pour le modifier
+                            </button>
+                            <x-confirm-modal
+                                name="duplicate-module-{{ $module->id }}"
+                                title="Dupliquer ce module ?"
+                                message="Il sera copié dans 'Mes modules' pour que vous puissiez le modifier librement."
+                                :action="route('formateur.modules.builder.duplicate', $module)"
+                                method="POST"
+                                confirm-label="Dupliquer"
+                            />
+                        @endif
+                    </div>
                 </header>
             @endunless
 

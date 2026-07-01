@@ -12,7 +12,7 @@ class Module extends Model
     private const DEFAULT_ESTIMATED_SECONDS_PER_QUESTION = 30;
     
     protected $fillable = [
-        'category_id','subcategory_id','formateur_id',
+        'category_id','subcategory_id','formateur_id','is_trainer_authored',
         'module_image','header_image',
         'module_title','module_name','module_name_slug','description','objectifs',
         'module_video','label','duree','resources','certificat','prerequi',
@@ -75,8 +75,19 @@ class Module extends Model
         return $q->where('status', 1);
     }
 
+    public function scopeAuthoredByTrainer($q, int $trainerId)
+    {
+        return $q->where('formateur_id', $trainerId)->where('is_trainer_authored', true);
+    }
+
+    public function scopePubliclyListable($q)
+    {
+        return $q->where('status', 1)->where('is_trainer_authored', false);
+    }
+
     protected $casts = [
         'status'                     => 'boolean',
+        'is_trainer_authored'        => 'boolean',
         'objectifs'                  => 'array',
         'estimated_question_seconds' => 'integer',
     ];

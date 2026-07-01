@@ -50,14 +50,17 @@
                                         <i class="ti ti-message"></i>
                                         Répondre
                                     </button>
-                                    <form action="{{ route('admin.retours.delete', $feedback->id) }}" method="POST" onsubmit="return confirm('Supprimer ce commentaire ?');" class="inline">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-red-200 text-red-700 hover:bg-red-600 hover:text-white transition text-xs font-varela cursor-pointer ml-2">
-                                            <i class="ti ti-trash"></i>
-                                            Supprimer
-                                        </button>
-                                    </form>
+                                    <button type="button" x-on:click="$dispatch('open-modal', 'delete-feedback-{{ $feedback->id }}')" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-red-200 text-red-700 hover:bg-red-600 hover:text-white transition text-xs font-varela cursor-pointer ml-2">
+                                        <i class="ti ti-trash"></i>
+                                        Supprimer
+                                    </button>
+                                    <x-confirm-modal
+                                        name="delete-feedback-{{ $feedback->id }}"
+                                        title="Supprimer ce commentaire ?"
+                                        :action="route('admin.retours.delete', $feedback->id)"
+                                        method="DELETE"
+                                        confirm-label="Supprimer"
+                                    />
                                 </td>
                             </tr>
                         @endforeach
@@ -65,7 +68,14 @@
                 </table>
             </div>
 
-            <div x-show="openModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" style="display: none;">
+            <div x-show="openModal" x-cloak
+                x-transition:enter="transition ease-out duration-200"
+                x-transition:enter-start="opacity-0 scale-95"
+                x-transition:enter-end="opacity-100 scale-100"
+                x-transition:leave="transition ease-in duration-150"
+                x-transition:leave-start="opacity-100 scale-100"
+                x-transition:leave-end="opacity-0 scale-95"
+                class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" style="display: none;">
                 <div class="bg-white rounded-lg p-6 w-full max-w-xl" @click.away="openModal = false">
                     <h3 class="text-lg font-semibold mb-2">Répondre au retour</h3>
 

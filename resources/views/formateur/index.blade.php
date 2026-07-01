@@ -118,7 +118,14 @@
       </div>
     </div>
 
-    <div x-show="loading" x-cloak class="mt-6 animate-pulse space-y-6">
+    <div x-show="loading" x-cloak
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0 scale-95"
+         x-transition:enter-end="opacity-100 scale-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100 scale-100"
+         x-transition:leave-end="opacity-0 scale-95"
+         class="mt-6 animate-pulse space-y-6">
       <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
         <div class="h-20 rounded-2xl bg-gray-100"></div>
         <div class="h-20 rounded-2xl bg-gray-100"></div>
@@ -133,7 +140,14 @@
       </div>
     </div>
 
-    <div x-show="error && !loading" x-cloak class="mt-6 rounded-[18px] border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700">
+    <div x-show="error && !loading" x-cloak
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0 scale-95"
+         x-transition:enter-end="opacity-100 scale-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100 scale-100"
+         x-transition:leave-end="opacity-0 scale-95"
+         class="mt-6 rounded-[18px] border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700">
       <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <p x-text="error"></p>
         <button
@@ -146,7 +160,14 @@
       </div>
     </div>
 
-    <div x-show="!loading && !error && data" x-cloak class="mt-6 space-y-6">
+    <div x-show="!loading && !error && data" x-cloak
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0 scale-95"
+         x-transition:enter-end="opacity-100 scale-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100 scale-100"
+         x-transition:leave-end="opacity-0 scale-95"
+         class="mt-6 space-y-6">
       <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
         <div class="rounded-[18px] border border-bleuone/10 bg-bleuone/5 px-5 py-4">
           <p class="text-xs font-semibold uppercase tracking-[0.22em] text-bleuone/70">Périmètre</p>
@@ -280,6 +301,12 @@
         <div
           x-show="tooltip"
           x-cloak
+          x-transition:enter="transition ease-out duration-200"
+          x-transition:enter-start="opacity-0 scale-95"
+          x-transition:enter-end="opacity-100 scale-100"
+          x-transition:leave="transition ease-in duration-150"
+          x-transition:leave-start="opacity-100 scale-100"
+          x-transition:leave-end="opacity-0 scale-95"
           :style="tooltip ? `position:fixed;left:${Math.min(tooltip.clientX + 14, window.innerWidth - 210)}px;top:${tooltip.clientY - 50}px` : ''"
           class="pointer-events-none z-50 min-w-[170px] rounded-xl border border-gray-200 bg-white px-3 py-2.5 shadow-lg text-sm"
         >

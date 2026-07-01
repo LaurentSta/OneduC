@@ -357,11 +357,16 @@
                       <button type="submit" class="rounded-md bg-[#004461] px-2.5 py-1.5 text-xs font-medium text-white">Sauver</button>
                     </div>
                   </form>
-                  <form method="POST" action="{{ route('admin.pilotage.projects.destroy', $project) }}" onsubmit="return confirm('Supprimer ce projet ?')" class="mt-2">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="rounded-md bg-red-600 px-2.5 py-1.5 text-xs font-medium text-white">Supprimer</button>
-                  </form>
+                  <div class="mt-2">
+                    <button type="button" x-data x-on:click="$dispatch('open-modal', 'delete-project-{{ $project->id }}')" class="rounded-md bg-red-600 px-2.5 py-1.5 text-xs font-medium text-white">Supprimer</button>
+                  </div>
+                  <x-confirm-modal
+                    name="delete-project-{{ $project->id }}"
+                    title="Supprimer ce projet ?"
+                    :action="route('admin.pilotage.projects.destroy', $project)"
+                    method="DELETE"
+                    confirm-label="Supprimer"
+                  />
                 </details>
               </td>
             </tr>
@@ -436,11 +441,14 @@
               <td class="px-3 py-3">
                 <div class="flex flex-wrap items-center gap-2">
                   <a href="{{ route('admin.pilotage.tasks.edit', $task) }}" class="rounded-md border border-gray-300 bg-white px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50">Editer</a>
-                  <form method="POST" action="{{ route('admin.pilotage.tasks.destroy', $task) }}" onsubmit="return confirm('Supprimer cette tache ?')">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="rounded-md bg-red-600 px-2 py-1 text-xs font-medium text-white hover:bg-red-700">Supprimer</button>
-                  </form>
+                  <button type="button" x-data x-on:click="$dispatch('open-modal', 'delete-task-{{ $task->id }}')" class="rounded-md bg-red-600 px-2 py-1 text-xs font-medium text-white hover:bg-red-700">Supprimer</button>
+                  <x-confirm-modal
+                    name="delete-task-{{ $task->id }}"
+                    title="Supprimer cette tache ?"
+                    :action="route('admin.pilotage.tasks.destroy', $task)"
+                    method="DELETE"
+                    confirm-label="Supprimer"
+                  />
                 </div>
               </td>
             </tr>

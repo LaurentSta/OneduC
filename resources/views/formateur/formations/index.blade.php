@@ -93,6 +93,12 @@
         type="button"
         x-show="tab === 'catalogue'"
         x-cloak
+        x-transition:enter="transition ease-out duration-200"
+        x-transition:enter-start="opacity-0 scale-95"
+        x-transition:enter-end="opacity-100 scale-100"
+        x-transition:leave="transition ease-in duration-150"
+        x-transition:leave-start="opacity-100 scale-100"
+        x-transition:leave-end="opacity-0 scale-95"
         @click="filtersOpen = !filtersOpen"
         :aria-expanded="filtersOpen"
         class="mb-2 inline-flex h-9 items-center gap-2 rounded-md border border-gray-200 bg-white px-3 text-sm font-medium text-gray-600 transition hover:border-orangeone/50 hover:text-orangeone"
@@ -104,7 +110,14 @@
   </div>
 
   {{-- Barre de recherche --}}
-  <form method="GET" x-show="tab === 'catalogue' && filtersOpen" x-cloak class="mb-6">
+  <form method="GET" x-show="tab === 'catalogue' && filtersOpen" x-cloak
+        x-transition:enter="transition ease-out duration-200"
+        x-transition:enter-start="opacity-0 scale-95"
+        x-transition:enter-end="opacity-100 scale-100"
+        x-transition:leave="transition ease-in duration-150"
+        x-transition:leave-start="opacity-100 scale-100"
+        x-transition:leave-end="opacity-0 scale-95"
+        class="mb-6">
     <div class="flex flex-wrap items-end gap-3 rounded-[10px] border border-gray-200 bg-white p-3 shadow-sm">
       <div class="w-full md:w-1/2">
         <label for="search" class="sr-only">Recherche</label>
@@ -137,7 +150,13 @@
   </form>
 
   {{-- ── CATALOGUE ─────────────────────────────────────────────────────────── --}}
-  <section x-show="tab === 'catalogue'" x-cloak>
+  <section x-show="tab === 'catalogue'" x-cloak
+           x-transition:enter="transition ease-out duration-200"
+           x-transition:enter-start="opacity-0 scale-95"
+           x-transition:enter-end="opacity-100 scale-100"
+           x-transition:leave="transition ease-in duration-150"
+           x-transition:leave-start="opacity-100 scale-100"
+           x-transition:leave-end="opacity-0 scale-95">
     <div class="space-y-8">
       {{-- Tableau des modules --}}
       <div class="overflow-x-auto bg-white shadow-md rounded-[20px] border-2 border-bleuone/20">
@@ -214,17 +233,34 @@
                 </td>
 
                 <td class="w-[210px] px-6 py-4">
-                  @if($statut === 'indisponible')
-                    <span class="whitespace-nowrap text-sm text-gray-400">Accès indisponible</span>
-                  @elseif($officialUrl)
-                    <a href="{{ $officialUrl }}"
-                       class="btn-oneduc whitespace-nowrap !px-3 !py-1 !text-sm">
-                      <x-icons.eye-iconify class="h-4 w-4" />
-                      Voir le module
-                    </a>
-                  @else
-                    <span class="whitespace-nowrap text-sm text-gray-400">Accès indisponible</span>
-                  @endif
+                  <div class="flex flex-wrap items-center gap-2">
+                    @if($statut === 'indisponible')
+                      <span class="whitespace-nowrap text-sm text-gray-400">Accès indisponible</span>
+                    @elseif($officialUrl)
+                      <a href="{{ $officialUrl }}"
+                         class="btn-oneduc whitespace-nowrap !px-3 !py-1 !text-sm">
+                        <x-icons.eye-iconify class="h-4 w-4" />
+                        Voir le module
+                      </a>
+                    @else
+                      <span class="whitespace-nowrap text-sm text-gray-400">Accès indisponible</span>
+                    @endif
+
+                    @if(!$module->is_trainer_authored)
+                      <button type="button" x-data x-on:click="$dispatch('open-modal', 'duplicate-module-{{ $module->id }}')"
+                              class="whitespace-nowrap rounded-[8px] border border-emerald-300 bg-emerald-50 px-3 py-1 text-sm font-bold text-emerald-700 hover:bg-emerald-100 transition">
+                        Dupliquer
+                      </button>
+                      <x-confirm-modal
+                        name="duplicate-module-{{ $module->id }}"
+                        title="Dupliquer ce module ?"
+                        message="Il sera copié dans 'Mes modules' pour que vous puissiez le modifier librement."
+                        :action="route('formateur.modules.builder.duplicate', $module)"
+                        method="POST"
+                        confirm-label="Dupliquer"
+                      />
+                    @endif
+                  </div>
                 </td>
               </tr>
             @empty
@@ -252,7 +288,13 @@
   </section>
 
   {{-- ── MES PARCOURS ──────────────────────────────────────────────────────── --}}
-  <section x-show="tab === 'parcours'" x-cloak>
+  <section x-show="tab === 'parcours'" x-cloak
+           x-transition:enter="transition ease-out duration-200"
+           x-transition:enter-start="opacity-0 scale-95"
+           x-transition:enter-end="opacity-100 scale-100"
+           x-transition:leave="transition ease-in duration-150"
+           x-transition:leave-start="opacity-100 scale-100"
+           x-transition:leave-end="opacity-0 scale-95">
 
     @if ($mesParcours->isNotEmpty())
       <div class="flex justify-end mb-4">

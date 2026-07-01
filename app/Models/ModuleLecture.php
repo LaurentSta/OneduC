@@ -25,6 +25,8 @@ class ModuleLecture extends Model
         'scorm_package_version_id',
         'use_active_scorm_version',
         'content_type',
+        'html_content',
+        'content_blocks',
         'duration',
         'slide_count',
         'question_count',
@@ -44,6 +46,7 @@ class ModuleLecture extends Model
         'live_quiz_entry_enabled' => 'boolean',
         'use_active_scorm_version' => 'boolean',
         'slides_converted_at' => 'datetime',
+        'content_blocks' => 'array',
     ];
 
     public function section()

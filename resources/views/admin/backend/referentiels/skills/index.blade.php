@@ -85,17 +85,17 @@
                                     Éditer
                                 </a>
 
-                                <form action="{{ route('admin.referentiels.skills.destroy', [$referentiel, $skill]) }}"
-                                      method="POST"
-                                      onsubmit="return confirm('Supprimer cette compétence ?')">
-                                    @csrf
-                                    @method('DELETE')
-
-                                    <button type="submit"
-                                            class="px-3 py-1.5 bg-red-600 text-white text-xs rounded hover:bg-red-700">
-                                        Supprimer
-                                    </button>
-                                </form>
+                                <button type="button" x-data x-on:click="$dispatch('open-modal', 'delete-skill-{{ $skill->id }}')"
+                                        class="px-3 py-1.5 bg-red-600 text-white text-xs rounded hover:bg-red-700">
+                                    Supprimer
+                                </button>
+                                <x-confirm-modal
+                                    name="delete-skill-{{ $skill->id }}"
+                                    title="Supprimer cette compétence ?"
+                                    :action="route('admin.referentiels.skills.destroy', [$referentiel, $skill])"
+                                    method="DELETE"
+                                    confirm-label="Supprimer"
+                                />
                             </div>
                         </td>
                     </tr>

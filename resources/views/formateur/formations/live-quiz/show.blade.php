@@ -244,7 +244,7 @@
                                 </span>
                             </button>
 
-                            <div x-show="open" x-collapse class="mt-4 space-y-3">
+                            <div x-show="open" x-collapse.duration.400ms class="mt-4 space-y-3">
                                 @if ((string) $currentQuestion->type === 'cloze')
                                     @php
                                         $blanks = is_array(data_get($currentQuestion->payload, 'blanks')) ? data_get($currentQuestion->payload, 'blanks') : [];

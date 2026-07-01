@@ -120,7 +120,14 @@
         </div>
     </header>
 
-    <div x-show="showInstructions" x-cloak class="fixed inset-0 z-50">
+    <div x-show="showInstructions" x-cloak
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-50">
         <div class="absolute inset-0 bg-slate-900/45" @click="showInstructions = false"></div>
         <section
             x-transition:enter="transition ease-out duration-200"
@@ -156,6 +163,12 @@
         <div
             x-show="feedback"
             x-cloak
+            x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="opacity-0 scale-95"
+            x-transition:enter-end="opacity-100 scale-100"
+            x-transition:leave="transition ease-in duration-150"
+            x-transition:leave-start="opacity-100 scale-100"
+            x-transition:leave-end="opacity-0 scale-95"
             class="mb-6 rounded-[18px] border border-orangeone/25 bg-orangeone/10 px-5 py-4 text-sm leading-6 text-orangeone"
         >
             <p class="font-bold" x-text="feedback ? feedback.title : ''"></p>
@@ -191,7 +204,14 @@
             <div class="mb-2 mt-6 h-1 w-full rounded bg-gray-100"></div>
         </nav>
 
-        <section x-show="activeTab === 'general'" x-cloak class="animate-fade-in-down pt-6">
+        <section x-show="activeTab === 'general'" x-cloak
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0 scale-95"
+                 x-transition:enter-end="opacity-100 scale-100"
+                 x-transition:leave="transition ease-in duration-150"
+                 x-transition:leave-start="opacity-100 scale-100"
+                 x-transition:leave-end="opacity-0 scale-95"
+                 class="animate-fade-in-down pt-6">
             <div class="mb-6">
                 <label for="sim_group_name" class="mb-2 block text-base font-medium text-gray-900">Nom du groupe</label>
                 <input id="sim_group_name" type="text" value="Hygiene alimentaire 2026"
@@ -256,7 +276,14 @@
             </div>
         </section>
 
-        <section x-show="activeTab === 'stagiaires'" x-cloak class="animate-fade-in-down pt-6">
+        <section x-show="activeTab === 'stagiaires'" x-cloak
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0 scale-95"
+                 x-transition:enter-end="opacity-100 scale-100"
+                 x-transition:leave="transition ease-in duration-150"
+                 x-transition:leave-start="opacity-100 scale-100"
+                 x-transition:leave-end="opacity-0 scale-95"
+                 class="animate-fade-in-down pt-6">
             <div class="mb-4 flex items-center gap-2">
                 <h3 class="font-raleway text-xl font-bold text-bleuone">Liste des stagiaires</h3>
             </div>
@@ -305,7 +332,14 @@
             </div>
         </section>
 
-        <section x-show="activeTab === 'parcours'" x-cloak class="animate-fade-in-down pt-6">
+        <section x-show="activeTab === 'parcours'" x-cloak
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0 scale-95"
+                 x-transition:enter-end="opacity-100 scale-100"
+                 x-transition:leave="transition ease-in duration-150"
+                 x-transition:leave-start="opacity-100 scale-100"
+                 x-transition:leave-end="opacity-0 scale-95"
+                 class="animate-fade-in-down pt-6">
             <div class="mb-6 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                 <div>
                     <h3 class="font-raleway text-xl font-bold text-bleuone">Organisation des modules</h3>

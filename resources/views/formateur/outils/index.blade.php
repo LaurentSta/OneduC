@@ -67,7 +67,13 @@
   <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6 mb-8">
 
     {{-- ── NUAGE DE MOTS ──────────────────────────────────────────────── --}}
-    <div x-show="filtre === 'all' || filtre === 'interaction'" class="flex flex-col bg-white rounded-[20px] shadow-md overflow-hidden">
+    <div x-show="filtre === 'all' || filtre === 'interaction'" x-transition:enter="transition ease-out duration-200"
+      x-transition:enter-start="opacity-0 scale-95"
+      x-transition:enter-end="opacity-100 scale-100"
+      x-transition:leave="transition ease-in duration-150"
+      x-transition:leave-start="opacity-100 scale-100"
+      x-transition:leave-end="opacity-0 scale-95"
+      class="flex flex-col bg-white rounded-[20px] shadow-md overflow-hidden">
       <div class="bg-amber-500 px-6 py-5 flex items-center gap-3">
         <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/20">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -120,7 +126,13 @@
     </div>
 
     {{-- ── QUIZ EN DIRECT ─────────────────────────────────────────────── --}}
-    <div x-show="filtre === 'all' || filtre === 'interaction'" class="flex flex-col bg-white rounded-[20px] shadow-md overflow-hidden">
+    <div x-show="filtre === 'all' || filtre === 'interaction'" x-transition:enter="transition ease-out duration-200"
+      x-transition:enter-start="opacity-0 scale-95"
+      x-transition:enter-end="opacity-100 scale-100"
+      x-transition:leave="transition ease-in duration-150"
+      x-transition:leave-start="opacity-100 scale-100"
+      x-transition:leave-end="opacity-0 scale-95"
+      class="flex flex-col bg-white rounded-[20px] shadow-md overflow-hidden">
       <div class="bg-[#004461] px-6 py-5 flex items-center gap-3">
         <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/20">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -151,7 +163,13 @@
     </div>
 
     {{-- ── TABLEAU BLANC ──────────────────────────────────────────────── --}}
-    <div x-show="filtre === 'all' || filtre === 'collaboration'" class="flex flex-col bg-white rounded-[20px] shadow-md overflow-hidden">
+    <div x-show="filtre === 'all' || filtre === 'collaboration'" x-transition:enter="transition ease-out duration-200"
+      x-transition:enter-start="opacity-0 scale-95"
+      x-transition:enter-end="opacity-100 scale-100"
+      x-transition:leave="transition ease-in duration-150"
+      x-transition:leave-start="opacity-100 scale-100"
+      x-transition:leave-end="opacity-0 scale-95"
+      class="flex flex-col bg-white rounded-[20px] shadow-md overflow-hidden">
       <div class="bg-[#E94D2A] px-6 py-5 flex items-center gap-3">
         <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/20">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -199,7 +217,13 @@
     </div>
 
     {{-- ── MUR DE QUESTIONS ANONYME ─────────────────────────────────── --}}
-    <div x-show="filtre === 'all' || filtre === 'interaction'" class="flex flex-col bg-white rounded-[20px] shadow-md overflow-hidden">
+    <div x-show="filtre === 'all' || filtre === 'interaction'" x-transition:enter="transition ease-out duration-200"
+      x-transition:enter-start="opacity-0 scale-95"
+      x-transition:enter-end="opacity-100 scale-100"
+      x-transition:leave="transition ease-in duration-150"
+      x-transition:leave-start="opacity-100 scale-100"
+      x-transition:leave-end="opacity-0 scale-95"
+      class="flex flex-col bg-white rounded-[20px] shadow-md overflow-hidden">
       <div class="bg-indigo-600 px-6 py-5 flex items-center gap-3">
         <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/20">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -253,7 +277,13 @@
     </div>
 
     {{-- ── SONDAGE ─────────────────────────────────────────────────────── --}}
-    <div x-show="filtre === 'all' || filtre === 'interaction'" class="flex flex-col bg-white rounded-[20px] shadow-md overflow-hidden">
+    <div x-show="filtre === 'all' || filtre === 'interaction'" x-transition:enter="transition ease-out duration-200"
+      x-transition:enter-start="opacity-0 scale-95"
+      x-transition:enter-end="opacity-100 scale-100"
+      x-transition:leave="transition ease-in duration-150"
+      x-transition:leave-start="opacity-100 scale-100"
+      x-transition:leave-end="opacity-0 scale-95"
+      class="flex flex-col bg-white rounded-[20px] shadow-md overflow-hidden">
       <div class="bg-teal-600 px-6 py-5 flex items-center gap-3">
         <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/20">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -312,7 +342,13 @@
     </div>
 
     {{-- ── ÉCHELLE DE POSITIONNEMENT ──────────────────────────────────── --}}
-    <div x-show="filtre === 'all' || filtre === 'interaction'" class="flex flex-col bg-white rounded-[20px] shadow-md overflow-hidden">
+    <div x-show="filtre === 'all' || filtre === 'interaction'" x-transition:enter="transition ease-out duration-200"
+      x-transition:enter-start="opacity-0 scale-95"
+      x-transition:enter-end="opacity-100 scale-100"
+      x-transition:leave="transition ease-in duration-150"
+      x-transition:leave-start="opacity-100 scale-100"
+      x-transition:leave-end="opacity-0 scale-95"
+      class="flex flex-col bg-white rounded-[20px] shadow-md overflow-hidden">
       <div class="bg-indigo-600 px-6 py-5 flex items-center gap-3">
         <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/20">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -362,7 +398,13 @@
     </div>
 
     {{-- ── ROUE ALÉATOIRE ─────────────────────────────────────────────── --}}
-    <div x-show="filtre === 'all' || filtre === 'animation'" class="flex flex-col bg-white rounded-[20px] shadow-md overflow-hidden">
+    <div x-show="filtre === 'all' || filtre === 'animation'" x-transition:enter="transition ease-out duration-200"
+      x-transition:enter-start="opacity-0 scale-95"
+      x-transition:enter-end="opacity-100 scale-100"
+      x-transition:leave="transition ease-in duration-150"
+      x-transition:leave-start="opacity-100 scale-100"
+      x-transition:leave-end="opacity-0 scale-95"
+      class="flex flex-col bg-white rounded-[20px] shadow-md overflow-hidden">
       <div class="bg-violet-600 px-6 py-5 flex items-center gap-3">
         <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/20">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -393,7 +435,13 @@
     </div>
 
     {{-- ── MINUTEUR COLLABORATIF ──────────────────────────────────────── --}}
-    <div x-show="filtre === 'all' || filtre === 'animation'" class="flex flex-col bg-white rounded-[20px] shadow-md overflow-hidden">
+    <div x-show="filtre === 'all' || filtre === 'animation'" x-transition:enter="transition ease-out duration-200"
+      x-transition:enter-start="opacity-0 scale-95"
+      x-transition:enter-end="opacity-100 scale-100"
+      x-transition:leave="transition ease-in duration-150"
+      x-transition:leave-start="opacity-100 scale-100"
+      x-transition:leave-end="opacity-0 scale-95"
+      class="flex flex-col bg-white rounded-[20px] shadow-md overflow-hidden">
       <div class="bg-rose-600 px-6 py-5 flex items-center gap-3">
         <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/20">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -437,8 +485,74 @@
       @endif
     </div>
 
+    {{-- ── MES MODULES (MODULE BUILDER) ───────────────────────────────── --}}
+    <div x-show="filtre === 'all'" x-transition:enter="transition ease-out duration-200"
+      x-transition:enter-start="opacity-0 scale-95"
+      x-transition:enter-end="opacity-100 scale-100"
+      x-transition:leave="transition ease-in duration-150"
+      x-transition:leave-start="opacity-100 scale-100"
+      x-transition:leave-end="opacity-0 scale-95"
+      class="flex flex-col bg-white rounded-[20px] shadow-md overflow-hidden">
+      <div class="bg-emerald-600 px-6 py-5 flex items-center gap-3">
+        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/20">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s4.832.477 6 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+          </svg>
+        </div>
+        <h2 class="text-lg font-bold text-white">Mes modules</h2>
+      </div>
+      <div class="flex-1 px-6 py-5 space-y-3">
+        <p class="text-sm text-gray-600 leading-relaxed">
+          Créez vos propres modules de formation (chapitres et leçons en texte riche) et assignez-les à vos groupes, sans passer par le catalogue admin.
+        </p>
+        <div class="flex flex-wrap gap-2 text-[11px]">
+          <span class="rounded-full bg-green-100 px-2.5 py-0.5 font-semibold text-green-700">Présentiel</span>
+          <span class="rounded-full bg-blue-100 px-2.5 py-0.5 font-semibold text-blue-700">Distanciel</span>
+          <span class="rounded-full bg-emerald-100 px-2.5 py-0.5 font-semibold text-emerald-700">Asynchrone</span>
+        </div>
+      </div>
+
+      @if($recentModules->isNotEmpty())
+        <div class="border-t border-gray-100 px-6 py-4">
+          <p class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">Modules récents</p>
+          <div class="space-y-2">
+            @foreach($recentModules as $module)
+              <div class="flex items-center justify-between gap-2">
+                <div class="min-w-0">
+                  <p class="text-xs font-semibold text-gray-800 truncate">{{ $module->module_title }}</p>
+                  <p class="text-[10px] text-gray-400">
+                    {{ $module->sections_count }} chapitre(s) · {{ $module->groups_count }} groupe(s)
+                  </p>
+                </div>
+                <a href="{{ route('formateur.modules.builder.edit', $module) }}"
+                   class="shrink-0 rounded-[6px] bg-emerald-100 px-2 py-1 text-[10px] font-bold text-emerald-700 hover:bg-emerald-200 transition">
+                  Ouvrir
+                </a>
+              </div>
+            @endforeach
+          </div>
+        </div>
+      @endif
+
+      <div class="border-t border-gray-100 px-6 py-4 mt-auto">
+        <a href="{{ route('formateur.modules.builder.index') }}"
+           class="w-full inline-flex items-center justify-center gap-2 rounded-[10px] bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-700 transition">
+          Gérer mes modules
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+          </svg>
+        </a>
+      </div>
+    </div>
+
     {{-- ── PAGE COLLABORATIVE (HEDGEDOC) ─────────────────────────────── --}}
-    <div x-show="filtre === 'all' || filtre === 'collaboration'" class="flex flex-col bg-white rounded-[20px] shadow-md overflow-hidden">
+    <div x-show="filtre === 'all' || filtre === 'collaboration'" x-transition:enter="transition ease-out duration-200"
+      x-transition:enter-start="opacity-0 scale-95"
+      x-transition:enter-end="opacity-100 scale-100"
+      x-transition:leave="transition ease-in duration-150"
+      x-transition:leave-start="opacity-100 scale-100"
+      x-transition:leave-end="opacity-0 scale-95"
+      class="flex flex-col bg-white rounded-[20px] shadow-md overflow-hidden">
       <div class="bg-cyan-600 px-6 py-5 flex items-center gap-3">
         <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/20">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">

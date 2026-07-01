@@ -95,13 +95,26 @@
                         </div>
 
                         <div class="mb-8 mt-6 min-h-[100px]">
-                            <div x-show="activeTab === 'presentation'" x-cloak class="space-y-4 font-lisible text-base leading-8 text-slate-700">
+                            <div x-show="activeTab === 'presentation'" x-cloak
+                                 x-transition:enter="transition ease-out duration-200"
+                                 x-transition:enter-start="opacity-0 scale-95"
+                                 x-transition:enter-end="opacity-100 scale-100"
+                                 x-transition:leave="transition ease-in duration-150"
+                                 x-transition:leave-start="opacity-100 scale-100"
+                                 x-transition:leave-end="opacity-0 scale-95"
+                                 class="space-y-4 font-lisible text-base leading-8 text-slate-700">
                                 @foreach ($currentModule['presentation'] as $paragraph)
                                     <p>{{ $paragraph }}</p>
                                 @endforeach
                             </div>
 
-                            <div x-show="activeTab === 'objectifs'" x-cloak>
+                            <div x-show="activeTab === 'objectifs'" x-cloak
+                                 x-transition:enter="transition ease-out duration-200"
+                                 x-transition:enter-start="opacity-0 scale-95"
+                                 x-transition:enter-end="opacity-100 scale-100"
+                                 x-transition:leave="transition ease-in duration-150"
+                                 x-transition:leave-start="opacity-100 scale-100"
+                                 x-transition:leave-end="opacity-0 scale-95">
                                 <div class="mb-5 rounded-2xl border border-orange-100 bg-orange-50/60 p-5">
                                     <p class="font-varela text-base uppercase tracking-[0.18em] text-orangeone">But du module</p>
                                     <p class="mt-2 font-raleway text-lg font-semibold leading-8 text-bleuone">{{ $specificObjective }}</p>
@@ -118,7 +131,14 @@
                                 </ul>
                             </div>
 
-                            <div x-show="activeTab === 'prerequis'" x-cloak class="rounded-[24px] border border-[#E7EEF3] bg-[#f8f7fa] p-5">
+                            <div x-show="activeTab === 'prerequis'" x-cloak
+                                 x-transition:enter="transition ease-out duration-200"
+                                 x-transition:enter-start="opacity-0 scale-95"
+                                 x-transition:enter-end="opacity-100 scale-100"
+                                 x-transition:leave="transition ease-in duration-150"
+                                 x-transition:leave-start="opacity-100 scale-100"
+                                 x-transition:leave-end="opacity-0 scale-95"
+                                 class="rounded-[24px] border border-[#E7EEF3] bg-[#f8f7fa] p-5">
                                 <h4 class="mb-3 flex items-center gap-2 font-varela text-base text-bleuone">
                                     <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -220,7 +240,14 @@
                                             <div class="h-1.5 bg-orangeone transition-all duration-700" style="width: {{ $chapterProgress }}%"></div>
                                         </div>
 
-                                        <div x-show="openSection === {{ $loop->index }}" x-cloak class="border-t border-gray-100">
+                                        <div x-show="openSection === {{ $loop->index }}" x-cloak
+                                             x-transition:enter="transition ease-out duration-200"
+                                             x-transition:enter-start="opacity-0 scale-95"
+                                             x-transition:enter-end="opacity-100 scale-100"
+                                             x-transition:leave="transition ease-in duration-150"
+                                             x-transition:leave-start="opacity-100 scale-100"
+                                             x-transition:leave-end="opacity-0 scale-95"
+                                             class="border-t border-gray-100">
 
                                             @if ($chapterTip)
                                                 <div class="mx-4 mt-4 flex items-start gap-3 rounded-[14px] border border-orange-100 bg-orange-50/60 px-4 py-3">
@@ -440,6 +467,12 @@
             x-data="{ open: true }"
             x-show="open"
             x-cloak
+            x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="opacity-0 scale-95"
+            x-transition:enter-end="opacity-100 scale-100"
+            x-transition:leave="transition ease-in duration-150"
+            x-transition:leave-start="opacity-100 scale-100"
+            x-transition:leave-end="opacity-0 scale-95"
             class="fixed inset-0 z-50 flex items-center justify-center p-4"
             @keydown.escape.window="open = false"
             role="dialog"

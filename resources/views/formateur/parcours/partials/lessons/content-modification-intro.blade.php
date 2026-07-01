@@ -204,6 +204,12 @@
 
         <div x-show="selectedGroup"
              x-cloak
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 scale-95"
+             x-transition:enter-end="opacity-100 scale-100"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100 scale-100"
+             x-transition:leave-end="opacity-0 scale-95"
              class="mt-6 rounded-[18px] border border-vertone/20 bg-vertone/10 px-5 py-4 text-sm font-semibold text-vertone">
             Groupe selectionne : Hygiene alimentaire 2026. La prochaine etape pourra afficher la fiche du groupe et ses contenus.
         </div>
