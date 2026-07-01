@@ -1150,8 +1150,8 @@ Zones : progressions formateur/admin.
 
 Probleme : nombreuses vues/assets generiques non Oneduc.  
 Impact : complexite, risque de confusion, dette.  
-Solution : identifier routes/vues utilisees, archiver ou supprimer le reste.  
-Zones : `resources/views/content`, `resources/assets/js`, `public/frontend/assets/js`.
+Solution : identifier routes/vues utilisees, archiver ou supprimer le reste. Les vues de template, sources Vite de demo, scripts publics de demo et payloads publics non references ont ete retires par lots.
+Zones restantes a auditer separement : assets vendor, images et fichiers publics explicitement references par les vues.
 
 13. Ameliorer l'accessibilite.
 

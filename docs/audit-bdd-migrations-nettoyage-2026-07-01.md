@@ -602,6 +602,15 @@ Fait dans le lot assets backend demo JS:
 - Conservation des assets vendor, images, CSS et bibliotheques publiques encore utiles ou a auditer separement.
 - Validation par recherche de references applicatives avant suppression.
 
+Fait dans le lot payloads publics de demo:
+
+- Suppression des JSON de fake data Vuexy dans `public/backend/assets/json` et `public/frontend/assets/json`.
+- Suppression de l'audio de demonstration `Water_Lily.mp3` cote backend et frontend.
+- Suppression de `demo.css` cote backend et frontend.
+- Suppression des scripts publics de pages demo Vuexy dans `public/frontend/assets/js`.
+- Conservation des assets vendor, images, logos et fichiers references par les vues applicatives.
+- Validation par recherche de references applicatives avant suppression.
+
 Alternative plus explicite:
 
 1. Creer une serie de migrations baseline par domaine:
@@ -648,4 +657,5 @@ Le nettoyage est faisable, mais le chemin propre n'est pas "DROP les tables vide
 6. Baseline SQL rafraichi sans les tables legacy deja traitees.
 7. Route stagiaire cassee et partials non references supprimes.
 8. Scripts publics backend de demo non references supprimes.
-9. Supprimer des tables uniquement apres sauvegarde et validation metier.
+9. Payloads publics de demo non references supprimes.
+10. Supprimer des tables uniquement apres sauvegarde et validation metier.
