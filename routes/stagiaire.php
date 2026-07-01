@@ -115,9 +115,6 @@ Route::middleware(['auth', 'role:stagiaire', 'track.time'])
             Route::get('/messages', [StagiaireController::class, 'StagiaireMessages'])
                 ->name('messages.index');
 
-            Route::get('/progression/detailmodule', [StagiaireController::class, 'ProgressionDetailModule'])
-                ->name('progression.detailmodule');
-
             Route::get('/formations/{module}/fin', [ModuleController::class, 'finModule'])
                 ->name('module.fin');
 

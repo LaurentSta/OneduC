@@ -590,6 +590,12 @@ Fait dans le lot rafraichissement baseline:
 - Retrait de `contacts` et `learning_objectives` du schema baseline pour les nouvelles installations.
 - Conservation des migrations `drop_contacts_table` et `drop_learning_objectives_table` pour les environnements existants qui ne les auraient pas encore appliquees.
 
+Fait dans le lot route/partials stagiaire:
+
+- Suppression de la route `stagiaire.progression.detailmodule`, qui pointait vers une methode `ProgressionDetailModule` inexistante.
+- Suppression de l'ancienne vue `stagiaire.progression_detailmodule`, plus alimentee par un controleur.
+- Suppression de composants/partials non references: `components.auth-session-status`, `components.oneduc.legal-sidebar`, `formateur.body_dashboard.footer`.
+
 Alternative plus explicite:
 
 1. Creer une serie de migrations baseline par domaine:
@@ -612,7 +618,7 @@ Ordre conseille:
 4. `learning_objectives` legacy. Fait.
 5. Vues auth/admin orphelines. Fait.
 6. Migrations intermediaires consolidees. Fait.
-7. Audit frontend des vues/assets de template.
+7. Audit frontend des vues/assets de template. En cours par lots.
 8. Suppressions de tables seulement apres sauvegarde et validation metier.
 
 ## Ce qu'il ne faut pas supprimer maintenant
@@ -634,4 +640,5 @@ Le nettoyage est faisable, mais le chemin propre n'est pas "DROP les tables vide
 4. Audit vues/assets de template effectue par lots.
 5. Vues auth/admin orphelines supprimees.
 6. Baseline SQL rafraichi sans les tables legacy deja traitees.
-7. Supprimer des tables uniquement apres sauvegarde et validation metier.
+7. Route stagiaire cassee et partials non references supprimes.
+8. Supprimer des tables uniquement apres sauvegarde et validation metier.
