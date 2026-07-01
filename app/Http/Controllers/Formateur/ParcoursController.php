@@ -5,10 +5,10 @@ namespace App\Http\Controllers\Formateur;
 use App\Data\ParcoursFormateur;
 use App\Http\Controllers\Controller;
 use App\Mail\ModuleQuestionnaireSubmitted;
+use App\Models\TrainerPathActivityAttempt;
 use App\Models\TrainerModuleQuestionnaireSubmission;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rule;
 
@@ -183,7 +183,7 @@ class ParcoursController extends Controller
 
         $now = now();
 
-        DB::table('trainer_path_activity_attempts')->updateOrInsert(
+        TrainerPathActivityAttempt::query()->updateOrCreate(
             [
                 'user_id' => auth()->id(),
                 'module_key' => $module,
@@ -196,17 +196,15 @@ class ParcoursController extends Controller
                 'total_items' => 1,
                 'correct_items' => 1,
                 'is_success' => true,
-                'submitted_answer' => json_encode([
+                'submitted_answer' => [
                     'completed_part' => $part,
                     'completed_at' => $now->toIso8601String(),
-                ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
-                'expected_answer' => json_encode([
+                ],
+                'expected_answer' => [
                     'required_part' => $part,
-                ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
-                'wrong_items' => json_encode([], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+                ],
+                'wrong_items' => [],
                 'submitted_at' => $now,
-                'created_at' => $now,
-                'updated_at' => $now,
             ]
         );
     }
@@ -247,7 +245,7 @@ class ParcoursController extends Controller
 
         $now = now();
 
-        DB::table('trainer_path_activity_attempts')->updateOrInsert(
+        TrainerPathActivityAttempt::query()->updateOrCreate(
             [
                 'user_id' => auth()->id(),
                 'module_key' => $module,
@@ -260,7 +258,7 @@ class ParcoursController extends Controller
                 'total_items' => 3,
                 'correct_items' => 3,
                 'is_success' => true,
-                'submitted_answer' => json_encode([
+                'submitted_answer' => [
                     'completed_part' => $part,
                     'completed_at' => $now->toIso8601String(),
                     'group_name' => (string) $request->input('name', ''),
@@ -275,15 +273,13 @@ class ParcoursController extends Controller
                     'temporaryPassword' => (string) $request->input('temporaryPassword', ''),
                     'students' => $request->input('students', []),
                     'modules' => $submittedModules,
-                ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
-                'expected_answer' => json_encode([
+                ],
+                'expected_answer' => [
                     'required_part' => $part,
                     'required_module_ids' => $completionConfig['required_module_ids'] ?? [],
-                ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
-                'wrong_items' => json_encode([], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+                ],
+                'wrong_items' => [],
                 'submitted_at' => $now,
-                'created_at' => $now,
-                'updated_at' => $now,
             ]
         );
 
@@ -306,7 +302,7 @@ class ParcoursController extends Controller
             return [];
         }
 
-        $latestSuccessfulAttempt = DB::table('trainer_path_activity_attempts')
+        $latestSuccessfulAttempt = TrainerPathActivityAttempt::query()
             ->where('user_id', auth()->id())
             ->where('module_key', $module)
             ->where('chapter_key', $chapter)
@@ -465,7 +461,7 @@ class ParcoursController extends Controller
         $activityType = (string) ($currentActivity['type'] ?? 'sorting');
         $limitedAttemptActivities = ['classer-les-elements', 'preparer-informations-utiles'];
 
-        $latestSuccessfulAttempt = DB::table('trainer_path_activity_attempts')
+        $latestSuccessfulAttempt = TrainerPathActivityAttempt::query()
             ->where('user_id', auth()->id())
             ->where('module_key', $module)
             ->where('chapter_key', $chapter)
@@ -486,7 +482,7 @@ class ParcoursController extends Controller
 
         $failedAttempts = 0;
         if (in_array($activity, $limitedAttemptActivities, true)) {
-            $failedAttempts = DB::table('trainer_path_activity_attempts')
+            $failedAttempts = TrainerPathActivityAttempt::query()
                 ->where('user_id', auth()->id())
                 ->where('activity_key', $activity)
                 ->where('is_success', false)
@@ -614,7 +610,7 @@ class ParcoursController extends Controller
         $isSuccess = empty($wrongItems);
         $failedAttempts = 0;
         if (in_array($activity, $limitedAttemptActivities, true)) {
-            $failedAttempts = DB::table('trainer_path_activity_attempts')
+            $failedAttempts = TrainerPathActivityAttempt::query()
                 ->where('user_id', auth()->id())
                 ->where('activity_key', $activity)
                 ->where('is_success', false)
@@ -642,12 +638,12 @@ class ParcoursController extends Controller
                 : 'Placez tous les éléments dans un bloc avant de valider.');
 
         $now = now();
-        $attemptNumber = DB::table('trainer_path_activity_attempts')
+        $attemptNumber = TrainerPathActivityAttempt::query()
             ->where('user_id', auth()->id())
             ->where('activity_key', $activity)
             ->count() + 1;
 
-        DB::table('trainer_path_activity_attempts')->insert([
+        TrainerPathActivityAttempt::query()->create([
             'user_id' => auth()->id(),
             'module_key' => $module,
             'chapter_key' => $chapter,
@@ -658,21 +654,19 @@ class ParcoursController extends Controller
             'total_items' => count($expectedCategories),
             'correct_items' => count($correctItemIds),
             'is_success' => $isSuccess,
-            'submitted_answer' => json_encode([
+            'submitted_answer' => [
                 'placements' => $placements,
                 'submitted_categories' => $submittedCategories,
                 'missing_items' => $missingItemIds,
-            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
-            'expected_answer' => json_encode([
+            ],
+            'expected_answer' => [
                 'categories' => $expectedCategories,
                 'dropzones' => $dropzones->mapWithKeys(
                     fn (array $dropzone): array => [(string) $dropzone['id'] => (string) ($dropzone['label'] ?? $dropzone['id'])]
                 )->all(),
-            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
-            'wrong_items' => json_encode($wrongItems, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            ],
+            'wrong_items' => $wrongItems,
             'submitted_at' => $now,
-            'created_at' => $now,
-            'updated_at' => $now,
         ]);
 
         return response()->json([
@@ -849,7 +843,7 @@ class ParcoursController extends Controller
 
         $expectedActivityTypes = $this->expectedActivityTypesForModule($moduleKey);
 
-        return DB::table('trainer_path_activity_attempts')
+        return TrainerPathActivityAttempt::query()
             ->where('user_id', auth()->id())
             ->where('module_key', $moduleKey)
             ->where('is_success', true)
@@ -881,7 +875,7 @@ class ParcoursController extends Controller
             return $completionMap;
         }
 
-        $successfulAttempts = DB::table('trainer_path_activity_attempts')
+        $successfulAttempts = TrainerPathActivityAttempt::query()
             ->where('user_id', auth()->id())
             ->where('is_success', true)
             ->get(['module_key', 'chapter_key', 'lesson_key', 'activity_key', 'activity_type']);
