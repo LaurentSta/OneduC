@@ -16,6 +16,7 @@ Mode: audit lecture seule initial, corrections non destructives de code/routes, 
 - Baseline restauree avec succes dans une instance MariaDB temporaire isolee: 74 tables, 109 migrations marquees comme executees, puis `Nothing to migrate`.
 - Migrations historiques pruned via `php artisan schema:dump --prune` apres merge et validation de la baseline.
 - Dossier `database/migrations` conserve avec un README pour les futures migrations.
+- Vues, layouts, partials, menus JSON et scripts Vite de demonstration du template retires apres verification d'absence de routes/references applicatives.
 - Verification: `php artisan test` passe avec 101 tests.
 
 
@@ -46,6 +47,8 @@ Conclusion: il ne faut pas commencer par supprimer des tables. Il faut d'abord c
 - `php artisan schema:dump`
 - `php artisan schema:dump --prune`
 - Restauration du schema dans une instance MariaDB temporaire locale, separee de `oneduc`.
+- Verification des vues avec `php artisan view:cache`.
+- Verification frontend avec `npm run build`.
 - Recherches `rg` sur les migrations, modeles, routes, controleurs, vues et tests.
 - Introspection Laravel en lecture seule via `php artisan tinker --execute` pour croiser tables, modeles, references de code et cles etrangeres.
 
@@ -83,6 +86,31 @@ Impact:
 - Aucune table ni donnee applicative n'est supprimee.
 - Les nouvelles installations chargent le schema baseline avant les migrations futures.
 - L'historique detaille reste disponible dans Git avant le commit de pruning.
+
+## Nettoyage des vues et assets de demonstration
+
+Action appliquee apres le pruning:
+
+- Suppression de `resources/views/content`, qui contenait les pages de demonstration du template: ecommerce, chat, calendar, invoice, charts, tables, auth demos, etc.
+- Suppression des partials de demonstration `resources/views/_partials`.
+- Suppression des layouts de demonstration `layoutMaster`, `commonMaster`, `contentNavbarLayout`, `blankLayout`, `horizontalLayout`, `layoutFront` et de `resources/views/layouts/sections`.
+- Suppression des menus JSON de demonstration `resources/menu`.
+- Suppression des scripts Vite de demonstration `resources/assets/js` et de `resources/assets/css/demo.css`.
+
+Verifications:
+
+- Aucune route ne ciblait ces vues.
+- Les layouts applicatifs conserves sont `layouts.app`, `layouts.guest` et `layouts.navigation`.
+- `php artisan view:cache` passe.
+- `php artisan route:list` passe avec 401 routes.
+- `npm run build` passe.
+- `php artisan test` passe avec 101 tests.
+
+Impact:
+
+- Nettoyage non destructif cote base de donnees.
+- Les assets publics et les sources applicatives utilises par `resources/js/app.js` restent en place.
+- Les vues metier Oneduc, admin, formateur, stagiaire et observateur sont conservees.
 
 ## Etat de la base locale
 
@@ -517,6 +545,11 @@ Fait dans le lot pruning:
 - `schema:dump --prune` execute apres merge de la baseline.
 - Migrations historiques retirees du dossier d'execution Laravel.
 - Dossier `database/migrations` conserve pour les futures migrations.
+
+Fait dans le lot vues/assets:
+
+- Suppression des vues et scripts de demonstration du template non routes.
+- Verification `view:cache`, `route:list`, `npm run build` et tests Laravel.
 
 Alternative plus explicite:
 
