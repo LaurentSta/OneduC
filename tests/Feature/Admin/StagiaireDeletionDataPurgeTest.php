@@ -250,15 +250,6 @@ it('purges stagiaire related learning and result data when deleted', function ()
         'updated_at' => now(),
     ]);
 
-    DB::table('learning_objectives')->insert([
-        'module_id' => $context['module_id'],
-        'user_id' => $stagiaire->id,
-        'progress' => 70,
-        'started_at' => now(),
-        'created_at' => now(),
-        'updated_at' => now(),
-    ]);
-
     DB::table('module_completion_notifications')->insert([
         'module_id' => $context['module_id'],
         'stagiaire_id' => $stagiaire->id,
@@ -312,7 +303,6 @@ it('purges stagiaire related learning and result data when deleted', function ()
     $this->assertDatabaseMissing('scorm_evaluation_interactions', ['user_id' => $stagiaire->id]);
     $this->assertDatabaseMissing('lesson_feedbacks', ['user_id' => $stagiaire->id]);
     $this->assertDatabaseMissing('video_segment_trackings', ['user_id' => $stagiaire->id]);
-    $this->assertDatabaseMissing('learning_objectives', ['user_id' => $stagiaire->id]);
     $this->assertDatabaseMissing('module_completion_notifications', ['stagiaire_id' => $stagiaire->id]);
     $this->assertDatabaseMissing('word_cloud_entries', ['user_id' => $stagiaire->id]);
     $this->assertDatabaseMissing('sessions', ['user_id' => $stagiaire->id]);

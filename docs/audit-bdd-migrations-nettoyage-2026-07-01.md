@@ -175,7 +175,6 @@ Tables principales:
 - `module_lectures`
 - `lesson_resources`
 - `lecture_objectives`
-- `learning_objectives`
 - `competencies`
 - `badges`
 - `badge_competency`
@@ -187,10 +186,12 @@ Statut:
 - Le domaine est actif dans les controleurs admin, formateur et stagiaire.
 - `lesson_resources`, `competencies`, `badges` et pivots sont vides localement, mais ils ont des controleurs, routes ou vues.
 
-Attention:
+Decision prise dans le lot objectifs legacy:
 
-- `learning_objectives` semble ancien ou moins central que `lecture_objectives`.
-- Ne pas supprimer sans verifier le besoin metier exact des objectifs historiques.
+- `learning_objectives` n'est plus utilise par l'application.
+- Le domaine actif des objectifs pedagogiques est `lecture_objectives`.
+- Suppression du modele `App\Models\LearningObjective`.
+- Ajout d'une migration de suppression de `learning_objectives` avec garde anti-perte de donnees si des lignes existent.
 
 ### SCORM, quiz et progression
 
@@ -559,7 +560,7 @@ Fait dans le lot PHP/dependances:
 - Suppression des vues d'evaluation `old_*`, non referencees.
 - Suppression d'une ancienne route `/login` doublonnee vers un `LoginController` inexistant; la route active reste `Auth\AuthenticatedSessionController`.
 - Suppression de la dependance NPM inutilisee `@tailwindcss/aspect-ratio`.
-- Conservation volontaire de `learning_objectives`: table encore prise en compte dans la purge utilisateur.
+- Conservation temporaire de `learning_objectives`: decision traitee dans le lot objectifs legacy.
 - Conservation temporaire de `contacts`: decision traitee dans le lot suivant.
 
 Fait dans le lot contacts:
@@ -567,6 +568,13 @@ Fait dans le lot contacts:
 - Decision de ne pas stocker les demandes de contact en base applicative.
 - Suppression du modele `App\Models\Contact`.
 - Ajout d'une migration `drop_contacts_table` avec garde si des donnees inattendues existent.
+
+Fait dans le lot objectifs legacy:
+
+- Decision de conserver `lecture_objectives` comme modele d'objectifs pedagogiques actif.
+- Suppression du modele `App\Models\LearningObjective`.
+- Retrait de `learning_objectives` de la purge manuelle stagiaire et du test associe.
+- Ajout d'une migration `drop_learning_objectives_table` avec garde si des donnees historiques existent.
 
 Alternative plus explicite:
 
@@ -587,9 +595,10 @@ Ordre conseille:
 1. Routes et debug code. Fait.
 2. `trainer_path_activity_attempts` modelisation. Fait.
 3. Contact table/model decision. Fait.
-4. Migrations intermediaires consolidees.
-5. Audit frontend des vues/assets de template.
-6. Suppressions de tables seulement apres sauvegarde et validation metier.
+4. `learning_objectives` legacy. Fait.
+5. Migrations intermediaires consolidees.
+6. Audit frontend des vues/assets de template.
+7. Suppressions de tables seulement apres sauvegarde et validation metier.
 
 ## Ce qu'il ne faut pas supprimer maintenant
 
@@ -605,6 +614,7 @@ Ne pas supprimer uniquement parce que la table est vide:
 Le nettoyage est faisable, mais le chemin propre n'est pas "DROP les tables vides". Etat courant:
 
 1. `contacts`: decision prise, suppression controlee par migration.
-2. Migrations consolidees via un schema baseline teste.
-3. Audit vues/assets de template effectue par lots.
-4. Supprimer des tables uniquement apres sauvegarde et validation metier.
+2. `learning_objectives`: decision prise, suppression controlee par migration.
+3. Migrations consolidees via un schema baseline teste.
+4. Audit vues/assets de template effectue par lots.
+5. Supprimer des tables uniquement apres sauvegarde et validation metier.
