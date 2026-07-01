@@ -110,24 +110,6 @@ CREATE TABLE `competencies` (
   KEY `competencies_is_active_index` (`is_active`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `contacts`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `contacts` (
-  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-  `prenom` varchar(255) DEFAULT NULL,
-  `nom` varchar(255) NOT NULL,
-  `email` varchar(255) NOT NULL,
-  `phone` varchar(255) DEFAULT NULL,
-  `heure_appel` varchar(255) DEFAULT NULL,
-  `type_utilisateur` enum('formateur','stagiaire') NOT NULL,
-  `objet` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`objet`)),
-  `message` text NOT NULL,
-  `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `evaluations`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
@@ -400,25 +382,6 @@ CREATE TABLE `jobs` (
   `created_at` int(10) unsigned NOT NULL,
   PRIMARY KEY (`id`),
   KEY `jobs_queue_index` (`queue`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `learning_objectives`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `learning_objectives` (
-  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-  `module_id` bigint(20) unsigned NOT NULL,
-  `user_id` bigint(20) unsigned NOT NULL,
-  `progress` tinyint(4) NOT NULL DEFAULT 0,
-  `started_at` timestamp NULL DEFAULT NULL,
-  `completed_at` timestamp NULL DEFAULT NULL,
-  `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `learning_objectives_module_id_foreign` (`module_id`),
-  KEY `learning_objectives_user_id_foreign` (`user_id`),
-  CONSTRAINT `learning_objectives_module_id_foreign` FOREIGN KEY (`module_id`) REFERENCES `modules` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `learning_objectives_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `lecture_objective_competency`;
@@ -1644,3 +1607,5 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (106,'2026_06_12_11
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (107,'2026_07_01_000001_add_html_content_to_module_lectures_table',1);
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (108,'2026_07_01_000002_add_is_trainer_authored_to_modules_table',1);
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (109,'2026_07_01_000003_add_content_blocks_to_module_lectures_table',1);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (110,'2026_07_01_211357_drop_contacts_table',2);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (111,'2026_07_01_212025_drop_learning_objectives_table',2);
