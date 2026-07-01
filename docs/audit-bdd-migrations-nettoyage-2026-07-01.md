@@ -551,6 +551,17 @@ Fait dans le lot vues/assets:
 - Suppression des vues et scripts de demonstration du template non routes.
 - Verification `view:cache`, `route:list`, `npm run build` et tests Laravel.
 
+Fait dans le lot PHP/dependances:
+
+- Suppression du controleur vide `HomeController`.
+- Suppression du mailer scaffold inutilise `ContactFormMail`.
+- Suppression des anciennes vues admin SCORM `library_*`, non routees et referenceant des routes inexistantes.
+- Suppression des vues d'evaluation `old_*`, non referencees.
+- Suppression d'une ancienne route `/login` doublonnee vers un `LoginController` inexistant; la route active reste `Auth\AuthenticatedSessionController`.
+- Suppression de la dependance NPM inutilisee `@tailwindcss/aspect-ratio`.
+- Conservation volontaire de `learning_objectives`: table encore prise en compte dans la purge utilisateur.
+- Conservation volontaire de `contacts`: decision produit/RGPD toujours necessaire avant migration destructive.
+
 Alternative plus explicite:
 
 1. Creer une serie de migrations baseline par domaine:

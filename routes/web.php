@@ -59,8 +59,6 @@ Route::get('/media/storage/{path}', function (string $path) {
     return response()->file($disk->path($path));
 })->where('path', '.*')->name('media.storage');
 
-// Tes routes existantes restent inchangées, elles seront ciblées par les boutons du Hub
-Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::get('/stagiaire/connexion', [\App\Http\Controllers\UserController::class, 'showCodeLoginForm'])->name('stagiaire.code.form');
 
 
