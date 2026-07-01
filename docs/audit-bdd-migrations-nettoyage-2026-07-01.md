@@ -584,6 +584,12 @@ Fait dans le lot vues auth/admin:
 - Suppression du login Breeze `auth.login`, remplace par `frontend.contenu.login`.
 - Suppression de l'ancien forgot-password stagiaire Vuexy, remplace par `auth.forgot-password`.
 
+Fait dans le lot rafraichissement baseline:
+
+- Regeneration de `database/schema/mysql-schema.sql` apres execution des migrations de suppression legacy.
+- Retrait de `contacts` et `learning_objectives` du schema baseline pour les nouvelles installations.
+- Conservation des migrations `drop_contacts_table` et `drop_learning_objectives_table` pour les environnements existants qui ne les auraient pas encore appliquees.
+
 Alternative plus explicite:
 
 1. Creer une serie de migrations baseline par domaine:
@@ -605,7 +611,7 @@ Ordre conseille:
 3. Contact table/model decision. Fait.
 4. `learning_objectives` legacy. Fait.
 5. Vues auth/admin orphelines. Fait.
-6. Migrations intermediaires consolidees.
+6. Migrations intermediaires consolidees. Fait.
 7. Audit frontend des vues/assets de template.
 8. Suppressions de tables seulement apres sauvegarde et validation metier.
 
@@ -627,4 +633,5 @@ Le nettoyage est faisable, mais le chemin propre n'est pas "DROP les tables vide
 3. Migrations consolidees via un schema baseline teste.
 4. Audit vues/assets de template effectue par lots.
 5. Vues auth/admin orphelines supprimees.
-6. Supprimer des tables uniquement apres sauvegarde et validation metier.
+6. Baseline SQL rafraichi sans les tables legacy deja traitees.
+7. Supprimer des tables uniquement apres sauvegarde et validation metier.
