@@ -59,7 +59,7 @@
           <div
             id="panel-objectifs"
             x-show="openItem === 1"
-            x-collapse
+            x-collapse.duration.400ms
             class="overflow-hidden p-4 bg-white font-lisible text-[17px] text-gray-800 leading-relaxed"
           >
             @if($lecturesWithObjectives->isNotEmpty())
@@ -104,7 +104,7 @@
         <div
           id="panel-questions"
           x-show="openItem === 2"
-          x-collapse
+          x-collapse.duration.400ms
           class="overflow-hidden p-4 bg-white font-lisible text-[17px] text-gray-800 leading-relaxed
                  [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:space-y-1
                  [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:space-y-1

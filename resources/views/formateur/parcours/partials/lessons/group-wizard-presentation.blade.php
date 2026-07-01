@@ -25,6 +25,12 @@
                 <section
                     x-show="page === {{ $pageIndex }}"
                     x-cloak
+                    x-transition:enter="transition ease-out duration-200"
+                    x-transition:enter-start="opacity-0 scale-95"
+                    x-transition:enter-end="opacity-100 scale-100"
+                    x-transition:leave="transition ease-in duration-150"
+                    x-transition:leave-start="opacity-100 scale-100"
+                    x-transition:leave-end="opacity-0 scale-95"
                     class="h-full w-full bg-white"
                     style="display: none;"
                 ></section>
@@ -38,6 +44,12 @@
                         type="button"
                         x-show="page > 1"
                         x-cloak
+                        x-transition:enter="transition ease-out duration-200"
+                        x-transition:enter-start="opacity-0 scale-95"
+                        x-transition:enter-end="opacity-100 scale-100"
+                        x-transition:leave="transition ease-in duration-150"
+                        x-transition:leave-start="opacity-100 scale-100"
+                        x-transition:leave-end="opacity-0 scale-95"
                         @click="previous()"
                         class="inline-flex items-center rounded-full border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-orangeone hover:text-orangeone"
                         style="display: none;"
@@ -51,6 +63,12 @@
                         type="button"
                         x-show="page < pageCount"
                         x-cloak
+                        x-transition:enter="transition ease-out duration-200"
+                        x-transition:enter-start="opacity-0 scale-95"
+                        x-transition:enter-end="opacity-100 scale-100"
+                        x-transition:leave="transition ease-in duration-150"
+                        x-transition:leave-start="opacity-100 scale-100"
+                        x-transition:leave-end="opacity-0 scale-95"
                         @click="next()"
                         class="btn-oneduc !rounded-full !px-6 !py-3 !text-sm"
                         style="display: none;"

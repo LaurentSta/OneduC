@@ -266,6 +266,12 @@
                     <div
                         x-show="datesOpen"
                         x-cloak
+                        x-transition:enter="transition ease-out duration-200"
+                        x-transition:enter-start="opacity-0 scale-95"
+                        x-transition:enter-end="opacity-100 scale-100"
+                        x-transition:leave="transition ease-in duration-150"
+                        x-transition:leave-start="opacity-100 scale-100"
+                        x-transition:leave-end="opacity-0 scale-95"
                         class="fixed inset-0 flex items-center justify-center p-4"
                         style="z-index: 99999;"
                         aria-modal="true"
@@ -305,7 +311,7 @@
                 </template>
 
                 {{-- CONTENU DÉTAILLÉ --}}
-                <div x-show="open" x-collapse>
+                <div x-show="open" x-collapse.duration.400ms>
                     <div class="border-t border-gray-100 bg-gray-50/30">
                         @foreach ($scores as $score)
                             <div class="px-6 py-4 border-b border-gray-100 last:border-0 hover:bg-white transition-colors">

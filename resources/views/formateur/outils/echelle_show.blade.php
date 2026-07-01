@@ -68,6 +68,12 @@
       $max = $qStats['max'] ?? 10;
     @endphp
     <section x-show="activeQ === {{ $qi }}" x-cloak
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 scale-95"
+             x-transition:enter-end="opacity-100 scale-100"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100 scale-100"
+             x-transition:leave-end="opacity-0 scale-95"
              class="bg-white rounded-[20px] shadow-md p-6 mb-6"
              data-question-block="{{ $qi }}">
 

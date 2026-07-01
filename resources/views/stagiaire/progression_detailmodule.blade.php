@@ -15,7 +15,7 @@
             </button>
 
             <!-- Contenu Accordéon -->
-            <div x-show="open" x-collapse class="bg-white px-6 py-4">
+            <div x-show="open" x-collapse.duration.400ms class="bg-white px-6 py-4">
                 <table class="min-w-full table-auto text-sm text-left">
                     <thead class="bg-gray-100 text-gray-700 font-semibold">
                         <tr>

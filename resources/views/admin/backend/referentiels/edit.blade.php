@@ -172,29 +172,22 @@
                 La suppression est une suppression logique. Le référentiel pourra être restauré si vous mettez en place un écran “Supprimés”.
             </p>
 
-            <form id="delete-form-{{ $referentiel->id }}"
-                  action="{{ route('admin.referentiels.destroy', $referentiel->id) }}"
-                  method="POST">
-                @csrf
-                @method('DELETE')
-
-                <button type="button"
-                        onclick="confirmDelete()"
-                        class="inline-flex items-center px-4 py-2 bg-red-600 text-white text-sm font-semibold rounded hover:bg-red-700 transition">
-                    Supprimer le référentiel
-                </button>
-            </form>
+            <button type="button"
+                    x-data
+                    x-on:click="$dispatch('open-modal', 'delete-referentiel-{{ $referentiel->id }}')"
+                    class="inline-flex items-center px-4 py-2 bg-red-600 text-white text-sm font-semibold rounded hover:bg-red-700 transition">
+                Supprimer le référentiel
+            </button>
+            <x-confirm-modal
+                name="delete-referentiel-{{ $referentiel->id }}"
+                title="Supprimer ce référentiel ?"
+                :action="route('admin.referentiels.destroy', $referentiel->id)"
+                method="DELETE"
+                confirm-label="Supprimer"
+            />
         </div>
 
     </div>
 </div>
-
-<script>
-    function confirmDelete() {
-        if (confirm("Êtes-vous sûr de vouloir supprimer ce référentiel ?")) {
-            document.getElementById('delete-form-{{ $referentiel->id }}').submit();
-        }
-    }
-</script>
 
 @endsection

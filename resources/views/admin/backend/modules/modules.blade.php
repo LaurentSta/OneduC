@@ -118,15 +118,18 @@
                     Contenu
                   </a>
 
-                  <form action="{{ route('admin.modules.delete', ['id' => $module->id]) }}" method="POST" class="delete-module-form inline-block" onsubmit="return confirm('Supprimer ce module ?')">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit"
-                            class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-red-200 text-red-700 hover:bg-red-600 hover:text-white transition text-xs font-varela cursor-pointer">
-                      <i class="ti ti-trash"></i>
-                      Supprimer
-                    </button>
-                  </form>
+                  <button type="button" x-data x-on:click="$dispatch('open-modal', 'delete-module-{{ $module->id }}')"
+                          class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-red-200 text-red-700 hover:bg-red-600 hover:text-white transition text-xs font-varela cursor-pointer">
+                    <i class="ti ti-trash"></i>
+                    Supprimer
+                  </button>
+                  <x-confirm-modal
+                    name="delete-module-{{ $module->id }}"
+                    title="Supprimer ce module ?"
+                    :action="route('admin.modules.delete', ['id' => $module->id])"
+                    method="DELETE"
+                    confirm-label="Supprimer"
+                  />
                 </div>
               </td>
             </tr>
@@ -180,15 +183,6 @@
         style: { fontSize: "16px", borderRadius: "10px" }
       }).showToast();
     @endif
-
-    document.querySelectorAll('.delete-module-form').forEach(form => {
-      form.addEventListener('submit', function (e) {
-        e.preventDefault();
-        if (confirm("Êtes-vous sûr de vouloir supprimer ce module ?")) {
-          this.submit();
-        }
-      });
-    });
   });
 </script>
 

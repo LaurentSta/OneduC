@@ -202,7 +202,7 @@
 	                        <div
 	                            id="sidebar-chapter-{{ $chapterKey }}"
 	                            x-show="openSidebarChapter === '{{ $chapterKey }}'"
-	                            x-collapse
+	                            x-collapse.duration.400ms
 	                            x-cloak
 	                            class="col-span-2 border-t border-gray-50 bg-white"
 	                        >

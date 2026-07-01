@@ -324,7 +324,13 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr class="border-t" x-show="!profileDeleted">
+                                <tr class="border-t" x-show="!profileDeleted"
+                                    x-transition:enter="transition ease-out duration-200"
+                                    x-transition:enter-start="opacity-0 scale-95"
+                                    x-transition:enter-end="opacity-100 scale-100"
+                                    x-transition:leave="transition ease-in duration-150"
+                                    x-transition:leave-start="opacity-100 scale-100"
+                                    x-transition:leave-end="opacity-0 scale-95">
                                     <td class="px-4 py-4 font-semibold">Marc Lefebvre</td>
                                     <td class="px-4 py-4">
                                         <span class="rounded-full bg-orangeone/10 px-3 py-1 text-xs font-bold text-orangeone">Profil incorrect</span>
@@ -335,7 +341,13 @@
                                         </button>
                                     </td>
                                 </tr>
-                                <tr class="border-t" x-show="profileDeleted && !profileRecreated" x-cloak>
+                                <tr class="border-t" x-show="profileDeleted && !profileRecreated" x-cloak
+                                    x-transition:enter="transition ease-out duration-200"
+                                    x-transition:enter-start="opacity-0 scale-95"
+                                    x-transition:enter-end="opacity-100 scale-100"
+                                    x-transition:leave="transition ease-in duration-150"
+                                    x-transition:leave-start="opacity-100 scale-100"
+                                    x-transition:leave-end="opacity-0 scale-95">
                                     <td class="px-4 py-4 text-slate-400">Marc Lefebvre</td>
                                     <td class="px-4 py-4">
                                         <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-500">Supprime</span>
@@ -346,7 +358,13 @@
                                         </button>
                                     </td>
                                 </tr>
-                                <tr class="border-t" x-show="profileRecreated" x-cloak>
+                                <tr class="border-t" x-show="profileRecreated" x-cloak
+                                    x-transition:enter="transition ease-out duration-200"
+                                    x-transition:enter-start="opacity-0 scale-95"
+                                    x-transition:enter-end="opacity-100 scale-100"
+                                    x-transition:leave="transition ease-in duration-150"
+                                    x-transition:leave-start="opacity-100 scale-100"
+                                    x-transition:leave-end="opacity-0 scale-95">
                                     <td class="px-4 py-4 font-semibold">Marc Lefebvre</td>
                                     <td class="px-4 py-4">
                                         <span class="rounded-full bg-vertone/10 px-3 py-1 text-xs font-bold text-vertone">Profil propre</span>
@@ -357,7 +375,14 @@
                         </table>
                     </div>
 
-                    <div x-show="profileRecreated" x-cloak class="mt-5 flex justify-end">
+                    <div x-show="profileRecreated" x-cloak
+                         x-transition:enter="transition ease-out duration-200"
+                         x-transition:enter-start="opacity-0 scale-95"
+                         x-transition:enter-end="opacity-100 scale-100"
+                         x-transition:leave="transition ease-in duration-150"
+                         x-transition:leave-start="opacity-100 scale-100"
+                         x-transition:leave-end="opacity-0 scale-95"
+                         class="mt-5 flex justify-end">
                         <a href="{{ $mixedNextUrl }}" class="btn-oneduc !rounded-full !px-6 !py-3">
                             Continuer
                             <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">

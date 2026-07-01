@@ -207,15 +207,16 @@
                 Modifier
               </a>
               @if($isPrimaryTrainer)
-                <form action="{{ route('formateur.groupes.destroy', $groupe->id) }}" method="POST"
-                      onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce groupe ?');"
-                      class="w-1/2">
-                  @csrf
-                  @method('DELETE')
-                  <button type="submit" class="btn-oneduc-blue w-full">
-                    Supprimer
-                  </button>
-                </form>
+                <button type="button" x-data x-on:click="$dispatch('open-modal', 'delete-groupe-{{ $groupe->id }}')" class="btn-oneduc-blue w-1/2">
+                  Supprimer
+                </button>
+                <x-confirm-modal
+                  name="delete-groupe-{{ $groupe->id }}"
+                  title="Êtes-vous sûr de vouloir supprimer ce groupe ?"
+                  :action="route('formateur.groupes.destroy', $groupe->id)"
+                  method="DELETE"
+                  confirm-label="Supprimer"
+                />
               @endif
             </div>
 

@@ -16,7 +16,8 @@
         || request()->routeIs('formateur.sondages.*')
         || request()->routeIs('formateur.pages-collaboratives.*')
         || request()->routeIs('formateur.live-quiz.*')
-        || request()->routeIs('formateur.groupes.whiteboard.*');
+        || request()->routeIs('formateur.groupes.whiteboard.*')
+        || request()->routeIs('formateur.modules.builder.*');
 
     $isProgressionActive = request()->routeIs('formateur.progressions.*')
         || request()->routeIs('formateur.progression.*');

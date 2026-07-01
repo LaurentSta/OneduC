@@ -91,7 +91,14 @@
                 <p class="text-xs text-gray-500 mt-0.5">
                   {{ $formateurName }} · {{ $message->created_at->diffForHumans() }}
                 </p>
-                <p x-show="!open" class="text-xs text-gray-600 mt-1 truncate">
+                <p x-show="!open" x-cloak
+                    x-transition:enter="transition ease-out duration-200"
+                    x-transition:enter-start="opacity-0 scale-95"
+                    x-transition:enter-end="opacity-100 scale-100"
+                    x-transition:leave="transition ease-in duration-150"
+                    x-transition:leave-start="opacity-100 scale-100"
+                    x-transition:leave-end="opacity-0 scale-95"
+                    class="text-xs text-gray-600 mt-1 truncate">
                   {{ mb_strimwidth($message->body, 0, 100, '…') }}
                 </p>
               </div>
@@ -103,7 +110,7 @@
               </svg>
             </button>
 
-            <div x-show="open" x-cloak x-collapse class="px-5 pb-5 border-t border-gray-100">
+            <div x-show="open" x-cloak x-collapse.duration.400ms class="px-5 pb-5 border-t border-gray-100">
               <p class="text-sm text-gray-700 whitespace-pre-wrap pt-4 font-lisible leading-relaxed">{{ $message->body }}</p>
               <p class="text-xs text-gray-400 mt-3">Reçu le {{ $message->created_at->format('d/m/Y à H:i') }}</p>
             </div>

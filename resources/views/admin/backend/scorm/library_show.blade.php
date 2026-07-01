@@ -129,17 +129,21 @@
                                         @endif
 
                                         {{-- Supprimer --}}
-                                        <form method="POST" action="{{ route('admin.scorm.library.versions.destroy', $v) }}"
-                                              onsubmit="return confirm('Supprimer définitivement cette version ? Cette action est irréversible.');">
-                                            @csrf
-                                            @method('DELETE')
-
-                                            <button type="submit"
-                                                    class="inline-flex items-center px-3 py-2 text-sm font-semibold rounded-lg border {{ $canDelete ? 'border-red-300 text-red-700 hover:bg-red-50' : 'border-gray-200 text-gray-400 cursor-not-allowed' }}"
-                                                    {{ $canDelete ? '' : 'disabled' }}>
-                                                Supprimer
-                                            </button>
-                                        </form>
+                                        <button type="button"
+                                                x-data
+                                                x-on:click="$dispatch('open-modal', 'delete-version-{{ $v->id }}')"
+                                                class="inline-flex items-center px-3 py-2 text-sm font-semibold rounded-lg border {{ $canDelete ? 'border-red-300 text-red-700 hover:bg-red-50' : 'border-gray-200 text-gray-400 cursor-not-allowed' }}"
+                                                {{ $canDelete ? '' : 'disabled' }}>
+                                            Supprimer
+                                        </button>
+                                        <x-confirm-modal
+                                            name="delete-version-{{ $v->id }}"
+                                            title="Supprimer définitivement cette version ?"
+                                            message="Cette action est irréversible."
+                                            :action="route('admin.scorm.library.versions.destroy', $v)"
+                                            method="DELETE"
+                                            confirm-label="Supprimer"
+                                        />
 
                                     </div>
 

@@ -99,12 +99,21 @@
                                     </a>
 
                                     <button type="button"
-                                            onclick="confirmDelete({{ $subcategory->id }})"
+                                            x-data
+                                            x-on:click="$dispatch('open-modal', 'delete-subcategory-{{ $subcategory->id }}')"
                                             class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-red-200 text-red-700
                                                    hover:bg-red-600 hover:text-white transition text-xs font-varela cursor-pointer">
                                         <i class="ti ti-trash"></i>
                                         Supprimer
                                     </button>
+                                    <x-confirm-modal
+                                        name="delete-subcategory-{{ $subcategory->id }}"
+                                        title="Supprimer cette sous-catégorie ?"
+                                        message="Cette action est irréversible."
+                                        :action="route('admin.subcategories.delete', $subcategory->id)"
+                                        method="DELETE"
+                                        confirm-label="Supprimer"
+                                    />
                                 </div>
                             </td>
                         </tr>
@@ -122,20 +131,7 @@
     </div>
 </div>
 
-{{-- Suppression --}}
 <script>
-    function confirmDelete(id) {
-        if (confirm('Êtes-vous sûr de vouloir supprimer cette sous-catégorie ? Cette action est irréversible.')) {
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = "{{ url('/admin/sous-categories') }}/" + id;
-            form.innerHTML = '<input type="hidden" name="_token" value="{{ csrf_token() }}">'
-                           + '<input type="hidden" name="_method" value="DELETE">';
-            document.body.appendChild(form);
-            form.submit();
-        }
-    }
-
     $(document).ready(function () {
         $('#subcategoryTable').DataTable({
             language: { url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/fr-FR.json' },

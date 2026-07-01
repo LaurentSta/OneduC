@@ -1,6 +1,12 @@
 <aside
   x-cloak
   x-show="sidebarOpen"
+  x-transition:enter="transition ease-out duration-200"
+  x-transition:enter-start="opacity-0 scale-95"
+  x-transition:enter-end="opacity-100 scale-100"
+  x-transition:leave="transition ease-in duration-150"
+  x-transition:leave-start="opacity-100 scale-100"
+  x-transition:leave-end="opacity-0 scale-95"
   class="w-80 flex-shrink-0 bg-white border-r border-gray-100 flex flex-col fixed md:sticky z-20"
   style="top: var(--app-header-h, 86px); height: calc(100vh - var(--app-header-h, 86px));"
   role="navigation"
@@ -57,7 +63,7 @@
                 </div>
               </a>
 
-              <div x-show="open" x-collapse class="col-span-2 border-t border-gray-50 bg-white">
+              <div x-show="open" x-collapse.duration.400ms class="col-span-2 border-t border-gray-50 bg-white">
                 <ul class="py-1">
                   @foreach ($section->lectures as $lec)
                     @php

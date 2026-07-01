@@ -14,7 +14,8 @@
   $sectionId = $lecture?->section_id;
   $contentType = (string) ($lecture->content_type ?? 'scorm');
   $isSlidesSelected = $contentType === 'slides';
-  $isScormSelected = !$isSlidesSelected;
+  $isBlocksSelected = $contentType === 'blocks';
+  $isScormSelected = !$isSlidesSelected && !$isBlocksSelected;
 
   // Query propagée : conserve mode/group_id/include_hidden et force anonymous
   $q = array_merge(($contextQuery ?? []), ['anonymous' => 1]);
@@ -218,6 +219,12 @@
             </svg>
             <h3 class="text-lg font-bold text-bleuone">Support slides manquant</h3>
             <p class="text-gray-500 text-sm">Le mode Slides est actif, mais aucun support converti n'est disponible.</p>
+          </div>
+        </div>
+      @elseif ($lecture && $isBlocksSelected)
+        <div class="h-full overflow-y-auto bg-white">
+          <div class="max-w-3xl mx-auto px-6 py-10">
+            @include('shared.lecture_blocks', ['blocks' => $lecture->content_blocks ?? []])
           </div>
         </div>
       @elseif ($lecture && $isScormSelected && $scormSrc)

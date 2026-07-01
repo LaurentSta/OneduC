@@ -61,14 +61,17 @@
                       <i class="ti ti-pencil"></i>
                       Éditer
                     </a>
-                    <form action="{{ route('admin.evaluations.destroy', $evaluation) }}" method="POST" onsubmit="return confirm('Supprimer ?')">
-                      @csrf
-                      @method('DELETE')
-                      <button type="submit" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-red-200 text-red-700 hover:bg-red-600 hover:text-white transition text-xs font-varela cursor-pointer">
-                        <i class="ti ti-trash"></i>
-                        Supprimer
-                      </button>
-                    </form>
+                    <button type="button" x-data x-on:click="$dispatch('open-modal', 'delete-evaluation-{{ $evaluation->id }}')" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-red-200 text-red-700 hover:bg-red-600 hover:text-white transition text-xs font-varela cursor-pointer">
+                      <i class="ti ti-trash"></i>
+                      Supprimer
+                    </button>
+                    <x-confirm-modal
+                      name="delete-evaluation-{{ $evaluation->id }}"
+                      title="Supprimer ?"
+                      :action="route('admin.evaluations.destroy', $evaluation)"
+                      method="DELETE"
+                      confirm-label="Supprimer"
+                    />
                   </div>
                 </td>
               </tr>

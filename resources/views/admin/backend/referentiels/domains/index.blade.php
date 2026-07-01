@@ -80,17 +80,17 @@
                                     Éditer
                                 </a>
 
-                                <form action="{{ route('admin.referentiels.domains.destroy', [$referentiel, $domain]) }}"
-                                      method="POST"
-                                      onsubmit="return confirm('Supprimer ce domaine ?')">
-                                    @csrf
-                                    @method('DELETE')
-
-                                    <button type="submit"
-                                            class="px-3 py-1.5 bg-red-600 text-white text-xs rounded hover:bg-red-700">
-                                        Supprimer
-                                    </button>
-                                </form>
+                                <button type="button" x-data x-on:click="$dispatch('open-modal', 'delete-domain-{{ $domain->id }}')"
+                                        class="px-3 py-1.5 bg-red-600 text-white text-xs rounded hover:bg-red-700">
+                                    Supprimer
+                                </button>
+                                <x-confirm-modal
+                                    name="delete-domain-{{ $domain->id }}"
+                                    title="Supprimer ce domaine ?"
+                                    :action="route('admin.referentiels.domains.destroy', [$referentiel, $domain])"
+                                    method="DELETE"
+                                    confirm-label="Supprimer"
+                                />
                             </div>
                         </td>
                     </tr>

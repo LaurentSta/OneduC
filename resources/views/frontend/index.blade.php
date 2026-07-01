@@ -792,7 +792,7 @@
               </svg>
             </span>
           </button>
-          <div x-show="open === {{ $i }}" x-collapse class="px-6 pb-6 pr-16 text-base leading-relaxed text-slate-600 md:text-lg">
+          <div x-show="open === {{ $i }}" x-collapse.duration.400ms class="px-6 pb-6 pr-16 text-base leading-relaxed text-slate-600 md:text-lg">
             {{ $faq['r'] }}
           </div>
         </article>

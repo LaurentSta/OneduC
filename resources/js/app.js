@@ -33,6 +33,11 @@ function loadGroupWhiteboardWhenNeeded() {
   import('./group-whiteboard-excalidraw.jsx').then(({ mountGroupWhiteboardExcalidraw }) => mountGroupWhiteboardExcalidraw());
 }
 
+function loadModuleBuilderEditorsWhenNeeded() {
+  if (!document.querySelector('[data-block-editor]')) return;
+  import('./formateur-module-builder-editor.jsx').then(({ mountModuleBuilderEditors }) => mountModuleBuilderEditors());
+}
+
 function loadAkeneHeroWhenNeeded() {
   if (!document.querySelector('[data-akene-hero]')) return;
   import('./frontend/akene-hero.js').then(({ initAkeneHero }) => initAkeneHero());
@@ -95,6 +100,7 @@ if (document.readyState === 'loading') {
     loadGroupLessonFlowWhenNeeded();
     loadParcoursBuilderWhenNeeded();
     loadGroupWhiteboardWhenNeeded();
+    loadModuleBuilderEditorsWhenNeeded();
     loadAkeneHeroWhenNeeded();
     initPublicPageTransitions();
   }, { once: true });
@@ -104,6 +110,7 @@ if (document.readyState === 'loading') {
   loadGroupLessonFlowWhenNeeded();
   loadParcoursBuilderWhenNeeded();
   loadGroupWhiteboardWhenNeeded();
+  loadModuleBuilderEditorsWhenNeeded();
   loadAkeneHeroWhenNeeded();
   initPublicPageTransitions();
 }

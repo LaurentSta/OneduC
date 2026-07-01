@@ -14,7 +14,8 @@
     $sectionId = $lecture?->section_id;
     $contentType = (string) ($lecture->content_type ?? 'scorm');
     $isSlidesSelected = $contentType === 'slides';
-    $isScormSelected = !$isSlidesSelected;
+    $isBlocksSelected = $contentType === 'blocks';
+    $isScormSelected = !$isSlidesSelected && !$isBlocksSelected;
 
     // 1. Récupération du statut réel pour savoir si on affiche le bouton au chargement
     $st = $lectureStats[$lectureId] ?? [];
@@ -254,6 +255,31 @@
                     <p class="text-gray-500 text-sm leading-relaxed">
                         Cette lecon est en mode Slides, mais aucun support converti n'est disponible pour le moment.
                     </p>
+                </div>
+            </div>
+        @elseif ($lecture && $isBlocksSelected)
+            <div class="h-full flex flex-col bg-white">
+                <div class="flex-1 overflow-y-auto">
+                    <div class="max-w-3xl mx-auto px-6 py-10">
+                        @include('shared.lecture_blocks', ['blocks' => $lecture->content_blocks ?? []])
+                    </div>
+                </div>
+                <div class="border-t border-gray-200 bg-white px-4 py-3 flex items-center justify-end gap-3">
+                    @if ($lecture->quiz_enabled && $quizStartUrl)
+                        <a href="{{ $quizStartUrl }}" class="btn-oneduc !px-5 !py-2 !text-xs">
+                            Passer au questionnaire
+                            <i class="ti ti-arrow-right"></i>
+                        </a>
+                    @else
+                        <form method="POST" action="{{ route('lecture.valider', ['id' => $lecture->id]) }}">
+                            @csrf
+                            <input type="hidden" name="redirect_to" value="{{ $nextUrl }}">
+                            <button type="submit" class="btn-oneduc !px-5 !py-2 !text-xs">
+                                Continuer
+                                <i class="ti ti-arrow-right"></i>
+                            </button>
+                        </form>
+                    @endif
                 </div>
             </div>
         @elseif ($isScormSelected && $scormSrc)

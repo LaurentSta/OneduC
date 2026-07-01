@@ -31,17 +31,19 @@
               Retour au groupe
             </a>
 
-            <form method="POST"
-                  action="{{ route('formateur.groupes.modules.lecons.reset', ['group' => $group->id, 'module' => $module->id]) }}"
-                  onsubmit="return confirm('Réinitialiser le cheminement de ce groupe pour ce module ?');">
-              @csrf
-              <button type="submit" class="btn-oneduc-blue !px-4 !py-2 !text-sm">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 4v6h6M20 20v-6h-6M20 10a8 8 0 00-14.9-4M4 14a8 8 0 0014.9 4" />
-                </svg>
-                Réinitialiser
-              </button>
-            </form>
+            <button type="button" x-data x-on:click="$dispatch('open-modal', 'reset-lecons-{{ $group->id }}-{{ $module->id }}')" class="btn-oneduc-blue !px-4 !py-2 !text-sm">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 4v6h6M20 20v-6h-6M20 10a8 8 0 00-14.9-4M4 14a8 8 0 0014.9 4" />
+              </svg>
+              Réinitialiser
+            </button>
+            <x-confirm-modal
+              name="reset-lecons-{{ $group->id }}-{{ $module->id }}"
+              title="Réinitialiser le cheminement de ce groupe pour ce module ?"
+              :action="route('formateur.groupes.modules.lecons.reset', ['group' => $group->id, 'module' => $module->id])"
+              method="POST"
+              confirm-label="Réinitialiser"
+            />
           </div>
 
           <div class="flex flex-wrap items-center gap-3 md:ml-auto">

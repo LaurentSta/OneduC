@@ -71,6 +71,12 @@
               <label class="text-xs font-semibold text-gray-600">Questions <span class="text-gray-400">(max 10)</span></label>
               <button type="button"
                       x-show="questions.length < 10"
+                      x-transition:enter="transition ease-out duration-200"
+                      x-transition:enter-start="opacity-0 scale-95"
+                      x-transition:enter-end="opacity-100 scale-100"
+                      x-transition:leave="transition ease-in duration-150"
+                      x-transition:leave-start="opacity-100 scale-100"
+                      x-transition:leave-end="opacity-0 scale-95"
                       @click="questions.push('')"
                       class="inline-flex items-center gap-1 rounded-[6px] border border-amber-300 bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-700 hover:bg-amber-100 transition">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -94,6 +100,12 @@
                   class="flex-1 rounded-[10px] border border-gray-300 px-3 py-2 text-sm focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-200 resize-none"></textarea>
                 <button type="button"
                         x-show="questions.length > 1"
+                        x-transition:enter="transition ease-out duration-200"
+                        x-transition:enter-start="opacity-0 scale-95"
+                        x-transition:enter-end="opacity-100 scale-100"
+                        x-transition:leave="transition ease-in duration-150"
+                        x-transition:leave-start="opacity-100 scale-100"
+                        x-transition:leave-end="opacity-0 scale-95"
                         @click="questions.splice(index, 1)"
                         class="mt-2 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-red-200 bg-white text-red-400 hover:bg-red-50 transition">
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
