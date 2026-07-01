@@ -611,6 +611,13 @@ Fait dans le lot payloads publics de demo:
 - Conservation des assets vendor, images, logos et fichiers references par les vues applicatives.
 - Validation par recherche de references applicatives avant suppression.
 
+Fait dans le lot images backend de demo:
+
+- Suppression des images publiques backend Vuexy non referencees: avatars, backgrounds, customizer, ecommerce, elements, front-pages, icons, illustrations, layouts, pages et products.
+- Suppression des SVG backend de wizard/template dans `public/backend/assets/svg`.
+- Conservation des seuls fichiers backend images references par les vues: `public/backend/assets/img/favicon/favicon.ico` et `public/backend/assets/img/logos/LOGOOneducSVG.svg`.
+- Validation par recherche de references applicatives et publiques avant suppression.
+
 Alternative plus explicite:
 
 1. Creer une serie de migrations baseline par domaine:
@@ -658,4 +665,5 @@ Le nettoyage est faisable, mais le chemin propre n'est pas "DROP les tables vide
 7. Route stagiaire cassee et partials non references supprimes.
 8. Scripts publics backend de demo non references supprimes.
 9. Payloads publics de demo non references supprimes.
-10. Supprimer des tables uniquement apres sauvegarde et validation metier.
+10. Images et SVG publics backend de demo non references supprimes.
+11. Supprimer des tables uniquement apres sauvegarde et validation metier.
