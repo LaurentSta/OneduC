@@ -310,7 +310,6 @@ class User extends Authenticatable
             'pilot_subscriptions',
             'pilot_notification_preferences',
             'word_cloud_entries',
-            'learning_objectives',
             'sessions',
             'activity_journal_entries',
         ];
