@@ -576,6 +576,14 @@ Fait dans le lot objectifs legacy:
 - Retrait de `learning_objectives` de la purge manuelle stagiaire et du test associe.
 - Ajout d'une migration `drop_learning_objectives_table` avec garde si des donnees historiques existent.
 
+Fait dans le lot vues auth/admin:
+
+- Suppression de l'ancien login admin `admin.admin_login`, non reference par une route.
+- Suppression de l'ancien formulaire `admin.backend.groupes.assign_stagiaire`, non reference par une route et pointant vers une route inexistante.
+- Suppression du footer admin `admin.body.footer`, remplace par le footer integre dans `admin.admin_dashboard`.
+- Suppression du login Breeze `auth.login`, remplace par `frontend.contenu.login`.
+- Suppression de l'ancien forgot-password stagiaire Vuexy, remplace par `auth.forgot-password`.
+
 Alternative plus explicite:
 
 1. Creer une serie de migrations baseline par domaine:
@@ -596,9 +604,10 @@ Ordre conseille:
 2. `trainer_path_activity_attempts` modelisation. Fait.
 3. Contact table/model decision. Fait.
 4. `learning_objectives` legacy. Fait.
-5. Migrations intermediaires consolidees.
-6. Audit frontend des vues/assets de template.
-7. Suppressions de tables seulement apres sauvegarde et validation metier.
+5. Vues auth/admin orphelines. Fait.
+6. Migrations intermediaires consolidees.
+7. Audit frontend des vues/assets de template.
+8. Suppressions de tables seulement apres sauvegarde et validation metier.
 
 ## Ce qu'il ne faut pas supprimer maintenant
 
@@ -617,4 +626,5 @@ Le nettoyage est faisable, mais le chemin propre n'est pas "DROP les tables vide
 2. `learning_objectives`: decision prise, suppression controlee par migration.
 3. Migrations consolidees via un schema baseline teste.
 4. Audit vues/assets de template effectue par lots.
-5. Supprimer des tables uniquement apres sauvegarde et validation metier.
+5. Vues auth/admin orphelines supprimees.
+6. Supprimer des tables uniquement apres sauvegarde et validation metier.
