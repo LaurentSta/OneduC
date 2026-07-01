@@ -2,7 +2,7 @@
 
 Date: 2026-07-01
 Projet: Oneduc Dev
-Mode: audit lecture seule initial, puis corrections non destructives de code/routes
+Mode: audit lecture seule initial, corrections non destructives de code/routes, puis baseline schema non destructive
 
 ## Corrections appliquees dans ce lot
 
@@ -12,6 +12,8 @@ Mode: audit lecture seule initial, puis corrections non destructives de code/rou
 - Modele `App\Models\TrainerPathActivityAttempt` ajoute pour la table `trainer_path_activity_attempts`.
 - Usages applicatifs principaux de `trainer_path_activity_attempts` refactorises depuis `DB::table(...)` vers le modele.
 - Archive `database/migrations/migrations.zip` deplacee vers `docs/archives/migrations-legacy-2026-07-01.zip`.
+- Baseline Laravel ajoutee dans `database/schema/mysql-schema.sql` via `php artisan schema:dump`, sans `--prune`.
+- Baseline restauree avec succes dans une instance MariaDB temporaire isolee: 74 tables, 109 migrations marquees comme executees, puis `Nothing to migrate`.
 - Verification: `php artisan test` passe avec 101 tests.
 
 
@@ -39,8 +41,30 @@ Conclusion: il ne faut pas commencer par supprimer des tables. Il faut d'abord c
 - `php artisan db:show --counts --views`
 - `php artisan route:list`
 - `php artisan route:list -v --path=admin/stagiaires`
+- `php artisan schema:dump`
+- Restauration du schema dans une instance MariaDB temporaire locale, separee de `oneduc`.
 - Recherches `rg` sur les migrations, modeles, routes, controleurs, vues et tests.
 - Introspection Laravel en lecture seule via `php artisan tinker --execute` pour croiser tables, modeles, references de code et cles etrangeres.
+
+## Baseline schema Laravel
+
+Fichier ajoute:
+
+- `database/schema/mysql-schema.sql`
+
+Statut:
+
+- Dump genere avec `php artisan schema:dump`.
+- Anciennes migrations conservees: aucun `schema:dump --prune` n'a ete execute.
+- Le fichier contient 74 definitions de tables et les 109 entrees de la table `migrations`.
+- La restauration a ete testee dans une instance MariaDB 10.11.14 temporaire, lancee sur un port isole.
+- Resultat Laravel sur base vide: `Loading stored database schemas`, puis `Nothing to migrate`.
+- La base temporaire et ses fichiers ont ete supprimes apres validation.
+
+Conclusion:
+
+- On dispose maintenant d'un point de reference fiable pour une installation neuve.
+- La prochaine etape peut etre une PR separee de pruning/consolidation, mais seulement apres decision explicite, car elle supprimera ou archivera des fichiers de migration historiques.
 
 ## Etat de la base locale
 
@@ -462,6 +486,13 @@ Option recommandee Laravel:
 4. Tester une installation fraiche: base vide, migrations, seeders, tests.
 5. Comparer le schema obtenu avec la base actuelle.
 6. Quand le schema est valide, envisager `schema:dump --prune` uniquement sur une branche dediee.
+
+Fait dans le lot baseline:
+
+- Dump `database/schema/mysql-schema.sql` genere sans pruning.
+- Restauration testee sur base MariaDB temporaire.
+- Statut valide: 74 tables et 109 migrations restaurees.
+- Tests Laravel complets OK.
 
 Alternative plus explicite:
 
