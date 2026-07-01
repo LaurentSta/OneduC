@@ -596,6 +596,12 @@ Fait dans le lot route/partials stagiaire:
 - Suppression de l'ancienne vue `stagiaire.progression_detailmodule`, plus alimentee par un controleur.
 - Suppression de composants/partials non references: `components.auth-session-status`, `components.oneduc.legal-sidebar`, `formateur.body_dashboard.footer`.
 
+Fait dans le lot assets backend demo JS:
+
+- Suppression des scripts publics de pages demo Vuexy dans `public/backend/assets/js`.
+- Conservation des assets vendor, images, CSS et bibliotheques publiques encore utiles ou a auditer separement.
+- Validation par recherche de references applicatives avant suppression.
+
 Alternative plus explicite:
 
 1. Creer une serie de migrations baseline par domaine:
@@ -641,4 +647,5 @@ Le nettoyage est faisable, mais le chemin propre n'est pas "DROP les tables vide
 5. Vues auth/admin orphelines supprimees.
 6. Baseline SQL rafraichi sans les tables legacy deja traitees.
 7. Route stagiaire cassee et partials non references supprimes.
-8. Supprimer des tables uniquement apres sauvegarde et validation metier.
+8. Scripts publics backend de demo non references supprimes.
+9. Supprimer des tables uniquement apres sauvegarde et validation metier.
