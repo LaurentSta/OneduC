@@ -307,12 +307,12 @@ Constat:
 - Le modele `Contact` existe mais n'est pas utilise.
 - Le formulaire de contact envoie des emails et une notification Discord, mais n'enregistre rien en base.
 
-Decision a prendre:
+Decision prise dans le lot `contacts`:
 
-- Option A: conserver la table et ajouter `Contact::create(...)` dans `ContactController@send`.
-- Option B: supprimer le modele et retirer la table lors de la consolidation, si l'historique des demandes ne doit pas etre stocke.
-
-Je recommande de choisir explicitement. En l'etat, c'est un vrai candidat de nettoyage, mais il n'a pas ete supprime dans ce lot pour eviter de trancher implicitement une question RGPD/metier.
+- Conserver le support par email et Discord, sans historique applicatif en base.
+- Supprimer le modele `Contact`.
+- Ajouter une migration de suppression de `contacts`.
+- Ajouter une garde anti-perte de donnees: si la table contient des lignes au moment du deploiement, la migration s'arrete et demande un export ou une migration explicite avant suppression.
 
 ## Risques et code inutile identifies
 
@@ -513,7 +513,7 @@ Action:
 ### Phase 1: stabiliser sans toucher au schema
 
 1. Corriger/proteger les routes sensibles.
-2. Decider du sort de `contacts`.
+2. Decider du sort de `contacts`. Fait.
 3. Lancer les tests apres chaque lot.
 
 Fait dans le lot courant:
@@ -560,7 +560,13 @@ Fait dans le lot PHP/dependances:
 - Suppression d'une ancienne route `/login` doublonnee vers un `LoginController` inexistant; la route active reste `Auth\AuthenticatedSessionController`.
 - Suppression de la dependance NPM inutilisee `@tailwindcss/aspect-ratio`.
 - Conservation volontaire de `learning_objectives`: table encore prise en compte dans la purge utilisateur.
-- Conservation volontaire de `contacts`: decision produit/RGPD toujours necessaire avant migration destructive.
+- Conservation temporaire de `contacts`: decision traitee dans le lot suivant.
+
+Fait dans le lot contacts:
+
+- Decision de ne pas stocker les demandes de contact en base applicative.
+- Suppression du modele `App\Models\Contact`.
+- Ajout d'une migration `drop_contacts_table` avec garde si des donnees inattendues existent.
 
 Alternative plus explicite:
 
@@ -580,7 +586,7 @@ Ordre conseille:
 
 1. Routes et debug code. Fait.
 2. `trainer_path_activity_attempts` modelisation. Fait.
-3. Contact table/model decision.
+3. Contact table/model decision. Fait.
 4. Migrations intermediaires consolidees.
 5. Audit frontend des vues/assets de template.
 6. Suppressions de tables seulement apres sauvegarde et validation metier.
@@ -596,9 +602,9 @@ Ne pas supprimer uniquement parce que la table est vide:
 
 ## Recommandation finale
 
-Le nettoyage est faisable, mais le chemin propre n'est pas "DROP les tables vides". Le meilleur premier lot est:
+Le nettoyage est faisable, mais le chemin propre n'est pas "DROP les tables vides". Etat courant:
 
-1. Decider si `contacts` doit etre une vraie table d'historique ou disparaitre.
-2. Consolider les migrations via un schema baseline teste.
-3. Auditer les vues/assets de template avant suppression.
+1. `contacts`: decision prise, suppression controlee par migration.
+2. Migrations consolidees via un schema baseline teste.
+3. Audit vues/assets de template effectue par lots.
 4. Supprimer des tables uniquement apres sauvegarde et validation metier.
