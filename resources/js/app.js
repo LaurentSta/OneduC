@@ -3,11 +3,9 @@ import '../css/app.css'; // ✅ Ajoute Tailwind
 import './bootstrap';
 import Alpine from 'alpinejs';
 import collapse from '@alpinejs/collapse';
-import { createModuleBuilderOutline } from './module-builder-outline';
 
 window.Alpine = Alpine;
 Alpine.plugin(collapse);
-Alpine.data('moduleBuilderOutline', createModuleBuilderOutline);
 Alpine.start();
 
 function loadGroupModuleFlowWhenNeeded() {
@@ -45,6 +43,11 @@ window.oneducMountBlockEditors = ensureModuleBuilderEditorsLoaded;
 function loadModuleBuilderEditorsWhenNeeded() {
   if (!document.querySelector('[data-block-editor]')) return;
   ensureModuleBuilderEditorsLoaded();
+}
+
+function loadOutlineEditorWhenNeeded() {
+  if (!document.querySelector('[data-outline-editor]')) return;
+  import('./outline-editor/OutlineEditor.jsx').then(({ mountOutlineEditor }) => mountOutlineEditor());
 }
 
 function loadAkeneHeroWhenNeeded() {
@@ -110,6 +113,7 @@ if (document.readyState === 'loading') {
     loadParcoursBuilderWhenNeeded();
     loadGroupWhiteboardWhenNeeded();
     loadModuleBuilderEditorsWhenNeeded();
+    loadOutlineEditorWhenNeeded();
     loadAkeneHeroWhenNeeded();
     initPublicPageTransitions();
   }, { once: true });
@@ -120,6 +124,7 @@ if (document.readyState === 'loading') {
   loadParcoursBuilderWhenNeeded();
   loadGroupWhiteboardWhenNeeded();
   loadModuleBuilderEditorsWhenNeeded();
+  loadOutlineEditorWhenNeeded();
   loadAkeneHeroWhenNeeded();
   initPublicPageTransitions();
 }

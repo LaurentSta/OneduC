@@ -230,9 +230,12 @@ Route::middleware(['auth', 'role:formateur', 'association.member'])
             Route::post('/{module}/sections/reorder', [ModuleBuilderController::class, 'reorderSections'])->name('sections.reorder');
 
             Route::post('/sections/{section}/lectures', [ModuleBuilderController::class, 'storeLecture'])->name('lectures.store');
+            Route::get('/lectures/{lecture}/edition', [ModuleBuilderController::class, 'editLecture'])->name('lectures.edit');
             Route::put('/lectures/{lecture}', [ModuleBuilderController::class, 'updateLecture'])->name('lectures.update');
             Route::delete('/lectures/{lecture}', [ModuleBuilderController::class, 'destroyLecture'])->name('lectures.destroy');
             Route::post('/sections/{section}/lectures/reorder', [ModuleBuilderController::class, 'reorderLectures'])->name('lectures.reorder');
+            Route::post('/lectures/{lecture}/move', [ModuleBuilderController::class, 'moveLecture'])->name('lectures.move');
+            Route::post('/lectures/{lecture}/promote', [ModuleBuilderController::class, 'promoteLectureToSection'])->name('lectures.promote');
 
             Route::put('/{module}/groupes', [ModuleBuilderController::class, 'assignGroups'])->name('groups.sync');
         });
