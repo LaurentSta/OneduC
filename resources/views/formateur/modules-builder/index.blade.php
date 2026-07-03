@@ -7,7 +7,18 @@
   {{-- En-tête --}}
   <header class="bg-white rounded-[20px] shadow-md px-8 pt-5 pb-6 my-6">
     <div class="flex flex-wrap items-center justify-between gap-4">
-      <div>
+      <div class="flex items-start gap-3">
+        <button type="button"
+                @click="sidebarCollapsed = !sidebarCollapsed"
+                class="hidden lg:inline-flex mt-1 items-center justify-center rounded-[8px] border border-gray-300 bg-white p-2 text-gray-600 hover:bg-gray-50 shrink-0"
+                :aria-expanded="(!sidebarCollapsed).toString()"
+                aria-controls="formateur-sidebar"
+                title="Afficher/masquer le menu">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+        <div>
         <nav class="text-sm font-varela text-gray-500 mb-2">
           <ol class="inline-flex items-center space-x-1">
             <li>
@@ -19,6 +30,7 @@
         </nav>
         <p class="font-raleway text-2xl text-bleuone">Mes modules</p>
         <p class="text-sm text-gray-500 mt-1">Créez vos propres modules de formation (chapitres + leçons en texte riche) et assignez-les à vos groupes.</p>
+        </div>
       </div>
     </div>
   </header>

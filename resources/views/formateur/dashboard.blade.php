@@ -23,9 +23,18 @@
   {{-- CSRF Token pour AJAX --}}
   <meta name="csrf-token" content="{{ csrf_token() }}">
 </head>
+@php
+  $isModuleBuilderRoute = request()->routeIs('formateur.modules.builder.*');
+@endphp
 <body
-  x-data="{ sidebarOpen: window.innerWidth >= 1024 }"
-  x-init="window.addEventListener('resize', () => { sidebarOpen = window.innerWidth >= 1024 ? true : false })"
+  x-data="{
+    sidebarOpen: window.innerWidth >= 1024,
+    sidebarCollapsed: localStorage.getItem('oneduc-formateur-sidebar-collapsed') === '1',
+  }"
+  x-init="
+    window.addEventListener('resize', () => { sidebarOpen = window.innerWidth >= 1024 ? true : false });
+    $watch('sidebarCollapsed', value => localStorage.setItem('oneduc-formateur-sidebar-collapsed', value ? '1' : '0'));
+  "
   class="bg-gray-100 text-gray-900 font-sans">
 
     {{-- HEADER FIXE EN HAUT --}}
@@ -33,7 +42,10 @@
   {{-- SIDEBAR FIXE A GAUCHE --}}
   @include('formateur.body_dashboard.sidebar')
   {{-- CONTENU PRINCIPAL --}}
-  <main class="flex-1 p-6 lg:ml-56" style="padding-top: calc(var(--app-header-h, 86px) + 12px);">
+  <main
+    class="flex-1 p-6 transition-[margin-left] duration-300"
+    :class="({{ $isModuleBuilderRoute ? 'true' : 'false' }} && sidebarCollapsed) ? '' : 'lg:ml-56'"
+    style="padding-top: calc(var(--app-header-h, 86px) + 12px);">
     @yield('formateur')
   </main>
 
