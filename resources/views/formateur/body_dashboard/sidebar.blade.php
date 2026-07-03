@@ -25,6 +25,7 @@
     $isDocumentationActive = request()->routeIs('formateur.documentation');
     $hasParcoursRoute = \Illuminate\Support\Facades\Route::has('formateur.parcours.index');
     $isParcoursActive = $hasParcoursRoute && request()->routeIs('formateur.parcours.*');
+    $isModuleBuilderRoute = request()->routeIs('formateur.modules.builder.*');
 
     $navBaseClasses = 'flex flex-col items-center rounded-xl px-4 py-3 transition-all duration-200';
     $navIdleClasses = 'text-white/90 hover:bg-[#0A5B80] hover:text-white';
@@ -33,8 +34,13 @@
 
 <aside
   id="formateur-sidebar"
-  :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
-  class="fixed left-0 z-40 w-56 lg:translate-x-0 transition-transform duration-300 flex flex-col bg-[#004461] text-white shadow-lg"
+  :class="{
+    'translate-x-0': sidebarOpen,
+    '-translate-x-full': !sidebarOpen,
+    'lg:translate-x-0': !({{ $isModuleBuilderRoute ? 'true' : 'false' }} && sidebarCollapsed),
+    'lg:-translate-x-full': {{ $isModuleBuilderRoute ? 'true' : 'false' }} && sidebarCollapsed,
+  }"
+  class="fixed left-0 z-40 w-56 transition-transform duration-300 flex flex-col bg-[#004461] text-white shadow-lg"
   style="top: var(--app-header-h, 86px); height: calc(100vh - var(--app-header-h, 86px));"
   aria-label="Navigation formateur">
     <div class="flex-1 overflow-y-auto">
