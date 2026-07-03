@@ -25,6 +25,10 @@ php artisan test --filter TestName                    # Filter by name
 
 **LMS for digital inclusion training** — Laravel 11 (PHP 8.2+) backend, Tailwind CSS v4 + Vite + Alpine.js frontend, MySQL/MariaDB in production.
 
+### Naming convention
+
+For new business-logic classes (`app/Domains/**`, Actions, Support classes, and similar Oneduc-specific code), use French names when possible — e.g. `CreerModule`, `ModifierLecon`, `AccesModule` rather than `CreateModule`, `UpdateLesson`, `ModuleAccess`. Keep English for framework-mandated names (`Controller`, `Model`, `Request`, `Middleware` suffixes, Laravel conventions) and third-party-facing code. When renaming existing files to follow this, confirm the exact names with the user first (naming is subjective and worth a quick check).
+
 ### Multi-role routing
 
 Each role has its own route file and controller namespace:
@@ -100,3 +104,79 @@ Beyond standard Laravel vars, these are project-specific:
 - `VITE_APP_NAME` — exposed to frontend
 
 Vite HMR host is hardcoded to a dev IP in `vite.config.js` — update it for new dev environments.
+
+## Wiki sync
+
+This project documents itself in `docs/wiki/` (mirrored to the GitHub Wiki). Whenever you make a meaningful code change — new feature, refactor, rename, bug fix that changes behavior — update the relevant `docs/wiki/*.md` page(s) in the same session, and say in your summary which pages you touched. Don't wait to be asked.
+
+Pushing those wiki changes to `origin` or syncing the GitHub Wiki still requires explicit confirmation each time, per the git safety rules below — this instruction only covers keeping the local `docs/wiki` files current.
+
+## Git workflow
+
+`main` is a protected branch on GitHub — direct pushes are rejected (`GH013`, "Changes must be made through a pull request"). Any change meant for `main` needs its own `feature/*` branch pushed to `origin`, with a PR opened from that branch. `gh` is not authenticated on this machine, so PRs can't be created or merged from the CLI — push the branch, hand the user the compare/PR link, and let them create and merge it on GitHub.
+
+---
+
+## Behavioral guidelines (Karpathy-inspired)
+
+**Tradeoff:** These guidelines bias toward caution over speed. For trivial tasks, use judgment.
+
+### 1. Think Before Coding
+
+**Don't assume. Don't hide confusion. Surface tradeoffs.**
+
+Before implementing:
+- State your assumptions explicitly. If uncertain, ask.
+- If multiple interpretations exist, present them - don't pick silently.
+- If a simpler approach exists, say so. Push back when warranted.
+- If something is unclear, stop. Name what's confusing. Ask.
+
+### 2. Simplicity First
+
+**Minimum code that solves the problem. Nothing speculative.**
+
+- No features beyond what was asked.
+- No abstractions for single-use code.
+- No "flexibility" or "configurability" that wasn't requested.
+- No error handling for impossible scenarios.
+- If you write 200 lines and it could be 50, rewrite it.
+
+Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
+
+### 3. Surgical Changes
+
+**Touch only what you must. Clean up only your own mess.**
+
+When editing existing code:
+- Don't "improve" adjacent code, comments, or formatting.
+- Don't refactor things that aren't broken.
+- Match existing style, even if you'd do it differently.
+- If you notice unrelated dead code, mention it - don't delete it.
+
+When your changes create orphans:
+- Remove imports/variables/functions that YOUR changes made unused.
+- Don't remove pre-existing dead code unless asked.
+
+The test: Every changed line should trace directly to the user's request.
+
+### 4. Goal-Driven Execution
+
+**Define success criteria. Loop until verified.**
+
+Transform tasks into verifiable goals:
+- "Add validation" → "Write tests for invalid inputs, then make them pass"
+- "Fix the bug" → "Write a test that reproduces it, then make it pass"
+- "Refactor X" → "Ensure tests pass before and after"
+
+For multi-step tasks, state a brief plan:
+```
+1. [Step] → verify: [check]
+2. [Step] → verify: [check]
+3. [Step] → verify: [check]
+```
+
+Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
+
+---
+
+**These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

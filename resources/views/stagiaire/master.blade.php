@@ -25,8 +25,14 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 </head>
 <body
-  x-data="{ sidebarOpen: window.innerWidth >= 1024 }"
-  x-init="window.addEventListener('resize', () => { sidebarOpen = window.innerWidth >= 1024 ? true : false })"
+  x-data="{
+    sidebarOpen: window.innerWidth >= 1024,
+    sidebarCollapsed: localStorage.getItem('oneduc-stagiaire-sidebar-collapsed') === '1',
+  }"
+  x-init="
+    window.addEventListener('resize', () => { sidebarOpen = window.innerWidth >= 1024 ? true : false });
+    $watch('sidebarCollapsed', value => localStorage.setItem('oneduc-stagiaire-sidebar-collapsed', value ? '1' : '0'));
+  "
   class="bg-gray-100 text-gray-900 font-sans">
 
     {{-- HEADER --}}
@@ -36,7 +42,10 @@
         @include('stagiaire.body_dashboard.sidebar')
 
         {{-- CONTENU PRINCIPAL --}}
-        <main class="flex-1 p-6 lg:ml-56" style="padding-top: calc(var(--app-header-h, 86px) + 12px);">
+        <main
+            class="flex-1 p-6 transition-[margin-left] duration-300"
+            :class="sidebarCollapsed ? '' : 'lg:ml-48'"
+            style="padding-top: calc(var(--app-header-h, 86px) + 12px);">
             @yield('content')
         </main>
 

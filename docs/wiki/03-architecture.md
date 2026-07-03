@@ -229,6 +229,8 @@ Exceptions notables :
 - le minuteur est unique par groupe (`GroupTimer`) ;
 - les pages collaboratives ouvrent une instance HedgeDoc externe configurée par `HEDGEDOC_BASE_URL`.
 
+Le Minuteur sert de pilote pour une structure par domaine (`app/Domains/Outils/<Outil>/` : contrôleurs, garde d'accès, routes et un `ServiceProvider` dédié), activable/désactivable indépendamment via `config/outils.php`, sans toucher au reste de l'application. Ce pattern est évalué comme modèle avant généralisation aux 6 autres outils.
+
 ---
 
 ## Configuration de l'apprentissage
