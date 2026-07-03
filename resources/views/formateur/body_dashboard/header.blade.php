@@ -11,12 +11,15 @@
             data-drawer-toggle="formateur-sidebar"
             aria-controls="formateur-sidebar"
             type="button"
-            @click="sidebarOpen = !sidebarOpen"
-            class="text-gray-600 hover:text-orangeone inline-flex lg:hidden">
+            @click="window.innerWidth >= 1024 ? (sidebarCollapsed = !sidebarCollapsed) : (sidebarOpen = !sidebarOpen)"
+            :aria-expanded="(window.innerWidth >= 1024 ? !sidebarCollapsed : sidebarOpen).toString()"
+            class="text-gray-600 hover:text-orangeone inline-flex">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
             <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
             </svg>
         </button>
+
+        <div class="h-6 w-px bg-gray-300" aria-hidden="true"></div>
 
         <!-- Logo juste à droite du burger -->
         <a href="{{ url('/') }}" class="inline-flex items-center">

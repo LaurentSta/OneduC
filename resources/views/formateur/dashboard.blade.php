@@ -23,9 +23,6 @@
   {{-- CSRF Token pour AJAX --}}
   <meta name="csrf-token" content="{{ csrf_token() }}">
 </head>
-@php
-  $isModuleBuilderRoute = request()->routeIs('formateur.modules.builder.*');
-@endphp
 <body
   x-data="{
     sidebarOpen: window.innerWidth >= 1024,
@@ -44,7 +41,7 @@
   {{-- CONTENU PRINCIPAL --}}
   <main
     class="flex-1 p-6 transition-[margin-left] duration-300"
-    :class="({{ $isModuleBuilderRoute ? 'true' : 'false' }} && sidebarCollapsed) ? '' : 'lg:ml-56'"
+    :class="sidebarCollapsed ? '' : 'lg:ml-48'"
     style="padding-top: calc(var(--app-header-h, 86px) + 12px);">
     @yield('formateur')
   </main>

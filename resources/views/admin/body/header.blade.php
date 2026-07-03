@@ -18,6 +18,8 @@
             </svg>
         </button>
 
+        <div class="h-6 w-px bg-gray-300" aria-hidden="true"></div>
+
         <!-- Logo juste à droite du burger -->
         <a href="{{ url('/') }}" class="inline-flex items-center gap-2">
         <img src="{{ asset('backend/assets/img/logos/LOGOOneducSVG.svg') }}" alt="Logo Oneduc" class="h-10 shrink-0 origin-left scale-110 transform">
