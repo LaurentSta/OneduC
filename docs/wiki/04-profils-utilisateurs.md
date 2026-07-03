@@ -28,7 +28,7 @@ Le middleware `RecordAdminActivity` journalise automatiquement toutes les action
 
 **Gestion des utilisateurs**
 - CRUD complet des formateurs (activation, désactivation, gestion du statut d'adhésion)
-- CRUD des stagiaires avec reset de progression
+- CRUD des stagiaires avec reset de progression (`admin.stagiaires.reset`, route protégée par `auth`, `role:admin`, `admin.activity`)
 - Gestion des observateurs
 - Soft delete des utilisateurs avec nettoyage des données liées (`cleanupRelatedStagiaireData()`)
 
@@ -62,7 +62,7 @@ Indicateurs volumétriques : nombre de catégories, sous-catégories, modules, f
 ### Accès et middleware
 
 Routes : `routes/formateur.php`  
-Middleware : `auth` + `role:formateur` + `association.member` + `force.password.change` (groupe interne)
+Middleware : `auth` + `role:formateur` + `association.member`
 
 **Politique d'adhésion** (`EnsureAssociationMembership`) : un formateur accède à la plateforme si :
 - `adhesion_status = active` avec `adhesion_valid_until` non dépassée, **ou**
@@ -90,7 +90,17 @@ Au-delà, le formateur est redirigé vers `/adhesion`.
 - Créer des parcours (`FormateurParcours`) en assemblant modules, nuages de mots, sondages
 - Associer un parcours à un groupe
 
-**Outils d'animation live** (9 outils — voir [Outils](07-outils-animation.md))
+**Modules personnels**
+- Créer des modules formateur via `/formateur/mes-modules`
+- Dupliquer un module catalogue dans une copie éditable
+- Créer/réordonner chapitres et leçons
+- Éditer des leçons en blocs structurés (`text`, `image`, `list`, `quote`, `divider`)
+- Uploader des images propres au module dans `modules_formateur/module_{id}/images`
+- Affecter le module personnel aux groupes accessibles
+
+Les modules formateur sont marqués `is_trainer_authored = true` et sont exclus du catalogue public.
+
+**Outils d'animation live** (voir [Outils](07-outils-animation.md))
 
 **Ressources de leçon**
 - Ajouter des ressources (liens, fichiers) à une leçon
@@ -104,7 +114,7 @@ Un formateur accède aux modules via deux voies :
 Le scope Eloquent `Group::scopeAccessibleByTrainer()` couvre les deux cas.
 
 ### Limites actuelles
-- La création de modules LMS est réservée à l'admin
+- Les modules créés par les formateurs supportent surtout le contenu en blocs ; l'import SCORM complet reste côté admin
 - Pas d'export des données de groupe
 - Pas de génération automatique de badges ou certificats en fin de parcours
 
@@ -152,7 +162,7 @@ Middleware : `auth` + `role:stagiaire` + `track.time` + `force.password.change` 
 
 ### Limites actuelles
 - Un stagiaire dans plusieurs groupes actifs ne voit que les modules du premier groupe (`.first()` dans `StagiaireModules()`)
-- L'accès direct aux modules par URL n'est pas vérifié contre l'appartenance au groupe (tout module actif est accessible par URL)
+- L'accès direct aux routes de leçon s'appuie encore surtout sur `Module::isVisibleTo()` et le contexte de groupe ; il faut centraliser la vérification d'appartenance via policies avant publication large
 
 ---
 
@@ -168,7 +178,7 @@ Rôle ajouté en mars 2026. L'observateur accède en lecture seule aux groupes e
 ### Fonctionnalités
 - Consultation des groupes auxquels il est rattaché
 - Lecture de la progression des stagiaires
-- Accès aux leçons via la même logique que les autres rôles (avec le même déficit de vérification d'appartenance groupe)
+- Accès en lecture aux leçons des groupes observés
 
 ### Rattachement
 Les observateurs sont rattachés aux groupes via `group_user.role_in_group = 'observateur'`.

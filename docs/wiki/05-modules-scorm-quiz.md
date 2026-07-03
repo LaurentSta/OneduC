@@ -9,6 +9,7 @@ Module
            ├── Contenu SCORM (package + version)
            ├── Contenu slides
            ├── Quiz natif (QuizQuestion + options)
+           ├── Blocs éditoriaux formateur (texte, image, liste, citation, séparateur)
            ├── Contenu vidéo / URL
            ├── LectureObjective (objectifs pédagogiques)
            └── LessonResource (ressources téléchargeables)
@@ -23,9 +24,10 @@ Module
 Fichier : `app/Models/Module.php`
 
 Champs principaux :
-- `titre` / `nom` / `slug` / `description` / `objectifs`
+- `module_title` / `module_name` / `module_name_slug` / `description` / `objectifs`
 - `category_id` / `subcategory_id`
 - `formateur_id` (formateur associé au module)
+- `is_trainer_authored` (module créé par un formateur, exclu du catalogue public)
 - `status` (actif/inactif)
 - `certificat` (champ présent, flux non implémenté)
 - `bestseller`, `vedette`, `surevalue` (flags marketing hérités du template)
@@ -37,9 +39,16 @@ Le modèle calcule une durée pédagogique via :
 - `getTotalSecondsAttribute()` — durée brute de toutes les leçons
 - `getEstimatedSecondsForUser(int $userId)` — ajuste selon le nombre de tentatives passées du stagiaire
 
-### Création des modules
+### Création des modules et visibilité
 
-La création est réservée à l'**administrateur** via `Backend/ModuleController`. Les formateurs assemblent des modules existants dans leurs groupes et parcours.
+Deux flux coexistent :
+
+| Flux | Contrôleur | Usage |
+|------|------------|-------|
+| Catalogue admin | `Backend/ModuleController` | Création complète des modules publics, SCORM, slides, quiz, évaluations |
+| Modules formateur | `Formateur/ModuleBuilderController` | Création de modules personnels en blocs, duplication d'un module catalogue, assignation aux groupes |
+
+Les modules personnels ont `is_trainer_authored = true`. Ils sont visibles dans l'espace du formateur propriétaire et des groupes auxquels ils sont affectés, mais exclus de la liste publique (`Module::publiclyListable()`).
 
 ---
 
@@ -51,9 +60,21 @@ La création est réservée à l'**administrateur** via `Backend/ModuleControlle
 |------|-------|-------------|
 | SCORM | `scorm_path`, `ScormPackageVersion` | Package SCORM importé avec versioning |
 | Slides | `slides_path`, `slides_status` | Présentation convertie et hébergée |
-| Quiz natif | `has_quiz` | Questions et réponses gérées nativement |
-| Quiz live | `has_live_quiz` | Activé lors d'une session live formateur |
-| Vidéo / URL | `content_type`, `content_url` | Lien externe ou vidéo intégrée |
+| Quiz natif | `quiz_enabled`, `quiz_questions_per_attempt` | Questions et réponses gérées nativement |
+| Quiz live | `live_quiz_entry_enabled` | Entrée vers une session live depuis la leçon |
+| Vidéo / URL | `url`, `module_video`, chemins via `config/learning_assets.php` | Lien externe ou vidéo intégrée |
+| Blocs formateur | `content_type = blocks`, `content_blocks` | Contenu éditorial structuré en JSON |
+
+### Blocs éditoriaux formateur
+
+Le builder formateur sauvegarde les leçons en `content_blocks`. Les blocs acceptés sont :
+- `text` avec HTML limité ;
+- `image` stockée sous `modules_formateur/module_{id}/images` ;
+- `list` ;
+- `quote` ;
+- `divider`.
+
+`ModuleBuilderController::sanitizeBlocks()` limite les blocs à 100 éléments, supprime les balises/scripts non autorisés et rejette les images qui ne proviennent pas du dossier du module.
 
 ### Personnalisation par groupe
 

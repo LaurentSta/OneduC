@@ -31,6 +31,8 @@ Ce glossaire unifie le vocabulaire du projet. L'une des faiblesses identifiées 
 **Définition** : Séquence ordonnée de modules et d'activités créée par un formateur pour un groupe de stagiaires. Un parcours peut combiner des modules, des nuages de mots et des sondages.  
 **Modèle** : `FormateurParcours` + `FormateurParcoursItem`  
 **Table** : `formateur_parcours`, `formateur_parcours_items`  
+**Types d'items actuels** : `module`, `wordcloud`, `poll`
+
 **Terme dans le code** : "MesFormations" (historique) → à renommer en "Parcours" dans l'interface  
 **Exemple** : "Parcours Inclusion Numérique Niveau 1"
 
@@ -97,12 +99,14 @@ Ce glossaire unifie le vocabulaire du projet. L'une des faiblesses identifiées 
 **Table** : `groups`
 
 ### Code d'accès
-**Définition** : Code alphanumérique à 6 caractères généré automatiquement par `CodeGeneratorService`. Permet à un stagiaire de rejoindre une formation sans connaître l'URL.  
+**Définition** : Code alphanumérique à 6 caractères généré automatiquement par `CodeGeneratorService`. Permet à un stagiaire de se connecter sans passer par email/mot de passe.
+
 **Champ** : `users.code_acces`  
 **Utilisé pour** : connexion stagiaire simplifiée
 
 ### Code temporaire de groupe
-**Définition** : Mot de passe provisoire associé à un groupe, chiffré en base de données. Permet aux stagiaires de s'identifier au groupe lors de leur première connexion.  
+**Définition** : Mot de passe provisoire associé à un groupe, chiffré en base de données. Sert dans les flux d'invitation/rattachement gérés par le formateur.
+
 **Champ** : `groups.temporary_password` (cast `encrypted`)  
 **À distinguer de** : Code d'accès (ci-dessus)
 

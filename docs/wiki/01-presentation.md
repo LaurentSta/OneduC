@@ -26,10 +26,11 @@ Le modèle de gouvernance est associatif : les formateurs accèdent à la platef
 | Domaine | Capacités |
 |---------|-----------|
 | **Gestion des utilisateurs** | 4 profils distincts (Admin, Formateur, Stagiaire, Observateur) avec espaces séparés |
-| **Contenu pédagogique** | Modules → Sections → Leçons (SCORM, slides, quiz natifs, vidéo, ressources) |
-| **Groupes de formation** | Création, co-formateurs, personnalisation des leçons par groupe |
+| **Contenu pédagogique** | Modules → Sections → Leçons (SCORM, slides, quiz natifs, blocs texte/image/liste/citation, vidéo, ressources) |
+| **Création formateur** | Builder de modules personnels, duplication de modules catalogue, images, sections, leçons et affectation aux groupes |
+| **Groupes de formation** | Création, co-formateurs, observateurs, personnalisation des leçons par groupe |
 | **Suivi de progression** | Multi-sources (quiz, SCORM, vidéo, temps de connexion) |
-| **Animation live** | 9 outils intégrés : Quiz live, Nuage de mots, Sondage, Échelle, Mur de questions, Roue aléatoire, Tableau blanc, Minuteur |
+| **Animation live** | Quiz live, Nuage de mots, Sondage, Échelle, Mur de questions, Roue aléatoire, Tableau blanc, Minuteur, pages collaboratives HedgeDoc |
 | **Tableaux de bord** | Analytique formateur avec identification des apprenants à risque |
 | **Accès simplifié** | Connexion par code court pour les stagiaires |
 
@@ -42,6 +43,7 @@ Le modèle de gouvernance est associatif : les formateurs accèdent à la platef
 - Multi-organisation (un seul tenant)
 - Prérequis bloquants entre modules
 - Interactions SCORM enregistrées au niveau des leçons (uniquement pour les évaluations)
+- Throttling sur la connexion stagiaire par code (`POST /stagiaire/connexion-code`)
 
 ---
 
@@ -50,7 +52,8 @@ Le modèle de gouvernance est associatif : les formateurs accèdent à la platef
 | Composant | Technologie |
 |-----------|-------------|
 | Backend | Laravel 11 / PHP 8.2+ |
-| Frontend | Tailwind CSS v4 + Vite + Alpine.js |
+| Frontend | Blade, Tailwind CSS v4, Vite, Alpine.js |
+| Écrans riches | React 19, Excalidraw, Tiptap, XYFlow |
 | Base de données | MySQL / MariaDB |
 | Standard e-learning | SCORM 1.2 et 2004 (API.js natif) |
 | Tests | Pest / PHPUnit |
@@ -59,30 +62,33 @@ Le modèle de gouvernance est associatif : les formateurs accèdent à la platef
 
 ---
 
-## Volume du projet (mai 2026)
+## Volume du projet (3 juillet 2026)
 
 | Élément | Volume |
 |---------|--------|
-| Contrôleurs PHP | 85 fichiers |
-| Modèles Eloquent | 58 modèles |
-| Vues Blade | 468 fichiers |
-| Migrations | 102 fichiers |
-| Routes déclarées | ~376 routes |
-| Fichiers de test | 37 fichiers Pest |
+| Contrôleurs PHP | 86 fichiers |
+| Modèles Eloquent | 59 modèles |
+| Services métier | 6 fichiers |
+| Vues Blade | 287 fichiers |
+| Tables dans le schéma MySQL baseline | 72 tables |
+| Migrations versionnées | 3 migrations post-baseline |
+| Routes déclarées | 402 routes |
+| Fichiers de test | 43 fichiers PHP |
+| Suite de tests | 102 tests passés, 501 assertions |
 
 ---
 
-## Niveau de maturité (audit mai 2026)
+## Niveau de maturité (analyse juillet 2026)
 
-| Axe | Note | Commentaire |
+| Axe | État | Commentaire |
 |-----|------|-------------|
-| Maturité technique | 11/20 | Fondations solides, bugs structurels à corriger, tests à stabiliser |
-| Maturité pédagogique | 14/20 | Vision juste, outils live remarquables, preuves et prérequis manquants |
-| Expérience utilisateur | 13/20 | Interface stagiaire adaptée, vocabulaire à unifier |
-| Potentiel commercial | 15/20 | Positionnement différenciant, pilote exploitable |
-| Capacité LMS globale | 12/20 | LMS réel mais incomplet sur SCORM, certificats, exports |
+| Maturité technique | En consolidation avancée | Tests automatisés au vert et build Vite réussi ; plusieurs contrôleurs restent volumineux |
+| Maturité pédagogique | Solide pour un pilote | Modules, quiz, SCORM, parcours, outils live et suivi formateur sont opérationnels |
+| Expérience utilisateur | Bonne base terrain | Accès stagiaire simplifié, interfaces par rôle, mais vocabulaire "formation/parcours/module" encore à unifier |
+| Potentiel de publication | Proche, sous réserve de vérifications | Licence, README, templates GitHub et wiki présents ; historique Git et quelques risques doivent être revus |
+| Capacité LMS globale | Réelle mais incomplète | Il manque certificats, exports, prérequis bloquants et contrôle d'accès centralisé par policy |
 
-La plateforme est utilisable dès aujourd'hui en **pilote contrôlé** (10 à 50 stagiaires, 3 à 5 formateurs, contexte associatif). Elle nécessite une consolidation technique avant mise en production large ou présentation institutionnelle.
+La plateforme est utilisable dès aujourd'hui en **pilote contrôlé** (10 à 50 stagiaires, 3 à 5 formateurs, contexte associatif). Avant une publication publique large, il faut surtout corriger les points listés dans [Sécurité & RGPD](10-securite-rgpd.md) et [Checklist GitHub](13-publication-github.md).
 
 ---
 

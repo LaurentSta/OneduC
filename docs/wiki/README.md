@@ -10,11 +10,11 @@ Bienvenue dans la documentation complète de la plateforme Oneduc, LMS dédié �
 |---|------|--------|
 | 01 | [Présentation du projet](01-presentation.md) | Vision, positionnement, stack technique, contexte |
 | 02 | [Installation & configuration](02-installation.md) | Prérequis, mise en route dev, variables d'environnement |
-| 03 | [Architecture technique](03-architecture.md) | Structure Laravel, routing multi-rôle, services, migrations |
+| 03 | [Architecture technique](03-architecture.md) | Structure Laravel, routing multi-rôle, services, schéma SQL baseline |
 | 04 | [Profils utilisateurs](04-profils-utilisateurs.md) | Admin, Formateur, Stagiaire, Observateur — droits et espaces |
 | 05 | [Modules, SCORM & Quiz](05-modules-scorm-quiz.md) | Contenu pédagogique, import SCORM, quiz natifs, progression |
 | 06 | [Groupes & Parcours](06-groupes-parcours.md) | Groupes de formation, co-formateurs, parcours ordonnés |
-| 07 | [Outils d'animation pédagogique](07-outils-animation.md) | Les 9 outils live intégrés, pattern commun |
+| 07 | [Outils d'animation pédagogique](07-outils-animation.md) | Activités live intégrées, tableau blanc, minuteur, pages collaboratives |
 | 08 | [Tableaux de bord](08-tableaux-de-bord.md) | Analytics Admin, Formateur, Stagiaire — sources de données |
 | 09 | [Design system](09-design-system.md) | Tokens Tailwind, composants, typographie, accessibilité |
 | 10 | [Sécurité & RGPD](10-securite-rgpd.md) | Middleware, authentification, données personnelles |
@@ -68,4 +68,18 @@ Ce wiki est destiné à quatre publics :
 
 ---
 
-*Dernière mise à jour : mai 2026 — Version actuelle : Laravel 11, PHP 8.2+, Tailwind CSS v4*
+## État vérifié du dépôt
+
+Analyse réalisée le **3 juillet 2026** depuis `/var/www/Oneduc_Dev`.
+
+| Vérification | Résultat |
+|--------------|----------|
+| Routes Laravel | 402 routes déclarées (`php artisan route:list --json`) |
+| Tests automatisés | 102 tests passés, 501 assertions |
+| Build frontend | `npm run build` réussi, avec avertissements de taille de chunks |
+| Schéma base de données | Baseline MySQL dans `database/schema/mysql-schema.sql` + 3 migrations post-baseline |
+| Point d'attention publication | Connexion stagiaire par code sans throttling, route de feedback leçon à corriger, historique Git à vérifier |
+
+---
+
+*Dernière mise à jour : juillet 2026 — Version actuelle : Laravel 11, PHP 8.2+, Tailwind CSS v4, React 19 pour certains écrans riches*

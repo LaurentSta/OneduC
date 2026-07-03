@@ -2,7 +2,7 @@
 
 ## Vue d'ensemble
 
-Chaque rôle dispose d'un tableau de bord adapté à ses besoins. La donnée est centralisée via `LearningAnalyticsService` pour le tableau de bord formateur.
+Chaque rôle dispose d'un tableau de bord adapté à ses besoins. La donnée est centralisée via `LearningAnalyticsService` pour le tableau de bord formateur, tandis que certains écrans stagiaires conservent encore des agrégations propres dans `StagiaireController`.
 
 ---
 
@@ -113,6 +113,7 @@ Le formateur peut filtrer l'activité par période (jour, semaine, mois, an). L'
 
 - Si le contenu est majoritairement SCORM, "questions traitées" et "taux de réussite" sont sous-estimés (interactions SCORM non enregistrées)
 - Un stagiaire dans plusieurs groupes actifs ne voit que le premier groupe
+- `StagiaireController` concentre encore dashboard, modules, résultats et outils ; un découpage améliorerait la maintenabilité
 
 ---
 
@@ -139,6 +140,14 @@ Pour rendre les tableaux de bord plus fiables et exploitables :
 2. **Alerte SCORM incomplète** : signaler quand `scorm_interactions` est vide pour un contenu SCORM afin d'éviter des interprétations erronées
 3. **Exporter** les données de progression (CSV par groupe, PDF fiche individuelle)
 4. **Unifier les définitions** : "actif", "terminé", "réussi", "temps d'apprentissage" doivent avoir la même définition sur tous les écrans
+
+---
+
+## État de vérification
+
+Au 3 juillet 2026 :
+- `php artisan test` : 102 tests passés, 501 assertions ;
+- `npm run build` : réussi, avec avertissements de bundles Vite volumineux.
 
 ---
 
