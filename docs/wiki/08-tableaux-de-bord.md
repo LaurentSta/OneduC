@@ -98,7 +98,7 @@ Le formateur peut filtrer l'activité par période (jour, semaine, mois, an). L'
 | Temps d'apprentissage | `VideoSegmentTracking` + `ScormScore.session_time` + `QuizAttempt.total_time_seconds` |
 | Questions traitées | `ScormInteraction` (vide pour SCORM) + `QuizAttemptQuestion` |
 | Taux de réussite | Ratio questions réussies / questions traitées |
-| Formations en cours | Modules du groupe actif avec progression par section |
+| Ma formation | Modules du groupe actif avec progression par section |
 | Progression par module | Ratio leçons terminées / leçons totales |
 | Graphique de réussite | Scores par tentative |
 | Temps moyen de réflexion | `quiz_attempt_questions.time_spent_seconds` moyen |
@@ -146,7 +146,7 @@ Pour rendre les tableaux de bord plus fiables et exploitables :
 ## État de vérification
 
 Au 3 juillet 2026 :
-- `php artisan test` : 102 tests passés, 501 assertions ;
+- dernière suite complète documentée : `php artisan test` avec 103 tests passés, 523 assertions ;
 - `npm run build` : réussi, avec avertissements de bundles Vite volumineux.
 
 ---

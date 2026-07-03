@@ -1,16 +1,54 @@
 # 12 — Glossaire
 
-Ce glossaire unifie le vocabulaire du projet. L'une des faiblesses identifiées dans les audits est la coexistence de termes proches (Modules, Formations, Parcours, Mes formations) qui peuvent désorienter les utilisateurs. Ce glossaire sert de référence pour les développeurs, les formateurs et les communications externes.
+Ce glossaire unifie le vocabulaire du projet. L'une des faiblesses identifiées dans les audits est la coexistence de termes proches (Modules, Formations, Parcours, Mes formations) qui peuvent désorienter les utilisateurs. Ce glossaire sert de référence pour les développeurs, les formateurs, les interfaces et les communications externes.
+
+---
+
+## Convention produit
+
+Oneduc doit privilégier un vocabulaire simple côté stagiaire et plus précis côté formateur/admin.
+
+| Niveau | Terme à afficher | Rôle |
+|--------|------------------|------|
+| Expérience globale | **Formation** | Ce que le stagiaire suit concrètement |
+| Organisation pédagogique | **Parcours** | Ordre préparé par le formateur pour un groupe |
+| Bloc de contenu réutilisable | **Module** | Élément du catalogue ou créé par un formateur |
+| Sous-partie du module | **Chapitre** | Partie structurante d'un module |
+| Page de contenu | **Leçon** | Contenu précis à lire, regarder ou réaliser |
+| Interaction | **Activité** | Quiz live, sondage, nuage de mots, tableau blanc, exercice, etc. |
+
+### Règle d'affichage par public
+
+| Public | Vocabulaire recommandé |
+|--------|------------------------|
+| Stagiaire | **Ma formation**, **Continuer ma formation**, **Mon programme**, **Chapitre**, **Leçon**, **Activité** |
+| Formateur | **Mes parcours**, **Mes modules**, **Catalogue de modules**, **Outils d'animation**, **Groupes** |
+| Admin | **Catalogue**, **Modules**, **Sections/chapitres**, **Leçons**, **Catégories**, **Évaluations** |
+| Code / base de données | Conserver les noms techniques existants (`Module`, `ModuleSection`, `ModuleLecture`, `FormateurParcours`) |
+
+Côté stagiaire, le terme **module** doit être limité aux écrans où il aide vraiment à comprendre la structure. Le mot **formation** porte l'expérience principale : c'est le terme le plus naturel pour un public éloigné du numérique.
+
+Côté formateur, le terme **parcours** désigne l'organisation pédagogique préparée pour un groupe. Le terme **module** désigne une brique pédagogique réutilisable, créée depuis `/formateur/mes-modules` ou issue du catalogue.
 
 ---
 
 ## Vocabulaire pédagogique
 
+### Formation
+**Définition** : Expérience globale suivie par un stagiaire. Dans l'interface stagiaire, "formation" désigne l'ensemble de ce qui lui est proposé, même si techniquement cela agrège un groupe, des modules et éventuellement un parcours.
+
+**Terme recommandé côté stagiaire** : "Ma formation", "Continuer ma formation", "Mon programme"
+
+**À éviter côté stagiaire** : multiplier les termes "module", "parcours" et "formation" sur le même écran.
+
 ### Module
 **Définition** : Unité d'apprentissage thématique. Un module contient des chapitres, eux-mêmes composés de leçons.  
 **Modèle** : `Module`  
 **Table** : `modules`  
-**Synonymes à éviter** : "cours", "formation" (dans ce contexte)  
+**Synonymes à éviter côté formateur/admin** : "cours", "formation"
+
+**Usage recommandé** : brique de contenu réutilisable dans le catalogue ou dans les modules personnels du formateur.
+
 **Exemple** : "Module Bureautique — Traitement de texte"
 
 ### Chapitre (Section)
@@ -33,7 +71,10 @@ Ce glossaire unifie le vocabulaire du projet. L'une des faiblesses identifiées 
 **Table** : `formateur_parcours`, `formateur_parcours_items`  
 **Types d'items actuels** : `module`, `wordcloud`, `poll`
 
-**Terme dans le code** : "MesFormations" (historique) → à renommer en "Parcours" dans l'interface  
+**Terme recommandé côté formateur** : "Parcours" ou "Mes parcours"
+
+**Terme dans le code** : `MesFormations` (historique) → à renommer progressivement en "Parcours" dans l'interface
+
 **Exemple** : "Parcours Inclusion Numérique Niveau 1"
 
 ### Parcours formateur
@@ -125,18 +166,32 @@ Ce glossaire unifie le vocabulaire du projet. L'une des faiblesses identifiées 
 
 ---
 
-## Vocabulaire à unifier dans l'interface
+## Convention d'interface à appliquer
 
-Les termes suivants coexistent dans l'interface et créent parfois de la confusion. Ce tableau propose une normalisation :
+Les termes suivants coexistent dans l'interface et créent parfois de la confusion. La normalisation retenue est :
 
 | Terme actuel | Recommandation | Explication |
 |-------------|----------------|-------------|
-| "Formations" (menu formateur) | "Parcours" | Désigne les `FormateurParcours` |
-| "Mes formations" | "Mes parcours" | Idem |
-| "Modules" | "Modules" | OK — à conserver |
-| "Parcours" | "Parcours formateur" | À clarifier pour éviter la confusion avec les parcours pédagogiques |
-| "Outils" (menu stagiaire) | "Activités de groupe" | Plus clair pour un public non-expert |
-| "Documentation" (menu stagiaire) | "Ressources" | Plus neutre et plus clair |
+| "Formations" (menu formateur) | "Parcours" | Désigne les `FormateurParcours` construits pour un groupe |
+| "Mes formations" (formateur) | "Mes parcours" | Évite la confusion avec "Ma formation" côté stagiaire |
+| "Ma formation" (stagiaire) | "Ma formation" | Terme principal à conserver côté apprenant |
+| "Modules" | "Modules" | À conserver pour le catalogue et les briques pédagogiques |
+| "Parcours formateur" | "Parcours formateur Oneduc" | Désigne l'onboarding du formateur dans la plateforme |
+| "Outils" (stagiaire) | "Activités de groupe" | Plus clair pour un public non-expert |
+| "Documentation" (stagiaire) | "Ressources" | Plus neutre et plus clair |
+| Bouton de reprise stagiaire | "Continuer ma formation" | Action la plus lisible pour reprendre là où il s'est arrêté |
+
+### Exemples de libellés recommandés
+
+| Contexte | Libellé recommandé |
+|----------|--------------------|
+| Menu stagiaire principal | "Ma formation" |
+| Bouton principal dashboard stagiaire | "Continuer ma formation" |
+| Liste stagiaire | "Mon programme" ou "Étapes de la formation" |
+| Menu formateur pour `FormateurParcours` | "Mes parcours" |
+| Menu formateur pour `ModuleBuilderController` | "Mes modules" |
+| Catalogue formateur/admin | "Catalogue de modules" |
+| Outils live | "Outils d'animation" côté formateur, "Activités de groupe" côté stagiaire |
 
 ---
 

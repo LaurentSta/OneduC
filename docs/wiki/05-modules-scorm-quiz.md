@@ -46,9 +46,48 @@ Deux flux coexistent :
 | Flux | Contrôleur | Usage |
 |------|------------|-------|
 | Catalogue admin | `Backend/ModuleController` | Création complète des modules publics, SCORM, slides, quiz, évaluations |
-| Modules formateur | `Formateur/ModuleBuilderController` | Création de modules personnels en blocs, duplication d'un module catalogue, assignation aux groupes |
+| Modules formateur | `Formateur/ModuleBuilderController` | Création de modules personnels, plan continu chapitres/leçons, duplication d'un module catalogue, assignation aux groupes |
 
 Les modules personnels ont `is_trainer_authored = true`. Ils sont visibles dans l'espace du formateur propriétaire et des groupes auxquels ils sont affectés, mais exclus de la liste publique (`Module::publiclyListable()`).
+
+---
+
+## Builder formateur continu
+
+Le builder formateur est séparé en deux niveaux :
+
+| Niveau | Vue | Rôle |
+|--------|-----|------|
+| Plan du module | `resources/views/formateur/modules-builder/edit.blade.php` | Titre, description, chapitres, leçons, assignation aux groupes |
+| Contenu de leçon | `resources/views/formateur/modules-builder/lecture-edit.blade.php` | Édition des blocs de contenu d'une leçon |
+
+Le plan est monté via `[data-outline-editor]` et `resources/js/outline-editor/OutlineEditor.jsx`. Il utilise Tiptap/ProseMirror avec deux noeuds métier :
+- `chapterHeading` pour les chapitres ;
+- `lessonItem` pour les leçons.
+
+Comportements implémentés :
+- `Entrée` ajoute une nouvelle ligne de leçon ;
+- `Maj+Entrée` transforme une leçon vide en chapitre ;
+- `Alt+↑` / `Alt+↓` réordonnent les lignes ;
+- le renommage est sauvegardé avec debounce ;
+- une leçon peut être déplacée entre chapitres ;
+- la suppression d'un chapitre ou d'une leçon passe par une confirmation ;
+- une leçon avec contenu existant ne peut pas être promue en chapitre, pour éviter une perte de contenu.
+
+Endpoints JSON principaux :
+
+| Action | Route nommée |
+|--------|--------------|
+| Créer / renommer / supprimer un chapitre | `formateur.modules.builder.sections.*` |
+| Réordonner les chapitres | `formateur.modules.builder.sections.reorder` |
+| Créer / renommer / supprimer une leçon | `formateur.modules.builder.lectures.*` |
+| Réordonner les leçons d'un chapitre | `formateur.modules.builder.lectures.reorder` |
+| Déplacer une leçon vers un autre chapitre | `formateur.modules.builder.lectures.move` |
+| Transformer une leçon vide en chapitre | `formateur.modules.builder.lectures.promote` |
+
+Le renommage d'une leçon depuis le plan ne doit pas écraser `content_blocks`. `ModuleBuilderController::updateLecture()` ne modifie donc le contenu que si la clé `content_blocks` est réellement envoyée.
+
+Les leçons SCORM ou slides issues d'une duplication catalogue restent présentes dans la copie formateur. Leur contenu importé est affiché comme verrouillé sur la page d'édition de leçon ; le formateur peut seulement renommer la leçon.
 
 ---
 

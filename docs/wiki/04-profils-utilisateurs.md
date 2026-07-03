@@ -9,7 +9,7 @@ La plateforme distingue quatre rôles, chacun avec un espace dédié, un préfix
 | Rôle | Champ `users.role` | Espace URL | Peut créer du contenu |
 |------|-------------------|------------|----------------------|
 | Admin | `admin` | `/admin` | Oui (tout) |
-| Formateur | `formateur` | `/formateur` | Oui (groupes, parcours) |
+| Formateur | `formateur` | `/formateur` | Oui (groupes, parcours, modules) |
 | Stagiaire | `stagiaire` | `/stagiaire` | Non |
 | Observateur | `observateur` | `/observateur` | Non |
 
@@ -89,16 +89,20 @@ Au-delà, le formateur est redirigé vers `/adhesion`.
 **Parcours de formation**
 - Créer des parcours (`FormateurParcours`) en assemblant modules, nuages de mots, sondages
 - Associer un parcours à un groupe
+- Vocabulaire recommandé dans l'interface : **Mes parcours**
 
 **Modules personnels**
 - Créer des modules formateur via `/formateur/mes-modules`
 - Dupliquer un module catalogue dans une copie éditable
-- Créer/réordonner chapitres et leçons
-- Éditer des leçons en blocs structurés (`text`, `image`, `list`, `quote`, `divider`)
+- Organiser le plan dans un éditeur continu type Rise : chapitres, leçons, renommage automatique, déplacement au clavier
+- Transformer une leçon vide en chapitre (`Maj+Entrée`) et déplacer une leçon entre chapitres
+- Ouvrir chaque leçon dans une page dédiée pour éditer ses blocs structurés (`text`, `image`, `list`, `quote`, `divider`)
 - Uploader des images propres au module dans `modules_formateur/module_{id}/images`
 - Affecter le module personnel aux groupes accessibles
 
 Les modules formateur sont marqués `is_trainer_authored = true` et sont exclus du catalogue public.
+
+Les leçons SCORM ou slides copiées depuis le catalogue sont conservées dans la copie formateur, mais leur contenu importé n'est pas modifiable dans l'éditeur de blocs ; seul le titre peut être renommé.
 
 **Outils d'animation live** (voir [Outils](07-outils-animation.md))
 
@@ -144,7 +148,8 @@ Middleware : `auth` + `role:stagiaire` + `track.time` + `force.password.change` 
 - Temps moyen de réflexion
 
 **Formation**
-- Liste des modules du groupe actif
+- Accès à **Ma formation** et au programme associé au groupe actif
+- Liste des modules qui composent la formation
 - Navigation section → leçon
 - Lecture de leçons SCORM (iframe), slides, quiz natifs, contenu vidéo
 - Marquage automatique de progression

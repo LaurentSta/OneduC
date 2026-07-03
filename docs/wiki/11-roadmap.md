@@ -2,7 +2,15 @@
 
 ## État actuel (3 juillet 2026)
 
-La plateforme est **utilisable en pilote contrôlé** (10 à 50 stagiaires, 3 à 5 formateurs, contexte associatif ou ateliers numériques). La suite automatisée est au vert (`102 tests passés`) et le build Vite réussit, mais quelques corrections restent nécessaires avant publication publique large.
+La plateforme est **utilisable en pilote contrôlé** (10 à 50 stagiaires, 3 à 5 formateurs, contexte associatif ou ateliers numériques). La dernière suite complète documentée était au vert (`103 tests passés`) et le build Vite réussissait, mais quelques corrections restent nécessaires avant publication publique large.
+
+Depuis l'audit initial, le module builder formateur a évolué vers un éditeur de plan continu :
+- plan chapitres/leçons en React + Tiptap ;
+- page séparée pour éditer le contenu riche d'une leçon ;
+- renommage autosauvegardé, déplacement inter-chapitres et promotion d'une leçon vide en chapitre ;
+- duplication de modules catalogue avec conservation des leçons SCORM/slides verrouillées côté contenu.
+
+La segmentation interne a démarré avec `app/Domains/ModulesFormateur` et `app/Domains/Learners` : le module builder garde l'orchestration HTTP, tandis que les actions métier (noms de classes en français : `CreerModule`, `CreerChapitre`, `CreerLecon`, `ModifierLecon`, `ReordonnerChapitres`, `ReordonnerLecons`, `DeplacerLecon`, `PromouvoirLeconEnChapitre`, `TeleverserImageModule`, `AssignerGroupesModule`, `DupliquerModuleCatalogue`) portent la création, duplication, réordonnancement, déplacement, promotion et assignation aux groupes. Le contrôleur stagiaire délègue désormais le calcul de progression des modules à `LearnerModuleProgress`.
 
 ---
 
@@ -32,7 +40,7 @@ La plateforme est **utilisable en pilote contrôlé** (10 à 50 stagiaires, 3 à
 | `Group` sans `SoftDeletes` | `app/Models/Group.php` | Moyenne — données orphelines |
 | Stagiaire multi-groupe — `.first()` uniquement | `StagiaireController.php:244` | Haute — modules masqués |
 | `ModuleController` 1185 lignes | `Backend/ModuleController.php` | Maintenance difficile |
-| `StagiaireController` 916 lignes | `StagiaireController.php` | Maintenance difficile |
+| `StagiaireController` 796 lignes | `StagiaireController.php` | Encore volumineux, mais progression module extraite |
 
 ---
 
@@ -44,7 +52,10 @@ La plateforme est **utilisable en pilote contrôlé** (10 à 50 stagiaires, 3 à
 - [x] Déplacer `reset-progression` dans `routes/admin.php` avec middleware complet
 - [x] Supprimer ou retirer la route debug admin non authentifiée
 - [x] Mettre à jour `UserFactory` : formateurs avec `adhesion_status = active` par défaut en test
-- [x] Remettre la suite de tests au vert (`102 tests passés`)
+- [x] Remettre la suite de tests au vert lors de l'audit initial (`102 tests passés`)
+- [x] Livrer l'éditeur de plan continu du module builder formateur
+- [x] Extraire la logique métier du module builder dans `app/Domains/ModulesFormateur` (classes en français)
+- [x] Extraire le calcul de progression des modules stagiaire dans `app/Domains/Learners`
 - [ ] Corriger `Module::isVisibleTo()` ou introduire des policies pour vérifier l'appartenance au groupe
 - [ ] Corriger `LessonFeedbackController::store()` avec la bonne route de redirection selon le rôle/contexte
 - [ ] Ajouter `throttle:10,1` ou rate limiter dédié sur la route de connexion par code d'accès
@@ -66,6 +77,7 @@ La plateforme est **utilisable en pilote contrôlé** (10 à 50 stagiaires, 3 à
 - [ ] Ajouter les exports CSV/PDF de progression par groupe
 - [ ] Créer des Laravel Policies (`ModulePolicy`, `GroupPolicy`, `LecturePolicy`) pour centraliser les autorisations
 - [ ] Découper `ModuleController` : extraire `ModuleNavigationService`, `ModuleCompletionService`, `StudentLectureAccessService`
+- [ ] Continuer la segmentation en domaines internes : Groupes, Progression/Analytics, SCORM/Quiz, Outils d'animation
 - [ ] Ajouter `SoftDeletes` sur `Group` avec migration `deleted_at`
 - [ ] Valider l'unicité de l'email dans `AdminController::AdminProfilStore()`
 - [ ] Ajouter la vérification d'appartenance à la leçon dans `POST /scorm/save-progress`
@@ -86,7 +98,7 @@ La plateforme est **utilisable en pilote contrôlé** (10 à 50 stagiaires, 3 à
 - [ ] Audit d'accessibilité WCAG 2.1 niveau AA et corrections (contrastes, ARIA, navigation clavier)
 - [ ] Documentation utilisateur : guide stagiaire, guide formateur (PDF + vidéo)
 - [ ] Nettoyer les vues de template génériques (`resources/views/content/apps/*`)
-- [ ] Unifier le vocabulaire dans les menus (voir [Glossaire](12-glossaire.md))
+- [ ] Appliquer dans les menus la convention du glossaire : "Ma formation" côté stagiaire, "Mes parcours" et "Mes modules" côté formateur
 
 ---
 
@@ -128,7 +140,7 @@ Voir [docs/idees-outils-formateurs.md](../idees-outils-formateurs.md) pour le d�
 |-----|-------------|--------------|
 | Maturité technique | Tests et build au vert, architecture encore concentrée dans gros contrôleurs | Policies, FormRequests corrigées, contrôleurs découpés |
 | Maturité pédagogique | Modules, quiz, SCORM, outils live et parcours déjà exploitables | Certificats, exports, prérequis et preuves SCORM complètes |
-| Expérience utilisateur | Espaces par rôle complets, accès stagiaire simplifié | Vocabulaire unifié et multi-groupe stagiaire corrigé |
+| Expérience utilisateur | Espaces par rôle complets, accès stagiaire simplifié, convention vocabulaire documentée | Menus alignés sur "Ma formation", "Mes parcours", "Mes modules" et multi-groupe stagiaire corrigé |
 | Publication GitHub | Base légale/documentaire en place | Historique Git vérifié, checklist sécurité résolue |
 
 ---
