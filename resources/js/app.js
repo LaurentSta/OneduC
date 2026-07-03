@@ -3,9 +3,11 @@ import '../css/app.css'; // ✅ Ajoute Tailwind
 import './bootstrap';
 import Alpine from 'alpinejs';
 import collapse from '@alpinejs/collapse';
+import { createModuleBuilderOutline } from './module-builder-outline';
 
 window.Alpine = Alpine;
 Alpine.plugin(collapse);
+Alpine.data('moduleBuilderOutline', createModuleBuilderOutline);
 Alpine.start();
 
 function loadGroupModuleFlowWhenNeeded() {
@@ -33,9 +35,16 @@ function loadGroupWhiteboardWhenNeeded() {
   import('./group-whiteboard-excalidraw.jsx').then(({ mountGroupWhiteboardExcalidraw }) => mountGroupWhiteboardExcalidraw());
 }
 
+function ensureModuleBuilderEditorsLoaded() {
+  return import('./formateur-module-builder-editor.jsx').then(({ mountModuleBuilderEditors }) => {
+    mountModuleBuilderEditors();
+  });
+}
+window.oneducMountBlockEditors = ensureModuleBuilderEditorsLoaded;
+
 function loadModuleBuilderEditorsWhenNeeded() {
   if (!document.querySelector('[data-block-editor]')) return;
-  import('./formateur-module-builder-editor.jsx').then(({ mountModuleBuilderEditors }) => mountModuleBuilderEditors());
+  ensureModuleBuilderEditorsLoaded();
 }
 
 function loadAkeneHeroWhenNeeded() {

@@ -223,20 +223,73 @@ function BlockRow({ block, index, onChange, onRemove, onDragStart, onDragOver, o
   );
 }
 
-function BlockEditor({ initialBlocks, inputName, uploadUrl }) {
+const SAVE_STATUS = { IDLE: 'idle', SAVING: 'saving', SAVED: 'saved', ERROR: 'error' };
+const AUTOSAVE_DELAY_MS = 800;
+
+function SaveStatus({ status, savedAt }) {
+  if (status === SAVE_STATUS.SAVING) {
+    return <span className="text-xs text-gray-400">Enregistrement…</span>;
+  }
+  if (status === SAVE_STATUS.ERROR) {
+    return <span className="text-xs text-red-500">Échec de l'enregistrement</span>;
+  }
+  if (status === SAVE_STATUS.SAVED && savedAt) {
+    return <span className="text-xs text-vertone">Enregistré à {savedAt}</span>;
+  }
+  return null;
+}
+
+function LectureEditor({ lectureId, initialTitle, initialBlocks, updateUrl, uploadUrl }) {
+  const [title, setTitle] = useState(initialTitle || '');
   const [blocks, setBlocks] = useState(() =>
     (initialBlocks || []).map((block) => ({ ...block, clientId: nextClientId() }))
   );
+  const [status, setStatus] = useState(SAVE_STATUS.IDLE);
+  const [savedAt, setSavedAt] = useState('');
   const dragIndexRef = useRef(null);
-  const hiddenInputRef = useRef(null);
+  const saveTimeoutRef = useRef(null);
+  const skipNextSaveRef = useRef(true);
+
+  const save = async () => {
+    setStatus(SAVE_STATUS.SAVING);
+    try {
+      const response = await fetch(updateUrl, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          'X-CSRF-TOKEN': csrfToken(),
+        },
+        body: JSON.stringify({
+          lecture_title: title,
+          content_blocks: JSON.stringify(blocks.map(({ clientId, ...rest }) => rest)),
+        }),
+      });
+
+      if (!response.ok) throw new Error('save failed');
+
+      setStatus(SAVE_STATUS.SAVED);
+      setSavedAt(new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }));
+      window.dispatchEvent(new CustomEvent('module-builder:lecture-saved', {
+        detail: { id: lectureId, lecture_title: title },
+      }));
+    } catch (e) {
+      setStatus(SAVE_STATUS.ERROR);
+    }
+  };
 
   useEffect(() => {
-    if (hiddenInputRef.current) {
-      hiddenInputRef.current.value = JSON.stringify(
-        blocks.map(({ clientId, ...rest }) => rest)
-      );
+    if (skipNextSaveRef.current) {
+      skipNextSaveRef.current = false;
+      return undefined;
     }
-  }, [blocks]);
+
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    saveTimeoutRef.current = setTimeout(save, AUTOSAVE_DELAY_MS);
+
+    return () => { if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [title, blocks]);
 
   const addBlock = (type) => setBlocks((prev) => [...prev, createBlock(type)]);
   const updateBlock = (index, updated) => setBlocks((prev) => prev.map((b, i) => (i === index ? updated : b)));
@@ -258,7 +311,19 @@ function BlockEditor({ initialBlocks, inputName, uploadUrl }) {
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
+      <div className="flex items-center justify-between gap-3">
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          maxLength={255}
+          placeholder="Titre de la leçon"
+          className="flex-1 rounded-[10px] border border-gray-300 px-3 py-2 text-sm font-semibold focus:border-orangeone focus:outline-none"
+        />
+        <SaveStatus status={status} savedAt={savedAt} />
+      </div>
+
       <div className="flex flex-wrap gap-2">
         {Object.entries(BLOCK_LABELS).map(([type, label]) => (
           <button
@@ -291,8 +356,6 @@ function BlockEditor({ initialBlocks, inputName, uploadUrl }) {
           <p className="text-xs text-gray-400">Aucun bloc pour le moment. Ajoutez-en un ci-dessus.</p>
         )}
       </div>
-
-      <input ref={hiddenInputRef} type="hidden" name={inputName} />
     </div>
   );
 }
@@ -302,8 +365,10 @@ export function mountModuleBuilderEditors() {
     if (container.dataset.blockEditorMounted === '1') return;
     container.dataset.blockEditorMounted = '1';
 
-    const inputName = container.dataset.inputName || 'content_blocks';
+    const lectureId = container.dataset.lectureId || '';
+    const updateUrl = container.dataset.updateUrl || '';
     const uploadUrl = container.dataset.uploadUrl || '';
+    const initialTitle = container.dataset.initialTitle || '';
 
     let initialBlocks = [];
     try {
@@ -314,7 +379,13 @@ export function mountModuleBuilderEditors() {
     }
 
     createRoot(container).render(
-      <BlockEditor initialBlocks={initialBlocks} inputName={inputName} uploadUrl={uploadUrl} />
+      <LectureEditor
+        lectureId={lectureId}
+        initialTitle={initialTitle}
+        initialBlocks={initialBlocks}
+        updateUrl={updateUrl}
+        uploadUrl={uploadUrl}
+      />
     );
   });
 }

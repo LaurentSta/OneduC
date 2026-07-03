@@ -89,7 +89,7 @@ class ModuleBuilderController extends Controller
                 'is_trainer_authored' => true,
             ]);
 
-            foreach ($catalogModule->sections()->orderBy('id')->get() as $section) {
+            foreach ($catalogModule->sections()->orderBy('position')->get() as $index => $section) {
                 $newSection = $newModule->sections()->create([
                     'section_title' => $section->section_title,
                     'section_html' => $section->section_html,
@@ -98,6 +98,7 @@ class ModuleBuilderController extends Controller
                     'contexte' => $section->contexte,
                     'scorm_video_path' => $section->scorm_video_path,
                     'video_url' => $section->video_url,
+                    'position' => $index,
                 ]);
 
                 foreach ($section->lectures()->orderBy('position')->get() as $lecture) {
@@ -187,9 +188,18 @@ class ModuleBuilderController extends Controller
             'section_title' => 'required|string|max:255',
         ]);
 
-        $module->sections()->create([
+        $position = (int) $module->sections()->max('position') + 1;
+
+        $section = $module->sections()->create([
             'section_title' => $validated['section_title'],
+            'position' => $position,
         ]);
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'section' => $this->sectionPayload($section),
+            ], 201);
+        }
 
         return back()->with('success', 'Chapitre ajouté.');
     }
@@ -204,17 +214,53 @@ class ModuleBuilderController extends Controller
 
         $section->update(['section_title' => $validated['section_title']]);
 
+        if ($request->wantsJson()) {
+            return response()->json([
+                'section' => $this->sectionPayload($section),
+            ]);
+        }
+
         return back()->with('success', 'Chapitre mis à jour.');
     }
 
-    public function destroySection(ModuleSection $section)
+    public function destroySection(Request $request, ModuleSection $section)
     {
         $this->assertOwnership($section->module);
 
         $section->lectures()->delete();
         $section->delete();
 
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true]);
+        }
+
         return back()->with('success', 'Chapitre supprimé.');
+    }
+
+    public function reorderSections(Request $request, Module $module)
+    {
+        $this->assertOwnership($module);
+
+        $validated = $request->validate([
+            'section_ids' => 'required|array',
+            'section_ids.*' => 'integer',
+        ]);
+
+        $existingIds = $module->sections()->pluck('id');
+        $requestedIds = collect($validated['section_ids']);
+
+        abort_unless(
+            $requestedIds->count() === $existingIds->count() && $requestedIds->diff($existingIds)->isEmpty(),
+            422
+        );
+
+        DB::transaction(function () use ($requestedIds) {
+            foreach ($requestedIds->values() as $position => $sectionId) {
+                ModuleSection::where('id', $sectionId)->update(['position' => $position]);
+            }
+        });
+
+        return response()->json(['success' => true]);
     }
 
     public function storeLecture(Request $request, ModuleSection $section)
@@ -228,13 +274,19 @@ class ModuleBuilderController extends Controller
 
         $position = (int) $section->lectures()->max('position') + 1;
 
-        $section->lectures()->create([
+        $lecture = $section->lectures()->create([
             'module_id' => $section->module_id,
             'lecture_title' => $validated['lecture_title'],
             'content_type' => 'blocks',
             'content_blocks' => $this->sanitizeBlocks($validated['content_blocks'] ?? null, (int) $section->module_id),
             'position' => $position,
         ]);
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'lecture' => $this->lecturePayload($lecture),
+            ], 201);
+        }
 
         return back()->with('success', 'Leçon ajoutée.');
     }
@@ -253,16 +305,53 @@ class ModuleBuilderController extends Controller
             'content_blocks' => $this->sanitizeBlocks($validated['content_blocks'] ?? null, (int) $lecture->module_id),
         ]);
 
+        if ($request->wantsJson()) {
+            return response()->json([
+                'lecture' => $this->lecturePayload($lecture),
+                'saved_at' => now()->toIso8601String(),
+            ]);
+        }
+
         return back()->with('success', 'Leçon mise à jour.');
     }
 
-    public function destroyLecture(ModuleLecture $lecture)
+    public function destroyLecture(Request $request, ModuleLecture $lecture)
     {
         $this->assertOwnership($lecture->module);
 
         $lecture->delete();
 
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true]);
+        }
+
         return back()->with('success', 'Leçon supprimée.');
+    }
+
+    public function reorderLectures(Request $request, ModuleSection $section)
+    {
+        $this->assertOwnership($section->module);
+
+        $validated = $request->validate([
+            'lecture_ids' => 'required|array',
+            'lecture_ids.*' => 'integer',
+        ]);
+
+        $existingIds = $section->lectures()->pluck('id');
+        $requestedIds = collect($validated['lecture_ids']);
+
+        abort_unless(
+            $requestedIds->count() === $existingIds->count() && $requestedIds->diff($existingIds)->isEmpty(),
+            422
+        );
+
+        DB::transaction(function () use ($requestedIds) {
+            foreach ($requestedIds->values() as $position => $lectureId) {
+                ModuleLecture::where('id', $lectureId)->update(['position' => $position]);
+            }
+        });
+
+        return response()->json(['success' => true]);
     }
 
     public function uploadImage(Request $request, Module $module)
@@ -314,6 +403,28 @@ class ModuleBuilderController extends Controller
             (int) $module->formateur_id === (int) auth()->id() && $module->is_trainer_authored,
             403
         );
+    }
+
+    private function sectionPayload(ModuleSection $section): array
+    {
+        return [
+            'id' => $section->id,
+            'section_title' => $section->section_title,
+            'position' => $section->position,
+        ];
+    }
+
+    private function lecturePayload(ModuleLecture $lecture): array
+    {
+        return [
+            'id' => $lecture->id,
+            'section_id' => $lecture->section_id,
+            'module_id' => $lecture->module_id,
+            'lecture_title' => $lecture->lecture_title,
+            'content_type' => $lecture->content_type,
+            'content_blocks' => $lecture->content_blocks ?? [],
+            'position' => $lecture->position,
+        ];
     }
 
     private function resolveTrainerCategory(): Category
