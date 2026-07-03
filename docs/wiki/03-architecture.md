@@ -28,7 +28,7 @@ routes/
 
 Le middleware `force.password.change` est appliqué dans l'espace stagiaire après les routes de première connexion. Il bloque l'accès jusqu'à ce que l'utilisateur définisse son mot de passe (`users.password_changed_at` nul). Le formateur n'a pas ce middleware dans `routes/formateur.php` au 3 juillet 2026.
 
-Le dépôt expose environ 400 routes : 402 routes déclarées via `php artisan route:list --json`, dont 128 sous `/admin`, 137 sous `/formateur`, 49 sous `/stagiaire` et 9 sous `/observateur`.
+Le dépôt expose environ 400 routes : 405 routes déclarées via `php artisan route:list --json`, dont 128 sous `/admin`, 140 sous `/formateur`, 49 sous `/stagiaire` et 9 sous `/observateur`.
 
 ---
 
@@ -38,7 +38,7 @@ Le dépôt expose environ 400 routes : 402 routes déclarées via `php artisan r
 app/Http/Controllers/
 ├── AdminController.php              ← Dashboard admin
 ├── FormateurController.php          ← Dashboard formateur (analytics)
-├── StagiaireController.php          ← Dashboard stagiaire
+├── StagiaireController.php          ← Dashboard stagiaire (796 lignes, progression extraite)
 ├── UserController.php               ← Auth, profil, connexion par code
 ├── LessonFeedbackController.php     ← Retours sur les leçons
 │
@@ -56,7 +56,7 @@ app/Http/Controllers/
 ├── Formateur/
 │   ├── GroupeController.php         ← Gestion groupes formateur (686 lignes)
 │   ├── GroupeModuleLessonController.php ← Personnalisation leçons par groupe
-│   ├── ModuleBuilderController.php  ← Création/édition de modules formateur (546 lignes)
+│   ├── ModuleBuilderController.php  ← Orchestration HTTP du builder de modules formateur (356 lignes)
 │   ├── MesFormationsController.php  ← FormateurParcours
 │   ├── ParcoursController.php       ← Parcours onboarding formateur
 │   ├── ProgressionGroupesController.php
@@ -67,6 +67,52 @@ app/Http/Controllers/
     ├── QuizController.php            ← Quiz natifs (701 lignes, partagé formateur)
     └── [outils live]/ ...
 ```
+
+---
+
+## Monolithe modulaire
+
+Oneduc reste volontairement un **monolithe Laravel** : une application, une base de données, un déploiement. La trajectoire recommandée est de le faire évoluer vers un **monolithe modulaire** : les contrôleurs gardent l'orchestration HTTP, tandis que la logique métier est extraite dans `app/Domains/`.
+
+Objectifs :
+- réduire les contrôleurs de plusieurs centaines de lignes ;
+- faciliter les tests ciblés ;
+- rendre les zones fonctionnelles plus lisibles pour les développeurs et pour l'IA ;
+- éviter la complexité prématurée des microservices.
+
+Domaines extraits :
+
+```text
+app/Domains/
+├── ModulesFormateur/
+│   ├── Actions/
+│   │   ├── CreerModule.php
+│   │   ├── DupliquerModuleCatalogue.php
+│   │   ├── CreerChapitre.php
+│   │   ├── CreerLecon.php
+│   │   ├── ModifierLecon.php
+│   │   ├── ReordonnerChapitres.php
+│   │   ├── ReordonnerLecons.php
+│   │   ├── DeplacerLecon.php
+│   │   ├── PromouvoirLeconEnChapitre.php
+│   │   ├── TeleverserImageModule.php
+│   │   └── AssignerGroupesModule.php
+│   └── Support/
+│       ├── AccesModule.php
+│       ├── DonneesModule.php
+│       └── NettoyeurBlocsModule.php
+└── Learners/
+    └── Support/
+        └── LearnerModuleProgress.php
+```
+
+Les noms de fichiers/classes de `ModulesFormateur` sont volontairement en français (convention retenue pour tout le code métier propre à Oneduc, par opposition aux termes techniques génériques du framework Laravel qui restent en anglais). `ModuleBuilderController` délègue maintenant la création, duplication, réordonnancement, déplacement de leçons, promotion en chapitre, upload d'images et assignation aux groupes à `ModulesFormateur`. `StagiaireController` délègue le calcul de progression des modules et les statuts de quiz natifs à `Learners\Support\LearnerModuleProgress`.
+
+Prochaines zones candidates :
+- `Backend/ModuleController` : navigation module/section/leçon, progression, médias ;
+- `StagiaireController` : dashboard, modules, résultats, outils ;
+- `Formateur/GroupeController` : création groupe, stagiaires, co-formateurs, invitations ;
+- `ProgressionStagiaireController` : timeline, présence, risque d'abandon.
 
 ---
 
@@ -135,6 +181,27 @@ La méthode `collectSnapshots()` produit un snapshot unifié par paire `(user_id
 
 ---
 
+## Écrans riches côté frontend
+
+Les écrans Blade restent majoritaires, mais plusieurs interfaces chargent React à la demande via `resources/js/app.js`.
+
+| Point de montage | Bundle chargé | Usage |
+|------------------|---------------|-------|
+| `[data-outline-editor]` | `resources/js/outline-editor/OutlineEditor.jsx` | Plan continu du builder de modules formateur |
+| `[data-block-editor]` | `resources/js/formateur-module-builder-editor.jsx` | Édition riche du contenu d'une leçon en blocs |
+| `[data-whiteboard-app]` | `resources/js/group-whiteboard-excalidraw.jsx` | Tableau blanc de groupe |
+| `[data-parcours-builder]` | `resources/js/formateur-parcours-builder.jsx` | Assemblage de parcours formateur |
+
+Le nouvel éditeur de plan du module builder utilise Tiptap/ProseMirror avec deux noeuds métier (`chapterHeading`, `lessonItem`). Le dossier `resources/js/outline-editor/` contient :
+- `OutlineEditor.jsx` : montage React et configuration Tiptap ;
+- `outline-keymap.js` : raccourcis clavier (`Entrée`, `Maj+Entrée`, `Alt+↑/↓`) ;
+- `reconcile.js` et `sync-queue.js` : création/renommage avec debounce et file de synchronisation ;
+- `api.js` : appels JSON vers `ModuleBuilderController`.
+
+Le contenu détaillé des leçons reste séparé dans la page `resources/views/formateur/modules-builder/lecture-edit.blade.php`, qui monte l'éditeur de blocs existant.
+
+---
+
 ## Middleware applicatif
 
 | Middleware | Classe | Rôle |
@@ -187,17 +254,17 @@ php artisan test                                      # Tous les tests
 php artisan test --filter NomDuTest                   # Filtre par nom
 ```
 
-État vérifié le 3 juillet 2026 :
+Dernière suite complète documentée le 3 juillet 2026 :
 
 ```bash
 php artisan test
-# 102 tests passés, 501 assertions
+# 103 tests passés, 523 assertions
 
 npm run build
 # Build réussi, avec avertissements de taille de chunks Vite
 ```
 
-Les factories formateur initialisent désormais une adhésion active par défaut, ce qui évite les faux échecs liés au middleware `association.member`.
+Les factories formateur initialisent désormais une adhésion active par défaut, ce qui évite les faux échecs liés au middleware `association.member`. Le module builder formateur est couvert par `tests/Feature/Formateur/ModuleBuilderTest.php` pour la création, la duplication, le réordonnancement, le déplacement de leçons, la promotion d'une leçon vide en chapitre et les contrôles d'accès.
 
 ---
 

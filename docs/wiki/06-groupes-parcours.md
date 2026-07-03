@@ -73,6 +73,8 @@ Cette fonctionnalité est avancée et rarement présente dans les LMS à ce stad
 
 ## Parcours de formation
 
+Convention vocabulaire : côté formateur, on parle de **parcours** ; côté stagiaire, le même ensemble doit être présenté comme **ma formation** ou **mon programme**. Le terme **module** reste réservé aux briques pédagogiques qui composent le parcours.
+
 ### Deux notions coexistent
 
 #### 1. Parcours formateur Oneduc (`ParcoursController`)
@@ -85,7 +87,7 @@ Accessible via `/formateur/parcours-formateur`.
 
 Voir le détail dans [docs/parcours-formateur.md](../parcours-formateur.md).
 
-#### 2. Formations créées par le formateur (`FormateurParcours`)
+#### 2. Parcours créés par le formateur (`FormateurParcours`)
 
 Ce sont les **parcours pédagogiques** qu'un formateur construit pour ses groupes de stagiaires.
 

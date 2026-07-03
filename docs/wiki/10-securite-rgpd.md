@@ -63,7 +63,7 @@ Ce mécanisme est stratégiquement pertinent pour le modèle associatif d'Oneduc
 |-------|--------------|
 | Route `/admin/stagiaires/{id}/debug-progression` | Aucune route correspondante trouvée dans `php artisan route:list --json` |
 | `POST /admin/stagiaires/{user}/reset-progression` | Route présente dans `routes/admin.php`, protégée par `auth`, `role:admin`, `admin.activity` |
-| Tests liés au middleware `association.member` | Suite verte : 102 tests passés |
+| Tests liés au middleware `association.member` | Dernière suite complète documentée : 103 tests passés |
 
 ### Points à corriger avant publication publique
 

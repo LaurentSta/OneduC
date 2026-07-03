@@ -27,7 +27,7 @@ Le modèle de gouvernance est associatif : les formateurs accèdent à la platef
 |---------|-----------|
 | **Gestion des utilisateurs** | 4 profils distincts (Admin, Formateur, Stagiaire, Observateur) avec espaces séparés |
 | **Contenu pédagogique** | Modules → Sections → Leçons (SCORM, slides, quiz natifs, blocs texte/image/liste/citation, vidéo, ressources) |
-| **Création formateur** | Builder de modules personnels, duplication de modules catalogue, images, sections, leçons et affectation aux groupes |
+| **Création formateur** | Builder de modules personnels avec plan continu, duplication de modules catalogue, édition de leçons en blocs, images et affectation aux groupes |
 | **Groupes de formation** | Création, co-formateurs, observateurs, personnalisation des leçons par groupe |
 | **Suivi de progression** | Multi-sources (quiz, SCORM, vidéo, temps de connexion) |
 | **Animation live** | Quiz live, Nuage de mots, Sondage, Échelle, Mur de questions, Roue aléatoire, Tableau blanc, Minuteur, pages collaboratives HedgeDoc |
@@ -72,9 +72,9 @@ Le modèle de gouvernance est associatif : les formateurs accèdent à la platef
 | Vues Blade | 287 fichiers |
 | Tables dans le schéma MySQL baseline | 72 tables |
 | Migrations versionnées | 3 migrations post-baseline |
-| Routes déclarées | 402 routes |
+| Routes déclarées | 405 routes |
 | Fichiers de test | 43 fichiers PHP |
-| Suite de tests | 102 tests passés, 501 assertions |
+| Suite de tests | Dernière suite complète documentée : 103 tests passés, 523 assertions |
 
 ---
 
@@ -82,9 +82,9 @@ Le modèle de gouvernance est associatif : les formateurs accèdent à la platef
 
 | Axe | État | Commentaire |
 |-----|------|-------------|
-| Maturité technique | En consolidation avancée | Tests automatisés au vert et build Vite réussi ; plusieurs contrôleurs restent volumineux |
+| Maturité technique | En consolidation avancée | Dernière suite complète documentée au vert et build Vite réussi ; plusieurs contrôleurs restent volumineux |
 | Maturité pédagogique | Solide pour un pilote | Modules, quiz, SCORM, parcours, outils live et suivi formateur sont opérationnels |
-| Expérience utilisateur | Bonne base terrain | Accès stagiaire simplifié, interfaces par rôle, mais vocabulaire "formation/parcours/module" encore à unifier |
+| Expérience utilisateur | Bonne base terrain | Accès stagiaire simplifié, interfaces par rôle, convention vocabulaire définie dans le glossaire et à appliquer dans les menus |
 | Potentiel de publication | Proche, sous réserve de vérifications | Licence, README, templates GitHub et wiki présents ; historique Git et quelques risques doivent être revus |
 | Capacité LMS globale | Réelle mais incomplète | Il manque certificats, exports, prérequis bloquants et contrôle d'accès centralisé par policy |
 
