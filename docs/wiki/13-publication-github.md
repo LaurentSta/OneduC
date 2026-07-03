@@ -8,20 +8,26 @@ Cette checklist doit être complétée avant de rendre le dépôt public sur Git
 
 Ces points doivent être corrigés AVANT de publier. Publier avec ces failles expose vos utilisateurs et donne une carte d'attaque publique.
 
-- [ ] **S1** — Déplacer la route `/admin/stagiaires/{id}/debug-progression` dans `routes/admin.php` sous middleware complet, ou la supprimer  
-  `routes/web.php` ligne 220
+- [x] **S1** — Route `/admin/stagiaires/{id}/debug-progression` supprimée ou absente
+  Vérifié le 3 juillet 2026 : aucune route `debug-progression` dans `php artisan route:list --json`
 
-- [ ] **S2** — Déplacer `POST /admin/stagiaires/{user}/reset-progression` dans `routes/admin.php`  
-  `routes/web.php` ligne 273
+- [x] **S2** — `POST /admin/stagiaires/{user}/reset-progression` protégé côté admin
+  Vérifié : route `admin.stagiaires.reset` dans `routes/admin.php`, sous `auth`, `role:admin`, `admin.activity`
 
 - [ ] **S3** — Corriger `Module::isVisibleTo()` pour vérifier l'appartenance groupe du stagiaire  
-  `app/Models/Module.php` ligne 84
+  `app/Models/Module.php`
 
 - [ ] **S4** — Ajouter throttling sur `/stagiaire/connexion-code`  
   `routes/web.php` — ajouter `->middleware('throttle:10,1')`
 
 - [ ] **S5** — Corriger `LessonFeedbackController::store()` (route inexistante → erreur 500)  
-  `app/Http/Controllers/LessonFeedbackController.php` ligne 32
+  `app/Http/Controllers/LessonFeedbackController.php` redirige vers `module.lesson`, route absente
+
+- [ ] **S6** — Corriger le cumul temps SCORM
+  `SCORMController::handleSessionTime()` écrit `last_session_time`, absent de `scorm_scores`
+
+- [ ] **S7** — Ajouter la vérification d'appartenance à la leçon dans `POST /scorm/save-progress`
+  Le CSRF est volontairement désactivé pour l'iframe SCORM, il faut compenser côté contrôleur
 
 ---
 
@@ -63,6 +69,8 @@ find . -name "*.sqlite" -not -path "./.git/*"
 
 Tout email ou nom réel doit être remplacé par des données fictives (`test@example.com`, `jean.dupont@exemple.fr`).
 
+État local partiel au 3 juillet 2026 : `git log --all --full-history -- .env` ne retourne rien. Le scan complet des secrets reste à faire avant passage public.
+
 ### Vérification du .gitignore
 
 ```bash
@@ -99,7 +107,7 @@ Les packages SCORM importés ne doivent pas être dans le dépôt git (ils peuve
 ## Axe 3 — Conformité légale
 
 - [ ] Le fichier `LICENSE` contient le texte intégral de l'AGPL v3  
-  → Copier depuis `https://www.gnu.org/licenses/agpl-3.0.txt` et coller dans `LICENSE`
+  → État local : le texte AGPL v3 complet est présent
 
 - [ ] Le fichier `NOTICE` mentionne `© Association Oneduc` avec les années correctes
 
@@ -135,6 +143,8 @@ Les packages SCORM importés ne doivent pas être dans le dépôt git (ils peuve
 - [ ] `.github/ISSUE_TEMPLATE/feature_request.md` — template de demande de fonctionnalité
 - [ ] `.github/PULL_REQUEST_TEMPLATE.md` — template de Pull Request (inclure rappel du CLA)
 
+État local : ces trois fichiers existent dans `.github/`.
+
 ### Branches et protection
 
 - [ ] La branche `main` est protégée (au moins : interdire les push directs, exiger une PR)
@@ -162,9 +172,9 @@ Le `README.md` à la racine est la première chose que les visiteurs GitHub voie
 
 | Priorité | Action | Bloquant ? |
 |----------|--------|------------|
-| 1 | Corriger les 5 failles de sécurité (S1 à S5) | Oui |
+| 1 | Corriger les points sécurité restants (S3 à S7) | Oui |
 | 2 | Vérifier et nettoyer l'historique git (secrets, données personnelles) | Oui |
-| 3 | Compléter le fichier LICENSE avec le texte AGPL v3 intégral | Oui |
+| 3 | Synchroniser `SECURITY.md` avec l'état réel de la checklist | Recommandé |
 | 4 | Vérifier convention formation / statuts association | Recommandé |
 | 5 | Configurer GitHub (topics, protections de branche, templates) | Non |
 | 6 | Mettre à jour le README principal avec badge et sections | Non |

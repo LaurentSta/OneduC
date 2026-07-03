@@ -50,29 +50,33 @@ Ce mécanisme est stratégiquement pertinent pour le modèle associatif d'Oneduc
 |--------|-----------|
 | Mots de passe utilisateurs | Hash bcrypt via Laravel (irréversible) |
 | Code d'accès temporaire groupe | Chiffrement via cast Laravel `encrypted` (réversible pour affichage) |
-| Codes d'accès SCORM | Générés aléatoirement par `CodeGeneratorService` |
+| Codes d'accès stagiaires | Générés aléatoirement par `CodeGeneratorService` (`users.code_acces`) |
+| Codes d'accès outils live | Générés par les contrôleurs d'outils (`access_code` sur les sessions) |
 
 ---
 
-## Risques de sécurité identifiés (audit mai 2026)
+## Risques de sécurité identifiés (analyse 3 juillet 2026)
 
-### Critiques (à corriger avant mise en production)
+### Points corrigés depuis l'ancien audit
 
-| # | Risque | Localisation | Impact |
-|---|--------|--------------|--------|
-| 1 | Route `/admin/stagiaires/{id}/debug-progression` accessible sans authentification | `routes/web.php` ligne 220 | Fuite de données de progression en JSON brut |
-| 2 | Route `POST /admin/stagiaires/{user}/reset-progression` hors middleware admin | `routes/web.php` ligne 273 | Réinitialisation non autorisée de la progression d'un stagiaire |
-| 3 | `Module::isVisibleTo()` retourne `true` pour tout module actif sans vérifier le groupe | `app/Models/Module.php` | Accès aux contenus de modules non affectés via URL directe |
-| 4 | Connexion par code sans throttling | Route `/stagiaire/connexion-code` | Brute-force possible sur les codes à 6 caractères |
-| 5 | `LessonFeedbackController::store()` redirige vers une route inexistante | `app/Http/Controllers/LessonFeedbackController.php:32` | Erreur 500 à chaque soumission de retour |
+| Point | État vérifié |
+|-------|--------------|
+| Route `/admin/stagiaires/{id}/debug-progression` | Aucune route correspondante trouvée dans `php artisan route:list --json` |
+| `POST /admin/stagiaires/{user}/reset-progression` | Route présente dans `routes/admin.php`, protégée par `auth`, `role:admin`, `admin.activity` |
+| Tests liés au middleware `association.member` | Suite verte : 102 tests passés |
 
-### Importants (production dégradée)
+### Points à corriger avant publication publique
 
 | # | Risque | Localisation | Impact |
 |---|--------|--------------|--------|
-| 6 | `POST /scorm/save-progress` sans CSRF ni vérification d'appartenance à la leçon | `routes/scorm.php` | Un utilisateur authentifié peut soumettre des scores pour une leçon qui n'est pas la sienne |
-| 7 | `AdminController::AdminProfilStore()` ne valide pas l'unicité de l'email | `AdminController` | Un admin peut usurper l'email d'un autre utilisateur |
-| 8 | Import mort `ScormInteractionController` dans `routes/scorm.php` | `routes/scorm.php:6` | Erreur potentielle en mode strict |
+| 1 | Connexion par code sans throttling | `POST /stagiaire/connexion-code` (`web` uniquement) | Brute-force possible sur les codes à 6 caractères |
+| 2 | `LessonFeedbackController::store()` redirige vers `module.lesson`, route inexistante | `app/Http/Controllers/LessonFeedbackController.php` | Erreur 500 probable à la soumission d'un retour de leçon |
+| 3 | `Module::isVisibleTo()` autorise tout module actif pour les non-admins | `app/Models/Module.php` | Risque d'accès direct à un module actif hors affectation groupe selon la route |
+| 4 | `POST /scorm/save-progress` sans CSRF et sans vérification d'appartenance à la leçon | `routes/scorm.php`, `SCORMController::saveProgress()` | Soumission de progression possible pour une leçon non affectée |
+| 5 | `SCORMController` écrit `last_session_time`, absent du schéma `scorm_scores` | `SCORMController::handleSessionTime()` | Erreur SQL possible lors de la réception de `cmi.core.session_time` |
+| 6 | `StoreModuleRequest::authorize()` et `StoreGroupeRequest::authorize()` retournent `false` | `app/Http/Requests/` | FormRequests inutilisables tant qu'ils ne sont pas corrigés |
+| 7 | `AdminController::AdminProfilStore()` ne valide pas l'unicité email avec exclusion de l'utilisateur courant | `AdminController` | Collision possible avec l'email d'un autre compte |
+| 8 | Import mort `ScormInteractionController` | `routes/scorm.php` | Dette technique faible, à nettoyer |
 
 ---
 

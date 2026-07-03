@@ -11,8 +11,8 @@ routes/
 ├── formateur.php     ← espace /formateur (middleware: auth, role:formateur, association.member)
 ├── stagiaire.php     ← espace /stagiaire (middleware: auth, role:stagiaire, track.time)
 ├── observateur.php   ← espace /observateur (middleware: auth, role:observateur)
-├── scorm.php         ← API SCORM (middleware partiel, sans CSRF)
-└── feedback.php      ← retours stagiaires
+├── scorm.php         ← API SCORM (middleware partiel, routes sans CSRF pour iframe)
+└── feedback.php      ← retours stagiaires (fichier présent mais non importé dans bootstrap/app.php)
 ```
 
 ---
@@ -23,10 +23,12 @@ routes/
 |--------|-------------|------------|----------------------|
 | Admin | `/admin` | `auth, role:admin, admin.activity` | `App\Http\Controllers\` (sous-dossier `Backend/`) |
 | Formateur | `/formateur` | `auth, role:formateur, association.member` | `App\Http\Controllers\Formateur\` |
-| Stagiaire | `/stagiaire` | `auth, role:stagiaire, track.time` | `App\Http\Controllers\Stagiaire\` |
+| Stagiaire | `/stagiaire` | `auth, role:stagiaire, track.time`, puis `force.password.change` sauf première connexion | `App\Http\Controllers\Stagiaire\` |
 | Observateur | `/observateur` | `auth, role:observateur` | `App\Http\Controllers\Observateur\` |
 
-Le middleware `force.password.change` est appliqué comme groupe interne dans les espaces stagiaire et formateur. Il bloque l'accès jusqu'à ce que l'utilisateur définisse son mot de passe à la première connexion (`users.password_changed_at` nul).
+Le middleware `force.password.change` est appliqué dans l'espace stagiaire après les routes de première connexion. Il bloque l'accès jusqu'à ce que l'utilisateur définisse son mot de passe (`users.password_changed_at` nul). Le formateur n'a pas ce middleware dans `routes/formateur.php` au 3 juillet 2026.
+
+Le dépôt expose environ 400 routes : 402 routes déclarées via `php artisan route:list --json`, dont 128 sous `/admin`, 137 sous `/formateur`, 49 sous `/stagiaire` et 9 sous `/observateur`.
 
 ---
 
@@ -54,6 +56,7 @@ app/Http/Controllers/
 ├── Formateur/
 │   ├── GroupeController.php         ← Gestion groupes formateur (686 lignes)
 │   ├── GroupeModuleLessonController.php ← Personnalisation leçons par groupe
+│   ├── ModuleBuilderController.php  ← Création/édition de modules formateur (546 lignes)
 │   ├── MesFormationsController.php  ← FormateurParcours
 │   ├── ParcoursController.php       ← Parcours onboarding formateur
 │   ├── ProgressionGroupesController.php
@@ -67,7 +70,7 @@ app/Http/Controllers/
 
 ---
 
-## Modèles Eloquent (58 modèles)
+## Modèles Eloquent (59 modèles)
 
 ### Modèles centraux
 
@@ -103,6 +106,8 @@ app/Http/Controllers/
 | `ScormPackage` | `scorm_packages` | Référence d'un package SCORM (slug stable) |
 | `ScormPackageVersion` | `scorm_package_versions` | Version d'un package SCORM importé |
 
+Le modèle `Module` utilise `SoftDeletes` et distingue les modules catalogue des modules créés par les formateurs via `is_trainer_authored`.
+
 ---
 
 ## Services métier
@@ -136,21 +141,26 @@ La méthode `collectSnapshots()` produit un snapshot unifié par paire `(user_id
 |-----------|--------|------|
 | `role` | `Role` | Vérifie `user.role` + `user.status = actif` |
 | `association.member` | `EnsureAssociationMembership` | Vérifie l'adhésion formateur (active ou grâce d'un mois) |
-| `track.time` | `TrackLearningTime` | Enregistre le temps de connexion stagiaire |
-| `force.password.change` | `ForcePasswordChange` | Bloque jusqu'au changement de mot de passe initial |
+| `track.time` | `TrackSessionTime` | Enregistre le temps de connexion stagiaire dans `users.total_site_time` |
+| `force.password.change` | `ForcePasswordChange` | Bloque l'espace stagiaire jusqu'au changement de mot de passe initial |
 | `admin.activity` | `RecordAdminActivity` | Journalise les actions POST/PUT/PATCH/DELETE admin |
 
 ---
 
 ## Pattern d'outils interactifs
 
-Tous les outils d'animation (Quiz live, Nuage de mots, Sondage, etc.) suivent le même patron de conception :
+La plupart des outils d'animation (Quiz live, Nuage de mots, Sondage, Échelle, Mur de questions, etc.) suivent le même patron de conception :
 
 1. **Deux tables** : une table de session (`*_sessions`) avec `group_id`, `formateur_id`, `is_active`, `access_code` ; une table de réponses (`*_responses`) avec `user_id`, `session_id`
 2. **Contrôleur formateur** dans `Formateur/` — CRUD + lancement/fermeture + endpoint JSON résultats
 3. **Contrôleur stagiaire** dans `Stagiaire/` — affichage formulaire + soumission réponse
-4. **Temps réel** : polling AJAX toutes les 2–3 secondes via Alpine.js `setInterval` (pas de WebSockets)
+4. **Temps réel** : polling AJAX toutes les 2–3 secondes via Alpine.js ou fetch côté React selon l'écran (pas de WebSockets)
 5. **Accès** : vérifié via `$group->students()->where('users.id', auth()->id())->exists()`
+
+Exceptions notables :
+- le tableau blanc utilise Excalidraw et persiste des éléments/snapshots de groupe ;
+- le minuteur est unique par groupe (`GroupTimer`) ;
+- les pages collaboratives ouvrent une instance HedgeDoc externe configurée par `HEDGEDOC_BASE_URL`.
 
 ---
 
@@ -177,19 +187,41 @@ php artisan test                                      # Tous les tests
 php artisan test --filter NomDuTest                   # Filtre par nom
 ```
 
-État actuel : **40 tests en échec sur 85** principalement à cause du middleware `association.member` qui n'est pas satisfait dans les factories par défaut. Voir [Roadmap](11-roadmap.md) pour le plan de correction.
+État vérifié le 3 juillet 2026 :
+
+```bash
+php artisan test
+# 102 tests passés, 501 assertions
+
+npm run build
+# Build réussi, avec avertissements de taille de chunks Vite
+```
+
+Les factories formateur initialisent désormais une adhésion active par défaut, ce qui évite les faux échecs liés au middleware `association.member`.
 
 ---
 
-## Migrations
+## Schéma et migrations
 
-102 migrations tracent l'évolution complète du schéma depuis la création du projet. Elles sont nommées chronologiquement et documentent chaque évolution du modèle de données.
+Les migrations historiques ont été élaguées après génération d'une baseline. L'état de référence est :
+
+```text
+database/schema/mysql-schema.sql   # 72 tables
+database/migrations/               # 3 migrations post-baseline
+```
+
+Les trois migrations actuelles :
+- suppriment `contacts` si la table legacy est vide ;
+- suppriment `learning_objectives` si la table legacy est vide ;
+- ajoutent `position` à `module_sections`.
 
 ```bash
 php artisan migrate          # Appliquer les migrations en attente
 php artisan migrate:status   # État de toutes les migrations
 php artisan migrate:fresh    # Remettre à zéro (détruit les données !)
 ```
+
+La baseline fournie est MySQL. Pour utiliser SQLite en développement, il faut générer une baseline SQLite ou restaurer une série complète de migrations compatible.
 
 ---
 

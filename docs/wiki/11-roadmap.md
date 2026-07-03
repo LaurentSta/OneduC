@@ -1,21 +1,21 @@
 # 11 — Roadmap & dette technique
 
-## État actuel (mai 2026)
+## État actuel (3 juillet 2026)
 
-La plateforme est **utilisable en pilote contrôlé** (10 à 50 stagiaires, 3 à 5 formateurs, contexte associatif ou ateliers numériques). Elle n'est pas encore prête pour une mise en production large ni pour une présentation à des financeurs institutionnels sans les corrections de la Phase 1.
+La plateforme est **utilisable en pilote contrôlé** (10 à 50 stagiaires, 3 à 5 formateurs, contexte associatif ou ateliers numériques). La suite automatisée est au vert (`102 tests passés`) et le build Vite réussit, mais quelques corrections restent nécessaires avant publication publique large.
 
 ---
 
-## Bugs critiques à corriger avant tout pilote
+## Corrections prioritaires avant publication publique
 
 | # | Bug | Fichier | Impact immédiat |
 |---|-----|---------|-----------------|
-| B1 | Route debug admin accessible sans auth | `routes/web.php:220` | Fuite de données personnelles |
-| B2 | Route reset-progression hors middleware admin | `routes/web.php:273` | Modification non autorisée |
-| B3 | `Module::isVisibleTo()` ne vérifie pas le groupe | `app/Models/Module.php:84` | Accès à tout module actif par URL |
-| B4 | `LessonFeedbackController::store()` route inexistante | `app/Http/Controllers/LessonFeedbackController.php:32` | Erreur 500 sur tout retour de leçon |
-| B5 | Connexion par code sans throttling | `routes/web.php` | Brute-force sur code 6 caractères |
-| B6 | 40 tests en échec sur 85 | `tests/Feature/*` | Impossible de garantir la stabilité |
+| B1 | Connexion par code sans throttling | `routes/web.php` | Brute-force sur code 6 caractères |
+| B2 | `LessonFeedbackController::store()` redirige vers `module.lesson`, route inexistante | `app/Http/Controllers/LessonFeedbackController.php` | Erreur 500 sur retour de leçon |
+| B3 | `Module::isVisibleTo()` ne vérifie pas l'appartenance groupe | `app/Models/Module.php` | Risque d'accès direct à un module actif par URL |
+| B4 | `SCORMController` écrit `last_session_time`, colonne absente | `app/Http/Controllers/SCORMController.php` | Erreur SQL possible sur `cmi.core.session_time` |
+| B5 | `POST /scorm/save-progress` ne vérifie pas l'appartenance à la leçon | `routes/scorm.php`, `SCORMController` | Soumission de score non autorisée possible |
+| B6 | `StoreModuleRequest` / `StoreGroupeRequest` retournent `authorize() = false` | `app/Http/Requests/` | FormRequests inutilisables |
 
 ---
 
@@ -29,28 +29,28 @@ La plateforme est **utilisable en pilote contrôlé** (10 à 50 stagiaires, 3 à
 | `StoreModuleRequest::authorize()` retourne `false` | `app/Http/Requests/` | Haute — FormRequest inutilisable |
 | `StoreGroupeRequest::authorize()` retourne `false` | `app/Http/Requests/` | Haute — FormRequest inutilisable |
 | Import mort `ScormInteractionController` | `routes/scorm.php:6` | Basse |
-| `EvaluationSCORMController::fin()` sans `use Evaluation` | `EvaluationSCORMController.php` | Basse |
 | `Group` sans `SoftDeletes` | `app/Models/Group.php` | Moyenne — données orphelines |
 | Stagiaire multi-groupe — `.first()` uniquement | `StagiaireController.php:244` | Haute — modules masqués |
 | `ModuleController` 1185 lignes | `Backend/ModuleController.php` | Maintenance difficile |
-| `StagiaireController` 903 lignes | `StagiaireController.php` | Maintenance difficile |
+| `StagiaireController` 916 lignes | `StagiaireController.php` | Maintenance difficile |
 
 ---
 
 ## Phase 1 — Sécurisation et stabilisation
 
 **Objectif : rendre la plateforme sûre et stable pour un pilote.**  
-**Durée estimée : 1 à 2 mois.**
+**État : partiellement réalisée.**
 
-- [ ] Déplacer les routes debug/reset dans `routes/admin.php` avec middleware complet
-- [ ] Corriger `Module::isVisibleTo()` pour vérifier l'appartenance au groupe du stagiaire
-- [ ] Corriger `LessonFeedbackController::store()` avec la bonne route de redirection
-- [ ] Ajouter `throttle:10,1` sur la route de connexion par code d'accès
-- [ ] Créer la migration `add_last_session_time_to_scorm_scores`
-- [ ] Mettre à jour `UserFactory` : formateurs avec `adhesion_status = 'active'` par défaut en test
-- [ ] Corriger les tests d'authentification et remettre la suite au vert
+- [x] Déplacer `reset-progression` dans `routes/admin.php` avec middleware complet
+- [x] Supprimer ou retirer la route debug admin non authentifiée
+- [x] Mettre à jour `UserFactory` : formateurs avec `adhesion_status = active` par défaut en test
+- [x] Remettre la suite de tests au vert (`102 tests passés`)
+- [ ] Corriger `Module::isVisibleTo()` ou introduire des policies pour vérifier l'appartenance au groupe
+- [ ] Corriger `LessonFeedbackController::store()` avec la bonne route de redirection selon le rôle/contexte
+- [ ] Ajouter `throttle:10,1` ou rate limiter dédié sur la route de connexion par code d'accès
+- [ ] Ajouter la colonne `last_session_time` à `scorm_scores` ou modifier le cumul de temps SCORM
+- [ ] Incrémenter correctement `attempts_count` SCORM
 - [ ] Supprimer l'import mort `ScormInteractionController` dans `routes/scorm.php`
-- [ ] Corriger `EvaluationSCORMController::fin()` avec `use App\Models\Evaluation`
 - [ ] Corriger `StoreModuleRequest::authorize()` et `StoreGroupeRequest::authorize()`
 
 ---
@@ -69,6 +69,7 @@ La plateforme est **utilisable en pilote contrôlé** (10 à 50 stagiaires, 3 à
 - [ ] Ajouter `SoftDeletes` sur `Group` avec migration `deleted_at`
 - [ ] Valider l'unicité de l'email dans `AdminController::AdminProfilStore()`
 - [ ] Ajouter la vérification d'appartenance à la leçon dans `POST /scorm/save-progress`
+- [ ] Découper `StagiaireController` : dashboard, modules, résultats, outils
 
 ---
 
@@ -121,15 +122,14 @@ Voir [docs/idees-outils-formateurs.md](../idees-outils-formateurs.md) pour le d�
 
 ---
 
-## Résumé des notes de maturité (audit Claude, mai 2026)
+## Résumé de maturité (analyse juillet 2026)
 
-| Axe | Note | Cible après Phase 1 |
-|-----|------|---------------------|
-| Maturité technique | 11/20 | 14/20 |
-| Maturité pédagogique | 14/20 | 15/20 |
-| Expérience utilisateur | 13/20 | 14/20 |
-| Potentiel commercial | 15/20 | 16/20 |
-| Capacité LMS globale | 12/20 | 15/20 |
+| Axe | État actuel | Cible proche |
+|-----|-------------|--------------|
+| Maturité technique | Tests et build au vert, architecture encore concentrée dans gros contrôleurs | Policies, FormRequests corrigées, contrôleurs découpés |
+| Maturité pédagogique | Modules, quiz, SCORM, outils live et parcours déjà exploitables | Certificats, exports, prérequis et preuves SCORM complètes |
+| Expérience utilisateur | Espaces par rôle complets, accès stagiaire simplifié | Vocabulaire unifié et multi-groupe stagiaire corrigé |
+| Publication GitHub | Base légale/documentaire en place | Historique Git vérifié, checklist sécurité résolue |
 
 ---
 

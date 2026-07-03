@@ -1,12 +1,12 @@
 # 07 — Outils d'animation pédagogique
 
-Oneduc intègre nativement **9 outils d'animation** utilisables en présentiel, distanciel ou hybride, sans plugin externe. C'est l'une des forces différenciantes majeures de la plateforme par rapport aux LMS généralistes.
+Oneduc intègre plusieurs outils d'animation utilisables en présentiel, distanciel ou hybride. La plateforme propose **8 activités live/groupes** plus une intégration **pages collaboratives HedgeDoc** côté formateur. C'est l'une des forces différenciantes majeures de la plateforme par rapport aux LMS généralistes.
 
 ---
 
-## Pattern commun à tous les outils
+## Pattern commun des activités live
 
-Chaque outil suit la même architecture :
+Les activités avec participation stagiaire suivent généralement la même architecture :
 
 ### Structure de données
 
@@ -46,9 +46,14 @@ $group->students()->where('users.id', auth()->id())->exists()
 
 Seuls les stagiaires membres du groupe peuvent accéder à un outil actif.
 
+Exceptions :
+- le tableau blanc a son propre modèle de snapshot/éléments Excalidraw ;
+- le minuteur n'a pas de table de réponses ;
+- les pages collaboratives redirigent vers HedgeDoc et ne sont pas une session live stockée dans Oneduc.
+
 ---
 
-## Les 9 outils
+## Les 9 entrées outils
 
 ### 1. Quiz live
 
@@ -110,11 +115,22 @@ Minuteur de session visible pour tous les participants. Le formateur le contrôl
 - Un seul minuteur actif par groupe (`GroupTimer` — relation unique)
 - Utile pour structurer des activités chronométrées (ateliers, quiz papier, brainstorming)
 
+### 9. Pages collaboratives (HedgeDoc)
+
+Accès formateur à une page collaborative externe via HedgeDoc.
+
+- Route : `/formateur/pages-collaboratives`
+- Configuration : `HEDGEDOC_BASE_URL` et `HEDGEDOC_NEW_PATH`
+- Si l'URL HedgeDoc n'est pas configurée, l'interface affiche les variables à ajouter dans `.env`
+- Pas de participation ni de stockage de réponses dans Oneduc
+
 ---
 
 ## Tableau de bord "Outils" stagiaire
 
-Les outils actifs sont agrégés pour le stagiaire dans `StagiaireController::StagiaireOutils()`. Cette méthode récupère toutes les sessions actives des groupes du stagiaire et les présente dans un tableau de bord unifié.
+Les outils actifs sont agrégés pour le stagiaire dans `StagiaireController::StagiaireOutils()`. Cette méthode récupère les sessions liées au premier groupe actif du stagiaire et les présente dans un tableau de bord unifié.
+
+Limite actuelle : comme pour les modules, un stagiaire présent dans plusieurs groupes actifs ne voit pas encore une agrégation multi-groupe.
 
 ---
 

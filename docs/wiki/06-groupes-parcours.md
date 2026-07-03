@@ -17,13 +17,15 @@ Un groupe est l'unité organisationnelle centrale d'Oneduc. Il relie :
 Fichier : `app/Models/Group.php`
 
 Champs principaux :
-- `name` / `description` / `status` (actif/inactif)
+- `name` / `description` / `is_active` (actif/inactif)
+- `is_sandbox`, `start_date`, `end_date`
 - `instructor_id` (formateur principal)
 - `temporary_password` (code d'accès, stocké chiffré via le cast `encrypted`)
 - `formateur_parcours_id` (parcours associé, optionnel)
-- `access_code` (code d'accès court pour les stagiaires)
 
 Le mot de passe temporaire de groupe est chiffré en base de données via le cast Laravel `encrypted` — les valeurs brutes ne sont jamais accessibles en clair hors de l'application.
+
+Le code court de connexion stagiaire est porté par `users.code_acces`, généré via `CodeGeneratorService` lors de la création/rattachement d'un stagiaire.
 
 ### Scope formateur
 
@@ -45,7 +47,7 @@ C'est le scope à utiliser systématiquement dans les contrôleurs formateur pou
 
 Via `Formateur/GroupeController::store()`. Champs obligatoires : nom du groupe, modules à affecter.
 
-Un code d'accès court est généré automatiquement via `CodeGeneratorService` (6 caractères alphanumériques).
+Un mot de passe temporaire de groupe peut être saisi. Les comptes stagiaires reçoivent de leur côté un code d'accès individuel de 6 caractères si `users.code_acces` est vide.
 
 ### Ajouter des stagiaires
 
@@ -89,7 +91,7 @@ Ce sont les **parcours pédagogiques** qu'un formateur construit pour ses groupe
 
 Modèles :
 - `FormateurParcours` — en-tête du parcours (titre, formateur)
-- `FormateurParcoursItem` — éléments ordonnés (type : `module`, `wordcloud`, `poll`, `activity`)
+- `FormateurParcoursItem` — éléments ordonnés (type : `module`, `wordcloud`, `poll`)
 
 Géré via `Formateur/MesFormationsController`.
 
