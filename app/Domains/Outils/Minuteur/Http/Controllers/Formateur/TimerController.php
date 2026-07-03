@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers\Formateur;
+namespace App\Domains\Outils\Minuteur\Http\Controllers\Formateur;
 
+use App\Domains\Outils\Minuteur\Support\AccesMinuteur;
 use App\Http\Controllers\Controller;
 use App\Models\Group;
 use App\Models\GroupTimer;
@@ -11,12 +12,11 @@ use Illuminate\View\View;
 
 class TimerController extends Controller
 {
+    public function __construct(private readonly AccesMinuteur $acces) {}
+
     public function show(Group $group): View
     {
-        $group = Group::query()
-            ->accessibleByTrainer((int) auth()->id())
-            ->whereKey($group->id)
-            ->firstOrFail();
+        $group = $this->acces->assertFormateurAccess($group);
 
         $timer = GroupTimer::ensureForGroup($group, auth()->user());
         $timer->resolveFinished();
@@ -38,10 +38,7 @@ class TimerController extends Controller
 
     public function status(Group $group): JsonResponse
     {
-        $group = Group::query()
-            ->accessibleByTrainer((int) auth()->id())
-            ->whereKey($group->id)
-            ->firstOrFail();
+        $group = $this->acces->assertFormateurAccess($group);
 
         $timer = GroupTimer::ensureForGroup($group, auth()->user());
 
@@ -50,10 +47,7 @@ class TimerController extends Controller
 
     public function configure(Request $request, Group $group): JsonResponse
     {
-        $group = Group::query()
-            ->accessibleByTrainer((int) auth()->id())
-            ->whereKey($group->id)
-            ->firstOrFail();
+        $group = $this->acces->assertFormateurAccess($group);
 
         $validated = $request->validate([
             'duration_seconds' => ['required', 'integer', 'min:30', 'max:7200'],
@@ -68,10 +62,7 @@ class TimerController extends Controller
 
     public function start(Group $group): JsonResponse
     {
-        $group = Group::query()
-            ->accessibleByTrainer((int) auth()->id())
-            ->whereKey($group->id)
-            ->firstOrFail();
+        $group = $this->acces->assertFormateurAccess($group);
 
         $timer = GroupTimer::ensureForGroup($group, auth()->user());
         $timer->start(auth()->user());
@@ -81,10 +72,7 @@ class TimerController extends Controller
 
     public function pause(Group $group): JsonResponse
     {
-        $group = Group::query()
-            ->accessibleByTrainer((int) auth()->id())
-            ->whereKey($group->id)
-            ->firstOrFail();
+        $group = $this->acces->assertFormateurAccess($group);
 
         $timer = GroupTimer::ensureForGroup($group, auth()->user());
         $timer->pause(auth()->user());
@@ -94,10 +82,7 @@ class TimerController extends Controller
 
     public function reset(Group $group): JsonResponse
     {
-        $group = Group::query()
-            ->accessibleByTrainer((int) auth()->id())
-            ->whereKey($group->id)
-            ->firstOrFail();
+        $group = $this->acces->assertFormateurAccess($group);
 
         $timer = GroupTimer::ensureForGroup($group, auth()->user());
         $timer->reset(auth()->user());

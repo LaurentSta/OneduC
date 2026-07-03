@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers\Stagiaire;
+namespace App\Domains\Outils\Minuteur\Http\Controllers\Stagiaire;
 
+use App\Domains\Outils\Minuteur\Support\AccesMinuteur;
 use App\Http\Controllers\Controller;
 use App\Models\Group;
 use App\Models\GroupTimer;
@@ -10,15 +11,11 @@ use Illuminate\View\View;
 
 class TimerController extends Controller
 {
+    public function __construct(private readonly AccesMinuteur $acces) {}
+
     public function show(Group $group): View
     {
-        abort_unless((bool) $group->is_active, 404);
-
-        $isMember = $group->students()
-            ->where('users.id', auth()->id())
-            ->exists();
-
-        abort_unless($isMember, 404);
+        $this->acces->assertStagiaireAccess($group);
 
         $timer = GroupTimer::ensureForGroup($group, auth()->user());
         $timer->resolveFinished();
@@ -35,13 +32,7 @@ class TimerController extends Controller
 
     public function status(Group $group): JsonResponse
     {
-        abort_unless((bool) $group->is_active, 404);
-
-        $isMember = $group->students()
-            ->where('users.id', auth()->id())
-            ->exists();
-
-        abort_unless($isMember, 404);
+        $this->acces->assertStagiaireAccess($group);
 
         $timer = GroupTimer::ensureForGroup($group, auth()->user());
 

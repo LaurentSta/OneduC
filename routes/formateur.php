@@ -26,7 +26,6 @@ use App\Http\Controllers\Formateur\ProgressionStagiaireController;
 use App\Http\Controllers\Formateur\ProgressionStagiairesController;
 use App\Http\Controllers\Formateur\QuestionWallController;
 use App\Http\Controllers\Formateur\RoueAleatoireController;
-use App\Http\Controllers\Formateur\TimerController;
 use App\Http\Controllers\Formateur\WhiteboardController;
 use App\Http\Controllers\Formateur\WordCloudController as FormateurWordCloudController;
 use App\Http\Controllers\FormateurController;
@@ -85,17 +84,6 @@ Route::middleware(['auth', 'role:formateur', 'association.member'])
         Route::get('/groupes/{id}/edit', [GroupeController::class, 'edit'])->name('groupes.edit');
         Route::put('/groupes/{id}', [GroupeController::class, 'update'])->name('groupes.update');
         Route::delete('/groupes/{id}', [GroupeController::class, 'destroy'])->name('groupes.destroy');
-        Route::prefix('/groupes/{group}/minuteur')
-            ->name('groupes.timer.')
-            ->group(function () {
-                Route::get('/', [TimerController::class, 'show'])->name('show');
-                Route::get('/status', [TimerController::class, 'status'])->name('status');
-                Route::post('/configure', [TimerController::class, 'configure'])->name('configure');
-                Route::post('/start', [TimerController::class, 'start'])->name('start');
-                Route::post('/pause', [TimerController::class, 'pause'])->name('pause');
-                Route::post('/reset', [TimerController::class, 'reset'])->name('reset');
-            });
-
         Route::prefix('/groupes/{group}/tableau-blanc')
             ->name('groupes.whiteboard.')
             ->group(function () {

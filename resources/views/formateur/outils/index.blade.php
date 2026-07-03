@@ -435,6 +435,7 @@
     </div>
 
     {{-- ── MINUTEUR COLLABORATIF ──────────────────────────────────────── --}}
+    @if(config('outils.minuteur.enabled'))
     <div x-show="filtre === 'all' || filtre === 'animation'" x-transition:enter="transition ease-out duration-200"
       x-transition:enter-start="opacity-0 scale-95"
       x-transition:enter-end="opacity-100 scale-100"
@@ -484,6 +485,7 @@
         </div>
       @endif
     </div>
+    @endif
 
     {{-- ── MES MODULES (MODULE BUILDER) ───────────────────────────────── --}}
     <div x-show="filtre === 'all'" x-transition:enter="transition ease-out duration-200"

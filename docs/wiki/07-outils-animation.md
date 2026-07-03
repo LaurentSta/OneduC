@@ -114,6 +114,7 @@ Minuteur de session visible pour tous les participants. Le formateur le contrôl
 
 - Un seul minuteur actif par groupe (`GroupTimer` — relation unique)
 - Utile pour structurer des activités chronométrées (ateliers, quiz papier, brainstorming)
+- Pilote de l'architecture « outil auto-contenu » : contrôleurs et garde d'accès vivent dans `app/Domains/Outils/Minuteur/`, routes enregistrées par `MinuteurServiceProvider`, activable/désactivable via `config('outils.minuteur.enabled')` (`OUTILS_MINUTEUR_ENABLED`)
 
 ### 9. Pages collaboratives (HedgeDoc)
 

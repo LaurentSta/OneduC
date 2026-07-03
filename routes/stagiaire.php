@@ -9,7 +9,6 @@ use App\Http\Controllers\Stagiaire\LiveQuizSessionController;
 use App\Http\Controllers\Stagiaire\QuizController;
 use App\Http\Controllers\Stagiaire\FirstLoginController; // ✅ Import du nouveau contrôleur
 use App\Http\Controllers\Stagiaire\WhiteboardController;
-use App\Http\Controllers\Stagiaire\TimerController;
 use App\Http\Controllers\Stagiaire\ParcoursWordCloudController;
 use App\Http\Controllers\Stagiaire\QuestionWallController;
 
@@ -54,13 +53,6 @@ Route::middleware(['auth', 'role:stagiaire', 'track.time'])
                 ->name('parametre');
             Route::get('/documentation', fn () => view('stagiaire.documentation'))
                 ->name('documentation');
-
-            Route::prefix('/minuteur')
-                ->name('timer.')
-                ->group(function () {
-                    Route::get('/groupes/{group}', [TimerController::class, 'show'])->name('show');
-                    Route::get('/groupes/{group}/status', [TimerController::class, 'status'])->name('status');
-                });
 
             Route::prefix('/tableau-blanc')
                 ->name('whiteboard.')
