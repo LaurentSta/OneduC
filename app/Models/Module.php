@@ -10,21 +10,21 @@ class Module extends Model
     use SoftDeletes;
 
     private const DEFAULT_ESTIMATED_SECONDS_PER_QUESTION = 30;
-    
+
     protected $fillable = [
-        'category_id','subcategory_id','formateur_id','is_trainer_authored',
-        'module_image','header_image',
-        'module_title','module_name','module_name_slug','description','objectifs',
-        'module_video','label','duree','resources','certificat','prerequi',
-        'bestseller','vedette','surevalue','status','evaluation_id',
+        'category_id', 'subcategory_id', 'formateur_id', 'is_trainer_authored',
+        'module_image', 'header_image',
+        'module_title', 'module_name', 'module_name_slug', 'description', 'objectifs',
+        'module_video', 'label', 'duree', 'resources', 'certificat', 'prerequi',
+        'bestseller', 'vedette', 'surevalue', 'status', 'evaluation_id',
         'estimated_question_seconds',
     ];
-   
+
     public function category()
     {
         return $this->belongsTo(Category::class);
     }
-    
+
     public function subCategory()
     {
         return $this->belongsTo(\App\Models\SubCategory::class, 'subcategory_id');
@@ -45,7 +45,7 @@ class Module extends Model
 
     public function sections()
     {
-        return $this->hasMany(ModuleSection::class);
+        return $this->hasMany(ModuleSection::class)->orderBy('position');
     }
 
     public function lectures()
@@ -86,16 +86,19 @@ class Module extends Model
     }
 
     protected $casts = [
-        'status'                     => 'boolean',
-        'is_trainer_authored'        => 'boolean',
-        'objectifs'                  => 'array',
+        'status' => 'boolean',
+        'is_trainer_authored' => 'boolean',
+        'objectifs' => 'array',
         'estimated_question_seconds' => 'integer',
     ];
 
     public function isVisibleTo(?\App\Models\User $user): bool
     {
-        if ($user && $user->role === 'admin') return true; 
-        return (bool) $this->status;                        
+        if ($user && $user->role === 'admin') {
+            return true;
+        }
+
+        return (bool) $this->status;
     }
 
     // --- C'EST ICI QU'ON AJOUTE LE CALCUL DU TEMPS ---
@@ -146,7 +149,7 @@ class Module extends Model
 
     public function getEstimatedSecondsForUser(?int $userId): int
     {
-        if (!$userId) {
+        if (! $userId) {
             return $this->total_seconds;
         }
 

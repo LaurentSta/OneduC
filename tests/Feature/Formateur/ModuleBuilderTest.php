@@ -18,7 +18,7 @@ it('lets a trainer create, edit and assign a self-authored module, and renders i
     $stagiaire = User::factory()->create(['role' => 'stagiaire', 'password_changed_at' => now()]);
 
     $group = Group::query()->create([
-        'name' => 'Groupe verif ' . uniqid(),
+        'name' => 'Groupe verif '.uniqid(),
         'instructor_id' => $formateur->id,
     ]);
 
@@ -125,17 +125,17 @@ it('lets a trainer duplicate a catalog module into an editable copy, preserving 
     $formateur = User::factory()->create(['role' => 'formateur']);
 
     $category = Category::query()->create([
-        'category_name' => 'Categorie dup ' . uniqid(),
-        'category_slug' => 'categorie-dup-' . uniqid(),
+        'category_name' => 'Categorie dup '.uniqid(),
+        'category_slug' => 'categorie-dup-'.uniqid(),
     ]);
     $subcategory = SubCategory::query()->create([
         'category_id' => $category->id,
         'subcategory_name' => 'Sous-categorie dup',
-        'subcategory_slug' => 'sous-categorie-dup-' . uniqid(),
+        'subcategory_slug' => 'sous-categorie-dup-'.uniqid(),
     ]);
 
     $group = Group::query()->create([
-        'name' => 'Groupe dup ' . uniqid(),
+        'name' => 'Groupe dup '.uniqid(),
         'instructor_id' => $formateur->id,
     ]);
 
@@ -146,7 +146,7 @@ it('lets a trainer duplicate a catalog module into an editable copy, preserving 
         'formateur_id' => $formateur->id,
         'module_title' => 'Formation catalogue',
         'module_name' => 'Formation catalogue',
-        'module_name_slug' => 'formation-catalogue-' . uniqid(),
+        'module_name_slug' => 'formation-catalogue-'.uniqid(),
         'status' => 1,
         'is_trainer_authored' => false,
     ]);
@@ -194,4 +194,92 @@ it('lets a trainer duplicate a catalog module into an editable copy, preserving 
         ->put(route('formateur.modules.builder.update', $copy), ['module_title' => 'Titre personnalise'])
         ->assertRedirect();
     expect($copy->fresh()->module_title)->toBe('Titre personnalise');
+});
+
+it('lets a trainer reorder chapters and lessons via JSON, autosave a lesson, and blocks foreign modules', function () {
+    $formateur = User::factory()->create(['role' => 'formateur']);
+    $other = User::factory()->create(['role' => 'formateur']);
+
+    $category = Category::query()->create([
+        'category_name' => 'Categorie reorder '.uniqid(),
+        'category_slug' => 'categorie-reorder-'.uniqid(),
+    ]);
+    $subcategory = SubCategory::query()->create([
+        'category_id' => $category->id,
+        'subcategory_name' => 'Sous-categorie reorder',
+        'subcategory_slug' => 'sous-categorie-reorder-'.uniqid(),
+    ]);
+
+    $module = Module::query()->create([
+        'category_id' => $category->id,
+        'subcategory_id' => $subcategory->id,
+        'formateur_id' => $formateur->id,
+        'module_title' => 'Module reorder',
+        'module_name' => 'Module reorder',
+        'module_name_slug' => 'module-reorder-'.uniqid(),
+        'status' => 1,
+        'is_trainer_authored' => true,
+    ]);
+
+    $sectionA = $module->sections()->create(['section_title' => 'Chapitre A', 'position' => 0]);
+    $sectionB = $module->sections()->create(['section_title' => 'Chapitre B', 'position' => 1]);
+
+    // storeSection responds with JSON when asked, and assigns the next position.
+    $jsonStore = $this->actingAs($formateur)->postJson(
+        route('formateur.modules.builder.sections.store', $module),
+        ['section_title' => 'Chapitre C']
+    );
+    $jsonStore->assertCreated();
+    $sectionC = ModuleSection::where('section_title', 'Chapitre C')->firstOrFail();
+    expect($sectionC->position)->toBe(2);
+
+    // Reordering to C, A, B must persist the new positions.
+    $reorderSections = $this->actingAs($formateur)->postJson(
+        route('formateur.modules.builder.sections.reorder', $module),
+        ['section_ids' => [$sectionC->id, $sectionA->id, $sectionB->id]]
+    );
+    $reorderSections->assertOk()->assertJson(['success' => true]);
+    expect($sectionC->fresh()->position)->toBe(0);
+    expect($sectionA->fresh()->position)->toBe(1);
+    expect($sectionB->fresh()->position)->toBe(2);
+
+    // A reorder payload missing a lesson (or from a foreign module) must be rejected.
+    $this->actingAs($formateur)->postJson(
+        route('formateur.modules.builder.sections.reorder', $module),
+        ['section_ids' => [$sectionA->id, $sectionB->id]]
+    )->assertStatus(422);
+
+    $lecture1 = $sectionA->lectures()->create([
+        'module_id' => $module->id, 'lecture_title' => 'Lecon 1', 'content_type' => 'blocks', 'content_blocks' => [], 'position' => 0,
+    ]);
+    $lecture2 = $sectionA->lectures()->create([
+        'module_id' => $module->id, 'lecture_title' => 'Lecon 2', 'content_type' => 'blocks', 'content_blocks' => [], 'position' => 1,
+    ]);
+
+    $reorderLectures = $this->actingAs($formateur)->postJson(
+        route('formateur.modules.builder.lectures.reorder', $sectionA),
+        ['lecture_ids' => [$lecture2->id, $lecture1->id]]
+    );
+    $reorderLectures->assertOk()->assertJson(['success' => true]);
+    expect($lecture2->fresh()->position)->toBe(0);
+    expect($lecture1->fresh()->position)->toBe(1);
+
+    // Autosave: a JSON PUT on the lecture returns the updated payload instead of redirecting.
+    $autosave = $this->actingAs($formateur)->putJson(
+        route('formateur.modules.builder.lectures.update', $lecture1),
+        ['lecture_title' => 'Lecon 1 renommee', 'content_blocks' => json_encode([['type' => 'divider']])]
+    );
+    $autosave->assertOk()->assertJsonPath('lecture.lecture_title', 'Lecon 1 renommee');
+    expect($lecture1->fresh()->lecture_title)->toBe('Lecon 1 renommee');
+
+    // A foreign trainer cannot reorder or autosave into someone else's module.
+    $this->actingAs($other)->postJson(
+        route('formateur.modules.builder.sections.reorder', $module),
+        ['section_ids' => [$sectionA->id, $sectionB->id, $sectionC->id]]
+    )->assertForbidden();
+
+    $this->actingAs($other)->putJson(
+        route('formateur.modules.builder.lectures.update', $lecture1),
+        ['lecture_title' => 'Hack', 'content_blocks' => '[]']
+    )->assertForbidden();
 });
