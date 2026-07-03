@@ -300,10 +300,15 @@ class ModuleBuilderController extends Controller
             'content_blocks' => 'nullable|string',
         ]);
 
-        $lecture->update([
-            'lecture_title' => $validated['lecture_title'],
-            'content_blocks' => $this->sanitizeBlocks($validated['content_blocks'] ?? null, (int) $lecture->module_id),
-        ]);
+        $updates = ['lecture_title' => $validated['lecture_title']];
+
+        // Title-only renames (e.g. from the outline editor) must not touch existing
+        // content — only overwrite content_blocks when the caller actually sent it.
+        if ($request->has('content_blocks')) {
+            $updates['content_blocks'] = $this->sanitizeBlocks($validated['content_blocks'], (int) $lecture->module_id);
+        }
+
+        $lecture->update($updates);
 
         if ($request->wantsJson()) {
             return response()->json([
@@ -352,6 +357,99 @@ class ModuleBuilderController extends Controller
         });
 
         return response()->json(['success' => true]);
+    }
+
+    public function editLecture(ModuleLecture $lecture)
+    {
+        $this->assertOwnership($lecture->module);
+
+        $lecture->load('section');
+
+        return view('formateur.modules-builder.lecture-edit', [
+            'module' => $lecture->module,
+            'section' => $lecture->section,
+            'lecture' => $lecture,
+        ]);
+    }
+
+    public function moveLecture(Request $request, ModuleLecture $lecture)
+    {
+        $this->assertOwnership($lecture->module);
+
+        $validated = $request->validate([
+            'section_id' => 'required|integer',
+            'position' => 'required|integer|min:0',
+        ]);
+
+        $targetSection = ModuleSection::find($validated['section_id']);
+
+        abort_unless(
+            $targetSection && (int) $targetSection->module_id === (int) $lecture->module_id,
+            422
+        );
+
+        DB::transaction(function () use ($lecture, $targetSection, $validated) {
+            $originSection = (int) $lecture->section_id === (int) $targetSection->id
+                ? null
+                : ModuleSection::find($lecture->section_id);
+
+            $lecture->update(['section_id' => $targetSection->id]);
+
+            $siblingIds = $targetSection->lectures()->pluck('id')
+                ->reject(fn ($id) => (int) $id === (int) $lecture->id)
+                ->values();
+
+            $position = min((int) $validated['position'], $siblingIds->count());
+            $siblingIds->splice($position, 0, [$lecture->id]);
+
+            foreach ($siblingIds->values() as $index => $id) {
+                ModuleLecture::where('id', $id)->update(['position' => $index]);
+            }
+
+            if ($originSection) {
+                foreach ($originSection->lectures()->pluck('id')->values() as $index => $id) {
+                    ModuleLecture::where('id', $id)->update(['position' => $index]);
+                }
+            }
+        });
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'lecture' => $this->lecturePayload($lecture->fresh()),
+            ]);
+        }
+
+        return back()->with('success', 'Leçon déplacée.');
+    }
+
+    public function promoteLectureToSection(Request $request, ModuleLecture $lecture)
+    {
+        $this->assertOwnership($lecture->module);
+
+        abort_if(! empty($lecture->content_blocks), 422, 'Cette leçon contient déjà du contenu, elle ne peut pas être transformée en chapitre.');
+
+        $module = $lecture->module;
+
+        $section = DB::transaction(function () use ($lecture, $module) {
+            $position = (int) $module->sections()->max('position') + 1;
+
+            $section = $module->sections()->create([
+                'section_title' => $lecture->lecture_title,
+                'position' => $position,
+            ]);
+
+            $lecture->delete();
+
+            return $section;
+        });
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'section' => $this->sectionPayload($section),
+            ], 201);
+        }
+
+        return back()->with('success', 'Leçon transformée en chapitre.');
     }
 
     public function uploadImage(Request $request, Module $module)

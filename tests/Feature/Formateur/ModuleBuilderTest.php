@@ -3,6 +3,7 @@
 use App\Models\Category;
 use App\Models\Group;
 use App\Models\Module;
+use App\Models\ModuleLecture;
 use App\Models\ModuleSection;
 use App\Models\SubCategory;
 use App\Models\User;
@@ -102,10 +103,18 @@ it('lets a trainer create, edit and assign a self-authored module, and renders i
     $assignResponse->assertRedirect();
     expect($module->groups()->pluck('groups.id')->all())->toContain($group->id);
 
-    // Edition page loads with the block editor mount point
+    // Edition page loads with the continuous outline mount point.
     $editResponse = $this->actingAs($formateur)->get(route('formateur.modules.builder.edit', $module));
     $editResponse->assertOk();
-    $editResponse->assertSee('data-block-editor', false);
+    $editResponse->assertSee('data-outline-editor', false);
+
+    // The dedicated lesson page still mounts the block editor and is reachable from the outline.
+    $lectureEditResponse = $this->actingAs($formateur)->get(route('formateur.modules.builder.lectures.edit', $lecture));
+    $lectureEditResponse->assertOk();
+    $lectureEditResponse->assertSee('data-block-editor', false);
+
+    // A foreign trainer cannot open the dedicated lesson page either.
+    $this->actingAs($other)->get(route('formateur.modules.builder.lectures.edit', $lecture))->assertForbidden();
 
     // Rendu stagiaire
     $lectureUrl = route('stagiaire.module.lecture', [
@@ -271,6 +280,17 @@ it('lets a trainer reorder chapters and lessons via JSON, autosave a lesson, and
     );
     $autosave->assertOk()->assertJsonPath('lecture.lecture_title', 'Lecon 1 renommee');
     expect($lecture1->fresh()->lecture_title)->toBe('Lecon 1 renommee');
+    expect($lecture1->fresh()->content_blocks)->toHaveCount(1);
+
+    // A title-only rename (as the outline editor sends, with no content_blocks key at all)
+    // must not wipe out content already saved by the block editor.
+    $titleOnlyRename = $this->actingAs($formateur)->putJson(
+        route('formateur.modules.builder.lectures.update', $lecture1),
+        ['lecture_title' => 'Lecon 1 renommee encore']
+    );
+    $titleOnlyRename->assertOk();
+    expect($lecture1->fresh()->lecture_title)->toBe('Lecon 1 renommee encore');
+    expect($lecture1->fresh()->content_blocks)->toHaveCount(1);
 
     // A foreign trainer cannot reorder or autosave into someone else's module.
     $this->actingAs($other)->postJson(
@@ -281,5 +301,103 @@ it('lets a trainer reorder chapters and lessons via JSON, autosave a lesson, and
     $this->actingAs($other)->putJson(
         route('formateur.modules.builder.lectures.update', $lecture1),
         ['lecture_title' => 'Hack', 'content_blocks' => '[]']
+    )->assertForbidden();
+});
+
+it('lets a trainer move a lesson across chapters and promote an empty lesson into a chapter', function () {
+    $formateur = User::factory()->create(['role' => 'formateur']);
+    $other = User::factory()->create(['role' => 'formateur']);
+
+    $category = Category::query()->create([
+        'category_name' => 'Categorie move '.uniqid(),
+        'category_slug' => 'categorie-move-'.uniqid(),
+    ]);
+    $subcategory = SubCategory::query()->create([
+        'category_id' => $category->id,
+        'subcategory_name' => 'Sous-categorie move',
+        'subcategory_slug' => 'sous-categorie-move-'.uniqid(),
+    ]);
+
+    $module = Module::query()->create([
+        'category_id' => $category->id,
+        'subcategory_id' => $subcategory->id,
+        'formateur_id' => $formateur->id,
+        'module_title' => 'Module move',
+        'module_name' => 'Module move',
+        'module_name_slug' => 'module-move-'.uniqid(),
+        'status' => 1,
+        'is_trainer_authored' => true,
+    ]);
+
+    $sectionA = $module->sections()->create(['section_title' => 'Chapitre A', 'position' => 0]);
+    $sectionB = $module->sections()->create(['section_title' => 'Chapitre B', 'position' => 1]);
+
+    $lectureA1 = $sectionA->lectures()->create([
+        'module_id' => $module->id, 'lecture_title' => 'Lecon A1', 'content_type' => 'blocks', 'content_blocks' => [], 'position' => 0,
+    ]);
+    $lectureA2 = $sectionA->lectures()->create([
+        'module_id' => $module->id, 'lecture_title' => 'Lecon A2', 'content_type' => 'blocks', 'content_blocks' => [], 'position' => 1,
+    ]);
+    $lectureB1 = $sectionB->lectures()->create([
+        'module_id' => $module->id, 'lecture_title' => 'Lecon B1', 'content_type' => 'blocks', 'content_blocks' => [], 'position' => 0,
+    ]);
+
+    // Move Lecon A2 to the front of Chapitre B.
+    $moveResponse = $this->actingAs($formateur)->postJson(
+        route('formateur.modules.builder.lectures.move', $lectureA2),
+        ['section_id' => $sectionB->id, 'position' => 0]
+    );
+    $moveResponse->assertOk()->assertJsonPath('lecture.section_id', $sectionB->id);
+
+    expect($lectureA2->fresh()->section_id)->toBe($sectionB->id);
+    expect($lectureA2->fresh()->position)->toBe(0);
+    expect($lectureB1->fresh()->position)->toBe(1);
+    // The vacated chapter's remaining lesson is renumbered without a gap.
+    expect($lectureA1->fresh()->position)->toBe(0);
+
+    // A section_id from a foreign module is rejected.
+    $foreignModule = Module::query()->create([
+        'category_id' => $category->id,
+        'subcategory_id' => $subcategory->id,
+        'formateur_id' => $formateur->id,
+        'module_title' => 'Autre module',
+        'module_name' => 'Autre module',
+        'module_name_slug' => 'autre-module-'.uniqid(),
+        'status' => 1,
+        'is_trainer_authored' => true,
+    ]);
+    $foreignSection = $foreignModule->sections()->create(['section_title' => 'Chapitre etranger', 'position' => 0]);
+
+    $this->actingAs($formateur)->postJson(
+        route('formateur.modules.builder.lectures.move', $lectureA1),
+        ['section_id' => $foreignSection->id, 'position' => 0]
+    )->assertStatus(422);
+
+    // Promoting an empty lesson turns it into a new chapter and removes the lesson.
+    $promoteResponse = $this->actingAs($formateur)->postJson(
+        route('formateur.modules.builder.lectures.promote', $lectureB1)
+    );
+    $promoteResponse->assertCreated()->assertJsonPath('section.section_title', 'Lecon B1');
+    expect(ModuleLecture::find($lectureB1->id))->toBeNull();
+    expect($module->sections()->where('section_title', 'Lecon B1')->exists())->toBeTrue();
+
+    // A lesson that already has content cannot be silently promoted (content would be lost).
+    $lectureWithContent = $sectionA->lectures()->create([
+        'module_id' => $module->id, 'lecture_title' => 'Lecon avec contenu', 'content_type' => 'blocks',
+        'content_blocks' => [['type' => 'divider']], 'position' => 5,
+    ]);
+    $this->actingAs($formateur)->postJson(
+        route('formateur.modules.builder.lectures.promote', $lectureWithContent)
+    )->assertStatus(422);
+    expect(ModuleLecture::find($lectureWithContent->id))->not->toBeNull();
+
+    // A foreign trainer cannot move or promote lessons in someone else's module.
+    $this->actingAs($other)->postJson(
+        route('formateur.modules.builder.lectures.move', $lectureA1),
+        ['section_id' => $sectionA->id, 'position' => 0]
+    )->assertForbidden();
+
+    $this->actingAs($other)->postJson(
+        route('formateur.modules.builder.lectures.promote', $lectureA1)
     )->assertForbidden();
 });
