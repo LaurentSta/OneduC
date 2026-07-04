@@ -7,47 +7,44 @@
 <div class="max-w-[1285px] mx-auto px-8">
 
   {{-- 🧩 EN-TÊTE DE PAGE FORMATEUR – Stagiaires --}}
-  <header class="bg-white rounded-[20px] shadow-md px-8 pt-4 pb-6 w-full mb-6">
-    <div class="grid grid-cols-12 gap-6 items-center">
+  <div class="rounded-[20px] border border-gray-100 bg-white shadow-md mb-6">
+    <div class="grid gap-6 px-6 py-6 md:px-8 md:py-7 lg:grid-cols-12 lg:items-center">
 
       {{-- Bloc texte --}}
-      <div class="col-span-12 md:col-span-8">
-        <x-typography variant="titre">Mes stagiaires</x-typography>
-        <x-typography variant="sous-titre" class="font-varela text-sous-titre text-orangeone">
-          Gérer l’ensemble de vos apprenants en un coup d’œil.
-        </x-typography>
-        <x-typography>
-          Depuis cette page, vous pouvez modifier, supprimer ou filtrer les stagiaires rattachés à vos groupes.
-        </x-typography>
-
+      <div class="lg:col-span-8">
         {{-- 📍 Fil d’Ariane --}}
-        <nav class="text-sm font-varela text-gray-600 mt-2" aria-label="Fil d'Ariane">
-          <ol class="inline-flex items-center space-x-1">
-            <li class="flex items-center">
-              <a href="{{ route('formateur.dashboard') }}" class="text-orangeone hover:underline flex items-center">
-                <span class="sr-only">Accueil</span>
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M3 9.75L12 3l9 6.75V19a2 2 0 01-2 2h-4a1 1 0 01-1-1v-5H10v5a1 1 0 01-1 1H5a2 2 0 01-2-2V9.75z"/>
-                </svg>
-              </a>
-              <span class="mx-2 text-gray-400" aria-hidden="true">/</span>
-            </li>
-            <li class="text-gray-400">Mes stagiaires</li>
-          </ol>
-        </nav>
+        <x-oneduc.breadcrumb :items="[['label' => 'Accueil', 'url' => route('formateur.dashboard')], ['label' => 'Mes stagiaires']]" />
+
+        <h1 class="font-raleway text-2xl font-medium leading-tight text-bleuone md:text-3xl">
+          Mes stagiaires
+        </h1>
+        <p class="mt-0.5 font-varela text-base text-orangeone md:text-lg">
+          Gérer l’ensemble de vos apprenants en un coup d’œil.
+        </p>
+        <p class="mt-3 max-w-2xl font-lisible text-sm leading-relaxed text-slate-700">
+          Depuis cette page, vous pouvez modifier, supprimer ou filtrer les stagiaires rattachés à vos groupes.
+        </p>
+
+        {{-- 📊 Statistiques --}}
+        <div class="mt-4 flex flex-wrap gap-2 text-xs font-varela">
+          <span class="inline-flex items-center gap-1.5 rounded-full border border-bleuone/15 bg-bleuone/5 px-3 py-1 text-bleuone">
+            {{ $stagiaires->total() }} stagiaires
+          </span>
+          <span class="inline-flex items-center gap-1.5 rounded-full border border-orangeone/20 bg-orangeone/10 px-3 py-1 text-orangeone">
+            {{ $groupes->count() }} groupes
+          </span>
+        </div>
       </div>
 
       {{-- Bloc image --}}
-      
-      <div class="col-span-12 md:col-span-4 flex justify-center md:justify-end">
+      <div class="lg:col-span-4 flex justify-center lg:justify-end">
         <img src="{{ asset('images/svg/ListesStagiaires.svg') }}"
-             alt="Illustration des modules de formation"
-             class="max-w-[400px] h-auto">
+             alt="Illustration des stagiaires"
+             class="max-w-[220px] h-auto">
       </div>
 
     </div>
-  </header>
+  </div>
 
   {{-- 📋 CONTENU PRINCIPAL --}}
   <main class="space-y-8">
@@ -57,78 +54,90 @@
       </div>
     @endif
 
-    {{-- 🔎 Barre de recherche --}}
-    <form method="GET" class="space-y-3">
-      <div class="flex flex-wrap items-end gap-3">
-        <div class="w-full md:w-[180px]">
-        <label for="per_page" class="sr-only">Nombre de stagiaires à afficher</label>
-        <select id="per_page"
-                name="per_page"
-                class="h-10 w-full rounded-md border border-gray-300 px-4 text-sm font-lisible shadow-sm focus:border-orangeone focus:ring-orangeone">
-          @foreach ($allowedPerPage as $option)
-            <option value="{{ $option }}" @selected($perPage === $option)>
-              {{ $option }} par page
-            </option>
-          @endforeach
-        </select>
-        </div>
-
-        <div class="w-full md:flex-1 md:min-w-[260px]">
-          <label for="search" class="sr-only">Recherche prénom</label>
-          <input type="text"
-                id="search"
-                name="search"
-                value="{{ request('search') }}"
-                placeholder="Recherche prénom"
-                class="h-10 w-full rounded-md border border-gray-300 px-4 text-sm font-lisible shadow-sm focus:border-orangeone focus:ring-orangeone">
-        </div>
-
-        <div class="w-full md:w-[280px]">
-          <label for="group_id" class="sr-only">Recherche de groupe</label>
-          <select id="group_id"
-                  name="group_id"
-                  class="h-10 w-full rounded-md border border-gray-300 px-4 text-sm font-lisible shadow-sm focus:border-orangeone focus:ring-orangeone">
-            <option value="">Recherche de groupe</option>
-            @foreach ($groupes as $groupe)
-              <option value="{{ $groupe->id }}" @selected((string)request('group_id') === (string)$groupe->id)>
-                {{ $groupe->name }}
-              </option>
-            @endforeach
-          </select>
-        </div>
-
-        <button type="submit" class="btn-oneduc inline-flex h-10 w-full items-center justify-center gap-2 sm:w-[200px] !text-sm">
+    {{-- 🔎 Filtres --}}
+    <div x-data="{ filtersOpen: {{ (request()->filled('search') || request()->filled('group_id') || (int) request('per_page', 10) !== 10) ? 'true' : 'false' }} }">
+      <div class="flex justify-end">
+        <button type="button"
+                @click="filtersOpen = !filtersOpen"
+                :aria-expanded="filtersOpen"
+                class="btn-oneduc-blue inline-flex h-10 items-center gap-2 !text-sm">
           <x-icons.filter-iconify class="h-4 w-4 shrink-0" />
           <span>Filtrer</span>
         </button>
-
-        <a href="{{ route('formateur.stagiaires.create', request()->filled('group_id') ? ['group_id' => request('group_id')] : []) }}"
-           class="btn-oneduc h-10 w-full sm:w-[200px] !text-sm">
-          <x-icons.add-stagiaire-button-iconify class="h-4 w-4 shrink-0" />
-          Ajouter un stagiaire
-        </a>
-
-        @if(request()->filled('search') || request()->filled('group_id') || request('per_page', 10) != 10)
-          <a href="{{ route('formateur.stagiaires.index') }}"
-            class="btn-oneduc-outline h-10 !text-sm">
-            Réinitialiser
-          </a>
-        @endif
       </div>
 
-      @if(request('group_id'))
-        <p class="pt-1 text-sm text-gray-600 font-varela">
-          Groupe sélectionné :
-          <span class="text-orangeone font-semibold">
-            {{ optional($groupes->firstWhere('id', (int)request('group_id')))->name }}
-          </span>
-        </p>
-      @endif
-    </form>
+      <form method="GET" x-show="filtersOpen" x-collapse.duration.300ms x-cloak class="mt-3 space-y-3">
+        <div class="flex flex-wrap items-end gap-3 rounded-md border border-gray-200 bg-white p-4">
+          <div class="w-full md:w-[180px]">
+            <label for="per_page" class="sr-only">Nombre de stagiaires à afficher</label>
+            <select id="per_page"
+                    name="per_page"
+                    class="h-10 w-full rounded-md border border-gray-300 px-4 text-sm font-lisible shadow-sm focus:border-orangeone focus:ring-orangeone">
+              @foreach ($allowedPerPage as $option)
+                <option value="{{ $option }}" @selected($perPage === $option)>
+                  {{ $option }} par page
+                </option>
+              @endforeach
+            </select>
+          </div>
+
+          <div class="w-full md:flex-1 md:min-w-[260px]">
+            <label for="search" class="sr-only">Recherche prénom</label>
+            <input type="text"
+                  id="search"
+                  name="search"
+                  value="{{ request('search') }}"
+                  placeholder="Recherche prénom"
+                  class="h-10 w-full rounded-md border border-gray-300 px-4 text-sm font-lisible shadow-sm focus:border-orangeone focus:ring-orangeone">
+          </div>
+
+          <div class="w-full md:w-[280px]">
+            <label for="group_id" class="sr-only">Recherche de groupe</label>
+            <select id="group_id"
+                    name="group_id"
+                    class="h-10 w-full rounded-md border border-gray-300 px-4 text-sm font-lisible shadow-sm focus:border-orangeone focus:ring-orangeone">
+              <option value="">Recherche de groupe</option>
+              @foreach ($groupes as $groupe)
+                <option value="{{ $groupe->id }}" @selected((string)request('group_id') === (string)$groupe->id)>
+                  {{ $groupe->name }}
+                </option>
+              @endforeach
+            </select>
+          </div>
+
+          <button type="submit" class="btn-oneduc-blue inline-flex h-10 w-full items-center justify-center gap-2 sm:w-[200px] !text-sm">
+            <x-icons.filter-iconify class="h-4 w-4 shrink-0" />
+            <span>Filtrer</span>
+          </button>
+
+          <a href="{{ route('formateur.stagiaires.create', request()->filled('group_id') ? ['group_id' => request('group_id')] : []) }}"
+             class="btn-oneduc-blue h-10 w-full sm:w-[200px] !text-sm">
+            <x-icons.add-stagiaire-button-iconify class="h-4 w-4 shrink-0" />
+            Ajouter un stagiaire
+          </a>
+
+          @if(request()->filled('search') || request()->filled('group_id') || request('per_page', 10) != 10)
+            <a href="{{ route('formateur.stagiaires.index') }}"
+              class="btn-oneduc-outline h-10 !text-sm">
+              Réinitialiser
+            </a>
+          @endif
+        </div>
+
+        @if(request('group_id'))
+          <p class="pt-1 text-sm text-gray-600 font-varela">
+            Groupe sélectionné :
+            <span class="text-orangeone font-semibold">
+              {{ optional($groupes->firstWhere('id', (int)request('group_id')))->name }}
+            </span>
+          </p>
+        @endif
+      </form>
+    </div>
 
 
     {{-- 📊 Tableau des stagiaires --}}
-    <div class="overflow-x-auto bg-white shadow-md rounded-[20px] border-2 border-bleuone/20">
+    <div class="overflow-x-auto overflow-y-visible bg-white rounded-md border-2 border-bleuone/20">
       <table class="min-w-full bg-white text-sm text-left text-gray-800 font-lisible">
         <thead class="bg-bleuone uppercase text-xs text-white font-varela sticky top-0 z-10">
           <tr>
@@ -163,26 +172,35 @@
               <td class="px-6 py-4">
                 <div class="flex gap-2">
                   {{-- Modifier --}}
-                  <a href="{{ route('formateur.stagiaires.edit', $stagiaire->id) }}"
-                     class="btn-oneduc !px-3 !py-1 !text-sm">
-                    <x-icons.edit-iconify class="h-4 w-4" />
-                    Modifier
-                  </a>
+                  <div class="relative inline-flex group">
+                    <a href="{{ route('formateur.stagiaires.edit', $stagiaire->id) }}"
+                       class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-orangeone/20 bg-orangeone/10 text-orangeone transition hover:border-orangeone hover:bg-orangeone hover:text-white"
+                       aria-label="Modifier {{ trim($stagiaire->prenom . ' ' . $stagiaire->name) ?: $stagiaire->email }}">
+                      <x-icons.edit-iconify class="h-4 w-4" />
+                    </a>
+                    <span class="pointer-events-none absolute -top-9 left-1/2 z-20 hidden -translate-x-1/2 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 shadow-lg group-hover:block">
+                      Modifier ce stagiaire
+                    </span>
+                  </div>
 
                   {{-- Supprimer --}}
-                  <form action="{{ route('formateur.stagiaires.destroy', $stagiaire->id) }}"
-                        method="POST">
-                    @csrf
-                    @method('DELETE')
-                    <button type="button"
-                            class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-bleuone/20 bg-bleuone/10 text-bleuone transition hover:border-bleuone hover:bg-bleuone hover:text-white"
-                            title="Supprimer ce stagiaire"
-                            aria-label="Supprimer {{ trim($stagiaire->prenom . ' ' . $stagiaire->name) ?: $stagiaire->email }}"
-                            data-delete-trigger
-                            data-stagiaire-name="{{ trim($stagiaire->prenom . ' ' . $stagiaire->name) ?: $stagiaire->email }}">
-                      <x-icons.trash-iconify class="h-5 w-5" />
-                    </button>
-                  </form>
+                  <div class="relative inline-flex group">
+                    <form action="{{ route('formateur.stagiaires.destroy', $stagiaire->id) }}"
+                          method="POST">
+                      @csrf
+                      @method('DELETE')
+                      <button type="button"
+                              class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-bleuone/20 bg-bleuone/10 text-bleuone transition hover:border-bleuone hover:bg-bleuone hover:text-white"
+                              aria-label="Supprimer {{ trim($stagiaire->prenom . ' ' . $stagiaire->name) ?: $stagiaire->email }}"
+                              data-delete-trigger
+                              data-stagiaire-name="{{ trim($stagiaire->prenom . ' ' . $stagiaire->name) ?: $stagiaire->email }}">
+                        <x-icons.trash-iconify class="h-5 w-5" />
+                      </button>
+                    </form>
+                    <span class="pointer-events-none absolute -top-9 left-1/2 z-20 hidden -translate-x-1/2 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 shadow-lg group-hover:block">
+                      Supprimer ce stagiaire
+                    </span>
+                  </div>
                 </div>
               </td>
             </tr>
@@ -193,23 +211,6 @@
           @endforelse
         </tbody>
       </table>
-    </div>
-
-    <div class="flex flex-wrap items-center gap-2">
-      <div class="inline-flex items-center gap-3 rounded-full border border-bleuone/20 bg-white px-4 py-2 text-sm font-varela text-gray-700">
-        <span class="flex h-8 w-8 items-center justify-center rounded-full bg-bleuone/10 text-bleuone">
-          <x-icons.stagiaire-iconify class="h-4 w-4" />
-        </span>
-        <span>Nombre total de stagiaires :</span>
-        <span class="font-bold text-bleuone">{{ $stagiaires->total() }}</span>
-      </div>
-      <div class="inline-flex items-center gap-3 rounded-full border border-orangeone/20 bg-white px-4 py-2 text-sm font-varela text-gray-700">
-        <span class="flex h-8 w-8 items-center justify-center rounded-full bg-orangeone/10 text-orangeone">
-          <x-icons.add-stagiaire-iconify class="h-4 w-4" />
-        </span>
-        <span>Nombre total de groupes :</span>
-        <span class="font-bold text-orangeone">{{ $groupes->count() }}</span>
-      </div>
     </div>
 
     {{-- 📄 Pagination --}}
