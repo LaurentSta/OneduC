@@ -45,7 +45,9 @@ it('lets a trainer create, edit and assign a self-authored module, and renders i
     ]);
     $sectionResponse->assertRedirect();
 
-    $section = $module->sections()->firstOrFail();
+    // A freshly created module already carries its example structure (2 chapters, 2+1 lessons),
+    // so the chapter/lesson under test must be looked up by title, not assumed to be the first one.
+    $section = $module->sections()->where('section_title', 'Section test')->firstOrFail();
 
     // Upload an image via the dedicated endpoint, as the block editor would.
     $uploadResponse = $this->actingAs($formateur)->post(
@@ -72,7 +74,7 @@ it('lets a trainer create, edit and assign a self-authored module, and renders i
     ]);
     $lectureResponse->assertRedirect();
 
-    $lecture = $section->lectures()->firstOrFail();
+    $lecture = $section->lectures()->where('lecture_title', 'Lecon test')->firstOrFail();
     expect($lecture->content_type)->toBe('blocks');
 
     $saved = collect($lecture->content_blocks);
@@ -128,6 +130,30 @@ it('lets a trainer create, edit and assign a self-authored module, and renders i
     $stagiaireResponse->assertSee('monde', false);
     $stagiaireResponse->assertSee('item deux', false);
     $stagiaireResponse->assertSee('Citation test', false);
+});
+
+it('autosaves the module title and description via JSON PUT without redirecting', function () {
+    $formateur = User::factory()->create(['role' => 'formateur']);
+
+    $storeResponse = $this->actingAs($formateur)->post(route('formateur.modules.builder.store'), [
+        'module_title' => 'Module autosave',
+        'description' => 'Description initiale',
+    ]);
+
+    $module = Module::where('module_title', 'Module autosave')->firstOrFail();
+    $storeResponse->assertRedirect(route('formateur.modules.builder.edit', $module));
+
+    // The builder's title/description field sends a JSON PUT (fetch) and must get a JSON
+    // response back, not a redirect: a redirect response confuses the fetch caller into
+    // reporting a save failure even though the write succeeded.
+    $autosave = $this->actingAs($formateur)->putJson(route('formateur.modules.builder.update', $module), [
+        'module_title' => 'Module autosave renomme',
+        'description' => 'Nouvelle description',
+    ]);
+
+    $autosave->assertOk();
+    expect($module->fresh()->module_title)->toBe('Module autosave renomme');
+    expect($module->fresh()->description)->toBe('Nouvelle description');
 });
 
 it('lets a trainer duplicate a catalog module into an editable copy, preserving scorm lessons and syncing groups', function () {

@@ -28,9 +28,9 @@ Champs principaux :
 - `category_id` / `subcategory_id`
 - `formateur_id` (formateur associé au module)
 - `is_trainer_authored` (module créé par un formateur, exclu du catalogue public)
-- `status` (actif/inactif)
-- `certificat` (champ présent, flux non implémenté)
-- `bestseller`, `vedette`, `surevalue` (flags marketing hérités du template)
+- `status` (actif/inactif — modifiable par le formateur depuis le panneau Options du builder)
+- `certificat`, `label`, `duree`, `resources`, `prerequi`, `module_video`, `module_image`, `header_image` (modifiables par le formateur depuis le panneau Options du builder)
+- `bestseller`, `vedette`, `surevalue` (flags marketing catalogue admin uniquement, non exposés au formateur)
 - `evaluation_id` (évaluation SCORM associée)
 
 ### Durée estimée intelligente
@@ -46,9 +46,11 @@ Deux flux coexistent :
 | Flux | Contrôleur | Usage |
 |------|------------|-------|
 | Catalogue admin | `Backend/ModuleController` | Création complète des modules publics, SCORM, slides, quiz, évaluations |
-| Modules formateur | `Formateur/ModuleBuilderController` | Création de modules personnels, plan continu chapitres/leçons, duplication d'un module catalogue, assignation aux groupes |
+| Modules formateur | `Formateur/ModuleBuilderController` | Création de modules personnels (avec structure d'exemple pré-remplie), plan continu chapitres/leçons, options du module, duplication d'un module catalogue, assignation aux groupes |
 
 Les modules personnels ont `is_trainer_authored = true`. Ils sont visibles dans l'espace du formateur propriétaire et des groupes auxquels ils sont affectés, mais exclus de la liste publique (`Module::publiclyListable()`).
+
+À la création (`CreerModule`), le module est pré-rempli avec une structure d'exemple : 2 chapitres, le premier avec 2 leçons, le second avec 1 leçon — pour éviter la page blanche et montrer le fonctionnement du plan continu. Le formateur est libre de renommer ou supprimer ces éléments.
 
 ---
 
@@ -58,8 +60,10 @@ Le builder formateur est séparé en deux niveaux :
 
 | Niveau | Vue | Rôle |
 |--------|-----|------|
-| Plan du module | `resources/views/formateur/modules-builder/edit.blade.php` | Titre, description, chapitres, leçons, assignation aux groupes |
+| Plan du module | `resources/views/formateur/modules-builder/edit.blade.php` | Titre, description, chapitres, leçons ; panneau replié « Options du module » (média, paramètres, contenu) et « Groupes assignés » |
 | Contenu de leçon | `resources/views/formateur/modules-builder/lecture-edit.blade.php` | Édition des blocs de contenu d'une leçon |
+
+Le panneau Options + Groupes assignés est replié par défaut (un seul bouton d'ouverture) pour garder l'écran de création concentré sur le titre, la description et le plan. Les options du module (`ModuleBuilderController::updateOptions()` / `ModifierOptionsModule`) couvrent label, durée, temps estimé par question, certificat, actif, ressources, prérequis, vidéo, image d'en-tête et image principale — tous facultatifs. Les champs catalogue (catégorie, sous-catégorie, formateur, bestseller, vedette, valeur ajoutée) restent réservés à l'admin et n'apparaissent pas ici.
 
 Le plan est monté via `[data-outline-editor]` et `resources/js/outline-editor/OutlineEditor.jsx`. Il utilise Tiptap/ProseMirror avec deux noeuds métier :
 - `chapterHeading` pour les chapitres ;

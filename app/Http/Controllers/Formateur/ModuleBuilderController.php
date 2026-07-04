@@ -6,6 +6,7 @@ use App\Domains\ModulesFormateur\Actions\AssignerGroupesModule;
 use App\Domains\ModulesFormateur\Actions\CreerModule;
 use App\Domains\ModulesFormateur\Actions\DupliquerModuleCatalogue;
 use App\Domains\ModulesFormateur\Actions\DeplacerLecon;
+use App\Domains\ModulesFormateur\Actions\ModifierOptionsModule;
 use App\Domains\ModulesFormateur\Actions\PromouvoirLeconEnChapitre;
 use App\Domains\ModulesFormateur\Actions\ReordonnerChapitres;
 use App\Domains\ModulesFormateur\Actions\ReordonnerLecons;
@@ -38,6 +39,7 @@ class ModuleBuilderController extends Controller
         private readonly PromouvoirLeconEnChapitre $promouvoirLeconEnChapitre,
         private readonly TeleverserImageModule $televerserImageModule,
         private readonly AssignerGroupesModule $assignerGroupesModule,
+        private readonly ModifierOptionsModule $modifierOptionsModule,
     ) {}
 
     public function index()
@@ -117,7 +119,40 @@ class ModuleBuilderController extends Controller
             'description' => $validated['description'] ?? null,
         ]);
 
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true]);
+        }
+
         return back()->with('success', 'Module mis à jour.');
+    }
+
+    public function updateOptions(Request $request, Module $module)
+    {
+        $this->access->assertOwner($module);
+
+        $validated = $request->validate([
+            'label' => 'nullable|string|max:255',
+            'duree' => 'nullable|string|max:100',
+            'estimated_question_seconds' => 'nullable|integer|min:1|max:600',
+            'resources' => 'nullable|string|max:255',
+            'prerequi' => 'nullable|string',
+            'module_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'header_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'module_video_file' => 'nullable|file|mimes:mp4,m4v,mov,avi,webm|max:307200',
+        ]);
+
+        $validated['certificat'] = $request->boolean('certificat');
+        $validated['status'] = $request->boolean('status');
+
+        $this->modifierOptionsModule->execute(
+            $module,
+            $validated,
+            $request->file('module_image'),
+            $request->file('header_image'),
+            $request->file('module_video_file'),
+        );
+
+        return back()->with('success', 'Options du module mises à jour.');
     }
 
     public function destroy(Module $module)

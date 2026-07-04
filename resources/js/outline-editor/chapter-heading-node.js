@@ -1,5 +1,6 @@
 import { Node, mergeAttributes } from '@tiptap/core';
 import { nextClientKey } from './client-key';
+import { createEditPencilIcon } from './edit-pencil-icon';
 
 export const ChapterHeading = Node.create({
   name: 'chapterHeading',
@@ -41,7 +42,7 @@ export const ChapterHeading = Node.create({
 
       const dom = document.createElement('div');
       dom.setAttribute('data-type', 'chapter-heading');
-      dom.className = 'group relative pt-8 pb-1';
+      dom.className = 'group relative pt-8 pb-1 first:pt-2';
 
       const label = document.createElement('div');
       label.contentEditable = 'false';
@@ -53,10 +54,13 @@ export const ChapterHeading = Node.create({
       contentDOM.className = 'border-b-2 border-orangeone pb-2 text-lg font-bold text-bleuone outline-none';
       dom.appendChild(contentDOM);
 
+      const editIcon = createEditPencilIcon('pointer-events-none absolute right-6 top-8 h-6 w-6 hidden text-gray-300 group-hover:inline-block group-first:top-2');
+      dom.appendChild(editIcon);
+
       const deleteButton = document.createElement('button');
       deleteButton.type = 'button';
       deleteButton.contentEditable = 'false';
-      deleteButton.className = 'absolute right-0 top-8 hidden text-xs text-red-400 hover:text-red-600 group-hover:inline-flex';
+      deleteButton.className = 'absolute right-0 top-8 hidden text-xs text-red-400 hover:text-red-600 group-hover:inline-flex group-first:top-2';
       deleteButton.textContent = '✕';
       deleteButton.title = 'Supprimer ce chapitre';
       deleteButton.addEventListener('mousedown', (event) => {

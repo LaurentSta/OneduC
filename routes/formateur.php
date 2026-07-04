@@ -210,6 +210,7 @@ Route::middleware(['auth', 'role:formateur', 'association.member'])
             Route::post('/{module}/images', [ModuleBuilderController::class, 'uploadImage'])->name('images.store');
             Route::get('/{module}/edition', [ModuleBuilderController::class, 'edit'])->name('edit');
             Route::put('/{module}', [ModuleBuilderController::class, 'update'])->name('update');
+            Route::put('/{module}/options', [ModuleBuilderController::class, 'updateOptions'])->name('options.update');
             Route::delete('/{module}', [ModuleBuilderController::class, 'destroy'])->name('destroy');
 
             Route::post('/{module}/sections', [ModuleBuilderController::class, 'storeSection'])->name('sections.store');

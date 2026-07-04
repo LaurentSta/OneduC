@@ -9,12 +9,17 @@ use Illuminate\Support\Str;
 
 class CreerModule
 {
+    public function __construct(
+        private readonly CreerChapitre $creerChapitre,
+        private readonly CreerLecon $creerLecon,
+    ) {}
+
     public function execute(array $data, int $trainerId): Module
     {
         $category = $this->resolveTrainerCategory();
         $subcategory = $this->resolveTrainerSubcategory($category);
 
-        return Module::create([
+        $module = Module::create([
             'module_title' => $data['module_title'],
             'module_name' => $data['module_title'],
             'module_name_slug' => Str::slug($data['module_title']),
@@ -25,6 +30,20 @@ class CreerModule
             'status' => 1,
             'is_trainer_authored' => true,
         ]);
+
+        $this->seedExempleDeStructure($module);
+
+        return $module;
+    }
+
+    private function seedExempleDeStructure(Module $module): void
+    {
+        $premierChapitre = $this->creerChapitre->execute($module, 'Chapitre 1');
+        $this->creerLecon->execute($premierChapitre, 'Leçon 1', null);
+        $this->creerLecon->execute($premierChapitre, 'Leçon 2', null);
+
+        $deuxiemeChapitre = $this->creerChapitre->execute($module, 'Chapitre 2');
+        $this->creerLecon->execute($deuxiemeChapitre, 'Leçon 1', null);
     }
 
     private function resolveTrainerCategory(): Category
