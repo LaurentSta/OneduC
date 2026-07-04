@@ -1,11 +1,20 @@
+function dispatchStatus(status) {
+  window.dispatchEvent(new CustomEvent('outline:sync-status', { detail: { status } }));
+}
+
 export function createSyncQueue() {
   let chain = Promise.resolve();
   const timers = new Map();
 
   function enqueue(task) {
-    chain = chain.then(task).catch((error) => {
+    dispatchStatus('saving');
+
+    chain = chain.then(task).then(() => {
+      dispatchStatus('saved');
+    }).catch((error) => {
       // eslint-disable-next-line no-console
       console.error('[outline-editor] sync failed', error);
+      dispatchStatus('error');
     });
 
     return chain;

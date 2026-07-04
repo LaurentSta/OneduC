@@ -1,5 +1,6 @@
 import { Node, mergeAttributes } from '@tiptap/core';
 import { nextClientKey } from './client-key';
+import { createEditPencilIcon } from './edit-pencil-icon';
 
 export const LessonItem = Node.create({
   name: 'lessonItem',
@@ -61,9 +62,11 @@ export const LessonItem = Node.create({
       contentDOM.className = 'flex-1 py-1 text-sm text-gray-800 outline-none';
       dom.appendChild(contentDOM);
 
+      const editIcon = createEditPencilIcon('pointer-events-none mt-1 h-5 w-5 shrink-0 hidden text-gray-300 group-hover:inline-block');
+      dom.appendChild(editIcon);
+
       const action = document.createElement('a');
       action.contentEditable = 'false';
-      action.className = 'mt-1 hidden shrink-0 items-center text-xs font-semibold text-gray-400 hover:text-orangeone group-hover:inline-flex';
 
       const deleteButton = document.createElement('button');
       deleteButton.type = 'button';
@@ -80,10 +83,13 @@ export const LessonItem = Node.create({
 
       const renderAction = () => {
         const isLocked = currentNode.attrs.contentType !== 'blocks';
-        action.textContent = isLocked ? '🔒' : '→ Ouvrir';
+        action.textContent = isLocked ? '🔒 Verrouillée' : 'Ouvrir';
         action.title = isLocked
           ? 'Contenu importé depuis le catalogue, non modifiable ici'
           : 'Ouvrir la leçon pour en éditer le contenu';
+        action.className = isLocked
+          ? 'mt-0.5 inline-flex shrink-0 items-center rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-400'
+          : 'mt-0.5 inline-flex shrink-0 items-center rounded-full border-2 border-orangeone bg-orangeone px-3 py-1 text-xs font-semibold text-white transition-colors hover:bg-white hover:text-orangeone';
 
         if (currentNode.attrs.editUrl) {
           action.href = currentNode.attrs.editUrl;
