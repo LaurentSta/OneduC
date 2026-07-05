@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\ContentBlockScormResult;
 use App\Models\ContentBlockScormScore;
+use App\Models\ModuleLecture;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -16,14 +17,19 @@ class ContentBlockScormController extends Controller
      */
     public function saveProgress(Request $request)
     {
-        $userId     = Auth::id();
-        $lectureId  = (int) $request->input('lecture_id');
-        $blockKey   = (string) $request->input('content_block_key');
-        $scormKey   = (string) $request->input('scorm_key');
+        $userId = Auth::id();
+        $lectureId = (int) $request->input('lecture_id');
+        $blockKey = (string) $request->input('content_block_key');
+        $scormKey = (string) $request->input('scorm_key');
         $scormValue = $request->input('scorm_value');
 
         if (! $userId || ! $lectureId || $blockKey === '' || $scormKey === '') {
             return response()->json(['error' => 'Incomplet'], 400);
+        }
+
+        $lecture = ModuleLecture::find($lectureId);
+        if (! $lecture || ! Auth::user()->aAccesAuModule($lecture->module_id)) {
+            return response()->json(['error' => 'Accès non autorisé à cette leçon'], 403);
         }
 
         ContentBlockScormResult::updateOrCreate(
@@ -40,8 +46,12 @@ class ContentBlockScormController extends Controller
             case 'cmi.core.score.raw':
                 $score = (int) $scormValue;
                 $sc->last_score = $score;
-                if (is_null($sc->first_score)) $sc->first_score = $score;
-                if ($score > ($sc->best_score ?? -1)) $sc->best_score = $score;
+                if (is_null($sc->first_score)) {
+                    $sc->first_score = $score;
+                }
+                if ($score > ($sc->best_score ?? -1)) {
+                    $sc->best_score = $score;
+                }
                 break;
 
             case 'cmi.core.lesson_status':
@@ -65,8 +75,8 @@ class ContentBlockScormController extends Controller
         $sc->save();
 
         return response()->json([
-            'success'             => true,
-            'lesson_status'       => $sc->is_completed ? 'completed' : 'in_progress',
+            'success' => true,
+            'lesson_status' => $sc->is_completed ? 'completed' : 'in_progress',
             'scorm_lesson_status' => $sc->lesson_status,
         ]);
     }
