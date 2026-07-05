@@ -132,9 +132,18 @@
          data-base-path="{{ route('formateur.modules.builder.index') }}"
          data-initial-doc="{{ json_encode($outlineNodes) }}"></div>
 
-    <p class="mt-4 text-xs text-gray-400">
-      Entrée pour ajouter une leçon · Maj+Entrée pour transformer la ligne en chapitre · Alt+↑/↓ pour réordonner
-    </p>
+    <div class="mt-4 flex gap-2">
+      <button type="button"
+              class="inline-flex shrink-0 items-center rounded-full border-2 border-orangeone bg-transparent px-3 py-1 text-xs font-semibold text-orangeone transition-colors hover:bg-orangeone hover:text-white"
+              x-on:click="window.dispatchEvent(new CustomEvent('outline:request-add-lesson'))">
+        + Ajouter une leçon
+      </button>
+      <button type="button"
+              class="inline-flex shrink-0 items-center rounded-full border-2 border-orangeone bg-transparent px-3 py-1 text-xs font-semibold text-orangeone transition-colors hover:bg-orangeone hover:text-white"
+              x-on:click="window.dispatchEvent(new CustomEvent('outline:request-add-chapter'))">
+        + Ajouter un chapitre
+      </button>
+    </div>
   </div>
 
   {{-- Options du module & groupes assignés --}}
@@ -274,30 +283,40 @@
   {{-- Confirmation de suppression (chapitre ou leçon), déclenchée depuis l'éditeur outline --}}
   <div x-data="{
         pendingDelete: { type: null, id: null, clientKey: null, title: '', message: '' },
+        deleteError: '',
         async confirmDelete() {
+          this.deleteError = '';
           try {
             if (this.pendingDelete.id) {
               const base = @js(route('formateur.modules.builder.index'));
               const url = this.pendingDelete.type === 'section'
                 ? base + '/sections/' + this.pendingDelete.id
                 : base + '/lectures/' + this.pendingDelete.id;
-              await fetch(url, {
+              const response = await fetch(url, {
                 method: 'DELETE',
                 headers: { Accept: 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content },
               });
+              if (!response.ok) {
+                const data = await response.json().catch(() => ({}));
+                this.deleteError = data.message || 'Suppression impossible.';
+                return;
+              }
             }
             window.dispatchEvent(new CustomEvent('outline:deleted', { detail: { clientKey: this.pendingDelete.clientKey } }));
             this.$dispatch('close');
-          } catch (e) {}
+          } catch (e) {
+            this.deleteError = 'Suppression impossible.';
+          }
         },
       }"
       x-on:outline:request-delete.window="
+        deleteError = '';
         pendingDelete = {
           type: $event.detail.type,
           id: $event.detail.id,
           clientKey: $event.detail.clientKey,
           title: $event.detail.type === 'section' ? 'Supprimer ce chapitre ?' : 'Supprimer cette leçon ?',
-          message: $event.detail.type === 'section' ? 'Toutes ses leçons seront également supprimées.' : 'Cette action est irréversible.',
+          message: 'Cette action est irréversible.',
         };
         $dispatch('open-modal', 'delete-confirm');
       ">
@@ -305,6 +324,7 @@
       <div class="p-6">
         <h2 class="text-lg font-raleway font-medium text-bleuone" x-text="pendingDelete.title"></h2>
         <p class="mt-2 text-sm text-gray-600" x-text="pendingDelete.message"></p>
+        <p x-show="deleteError" x-text="deleteError" class="mt-2 text-sm font-semibold text-red-600"></p>
         <div class="mt-6 flex justify-end gap-3">
           <button type="button" class="btn-oneduc-outline !px-4 !py-2 !text-sm" x-on:click="$dispatch('close')">Annuler</button>
           <button type="button" class="btn-oneduc-danger !px-4 !py-2 !text-sm" x-on:click="confirmDelete()">Supprimer</button>

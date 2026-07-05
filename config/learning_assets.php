@@ -6,6 +6,8 @@ return [
         'modules/scorm/00_Lecons',
     ],
 
+    'lessons_scorm_blocks_base' => 'modules/00_Lecons_blocks',
+
     'videos_base' => 'modules/videos',
     'videos_legacy' => [
         'modules/scorm/02_videos',

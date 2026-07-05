@@ -12,8 +12,11 @@ use App\Domains\ModulesFormateur\Actions\ReordonnerChapitres;
 use App\Domains\ModulesFormateur\Actions\ReordonnerLecons;
 use App\Domains\ModulesFormateur\Actions\CreerLecon;
 use App\Domains\ModulesFormateur\Actions\CreerChapitre;
+use App\Domains\ModulesFormateur\Actions\DupliquerLecon;
 use App\Domains\ModulesFormateur\Actions\ModifierLecon;
 use App\Domains\ModulesFormateur\Actions\TeleverserImageModule;
+use App\Domains\ModulesFormateur\Actions\TeleverserScormModule;
+use App\Domains\ModulesFormateur\Actions\TeleverserVideoModule;
 use App\Domains\ModulesFormateur\Support\AccesModule;
 use App\Domains\ModulesFormateur\Support\DonneesModule;
 use App\Http\Controllers\Controller;
@@ -34,10 +37,13 @@ class ModuleBuilderController extends Controller
         private readonly ReordonnerChapitres $reordonnerChapitres,
         private readonly CreerLecon $creerLecon,
         private readonly ModifierLecon $modifierLecon,
+        private readonly DupliquerLecon $dupliquerLecon,
         private readonly ReordonnerLecons $reordonnerLecons,
         private readonly DeplacerLecon $deplacerLecon,
         private readonly PromouvoirLeconEnChapitre $promouvoirLeconEnChapitre,
         private readonly TeleverserImageModule $televerserImageModule,
+        private readonly TeleverserVideoModule $televerserVideoModule,
+        private readonly TeleverserScormModule $televerserScormModule,
         private readonly AssignerGroupesModule $assignerGroupesModule,
         private readonly ModifierOptionsModule $modifierOptionsModule,
     ) {}
@@ -206,7 +212,12 @@ class ModuleBuilderController extends Controller
     {
         $this->access->assertOwner($section->module);
 
-        $section->lectures()->delete();
+        if ($section->lectures()->exists()) {
+            return response()->json([
+                'message' => 'Ce chapitre contient des leçons. Déplacez-les ou supprimez-les avant de supprimer le chapitre.',
+            ], 422);
+        }
+
         $section->delete();
 
         if ($request->wantsJson()) {
@@ -280,6 +291,21 @@ class ModuleBuilderController extends Controller
         return back()->with('success', 'Leçon mise à jour.');
     }
 
+    public function duplicateLecture(Request $request, ModuleLecture $lecture)
+    {
+        $this->access->assertOwner($lecture->module);
+
+        $duplicate = $this->dupliquerLecon->execute($lecture);
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'lecture' => $this->payloads->lecture($duplicate),
+            ], 201);
+        }
+
+        return back()->with('success', 'Leçon dupliquée.');
+    }
+
     public function destroyLecture(Request $request, ModuleLecture $lecture)
     {
         $this->access->assertOwner($lecture->module);
@@ -317,6 +343,7 @@ class ModuleBuilderController extends Controller
             'module' => $lecture->module,
             'section' => $lecture->section,
             'lecture' => $lecture,
+            'initialBlocks' => $this->payloads->resolvedContentBlocks($lecture),
         ]);
     }
 
@@ -367,11 +394,48 @@ class ModuleBuilderController extends Controller
             'image' => 'required|image|mimes:jpg,jpeg,png,webp,gif|max:5120',
         ]);
 
-        $path = $this->televerserImageModule->execute($module, $request->file('image'));
+        $media = $this->televerserImageModule->execute($module, $request->file('image'));
 
         return response()->json([
-            'path' => $path,
-            'url' => route('media.storage', ['path' => $path]),
+            'media_id' => $media->id,
+            'url' => $media->getUrl('display'),
+        ]);
+    }
+
+    public function uploadVideo(Request $request, Module $module)
+    {
+        $this->access->assertOwner($module);
+
+        $request->validate([
+            'video' => 'required|mimes:mp4,webm,ogg|max:102400',
+        ]);
+
+        $media = $this->televerserVideoModule->execute($module, $request->file('video'));
+
+        return response()->json([
+            'url' => $media->getUrl(),
+        ]);
+    }
+
+    public function uploadScorm(Request $request, Module $module)
+    {
+        $this->access->assertOwner($module);
+
+        $validated = $request->validate([
+            'scorm' => 'required|file|mimes:zip|max:512000',
+            'content_block_key' => ['required', 'string', 'regex:/^[A-Za-z0-9_-]{8,64}$/'],
+        ]);
+
+        $version = $this->televerserScormModule->execute(
+            $module,
+            $request->file('scorm'),
+            $validated['content_block_key']
+        );
+
+        return response()->json([
+            'scorm_package_version_id' => $version->id,
+            'content_block_key' => $validated['content_block_key'],
+            'preview_url' => $version->asset_url,
         ]);
     }
 

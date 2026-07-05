@@ -2,8 +2,11 @@
 
 namespace App\Domains\ModulesFormateur\Support;
 
-use Illuminate\Support\Facades\Storage;
+use App\Models\Module;
+use App\Models\ScormPackageVersion;
+use App\Support\LearningAssetPath;
 use Illuminate\Support\Str;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class NettoyeurBlocsModule
 {
@@ -18,7 +21,13 @@ class NettoyeurBlocsModule
             return [];
         }
 
-        $allowedImagePrefix = "modules_formateur/module_{$moduleId}/images/";
+        $validMediaIds = Media::query()
+            ->where('model_type', Module::class)
+            ->where('model_id', $moduleId)
+            ->where('collection_name', 'lesson-images')
+            ->pluck('id')
+            ->flip();
+
         $sanitized = [];
 
         foreach (array_slice($decoded, 0, 100) as $block) {
@@ -35,29 +44,15 @@ class NettoyeurBlocsModule
                     break;
 
                 case 'image':
-                    $path = (string) ($block['path'] ?? '');
-                    if ($path === '' || ! str_starts_with($path, $allowedImagePrefix) || ! Storage::disk('public')->exists($path)) {
+                    $mediaId = (int) ($block['media_id'] ?? 0);
+                    if ($mediaId <= 0 || ! isset($validMediaIds[$mediaId])) {
                         break;
                     }
                     $sanitized[] = [
                         'type' => 'image',
-                        'path' => $path,
+                        'media_id' => $mediaId,
                         'caption' => Str::limit(strip_tags((string) ($block['caption'] ?? '')), 255, ''),
                     ];
-                    break;
-
-                case 'list':
-                    $style = ($block['style'] ?? 'bullet') === 'numbered' ? 'numbered' : 'bullet';
-                    $items = collect($block['items'] ?? [])
-                        ->take(30)
-                        ->map(fn ($item) => Str::limit(strip_tags((string) $item), 500, ''))
-                        ->filter(fn ($item) => $item !== '')
-                        ->values()
-                        ->all();
-
-                    if (! empty($items)) {
-                        $sanitized[] = ['type' => 'list', 'style' => $style, 'items' => $items];
-                    }
                     break;
 
                 case 'quote':
@@ -72,8 +67,39 @@ class NettoyeurBlocsModule
                     ];
                     break;
 
+                case 'video':
+                    $url = trim((string) ($block['url'] ?? ''));
+                    if ($url === '' || ClassifieurUrlVideo::classify($url) === null) {
+                        break;
+                    }
+                    $sanitized[] = [
+                        'type' => 'video',
+                        'url' => $url,
+                        'caption' => Str::limit(strip_tags((string) ($block['caption'] ?? '')), 255, ''),
+                    ];
+                    break;
+
                 case 'divider':
                     $sanitized[] = ['type' => 'divider'];
+                    break;
+
+                case 'scorm':
+                    $key = (string) ($block['content_block_key'] ?? '');
+                    $versionId = (int) ($block['scorm_package_version_id'] ?? 0);
+                    if ($key === '' || ! preg_match('/^[A-Za-z0-9_-]{8,64}$/', $key) || $versionId <= 0) {
+                        break;
+                    }
+
+                    $version = ScormPackageVersion::find($versionId);
+                    if (! $version || $version->folder !== LearningAssetPath::lessonBlockScormFolder($moduleId, $key)) {
+                        break;
+                    }
+
+                    $sanitized[] = [
+                        'type' => 'scorm',
+                        'content_block_key' => $key,
+                        'scorm_package_version_id' => $versionId,
+                    ];
                     break;
             }
         }

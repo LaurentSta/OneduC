@@ -208,6 +208,8 @@ Route::middleware(['auth', 'role:formateur', 'association.member'])
             Route::post('/', [ModuleBuilderController::class, 'store'])->name('store');
             Route::post('/depuis-catalogue/{catalogModule}', [ModuleBuilderController::class, 'duplicate'])->name('duplicate');
             Route::post('/{module}/images', [ModuleBuilderController::class, 'uploadImage'])->name('images.store');
+            Route::post('/{module}/videos', [ModuleBuilderController::class, 'uploadVideo'])->name('videos.store');
+            Route::post('/{module}/scorm', [ModuleBuilderController::class, 'uploadScorm'])->name('scorm.store');
             Route::get('/{module}/edition', [ModuleBuilderController::class, 'edit'])->name('edit');
             Route::put('/{module}', [ModuleBuilderController::class, 'update'])->name('update');
             Route::put('/{module}/options', [ModuleBuilderController::class, 'updateOptions'])->name('options.update');
@@ -222,6 +224,7 @@ Route::middleware(['auth', 'role:formateur', 'association.member'])
             Route::get('/lectures/{lecture}/edition', [ModuleBuilderController::class, 'editLecture'])->name('lectures.edit');
             Route::put('/lectures/{lecture}', [ModuleBuilderController::class, 'updateLecture'])->name('lectures.update');
             Route::delete('/lectures/{lecture}', [ModuleBuilderController::class, 'destroyLecture'])->name('lectures.destroy');
+            Route::post('/lectures/{lecture}/duplicate', [ModuleBuilderController::class, 'duplicateLecture'])->name('lectures.duplicate');
             Route::post('/sections/{section}/lectures/reorder', [ModuleBuilderController::class, 'reorderLectures'])->name('lectures.reorder');
             Route::post('/lectures/{lecture}/move', [ModuleBuilderController::class, 'moveLecture'])->name('lectures.move');
             Route::post('/lectures/{lecture}/promote', [ModuleBuilderController::class, 'promoteLectureToSection'])->name('lectures.promote');

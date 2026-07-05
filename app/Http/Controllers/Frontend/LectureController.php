@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Models\ContentBlockScormScore;
 use App\Models\ModuleLecture;
 use App\Models\Progression;
+use App\Models\ScormPackageVersion;
 use Illuminate\Support\Facades\Storage;
 
 class LectureController extends Controller
@@ -59,6 +61,33 @@ class LectureController extends Controller
             'lecture' => $lecture,
             'scormPath' => $path,
             'scormUrl' => $lecture->scorm_asset_url,
+        ]);
+    }
+
+    public function showScormBlock($id, $key)
+    {
+        $lecture = ModuleLecture::findOrFail($id);
+
+        $block = collect($lecture->content_blocks ?? [])
+            ->first(fn ($b) => ($b['type'] ?? null) === 'scorm' && ($b['content_block_key'] ?? null) === $key);
+
+        abort_if(! $block, 404);
+
+        $version = ScormPackageVersion::find($block['scorm_package_version_id'] ?? null);
+
+        abort_if(! $version || ! $version->asset_url, 404);
+
+        $isAlreadyDone = ContentBlockScormScore::query()
+            ->where('user_id', auth()->id())
+            ->where('lecture_id', $lecture->id)
+            ->where('content_block_key', $key)
+            ->value('is_completed');
+
+        return view('shared.scorm_block_wrapper', [
+            'lectureId' => $lecture->id,
+            'contentBlockKey' => $key,
+            'scormUrl' => $version->asset_url,
+            'isAlreadyDone' => (bool) $isAlreadyDone,
         ]);
     }
 

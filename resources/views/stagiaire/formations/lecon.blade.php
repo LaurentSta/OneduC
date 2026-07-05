@@ -261,7 +261,7 @@
             <div class="h-full flex flex-col bg-white">
                 <div class="flex-1 overflow-y-auto">
                     <div class="max-w-3xl mx-auto px-6 py-10">
-                        @include('shared.lecture_blocks', ['blocks' => $lecture->content_blocks ?? []])
+                        @include('shared.lecture_blocks', ['blocks' => $lecture->content_blocks ?? [], 'lecture' => $lecture])
                     </div>
                 </div>
                 <div class="border-t border-gray-200 bg-white px-4 py-3 flex items-center justify-end gap-3">

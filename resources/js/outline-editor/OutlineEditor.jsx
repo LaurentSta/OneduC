@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import { useEditor, EditorContent } from '@tiptap/react';
+import { TextSelection } from '@tiptap/pm/state';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import { OutlineDocument } from './outline-document';
@@ -50,6 +51,44 @@ function OutlineEditorApp({ moduleId, basePath, initialNodes }) {
   if (!apiRef.current) apiRef.current = createOutlineApi(basePath, moduleId);
   if (!queueRef.current) queueRef.current = createSyncQueue();
 
+  function syncNodeMove({ clientKey, type }) {
+    queueRef.current.enqueue(async () => {
+      const flatNodes = [];
+      editor.state.doc.forEach((node) => flatNodes.push(node));
+
+      if (type === 'chapterHeading') {
+        const sectionIds = flatNodes
+          .filter((n) => n.type.name === 'chapterHeading' && n.attrs.sectionId)
+          .map((n) => n.attrs.sectionId);
+
+        if (sectionIds.length > 1) await apiRef.current.reorderSections(sectionIds);
+
+        return;
+      }
+
+      let currentSectionId = null;
+      let movedLectureId = null;
+      let position = 0;
+
+      for (const node of flatNodes) {
+        if (node.type.name === 'chapterHeading') {
+          currentSectionId = node.attrs.sectionId;
+          position = 0;
+          continue;
+        }
+        if (node.attrs.clientKey === clientKey) {
+          movedLectureId = node.attrs.lectureId;
+          break;
+        }
+        position += 1;
+      }
+
+      if (movedLectureId && currentSectionId) {
+        await apiRef.current.moveLecture(movedLectureId, currentSectionId, position);
+      }
+    });
+  }
+
   const editor = useEditor({
     extensions: [
       OutlineDocument,
@@ -91,43 +130,7 @@ function OutlineEditorApp({ moduleId, basePath, initialNodes }) {
             reconcilerRef.current?.applyAttrs(clientKey, { sectionId: section.id, lectureId: null });
           });
         },
-        onMove: ({ clientKey, type }) => {
-          queueRef.current.enqueue(async () => {
-            const flatNodes = [];
-            editor.state.doc.forEach((node) => flatNodes.push(node));
-
-            if (type === 'chapterHeading') {
-              const sectionIds = flatNodes
-                .filter((n) => n.type.name === 'chapterHeading' && n.attrs.sectionId)
-                .map((n) => n.attrs.sectionId);
-
-              if (sectionIds.length > 1) await apiRef.current.reorderSections(sectionIds);
-
-              return;
-            }
-
-            let currentSectionId = null;
-            let movedLectureId = null;
-            let position = 0;
-
-            for (const node of flatNodes) {
-              if (node.type.name === 'chapterHeading') {
-                currentSectionId = node.attrs.sectionId;
-                position = 0;
-                continue;
-              }
-              if (node.attrs.clientKey === clientKey) {
-                movedLectureId = node.attrs.lectureId;
-                break;
-              }
-              position += 1;
-            }
-
-            if (movedLectureId && currentSectionId) {
-              await apiRef.current.moveLecture(movedLectureId, currentSectionId, position);
-            }
-          });
-        },
+        onMove: syncNodeMove,
       }),
     ],
     content: buildInitialDoc(initialNodes, basePath),
@@ -170,9 +173,87 @@ function OutlineEditorApp({ moduleId, basePath, initialNodes }) {
       });
     }
 
-    window.addEventListener('outline:deleted', handleDeleted);
+    function appendNodeAtEnd(nodeTypeName, keyPrefix) {
+      if (!editor) return;
 
-    return () => window.removeEventListener('outline:deleted', handleDeleted);
+      editor.commands.command(({ tr, state, dispatch }) => {
+        if (!dispatch) return true;
+
+        const endPos = state.doc.content.size;
+        const nodeType = state.schema.nodes[nodeTypeName];
+        const newNode = nodeType.create({ clientKey: nextClientKey(keyPrefix) });
+
+        tr.insert(endPos, newNode);
+        tr.setSelection(TextSelection.near(tr.doc.resolve(endPos + 1)));
+        dispatch(tr);
+
+        return true;
+      });
+
+      editor.commands.focus();
+    }
+
+    function handleAddLesson() {
+      appendNodeAtEnd('lessonItem', 'lecture');
+    }
+
+    function handleAddChapter() {
+      appendNodeAtEnd('chapterHeading', 'section');
+    }
+
+    function handleRequestMove(event) {
+      const { clientKey, type } = event.detail || {};
+      if (!clientKey) return;
+      syncNodeMove({ clientKey, type: type || 'lessonItem' });
+    }
+
+    function handleRequestDuplicate(event) {
+      const { clientKey, lectureId } = event.detail || {};
+      if (!clientKey || !lectureId || !editor) return;
+
+      queueRef.current.enqueue(async () => {
+        const duplicate = await apiRef.current.duplicateLecture(lectureId);
+
+        editor.commands.command(({ tr, state, dispatch }) => {
+          let target = null;
+          tr.doc.forEach((node, offset) => {
+            if (target === null && node.attrs.clientKey === clientKey) target = { from: offset, to: offset + node.nodeSize };
+          });
+          if (!target) return false;
+          if (!dispatch) return true;
+
+          const lessonItemType = state.schema.nodes.lessonItem;
+          const newLesson = lessonItemType.create(
+            {
+              clientKey: nextClientKey('lecture'),
+              lectureId: duplicate.id,
+              contentType: duplicate.content_type,
+              editUrl: `${basePath}/lectures/${duplicate.id}/edition`,
+            },
+            duplicate.lecture_title ? state.schema.text(duplicate.lecture_title) : undefined
+          );
+
+          tr.insert(target.to, newLesson);
+          dispatch(tr);
+
+          return true;
+        });
+      });
+    }
+
+    window.addEventListener('outline:deleted', handleDeleted);
+    window.addEventListener('outline:request-add-lesson', handleAddLesson);
+    window.addEventListener('outline:request-add-chapter', handleAddChapter);
+    window.addEventListener('outline:request-move', handleRequestMove);
+    window.addEventListener('outline:request-duplicate', handleRequestDuplicate);
+
+    return () => {
+      window.removeEventListener('outline:deleted', handleDeleted);
+      window.removeEventListener('outline:request-add-lesson', handleAddLesson);
+      window.removeEventListener('outline:request-add-chapter', handleAddChapter);
+      window.removeEventListener('outline:request-move', handleRequestMove);
+      window.removeEventListener('outline:request-duplicate', handleRequestDuplicate);
+    };
   }, [editor]);
 
   return <EditorContent editor={editor} />;

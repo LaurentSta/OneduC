@@ -1,38 +1,43 @@
 {{-- resources/views/shared/lecture_blocks.blade.php --}}
-@php $blocks = collect($blocks ?? []); @endphp
+@php $blocks = collect($blocks ?? []); $lecture = $lecture ?? null; @endphp
 
 @foreach($blocks as $block)
   @switch($block['type'] ?? null)
     @case('text')
-      <div class="prose prose-slate max-w-none mb-6">
+      <div class="rich-text-content prose prose-slate max-w-none mb-6">
         {!! $block['html'] ?? '' !!}
       </div>
       @break
 
     @case('image')
-      <figure class="mb-6">
-        <img src="{{ route('media.storage', ['path' => $block['path']]) }}"
-             alt="{{ $block['caption'] ?? '' }}"
-             class="w-full rounded-xl border border-gray-200">
-        @if(!empty($block['caption']))
-          <figcaption class="mt-2 text-center text-sm text-gray-500">{{ $block['caption'] }}</figcaption>
-        @endif
-      </figure>
+      @php $media = \Spatie\MediaLibrary\MediaCollections\Models\Media::find($block['media_id'] ?? null); @endphp
+      @if($media)
+        <figure class="mb-6">
+          <img src="{{ $media->getUrl('display') }}"
+               alt="{{ $block['caption'] ?? '' }}"
+               class="w-full rounded-xl border border-gray-200">
+          @if(!empty($block['caption']))
+            <figcaption class="mt-2 text-center text-sm text-gray-500">{{ $block['caption'] }}</figcaption>
+          @endif
+        </figure>
+      @endif
       @break
 
-    @case('list')
-      @if(($block['style'] ?? 'bullet') === 'numbered')
-        <ol class="mb-6 list-decimal pl-6 space-y-1 text-gray-700">
-          @foreach($block['items'] ?? [] as $item)
-            <li>{{ $item }}</li>
-          @endforeach
-        </ol>
-      @else
-        <ul class="mb-6 list-disc pl-6 space-y-1 text-gray-700">
-          @foreach($block['items'] ?? [] as $item)
-            <li>{{ $item }}</li>
-          @endforeach
-        </ul>
+    @case('video')
+      @php $videoInfo = \App\Domains\ModulesFormateur\Support\ClassifieurUrlVideo::classify($block['url'] ?? ''); @endphp
+      @if($videoInfo)
+        <figure class="mb-6">
+          @if($videoInfo['kind'] === 'file')
+            <video src="{{ $videoInfo['embed_url'] }}" controls class="w-full rounded-xl border border-gray-200"></video>
+          @else
+            <div class="aspect-video w-full overflow-hidden rounded-xl border border-gray-200">
+              <iframe src="{{ $videoInfo['embed_url'] }}" class="h-full w-full" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            </div>
+          @endif
+          @if(!empty($block['caption']))
+            <figcaption class="mt-2 text-center text-sm text-gray-500">{{ $block['caption'] }}</figcaption>
+          @endif
+        </figure>
       @endif
       @break
 
@@ -47,6 +52,15 @@
 
     @case('divider')
       <hr class="my-8 border-gray-200">
+      @break
+
+    @case('scorm')
+      @if($lecture && !empty($block['content_block_key']))
+        <div class="mb-6 overflow-hidden rounded-xl border border-gray-200" style="height: 70vh;">
+          <iframe src="{{ route('lecture.scorm-block', ['id' => $lecture->id, 'key' => $block['content_block_key']]) }}"
+                  class="h-full w-full border-0" title="Contenu SCORM" allowfullscreen></iframe>
+        </div>
+      @endif
       @break
   @endswitch
 @endforeach

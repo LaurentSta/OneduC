@@ -4,10 +4,31 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Image\Enums\Fit;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
-class Module extends Model
+class Module extends Model implements HasMedia
 {
     use SoftDeletes;
+    use InteractsWithMedia;
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('lesson-images')
+            ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
+
+        $this->addMediaCollection('lesson-videos')
+            ->acceptsMimeTypes(['video/mp4', 'video/webm', 'video/ogg']);
+    }
+
+    public function registerMediaConversions(?Media $media = null): void
+    {
+        $this->addMediaConversion('display')
+            ->fit(Fit::Max, 1600, 1600)
+            ->nonQueued();
+    }
 
     private const DEFAULT_ESTIMATED_SECONDS_PER_QUESTION = 30;
 

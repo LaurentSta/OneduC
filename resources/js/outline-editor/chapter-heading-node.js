@@ -1,6 +1,8 @@
 import { Node, mergeAttributes } from '@tiptap/core';
 import { nextClientKey } from './client-key';
-import { createEditPencilIcon } from './edit-pencil-icon';
+import {
+  closeOpenMenu, openMenu, isMenuOpen, createDotsIcon, createTrashIcon, createMenuItem,
+} from './row-controls';
 
 export const ChapterHeading = Node.create({
   name: 'chapterHeading',
@@ -51,25 +53,49 @@ export const ChapterHeading = Node.create({
       dom.appendChild(label);
 
       const contentDOM = document.createElement('div');
-      contentDOM.className = 'border-b-2 border-orangeone pb-2 text-lg font-bold text-bleuone outline-none';
+      contentDOM.className = 'border-b-2 border-orangeone pb-2 text-2xl font-bold text-bleuone outline-none';
       dom.appendChild(contentDOM);
 
-      const editIcon = createEditPencilIcon('pointer-events-none absolute right-6 top-8 h-6 w-6 hidden text-gray-300 group-hover:inline-block group-first:top-2');
-      dom.appendChild(editIcon);
+      const menuWrapper = document.createElement('span');
+      menuWrapper.contentEditable = 'false';
+      menuWrapper.className = 'absolute right-0 top-8 group-first:top-2';
 
-      const deleteButton = document.createElement('button');
-      deleteButton.type = 'button';
-      deleteButton.contentEditable = 'false';
-      deleteButton.className = 'absolute right-0 top-8 hidden text-xs text-red-400 hover:text-red-600 group-hover:inline-flex group-first:top-2';
-      deleteButton.textContent = '✕';
-      deleteButton.title = 'Supprimer ce chapitre';
-      deleteButton.addEventListener('mousedown', (event) => {
-        event.preventDefault();
-        window.dispatchEvent(new CustomEvent('outline:request-delete', {
-          detail: { type: 'section', id: currentNode.attrs.sectionId, clientKey: currentNode.attrs.clientKey },
-        }));
+      const menuButton = document.createElement('button');
+      menuButton.type = 'button';
+      menuButton.className = 'flex h-7 w-7 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600';
+      menuButton.title = 'Options du chapitre';
+      menuButton.appendChild(createDotsIcon());
+
+      const menuPanel = document.createElement('div');
+      menuPanel.className = 'absolute right-0 top-8 z-10 hidden min-w-[140px] rounded-lg border border-gray-200 bg-white py-1 shadow-lg';
+
+      const deleteMenuItem = createMenuItem({
+        icon: createTrashIcon(),
+        label: 'Supprimer',
+        className: 'text-red-500 hover:bg-red-50',
+        onClick: (event) => {
+          event.preventDefault();
+          closeOpenMenu();
+          window.dispatchEvent(new CustomEvent('outline:request-delete', {
+            detail: { type: 'section', id: currentNode.attrs.sectionId, clientKey: currentNode.attrs.clientKey },
+          }));
+        },
       });
-      dom.appendChild(deleteButton);
+      menuPanel.appendChild(deleteMenuItem);
+
+      menuButton.addEventListener('mousedown', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        if (isMenuOpen(menuPanel)) {
+          closeOpenMenu();
+          return;
+        }
+        openMenu(menuPanel, dom);
+      });
+
+      menuWrapper.appendChild(menuButton);
+      menuWrapper.appendChild(menuPanel);
+      dom.appendChild(menuWrapper);
 
       return {
         dom,
@@ -79,6 +105,11 @@ export const ChapterHeading = Node.create({
           currentNode = updatedNode;
 
           return true;
+        },
+        // See lessonItem's node view for why this is needed: ProseMirror otherwise
+        // reverts DOM mutations (like the menu's "hidden" class) made outside contentDOM.
+        ignoreMutation(mutation) {
+          return !contentDOM.contains(mutation.target);
         },
       };
     };
