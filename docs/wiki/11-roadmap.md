@@ -4,7 +4,7 @@
 
 ## État actuel (5 juillet 2026)
 
-La plateforme est **utilisable en pilote contrôlé** (10 à 50 stagiaires, 3 à 5 formateurs, contexte associatif ou ateliers numériques). Le build Vite réussit, mais la validation du 5 juillet signale 1 test rouge sur 104 et une page publique en erreur 500 (`/inscription`). Ces points doivent être corrigés avant publication publique large.
+La plateforme est **utilisable en pilote contrôlé** (10 à 50 stagiaires, 3 à 5 formateurs, contexte associatif ou ateliers numériques). Le build Vite réussit. Les corrections de sécurité et de santé applicative S3 à S9 (voir tableau ci-dessous, B0-B5 et B7) ont été appliquées le 5 juillet 2026 : suite de tests complète verte (124 tests). Un gap est resté ouvert lors du correctif de `Module::isVisibleTo()` : `StagiaireController::StagiaireModuleDetail()` et `Frontend\LectureController` ne vérifient pas l'appartenance groupe (voir [Sécurité & RGPD](10-securite-rgpd.md)).
 
 Depuis l'audit initial, le module builder formateur a évolué vers un éditeur de plan continu :
 - plan chapitres/leçons en React + Tiptap ;
@@ -20,14 +20,14 @@ La segmentation interne a démarré avec `app/Domains/ModulesFormateur` et `app/
 
 | # | Bug | Fichier | Impact immédiat |
 |---|-----|---------|-----------------|
-| B0 | `/inscription` appelle `UserController::Register()` absent | `routes/web.php` | Erreur 500 sur page publique |
-| B1 | Connexion par code sans throttling | `routes/web.php` | Brute-force sur code 6 caractères |
-| B2 | `LessonFeedbackController::store()` redirige vers `module.lesson`, route inexistante | `app/Http/Controllers/LessonFeedbackController.php` | Erreur 500 sur retour de leçon |
-| B3 | `Module::isVisibleTo()` ne vérifie pas l'appartenance groupe | `app/Models/Module.php` | Risque d'accès direct à un module actif par URL |
-| B4 | `SCORMController` écrit `last_session_time`, colonne absente de `scorm_scores` | `app/Http/Controllers/SCORMController.php` | Erreur SQL possible sur `cmi.core.session_time` legacy |
-| B5 | `POST /scorm/save-progress` ne vérifie pas l'appartenance à la leçon | `routes/scorm.php`, `SCORMController` | Soumission de score non autorisée possible |
+| B0 | ✅ Corrigé 5/07/2026 — `/inscription` appelait `UserController::Register()` absent | `routes/web.php` | Redirection 301 vers `/inscription-formateur` |
+| B1 | ✅ Corrigé 5/07/2026 — Connexion par code sans throttling | `routes/web.php`, `AppServiceProvider` | Rate limiter `connexion-code` (10/min/IP) |
+| B2 | ✅ Corrigé 5/07/2026 — `LessonFeedbackController::store()` redirigeait vers `module.lesson`, route inexistante | `app/Http/Controllers/LessonFeedbackController.php` | `redirect()->back()` |
+| B3 | ✅ Corrigé 5/07/2026 — `Module::isVisibleTo()` ne vérifiait pas l'appartenance groupe | `app/Models/Module.php` | Vérification via `User::aAccesAuModule()` / `Group::scopeAccessibleByTrainer()`. **Gap restant** : `StagiaireModuleDetail()` et `Frontend\LectureController` n'appellent pas cette méthode |
+| B4 | ✅ Corrigé 5/07/2026 — `SCORMController` écrit `last_session_time`, colonne absente de `scorm_scores` | `app/Http/Controllers/SCORMController.php` | Migration ajoutant la colonne |
+| B5 | ✅ Corrigé 5/07/2026 — `POST /scorm/save-progress` ne vérifiait pas l'appartenance à la leçon | `routes/scorm.php`, `SCORMController` | `aAccesAuModule()` + middleware `auth`, même garde sur `save-block-progress` et `evaluation-progress` |
 | B6 | `StoreModuleRequest` / `StoreGroupeRequest` retournent `authorize() = false` | `app/Http/Requests/` | FormRequests inutilisables |
-| B7 | Upload image builder : test attend `path`, contrôleur retourne `media_id`/`url` | `ModuleBuilderController`, `ModuleBuilderTest` | Suite de tests rouge et contrat frontend à clarifier |
+| B7 | ✅ Corrigé 5/07/2026 — Upload image builder : le test attendait `path`, le contrôleur retourne `media_id`/`url` | `ModuleBuilderController`, `ModuleBuilderTest` | Test aligné sur le contrat Media Library réellement utilisé par le frontend |
 
 ---
 
@@ -35,9 +35,6 @@ La segmentation interne a démarré avec `app/Domains/ModulesFormateur` et `app/
 
 | Élément | Localisation | Gravité |
 |---------|-------------|---------|
-| `/inscription` en erreur 500 | `routes/web.php:174` | Haute — page publique cassée |
-| Contrat d'upload image builder instable | `ModuleBuilderController::uploadImage()` | Haute — test rouge et risque éditeur de blocs |
-| `last_session_time` utilisé sans colonne migrée dans `scorm_scores` | `SCORMController.php:99` | Haute — cumul temps SCORM legacy défaillant |
 | `attempts_count` SCORM jamais incrémenté | `SCORMController.php` | Moyenne |
 | `scorm_interactions` non alimenté pour les leçons | `SCORMController::saveProgress()` | Haute — métriques analytiques vides |
 | `StoreModuleRequest::authorize()` retourne `false` | `app/Http/Requests/` | Haute — FormRequest inutilisable |
@@ -80,12 +77,12 @@ Une comparaison du code sur `main` (85 contrôleurs, 61 modèles, 411 routes) av
 - [x] Livrer l'éditeur de plan continu du module builder formateur
 - [x] Extraire la logique métier du module builder dans `app/Domains/ModulesFormateur` (classes en français)
 - [x] Extraire le calcul de progression des modules stagiaire dans `app/Domains/Learners`
-- [ ] Corriger `/inscription` ou rediriger explicitement vers `/inscription-formateur`
-- [ ] Stabiliser le contrat d'upload image du builder et remettre `ModuleBuilderTest` au vert
-- [ ] Corriger `Module::isVisibleTo()` ou introduire des policies pour vérifier l'appartenance au groupe
-- [ ] Corriger `LessonFeedbackController::store()` avec la bonne route de redirection selon le rôle/contexte
-- [ ] Ajouter `throttle:10,1` ou rate limiter dédié sur la route de connexion par code d'accès
-- [ ] Ajouter la colonne `last_session_time` à `scorm_scores` ou modifier le cumul de temps SCORM
+- [x] Corriger `/inscription` ou rediriger explicitement vers `/inscription-formateur`
+- [x] Stabiliser le contrat d'upload image du builder et remettre `ModuleBuilderTest` au vert
+- [x] Corriger `Module::isVisibleTo()` pour vérifier l'appartenance au groupe (policies complètes reportées en Phase 2 — voir gap `StagiaireModuleDetail`/`LectureController` dans [Sécurité & RGPD](10-securite-rgpd.md))
+- [x] Corriger `LessonFeedbackController::store()` avec la bonne route de redirection selon le rôle/contexte
+- [x] Ajouter `throttle:10,1` ou rate limiter dédié sur la route de connexion par code d'accès
+- [x] Ajouter la colonne `last_session_time` à `scorm_scores` ou modifier le cumul de temps SCORM
 - [ ] Incrémenter correctement `attempts_count` SCORM
 - [ ] Supprimer l'import mort `ScormInteractionController` dans `routes/scorm.php`
 - [ ] Corriger `StoreModuleRequest::authorize()` et `StoreGroupeRequest::authorize()`
@@ -106,7 +103,7 @@ Une comparaison du code sur `main` (85 contrôleurs, 61 modèles, 411 routes) av
 - [ ] Continuer la segmentation en domaines internes : Groupes, Progression/Analytics, SCORM/Quiz, Outils d'animation
 - [ ] Ajouter `SoftDeletes` sur `Group` avec migration `deleted_at`
 - [ ] Valider l'unicité de l'email dans `AdminController::AdminProfilStore()`
-- [ ] Ajouter la vérification d'appartenance à la leçon dans `POST /scorm/save-progress`
+- [x] Ajouter la vérification d'appartenance à la leçon dans `POST /scorm/save-progress` (et `save-block-progress`, `evaluation-progress`)
 - [ ] Découper `StagiaireController` : dashboard, modules, résultats, outils
 
 ---
@@ -190,10 +187,10 @@ Le bloc SCORM (juillet 2026, voir [docs/wiki/05-modules-scorm-quiz.md](05-module
 
 | Axe | État actuel | Cible proche |
 |-----|-------------|--------------|
-| Maturité technique | Build au vert, 1 test rouge, architecture encore concentrée dans gros contrôleurs | Tests verts, policies, FormRequests corrigées, contrôleurs découpés |
+| Maturité technique | Build au vert, tests verts (124), architecture encore concentrée dans gros contrôleurs | Policies, FormRequests corrigées, contrôleurs découpés |
 | Maturité pédagogique | Modules, quiz, SCORM, outils live et parcours déjà exploitables | Certificats, exports, prérequis et preuves SCORM complètes |
 | Expérience utilisateur | Espaces par rôle complets, accès stagiaire simplifié, convention vocabulaire documentée | Menus alignés sur "Ma formation", "Mes parcours", "Mes modules" et multi-groupe stagiaire corrigé |
-| Publication GitHub | Base légale/documentaire en place, mais `/inscription` et un test doivent être corrigés | Historique Git vérifié, checklist sécurité résolue, crawl public vert |
+| Publication GitHub | Base légale/documentaire en place, checklist sécurité S3-S9 résolue (5 juillet 2026) | Historique Git vérifié, gap `isVisibleTo()` (StagiaireModuleDetail/LectureController) traité, crawl public vert |
 
 ---
 

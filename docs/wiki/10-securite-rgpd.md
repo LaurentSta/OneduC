@@ -15,7 +15,7 @@ Route : `POST /stagiaire/connexion-code`
 Contrôleur : `UserController::loginByCode()`  
 Fonctionnement : le stagiaire saisit uniquement un code alphanumérique 6 caractères (`users.code_acces`). Aucun email ni mot de passe n'est requis.
 
-**Point de vigilance** : cette route n'a pas de throttling. Un code à 6 caractères est attaquable par force brute. Voir [Roadmap Phase 1](11-roadmap.md).
+Throttling : rate limiter nommé `connexion-code` (10 tentatives/minute par IP, 429 au-delà), défini dans `AppServiceProvider` et appliqué à la route depuis le 5 juillet 2026.
 
 ### Première connexion
 Le middleware `ForcePasswordChange` bloque l'accès à l'espace stagiaire tant que `users.password_changed_at` est nul, sauf pour les routes `/stagiaire/premiere-connexion`. L'utilisateur est redirigé vers un formulaire de changement de mot de passe (validation `min:8`). Au 5 juillet 2026, ce middleware n'est pas appliqué à l'espace formateur.
@@ -65,19 +65,21 @@ C'est ce mécanisme qui fait tenir le modèle associatif : l'accès formateur re
 |-------|--------------|
 | Route `/admin/stagiaires/{id}/debug-progression` | Aucune route correspondante trouvée dans `php artisan route:list --json` |
 | `POST /admin/stagiaires/{user}/reset-progression` | Route présente dans `routes/admin.php`, protégée par `auth`, `role:admin`, `admin.activity` |
-| Tests liés au middleware `association.member` | La suite du 5 juillet passe sur ces scénarios ; l'unique échec concerne le contrat d'upload image du builder |
+| Tests liés au middleware `association.member` | La suite du 5 juillet passe sur ces scénarios |
+| `/inscription`, connexion par code, `LessonFeedbackController::store()`, `Module::isVisibleTo()`, SCORM (`save-progress`/`save-block-progress`/`evaluation-progress`), `last_session_time`, contrat d'upload image du builder | Corrigés le 5 juillet 2026 (voir [Checklist de publication](13-publication-github.md), Axe 1, S3 à S9). Suite de tests complète verte (124 tests). |
 
-### Points à corriger avant publication publique
+### Gap identifié lors du correctif S3 (à traiter)
+
+`Module::isVisibleTo()` est désormais le point de vérité pour la visibilité d'un module, mais deux points d'accès ne l'appellent pas et n'ont **aucune** vérification d'appartenance groupe :
+- `StagiaireController::StagiaireModuleDetail()` (route `stagiaire.module.detail`) — ne vérifie que `Module::active()`
+- `Frontend\LectureController` (`show`, `showScorm`, `showScormBlock`, `showSlides`) — aucune vérification ; `showScorm` (route `lecture.scorm`) n'est même pas derrière le middleware `auth`
+
+Un stagiaire authentifié (ou, pour `showScorm`, un visiteur non authentifié) peut donc encore accéder au détail ou au contenu d'une leçon dont le module n'est pas affecté à son groupe, en devinant/énumérant les identifiants. À corriger avant publication, ou au minimum documenter le risque.
+
+### Points restants (hors périmètre du correctif du 5 juillet 2026)
 
 | # | Risque | Localisation | Impact |
 |---|--------|--------------|--------|
-| 1 | `/inscription` retourne une erreur 500 | `routes/web.php` appelle `UserController::Register()` absent | Page publique cassée, à corriger avant publication |
-| 2 | Connexion par code sans throttling | `POST /stagiaire/connexion-code` (`web` uniquement) | Brute-force possible sur les codes à 6 caractères |
-| 3 | `LessonFeedbackController::store()` redirige vers `module.lesson`, route inexistante | `app/Http/Controllers/LessonFeedbackController.php` | Erreur 500 probable à la soumission d'un retour de leçon |
-| 4 | `Module::isVisibleTo()` autorise tout module actif pour les non-admins | `app/Models/Module.php` | Risque d'accès direct à un module actif hors affectation groupe selon la route |
-| 5 | `POST /scorm/save-progress` sans CSRF et sans vérification d'appartenance à la leçon | `routes/scorm.php`, `SCORMController::saveProgress()` | Soumission de progression possible pour une leçon non affectée si l'utilisateur est authentifié |
-| 6 | `SCORMController` écrit `last_session_time`, absent du schéma `scorm_scores` | `SCORMController::handleSessionTime()` | Erreur SQL possible lors de la réception de `cmi.core.session_time` sur SCORM legacy |
-| 7 | Contrat d'upload image du builder instable | `ModuleBuilderController::uploadImage()` retourne `media_id`/`url`, le test attend `path` | Suite de tests rouge, risque de rupture éditeur de blocs |
 | 8 | `StoreModuleRequest::authorize()` et `StoreGroupeRequest::authorize()` retournent `false` | `app/Http/Requests/` | FormRequests inutilisables tant qu'ils ne sont pas corrigés |
 | 9 | `AdminController::AdminProfilStore()` ne valide pas l'unicité email avec exclusion de l'utilisateur courant | `AdminController` | Collision possible avec l'email d'un autre compte |
 | 10 | Import mort `ScormInteractionController` | `routes/scorm.php` | Dette technique faible, à nettoyer |
@@ -100,7 +102,7 @@ La suppression d'un compte formateur via `cleanupOwnedGroupsAndLinkedStagiaires(
 
 Les routes `/scorm/save-progress`, `/scorm/save-block-progress` et `/scorm/evaluation-progress` désactivent le middleware CSRF (`VerifyCsrfToken::class`). C'est techniquement nécessaire car les packages SCORM s'exécutent dans un iframe et ne peuvent pas inclure le token CSRF Laravel.
 
-La compensation de sécurité consiste à vérifier que `Auth::id()` existe dans le contrôleur. **Il manque** la vérification que l'utilisateur authentifié est bien autorisé à écrire la progression de la leçon en cours. Attention aussi à la distinction entre les deux stockages : `content_block_scorm_scores` contient bien `last_session_time`, mais `scorm_scores` ne le contient pas dans la baseline actuelle.
+La compensation de sécurité vérifie que `Auth::id()` existe (middleware `auth`, ajouté le 5 juillet 2026 sur les 3 routes) **et** que l'utilisateur authentifié est bien autorisé à écrire la progression de la leçon/évaluation en cours (`User::aAccesAuModule()` — stagiaire d'un groupe actif auquel le module est affecté), avec 403 sinon. `scorm_scores` contient désormais `last_session_time`, au même titre que `content_block_scorm_scores`.
 
 ---
 
