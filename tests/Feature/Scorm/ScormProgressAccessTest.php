@@ -5,6 +5,7 @@ use App\Models\Group;
 use App\Models\Module;
 use App\Models\ModuleLecture;
 use App\Models\ModuleSection;
+use App\Models\ScormScore;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -232,4 +233,28 @@ test('an unauthenticated request cannot save evaluation scorm progress', functio
     ]);
 
     $response->assertRedirect('/login');
+});
+
+test('session time accumulates across successive scorm progress calls on scorm_scores.last_session_time', function () {
+    ['memberStagiaire' => $stagiaire, 'lecture' => $lecture] = seedScormAccessContext();
+
+    $this->actingAs($stagiaire)->post('/scorm/save-progress', [
+        'lecture_id' => $lecture->id,
+        'scorm_key' => 'cmi.core.session_time',
+        'scorm_value' => '00:05:00',
+    ])->assertOk();
+
+    $score = ScormScore::where('user_id', $stagiaire->id)->where('lecture_id', $lecture->id)->first();
+    expect($score->session_time)->toBe(300);
+    expect($score->last_session_time)->toBe(300);
+
+    $this->actingAs($stagiaire)->post('/scorm/save-progress', [
+        'lecture_id' => $lecture->id,
+        'scorm_key' => 'cmi.core.session_time',
+        'scorm_value' => '00:08:00',
+    ])->assertOk();
+
+    $score->refresh();
+    expect($score->session_time)->toBe(480);
+    expect($score->last_session_time)->toBe(480);
 });
