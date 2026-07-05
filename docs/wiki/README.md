@@ -1,6 +1,6 @@
 # Wiki Oneduc — Documentation du projet
 
-Bienvenue dans la documentation complète de la plateforme Oneduc, LMS dédié à l'inclusion numérique et à la formation accompagnée.
+Bienvenue sur la documentation d'Oneduc, un LMS dédié à l'inclusion numérique et à la formation accompagnée.
 
 ---
 
@@ -8,7 +8,7 @@ Bienvenue dans la documentation complète de la plateforme Oneduc, LMS dédié �
 
 | # | Page | Résumé |
 |---|------|--------|
-| 01 | [Présentation du projet](01-presentation.md) | Vision, positionnement, stack technique, contexte |
+| 01 | [Présentation du projet](01-presentation.md) | Vision, usages possibles, bilan fonctionnel, trajectoire produit |
 | 02 | [Installation & configuration](02-installation.md) | Prérequis, mise en route dev, variables d'environnement |
 | 03 | [Architecture technique](03-architecture.md) | Structure Laravel, routing multi-rôle, services, schéma SQL baseline |
 | 04 | [Profils utilisateurs](04-profils-utilisateurs.md) | Admin, Formateur, Stagiaire, Observateur — droits et espaces |
@@ -21,6 +21,7 @@ Bienvenue dans la documentation complète de la plateforme Oneduc, LMS dédié �
 | 11 | [Roadmap](11-roadmap.md) | Feuille de route en 4 phases, bugs connus, dette technique |
 | 12 | [Glossaire](12-glossaire.md) | Vocabulaire unifié du projet |
 | 13 | [Prêt à publier sur GitHub](13-publication-github.md) | Checklist avant publication — sécurité, licence, nettoyage |
+| 14 | [Audit site du 5 juillet 2026](14-audit-site-2026-07-05.md) | Crawl public, état des routes, tests/build, priorités de correction |
 
 ---
 
@@ -28,14 +29,14 @@ Bienvenue dans la documentation complète de la plateforme Oneduc, LMS dédié �
 
 Oneduc est distribué sous **licence GNU Affero General Public License v3 (AGPL v3)**.
 
-**Ce que cela signifie :**
-- Tout le monde peut utiliser, modifier et redistribuer Oneduc librement
-- Toute modification redistribuée (y compris en mode SaaS hébergé) doit être publiée sous la même licence
-- L'usage commercial est autorisé sous conditions de réciprocité — contactez l'association pour une licence commerciale
+Concrètement :
+- tout le monde peut utiliser, modifier et redistribuer Oneduc librement ;
+- toute modification redistribuée, y compris en mode SaaS hébergé, doit être publiée sous la même licence ;
+- l'usage commercial est possible sous conditions de réciprocité — contactez l'association pour une licence commerciale.
 
-**Titulaire des droits :** Association Oneduc (loi 1901)  
-**Contributions :** soumises au [Contributor License Agreement](../../CLA.md)  
-**Gouvernance :** le projet est piloté par l'Association Oneduc via ses instances statutaires
+**Titulaire des droits :** Association Oneduc (loi 1901)
+**Contributions :** soumises au [Contributor License Agreement](../../CLA.md)
+**Gouvernance :** pilotée par l'Association Oneduc via ses instances statutaires
 
 Fichiers légaux à la racine du projet :
 
@@ -52,34 +53,33 @@ Fichiers légaux à la racine du projet :
 
 ## Autres ressources du dossier `docs/`
 
-- [Parcours formateur Oneduc](../parcours-formateur.md) — Structure de l'onboarding formateur (5 modules)
+- [Parcours formateur Oneduc](../parcours-formateur.md) — structure de l'onboarding formateur (5 modules)
 - [Idées d'outils formateurs](../idees-outils-formateurs.md) — 8 pistes produit (OF-001 à OF-008)
 
 ---
 
-## À propos du wiki
+## À qui s'adresse ce wiki
 
-Ce wiki est destiné à quatre publics :
-
-- **Développeurs** — comprendre l'architecture, contribuer au code, éviter les pièges connus
-- **Formateurs** — comprendre les fonctionnalités disponibles, les outils d'animation, le parcours d'onboarding
-- **Partenaires & financeurs** — vision du projet, maturité, positionnement, roadmap
-- **Administrateurs système** — installation, configuration, sécurité, variables d'environnement
+- **Développeurs**, pour comprendre l'architecture, contribuer au code et éviter les pièges connus.
+- **Formateurs**, pour repérer les fonctionnalités disponibles, les outils d'animation et le parcours d'onboarding.
+- **Partenaires et financeurs**, pour situer la vision du projet, sa maturité et sa roadmap.
+- **Administrateurs système**, pour l'installation, la configuration et la sécurité.
 
 ---
 
 ## État vérifié du dépôt
 
-Analyse réalisée le **3 juillet 2026** depuis `/var/www/Oneduc_Dev`.
+Analyse réalisée le **5 juillet 2026** depuis `/var/www/Oneduc_Dev`.
 
 | Vérification | Résultat |
 |--------------|----------|
-| Routes Laravel | 405 routes déclarées (`php artisan route:list --json`) |
-| Tests automatisés | Dernière suite complète documentée : 103 tests passés, 523 assertions |
-| Build frontend | `npm run build` réussi, avec avertissements de taille de chunks |
-| Schéma base de données | Baseline MySQL dans `database/schema/mysql-schema.sql` + 3 migrations post-baseline |
-| Point d'attention publication | Connexion stagiaire par code sans throttling, route de feedback leçon à corriger, historique Git à vérifier |
+| Routes Laravel | 411 routes déclarées (`php artisan route:list --json`) |
+| Crawl public | 23 routes GET publiques sans paramètres testées : 22 en HTTP 200, `/inscription` en HTTP 500 |
+| Tests automatisés | `php artisan test` : 103 tests passés, 1 échec, 505 assertions |
+| Build frontend | `npm run build` réussi, avec avertissements Vite sur les chunks volumineux |
+| Schéma base de données | Baseline MySQL dans `database/schema/mysql-schema.sql` + 5 migrations post-baseline, toutes marquées `Ran` localement |
+| Point d'attention publication | `/inscription` cassée, test ModuleBuilder rouge, connexion stagiaire par code sans throttling, route de feedback leçon à corriger, historique Git à vérifier |
 
 ---
 
-*Dernière mise à jour : juillet 2026 — Version actuelle : Laravel 11, PHP 8.2+, Tailwind CSS v4, React 19 pour certains écrans riches*
+*Dernière mise à jour : 5 juillet 2026 — Version locale vérifiée : Laravel 11.42.0, PHP 8.3.6, Tailwind CSS v4, React 19 pour certains écrans riches*

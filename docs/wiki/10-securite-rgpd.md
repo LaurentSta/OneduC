@@ -16,7 +16,7 @@ Fonctionnement : le stagiaire saisit uniquement un code alphanumérique 6 caract
 **Point de vigilance** : cette route n'a pas de throttling. Un code à 6 caractères est attaquable par force brute. Voir [Roadmap Phase 1](11-roadmap.md).
 
 ### Première connexion
-Le middleware `ForcePasswordChange` bloque l'accès à l'espace formateur et stagiaire tant que `users.password_changed_at` est nul. L'utilisateur est redirigé vers un formulaire de changement de mot de passe (validation `min:8`).
+Le middleware `ForcePasswordChange` bloque l'accès à l'espace stagiaire tant que `users.password_changed_at` est nul, sauf pour les routes `/stagiaire/premiere-connexion`. L'utilisateur est redirigé vers un formulaire de changement de mot de passe (validation `min:8`). Au 5 juillet 2026, ce middleware n'est pas appliqué à l'espace formateur.
 
 ---
 
@@ -30,7 +30,7 @@ SI adhesion_status = 'pending' ET created_at + 30 jours > aujourd'hui → Accès
 SINON → Redirection vers /adhesion
 ```
 
-Ce mécanisme est stratégiquement pertinent pour le modèle associatif d'Oneduc.
+C'est ce mécanisme qui fait tenir le modèle associatif : l'accès formateur reste conditionné à une adhésion à jour.
 
 ---
 
@@ -55,7 +55,7 @@ Ce mécanisme est stratégiquement pertinent pour le modèle associatif d'Oneduc
 
 ---
 
-## Risques de sécurité identifiés (analyse 3 juillet 2026)
+## Risques de sécurité identifiés (analyse 5 juillet 2026)
 
 ### Points corrigés depuis l'ancien audit
 
@@ -63,20 +63,22 @@ Ce mécanisme est stratégiquement pertinent pour le modèle associatif d'Oneduc
 |-------|--------------|
 | Route `/admin/stagiaires/{id}/debug-progression` | Aucune route correspondante trouvée dans `php artisan route:list --json` |
 | `POST /admin/stagiaires/{user}/reset-progression` | Route présente dans `routes/admin.php`, protégée par `auth`, `role:admin`, `admin.activity` |
-| Tests liés au middleware `association.member` | Dernière suite complète documentée : 103 tests passés |
+| Tests liés au middleware `association.member` | La suite du 5 juillet passe sur ces scénarios ; l'unique échec concerne le contrat d'upload image du builder |
 
 ### Points à corriger avant publication publique
 
 | # | Risque | Localisation | Impact |
 |---|--------|--------------|--------|
-| 1 | Connexion par code sans throttling | `POST /stagiaire/connexion-code` (`web` uniquement) | Brute-force possible sur les codes à 6 caractères |
-| 2 | `LessonFeedbackController::store()` redirige vers `module.lesson`, route inexistante | `app/Http/Controllers/LessonFeedbackController.php` | Erreur 500 probable à la soumission d'un retour de leçon |
-| 3 | `Module::isVisibleTo()` autorise tout module actif pour les non-admins | `app/Models/Module.php` | Risque d'accès direct à un module actif hors affectation groupe selon la route |
-| 4 | `POST /scorm/save-progress` sans CSRF et sans vérification d'appartenance à la leçon | `routes/scorm.php`, `SCORMController::saveProgress()` | Soumission de progression possible pour une leçon non affectée |
-| 5 | `SCORMController` écrit `last_session_time`, absent du schéma `scorm_scores` | `SCORMController::handleSessionTime()` | Erreur SQL possible lors de la réception de `cmi.core.session_time` |
-| 6 | `StoreModuleRequest::authorize()` et `StoreGroupeRequest::authorize()` retournent `false` | `app/Http/Requests/` | FormRequests inutilisables tant qu'ils ne sont pas corrigés |
-| 7 | `AdminController::AdminProfilStore()` ne valide pas l'unicité email avec exclusion de l'utilisateur courant | `AdminController` | Collision possible avec l'email d'un autre compte |
-| 8 | Import mort `ScormInteractionController` | `routes/scorm.php` | Dette technique faible, à nettoyer |
+| 1 | `/inscription` retourne une erreur 500 | `routes/web.php` appelle `UserController::Register()` absent | Page publique cassée, à corriger avant publication |
+| 2 | Connexion par code sans throttling | `POST /stagiaire/connexion-code` (`web` uniquement) | Brute-force possible sur les codes à 6 caractères |
+| 3 | `LessonFeedbackController::store()` redirige vers `module.lesson`, route inexistante | `app/Http/Controllers/LessonFeedbackController.php` | Erreur 500 probable à la soumission d'un retour de leçon |
+| 4 | `Module::isVisibleTo()` autorise tout module actif pour les non-admins | `app/Models/Module.php` | Risque d'accès direct à un module actif hors affectation groupe selon la route |
+| 5 | `POST /scorm/save-progress` sans CSRF et sans vérification d'appartenance à la leçon | `routes/scorm.php`, `SCORMController::saveProgress()` | Soumission de progression possible pour une leçon non affectée si l'utilisateur est authentifié |
+| 6 | `SCORMController` écrit `last_session_time`, absent du schéma `scorm_scores` | `SCORMController::handleSessionTime()` | Erreur SQL possible lors de la réception de `cmi.core.session_time` sur SCORM legacy |
+| 7 | Contrat d'upload image du builder instable | `ModuleBuilderController::uploadImage()` retourne `media_id`/`url`, le test attend `path` | Suite de tests rouge, risque de rupture éditeur de blocs |
+| 8 | `StoreModuleRequest::authorize()` et `StoreGroupeRequest::authorize()` retournent `false` | `app/Http/Requests/` | FormRequests inutilisables tant qu'ils ne sont pas corrigés |
+| 9 | `AdminController::AdminProfilStore()` ne valide pas l'unicité email avec exclusion de l'utilisateur courant | `AdminController` | Collision possible avec l'email d'un autre compte |
+| 10 | Import mort `ScormInteractionController` | `routes/scorm.php` | Dette technique faible, à nettoyer |
 
 ---
 
@@ -94,9 +96,9 @@ La suppression d'un compte formateur via `cleanupOwnedGroupsAndLinkedStagiaires(
 
 ## SCORM et CSRF
 
-Les routes `/scorm/save-progress` et `/scorm/evaluation-progress` désactivent le middleware CSRF (`VerifyCsrfToken::class`). C'est techniquement nécessaire car les packages SCORM s'exécutent dans un iframe et ne peuvent pas inclure le token CSRF Laravel.
+Les routes `/scorm/save-progress`, `/scorm/save-block-progress` et `/scorm/evaluation-progress` désactivent le middleware CSRF (`VerifyCsrfToken::class`). C'est techniquement nécessaire car les packages SCORM s'exécutent dans un iframe et ne peuvent pas inclure le token CSRF Laravel.
 
-La compensation de sécurité consiste à vérifier que `Auth::id()` existe dans le contrôleur. **Il manque** la vérification que l'utilisateur authentifié est bien le titulaire de la leçon en cours.
+La compensation de sécurité consiste à vérifier que `Auth::id()` existe dans le contrôleur. **Il manque** la vérification que l'utilisateur authentifié est bien autorisé à écrire la progression de la leçon en cours. Attention aussi à la distinction entre les deux stockages : `content_block_scorm_scores` contient bien `last_session_time`, mais `scorm_scores` ne le contient pas dans la baseline actuelle.
 
 ---
 

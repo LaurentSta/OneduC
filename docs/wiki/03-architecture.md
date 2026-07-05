@@ -12,7 +12,7 @@ routes/
 ├── stagiaire.php     ← espace /stagiaire (middleware: auth, role:stagiaire, track.time)
 ├── observateur.php   ← espace /observateur (middleware: auth, role:observateur)
 ├── scorm.php         ← API SCORM (middleware partiel, routes sans CSRF pour iframe)
-└── feedback.php      ← retours stagiaires (fichier présent mais non importé dans bootstrap/app.php)
+└── feedback.php      ← fichier présent mais non importé ; les routes feedback actives sont dans web.php
 ```
 
 ---
@@ -26,9 +26,9 @@ routes/
 | Stagiaire | `/stagiaire` | `auth, role:stagiaire, track.time`, puis `force.password.change` sauf première connexion | `App\Http\Controllers\Stagiaire\` |
 | Observateur | `/observateur` | `auth, role:observateur` | `App\Http\Controllers\Observateur\` |
 
-Le middleware `force.password.change` est appliqué dans l'espace stagiaire après les routes de première connexion. Il bloque l'accès jusqu'à ce que l'utilisateur définisse son mot de passe (`users.password_changed_at` nul). Le formateur n'a pas ce middleware dans `routes/formateur.php` au 3 juillet 2026.
+Le middleware `force.password.change` est appliqué dans l'espace stagiaire après les routes de première connexion. Il bloque l'accès jusqu'à ce que l'utilisateur définisse son mot de passe (`users.password_changed_at` nul). Le formateur n'a pas ce middleware dans `routes/formateur.php` au 5 juillet 2026.
 
-Le dépôt expose environ 400 routes : 405 routes déclarées via `php artisan route:list --json`, dont 128 sous `/admin`, 140 sous `/formateur`, 49 sous `/stagiaire` et 9 sous `/observateur`.
+Le dépôt expose 411 routes déclarées via `php artisan route:list --json`, dont 128 sous `/admin`, 144 sous `/formateur`, 49 sous `/stagiaire` et 9 sous `/observateur`.
 
 ---
 
@@ -38,7 +38,7 @@ Le dépôt expose environ 400 routes : 405 routes déclarées via `php artisan r
 app/Http/Controllers/
 ├── AdminController.php              ← Dashboard admin
 ├── FormateurController.php          ← Dashboard formateur (analytics)
-├── StagiaireController.php          ← Dashboard stagiaire (796 lignes, progression extraite)
+├── StagiaireController.php          ← Dashboard stagiaire (794 lignes, progression extraite)
 ├── UserController.php               ← Auth, profil, connexion par code
 ├── LessonFeedbackController.php     ← Retours sur les leçons
 │
@@ -56,7 +56,7 @@ app/Http/Controllers/
 ├── Formateur/
 │   ├── GroupeController.php         ← Gestion groupes formateur (686 lignes)
 │   ├── GroupeModuleLessonController.php ← Personnalisation leçons par groupe
-│   ├── ModuleBuilderController.php  ← Orchestration HTTP du builder de modules formateur (356 lignes)
+│   ├── ModuleBuilderController.php  ← Orchestration HTTP du builder de modules formateur (455 lignes)
 │   ├── MesFormationsController.php  ← FormateurParcours
 │   ├── ParcoursController.php       ← Parcours onboarding formateur
 │   ├── ProgressionGroupesController.php
@@ -96,6 +96,9 @@ app/Domains/
 │   │   ├── DeplacerLecon.php
 │   │   ├── PromouvoirLeconEnChapitre.php
 │   │   ├── TeleverserImageModule.php
+│   │   ├── TeleverserVideoModule.php
+│   │   ├── TeleverserScormModule.php
+│   │   ├── ModifierOptionsModule.php
 │   │   └── AssignerGroupesModule.php
 │   └── Support/
 │       ├── AccesModule.php
@@ -106,7 +109,7 @@ app/Domains/
         └── LearnerModuleProgress.php
 ```
 
-Les noms de fichiers/classes de `ModulesFormateur` sont volontairement en français (convention retenue pour tout le code métier propre à Oneduc, par opposition aux termes techniques génériques du framework Laravel qui restent en anglais). `ModuleBuilderController` délègue maintenant la création, duplication, réordonnancement, déplacement de leçons, promotion en chapitre, upload d'images et assignation aux groupes à `ModulesFormateur`. `StagiaireController` délègue le calcul de progression des modules et les statuts de quiz natifs à `Learners\Support\LearnerModuleProgress`.
+Les noms de fichiers/classes de `ModulesFormateur` sont volontairement en français (convention retenue pour tout le code métier propre à Oneduc, par opposition aux termes techniques génériques du framework Laravel qui restent en anglais). `ModuleBuilderController` délègue maintenant la création, duplication, réordonnancement, déplacement de leçons, promotion en chapitre, upload d'images/vidéos/SCORM, options module et assignation aux groupes à `ModulesFormateur`. `StagiaireController` délègue le calcul de progression des modules et les statuts de quiz natifs à `Learners\Support\LearnerModuleProgress`.
 
 Prochaines zones candidates :
 - `Backend/ModuleController` : navigation module/section/leçon, progression, médias ;
@@ -116,7 +119,7 @@ Prochaines zones candidates :
 
 ---
 
-## Modèles Eloquent (59 modèles)
+## Modèles Eloquent (61 modèles)
 
 ### Modèles centraux
 
@@ -164,6 +167,7 @@ app/Services/
 ├── QuizService.php                 ← Logique quiz (démarrage, réponses, scoring)
 ├── CodeGeneratorService.php        ← Génération de codes d'accès 6 caractères alphanumériques
 ├── ModuleCompletionNotifier.php    ← Notification formateur en fin de module
+├── TrainerPathQualityDashboardService.php ← Qualité du parcours formateur côté admin
 └── Scorm/
     └── ScormImporter.php           ← Import ZIP SCORM sécurisé avec versioning
 ```
@@ -256,11 +260,13 @@ php artisan test                                      # Tous les tests
 php artisan test --filter NomDuTest                   # Filtre par nom
 ```
 
-Dernière suite complète documentée le 3 juillet 2026 :
+Dernière validation documentée le 5 juillet 2026 :
 
 ```bash
 php artisan test
-# 103 tests passés, 523 assertions
+# 103 tests passés, 1 échec, 505 assertions
+# Échec : Tests\Feature\Formateur\ModuleBuilderTest attend un champ JSON `path`
+# après upload image, alors que le contrôleur retourne `media_id` et `url`.
 
 npm run build
 # Build réussi, avec avertissements de taille de chunks Vite
@@ -276,13 +282,15 @@ Les migrations historiques ont été élaguées après génération d'une baseli
 
 ```text
 database/schema/mysql-schema.sql   # 72 tables
-database/migrations/               # 3 migrations post-baseline
+database/migrations/               # 5 migrations post-baseline
 ```
 
-Les trois migrations actuelles :
+Les cinq migrations actuelles :
 - suppriment `contacts` si la table legacy est vide ;
 - suppriment `learning_objectives` si la table legacy est vide ;
 - ajoutent `position` à `module_sections`.
+- créent la table `media` de Spatie Media Library ;
+- créent `content_block_scorm_results` et `content_block_scorm_scores` pour les blocs SCORM intégrés aux leçons.
 
 ```bash
 php artisan migrate          # Appliquer les migrations en attente

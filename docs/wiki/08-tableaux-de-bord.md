@@ -145,8 +145,9 @@ Pour rendre les tableaux de bord plus fiables et exploitables :
 
 ## État de vérification
 
-Au 3 juillet 2026 :
-- dernière suite complète documentée : `php artisan test` avec 103 tests passés, 523 assertions ;
+Au 5 juillet 2026 :
+- `php artisan test` : 103 tests passés, 1 échec, 505 assertions ;
+- l'échec restant concerne le contrat d'upload image du module builder (`path` attendu par le test, `media_id`/`url` retournés par le contrôleur) ;
 - `npm run build` : réussi, avec avertissements de bundles Vite volumineux.
 
 ---

@@ -1,8 +1,8 @@
 # 11 — Roadmap & dette technique
 
-## État actuel (3 juillet 2026)
+## État actuel (5 juillet 2026)
 
-La plateforme est **utilisable en pilote contrôlé** (10 à 50 stagiaires, 3 à 5 formateurs, contexte associatif ou ateliers numériques). La dernière suite complète documentée était au vert (`103 tests passés`) et le build Vite réussissait, mais quelques corrections restent nécessaires avant publication publique large.
+La plateforme est **utilisable en pilote contrôlé** (10 à 50 stagiaires, 3 à 5 formateurs, contexte associatif ou ateliers numériques). Le build Vite réussit, mais la validation du 5 juillet signale 1 test rouge sur 104 et une page publique en erreur 500 (`/inscription`). Ces points doivent être corrigés avant publication publique large.
 
 Depuis l'audit initial, le module builder formateur a évolué vers un éditeur de plan continu :
 - plan chapitres/leçons en React + Tiptap ;
@@ -10,7 +10,7 @@ Depuis l'audit initial, le module builder formateur a évolué vers un éditeur 
 - renommage autosauvegardé, déplacement inter-chapitres et promotion d'une leçon vide en chapitre ;
 - duplication de modules catalogue avec conservation des leçons SCORM/slides verrouillées côté contenu.
 
-La segmentation interne a démarré avec `app/Domains/ModulesFormateur` et `app/Domains/Learners` : le module builder garde l'orchestration HTTP, tandis que les actions métier (noms de classes en français : `CreerModule`, `CreerChapitre`, `CreerLecon`, `ModifierLecon`, `ReordonnerChapitres`, `ReordonnerLecons`, `DeplacerLecon`, `PromouvoirLeconEnChapitre`, `TeleverserImageModule`, `AssignerGroupesModule`, `DupliquerModuleCatalogue`) portent la création, duplication, réordonnancement, déplacement, promotion et assignation aux groupes. Le contrôleur stagiaire délègue désormais le calcul de progression des modules à `LearnerModuleProgress`.
+La segmentation interne a démarré avec `app/Domains/ModulesFormateur` et `app/Domains/Learners` : le module builder garde l'orchestration HTTP, tandis que les actions métier (noms de classes en français : `CreerModule`, `CreerChapitre`, `CreerLecon`, `ModifierLecon`, `ReordonnerChapitres`, `ReordonnerLecons`, `DeplacerLecon`, `PromouvoirLeconEnChapitre`, `TeleverserImageModule`, `TeleverserVideoModule`, `TeleverserScormModule`, `ModifierOptionsModule`, `AssignerGroupesModule`, `DupliquerModuleCatalogue`) portent la création, duplication, réordonnancement, déplacement, promotion, médias, options et assignation aux groupes. Le contrôleur stagiaire délègue désormais le calcul de progression des modules à `LearnerModuleProgress`.
 
 ---
 
@@ -18,12 +18,14 @@ La segmentation interne a démarré avec `app/Domains/ModulesFormateur` et `app/
 
 | # | Bug | Fichier | Impact immédiat |
 |---|-----|---------|-----------------|
+| B0 | `/inscription` appelle `UserController::Register()` absent | `routes/web.php` | Erreur 500 sur page publique |
 | B1 | Connexion par code sans throttling | `routes/web.php` | Brute-force sur code 6 caractères |
 | B2 | `LessonFeedbackController::store()` redirige vers `module.lesson`, route inexistante | `app/Http/Controllers/LessonFeedbackController.php` | Erreur 500 sur retour de leçon |
 | B3 | `Module::isVisibleTo()` ne vérifie pas l'appartenance groupe | `app/Models/Module.php` | Risque d'accès direct à un module actif par URL |
-| B4 | `SCORMController` écrit `last_session_time`, colonne absente | `app/Http/Controllers/SCORMController.php` | Erreur SQL possible sur `cmi.core.session_time` |
+| B4 | `SCORMController` écrit `last_session_time`, colonne absente de `scorm_scores` | `app/Http/Controllers/SCORMController.php` | Erreur SQL possible sur `cmi.core.session_time` legacy |
 | B5 | `POST /scorm/save-progress` ne vérifie pas l'appartenance à la leçon | `routes/scorm.php`, `SCORMController` | Soumission de score non autorisée possible |
 | B6 | `StoreModuleRequest` / `StoreGroupeRequest` retournent `authorize() = false` | `app/Http/Requests/` | FormRequests inutilisables |
+| B7 | Upload image builder : test attend `path`, contrôleur retourne `media_id`/`url` | `ModuleBuilderController`, `ModuleBuilderTest` | Suite de tests rouge et contrat frontend à clarifier |
 
 ---
 
@@ -31,7 +33,9 @@ La segmentation interne a démarré avec `app/Domains/ModulesFormateur` et `app/
 
 | Élément | Localisation | Gravité |
 |---------|-------------|---------|
-| `last_session_time` utilisé sans colonne migrée | `SCORMController.php:99` | Haute — cumul temps SCORM défaillant |
+| `/inscription` en erreur 500 | `routes/web.php:174` | Haute — page publique cassée |
+| Contrat d'upload image builder instable | `ModuleBuilderController::uploadImage()` | Haute — test rouge et risque éditeur de blocs |
+| `last_session_time` utilisé sans colonne migrée dans `scorm_scores` | `SCORMController.php:99` | Haute — cumul temps SCORM legacy défaillant |
 | `attempts_count` SCORM jamais incrémenté | `SCORMController.php` | Moyenne |
 | `scorm_interactions` non alimenté pour les leçons | `SCORMController::saveProgress()` | Haute — métriques analytiques vides |
 | `StoreModuleRequest::authorize()` retourne `false` | `app/Http/Requests/` | Haute — FormRequest inutilisable |
@@ -40,7 +44,25 @@ La segmentation interne a démarré avec `app/Domains/ModulesFormateur` et `app/
 | `Group` sans `SoftDeletes` | `app/Models/Group.php` | Moyenne — données orphelines |
 | Stagiaire multi-groupe — `.first()` uniquement | `StagiaireController.php:244` | Haute — modules masqués |
 | `ModuleController` 1185 lignes | `Backend/ModuleController.php` | Maintenance difficile |
-| `StagiaireController` 796 lignes | `StagiaireController.php` | Encore volumineux, mais progression module extraite |
+| `StagiaireController` 794 lignes | `StagiaireController.php` | Encore volumineux, mais progression module extraite |
+
+---
+
+## Documentation du wiki à compléter (audit du 5 juillet 2026)
+
+Une comparaison du code sur `main` (85 contrôleurs, 61 modèles, 411 routes) avec le contenu réel du wiki a fait apparaître onze fonctionnalités déjà présentes dans le code mais absentes ou sous-documentées dans le wiki. Suivi aussi comme tâches dans le Kanban de pilotage interne (projet « Wiki — combler les trous de documentation », colonne À faire).
+
+- [ ] Documenter les référentiels de compétences (`SkillReferential` → `SkillDomain` → `Skill`, CRUD complet sous `/admin/referentiels/*`) — corriger au passage le glossaire, qui dit à tort « en cours d'implémentation »
+- [ ] Documenter le système de badges (`Badge` relié à `Competency` via `badge_competency`) — préciser que le catalogue existe déjà, seule l'attribution automatique à un utilisateur manque
+- [ ] Documenter la messagerie formateur → stagiaire (`FormateurStagiaireController`, modèle `FormateurMessage`, notification et/ou email)
+- [ ] Documenter le pilotage interne (Kanban admin : `PilotProject`, `PilotTask`, commentaires, abonnements, notifications)
+- [ ] Documenter le dashboard qualité parcours formateur module 2 (`TrainerPathQualityController`, `TrainerPathActivityAttempt`)
+- [ ] Documenter la participation publique anonyme aux outils live (`/oneduc/mot`, `/sondage`, `/echelle`, `/questions`, `/roue` — sans compte ni connexion) et croiser avec la page Sécurité pour vérifier le throttling
+- [ ] Documenter le vote sur le mur de questions (`QuestionWallVote`)
+- [ ] Documenter les questionnaires de fin de module et les activités notées du parcours formateur (`TrainerModuleQuestionnaireSubmission`, mail `ModuleQuestionnaireSubmitted`)
+- [ ] Documenter le système de notifications et les endpoints `notification-status` (Live Quiz, Mur de questions, Tableau blanc côté stagiaire)
+- [ ] Documenter le formulaire de contact (`ContactController`, mails `ContactConfirmation`/`ContactMessage`)
+- [ ] Documenter les pages publiques/marketing (`/association`, `/le-projet-oneduc-fr`, `/chartegraphique`, `/formations`, `/adhesion`, `Frontend/MFormationsController`)
 
 ---
 
@@ -56,6 +78,8 @@ La segmentation interne a démarré avec `app/Domains/ModulesFormateur` et `app/
 - [x] Livrer l'éditeur de plan continu du module builder formateur
 - [x] Extraire la logique métier du module builder dans `app/Domains/ModulesFormateur` (classes en français)
 - [x] Extraire le calcul de progression des modules stagiaire dans `app/Domains/Learners`
+- [ ] Corriger `/inscription` ou rediriger explicitement vers `/inscription-formateur`
+- [ ] Stabiliser le contrat d'upload image du builder et remettre `ModuleBuilderTest` au vert
 - [ ] Corriger `Module::isVisibleTo()` ou introduire des policies pour vérifier l'appartenance au groupe
 - [ ] Corriger `LessonFeedbackController::store()` avec la bonne route de redirection selon le rôle/contexte
 - [ ] Ajouter `throttle:10,1` ou rate limiter dédié sur la route de connexion par code d'accès
@@ -164,10 +188,10 @@ Le bloc SCORM (juillet 2026, voir [docs/wiki/05-modules-scorm-quiz.md](05-module
 
 | Axe | État actuel | Cible proche |
 |-----|-------------|--------------|
-| Maturité technique | Tests et build au vert, architecture encore concentrée dans gros contrôleurs | Policies, FormRequests corrigées, contrôleurs découpés |
+| Maturité technique | Build au vert, 1 test rouge, architecture encore concentrée dans gros contrôleurs | Tests verts, policies, FormRequests corrigées, contrôleurs découpés |
 | Maturité pédagogique | Modules, quiz, SCORM, outils live et parcours déjà exploitables | Certificats, exports, prérequis et preuves SCORM complètes |
 | Expérience utilisateur | Espaces par rôle complets, accès stagiaire simplifié, convention vocabulaire documentée | Menus alignés sur "Ma formation", "Mes parcours", "Mes modules" et multi-groupe stagiaire corrigé |
-| Publication GitHub | Base légale/documentaire en place | Historique Git vérifié, checklist sécurité résolue |
+| Publication GitHub | Base légale/documentaire en place, mais `/inscription` et un test doivent être corrigés | Historique Git vérifié, checklist sécurité résolue, crawl public vert |
 
 ---
 
