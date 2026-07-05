@@ -11,8 +11,8 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class Module extends Model implements HasMedia
 {
-    use SoftDeletes;
     use InteractsWithMedia;
+    use SoftDeletes;
 
     public function registerMediaCollections(): void
     {
@@ -115,11 +115,36 @@ class Module extends Model implements HasMedia
 
     public function isVisibleTo(?\App\Models\User $user): bool
     {
-        if ($user && $user->role === 'admin') {
+        if (! $this->status) {
+            return false;
+        }
+
+        if (! $user) {
+            return false;
+        }
+
+        if ($user->role === 'admin') {
             return true;
         }
 
-        return (bool) $this->status;
+        if ($user->role === 'formateur') {
+            // Module de catalogue (auteur admin) : parcourable/duplicable par tout formateur.
+            if (! $this->is_trainer_authored) {
+                return true;
+            }
+
+            if ((int) $this->formateur_id === (int) $user->id) {
+                return true;
+            }
+
+            return $this->groups()->accessibleByTrainer((int) $user->id)->exists();
+        }
+
+        if ($user->role === 'stagiaire') {
+            return $user->aAccesAuModule($this->id);
+        }
+
+        return false;
     }
 
     // --- C'EST ICI QU'ON AJOUTE LE CALCUL DU TEMPS ---

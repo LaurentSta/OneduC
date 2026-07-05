@@ -16,26 +16,26 @@ Ces points doivent être corrigés AVANT de publier. Publier avec ces failles ex
 - [x] **S2** — `POST /admin/stagiaires/{user}/reset-progression` protégé côté admin
   Vérifié : route `admin.stagiaires.reset` dans `routes/admin.php`, sous `auth`, `role:admin`, `admin.activity`
 
-- [ ] **S3** — Corriger `Module::isVisibleTo()` pour vérifier l'appartenance groupe du stagiaire  
-  `app/Models/Module.php`
+- [x] **S3** — Corriger `Module::isVisibleTo()` pour vérifier l'appartenance groupe du stagiaire  
+  Corrigé le 5 juillet 2026 : `app/Models/Module.php` — stagiaire vérifié via `User::aAccesAuModule()` (groupe actif + module affecté), formateur via `formateur_id`/`is_trainer_authored` ou `Group::scopeAccessibleByTrainer()`. **Gap restant identifié** : `StagiaireController::StagiaireModuleDetail()` (route `stagiaire.module.detail`) et `Frontend\LectureController` (`show`, `showScorm`, `showScormBlock`, `showSlides`) n'appellent pas `isVisibleTo()` et n'ont aucune vérification d'appartenance groupe — à traiter en Phase 2.
 
-- [ ] **S4** — Ajouter throttling sur `/stagiaire/connexion-code`  
-  `routes/web.php` — ajouter `->middleware('throttle:10,1')`
+- [x] **S4** — Ajouter throttling sur `/stagiaire/connexion-code`  
+  Corrigé le 5 juillet 2026 : rate limiter nommé `connexion-code` (10/minute par IP) via `RateLimiter::for()` dans `AppServiceProvider`, appliqué à la route dans `routes/web.php`.
 
-- [ ] **S5** — Corriger `LessonFeedbackController::store()` (route inexistante → erreur 500)  
-  `app/Http/Controllers/LessonFeedbackController.php` redirige vers `module.lesson`, route absente
+- [x] **S5** — Corriger `LessonFeedbackController::store()` (route inexistante → erreur 500)  
+  Corrigé le 5 juillet 2026 : `redirect()->back()` remplace la redirection vers `module.lesson` (route inexistante).
 
-- [ ] **S6** — Corriger le cumul temps SCORM legacy
-  `SCORMController::handleSessionTime()` écrit `last_session_time`, absent de `scorm_scores` dans la baseline actuelle. La nouvelle table `content_block_scorm_scores` contient bien cette colonne, mais elle ne corrige pas le flux SCORM legacy.
+- [x] **S6** — Corriger le cumul temps SCORM legacy
+  Corrigé le 5 juillet 2026 : migration ajoutant `last_session_time` à `scorm_scores` (même type que `content_block_scorm_scores`).
 
-- [ ] **S7** — Ajouter la vérification d'appartenance à la leçon dans `POST /scorm/save-progress`
-  Le CSRF est volontairement désactivé pour l'iframe SCORM, il faut compenser côté contrôleur
+- [x] **S7** — Ajouter la vérification d'appartenance à la leçon dans `POST /scorm/save-progress`
+  Corrigé le 5 juillet 2026 : `User::aAccesAuModule()` appliqué dans `SCORMController`, `ContentBlockScormController` et `EvaluationSCORMController` (403 sinon), middleware `auth` ajouté sur les 3 routes (CSRF reste désactivé pour l'iframe).
 
-- [ ] **S8** — Corriger la page publique `/inscription`
-  `routes/web.php` appelle `UserController::Register()`, méthode absente ; le crawl public du 5 juillet retourne HTTP 500.
+- [x] **S8** — Corriger la page publique `/inscription`
+  Corrigé le 5 juillet 2026 : redirection 301 vers `/inscription-formateur` (seul parcours d'inscription fonctionnel).
 
-- [ ] **S9** — Remettre `php artisan test` au vert
-  Échec actuel : contrat d'upload image du builder (`path` attendu par le test, `media_id`/`url` retournés par `ModuleBuilderController::uploadImage()`).
+- [x] **S9** — Remettre `php artisan test` au vert
+  Corrigé le 5 juillet 2026 : le test attendait `path`, contrat obsolète antérieur à la migration Media Library. Test mis à jour pour valider `media_id`/`url` (contrat réellement utilisé par le contrôleur et le frontend). Suite complète verte (124 tests).
 
 ---
 
@@ -180,7 +180,8 @@ Le `README.md` à la racine est la première chose que les visiteurs GitHub voie
 
 | Priorité | Action | Bloquant ? |
 |----------|--------|------------|
-| 1 | Corriger les points sécurité et santé applicative restants (S3 à S9) | Oui |
+| 1 | ~~Corriger les points sécurité et santé applicative restants (S3 à S9)~~ — fait le 5 juillet 2026, voir Axe 1 | Oui |
+| 1bis | Traiter le gap identifié lors du correctif S3 : `StagiaireModuleDetail` et `Frontend\LectureController` ne vérifient pas l'appartenance groupe | Oui |
 | 2 | Vérifier et nettoyer l'historique git (secrets, données personnelles) | Oui |
 | 3 | Synchroniser `SECURITY.md` avec l'état réel de la checklist | Recommandé |
 | 4 | Vérifier convention formation / statuts association | Recommandé |

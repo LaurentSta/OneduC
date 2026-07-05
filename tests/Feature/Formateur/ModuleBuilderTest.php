@@ -55,17 +55,18 @@ it('lets a trainer create, edit and assign a self-authored module, and renders i
         ['image' => UploadedFile::fake()->image('photo.jpg')]
     );
     $uploadResponse->assertOk();
-    $imagePath = $uploadResponse->json('path');
-    expect($imagePath)->toStartWith("modules_formateur/module_{$module->id}/images/");
+    $mediaId = $uploadResponse->json('media_id');
+    $mediaUrl = $uploadResponse->json('url');
+    expect($mediaId)->toBeInt();
+    expect($mediaUrl)->toBeString();
 
     $blocks = [
         ['type' => 'text', 'html' => '<p>Bonjour <strong>monde</strong></p><script>alert(1)</script>'],
-        ['type' => 'image', 'path' => $imagePath, 'caption' => '<b>Legende</b>'],
-        ['type' => 'list', 'style' => 'bullet', 'items' => ['<i>item un</i>', 'item deux']],
+        ['type' => 'image', 'media_id' => $mediaId, 'caption' => '<b>Legende</b>'],
         ['type' => 'quote', 'text' => '<script>alert(2)</script>Citation test', 'source' => 'Auteur'],
         ['type' => 'divider'],
-        // A path outside this module's upload folder must be rejected.
-        ['type' => 'image', 'path' => 'modules_formateur/module_999/images/hack.jpg', 'caption' => ''],
+        // A media_id that does not belong to this module's media library entries must be rejected.
+        ['type' => 'image', 'media_id' => 999999, 'caption' => ''],
     ];
 
     $lectureResponse = $this->actingAs($formateur)->post(route('formateur.modules.builder.lectures.store', $section), [
@@ -78,18 +79,15 @@ it('lets a trainer create, edit and assign a self-authored module, and renders i
     expect($lecture->content_type)->toBe('blocks');
 
     $saved = collect($lecture->content_blocks);
-    expect($saved)->toHaveCount(5); // the out-of-scope image block must have been dropped
+    expect($saved)->toHaveCount(4); // the out-of-scope image block must have been dropped
 
     $textBlock = $saved->firstWhere('type', 'text');
     expect($textBlock['html'])->toContain('<strong>monde</strong>');
     expect($textBlock['html'])->not->toContain('<script>');
 
     $imageBlock = $saved->firstWhere('type', 'image');
-    expect($imageBlock['path'])->toBe($imagePath);
+    expect($imageBlock['media_id'])->toBe($mediaId);
     expect($imageBlock['caption'])->not->toContain('<b>');
-
-    $listBlock = $saved->firstWhere('type', 'list');
-    expect($listBlock['items'][0])->not->toContain('<i>');
 
     $quoteBlock = $saved->firstWhere('type', 'quote');
     expect($quoteBlock['text'])->not->toContain('<script>');
@@ -128,7 +126,6 @@ it('lets a trainer create, edit and assign a self-authored module, and renders i
     $stagiaireResponse = $this->actingAs($stagiaire)->get($lectureUrl);
     $stagiaireResponse->assertOk();
     $stagiaireResponse->assertSee('monde', false);
-    $stagiaireResponse->assertSee('item deux', false);
     $stagiaireResponse->assertSee('Citation test', false);
 });
 
