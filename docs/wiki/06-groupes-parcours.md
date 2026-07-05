@@ -67,7 +67,7 @@ Chaque formateur peut pour son groupe :
 - **Masquer** une leçon (sans la supprimer du module)
 - **Réordonner** les leçons dans l'affichage stagiaire
 
-Cette fonctionnalité est avancée et rarement présente dans les LMS à ce stade de développement.
+C'est une personnalisation fine, utile quand un même module sert à plusieurs groupes de niveaux différents.
 
 ---
 

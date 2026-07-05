@@ -1,6 +1,6 @@
 # 07 — Outils d'animation pédagogique
 
-Oneduc intègre plusieurs outils d'animation utilisables en présentiel, distanciel ou hybride. La plateforme propose **8 activités live/groupes** plus une intégration **pages collaboratives HedgeDoc** côté formateur. C'est l'une des forces différenciantes majeures de la plateforme par rapport aux LMS généralistes.
+Oneduc intègre plusieurs outils d'animation utilisables en présentiel, distanciel ou hybride. La plateforme propose **8 activités live/groupes** plus une intégration **pages collaboratives HedgeDoc** côté formateur — de quoi tenir une séance sans multiplier les services externes.
 
 ---
 

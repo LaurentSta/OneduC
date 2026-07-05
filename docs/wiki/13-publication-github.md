@@ -9,7 +9,7 @@ Cette checklist doit être complétée avant de rendre le dépôt public sur Git
 Ces points doivent être corrigés AVANT de publier. Publier avec ces failles expose vos utilisateurs et donne une carte d'attaque publique.
 
 - [x] **S1** — Route `/admin/stagiaires/{id}/debug-progression` supprimée ou absente
-  Vérifié le 3 juillet 2026 : aucune route `debug-progression` dans `php artisan route:list --json`
+  Vérifié le 5 juillet 2026 : aucune route `debug-progression` dans `php artisan route:list --json`
 
 - [x] **S2** — `POST /admin/stagiaires/{user}/reset-progression` protégé côté admin
   Vérifié : route `admin.stagiaires.reset` dans `routes/admin.php`, sous `auth`, `role:admin`, `admin.activity`
@@ -23,11 +23,17 @@ Ces points doivent être corrigés AVANT de publier. Publier avec ces failles ex
 - [ ] **S5** — Corriger `LessonFeedbackController::store()` (route inexistante → erreur 500)  
   `app/Http/Controllers/LessonFeedbackController.php` redirige vers `module.lesson`, route absente
 
-- [ ] **S6** — Corriger le cumul temps SCORM
-  `SCORMController::handleSessionTime()` écrit `last_session_time`, absent de `scorm_scores`
+- [ ] **S6** — Corriger le cumul temps SCORM legacy
+  `SCORMController::handleSessionTime()` écrit `last_session_time`, absent de `scorm_scores` dans la baseline actuelle. La nouvelle table `content_block_scorm_scores` contient bien cette colonne, mais elle ne corrige pas le flux SCORM legacy.
 
 - [ ] **S7** — Ajouter la vérification d'appartenance à la leçon dans `POST /scorm/save-progress`
   Le CSRF est volontairement désactivé pour l'iframe SCORM, il faut compenser côté contrôleur
+
+- [ ] **S8** — Corriger la page publique `/inscription`
+  `routes/web.php` appelle `UserController::Register()`, méthode absente ; le crawl public du 5 juillet retourne HTTP 500.
+
+- [ ] **S9** — Remettre `php artisan test` au vert
+  Échec actuel : contrat d'upload image du builder (`path` attendu par le test, `media_id`/`url` retournés par `ModuleBuilderController::uploadImage()`).
 
 ---
 
@@ -69,7 +75,7 @@ find . -name "*.sqlite" -not -path "./.git/*"
 
 Tout email ou nom réel doit être remplacé par des données fictives (`test@example.com`, `jean.dupont@exemple.fr`).
 
-État local partiel au 3 juillet 2026 : `git log --all --full-history -- .env` ne retourne rien. Le scan complet des secrets reste à faire avant passage public.
+État local partiel au 5 juillet 2026 : `git log --all --full-history -- .env` ne retourne rien. Le scan complet des secrets reste à faire avant passage public.
 
 ### Vérification du .gitignore
 
@@ -172,7 +178,7 @@ Le `README.md` à la racine est la première chose que les visiteurs GitHub voie
 
 | Priorité | Action | Bloquant ? |
 |----------|--------|------------|
-| 1 | Corriger les points sécurité restants (S3 à S7) | Oui |
+| 1 | Corriger les points sécurité et santé applicative restants (S3 à S9) | Oui |
 | 2 | Vérifier et nettoyer l'historique git (secrets, données personnelles) | Oui |
 | 3 | Synchroniser `SECURITY.md` avec l'état réel de la checklist | Recommandé |
 | 4 | Vérifier convention formation / statuts association | Recommandé |
