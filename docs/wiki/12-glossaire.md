@@ -1,5 +1,7 @@
 # 12 — Glossaire
 
+*Public : tous les profils.*
+
 Ce glossaire unifie le vocabulaire du projet. L'une des faiblesses identifiées dans les audits est la coexistence de termes proches (Modules, Formations, Parcours, Mes formations) qui peuvent désorienter les utilisateurs. Ce glossaire sert de référence pour les développeurs, les formateurs, les interfaces et les communications externes.
 
 ---

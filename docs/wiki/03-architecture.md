@@ -1,5 +1,7 @@
 # 03 — Architecture technique
 
+*Public : développeurs.*
+
 ## Vue d'ensemble
 
 Oneduc suit une architecture **Laravel MVC standard** avec une séparation nette par rôle utilisateur au niveau des routes, contrôleurs et vues.

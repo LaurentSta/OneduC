@@ -1,5 +1,7 @@
 # 13 — Checklist : prêt à publier sur GitHub
 
+*Public : développeurs et mainteneurs du projet.*
+
 Cette checklist doit être complétée avant de rendre le dépôt public sur GitHub. Elle couvre quatre axes : sécurité du code, nettoyage de l'historique git, conformité légale, et configuration GitHub.
 
 ---
