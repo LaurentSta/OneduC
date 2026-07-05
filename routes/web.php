@@ -164,7 +164,8 @@ Route::post('/connexion', [\App\Http\Controllers\Auth\AuthenticatedSessionContro
 // Déconnexion de l'utilisateur
 Route::post('/logout', [\App\Http\Controllers\Auth\AuthenticatedSessionController::class, 'destroy'])->name('logout');
 // Formulaire d'inscription classique
-Route::get('/inscription', [\App\Http\Controllers\UserController::class, 'Register'])->name('inscription');
+// UserController::Register() n'existe plus : redirection vers l'inscription formateur, seul parcours d'inscription fonctionnel
+Route::redirect('/inscription', '/inscription-formateur', 301)->name('inscription');
 
 // Envoi de feedback sur une leçon (uniquement pour les utilisateurs connectés)
 Route::middleware(['auth'])->group(function () {
