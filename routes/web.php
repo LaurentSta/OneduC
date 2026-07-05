@@ -1,16 +1,14 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Backend\ModuleController;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Storage;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\NotificationController;
-use App\Http\Controllers\WordCloudParticipationController;
-use App\Http\Controllers\RoueAleatoireParticipationController;
-use App\Http\Controllers\QuestionWallParticipationController;
 use App\Http\Controllers\PollParticipationController;
+use App\Http\Controllers\QuestionWallParticipationController;
+use App\Http\Controllers\RoueAleatoireParticipationController;
 use App\Http\Controllers\ScaleParticipationController;
+use App\Http\Controllers\WordCloudParticipationController;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 
 // -------------------------------------------------------------------------
 // Fichier de routes publiques de l'application. Les routes des différents
@@ -37,11 +35,10 @@ Route::view('/conditions-utilisation', 'frontend.contenu.conditions-utilisation'
 Route::view('/confidentialite', 'frontend.contenu.confidentialite')->name('confidentialite');
 Route::view('/cookies', 'frontend.contenu.cookies')->name('cookies');
 
-
 // Route pour le Hub de connexion (Version corrigée)
 Route::get('/connexion-choix', function () {
     // Si le fichier est dans resources/views/frontend/contenu/
-    return view('frontend.contenu.login-hub'); 
+    return view('frontend.contenu.login-hub');
 })->name('login.selection');
 
 // Diffusion d'un média stocké sur le disque Laravel "public" (storage/app/public)
@@ -52,7 +49,7 @@ Route::get('/media/storage/{path}', function (string $path) {
     }
 
     $disk = Storage::disk('public');
-    if (!$disk->exists($path)) {
+    if (! $disk->exists($path)) {
         abort(404);
     }
 
@@ -60,7 +57,6 @@ Route::get('/media/storage/{path}', function (string $path) {
 })->where('path', '.*')->name('media.storage');
 
 Route::get('/stagiaire/connexion', [\App\Http\Controllers\UserController::class, 'showCodeLoginForm'])->name('stagiaire.code.form');
-
 
 // ----------------------------------------------------------
 // 🧠 Catégories & sous-catégories
@@ -117,7 +113,7 @@ Route::get('/oneduc/mot/{code}/data', [WordCloudParticipationController::class, 
 // ----------------------------------------------------------
 // 🎡 Roue aléatoire (participation)
 // ----------------------------------------------------------
-Route::get('/oneduc/roue/{code}',       [RoueAleatoireParticipationController::class, 'show'])->name('roue.join');
+Route::get('/oneduc/roue/{code}', [RoueAleatoireParticipationController::class, 'show'])->name('roue.join');
 Route::get('/oneduc/roue/{code}/state', [RoueAleatoireParticipationController::class, 'state'])->name('roue.state');
 
 // ----------------------------------------------------------
@@ -144,9 +140,6 @@ Route::middleware(['auth'])->group(function () {
         ->name('sondages.submit');
     Route::get('/oneduc/sondage/{code}/data', [PollParticipationController::class, 'data'])->name('sondages.data');
 });
-
-
-
 
 // ----------------------------------------------------------
 // 📏 Échelle de positionnement (participation)
@@ -245,7 +238,7 @@ Route::post('/inscription-formateur', [\App\Http\Controllers\Formateur\Formateur
 // Connexion via code d’accès (stagiaire)
 // Connexion d'un stagiaire via un code d'accès fourni par le formateur
 Route::get('/stagiaire/connexion-code', [\App\Http\Controllers\UserController::class, 'showCodeLoginForm'])->name('stagiaire.code.form.legacy');
-Route::post('/stagiaire/connexion-code', [\App\Http\Controllers\UserController::class, 'loginByCode'])->name('stagiaire.code.login');
+Route::post('/stagiaire/connexion-code', [\App\Http\Controllers\UserController::class, 'loginByCode'])->middleware('throttle:connexion-code')->name('stagiaire.code.login');
 
 // Formulaire de contact
 Route::middleware(['throttle:contact'])->group(function () {
