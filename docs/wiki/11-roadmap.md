@@ -1,5 +1,7 @@
 # 11 — Roadmap & dette technique
 
+*Public : tous les profils. Les tableaux de bugs et de dette technique s'adressent aux développeurs.*
+
 ## État actuel (5 juillet 2026)
 
 La plateforme est **utilisable en pilote contrôlé** (10 à 50 stagiaires, 3 à 5 formateurs, contexte associatif ou ateliers numériques). Le build Vite réussit, mais la validation du 5 juillet signale 1 test rouge sur 104 et une page publique en erreur 500 (`/inscription`). Ces points doivent être corrigés avant publication publique large.

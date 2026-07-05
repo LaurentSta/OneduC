@@ -4,6 +4,26 @@ Bienvenue sur la documentation d'Oneduc, un LMS dédié à l'inclusion numériqu
 
 ---
 
+## Par où commencer selon votre profil
+
+Tout le wiki n'est pas à lire par tout le monde. Voici les parcours conseillés :
+
+**Formateur** — vous voulez savoir ce que la plateforme permet de faire :
+[Présentation](01-presentation.md) → [Profils utilisateurs](04-profils-utilisateurs.md) → [Groupes & Parcours](06-groupes-parcours.md) → [Outils d'animation](07-outils-animation.md) → [Tableaux de bord](08-tableaux-de-bord.md). Le [Glossaire](12-glossaire.md) sert de référence pour le vocabulaire.
+
+**Développeur** — vous voulez contribuer au code :
+[Installation](02-installation.md) → [Architecture](03-architecture.md) → [Roadmap](11-roadmap.md), puis les pages du domaine sur lequel vous travaillez. Lisez la [Checklist de publication](13-publication-github.md) avant tout travail touchant à la sécurité.
+
+**Partenaire ou financeur** — vous voulez situer le projet :
+[Présentation](01-presentation.md) et [Roadmap](11-roadmap.md) suffisent.
+
+**Administrateur système** :
+[Installation](02-installation.md) → [Sécurité & RGPD](10-securite-rgpd.md).
+
+Chaque page indique en tête son public visé. Les pages mixtes regroupent la partie technique en fin de page.
+
+---
+
 ## Table des matières
 
 | # | Page | Résumé |
@@ -54,16 +74,7 @@ Fichiers légaux à la racine du projet :
 ## Autres ressources du dossier `docs/`
 
 - [Parcours formateur Oneduc](../parcours-formateur.md) — structure de l'onboarding formateur (5 modules)
-- [Idées d'outils formateurs](../idees-outils-formateurs.md) — 8 pistes produit (OF-001 à OF-008)
-
----
-
-## À qui s'adresse ce wiki
-
-- **Développeurs**, pour comprendre l'architecture, contribuer au code et éviter les pièges connus.
-- **Formateurs**, pour repérer les fonctionnalités disponibles, les outils d'animation et le parcours d'onboarding.
-- **Partenaires et financeurs**, pour situer la vision du projet, sa maturité et sa roadmap.
-- **Administrateurs système**, pour l'installation, la configuration et la sécurité.
+- [Idées d'outils formateurs](../idees-outils-formateurs.md) — pistes produit (OF-001 à OF-013)
 
 ---
 

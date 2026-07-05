@@ -1,5 +1,7 @@
 # 10 — Sécurité & RGPD
 
+*Public : développeurs et administrateurs système.*
+
 ## Authentification
 
 ### Mode standard

@@ -1,5 +1,7 @@
 # 09 — Design system
 
+*Public : développeurs et designers.*
+
 Le design system d'Oneduc est défini dans `tailwind.config.js`. Il étend Tailwind CSS v4 avec des tokens de couleur, de typographie et des composants réutilisables.
 
 ---

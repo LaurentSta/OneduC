@@ -1,5 +1,7 @@
 # 05 — Modules, SCORM & Quiz
 
+*Public : développeurs. Pour l'usage du builder et des quiz côté formateur, voir [Profils utilisateurs](04-profils-utilisateurs.md).*
+
 ## Hiérarchie du contenu pédagogique
 
 ```

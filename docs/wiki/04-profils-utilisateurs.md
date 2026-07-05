@@ -1,192 +1,120 @@
 # 04 — Profils utilisateurs
 
-La plateforme distingue quatre rôles, chacun avec un espace dédié, un préfixe d'URL, une chaîne de middleware et une interface spécifique.
+*Public : tous les profils. Les détails techniques (routes, middleware) sont regroupés sous chaque rôle et en fin de page.*
 
----
+La plateforme distingue quatre rôles. Chacun a son espace, son interface et ses droits. Un stagiaire ne voit jamais un écran de gestion ; un observateur ne peut rien modifier.
 
-## Vue d'ensemble des rôles
-
-| Rôle | Champ `users.role` | Espace URL | Peut créer du contenu |
-|------|-------------------|------------|----------------------|
-| Admin | `admin` | `/admin` | Oui (tout) |
-| Formateur | `formateur` | `/formateur` | Oui (groupes, parcours, modules) |
-| Stagiaire | `stagiaire` | `/stagiaire` | Non |
-| Observateur | `observateur` | `/observateur` | Non |
+| Rôle | Espace | Peut créer du contenu |
+|------|--------|----------------------|
+| Admin | `/admin` | Oui (tout) |
+| Formateur | `/formateur` | Oui (groupes, parcours, modules) |
+| Stagiaire | `/stagiaire` | Non |
+| Observateur | `/observateur` | Non |
 
 ---
 
 ## Administrateur
 
-### Accès et middleware
+L'administrateur pilote la plateforme. Il gère le catalogue de modules, les comptes utilisateurs, les catégories, les référentiels de compétences, les badges et les évaluations. Toutes ses actions destructives sont journalisées automatiquement.
 
-Routes : `routes/admin.php`  
-Middleware : `auth` + `role:admin` + `admin.activity`
+### Ce qu'il peut faire
 
-Le middleware `RecordAdminActivity` journalise automatiquement toutes les actions destructives (POST/PUT/PATCH/DELETE) dans la table `activity_journal_entries`. Les données sensibles y sont sanitisées.
+**Utilisateurs** : créer, modifier, activer ou désactiver les formateurs (avec gestion du statut d'adhésion), gérer les stagiaires (dont la remise à zéro de progression) et les observateurs. La suppression d'un compte nettoie les données liées.
 
-### Fonctionnalités
+**Contenu pédagogique** : créer les modules du catalogue avec leurs sections et leçons, importer des packages SCORM et des slides, gérer la banque de questions quiz (avec import CSV), les évaluations SCORM et les catégories.
 
-**Gestion des utilisateurs**
-- CRUD complet des formateurs (activation, désactivation, gestion du statut d'adhésion)
-- CRUD des stagiaires avec reset de progression (`admin.stagiaires.reset`, route protégée par `auth`, `role:admin`, `admin.activity`)
-- Gestion des observateurs
-- Soft delete des utilisateurs avec nettoyage des données liées (`cleanupRelatedStagiaireData()`)
+**Pilotage** : un module interne de suivi de projets (Kanban, tâches, journal, notifications), les référentiels de compétences, la consultation des retours stagiaires.
 
-**Gestion du contenu pédagogique**
-- CRUD modules, sections, leçons
-- Import SCORM pour une leçon (`ScormLibraryController::importForLecture()`)
-- Import de slides (`ModuleLectureController::importSlidesForLecture()`)
-- Banque de questions quiz (CRUD, import CSV, médias)
-- CRUD évaluations SCORM
-- Catégories et sous-catégories
+**Tableau de bord** : indicateurs volumétriques (nombre de modules, formateurs, stagiaires, groupes, leçons...).
 
-**Outils admin**
-- Module de pilotage interne (projets Kanban, tâches, journal, notifications)
-- Référentiels de compétences, domaines, badges
-- Consultation et suppression des retours stagiaires
-- Nuage de mots admin
+### Ce qu'il ne peut pas encore faire
 
-**Tableau de bord**
-Indicateurs volumétriques : nombre de catégories, sous-catégories, modules, formateurs, stagiaires, groupes, sections, leçons.
+Exporter des données en CSV ou PDF, générer des certificats, gérer plusieurs organisations. La mise à jour d'email admin ne valide pas encore l'unicité.
 
-### Limites actuelles
-- Pas d'export CSV/PDF des données
-- Pas de génération de certificats
-- Pas de gestion multi-organisation
-- La mise à jour d'email admin ne valide pas l'unicité
+### Détails techniques
+
+Routes : `routes/admin.php` — middleware `auth` + `role:admin` + `admin.activity`.
+Le middleware `RecordAdminActivity` journalise les actions POST/PUT/PATCH/DELETE dans `activity_journal_entries`, données sensibles sanitisées. La remise à zéro de progression passe par `admin.stagiaires.reset`, protégée par la chaîne complète. Le nettoyage à la suppression de compte est porté par `cleanupRelatedStagiaireData()`.
 
 ---
 
 ## Formateur
 
-### Accès et middleware
+Le formateur est le rôle central côté terrain. Il crée ses groupes, y ajoute des stagiaires, leur affecte des modules, anime des séances et suit les progressions.
 
-Routes : `routes/formateur.php`  
-Middleware : `auth` + `role:formateur` + `association.member`
+Son accès dépend de son adhésion à l'association : adhésion active, ou compte de moins d'un mois en attente d'adhésion. Au-delà, il est redirigé vers la page d'adhésion.
 
-**Politique d'adhésion** (`EnsureAssociationMembership`) : un formateur accède à la plateforme si :
-- `adhesion_status = active` avec `adhesion_valid_until` non dépassée, **ou**
-- `adhesion_status = pending` et le compte a moins d'un mois (`created_at + 30 jours > aujourd'hui`)
+### Ce qu'il peut faire
 
-Au-delà, le formateur est redirigé vers `/adhesion`.
+**Groupes** : créer, modifier, activer ou désactiver un groupe ; générer un code d'accès pour les stagiaires ; ajouter des stagiaires existants ou en créer avec invitation par mail ; inviter des co-formateurs ; affecter des modules dans un ordre choisi ; masquer ou réordonner des leçons pour un groupe précis.
 
-### Fonctionnalités
+**Suivi** : vue par groupe (taux de réussite, stagiaires actifs, inactifs, non démarrés), vue par stagiaire leçon par leçon, vue par module, repérage des apprenants à risque.
 
-**Gestion des groupes**
-- Créer, éditer, supprimer, activer/désactiver des groupes
-- Générer un code d'accès temporaire chiffré pour les stagiaires
-- Ajouter des stagiaires existants ou en créer de nouveaux avec invitation mail
-- Ajouter des co-formateurs avec notification interne
-- Affecter des modules à un groupe avec ordre configurable
-- Personnaliser les leçons par groupe (masquage, réordonnancement) via `group_module_lectures`
+**Parcours** : assembler des modules, nuages de mots et sondages dans un parcours ordonné, puis l'associer à un groupe. Dans l'interface, ce sont "Mes parcours".
 
-**Suivi de progression**
-- Vue par groupe : taux de réussite, stagiaires actifs/inactifs/non démarrés
-- Vue par stagiaire : détail leçon par leçon
-- Vue par module : progression globale
-- Identification des apprenants à risque
+**Modules personnels** : créer ses propres modules dans un éditeur de plan continu (chapitres et leçons, réordonnancement au clavier ou à la souris, duplication de leçon), éditer chaque leçon en blocs de contenu (texte, image, citation, séparateur), téléverser ses images, ou dupliquer un module du catalogue pour l'adapter. Les modules personnels n'apparaissent pas dans le catalogue public.
 
-**Parcours de formation**
-- Créer des parcours (`FormateurParcours`) en assemblant modules, nuages de mots, sondages
-- Associer un parcours à un groupe
-- Vocabulaire recommandé dans l'interface : **Mes parcours**
+Limite à connaître : les leçons SCORM ou slides copiées depuis le catalogue restent dans la copie, mais leur contenu importé n'est pas modifiable — seul le titre peut être renommé.
 
-**Modules personnels**
-- Créer des modules formateur via `/formateur/mes-modules`
-- Dupliquer un module catalogue dans une copie éditable
-- Organiser le plan dans un éditeur continu type Rise : chapitres, leçons, renommage automatique, déplacement au clavier
-- Transformer une leçon vide en chapitre (`Maj+Entrée`) et déplacer une leçon entre chapitres
-- Ouvrir chaque leçon dans une page dédiée pour éditer ses blocs structurés (`text`, `image`, `list`, `quote`, `divider`)
-- Uploader des images propres au module dans `modules_formateur/module_{id}/images`
-- Affecter le module personnel aux groupes accessibles
+**Animation** : tous les outils live (voir [Outils d'animation](07-outils-animation.md)).
 
-Les modules formateur sont marqués `is_trainer_authored = true` et sont exclus du catalogue public.
+**Ressources** : ajouter des liens ou fichiers à une leçon, avec visibilité stagiaire réglable par ressource.
 
-Les leçons SCORM ou slides copiées depuis le catalogue sont conservées dans la copie formateur, mais leur contenu importé n'est pas modifiable dans l'éditeur de blocs ; seul le titre peut être renommé.
+### Ce qu'il ne peut pas encore faire
 
-**Outils d'animation live** (voir [Outils](07-outils-animation.md))
+Importer lui-même un package SCORM complet (l'import reste côté admin), exporter les données de son groupe, générer des badges ou certificats en fin de parcours.
 
-**Ressources de leçon**
-- Ajouter des ressources (liens, fichiers) à une leçon
-- Toggle de visibilité stagiaire par ressource
+### Détails techniques
 
-### Accès aux modules
-Un formateur accède aux modules via deux voies :
-1. Il est le `instructor_id` du groupe
-2. Il est co-formateur via `group_user.role_in_group = 'formateur'`
-
-Le scope Eloquent `Group::scopeAccessibleByTrainer()` couvre les deux cas.
-
-### Limites actuelles
-- Les modules créés par les formateurs supportent surtout le contenu en blocs ; l'import SCORM complet reste côté admin
-- Pas d'export des données de groupe
-- Pas de génération automatique de badges ou certificats en fin de parcours
+Routes : `routes/formateur.php` — middleware `auth` + `role:formateur` + `association.member`.
+Politique d'adhésion (`EnsureAssociationMembership`) : accès si `adhesion_status = active` avec `adhesion_valid_until` non dépassée, ou `adhesion_status = pending` avec `created_at + 30 jours > aujourd'hui`.
+Un formateur accède à un groupe soit comme `instructor_id`, soit comme co-formateur via `group_user.role_in_group = 'formateur'`. Le scope `Group::scopeAccessibleByTrainer()` couvre les deux cas — à utiliser systématiquement dans les contrôleurs formateur.
+La personnalisation des leçons par groupe passe par `group_module_lectures`. Les modules personnels sont marqués `is_trainer_authored = true` et leurs images stockées dans `modules_formateur/module_{id}/images`. Les blocs de leçon acceptés : `text`, `image`, `list`, `quote`, `divider`.
 
 ---
 
 ## Stagiaire
 
-### Accès et middleware
+Le stagiaire accède à sa formation, suit ses leçons, répond aux quiz et participe aux activités lancées par le formateur. Son interface est volontairement épurée.
 
-Routes : `routes/stagiaire.php`  
-Middleware : `auth` + `role:stagiaire` + `track.time` + `force.password.change` (groupe principal)
+### Deux façons de se connecter
 
-### Modes de connexion
+Le mode classique : email et mot de passe. Le mode code d'accès : un code alphanumérique de 6 caractères, sans email ni mot de passe. C'est le mode privilégié pour les publics éloignés du numérique.
 
-**Mode classique** : email + mot de passe  
-**Mode code d'accès** : via `POST /stagiaire/connexion-code` — le stagiaire saisit uniquement un code alphanumérique à 6 caractères. C'est le mode privilégié pour les publics éloignés du numérique.
+À la première connexion, le stagiaire doit définir un nouveau mot de passe avant d'accéder à son espace.
 
-À la première connexion, le middleware `ForcePasswordChange` bloque l'accès jusqu'à la définition d'un nouveau mot de passe (validation `min:8`).
+### Ce qu'il voit
 
-### Fonctionnalités
+**Tableau de bord** : son formateur référent (affiché en permanence), son temps d'apprentissage, son taux de réussite, sa progression par module.
 
-**Tableau de bord**
-- Formateur référent affiché en permanence
-- Temps d'apprentissage cumulé
-- Taux de réussite
-- Progression par module
-- Temps moyen de réflexion
+**Formation** : "Ma formation" et le programme de son groupe, la navigation chapitre → leçon, la lecture des leçons SCORM, slides, vidéos et quiz. La progression se marque automatiquement.
 
-**Formation**
-- Accès à **Ma formation** et au programme associé au groupe actif
-- Liste des modules qui composent la formation
-- Navigation section → leçon
-- Lecture de leçons SCORM (iframe), slides, quiz natifs, contenu vidéo
-- Marquage automatique de progression
+**Résultats** : l'historique de ses tentatives de quiz, question par question, et ses scores SCORM.
 
-**Résultats**
-- Historique des tentatives quiz avec détail par question
-- Scores SCORM par leçon
+**Outils** : les activités live lancées par le formateur.
 
-**Outils**
-- Participation aux outils live lancés par le formateur (Quiz live, Nuage de mots, Sondage, etc.)
+**Profil** : modification de ses informations, de son mot de passe, et suppression de son compte.
 
-**Profil**
-- Modification du profil et du mot de passe
-- Suppression du compte
+### Limites connues
 
-### Limites actuelles
-- Un stagiaire dans plusieurs groupes actifs ne voit que les modules du premier groupe (`.first()` dans `StagiaireModules()`)
-- L'accès direct aux routes de leçon s'appuie encore surtout sur `Module::isVisibleTo()` et le contexte de groupe ; il faut centraliser la vérification d'appartenance via policies avant publication large
+Un stagiaire présent dans plusieurs groupes actifs ne voit que les modules du premier groupe. C'est un bug identifié, à corriger en phase 2.
+
+### Détails techniques
+
+Routes : `routes/stagiaire.php` — middleware `auth` + `role:stagiaire` + `track.time` + `force.password.change` (hors routes de première connexion).
+Connexion par code : `POST /stagiaire/connexion-code` (`UserController::loginByCode()`), sur `users.code_acces`. Le middleware `ForcePasswordChange` bloque tant que `users.password_changed_at` est nul (validation `min:8`).
+Le bug multi-groupe vient du `.first()` dans `StagiaireController::StagiaireModules()`. L'accès direct aux leçons repose encore surtout sur `Module::isVisibleTo()` ; la vérification d'appartenance doit être centralisée via policies avant publication large.
 
 ---
 
 ## Observateur
 
-### Accès et middleware
+L'observateur consulte sans intervenir. Il voit les groupes auxquels il est rattaché, la progression des stagiaires et les leçons de ces groupes, en lecture seule. Le rôle a été ajouté en mars 2026 — typiquement pour un coordinateur, un financeur ou un tuteur.
 
-Routes : `routes/observateur.php`  
-Middleware : `auth` + `role:observateur`
+### Détails techniques
 
-Rôle ajouté en mars 2026. L'observateur accède en lecture seule aux groupes et aux progressions.
-
-### Fonctionnalités
-- Consultation des groupes auxquels il est rattaché
-- Lecture de la progression des stagiaires
-- Accès en lecture aux leçons des groupes observés
-
-### Rattachement
-Les observateurs sont rattachés aux groupes via `group_user.role_in_group = 'observateur'`.
+Routes : `routes/observateur.php` — middleware `auth` + `role:observateur`.
+Rattachement aux groupes via `group_user.role_in_group = 'observateur'`.
 
 ---
 

@@ -1,5 +1,7 @@
 # 02 — Installation & Configuration
 
+*Public : développeurs et administrateurs système.*
+
 ## Prérequis
 
 | Outil | Version minimale |
