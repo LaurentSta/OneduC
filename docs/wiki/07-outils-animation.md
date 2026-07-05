@@ -53,6 +53,16 @@ Exceptions :
 
 ---
 
+## Page d'entrée formateur (grille d'outils)
+
+`OutilsNumeriquesController::index()` (route `/formateur/outils-numeriques`) sert de hub : il agrège les sessions récentes de chaque outil (nuages de mots, murs de questions, sondages, échelles, modules) et la liste des groupes du formateur, puis les passe à la vue `formateur.outils.index`.
+
+Côté affichage, chaque outil est une **tuile compacte** (icône + titre) plutôt qu'une grande carte — pensé pour rester lisible à mesure que le nombre d'outils augmente. La description complète, les badges (Présentiel/Distanciel/...) et les sessions récentes/groupes n'apparaissent qu'au **survol ou au focus clavier** de la tuile, dans une info-bulle positionnée sous la tuile. Ce comportement est porté par le composant réutilisable `x-oneduc.outil-tile` (`resources/views/components/oneduc/outil-tile.blade.php`), qui expose des slots `icon`, `description`, `badges` et `body` (sessions récentes / liste de groupes / état vide). La barre de filtres « Famille » (Tous les outils / Interaction & Feedback / Collaboration / Animation de session) reste inchangée et pilote la visibilité des tuiles via Alpine.js.
+
+Pour ajouter un nouvel outil à cette page, il suffit d'invoquer `<x-oneduc.outil-tile>` avec ses props (`title`, `icon-bg`, `cta-route`, `cta-label`, `cta-bg`, `badge-count` optionnel) et ses slots — pas besoin de dupliquer la structure de carte.
+
+---
+
 ## Les 9 entrées outils
 
 ### 1. Quiz live

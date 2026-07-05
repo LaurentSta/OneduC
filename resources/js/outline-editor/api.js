@@ -55,6 +55,10 @@ export function createOutlineApi(basePath, moduleId) {
     async destroyLecture(lectureId) {
       await jsonRequest(`${basePath}/lectures/${lectureId}`, 'DELETE');
     },
+    async duplicateLecture(lectureId) {
+      const data = await jsonRequest(`${basePath}/lectures/${lectureId}/duplicate`, 'POST');
+      return data.lecture;
+    },
     async reorderLectures(sectionId, lectureIds) {
       await jsonRequest(`${basePath}/sections/${sectionId}/lectures/reorder`, 'POST', { lecture_ids: lectureIds });
     },

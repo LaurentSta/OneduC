@@ -41,8 +41,10 @@
            data-lecture-id="{{ $lecture->id }}"
            data-update-url="{{ route('formateur.modules.builder.lectures.update', $lecture) }}"
            data-upload-url="{{ route('formateur.modules.builder.images.store', $module) }}"
+           data-video-upload-url="{{ route('formateur.modules.builder.videos.store', $module) }}"
+           data-scorm-upload-url="{{ route('formateur.modules.builder.scorm.store', $module) }}"
            data-initial-title="{{ $lecture->lecture_title }}"
-           data-initial-blocks="{{ json_encode($lecture->content_blocks ?? []) }}"></div>
+           data-initial-blocks="{{ json_encode($initialBlocks ?? []) }}"></div>
     @endif
   </div>
 </div>

@@ -254,6 +254,21 @@
            transition-all duration-300 hover:bg-white hover:text-red-500
            focus:outline-none focus:ring-4 focus:ring-red-100 active:scale-95;
   }
+
+  /* Styles minimaux pour le HTML des blocs "texte" (editeur TipTap + lecture),
+     en l'absence du plugin @tailwindcss/typography. */
+  .rich-text-content :where(h1, h2, h3, h4) {
+    @apply font-bold text-bleuone;
+  }
+  .rich-text-content h1 { @apply mb-3 mt-4 text-2xl; }
+  .rich-text-content h2 { @apply mb-2 mt-3 text-xl; }
+  .rich-text-content h3 { @apply mb-2 mt-3 text-lg; }
+  .rich-text-content h4 { @apply mb-1 mt-2 text-base; }
+  .rich-text-content p { @apply mb-2; }
+  .rich-text-content ul { @apply mb-3 list-disc space-y-1 pl-6; }
+  .rich-text-content ol { @apply mb-3 list-decimal space-y-1 pl-6; }
+  .rich-text-content a { @apply text-orangeone underline; }
+  .rich-text-content code { @apply rounded bg-gray-100 px-1 py-0.5 font-mono text-[0.9em]; }
 }
 
 @layer utilities {

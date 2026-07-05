@@ -22,44 +22,42 @@
 >
 
   {{-- EN-TÊTE --}}
-  <header class="bg-white rounded-[20px] shadow-md px-8 pt-4 pb-6 w-full mb-6">
-    <div class="grid grid-cols-12 gap-6 items-center">
+  <div class="rounded-[20px] border border-gray-100 bg-white shadow-md mb-6">
+    <div class="grid gap-6 px-6 py-6 md:px-8 md:py-7 lg:grid-cols-12 lg:items-center">
 
-      <div class="col-span-12 md:col-span-8">
-        <x-typography variant="titre">Mes modules de formation</x-typography>
-        <x-typography variant="sous-titre" class="font-varela text-sous-titre text-orangeone">
+      <div class="lg:col-span-8">
+        <x-oneduc.breadcrumb :items="[['label' => 'Accueil', 'url' => route('formateur.dashboard')], ['label' => request('tab') === 'parcours' ? 'Mes parcours de formation' : 'Catalogue des modules']]" />
+
+        <h1 class="font-raleway text-2xl font-medium leading-tight text-bleuone md:text-3xl">
+          Mes modules de formation
+        </h1>
+        <p class="mt-0.5 font-varela text-base text-orangeone md:text-lg">
           Suivez les modules que vous utilisez dans vos groupes.
-        </x-typography>
-        <x-typography>
+        </p>
+        <p class="mt-3 max-w-2xl font-lisible text-sm leading-relaxed text-slate-700">
           Retrouvez ici tous les modules de formation utilisés, leur statut, les groupes concernés et les stagiaires associés.
-        </x-typography>
+        </p>
 
-        <nav class="text-sm font-varela text-gray-600 mt-2" aria-label="Fil d'Ariane">
-          <ol class="inline-flex items-center space-x-1">
-            <li class="flex items-center">
-              <a href="{{ route('formateur.dashboard') }}" class="text-orangeone hover:underline flex items-center">
-                <span class="sr-only">Accueil</span>
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M3 9.75L12 3l9 6.75V19a2 2 0 01-2 2h-4a1 1 0 01-1-1v-5H10v5a1 1 0 01-1 1H5a2 2 0 01-2-2V9.75z"/>
-                </svg>
-              </a>
-              <span class="mx-2 text-gray-400" aria-hidden="true">/</span>
-            </li>
-            <li class="text-gray-400" x-text="tab === 'parcours' ? 'Mes parcours de formation' : 'Catalogue des modules'">Catalogue des modules</li>
-          </ol>
-        </nav>
+        {{-- 📊 Statistiques --}}
+        <div class="mt-4 flex flex-wrap gap-2 text-xs font-varela">
+          <span class="inline-flex items-center gap-1.5 rounded-full border border-bleuone/15 bg-bleuone/5 px-3 py-1 text-bleuone">
+            {{ $modules->total() }} modules
+          </span>
+          <span class="inline-flex items-center gap-1.5 rounded-full border border-orangeone/20 bg-orangeone/10 px-3 py-1 text-orangeone">
+            {{ $mesParcours->count() }} parcours
+          </span>
+        </div>
       </div>
 
-      <div class="col-span-12 md:col-span-4 flex justify-center md:justify-end">
+      <div class="lg:col-span-4 flex justify-center lg:justify-end">
         <img src="{{ asset('images/svg/Modules.svg') }}"
              alt="Illustration des modules de formation"
-             class="max-w-[300px] h-auto"
+             class="max-w-[220px] h-auto"
              loading="lazy">
       </div>
 
     </div>
-  </header>
+  </div>
 
   {{-- ONGLETS --}}
   <div class="mb-4 rounded-t-[14px] border border-gray-200 border-b-2 border-b-bleuone/15 bg-white px-3 pt-3 shadow-sm">
@@ -159,7 +157,7 @@
            x-transition:leave-end="opacity-0 scale-95">
     <div class="space-y-8">
       {{-- Tableau des modules --}}
-      <div class="overflow-x-auto bg-white shadow-md rounded-[20px] border-2 border-bleuone/20">
+      <div class="overflow-x-auto overflow-y-visible bg-white rounded-md border-2 border-bleuone/20">
         <table class="min-w-full bg-white text-sm text-left text-gray-800 font-lisible">
           <thead class="bg-bleuone uppercase text-xs text-white font-varela sticky top-0 z-10">
             <tr>
@@ -237,20 +235,31 @@
                     @if($statut === 'indisponible')
                       <span class="whitespace-nowrap text-sm text-gray-400">Accès indisponible</span>
                     @elseif($officialUrl)
-                      <a href="{{ $officialUrl }}"
-                         class="btn-oneduc whitespace-nowrap !px-3 !py-1 !text-sm">
-                        <x-icons.eye-iconify class="h-4 w-4" />
-                        Voir le module
-                      </a>
+                      <div class="relative inline-flex group">
+                        <a href="{{ $officialUrl }}"
+                           class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-orangeone/20 bg-orangeone/10 text-orangeone transition hover:border-orangeone hover:bg-orangeone hover:text-white"
+                           aria-label="Voir le module {{ $titre }}">
+                          <x-icons.eye-iconify class="h-4 w-4" />
+                        </a>
+                        <span class="pointer-events-none absolute -top-9 left-1/2 z-20 hidden -translate-x-1/2 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 shadow-lg group-hover:block">
+                          Voir le module
+                        </span>
+                      </div>
                     @else
                       <span class="whitespace-nowrap text-sm text-gray-400">Accès indisponible</span>
                     @endif
 
                     @if(!$module->is_trainer_authored)
-                      <button type="button" x-data x-on:click="$dispatch('open-modal', 'duplicate-module-{{ $module->id }}')"
-                              class="whitespace-nowrap rounded-[8px] border border-emerald-300 bg-emerald-50 px-3 py-1 text-sm font-bold text-emerald-700 hover:bg-emerald-100 transition">
-                        Dupliquer
-                      </button>
+                      <div class="relative inline-flex group">
+                        <button type="button" x-data x-on:click="$dispatch('open-modal', 'duplicate-module-{{ $module->id }}')"
+                                aria-label="Dupliquer le module {{ $titre }}"
+                                class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-emerald-300 bg-emerald-50 text-emerald-700 transition hover:border-emerald-400 hover:bg-emerald-600 hover:text-white">
+                          <x-icons.copy-iconify class="h-4 w-4" />
+                        </button>
+                        <span class="pointer-events-none absolute -top-9 left-1/2 z-20 hidden -translate-x-1/2 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 shadow-lg group-hover:block">
+                          Dupliquer
+                        </span>
+                      </div>
                       <x-confirm-modal
                         name="duplicate-module-{{ $module->id }}"
                         title="Dupliquer ce module ?"

@@ -131,6 +131,32 @@ Voir [docs/idees-outils-formateurs.md](../idees-outils-formateurs.md) pour le d�
 | OF-006 | Groupes intelligents | Moyenne |
 | OF-007 | Débrief / rétrospective | Moyenne |
 | OF-008 | Analytics pédagogiques avancées | Moyenne |
+| OF-009 | Import de cours par IA (PowerPoint, PDF) | Moyenne |
+| OF-010 | Clic sur zones d'image | Moyenne |
+| OF-011 | File d'attente de parole | Moyenne |
+| OF-012 | Vrai / Faux express | Moyenne |
+| OF-013 | Roue aléatoire (améliorée) | Moyenne |
+
+---
+
+## Nouveaux blocs de contenu de leçon (inspiration Articulate Rise)
+
+Le bloc SCORM (juillet 2026, voir [docs/wiki/05-modules-scorm-quiz.md](05-modules-scorm-quiz.md)) a établi le pattern pour ajouter un nouveau type de bloc dans l'éditeur de leçon : composant JS dans `resources/js/formateur-module-builder-editor.jsx`, validation dans `NettoyeurBlocsModule::sanitizeBlocks()`, rendu lecture dans `resources/views/shared/lecture_blocks.blade.php`. Les blocs suivants, inspirés des blocs interactifs d'Articulate Rise, sont identifiés comme prochaines pistes :
+
+| ID | Bloc | Description | Priorité |
+|----|------|--------------|----------|
+| BC-001 | Carrousel / Processus | Suite d'étapes numérotées navigables (précédent/suivant), chaque étape avec titre + texte + image optionnelle. Utile pour une chronologie, un processus ou les étapes d'une procédure | Moyenne |
+| BC-002 | Flashcards | Cartes recto/verso (question/réponse ou terme/définition) que le stagiaire retourne au clic. Simple à créer pour du vocabulaire ou de la mémorisation | Moyenne |
+| BC-003 | Tri (sorting) | Cartes à glisser-déposer dans 2 catégories nommées par le formateur (ex. Vrai/Faux, Avant/Après, Bonne pratique/Mauvaise pratique) | Moyenne |
+| BC-004 | Bouton "Continuer" en fin de leçon | Bouton qui se débloque une fois la leçon parcourue en entier (scroll jusqu'en bas et/ou blocs interactifs complétés), pour marquer explicitement la progression avant de passer à la suite | Moyenne |
+
+**BC-001 — Carrousel / Processus** : nouveau type de bloc `carousel` avec une liste d'étapes (`{title, text, image_id}`) ; contenu passif, pas de suivi de progression nécessaire.
+
+**BC-002 — Flashcards** : bloc `flashcard` avec une liste de cartes (`{front, back}`) et un retournement visuel au clic/tap ; peut être décliné en grille ou en défilement une carte à la fois.
+
+**BC-003 — Tri (sorting)** : bloc `sorting` avec deux catégories nommées et une liste d'éléments à classer (`{label, category}`). Peut réutiliser le pattern de drag-and-drop déjà en place pour réordonner les leçons dans le plan du module (`resources/js/outline-editor/lesson-item-node.js`), plus une validation visuelle bonne/mauvaise réponse après dépôt.
+
+**BC-004 — Bouton "Continuer" en fin de leçon** : aujourd'hui, seuls le SCORM (`afficherBoutonSuivantDepuisIframe()` dans `public/scorm_core/js/API.js`) et les quiz pilotent la navigation vers la leçon suivante. Une leçon en blocs (texte/image/vidéo/carrousel/flashcards/tri) n'a aucun mécanisme de progression explicite : ce bouton se déclenche en bas de la page de leçon, cohérent avec le comportement SCORM existant, et pourrait aussi servir de brique pour le mode stagiaire très simplifié envisagé en Phase 4 (bouton "Continuer ma formation").
 
 ---
 

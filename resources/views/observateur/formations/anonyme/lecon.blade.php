@@ -109,7 +109,7 @@
     @elseif ($lecture && $isBlocksSelected)
       <div class="relative w-full overflow-y-auto bg-white" style="height: calc(100vh - var(--app-header-h, 86px));">
         <div class="max-w-3xl mx-auto px-6 py-10">
-          @include('shared.lecture_blocks', ['blocks' => $lecture->content_blocks ?? []])
+          @include('shared.lecture_blocks', ['blocks' => $lecture->content_blocks ?? [], 'lecture' => $lecture])
         </div>
       </div>
     @elseif ($lecture && $isScormSelected && $scormSrc)
