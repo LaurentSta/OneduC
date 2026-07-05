@@ -48,6 +48,24 @@ La segmentation interne a démarré avec `app/Domains/ModulesFormateur` et `app/
 
 ---
 
+## Documentation du wiki à compléter (audit du 5 juillet 2026)
+
+Une comparaison du code sur `main` (85 contrôleurs, 61 modèles, 411 routes) avec le contenu réel du wiki a fait apparaître onze fonctionnalités déjà présentes dans le code mais absentes ou sous-documentées dans le wiki. Suivi aussi comme tâches dans le Kanban de pilotage interne (projet « Wiki — combler les trous de documentation », colonne À faire).
+
+- [ ] Documenter les référentiels de compétences (`SkillReferential` → `SkillDomain` → `Skill`, CRUD complet sous `/admin/referentiels/*`) — corriger au passage le glossaire, qui dit à tort « en cours d'implémentation »
+- [ ] Documenter le système de badges (`Badge` relié à `Competency` via `badge_competency`) — préciser que le catalogue existe déjà, seule l'attribution automatique à un utilisateur manque
+- [ ] Documenter la messagerie formateur → stagiaire (`FormateurStagiaireController`, modèle `FormateurMessage`, notification et/ou email)
+- [ ] Documenter le pilotage interne (Kanban admin : `PilotProject`, `PilotTask`, commentaires, abonnements, notifications)
+- [ ] Documenter le dashboard qualité parcours formateur module 2 (`TrainerPathQualityController`, `TrainerPathActivityAttempt`)
+- [ ] Documenter la participation publique anonyme aux outils live (`/oneduc/mot`, `/sondage`, `/echelle`, `/questions`, `/roue` — sans compte ni connexion) et croiser avec la page Sécurité pour vérifier le throttling
+- [ ] Documenter le vote sur le mur de questions (`QuestionWallVote`)
+- [ ] Documenter les questionnaires de fin de module et les activités notées du parcours formateur (`TrainerModuleQuestionnaireSubmission`, mail `ModuleQuestionnaireSubmitted`)
+- [ ] Documenter le système de notifications et les endpoints `notification-status` (Live Quiz, Mur de questions, Tableau blanc côté stagiaire)
+- [ ] Documenter le formulaire de contact (`ContactController`, mails `ContactConfirmation`/`ContactMessage`)
+- [ ] Documenter les pages publiques/marketing (`/association`, `/le-projet-oneduc-fr`, `/chartegraphique`, `/formations`, `/adhesion`, `Frontend/MFormationsController`)
+
+---
+
 ## Phase 1 — Sécurisation et stabilisation
 
 **Objectif : rendre la plateforme sûre et stable pour un pilote.**  
