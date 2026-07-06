@@ -120,9 +120,9 @@ Le minuteur sert de pilote pour l'architecture "outil auto-contenu" : contrôleu
 
 `OutilsNumeriquesController::index()` (route `/formateur/outils-numeriques`) sert de hub : il agrège les sessions récentes de chaque outil et la liste des groupes du formateur, puis les passe à la vue `formateur.outils.index`.
 
-Chaque outil est une tuile compacte (icône + titre). La description, les badges (Présentiel/Distanciel/...) et les sessions récentes n'apparaissent qu'au survol ou au focus clavier, dans une info-bulle sous la tuile. Ce comportement est porté par le composant réutilisable `x-oneduc.outil-tile` (`resources/views/components/oneduc/outil-tile.blade.php`), avec les slots `icon`, `description`, `badges` et `body`. La barre de filtres "Famille" pilote la visibilité des tuiles via Alpine.js.
+Chaque outil est une tuile compacte (icône + titre) dans une grille à gauche ; un panneau fixe à droite (`#outil-detail-panel`) affiche un texte générique par défaut et bascule sur la description, les badges (Présentiel/Distanciel/...) et les sessions récentes de l'outil cliqué. Ce comportement est porté par le composant réutilisable `x-oneduc.outil-tile` (`resources/views/components/oneduc/outil-tile.blade.php`), avec les slots `icon`, `description`, `badges` et `body` : le contenu de détail est déplacé vers le panneau de droite via `x-teleport` (Alpine.js) et affiché avec `x-show="selectedTool === '...'"`, ce qui évite tout décalage de la grille (l'ancienne info-bulle au survol décalait la mise en page). L'état `selectedTool` et la barre de filtres "Famille" (`filtre`) sont portés par le conteneur parent (`formateur.outils.index`).
 
-Pour ajouter un outil à cette page : invoquer `<x-oneduc.outil-tile>` avec ses props (`title`, `icon-bg`, `cta-route`, `cta-label`, `cta-bg`, `badge-count` optionnel) et ses slots. Pas besoin de dupliquer la structure de carte.
+Pour ajouter un outil à cette page : invoquer `<x-oneduc.outil-tile>` avec ses props (`title`, `icon-bg`, `tool-id` unique, `cta-route`, `cta-label`, `cta-bg`, `badge-count` optionnel) et ses slots. Pas besoin de dupliquer la structure de carte.
 
 ### Agrégateur stagiaire
 

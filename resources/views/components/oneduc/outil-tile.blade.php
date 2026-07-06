@@ -5,26 +5,15 @@
     'ctaRoute' => null,
     'ctaLabel' => null,
     'ctaBg' => null,
+    'toolId',
 ])
 
-<div {{ $attributes->merge(['class' => 'relative']) }}
-     x-data="{ open: false, alignRight: false, checkAlign() { this.alignRight = ($el.getBoundingClientRect().left + 320) > (window.innerWidth - 16) } }"
-     @mouseenter="open = true; checkAlign()"
-     @mouseleave="open = false"
-     @focusin="open = true; checkAlign()"
-     @focusout="open = false"
-     @keydown.escape="open = false"
-     @click.outside="open = false">
-
-    @php
-        $triggerClasses = 'flex w-full flex-col items-center gap-2 rounded-2xl bg-white p-4 text-center shadow-md transition hover:-translate-y-0.5 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-bleuone/40';
-    @endphp
-
-    @if($ctaRoute)
-        <a href="{{ $ctaRoute }}" :aria-expanded="open.toString()" aria-haspopup="true" class="{{ $triggerClasses }}">
-    @else
-        <button type="button" @click="open = !open" :aria-expanded="open.toString()" aria-haspopup="true" class="{{ $triggerClasses }}">
-    @endif
+<div {{ $attributes }}>
+    <button type="button"
+            @click="selectedTool = '{{ $toolId }}'"
+            :aria-pressed="(selectedTool === '{{ $toolId }}').toString()"
+            :class="selectedTool === '{{ $toolId }}' ? 'ring-2 ring-bleuone bg-bleuone/5' : ''"
+            class="flex w-full flex-col items-center gap-2 rounded-2xl bg-white p-4 text-center shadow-md transition hover:-translate-y-0.5 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-bleuone/40">
 
         <span class="relative flex h-14 w-14 items-center justify-center rounded-2xl {{ $iconBg }} text-white">
             {{ $icon }}
@@ -35,23 +24,11 @@
             @endif
         </span>
         <span class="text-xs font-bold leading-tight text-gray-800 md:text-sm">{{ $title }}</span>
+    </button>
 
-    @if($ctaRoute)
-        </a>
-    @else
-        </button>
-    @endif
-
-    <div x-show="open" x-cloak
-         x-transition:enter="transition ease-out duration-150"
-         x-transition:enter-start="opacity-0 scale-95"
-         x-transition:enter-end="opacity-100 scale-100"
-         x-transition:leave="transition ease-in duration-100"
-         x-transition:leave-start="opacity-100 scale-100"
-         x-transition:leave-end="opacity-0 scale-95"
-         :class="alignRight ? 'right-0' : 'left-0'"
-         class="absolute top-full z-30 mt-3 w-80 max-w-[85vw] text-left">
-        <div class="rounded-2xl border border-gray-100 bg-white p-5 shadow-xl">
+    {{-- Détail de l'outil : téléporté dans le panneau de droite, affiché uniquement quand sélectionné --}}
+    <template x-teleport="#outil-detail-panel">
+        <div x-show="selectedTool === '{{ $toolId }}'" x-cloak class="text-left">
             <div class="mb-3 flex items-center gap-2.5">
                 <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl {{ $iconBg }} text-white">
                     {{ $icon }}
@@ -85,5 +62,5 @@
                 </a>
             @endif
         </div>
-    </div>
+    </template>
 </div>
