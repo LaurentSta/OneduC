@@ -206,6 +206,7 @@ Route::middleware(['auth', 'role:formateur', 'association.member'])
             Route::get('/', [ModuleBuilderController::class, 'index'])->name('index');
             Route::get('/creer', [ModuleBuilderController::class, 'create'])->name('create');
             Route::post('/', [ModuleBuilderController::class, 'store'])->name('store');
+            Route::post('/generer-ia', [ModuleBuilderController::class, 'generateStructureIA'])->name('generate-structure-ia');
             Route::post('/depuis-catalogue/{catalogModule}', [ModuleBuilderController::class, 'duplicate'])->name('duplicate');
             Route::post('/{module}/images', [ModuleBuilderController::class, 'uploadImage'])->name('images.store');
             Route::post('/{module}/videos', [ModuleBuilderController::class, 'uploadVideo'])->name('videos.store');
@@ -221,6 +222,7 @@ Route::middleware(['auth', 'role:formateur', 'association.member'])
             Route::post('/{module}/sections/reorder', [ModuleBuilderController::class, 'reorderSections'])->name('sections.reorder');
 
             Route::post('/sections/{section}/lectures', [ModuleBuilderController::class, 'storeLecture'])->name('lectures.store');
+            Route::post('/sections/{section}/lectures/generer-ia', [ModuleBuilderController::class, 'generateLectureIA'])->name('lectures.generate-ia');
             Route::get('/lectures/{lecture}/edition', [ModuleBuilderController::class, 'editLecture'])->name('lectures.edit');
             Route::put('/lectures/{lecture}', [ModuleBuilderController::class, 'updateLecture'])->name('lectures.update');
             Route::delete('/lectures/{lecture}', [ModuleBuilderController::class, 'destroyLecture'])->name('lectures.destroy');

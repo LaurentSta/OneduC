@@ -37,7 +37,7 @@ return [
 
     'captcha' => [
         'sitekey' => env('NOCAPTCHA_SITEKEY'),
-        'secret'  => env('NOCAPTCHA_SECRET'),
+        'secret' => env('NOCAPTCHA_SECRET'),
     ],
 
     'discord' => [
@@ -51,5 +51,9 @@ return [
         'new_path' => env('HEDGEDOC_NEW_PATH', '/new'),
     ],
 
+    'mistral' => [
+        'api_key' => env('MISTRAL_API_KEY', ''),
+        'model' => env('MISTRAL_MODEL', 'mistral-large-latest'),
+    ],
 
 ];

@@ -54,6 +54,18 @@ Les modules personnels ont `is_trainer_authored = true`. Ils sont visibles dans 
 
 À la création (`CreerModule`), le module est pré-rempli avec une structure d'exemple : 2 chapitres, le premier avec 2 leçons, le second avec 1 leçon — pour éviter la page blanche et montrer le fonctionnement du plan continu. Le formateur est libre de renommer ou supprimer ces éléments.
 
+### Génération de formation complète par IA (thème et/ou document)
+
+Sur l'écran « Créer une formation » (`create.blade.php`), un second onglet « Générer avec l'IA » permet de saisir un thème (texte libre, 500 caractères max) et/ou d'importer un document source (PDF, `.docx` ou texte brut, 20 Mo max) au lieu de remplir titre/description manuellement — au moins l'un des deux est requis. Flux :
+
+1. `ModuleBuilderController::generateStructureIA()` (route `formateur.modules.builder.generate-structure-ia`, POST `/mes-modules/generer-ia`) valide thème/document et appelle `GenererStructureFormationIA::execute()`. `set_time_limit(270)` est posé avant l'appel : la génération complète peut prendre 1 à 4 minutes.
+2. Si un document est fourni, `ExtracteurTexteDocument` en extrait le texte (même Support que la génération de leçon unique). Le thème et/ou le texte du document sont combinés dans le prompt utilisateur envoyé à Mistral.
+3. `MistralClient::chat()` est appelé avec un timeout de 240 s et jusqu'à 8000 tokens de réponse, en mode JSON strict. Le prompt demande 3 à 5 chapitres de 2 à 4 leçons, chaque leçon avec un contenu déjà rédigé (blocs `text`).
+4. Le module est créé via `CreerModule::creerModuleVide()` (variante de `CreerModule::execute()` sans la structure d'exemple), puis chapitres et leçons sont créés dans une transaction (`CreerChapitre`, `CreerLecon` — même sanitizer que le reste du builder).
+5. Redirection vers le plan du module généré, à relire et ajuster avant de le proposer aux stagiaires.
+
+Point d'attention : `Illuminate\Http\Client\ConnectionException` (timeout réseau vers Mistral) n'hérite pas de `RuntimeException` — les deux `generateStructureIA()` et `generateLectureIA()` catchent donc `ConnectionException` séparément (message générique « a pris trop de temps ») de `RuntimeException` (message spécifique : quota, modération, réponse invalide), sinon un timeout Mistral remonte en erreur 500 au lieu d'un message utilisateur.
+
 ---
 
 ## Builder formateur continu
@@ -102,6 +114,27 @@ Le renommage d'une leçon depuis le plan ne doit pas écraser `content_blocks`. 
 `DupliquerLecon` clone une leçon (`Model::replicate()`) avec tous ses champs — titre suffixé par « (copie) », insérée juste après l'originale (positions recalculées pour tout le chapitre). Fonctionne aussi pour les leçons SCORM/slides verrouillées, qui pointent alors vers le même paquet importé que l'original.
 
 Les leçons SCORM ou slides issues d'une duplication catalogue restent présentes dans la copie formateur. Leur contenu importé est affiché comme verrouillé sur la page d'édition de leçon ; le formateur peut seulement renommer la leçon.
+
+### Génération de leçon par IA (Mistral)
+
+Depuis l'écran du plan de module (`edit.blade.php`), un bouton « + Générer une leçon (IA) » ouvre une modale permettant d'importer un document (PDF, Word `.docx` ou texte brut, 20 Mo max) pour un chapitre donné. Le flux :
+
+1. `ModuleBuilderController::generateLectureIA()` (route `formateur.modules.builder.lectures.generate-ia`, POST `sections/{section}/lectures/generer-ia`) valide le fichier et délègue à `GenererLeconIA::execute()`.
+2. `ExtracteurTexteDocument` extrait le texte brut (`smalot/pdfparser` pour le PDF, `phpoffice/phpword` pour le `.docx`, lecture directe pour `.txt`).
+3. `MistralClient::chat()` appelle l'API Mistral (`config('services.mistral.*')`, variables d'env `MISTRAL_API_KEY` / `MISTRAL_MODEL`) en mode JSON strict, avec un prompt qui structure le document en blocs `text` pédagogiques et suggère un titre.
+4. La réponse passe par le `NettoyeurBlocsModule` existant (même sanitizer que l'éditeur manuel) avant d'être persistée via `CreerLecon`, dans le chapitre choisi.
+
+Seuls des blocs `text` sont générés (pas d'image/vidéo/SCORM, qui nécessitent des médias déjà importés). Le formateur doit relire et ajuster le contenu généré avant de le proposer aux stagiaires — rien n'est publié automatiquement, la leçon est créée comme n'importe quelle leçon manuelle et reste éditable normalement.
+
+### Garde-fous des générations IA (modération + quota)
+
+Les deux actions IA (`GenererLeconIA`, `GenererStructureFormationIA`) appliquent systématiquement, dans cet ordre, avant tout appel de génération coûteux :
+
+1. **Quota** (`LimiteurGenerationIA`) : vérifie via `RateLimiter::tooManyAttempts()` qu'un formateur n'a pas dépassé **3 générations IA par jour** (clé `ia-generation-formateur:{id}`, fenêtre glissante de 24 h via le cache par défaut de l'app — table `cache`). Si dépassé, lève une `RuntimeException` immédiatement, avant tout appel réseau.
+2. **Modération** (`GardeFouPromptIA` + `MistralClient::moderate()`) : envoie le thème et/ou le texte extrait du document à l'endpoint `POST /v1/moderations` (modèle `mistral-moderation-latest`). Catégories bloquantes : `sexual`, `hate_and_discrimination`, `violence_and_threats`, `dangerous`, `criminal`, `selfharm`, `jailbreaking`. **Volontairement exclues** : `health`, `financial`, `law`, `pii` — une plateforme de formation professionnelle traite légitimement ces sujets (premiers secours, gestion budgétaire, droit du travail, protection des données), les inclure aurait généré trop de faux positifs. Rejet immédiat (`RuntimeException` avec le nom des catégories déclenchées) si une catégorie bloquante est détectée à `true`.
+3. Seulement si la modération passe, `LimiteurGenerationIA::enregistrerTentative()` incrémente le compteur de quota — **juste avant** l'appel de génération proprement dit, donc un contenu rejeté par la modération ne consomme pas de quota, mais un timeout Mistral (après modération) en consomme un (l'appel a réellement eu lieu).
+
+`GenererLeconIA::execute()` et `GenererStructureFormationIA::execute()` prennent donc désormais un paramètre `int $trainerId` en plus du document/thème.
 
 ---
 
