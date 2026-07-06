@@ -16,10 +16,19 @@ class CreerModule
 
     public function execute(array $data, int $trainerId): Module
     {
+        $module = $this->creerModuleVide($data, $trainerId);
+
+        $this->seedExempleDeStructure($module);
+
+        return $module;
+    }
+
+    public function creerModuleVide(array $data, int $trainerId): Module
+    {
         $category = $this->resolveTrainerCategory();
         $subcategory = $this->resolveTrainerSubcategory($category);
 
-        $module = Module::create([
+        return Module::create([
             'module_title' => $data['module_title'],
             'module_name' => $data['module_title'],
             'module_name_slug' => Str::slug($data['module_title']),
@@ -30,10 +39,6 @@ class CreerModule
             'status' => 1,
             'is_trainer_authored' => true,
         ]);
-
-        $this->seedExempleDeStructure($module);
-
-        return $module;
     }
 
     private function seedExempleDeStructure(Module $module): void

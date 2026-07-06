@@ -92,6 +92,8 @@ app/Domains/
 │   │   ├── DupliquerModuleCatalogue.php
 │   │   ├── CreerChapitre.php
 │   │   ├── CreerLecon.php
+│   │   ├── GenererLeconIA.php
+│   │   ├── GenererStructureFormationIA.php
 │   │   ├── ModifierLecon.php
 │   │   ├── ReordonnerChapitres.php
 │   │   ├── ReordonnerLecons.php
@@ -105,7 +107,11 @@ app/Domains/
 │   └── Support/
 │       ├── AccesModule.php
 │       ├── DonneesModule.php
-│       └── NettoyeurBlocsModule.php
+│       ├── NettoyeurBlocsModule.php
+│       ├── ExtracteurTexteDocument.php
+│       ├── MistralClient.php
+│       ├── GardeFouPromptIA.php
+│       └── LimiteurGenerationIA.php
 └── Learners/
     └── Support/
         └── LearnerModuleProgress.php

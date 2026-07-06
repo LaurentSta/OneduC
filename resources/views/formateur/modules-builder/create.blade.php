@@ -37,33 +37,101 @@
     </div>
   </header>
 
-  <div class="bg-white rounded-[20px] shadow-md p-6 max-w-xl">
-    <form method="POST" action="{{ route('formateur.modules.builder.store') }}" class="space-y-4">
-      @csrf
+  @if(session('success'))
+    <div class="mb-6 max-w-xl rounded-[10px] bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-700">
+      {{ session('success') }}
+    </div>
+  @endif
 
-      <div>
-        <label class="block text-xs font-semibold text-gray-600 mb-1">Titre de la formation</label>
-        <input type="text" name="module_title" value="{{ old('module_title') }}" required maxlength="255"
-               placeholder="Ex : Les bases du numérique"
-               class="w-full rounded-[10px] border border-gray-300 px-3 py-2.5 text-sm focus:border-orangeone focus:outline-none focus:ring-2 focus:ring-orange-100">
-        @error('module_title')
-          <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-        @enderror
-      </div>
+  @if(session('error'))
+    <div class="mb-6 max-w-xl rounded-[10px] bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+      {{ session('error') }}
+    </div>
+  @endif
 
-      <div>
-        <label class="block text-xs font-semibold text-gray-600 mb-1">Description</label>
-        <textarea name="description" rows="4" maxlength="5000"
-                  placeholder="Décrivez brièvement le contenu de la formation"
-                  class="w-full rounded-[10px] border border-gray-300 px-3 py-2.5 text-sm focus:border-orangeone focus:outline-none focus:ring-2 focus:ring-orange-100">{{ old('description') }}</textarea>
-      </div>
-
-      <p class="text-xs text-gray-400">Vous pourrez ajouter les chapitres et les leçons juste après la création.</p>
-
-      <button type="submit" class="btn-oneduc !py-2.5 !text-sm">
-        Créer la formation
+  <div class="max-w-xl" x-data="{ mode: @js(old('theme') !== null || $errors->has('document') ? 'ia' : 'manuel') }">
+    <div class="mb-4 inline-flex rounded-full border border-gray-200 bg-white p-1 text-sm shadow-sm">
+      <button type="button"
+              x-on:click="mode = 'manuel'"
+              :class="mode === 'manuel' ? 'bg-bleuone text-white' : 'text-gray-500'"
+              class="rounded-full px-4 py-1.5 font-semibold transition-colors">
+        Créer manuellement
       </button>
-    </form>
+      <button type="button"
+              x-on:click="mode = 'ia'"
+              :class="mode === 'ia' ? 'bg-bleuone text-white' : 'text-gray-500'"
+              class="rounded-full px-4 py-1.5 font-semibold transition-colors">
+        Générer avec l'IA
+      </button>
+    </div>
+
+    <div x-show="mode === 'manuel'" class="bg-white rounded-[20px] shadow-md p-6">
+      <form method="POST" action="{{ route('formateur.modules.builder.store') }}" class="space-y-4">
+        @csrf
+
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Titre de la formation</label>
+          <input type="text" name="module_title" value="{{ old('module_title') }}" required maxlength="255"
+                 placeholder="Ex : Les bases du numérique"
+                 class="w-full rounded-[10px] border border-gray-300 px-3 py-2.5 text-sm focus:border-orangeone focus:outline-none focus:ring-2 focus:ring-orange-100">
+          @error('module_title')
+            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+          @enderror
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Description</label>
+          <textarea name="description" rows="4" maxlength="5000"
+                    placeholder="Décrivez brièvement le contenu de la formation"
+                    class="w-full rounded-[10px] border border-gray-300 px-3 py-2.5 text-sm focus:border-orangeone focus:outline-none focus:ring-2 focus:ring-orange-100">{{ old('description') }}</textarea>
+        </div>
+
+        <p class="text-xs text-gray-400">Vous pourrez ajouter les chapitres et les leçons juste après la création.</p>
+
+        <button type="submit" class="btn-oneduc !py-2.5 !text-sm">
+          Créer la formation
+        </button>
+      </form>
+    </div>
+
+    <div x-show="mode === 'ia'" x-cloak
+         x-data="{ loading: false }"
+         class="bg-white rounded-[20px] shadow-md p-6">
+      <form method="POST" action="{{ route('formateur.modules.builder.generate-structure-ia') }}"
+            enctype="multipart/form-data" class="space-y-4" x-on:submit="loading = true">
+        @csrf
+
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Thème de la formation</label>
+          <textarea name="theme" rows="3" maxlength="500"
+                    placeholder="Ex : Initiation à la sécurité informatique pour les seniors"
+                    class="w-full rounded-[10px] border border-gray-300 px-3 py-2.5 text-sm focus:border-orangeone focus:outline-none focus:ring-2 focus:ring-orange-100">{{ old('theme') }}</textarea>
+          @error('theme')
+            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+          @enderror
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Document source (optionnel)</label>
+          <input type="file" name="document" accept=".pdf,.docx,.txt"
+                 class="block w-full text-sm text-gray-600 file:mr-3 file:rounded-full file:border-0 file:bg-gray-100 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-gray-700 hover:file:bg-gray-200">
+          <p class="mt-1 text-xs text-gray-400">PDF, Word (.docx) ou texte brut, 20 Mo max.</p>
+          @error('document')
+            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+          @enderror
+        </div>
+
+        <p class="text-xs text-gray-400">
+          Renseignez un thème, importez un document, ou les deux : l'IA (Mistral) génère automatiquement les chapitres, les leçons et leur contenu.
+          Relisez et ajustez l'ensemble avant de proposer la formation aux stagiaires.
+        </p>
+
+        <button type="submit" :disabled="loading" class="btn-oneduc !py-2.5 !text-sm disabled:cursor-not-allowed disabled:opacity-60">
+          <span x-show="!loading">Générer la formation</span>
+          <span x-show="loading" x-cloak>Génération en cours… (jusqu'à 4 minutes)</span>
+        </button>
+      </form>
+    </div>
   </div>
 
 </div>

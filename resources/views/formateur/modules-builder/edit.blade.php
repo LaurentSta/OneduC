@@ -143,6 +143,57 @@
               x-on:click="window.dispatchEvent(new CustomEvent('outline:request-add-chapter'))">
         + Ajouter un chapitre
       </button>
+      @if($module->sections->isNotEmpty())
+        <div x-data="{ sectionUrls: @js($module->sections->mapWithKeys(fn ($s) => [$s->id => route('formateur.modules.builder.lectures.generate-ia', $s)])), selectedSectionId: {{ $module->sections->first()->id }} }">
+          <button type="button"
+                  class="inline-flex shrink-0 items-center rounded-full border-2 border-bleuone bg-transparent px-3 py-1 text-xs font-semibold text-bleuone transition-colors hover:bg-bleuone hover:text-white"
+                  x-on:click="$dispatch('open-modal', 'generate-lecture-ia')">
+            + Générer une leçon (IA)
+          </button>
+
+          <x-modal name="generate-lecture-ia" maxWidth="md">
+            <div class="p-6">
+              <h2 class="text-lg font-raleway font-medium text-bleuone">Générer une leçon avec l'IA</h2>
+              <p class="mt-2 text-sm text-gray-600">
+                Importez un document (PDF, Word .docx ou texte brut) : l'IA (Mistral) en extrait le contenu et pré-remplit une nouvelle leçon.
+                Relisez et ajustez le contenu avant de le proposer aux stagiaires.
+              </p>
+
+              <form method="POST" :action="sectionUrls[selectedSectionId]" enctype="multipart/form-data" class="mt-5 space-y-4">
+                @csrf
+
+                <div>
+                  <label class="block text-sm text-gray-600 mb-1">Chapitre de destination</label>
+                  <select x-model="selectedSectionId"
+                          class="w-full rounded-lg border border-gray-200 px-3 py-1.5 text-sm focus:border-orangeone focus:outline-none focus:ring-1 focus:ring-orangeone">
+                    @foreach($module->sections as $section)
+                      <option value="{{ $section->id }}">{{ $section->section_title }}</option>
+                    @endforeach
+                  </select>
+                </div>
+
+                <div>
+                  <label class="block text-sm text-gray-600 mb-1">Titre de la leçon (optionnel — sinon suggéré par l'IA)</label>
+                  <input type="text" name="lecture_title" maxlength="255"
+                         class="w-full rounded-lg border border-gray-200 px-3 py-1.5 text-sm focus:border-orangeone focus:outline-none focus:ring-1 focus:ring-orangeone">
+                </div>
+
+                <div>
+                  <label class="block text-sm text-gray-600 mb-1">Document source</label>
+                  <input type="file" name="document" accept=".pdf,.docx,.txt" required
+                         class="block w-full text-sm text-gray-600 file:mr-3 file:rounded-full file:border-0 file:bg-gray-100 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-gray-700 hover:file:bg-gray-200">
+                  <p class="mt-1 text-xs text-gray-400">PDF, Word (.docx) ou texte brut, 20 Mo max.</p>
+                </div>
+
+                <div class="flex justify-end gap-3">
+                  <button type="button" class="btn-oneduc-outline !px-4 !py-2 !text-sm" x-on:click="$dispatch('close')">Annuler</button>
+                  <button type="submit" class="btn-oneduc !px-4 !py-2 !text-sm">Générer la leçon</button>
+                </div>
+              </form>
+            </div>
+          </x-modal>
+        </div>
+      @endif
     </div>
   </div>
 

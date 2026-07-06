@@ -3,17 +3,19 @@
 namespace App\Http\Controllers\Formateur;
 
 use App\Domains\ModulesFormateur\Actions\AssignerGroupesModule;
+use App\Domains\ModulesFormateur\Actions\CreerChapitre;
+use App\Domains\ModulesFormateur\Actions\CreerLecon;
 use App\Domains\ModulesFormateur\Actions\CreerModule;
-use App\Domains\ModulesFormateur\Actions\DupliquerModuleCatalogue;
 use App\Domains\ModulesFormateur\Actions\DeplacerLecon;
+use App\Domains\ModulesFormateur\Actions\DupliquerLecon;
+use App\Domains\ModulesFormateur\Actions\DupliquerModuleCatalogue;
+use App\Domains\ModulesFormateur\Actions\GenererLeconIA;
+use App\Domains\ModulesFormateur\Actions\GenererStructureFormationIA;
+use App\Domains\ModulesFormateur\Actions\ModifierLecon;
 use App\Domains\ModulesFormateur\Actions\ModifierOptionsModule;
 use App\Domains\ModulesFormateur\Actions\PromouvoirLeconEnChapitre;
 use App\Domains\ModulesFormateur\Actions\ReordonnerChapitres;
 use App\Domains\ModulesFormateur\Actions\ReordonnerLecons;
-use App\Domains\ModulesFormateur\Actions\CreerLecon;
-use App\Domains\ModulesFormateur\Actions\CreerChapitre;
-use App\Domains\ModulesFormateur\Actions\DupliquerLecon;
-use App\Domains\ModulesFormateur\Actions\ModifierLecon;
 use App\Domains\ModulesFormateur\Actions\TeleverserImageModule;
 use App\Domains\ModulesFormateur\Actions\TeleverserScormModule;
 use App\Domains\ModulesFormateur\Actions\TeleverserVideoModule;
@@ -36,6 +38,8 @@ class ModuleBuilderController extends Controller
         private readonly CreerChapitre $creerChapitre,
         private readonly ReordonnerChapitres $reordonnerChapitres,
         private readonly CreerLecon $creerLecon,
+        private readonly GenererLeconIA $genererLeconIA,
+        private readonly GenererStructureFormationIA $genererStructureFormationIA,
         private readonly ModifierLecon $modifierLecon,
         private readonly DupliquerLecon $dupliquerLecon,
         private readonly ReordonnerLecons $reordonnerLecons,
@@ -80,6 +84,36 @@ class ModuleBuilderController extends Controller
         return redirect()
             ->route('formateur.modules.builder.edit', $module)
             ->with('success', 'Module créé. Ajoutez maintenant des chapitres et des leçons.');
+    }
+
+    public function generateStructureIA(Request $request)
+    {
+        $validated = $request->validate([
+            'theme' => 'nullable|string|max:500',
+            'document' => 'nullable|file|mimes:pdf,docx,txt|max:20480',
+        ]);
+
+        if (blank($validated['theme'] ?? null) && ! $request->hasFile('document')) {
+            return back()->withInput()->with('error', "Merci de renseigner un thème ou d'importer un document.");
+        }
+
+        set_time_limit(270);
+
+        try {
+            $module = $this->genererStructureFormationIA->execute(
+                $validated['theme'] ?? null,
+                $request->file('document'),
+                (int) auth()->id()
+            );
+        } catch (\Illuminate\Http\Client\ConnectionException $e) {
+            return back()->withInput()->with('error', "La génération par l'IA a pris trop de temps. Réessayez, éventuellement avec un thème plus court ou un document plus léger.");
+        } catch (\RuntimeException $e) {
+            return back()->withInput()->with('error', $e->getMessage());
+        }
+
+        return redirect()
+            ->route('formateur.modules.builder.edit', $module)
+            ->with('success', "Formation générée par l'IA. Relisez et ajustez le contenu avant de la proposer aux stagiaires.");
     }
 
     public function duplicate(Module $catalogModule)
@@ -263,6 +297,34 @@ class ModuleBuilderController extends Controller
         }
 
         return back()->with('success', 'Leçon ajoutée.');
+    }
+
+    public function generateLectureIA(Request $request, ModuleSection $section)
+    {
+        $this->access->assertOwner($section->module);
+
+        $validated = $request->validate([
+            'document' => 'required|file|mimes:pdf,docx,txt|max:20480',
+            'lecture_title' => 'nullable|string|max:255',
+        ]);
+
+        try {
+            $result = $this->genererLeconIA->execute($request->file('document'), (int) auth()->id());
+        } catch (\Illuminate\Http\Client\ConnectionException $e) {
+            return back()->with('error', "La génération par l'IA a pris trop de temps. Réessayez.");
+        } catch (\RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        $this->creerLecon->execute(
+            $section,
+            ($validated['lecture_title'] ?? null) ?: $result['title'],
+            $result['blocks_json']
+        );
+
+        return redirect()
+            ->route('formateur.modules.builder.edit', $section->module)
+            ->with('success', "Leçon générée par l'IA. Relisez et ajustez le contenu avant de la proposer aux stagiaires.");
     }
 
     public function updateLecture(Request $request, ModuleLecture $lecture)

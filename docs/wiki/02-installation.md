@@ -118,6 +118,8 @@ Mettre à jour cette valeur avec l'IP locale de la machine de développement pou
 | `NOCAPTCHA_SITEKEY` | Clé publique reCAPTCHA si les formulaires publics l'utilisent | Selon usage |
 | `NOCAPTCHA_SECRET` | Secret reCAPTCHA | Selon usage |
 | `COOKIE_CONSENT_ENABLED` | Active/désactive le bandeau cookies Spatie | Non (défaut : `true`) |
+| `MISTRAL_API_KEY` | Clé API Mistral pour la génération de leçon par IA (builder formateur) | Non (fonctionnalité désactivée sans clé) |
+| `MISTRAL_MODEL` | Modèle Mistral utilisé | Non (défaut : `mistral-large-latest`) |
 
 ---
 
@@ -131,6 +133,8 @@ Mettre à jour cette valeur avec l'IP locale de la machine de développement pou
 | `anhskohbo/no-captcha` | Captcha sur formulaires publics |
 | `spatie/laravel-cookie-consent` | Bandeau RGPD cookies |
 | `laravel-lang/common` | Traductions Laravel |
+| `smalot/pdfparser` | Extraction de texte PDF (génération de leçon par IA) |
+| `phpoffice/phpword` | Extraction de texte Word `.docx` (génération de leçon par IA) |
 
 ### Dev PHP
 
