@@ -192,7 +192,7 @@
       >
         <div class="mb-3 flex items-start justify-between gap-3">
           <div class="flex items-start gap-2 min-w-0">
-            <h2 class="text-sm font-bold text-bleuone">Ressources du module</h2>
+            <h2 class="text-sm font-bold text-bleuone">Ressources de la formation</h2>
             <div x-data="{ open: false }" class="relative">
               <button
                 type="button"
@@ -201,7 +201,7 @@
                 @focus="open = true"
                 @blur="open = false"
                 class="inline-flex h-5 w-5 items-center justify-center rounded-full border border-gray-200 bg-white text-[10px] font-black text-bleuone transition hover:border-bleuone"
-                aria-label="Aide sur les ressources du module"
+                aria-label="Aide sur les ressources de la formation"
               >
                 ?
               </button>
@@ -217,7 +217,7 @@
                 class="absolute left-0 top-full z-20 mt-2 w-52 rounded-xl border border-slate-200 bg-slate-900 px-3 py-2 text-[11px] leading-relaxed text-white shadow-xl"
                 style="display: none;"
               >
-                Documents et supports utilises dans le module.
+                Documents et supports utilises dans la formation.
               </div>
             </div>
           </div>

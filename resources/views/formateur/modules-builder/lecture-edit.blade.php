@@ -8,7 +8,7 @@
     <nav class="text-sm font-varela text-gray-500 mb-2">
       <ol class="inline-flex items-center flex-wrap gap-1">
         <li>
-          <a href="{{ route('formateur.modules.builder.index') }}" class="text-orangeone hover:underline">Mes modules</a>
+          <a href="{{ route('formateur.modules.builder.index') }}" class="text-orangeone hover:underline">Mes créations</a>
         </li>
         <li><span class="mx-1 text-gray-400">/</span></li>
         <li>
@@ -20,7 +20,7 @@
         <li class="text-gray-400">{{ $lecture->lecture_title }}</li>
       </ol>
     </nav>
-    <a href="{{ route('formateur.modules.builder.edit', $module) }}" class="text-sm font-semibold text-gray-500 hover:text-orangeone">← Retour au plan du module</a>
+    <a href="{{ route('formateur.modules.builder.edit', $module) }}" class="text-sm font-semibold text-gray-500 hover:text-orangeone">← Retour au plan de la formation</a>
   </header>
 
   <div class="bg-white rounded-[20px] shadow-md px-10 py-10 mb-8">

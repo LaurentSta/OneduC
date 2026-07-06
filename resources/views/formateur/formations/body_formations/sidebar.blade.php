@@ -5,7 +5,7 @@
   class="w-80 flex-shrink-0 bg-white border-r border-gray-100 flex flex-col fixed md:sticky z-20"
   style="top: var(--app-header-h, 86px); height: calc(100vh - var(--app-header-h, 86px));"
   role="navigation"
-  aria-label="Plan du module (formateur)"
+  aria-label="Plan de la formation (formateur)"
 >
   @php
     // Mode anonyme (lecture seule) : on masque tout suivi

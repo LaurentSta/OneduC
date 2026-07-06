@@ -47,7 +47,7 @@
 
       return [
         'id' => $id,
-        'title' => (string) data_get($moduleMeta, 'title', "Module #{$id}"),
+        'title' => (string) data_get($moduleMeta, 'title', "Formation #{$id}"),
         'position' => $index + 1,
         'persisted' => false,
         'manage_url' => '',
@@ -78,7 +78,7 @@
   $steps = [
     ['label' => 'Informations', 'helper' => 'Nom et description'],
     ['label' => 'Stagiaires', 'helper' => 'Accès et invitations'],
-    ['label' => 'Modules', 'helper' => 'Parcours pedagogique'],
+    ['label' => 'Formations', 'helper' => 'Parcours pedagogique'],
   ];
 
   $initialWizardStep = 1;
@@ -106,7 +106,7 @@
         $meta = $modulesById->get($item->module_id) ?? [];
         return [
           'id'             => (int) $item->module_id,
-          'title'          => (string) data_get($meta, 'title', "Module #{$item->module_id}"),
+          'title'          => (string) data_get($meta, 'title', "Formation #{$item->module_id}"),
           'position'       => (int) $item->position,
           'persisted'      => false,
           'manage_url'     => '',
@@ -165,7 +165,7 @@
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
             </svg>
-            <span class="font-bold">{{ $availableModules->count() }}</span> Modules disponibles
+            <span class="font-bold">{{ $availableModules->count() }}</span> Formations disponibles
           </div>
           <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-vertone/10 text-vertone border border-vertone/20">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -564,13 +564,13 @@ Lucas;Bernard;lucas.bernard@entreprise.fr</pre>
         <section class="animate-fade-in-down">
           <div class="mb-6">
             <div class="flex items-center gap-2">
-              <h2 class="text-xl font-bold text-bleuone font-raleway">Organisation des modules</h2>
+              <h2 class="text-xl font-bold text-bleuone font-raleway">Organisation des formations</h2>
               <div class="relative group">
                 <button type="button" aria-label="Information sur le parcours pédagogique" class="inline-flex h-5 w-5 items-center justify-center rounded-full border border-gray-300 bg-white text-[11px] font-bold text-gray-600">
                   ?
                 </button>
                 <div class="pointer-events-none absolute left-1/2 top-full z-20 mt-2 hidden w-80 -translate-x-1/2 rounded-lg border border-gray-200 bg-white p-3 text-xs text-gray-700 shadow-lg group-hover:block group-focus-within:block">
-                  Ajoutez les modules utiles pour ce groupe, organisez-les dans l’ordre souhaité, puis validez la création. Vous retrouverez ensuite la même interface dans l’édition pour ajuster le parcours.
+                  Ajoutez les formations utiles pour ce groupe, organisez-les dans l’ordre souhaité, puis validez la création. Vous retrouverez ensuite la même interface dans l’édition pour ajuster le parcours.
                 </div>
               </div>
             </div>
@@ -836,7 +836,7 @@ Lucas;Bernard;lucas.bernard@entreprise.fr</pre>
       const selectedModules = current.querySelectorAll('input[name="modules[]"]');
       if (selectedModules.length === 0) {
         completedSteps.delete(step);
-        showWizardClientErrors(['Ajoutez au moins un module au parcours.']);
+        showWizardClientErrors(['Ajoutez au moins une formation au parcours.']);
         return false;
       }
     }

@@ -71,7 +71,7 @@
     <div class="bg-white rounded-[20px] shadow-md p-5 flex items-center gap-2">
       <img src="{{ asset('images/svg/MFormation.svg') }}" alt="" class="w-20 h-20 shrink-0" aria-hidden="true">
       <div class="leading-tight">
-        <p class="text-base font-semibold text-orangeone">Modules utilisés</p>
+        <p class="text-base font-semibold text-orangeone">Formations utilisées</p>
         <p class="text-[17px] font-medium text-bleuone">{{ $modulesUsed ?? 0 }}</p>
       </div>
     </div>
@@ -524,7 +524,7 @@
     <article class="bg-white rounded-[20px] shadow-md p-6">
       <div class="flex items-start justify-between gap-4 mb-6">
         <div>
-          <h2 class="text-xl font-semibold text-bleuone">Modules à renforcer</h2>
+          <h2 class="text-xl font-semibold text-bleuone">Formations à renforcer</h2>
           <p class="text-sm text-gray-600">Les contenus les plus sensibles.</p>
         </div>
         <p class="text-2xl font-bold text-bleuone">{{ $modulesNeedingAttentionCount ?? 0 }}</p>
@@ -537,7 +537,7 @@
           @endphp
           <div>
             <div class="flex items-center justify-between gap-3 mb-2">
-              <p class="text-sm font-semibold text-gray-800 truncate">{{ $module->module_title ?? 'Module' }}</p>
+              <p class="text-sm font-semibold text-gray-800 truncate">{{ $module->module_title ?? 'Formation' }}</p>
               <p class="text-sm text-gray-600 whitespace-nowrap">{{ $module->attention_label ?? 'Bon suivi' }}</p>
             </div>
             <div class="h-3 rounded-full bg-gray-100 overflow-hidden">
@@ -545,7 +545,7 @@
             </div>
           </div>
         @empty
-          <p class="text-sm text-gray-500">Aucun module à afficher.</p>
+          <p class="text-sm text-gray-500">Aucune formation à afficher.</p>
         @endforelse
       </div>
     </article>
@@ -560,7 +560,7 @@
       </a>
       <a href="{{ route('formateur.progressions.modules') }}" class="inline-flex items-center gap-2 text-orangeone hover:underline">
         <x-icons.eye-iconify class="h-4 w-4" />
-        Voir les modules
+        Voir les formations
       </a>
       <a href="{{ route('formateur.progressions.stagiaires') }}" class="inline-flex items-center gap-2 text-orangeone hover:underline">
         <x-icons.eye-iconify class="h-4 w-4" />
@@ -573,7 +573,7 @@
         Ajouter un stagiaire
       </a>
       <a href="{{ route('formateur.formations.index') }}" class="text-orangeone hover:underline">
-        Consulter les modules
+        Consulter les formations
       </a>
     </div>
   </section>

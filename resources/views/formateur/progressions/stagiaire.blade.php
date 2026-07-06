@@ -69,7 +69,7 @@
         <div>
           <p class="text-sm font-bold text-gray-700">Contexte du suivi</p>
           <p class="text-xs text-gray-500 mt-1">
-            Le suivi temporel et le flux d'activité sont calculés sur le groupe sélectionné et ses modules associés.
+            Le suivi temporel et le flux d'activité sont calculés sur le groupe sélectionné et ses formations associées.
           </p>
         </div>
         <div class="flex flex-wrap gap-2">
@@ -317,7 +317,7 @@
                   <table class="w-full text-left border-collapse">
                       <thead class="bg-gray-50 sticky top-0 z-10 text-[10px] uppercase text-gray-400 font-bold tracking-wider">
                           <tr>
-                              <th class="px-6 py-3">Question et module</th>
+                              <th class="px-6 py-3">Question et formation</th>
                               <th class="px-4 py-3 text-center">Tentatives</th>
                               <th class="px-4 py-3 text-center">1er essai</th>
                               <th class="px-4 py-3 text-center">Statut final</th>
@@ -391,7 +391,7 @@
               <thead class="bg-white text-xs text-gray-500 uppercase font-varela border-b border-gray-100">
                   <tr>
                       <th class="px-6 py-3">Leçon</th>
-                      <th class="px-6 py-3">Module</th>
+                      <th class="px-6 py-3">Formation</th>
                       <th class="px-6 py-3 text-center">Terminé le</th>
                   </tr>
               </thead>
@@ -402,7 +402,7 @@
                               {{ $p->lecture->lecture_title ?? 'Leçon supprimée' }}
                           </td>
                           <td class="px-6 py-4 text-gray-500">
-                              {{ $p->lecture->section->module->module_title ?? 'Module supprimé' }}
+                              {{ $p->lecture->section->module->module_title ?? 'Formation supprimée' }}
                           </td>
                           <td class="px-6 py-4 text-center text-gray-500 text-xs">
                               {{ \Carbon\Carbon::parse($p->completed_at)->format('d/m/Y à H:i') }}

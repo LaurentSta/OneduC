@@ -234,7 +234,7 @@
         <h2 class="text-base font-bold text-bleuone">Contexte</h2>
         <dl class="mt-3 space-y-2 text-sm">
           <div class="flex items-center justify-between gap-3">
-            <dt class="text-gray-500">Module</dt>
+            <dt class="text-gray-500">Formation</dt>
             <dd class="text-right text-gray-800 font-semibold">{{ $module->module_name ?? ('#'.$module->id) }}</dd>
           </div>
           <div class="flex items-center justify-between gap-3">

@@ -82,7 +82,7 @@
               </div>
               <div>
                 <div class="text-lg font-bold text-orangeone leading-none">{{ $statModules }}</div>
-                <div class="text-[11px] text-gray-500 mt-0.5">Module{{ $statModules > 1 ? 's' : '' }}</div>
+                <div class="text-[11px] text-gray-500 mt-0.5">Formation{{ $statModules > 1 ? 's' : '' }}</div>
               </div>
             </div>
 

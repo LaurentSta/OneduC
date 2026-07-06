@@ -48,7 +48,7 @@ function normalizeAvailableModules(rawModules) {
     if (!id || seen.has(id)) return;
 
     seen.add(id);
-    const title = String(raw?.title ?? raw?.module_title ?? '').trim() || `Module #${id}`;
+    const title = String(raw?.title ?? raw?.module_title ?? '').trim() || `Formation #${id}`;
     out.push({
       id,
       title,
@@ -78,7 +78,7 @@ function normalizeSelectedModules(rawModules, moduleMap) {
 
     out.push({
       id,
-      title: titleFromMap || fallbackTitle || `Module #${id}`,
+      title: titleFromMap || fallbackTitle || `Formation #${id}`,
       position: toPositiveInt(raw?.position) || index + 1,
       persisted: raw?.persisted !== false,
       manage_url: String(raw?.manage_url ?? '').trim(),
@@ -129,7 +129,7 @@ function ParcoursHeaderLabel({ parcours }) {
         {parcours.title}
       </div>
       <div className="flex flex-wrap gap-1.5">
-        {chip(`${parcours.module_count} module${parcours.module_count > 1 ? 's' : ''}`, 'rgba(255,255,255,0.18)', '#fff')}
+        {chip(`${parcours.module_count} formation${parcours.module_count > 1 ? 's' : ''}`, 'rgba(255,255,255,0.18)', '#fff')}
         {chip(`${parcours.lesson_count} leçon${parcours.lesson_count > 1 ? 's' : ''}`, '#e94d2a', '#fff')}
         {chip(`${parcours.question_count} question${parcours.question_count > 1 ? 's' : ''}`, '#16a34a', '#fff')}
         {parcours.wc_count > 0 && chip(`${parcours.wc_count} nuage${parcours.wc_count > 1 ? 's' : ''} de mots`, '#d97706', '#fff')}
@@ -216,7 +216,7 @@ function GroupModuleFlow({
       const newModules = rawModules
         .map((m) => ({
           id: toPositiveInt(m?.id),
-          title: String(m?.title ?? '').trim() || `Module #${m?.id}`,
+          title: String(m?.title ?? '').trim() || `Formation #${m?.id}`,
           position: 0,
           persisted: false,
           manage_url: '',
@@ -388,14 +388,14 @@ function GroupModuleFlow({
     if (!moduleId) return;
 
     if (selectedIds.has(moduleId)) {
-      setAddError('Ce module est déjà dans le parcours.');
+      setAddError('Cette formation est déjà dans le parcours.');
       setNewModuleId('');
       return;
     }
 
     const availableModule = availableModuleMap.get(moduleId);
     if (!availableModule) {
-      setAddError('Module introuvable.');
+      setAddError('Formation introuvable.');
       return;
     }
 
@@ -454,7 +454,7 @@ function GroupModuleFlow({
               onClick={() => setPickerTab('modules')}
               className={`px-4 py-2 text-sm font-semibold border-b-2 -mb-px transition ${pickerTab === 'modules' ? 'border-[#004461] text-[#004461]' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
             >
-              Modules individuels
+              Formations individuelles
             </button>
             <button
               type="button"
@@ -479,7 +479,7 @@ function GroupModuleFlow({
                   )}
                   <div className="grid grid-cols-3 gap-2">
                     <div className="rounded-lg bg-[#004461]/5 px-2 py-2 text-center">
-                      <div className="text-[10px] font-semibold text-[#004461] uppercase tracking-wide">Modules</div>
+                      <div className="text-[10px] font-semibold text-[#004461] uppercase tracking-wide">Formations</div>
                       <div className="text-sm font-bold text-[#004461]">{parcours.module_count}</div>
                     </div>
                     <div className="rounded-lg bg-orange-500/10 px-2 py-2 text-center">
@@ -504,7 +504,7 @@ function GroupModuleFlow({
                     </button>
                   ) : (
                     <p className="mt-auto text-center text-[10px] text-gray-400 italic">
-                      Ce parcours ne contient pas de modules — ajoutez des étapes de type module dans le builder pour l'utiliser ici.
+                      Ce parcours ne contient pas de formations — ajoutez des étapes de type formation dans le builder pour l'utiliser ici.
                     </p>
                   )}
                 </div>
@@ -522,7 +522,7 @@ function GroupModuleFlow({
                 }}
                 className="w-full rounded border border-gray-300 px-3 py-2"
               >
-                <option value="">- Sélectionner un module -</option>
+                <option value="">- Sélectionner une formation -</option>
                 {selectableModules.map((module) => (
                   <option key={`module-option-${module.id}`} value={module.id}>
                     {module.title}
@@ -541,7 +541,7 @@ function GroupModuleFlow({
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
               </svg>
-              Ajouter un module
+              Ajouter une formation
             </button>
           </div>
         )}
@@ -580,7 +580,7 @@ function GroupModuleFlow({
           <thead className="sticky top-0 z-10 bg-bleuone text-xs uppercase text-white">
             <tr>
               <th className="w-[100px] px-4 py-3 text-center">Ordre</th>
-              <th className="px-4 py-3">Nom du module</th>
+              <th className="px-4 py-3">Nom de la formation</th>
               <th className="px-4 py-3 text-right">Actions</th>
             </tr>
           </thead>
@@ -616,8 +616,8 @@ function GroupModuleFlow({
                         type="button"
                         onClick={() => moveModule(module.id, -1)}
                         disabled={index === 0}
-                        title={index === 0 ? 'Ce module est déjà en première position' : 'Monter ce module'}
-                        aria-label={index === 0 ? 'Impossible de monter ce module' : 'Monter ce module'}
+                        title={index === 0 ? 'Cette formation est déjà en première position' : 'Monter cette formation'}
+                        aria-label={index === 0 ? 'Impossible de monter cette formation' : 'Monter cette formation'}
                         className="inline-flex h-8 w-8 items-center justify-center rounded border border-gray-300 text-bleuone hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-30"
                       >
                         <svg
@@ -639,8 +639,8 @@ function GroupModuleFlow({
                         type="button"
                         onClick={() => moveModule(module.id, +1)}
                         disabled={index === selectedModules.length - 1}
-                        title={index === selectedModules.length - 1 ? 'Ce module est déjà en dernière position' : 'Descendre ce module'}
-                        aria-label={index === selectedModules.length - 1 ? 'Impossible de descendre ce module' : 'Descendre ce module'}
+                        title={index === selectedModules.length - 1 ? 'Cette formation est déjà en dernière position' : 'Descendre cette formation'}
+                        aria-label={index === selectedModules.length - 1 ? 'Impossible de descendre cette formation' : 'Descendre cette formation'}
                         className="inline-flex h-8 w-8 items-center justify-center rounded border border-gray-300 text-bleuone hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-30"
                       >
                         <svg

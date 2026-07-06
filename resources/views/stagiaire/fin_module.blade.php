@@ -21,7 +21,7 @@
   <header class="bg-white rounded-[20px] shadow-md px-8 pt-4 pb-6 w-full mb-6">
     <p class="font-raleway text-titre text-bleuone leading-tight mb-2">Félicitations</p>
     <p class="font-varela text-sous-titre text-orangeone">
-      Module terminé : {{ $module->module_name }}
+      Formation terminée : {{ $module->module_name }}
     </p>
   </header>
 
@@ -38,7 +38,7 @@
       <div class="mt-6">
         <a href="{{ route('stagiaire.modules') }}" 
            class="inline-block px-4 py-2 rounded-lg bg-bleuone text-white">
-          Retour aux modules
+          Retour aux formations
         </a>
       </div>
     </div>
@@ -55,13 +55,13 @@
     <div class="mb-5">
       <h2 class="text-lg font-semibold text-bleuone">Statistiques d’utilisabilité</h2>
       <p class="text-sm text-gray-500 mt-1">
-        Indicateurs de fin de parcours pour ce module de formation.
+        Indicateurs de fin de parcours pour cette formation.
       </p>
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       <article class="rounded-xl border border-gray-200 p-4 bg-gray-50">
-        <p class="text-xs uppercase tracking-wide text-gray-500">Progression module</p>
+        <p class="text-xs uppercase tracking-wide text-gray-500">Progression</p>
         <p class="mt-2 text-2xl font-bold text-bleuone">{{ (int) ($stats['module_completion_percent'] ?? 0) }}%</p>
         <p class="mt-1 text-sm text-gray-600">
           {{ (int) ($stats['completed_lectures'] ?? 0) }} / {{ $totalLectures }} leçons validées
@@ -128,7 +128,7 @@
     document.addEventListener('DOMContentLoaded', function () {
       const toast = document.createElement('div');
       toast.className = 'fixed top-5 right-5 z-[120] max-w-sm bg-white border border-green-200 shadow-lg rounded-xl px-4 py-3';
-      toast.innerHTML = '<p class="text-xs font-semibold text-green-700">Module terminé</p>'
+      toast.innerHTML = '<p class="text-xs font-semibold text-green-700">Formation terminée</p>'
         + '<p class="text-xs text-gray-700 mt-1">{{ addslashes($completionToast) }}</p>';
       document.body.appendChild(toast);
       setTimeout(() => toast.remove(), 4500);

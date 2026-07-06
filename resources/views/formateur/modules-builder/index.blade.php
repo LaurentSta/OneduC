@@ -15,11 +15,11 @@
               <a href="{{ route('formateur.outils.index') }}" class="text-orangeone hover:underline">Outils numériques</a>
             </li>
             <li><span class="mx-2 text-gray-400">/</span></li>
-            <li class="text-gray-400">Mes modules</li>
+            <li class="text-gray-400">Mes créations</li>
           </ol>
         </nav>
-        <p class="font-raleway text-2xl text-bleuone">Mes modules</p>
-        <p class="text-sm text-gray-500 mt-1">Créez vos propres modules de formation (chapitres + leçons en texte riche) et assignez-les à vos groupes.</p>
+        <p class="font-raleway text-2xl text-bleuone">Mes créations</p>
+        <p class="text-sm text-gray-500 mt-1">Créez vos propres formations (chapitres + leçons en texte riche) et assignez-les à vos groupes.</p>
         </div>
       </div>
     </div>
@@ -42,13 +42,13 @@
     {{-- Formulaire création --}}
     <div class="lg:col-span-1">
       <div class="bg-white rounded-[20px] shadow-md p-6 sticky top-6">
-        <p class="font-varela text-base font-bold text-bleuone mb-4">Nouveau module</p>
+        <p class="font-varela text-base font-bold text-bleuone mb-4">Nouvelle formation</p>
 
         <form method="POST" action="{{ route('formateur.modules.builder.store') }}" class="space-y-4">
           @csrf
 
           <div>
-            <label class="block text-xs font-semibold text-gray-600 mb-1">Titre du module</label>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Titre de la formation</label>
             <input type="text" name="module_title" value="{{ old('module_title') }}" required maxlength="255"
                    placeholder="Ex : Les bases du numérique"
                    class="w-full rounded-[10px] border border-gray-300 px-3 py-2.5 text-sm focus:border-orangeone focus:outline-none focus:ring-2 focus:ring-orange-100">
@@ -57,18 +57,18 @@
           <div>
             <label class="block text-xs font-semibold text-gray-600 mb-1">Description</label>
             <textarea name="description" rows="3" maxlength="5000"
-                      placeholder="Décrivez brièvement le contenu du module"
+                      placeholder="Décrivez brièvement le contenu de la formation"
                       class="w-full rounded-[10px] border border-gray-300 px-3 py-2.5 text-sm focus:border-orangeone focus:outline-none focus:ring-2 focus:ring-orange-100">{{ old('description') }}</textarea>
           </div>
 
           <button type="submit" class="btn-oneduc w-full !py-2.5 !text-sm">
-            Créer le module
+            Créer la formation
           </button>
         </form>
       </div>
     </div>
 
-    {{-- Liste des modules --}}
+    {{-- Liste des formations --}}
     <div class="lg:col-span-2 space-y-4">
       @forelse($modules as $module)
         <div class="bg-white rounded-[20px] shadow-md p-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -97,7 +97,7 @@
             </button>
             <x-confirm-modal
               name="delete-module-{{ $module->id }}"
-              title="Supprimer ce module ?"
+              title="Supprimer cette formation ?"
               message="Cette action est irréversible."
               :action="route('formateur.modules.builder.destroy', $module)"
               method="DELETE"
@@ -112,8 +112,8 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s4.832.477 6 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
             </svg>
           </div>
-          <p class="text-sm font-semibold text-gray-700">Aucun module créé</p>
-          <p class="text-xs text-gray-400 mt-1">Utilisez le formulaire pour créer votre premier module.</p>
+          <p class="text-sm font-semibold text-gray-700">Aucune formation créée</p>
+          <p class="text-xs text-gray-400 mt-1">Utilisez le formulaire pour créer votre première formation.</p>
         </div>
       @endforelse
     </div>

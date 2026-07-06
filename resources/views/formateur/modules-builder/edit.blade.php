@@ -31,7 +31,7 @@
         <nav class="text-sm font-varela text-gray-500 mt-1">
           <ol class="inline-flex items-center space-x-1">
             <li>
-              <a href="{{ route('formateur.modules.builder.index') }}" class="text-orangeone hover:underline">Mes modules</a>
+              <a href="{{ route('formateur.modules.builder.index') }}" class="text-orangeone hover:underline">Mes créations</a>
             </li>
             <li><span class="mx-2 text-gray-400">/</span></li>
             <li class="text-gray-400">{{ $module->module_title }}</li>
@@ -74,7 +74,7 @@
                Accept: 'application/json',
                'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
              },
-             body: JSON.stringify({ module_title: this.title || 'Module sans titre', description: this.description }),
+             body: JSON.stringify({ module_title: this.title || 'Formation sans titre', description: this.description }),
            }).then((response) => {
              if (response.status === 419) throw new Error('expired');
              if (!response.ok) throw new Error('failed');
@@ -103,7 +103,7 @@
     </div>
 
     <div class="group relative mt-3">
-      <input type="text" x-model="title" placeholder="Titre du module" maxlength="255"
+      <input type="text" x-model="title" placeholder="Titre de la formation" maxlength="255"
              class="w-full border-0 bg-transparent p-0 pr-8 font-raleway text-4xl font-bold text-bleuone placeholder:text-gray-300 focus:outline-none focus:ring-0">
       <x-icons.edit-iconify class="pointer-events-none absolute right-0 top-[60%] h-7 w-7 -translate-y-1/2 text-gray-300 opacity-0 transition-opacity group-hover:opacity-100" />
     </div>
@@ -149,7 +149,7 @@
   {{-- Options du module & groupes assignés --}}
   <div class="bg-white rounded-[20px] shadow-md p-6 mb-8" x-data="{ open: false }">
     <button type="button" @click="open = !open" class="w-full flex items-center justify-between text-left">
-      <p class="font-varela text-base font-bold text-bleuone">Options du module</p>
+      <p class="font-varela text-base font-bold text-bleuone">Options de la formation</p>
       <span class="text-gray-400 transition-transform" :class="open ? 'rotate-180' : ''">⌄</span>
     </button>
 
@@ -168,7 +168,7 @@
                    accept="video/mp4,video/x-m4v,video/quicktime,video/x-msvideo,video/webm"
                    class="block w-full text-sm text-gray-600 file:mr-3 file:rounded-full file:border-0 file:bg-gray-100 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-gray-700 hover:file:bg-gray-200">
             @if($module->module_video)
-              <p class="mt-1 text-xs text-gray-400">Une vidéo est déjà associée à ce module.</p>
+              <p class="mt-1 text-xs text-gray-400">Une vidéo est déjà associée à cette formation.</p>
             @endif
           </div>
 

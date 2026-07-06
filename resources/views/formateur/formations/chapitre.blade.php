@@ -33,7 +33,7 @@
   $whiteboardGroups = collect($whiteboardGroups ?? []);
   $currentWhiteboardGroup = $currentWhiteboardGroup ?? null;
   $wordClouds = collect($wordClouds ?? []);
-  $moduleLabel = $module->module_title ?? $module->module_name ?? ('Module #' . $module->id);
+  $moduleLabel = $module->module_title ?? $module->module_name ?? ('Formation #' . $module->id);
   $moduleDetailUrl = $appendQuery(route('formateur.formations.detail', ['module' => $module->id]), $contextQuery);
 
   $defaultToolGroup = $toolGroups->firstWhere('id', (int) ($groupId ?? 0)) ?? $toolGroups->first();
@@ -186,7 +186,7 @@
   {{-- FIL D'ARIANE HIÉRARCHIQUE --}}
   <div class="shrink-0 border-b border-gray-100 bg-gray-50 px-5 py-2">
       <x-formateur.hierarchy-breadcrumb
-          :module="['label' => 'Module', 'title' => $moduleLabel, 'url' => $moduleDetailUrl]"
+          :module="['label' => 'Formation', 'title' => $moduleLabel, 'url' => $moduleDetailUrl]"
           :chapter="['label' => $chapterNo ? 'Ch. '.$chapterNo : 'Chapitre', 'title' => $selectedSection->section_title, 'url' => null]"
       />
   </div>
@@ -747,7 +747,7 @@
                    style="display: none;">
                   <div class="mb-4 flex items-center gap-2">
                       <h3 class="font-raleway text-lg font-bold text-orangeone">Ressources</h3>
-                      <x-help-tooltip message="Documents partages sur l'ensemble du module." aria-label="Aide sur les ressources" />
+                      <x-help-tooltip message="Documents partages sur l'ensemble de la formation." aria-label="Aide sur les ressources" />
                   </div>
 
                   <div class="space-y-5">
@@ -823,7 +823,7 @@
                                                   ?
                                               </button>
                                               <div x-show="open" x-cloak class="absolute left-0 top-full z-20 mt-2 w-56 rounded-xl border border-slate-200 bg-slate-900 px-3 py-2 text-[11px] leading-relaxed text-white shadow-xl" style="display: none;">
-                                                  Le stagiaire peut consulter cette ressource depuis son espace ressources du module.
+                                                  Le stagiaire peut consulter cette ressource depuis son espace ressources de la formation.
                                               </div>
                                           </div>
                                       </div>
@@ -941,7 +941,7 @@
                                   </div>
                               @empty
                                   <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-center">
-                                      <p class="text-sm font-medium text-slate-500">Aucune ressource sur ce module.</p>
+                                      <p class="text-sm font-medium text-slate-500">Aucune ressource sur cette formation.</p>
                                   </div>
                               @endforelse
                           </div>
@@ -968,17 +968,17 @@
                                       @click="selectedTool = 'module_setup'"
                                       :class="selectedTool === 'module_setup' ? 'bg-orange-50 text-orangeone border-orange-200' : 'bg-white text-slate-700 border-transparent hover:bg-slate-50'"
                                       class="flex flex-1 items-center rounded-2xl border px-3 py-3 text-left text-sm font-semibold transition">
-                                  Personnaliser le module
+                                  Personnaliser la formation
                               </button>
                               <button type="button"
                                       @click.stop="open = !open"
                                       :aria-expanded="open.toString()"
                                       class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-300 bg-white text-[11px] font-black text-bleuone transition hover:border-bleuone hover:bg-slate-50"
-                                      aria-label="Aide sur personnaliser le module">
+                                      aria-label="Aide sur personnaliser la formation">
                                   ?
                               </button>
                               <div x-show="open" x-cloak class="absolute left-0 top-full z-20 mt-2 w-64 rounded-xl border border-slate-200 bg-slate-900 px-3 py-2 text-[11px] leading-relaxed text-white shadow-xl" style="display: none;">
-                                  Permet d'ajuster le module pour un groupe precis, avec ses reglages et sa personnalisation pedagogique.
+                                  Permet d'ajuster la formation pour un groupe precis, avec ses reglages et sa personnalisation pedagogique.
                               </div>
                           </div>
 
@@ -1037,12 +1037,12 @@
                                   </div>
 
                                   <div>
-                                      <label for="tool-module-chapter" class="mb-1 block text-xs font-semibold text-slate-600">Module</label>
+                                      <label for="tool-module-chapter" class="mb-1 block text-xs font-semibold text-slate-600">Formation</label>
                                       <select id="tool-module-chapter"
                                               x-model="selectedToolModuleId"
                                               class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm focus:border-orangeone focus:ring-orangeone"
                                               :disabled="selectedToolModules().length === 0">
-                                          <option value="">Choisir un module</option>
+                                          <option value="">Choisir une formation</option>
                                           <template x-for="moduleItem in selectedToolModules()" :key="moduleItem.id">
                                               <option :value="String(moduleItem.id)" x-text="moduleItem.title"></option>
                                           </template>
@@ -1088,7 +1088,7 @@
                               <div class="flex items-start justify-between gap-3">
                                   <div>
                                       <h4 class="text-lg font-bold text-bleuone">Quiz en direct</h4>
-                                      <p class="mt-1 text-xs text-slate-500">Choisissez un groupe, un module et une lecon avant de lancer la session.</p>
+                                      <p class="mt-1 text-xs text-slate-500">Choisissez un groupe, une formation et une lecon avant de lancer la session.</p>
                                   </div>
                               </div>
 
@@ -1132,8 +1132,8 @@
                                    class="rounded-[22px] border border-slate-200 bg-white p-5 shadow-sm" style="display: none;">
                               <div class="flex items-start justify-between gap-3">
                                   <div>
-                                      <h4 class="text-lg font-bold text-bleuone">Personnaliser le module</h4>
-                                      <p class="mt-1 text-xs text-slate-500">Accedez au parametrage pedagogique du module selectionne pour ce groupe.</p>
+                                      <h4 class="text-lg font-bold text-bleuone">Personnaliser la formation</h4>
+                                      <p class="mt-1 text-xs text-slate-500">Accedez au parametrage pedagogique de la formation selectionnee pour ce groupe.</p>
                                   </div>
                               </div>
 
@@ -1143,7 +1143,7 @@
                                      rel="noopener"
                                      class="inline-flex items-center justify-center rounded-xl bg-orangeone px-4 py-2.5 text-xs font-bold uppercase text-white transition hover:bg-orange-600"
                                      :class="selectedToolManageUrl() === '#' ? 'pointer-events-none opacity-50' : ''">
-                                      Ouvrir la personnalisation du module
+                                      Ouvrir la personnalisation de la formation
                                   </a>
                               </div>
                           </section>

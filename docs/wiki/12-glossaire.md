@@ -24,13 +24,13 @@ Oneduc doit privilégier un vocabulaire simple côté stagiaire et plus précis 
 | Public | Vocabulaire recommandé |
 |--------|------------------------|
 | Stagiaire | **Ma formation**, **Continuer ma formation**, **Mon programme**, **Chapitre**, **Leçon**, **Activité** |
-| Formateur | **Mes parcours**, **Mes modules**, **Catalogue de modules**, **Outils d'animation**, **Groupes** |
+| Formateur | **Mes formations**, **Catalogue**, **Créations**, **Parcours**, **Outils d'animation**, **Groupes** |
 | Admin | **Catalogue**, **Modules**, **Sections/chapitres**, **Leçons**, **Catégories**, **Évaluations** |
 | Code / base de données | Conserver les noms techniques existants (`Module`, `ModuleSection`, `ModuleLecture`, `FormateurParcours`) |
 
 Côté stagiaire, le terme **module** doit être limité aux écrans où il aide vraiment à comprendre la structure. Le mot **formation** porte l'expérience principale : c'est le terme le plus naturel pour un public éloigné du numérique.
 
-Côté formateur, le terme **parcours** désigne l'organisation pédagogique préparée pour un groupe. Le terme **module** désigne une brique pédagogique réutilisable, créée depuis `/formateur/mes-modules` ou issue du catalogue.
+**Mise à jour 2026** : le mot **module** a été retiré de l'interface formateur également, pour la même raison de simplicité (formateurs peu expérimentés). Ce que le modèle `Module` représente s'affiche désormais partout comme une **formation** — seuls le code, les noms de route (`formateur.modules.builder.*`) et la table `modules` gardent le nom technique. La page "Formations" du formateur (`/formateur/formations`) a trois onglets : **Catalogue** (formations du catalogue et des autres formateurs), **Créations** (formations créées par le formateur lui-même, ex-« Mes modules », toujours servie par `/formateur/mes-modules`), et **Parcours** (`FormateurParcours`, l'ordonnancement pédagogique préparé pour un groupe — ex-« Mes parcours de formation »).
 
 ---
 
@@ -44,14 +44,15 @@ Côté formateur, le terme **parcours** désigne l'organisation pédagogique pr�
 **À éviter côté stagiaire** : multiplier les termes "module", "parcours" et "formation" sur le même écran.
 
 ### Module
-**Définition** : Unité d'apprentissage thématique. Un module contient des chapitres, eux-mêmes composés de leçons.  
+**Définition** : Unité d'apprentissage thématique. Un module contient des chapitres, eux-mêmes composés de leçons. C'est un nom de modèle de données ; l'interface formateur/stagiaire ne l'affiche plus depuis 2026 (voir mise à jour ci-dessus).  
 **Modèle** : `Module`  
 **Table** : `modules`  
-**Synonymes à éviter côté formateur/admin** : "cours", "formation"
+**Terme affiché en formateur/stagiaire** : "Formation"  
+**Synonymes à éviter côté admin** : "cours"
 
-**Usage recommandé** : brique de contenu réutilisable dans le catalogue ou dans les modules personnels du formateur.
+**Usage recommandé** : brique de contenu réutilisable dans le catalogue ou dans les créations personnelles du formateur.
 
-**Exemple** : "Module Bureautique — Traitement de texte"
+**Exemple** : "Formation Bureautique — Traitement de texte" (affiché) / modèle `Module` (code)
 
 ### Chapitre (Section)
 **Définition** : Subdivision d'un module. Regroupe plusieurs leçons autour d'un objectif pédagogique commun.  
@@ -170,17 +171,17 @@ Côté formateur, le terme **parcours** désigne l'organisation pédagogique pr�
 
 ## Convention d'interface à appliquer
 
-Les termes suivants coexistent dans l'interface et créent parfois de la confusion. La normalisation retenue est :
+Les termes suivants coexistent dans l'interface et créent parfois de la confusion. La normalisation retenue (mise à jour 2026) est :
 
-| Terme actuel | Recommandation | Explication |
+| Terme historique | Décision retenue | Explication |
 |-------------|----------------|-------------|
-| "Formations" (menu formateur) | "Parcours" | Désigne les `FormateurParcours` construits pour un groupe |
-| "Mes formations" (formateur) | "Mes parcours" | Évite la confusion avec "Ma formation" côté stagiaire |
-| "Ma formation" (stagiaire) | "Ma formation" | Terme principal à conserver côté apprenant |
-| "Modules" | "Modules" | À conserver pour le catalogue et les briques pédagogiques |
-| "Parcours formateur" | "Parcours formateur Oneduc" | Désigne l'onboarding du formateur dans la plateforme |
-| "Outils" (stagiaire) | "Activités de groupe" | Plus clair pour un public non-expert |
-| "Documentation" (stagiaire) | "Ressources" | Plus neutre et plus clair |
+| "Catalogue de modules" (formateur) | "Catalogue" | Onglet de la page Formations ; liste les `Module` du catalogue et des autres formateurs |
+| "Mes modules" (formateur, `ModuleBuilderController`) | "Créations" | Onglet de la page Formations ; création/gestion des `Module` propres au formateur |
+| "Mes parcours de formation" (formateur) | "Parcours" | Onglet de la page Formations ; désigne les `FormateurParcours` construits pour un groupe |
+| "Ma formation" (stagiaire) | "Ma formation" | Terme principal à conserver côté apprenant, inchangé |
+| "Parcours formateur" | "Parcours formateur Oneduc" | Désigne l'onboarding du formateur dans la plateforme — vocabulaire distinct, non concerné par la simplification module→formation |
+| "Outils" (stagiaire) | "Activités de groupe" | Proposition non appliquée à ce jour |
+| "Documentation" (stagiaire) | "Ressources" | Proposition non appliquée à ce jour |
 | Bouton de reprise stagiaire | "Continuer ma formation" | Action la plus lisible pour reprendre là où il s'est arrêté |
 
 ### Exemples de libellés recommandés
@@ -190,9 +191,9 @@ Les termes suivants coexistent dans l'interface et créent parfois de la confusi
 | Menu stagiaire principal | "Ma formation" |
 | Bouton principal dashboard stagiaire | "Continuer ma formation" |
 | Liste stagiaire | "Mon programme" ou "Étapes de la formation" |
-| Menu formateur pour `FormateurParcours` | "Mes parcours" |
-| Menu formateur pour `ModuleBuilderController` | "Mes modules" |
-| Catalogue formateur/admin | "Catalogue de modules" |
+| Onglet formateur pour `FormateurParcours` | "Parcours" |
+| Onglet formateur pour `ModuleBuilderController` | "Créations" |
+| Onglet catalogue formateur/admin | "Catalogue" |
 | Outils live | "Outils d'animation" côté formateur, "Activités de groupe" côté stagiaire |
 
 ---

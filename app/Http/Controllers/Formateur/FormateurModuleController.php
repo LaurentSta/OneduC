@@ -62,7 +62,13 @@ class FormateurModuleController extends Controller
             ->orderByDesc('created_at')
             ->get();
 
-        return view('formateur.formations.index', compact('modules', 'search', 'mesParcours'));
+        $mesCreations = Module::query()
+            ->authoredByTrainer($formateurId)
+            ->withCount(['sections', 'groups'])
+            ->orderByDesc('updated_at')
+            ->get();
+
+        return view('formateur.formations.index', compact('modules', 'search', 'mesParcours', 'mesCreations'));
     }
 
     public function moduleDetail(Request $request, Module $module)

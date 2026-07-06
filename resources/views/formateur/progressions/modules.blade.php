@@ -10,31 +10,31 @@
 
       <div class="lg:col-span-8">
         {{-- Fil d’Ariane --}}
-        <x-oneduc.breadcrumb :items="[['label' => 'Accueil', 'url' => route('formateur.dashboard')], ['label' => 'Suivi par module']]" />
+        <x-oneduc.breadcrumb :items="[['label' => 'Accueil', 'url' => route('formateur.dashboard')], ['label' => 'Suivi par formation']]" />
 
         <h1 class="font-raleway text-2xl font-medium leading-tight text-bleuone md:text-3xl">
-          Suivi par module
+          Suivi par formation
         </h1>
         <p class="mt-0.5 font-varela text-base text-orangeone md:text-lg">
-          Analyse des modules utilisés dans vos groupes
+          Analyse des formations utilisées dans vos groupes
         </p>
         <p class="mt-3 max-w-2xl font-lisible text-sm leading-relaxed text-slate-700">
-          Cette vue présente uniquement les modules réellement associés à vos groupes.
-          Vous pouvez identifier les modules les plus sollicités, ceux à renforcer
+          Cette vue présente uniquement les formations réellement associées à vos groupes.
+          Vous pouvez identifier les formations les plus sollicitées, celles à renforcer
           et repérer d’éventuelles difficultés pédagogiques.
         </p>
 
         {{-- 📊 Statistiques --}}
         <div class="mt-4 flex flex-wrap gap-2 text-xs font-varela">
           <span class="inline-flex items-center gap-1.5 rounded-full border border-bleuone/15 bg-bleuone/5 px-3 py-1 text-bleuone">
-            {{ $modules->count() }} modules
+            {{ $modules->count() }} formations
           </span>
         </div>
       </div>
 
       <div class="lg:col-span-4 flex justify-center lg:justify-end">
         <img src="{{ asset('images/svg/Progressions.svg') }}"
-             alt="Illustration suivi par module"
+             alt="Illustration suivi par formation"
              class="max-w-[220px] h-auto">
       </div>
 
@@ -68,7 +68,7 @@
                     {{-- 1. Info Module --}}
                     <div class="flex-1">
                         <div class="flex items-center gap-3 mb-2">
-                            <span class="px-2 py-1 bg-blue-50 text-bleuone text-xs font-bold rounded uppercase tracking-wider">Module</span>
+                            <span class="px-2 py-1 bg-blue-50 text-bleuone text-xs font-bold rounded uppercase tracking-wider">Formation</span>
                             <h3 class="text-xl font-bold text-gray-900">{{ $m->module_title }}</h3>
                         </div>
                         <div class="flex items-center gap-6 text-sm text-gray-500 mt-4">
@@ -127,7 +127,7 @@
                     <div class="mt-6 pt-6 border-t border-dashed border-gray-200">
                         <p class="text-sm text-gray-400 italic flex items-center gap-2">
                             <svg class="w-5 h-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                            Aucune difficulté majeure détectée sur les quiz de ce module.
+                            Aucune difficulté majeure détectée sur les quiz de cette formation.
                         </p>
                     </div>
                 @endif
@@ -136,13 +136,13 @@
         </div>
     @empty
         <div class="text-center py-12 bg-white rounded-2xl border border-dashed border-gray-300">
-            <p class="text-gray-500">Aucun module associé à vos groupes pour le moment.</p>
+            <p class="text-gray-500">Aucune formation associée à vos groupes pour le moment.</p>
         </div>
     @endforelse
 
     <div class="flex flex-wrap items-center gap-2">
         <div class="inline-flex items-center gap-2 rounded-full border border-bleuone/20 bg-white px-4 py-2 text-sm font-varela text-gray-700">
-            <span>Nombre total de modules :</span>
+            <span>Nombre total de formations :</span>
             <span class="font-bold text-bleuone">{{ $modules->count() }}</span>
         </div>
     </div>

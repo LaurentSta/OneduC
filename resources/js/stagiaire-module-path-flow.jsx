@@ -49,7 +49,7 @@ function normalizeModules(rawModules) {
     seen.add(id);
     out.push({
       id,
-      title: String(raw?.title ?? raw?.module_title ?? '').trim() || `Module #${id}`,
+      title: String(raw?.title ?? raw?.module_title ?? '').trim() || `Formation #${id}`,
       order: toPositiveInt(raw?.order) || index + 1,
       status: String(raw?.status ?? 'not_started'),
       progress: Math.max(0, Math.min(100, Number(raw?.progress ?? 0) || 0)),
@@ -199,7 +199,7 @@ function StagiaireModulePathFlow({ modules = [] }) {
       <h3 id="stagiaire-flow-title" className="mb-1 text-lg font-bold text-bleuone">
         Parcours visuel
       </h3>
-      <p className="mb-4 text-sm text-gray-600">Vue chronologique de vos modules de formation.</p>
+      <p className="mb-4 text-sm text-gray-600">Vue chronologique de vos formations.</p>
 
       <div className="mb-4 flex flex-wrap items-center gap-3 text-xs">
         <span className="inline-flex items-center gap-2 rounded border border-gray-200 bg-gray-50 px-2.5 py-1.5 text-gray-700">

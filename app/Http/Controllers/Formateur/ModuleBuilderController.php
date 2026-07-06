@@ -65,7 +65,7 @@ class ModuleBuilderController extends Controller
 
     public function create()
     {
-        return redirect()->route('formateur.modules.builder.index');
+        return view('formateur.modules-builder.create');
     }
 
     public function store(Request $request)

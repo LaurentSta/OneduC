@@ -406,11 +406,11 @@
     <x-oneduc.outil-tile
       x-show="filtre === 'all'"
       tool-id="modules"
-      title="Mes modules"
+      title="Mes créations"
       icon-bg="bg-emerald-600"
       :badge-count="$recentModules->count()"
-      cta-route="{{ route('formateur.modules.builder.index') }}"
-      cta-label="Gérer mes modules"
+      cta-route="{{ route('formateur.formations.index', ['tab' => 'creations']) }}"
+      cta-label="Gérer mes créations"
       cta-bg="bg-emerald-600 hover:bg-emerald-700"
     >
       <x-slot:icon>
@@ -419,7 +419,7 @@
         </svg>
       </x-slot:icon>
       <x-slot:description>
-        Créez vos propres modules de formation (chapitres et leçons en texte riche) et assignez-les à vos groupes, sans passer par le catalogue admin.
+        Créez vos propres formations (chapitres et leçons en texte riche) et assignez-les à vos groupes, sans passer par le catalogue admin.
       </x-slot:description>
       <x-slot:badges>
         <span class="rounded-full bg-green-100 px-2.5 py-0.5 font-semibold text-green-700">Présentiel</span>
@@ -428,7 +428,7 @@
       </x-slot:badges>
       @if($recentModules->isNotEmpty())
         <x-slot:body>
-          <p class="mb-2 text-[10px] font-bold uppercase tracking-wider text-gray-400">Modules récents</p>
+          <p class="mb-2 text-[10px] font-bold uppercase tracking-wider text-gray-400">Formations récentes</p>
           <div class="space-y-2">
             @foreach($recentModules as $module)
               <div class="flex items-center justify-between gap-2">
