@@ -9,6 +9,7 @@ use App\Domains\ModulesFormateur\Actions\CreerModule;
 use App\Domains\ModulesFormateur\Actions\DeplacerLecon;
 use App\Domains\ModulesFormateur\Actions\DupliquerLecon;
 use App\Domains\ModulesFormateur\Actions\DupliquerModuleCatalogue;
+use App\Domains\ModulesFormateur\Actions\GenererAudioLecon;
 use App\Domains\ModulesFormateur\Actions\GenererLeconIA;
 use App\Domains\ModulesFormateur\Actions\GenererStructureFormationIA;
 use App\Domains\ModulesFormateur\Actions\ModifierLecon;
@@ -40,6 +41,7 @@ class ModuleBuilderController extends Controller
         private readonly CreerLecon $creerLecon,
         private readonly GenererLeconIA $genererLeconIA,
         private readonly GenererStructureFormationIA $genererStructureFormationIA,
+        private readonly GenererAudioLecon $genererAudioLecon,
         private readonly ModifierLecon $modifierLecon,
         private readonly DupliquerLecon $dupliquerLecon,
         private readonly ReordonnerLecons $reordonnerLecons,
@@ -176,6 +178,7 @@ class ModuleBuilderController extends Controller
             'estimated_question_seconds' => 'nullable|integer|min:1|max:600',
             'resources' => 'nullable|string|max:255',
             'prerequi' => 'nullable|string',
+            'objectifs' => 'nullable|string',
             'module_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
             'header_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
             'module_video_file' => 'nullable|file|mimes:mp4,m4v,mov,avi,webm|max:307200',
@@ -309,7 +312,7 @@ class ModuleBuilderController extends Controller
         ]);
 
         try {
-            $result = $this->genererLeconIA->execute($request->file('document'), (int) auth()->id());
+            $result = $this->genererLeconIA->execute($request->file('document'), $section->module, (int) auth()->id());
         } catch (\Illuminate\Http\Client\ConnectionException $e) {
             return back()->with('error', "La génération par l'IA a pris trop de temps. Réessayez.");
         } catch (\RuntimeException $e) {
@@ -407,6 +410,19 @@ class ModuleBuilderController extends Controller
             'lecture' => $lecture,
             'initialBlocks' => $this->payloads->resolvedContentBlocks($lecture),
         ]);
+    }
+
+    public function generateAudioLecture(ModuleLecture $lecture)
+    {
+        $this->access->assertOwner($lecture->module);
+
+        try {
+            $this->genererAudioLecon->execute($lecture, (int) auth()->id());
+        } catch (\RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        return back()->with('success', "Audio généré. Vous pouvez l'écouter ci-dessous.");
     }
 
     public function moveLecture(Request $request, ModuleLecture $lecture)

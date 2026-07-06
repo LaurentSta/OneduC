@@ -224,6 +224,7 @@ Route::middleware(['auth', 'role:formateur', 'association.member'])
             Route::post('/sections/{section}/lectures', [ModuleBuilderController::class, 'storeLecture'])->name('lectures.store');
             Route::post('/sections/{section}/lectures/generer-ia', [ModuleBuilderController::class, 'generateLectureIA'])->name('lectures.generate-ia');
             Route::get('/lectures/{lecture}/edition', [ModuleBuilderController::class, 'editLecture'])->name('lectures.edit');
+            Route::post('/lectures/{lecture}/generer-audio', [ModuleBuilderController::class, 'generateAudioLecture'])->name('lectures.generate-audio');
             Route::put('/lectures/{lecture}', [ModuleBuilderController::class, 'updateLecture'])->name('lectures.update');
             Route::delete('/lectures/{lecture}', [ModuleBuilderController::class, 'destroyLecture'])->name('lectures.destroy');
             Route::post('/lectures/{lecture}/duplicate', [ModuleBuilderController::class, 'duplicateLecture'])->name('lectures.duplicate');

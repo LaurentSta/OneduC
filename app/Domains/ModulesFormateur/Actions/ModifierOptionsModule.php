@@ -41,11 +41,30 @@ class ModifierOptionsModule
             'estimated_question_seconds' => $data['estimated_question_seconds'] ?? null,
             'resources' => $data['resources'] ?? null,
             'prerequi' => $data['prerequi'] ?? null,
+            'objectifs' => $this->normaliserObjectifs($data['objectifs'] ?? null),
             'certificat' => $data['certificat'] ?? false,
             'status' => $data['status'] ?? false,
         ]);
 
         return $module;
+    }
+
+    /**
+     * @return array<int, string>|null
+     */
+    private function normaliserObjectifs(?string $rawObjectifs): ?array
+    {
+        if ($rawObjectifs === null || trim($rawObjectifs) === '') {
+            return null;
+        }
+
+        $objectifs = collect(preg_split('/\r\n|\r|\n/', $rawObjectifs))
+            ->map(fn ($ligne) => trim($ligne))
+            ->filter()
+            ->values()
+            ->all();
+
+        return $objectifs !== [] ? $objectifs : null;
     }
 
     private function storeImage(UploadedFile $file, string $folder): string
@@ -72,10 +91,14 @@ class ModifierOptionsModule
         }
 
         $baseName = Str::slug(pathinfo((string) $video->getClientOriginalName(), PATHINFO_FILENAME));
-        if ($baseName === '') $baseName = 'module-video';
+        if ($baseName === '') {
+            $baseName = 'module-video';
+        }
 
         $extension = strtolower((string) $video->getClientOriginalExtension());
-        if ($extension === '') $extension = 'mp4';
+        if ($extension === '') {
+            $extension = 'mp4';
+        }
 
         $fileName = now()->format('Ymd_His').'_'.Str::random(6).'_'.$baseName.'.'.$extension;
         $disk->putFileAs($storageFolder, $video, $fileName);

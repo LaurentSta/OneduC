@@ -56,4 +56,9 @@ return [
         'model' => env('MISTRAL_MODEL', 'mistral-large-latest'),
     ],
 
+    'piper' => [
+        'binary' => env('PIPER_BINARY_PATH', storage_path('app/piper/piper/piper')),
+        'model' => env('PIPER_MODEL_PATH', storage_path('app/piper/voices/fr_FR-siwis-medium.onnx')),
+    ],
+
 ];

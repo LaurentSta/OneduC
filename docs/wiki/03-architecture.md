@@ -94,6 +94,8 @@ app/Domains/
 │   │   ├── CreerLecon.php
 │   │   ├── GenererLeconIA.php
 │   │   ├── GenererStructureFormationIA.php
+│   │   ├── GenererAudioLecon.php
+│   │   ├── ImporterImagesDocument.php
 │   │   ├── ModifierLecon.php
 │   │   ├── ReordonnerChapitres.php
 │   │   ├── ReordonnerLecons.php
@@ -110,6 +112,7 @@ app/Domains/
 │       ├── NettoyeurBlocsModule.php
 │       ├── ExtracteurTexteDocument.php
 │       ├── MistralClient.php
+│       ├── PiperTtsClient.php
 │       ├── GardeFouPromptIA.php
 │       └── LimiteurGenerationIA.php
 └── Learners/

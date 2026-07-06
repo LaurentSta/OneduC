@@ -33,6 +33,7 @@ class CreerModule
             'module_name' => $data['module_title'],
             'module_name_slug' => Str::slug($data['module_title']),
             'description' => $data['description'] ?? null,
+            'objectifs' => $data['objectifs'] ?? null,
             'formateur_id' => $trainerId,
             'category_id' => $category->id,
             'subcategory_id' => $subcategory->id,

@@ -1,6 +1,10 @@
 {{-- resources/views/shared/lecture_blocks.blade.php --}}
 @php $blocks = collect($blocks ?? []); $lecture = $lecture ?? null; @endphp
 
+@if($lecture && method_exists($lecture, 'getFirstMedia') && ($audio = $lecture->getFirstMedia('lesson-audio')))
+  <audio controls class="mb-6 w-full" src="{{ $audio->getUrl() }}"></audio>
+@endif
+
 @foreach($blocks as $block)
   @switch($block['type'] ?? null)
     @case('text')

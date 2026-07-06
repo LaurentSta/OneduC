@@ -6,6 +6,7 @@ use App\Domains\ModulesFormateur\Support\ExtracteurTexteDocument;
 use App\Domains\ModulesFormateur\Support\GardeFouPromptIA;
 use App\Domains\ModulesFormateur\Support\LimiteurGenerationIA;
 use App\Domains\ModulesFormateur\Support\MistralClient;
+use App\Models\Module;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
 use RuntimeException;
@@ -30,12 +31,13 @@ PROMPT;
         private readonly MistralClient $mistral,
         private readonly GardeFouPromptIA $gardeFou,
         private readonly LimiteurGenerationIA $limiteur,
+        private readonly ImporterImagesDocument $importerImages,
     ) {}
 
     /**
      * @return array{title: string, blocks_json: string}
      */
-    public function execute(UploadedFile $document, int $trainerId): array
+    public function execute(UploadedFile $document, Module $module, int $trainerId): array
     {
         if ($this->limiteur->tropDeTentatives($trainerId)) {
             throw new RuntimeException('Limite de 3 générations IA par jour atteinte. Réessayez demain.');
@@ -43,12 +45,13 @@ PROMPT;
 
         $sourceText = Str::limit($this->extracteur->extract($document), self::MAX_SOURCE_CHARS, '');
 
-        $this->gardeFou->verifier($sourceText);
+        $this->gardeFou->verifier($sourceText, $trainerId);
         $this->limiteur->enregistrerTentative($trainerId);
 
         $raw = $this->mistral->chat(
             self::SYSTEM_PROMPT,
-            "Voici le contenu du document source à transformer en leçon :\n\n".$sourceText
+            "Voici le contenu du document source à transformer en leçon :\n\n".$sourceText,
+            trainerId: $trainerId,
         );
 
         $decoded = json_decode($raw, true);
@@ -61,9 +64,11 @@ PROMPT;
             $title = pathinfo($document->getClientOriginalName(), PATHINFO_FILENAME);
         }
 
+        $blocks = array_merge($decoded['blocks'], $this->importerImages->importer($document, $module));
+
         return [
             'title' => Str::limit($title, 255, ''),
-            'blocks_json' => json_encode($decoded['blocks']),
+            'blocks_json' => json_encode($blocks),
         ];
     }
 }

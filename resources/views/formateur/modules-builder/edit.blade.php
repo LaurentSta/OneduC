@@ -295,6 +295,13 @@
             <textarea name="prerequi" rows="2" placeholder="Ex : savoir utiliser la souris..."
                       class="w-full rounded-lg border border-gray-200 px-3 py-1.5 text-sm focus:border-orangeone focus:outline-none focus:ring-1 focus:ring-orangeone">{{ old('prerequi', $module->prerequi) }}</textarea>
           </div>
+
+          <div class="sm:col-span-2">
+            <label class="block text-sm text-gray-600 mb-1">Objectifs pédagogiques (un par ligne)</label>
+            <textarea name="objectifs" rows="4" placeholder="Ex : Vous saurez identifier..."
+                      class="w-full rounded-lg border border-gray-200 px-3 py-1.5 text-sm focus:border-orangeone focus:outline-none focus:ring-1 focus:ring-orangeone">{{ old('objectifs', is_array($module->objectifs) ? implode("\n", $module->objectifs) : $module->objectifs) }}</textarea>
+            <p class="mt-1 text-xs text-gray-400">Affichés dans l'onglet « Objectifs » de la page de présentation de la formation.</p>
+          </div>
         </div>
       </div>
 

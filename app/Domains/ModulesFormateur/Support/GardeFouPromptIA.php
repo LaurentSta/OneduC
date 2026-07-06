@@ -27,14 +27,14 @@ class GardeFouPromptIA
         private readonly MistralClient $mistral,
     ) {}
 
-    public function verifier(string $texte): void
+    public function verifier(string $texte, ?int $trainerId = null): void
     {
         $texte = trim($texte);
         if ($texte === '') {
             return;
         }
 
-        $categories = $this->mistral->moderate(Str::limit($texte, 8000, ''));
+        $categories = $this->mistral->moderate(Str::limit($texte, 8000, ''), $trainerId);
 
         $declenchees = array_intersect_key(self::CATEGORIES_BLOQUEES, array_filter($categories));
 
