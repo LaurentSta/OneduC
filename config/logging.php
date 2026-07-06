@@ -123,6 +123,14 @@ return [
             'handler' => NullHandler::class,
         ],
 
+        'mistral' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/mistral.log'),
+            'level' => 'info',
+            'days' => 30,
+            'replace_placeholders' => true,
+        ],
+
         'emergency' => [
             'path' => storage_path('logs/laravel.log'),
         ],
