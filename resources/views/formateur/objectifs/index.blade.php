@@ -11,7 +11,7 @@
           Recherchez les objectifs existants pour eviter les doublons.
         </x-typography>
         <x-typography>
-          La recherche fonctionne par mots-cles sur les objectifs de lecon, la lecon, le chapitre et le module.
+          La recherche fonctionne par mots-cles sur les objectifs de lecon, la lecon, le chapitre et la formation.
         </x-typography>
 
         <nav class="text-sm font-varela text-gray-600 mt-2" aria-label="Fil d'Ariane">
@@ -68,14 +68,14 @@
       </div>
 
       <div class="w-full md:w-4/12">
-        <label for="module_id" class="sr-only">Filtrer par module</label>
+        <label for="module_id" class="sr-only">Filtrer par formation</label>
         <select
           id="module_id"
           name="module_id"
           class="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-orangeone focus:border-orangeone text-sm font-lisible bg-white">
-          <option value="0">Tous les modules</option>
+          <option value="0">Toutes les formations</option>
           @foreach($modules as $m)
-            @php $moduleLabel = $m->module_title ?: ($m->module_name ?: ('Module #' . $m->id)); @endphp
+            @php $moduleLabel = $m->module_title ?: ($m->module_name ?: ('Formation #' . $m->id)); @endphp
             <option value="{{ $m->id }}" @selected($moduleId === (int) $m->id)>{{ $moduleLabel }}</option>
           @endforeach
         </select>
@@ -104,7 +104,7 @@
             <th class="px-6 py-3">Competences</th>
             <th class="px-6 py-3">Lecon</th>
             <th class="px-6 py-3">Chapitre</th>
-            <th class="px-6 py-3">Module</th>
+            <th class="px-6 py-3">Formation</th>
             <th class="px-6 py-3">Actions</th>
           </tr>
         </thead>

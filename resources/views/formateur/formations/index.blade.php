@@ -6,13 +6,13 @@
 <div
   class="max-w-[1285px] mx-auto px-8"
   x-data="{
-    tab: '{{ request('tab') === 'parcours' ? 'parcours' : 'catalogue' }}',
+    tab: '{{ in_array(request('tab'), ['parcours', 'creations']) ? request('tab') : 'catalogue' }}',
     filtersOpen: {{ request()->filled('search') ? 'true' : 'false' }},
     setTab(value) {
       this.tab = value;
       const url = new URL(window.location.href);
-      if (value === 'parcours') {
-        url.searchParams.set('tab', 'parcours');
+      if (value === 'parcours' || value === 'creations') {
+        url.searchParams.set('tab', value);
       } else {
         url.searchParams.delete('tab');
       }
@@ -26,22 +26,29 @@
     <div class="grid gap-6 px-6 py-6 md:px-8 md:py-7 lg:grid-cols-12 lg:items-center">
 
       <div class="lg:col-span-8">
-        <x-oneduc.breadcrumb :items="[['label' => 'Accueil', 'url' => route('formateur.dashboard')], ['label' => request('tab') === 'parcours' ? 'Mes parcours de formation' : 'Catalogue des modules']]" />
+        @php
+          $formationsTabLabel = match(request('tab')) {
+            'parcours' => 'Parcours',
+            'creations' => 'Créations',
+            default => 'Catalogue',
+          };
+        @endphp
+        <x-oneduc.breadcrumb :items="[['label' => 'Accueil', 'url' => route('formateur.dashboard')], ['label' => $formationsTabLabel]]" />
 
         <h1 class="font-raleway text-2xl font-medium leading-tight text-bleuone md:text-3xl">
-          Mes modules de formation
+          Mes formations
         </h1>
         <p class="mt-0.5 font-varela text-base text-orangeone md:text-lg">
-          Suivez les modules que vous utilisez dans vos groupes.
+          Suivez les formations que vous utilisez dans vos groupes.
         </p>
         <p class="mt-3 max-w-2xl font-lisible text-sm leading-relaxed text-slate-700">
-          Retrouvez ici tous les modules de formation utilisés, leur statut, les groupes concernés et les stagiaires associés.
+          Retrouvez ici toutes les formations utilisées, leur statut, les groupes concernés et les stagiaires associés.
         </p>
 
         {{-- 📊 Statistiques --}}
         <div class="mt-4 flex flex-wrap gap-2 text-xs font-varela">
           <span class="inline-flex items-center gap-1.5 rounded-full border border-bleuone/15 bg-bleuone/5 px-3 py-1 text-bleuone">
-            {{ $modules->total() }} modules
+            {{ $modules->total() }} formations
           </span>
           <span class="inline-flex items-center gap-1.5 rounded-full border border-orangeone/20 bg-orangeone/10 px-3 py-1 text-orangeone">
             {{ $mesParcours->count() }} parcours
@@ -51,7 +58,7 @@
 
       <div class="lg:col-span-4 flex justify-center lg:justify-end">
         <img src="{{ asset('images/svg/Modules.svg') }}"
-             alt="Illustration des modules de formation"
+             alt="Illustration des formations"
              class="max-w-[220px] h-auto"
              loading="lazy">
       </div>
@@ -62,29 +69,55 @@
   {{-- ONGLETS --}}
   <div class="mb-4 rounded-t-[14px] border border-gray-200 border-b-2 border-b-bleuone/15 bg-white px-3 pt-3 shadow-sm">
     <div class="flex flex-wrap items-end justify-between gap-3">
-      <div role="tablist" aria-label="Vue des formations">
-        <button
-          type="button"
-          role="tab"
-          @click="setTab('catalogue')"
-          :aria-selected="tab === 'catalogue'"
-          :class="tab === 'catalogue' ? 'border-[#E94D2A] text-[#E94D2A]' : 'border-transparent text-gray-500 hover:text-bleuone'"
-          class="-mb-[2px] inline-flex items-center gap-2 border-b-2 px-4 pb-3 pt-2 text-sm font-semibold transition"
-        >
-          Catalogue des modules
-          <span class="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{{ $modules->total() }}</span>
-        </button>
-        <button
-          type="button"
-          role="tab"
-          @click="setTab('parcours')"
-          :aria-selected="tab === 'parcours'"
-          :class="tab === 'parcours' ? 'border-[#E94D2A] text-[#E94D2A]' : 'border-transparent text-gray-500 hover:text-bleuone'"
-          class="-mb-[2px] inline-flex items-center gap-2 border-b-2 px-4 pb-3 pt-2 text-sm font-semibold transition"
-        >
-          Mes parcours de formation
-          <span class="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{{ $mesParcours->count() }}</span>
-        </button>
+      <div role="tablist" aria-label="Vue des formations" class="flex items-end gap-1">
+        <div class="relative inline-flex group">
+          <button
+            type="button"
+            role="tab"
+            @click="setTab('catalogue')"
+            :aria-selected="tab === 'catalogue'"
+            :class="tab === 'catalogue' ? 'border-[#E94D2A] text-[#E94D2A]' : 'border-transparent text-gray-500 hover:text-bleuone'"
+            class="-mb-[2px] inline-flex items-center gap-2 border-b-2 px-4 pb-3 pt-2 text-sm font-semibold transition"
+          >
+            Catalogue
+            <span class="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{{ $modules->total() }}</span>
+          </button>
+          <span class="pointer-events-none absolute -top-9 left-1/2 z-20 hidden -translate-x-1/2 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 shadow-lg group-hover:block">
+            Formations disponibles pour vos groupes
+          </span>
+        </div>
+        <div class="relative inline-flex group">
+          <button
+            type="button"
+            role="tab"
+            @click="setTab('creations')"
+            :aria-selected="tab === 'creations'"
+            :class="tab === 'creations' ? 'border-[#E94D2A] text-[#E94D2A]' : 'border-transparent text-gray-500 hover:text-bleuone'"
+            class="-mb-[2px] inline-flex items-center gap-2 border-b-2 px-4 pb-3 pt-2 text-sm font-semibold transition"
+          >
+            Créations
+            <span class="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{{ $mesCreations->count() }}</span>
+          </button>
+          <span class="pointer-events-none absolute -top-9 left-1/2 z-20 hidden -translate-x-1/2 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 shadow-lg group-hover:block">
+            Créez vos propres formations
+          </span>
+        </div>
+        <div class="relative inline-flex group">
+          <button
+            type="button"
+            role="tab"
+            @click="setTab('parcours')"
+            :aria-selected="tab === 'parcours'"
+            :class="tab === 'parcours' ? 'border-[#E94D2A] text-[#E94D2A]' : 'border-transparent text-gray-500 hover:text-bleuone'"
+            class="-mb-[2px] inline-flex items-center gap-2 border-b-2 px-4 pb-3 pt-2 text-sm font-semibold transition"
+          >
+            Parcours
+            <span class="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{{ $mesParcours->count() }}</span>
+          </button>
+          <span class="pointer-events-none absolute -top-9 left-1/2 z-20 hidden -translate-x-1/2 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 shadow-lg group-hover:block">
+            Ordonnez les formations suivies par un groupe
+          </span>
+        </div>
       </div>
 
       <button
@@ -123,7 +156,7 @@
                id="search"
                name="search"
                value="{{ $search ?? request('search') }}"
-               placeholder="Rechercher un titre de module"
+               placeholder="Rechercher un titre de formation"
                class="h-10 w-full rounded-md border border-gray-300 px-4 text-sm font-lisible shadow-sm focus:border-orangeone focus:ring-orangeone">
       </div>
 
@@ -238,11 +271,11 @@
                       <div class="relative inline-flex group">
                         <a href="{{ $officialUrl }}"
                            class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-orangeone/20 bg-orangeone/10 text-orangeone transition hover:border-orangeone hover:bg-orangeone hover:text-white"
-                           aria-label="Voir le module {{ $titre }}">
+                           aria-label="Voir la formation {{ $titre }}">
                           <x-icons.eye-iconify class="h-4 w-4" />
                         </a>
                         <span class="pointer-events-none absolute -top-9 left-1/2 z-20 hidden -translate-x-1/2 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 shadow-lg group-hover:block">
-                          Voir le module
+                          Voir la formation
                         </span>
                       </div>
                     @else
@@ -252,7 +285,7 @@
                     @if(!$module->is_trainer_authored)
                       <div class="relative inline-flex group">
                         <button type="button" x-data x-on:click="$dispatch('open-modal', 'duplicate-module-{{ $module->id }}')"
-                                aria-label="Dupliquer le module {{ $titre }}"
+                                aria-label="Dupliquer la formation {{ $titre }}"
                                 class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-emerald-300 bg-emerald-50 text-emerald-700 transition hover:border-emerald-400 hover:bg-emerald-600 hover:text-white">
                           <x-icons.copy-iconify class="h-4 w-4" />
                         </button>
@@ -262,8 +295,8 @@
                       </div>
                       <x-confirm-modal
                         name="duplicate-module-{{ $module->id }}"
-                        title="Dupliquer ce module ?"
-                        message="Il sera copié dans 'Mes modules' pour que vous puissiez le modifier librement."
+                        title="Dupliquer cette formation ?"
+                        message="Elle sera copiée dans 'Mes créations' pour que vous puissiez la modifier librement."
                         :action="route('formateur.modules.builder.duplicate', $module)"
                         method="POST"
                         confirm-label="Dupliquer"
@@ -274,7 +307,7 @@
               </tr>
             @empty
               <tr>
-                <td colspan="7" class="px-6 py-4 text-center text-gray-500">Aucun module trouvé.</td>
+                <td colspan="7" class="px-6 py-4 text-center text-gray-500">Aucune formation trouvée.</td>
               </tr>
             @endforelse
           </tbody>
@@ -286,7 +319,7 @@
           <span class="flex h-8 w-8 items-center justify-center rounded-full bg-bleuone/10 text-bleuone">
             <x-icons.module-iconify class="h-4 w-4" />
           </span>
-          <span>Nombre total de modules :</span>
+          <span>Nombre total de formations :</span>
           <span class="font-bold text-bleuone">{{ $modules->total() }}</span>
         </div>
       </div>
@@ -294,6 +327,93 @@
       <div>{{ $modules->links('pagination::tailwind') }}</div>
 
     </div>
+  </section>
+
+  {{-- ── MES CRÉATIONS ─────────────────────────────────────────────────────── --}}
+  <section x-show="tab === 'creations'" x-cloak
+           x-transition:enter="transition ease-out duration-200"
+           x-transition:enter-start="opacity-0 scale-95"
+           x-transition:enter-end="opacity-100 scale-100"
+           x-transition:leave="transition ease-in duration-150"
+           x-transition:leave-start="opacity-100 scale-100"
+           x-transition:leave-end="opacity-0 scale-95">
+
+    @if ($mesCreations->isNotEmpty())
+      <div class="flex justify-end mb-4">
+        <a href="{{ route('formateur.modules.builder.create') }}"
+           class="inline-flex items-center gap-2 px-5 py-3 rounded-[10px] bg-[#E94D2A] text-white font-medium hover:bg-[#cf4121] transition">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+          </svg>
+          Créer une formation
+        </a>
+      </div>
+    @endif
+
+    @if (session('success'))
+      <div class="mb-4 px-4 py-3 rounded-[10px] bg-green-50 text-green-800 border border-green-200 text-sm">
+        {{ session('success') }}
+      </div>
+    @endif
+
+    @if ($mesCreations->isEmpty())
+      <div class="bg-white rounded-[20px] shadow-md px-8 py-16 text-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+        </svg>
+        <p class="text-gray-500 mb-6">Vous n'avez pas encore créé de formation.</p>
+        <a href="{{ route('formateur.modules.builder.create') }}"
+           class="inline-flex items-center gap-2 px-5 py-3 rounded-[10px] bg-[#E94D2A] text-white font-medium hover:bg-[#cf4121] transition">
+          Créer ma première formation
+        </a>
+      </div>
+    @else
+      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        @foreach ($mesCreations as $creation)
+          <div class="bg-white rounded-[20px] shadow-md flex flex-col overflow-hidden">
+            <div class="px-6 pt-5 pb-4 flex-1">
+              <h2 class="text-base font-semibold text-gray-900 mb-1 line-clamp-2">{{ $creation->module_title }}</h2>
+              @if ($creation->description)
+                <p class="text-sm text-gray-500 line-clamp-3 mb-3">{{ $creation->description }}</p>
+              @endif
+              <div class="flex items-center gap-2 text-xs text-gray-400">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                </svg>
+                {{ $creation->sections_count }} chapitre{{ $creation->sections_count > 1 ? 's' : '' }}
+                · {{ $creation->groups_count }} groupe{{ $creation->groups_count > 1 ? 's' : '' }} assigné{{ $creation->groups_count > 1 ? 's' : '' }}
+              </div>
+            </div>
+            <div class="border-t border-gray-100 px-6 py-3 flex justify-between items-center bg-gray-50">
+              <span class="text-xs text-gray-400">{{ $creation->updated_at->diffForHumans() }}</span>
+              <div class="flex gap-2">
+                <a href="{{ route('formateur.formations.preview', $creation) }}" target="_blank" rel="noopener"
+                   class="text-xs px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-700 hover:border-[#E94D2A] hover:text-[#E94D2A] transition">
+                  Aperçu
+                </a>
+                <a href="{{ route('formateur.modules.builder.edit', $creation) }}"
+                   class="text-xs px-3 py-1.5 rounded-lg bg-[#E94D2A] text-white hover:bg-[#cf4121] transition">
+                  Modifier
+                </a>
+                <button type="button" x-data x-on:click="$dispatch('open-modal', 'delete-creation-{{ $creation->id }}')"
+                        class="text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:border-red-300 hover:text-red-600 transition">
+                  Supprimer
+                </button>
+                <x-confirm-modal
+                  name="delete-creation-{{ $creation->id }}"
+                  title="Supprimer cette formation ?"
+                  message="Cette action est irréversible."
+                  :action="route('formateur.modules.builder.destroy', $creation)"
+                  method="DELETE"
+                  confirm-label="Supprimer"
+                />
+              </div>
+            </div>
+          </div>
+        @endforeach
+      </div>
+    @endif
+
   </section>
 
   {{-- ── MES PARCOURS ──────────────────────────────────────────────────────── --}}

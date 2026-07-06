@@ -18,10 +18,10 @@
           Mes groupes de formation
         </h1>
         <p class="mt-0.5 font-varela text-base text-orangeone md:text-lg">
-          Gérez facilement vos groupes, modules et stagiaires.
+          Gérez facilement vos groupes, formations et stagiaires.
         </p>
         <p class="mt-3 max-w-2xl font-lisible text-sm leading-relaxed text-slate-700">
-          Retrouvez ici tous vos groupes. Vous pouvez les modifier, leur associer des modules ou ajouter des stagiaires.
+          Retrouvez ici tous vos groupes. Vous pouvez les modifier, leur associer des formations ou ajouter des stagiaires.
         </p>
 
         {{-- 📊 Statistiques --}}
@@ -165,12 +165,12 @@
 
               <div class="rounded-2xl bg-gray-50/80 p-4" x-data="{ open: false }">
                 <div class="mb-2 flex items-center justify-between gap-2">
-                  <h4 class="text-[11px] font-bold uppercase tracking-[0.16em] text-gray-500 font-varela">Modules associés</h4>
+                  <h4 class="text-[11px] font-bold uppercase tracking-[0.16em] text-gray-500 font-varela">Formations associées</h4>
                   @if($groupe->modules->count() > 3)
                     <button type="button"
                             x-on:click="open = !open"
                             :aria-expanded="open"
-                            aria-label="Afficher tous les modules"
+                            aria-label="Afficher toutes les formations"
                             class="shrink-0 rounded-full p-1 text-gray-400 transition hover:bg-white hover:text-orangeone">
                       <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform duration-200" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
@@ -191,7 +191,7 @@
                       {{ Str::limit($module->module_title, 30) }}
                     </a>
                   @empty
-                    <p class="text-sm italic text-gray-400 font-lisible">Aucun module</p>
+                    <p class="text-sm italic text-gray-400 font-lisible">Aucune formation</p>
                   @endforelse
                 </div>
 

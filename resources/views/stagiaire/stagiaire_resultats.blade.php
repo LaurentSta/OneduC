@@ -185,7 +185,7 @@
 
     {{-- 4. DÉTAIL PAR MODULE (ACCORDÉONS) --}}
     <div class="space-y-6">
-        <h2 class="text-lg font-raleway font-bold text-gray-800 mb-4 px-1">Détail des scores par module</h2>
+        <h2 class="text-lg font-raleway font-bold text-gray-800 mb-4 px-1">Détail des scores par formation</h2>
 
         {{-- On groupe par titre de module --}}
         @forelse ($resultats->groupBy(fn($item) => $item->module_title ?? 'Autre') as $moduleTitle => $scores)
@@ -282,7 +282,7 @@
                         <div class="relative w-full max-w-md bg-white rounded-2xl shadow-xl border border-gray-100 p-6" @click.stop>
                             <div class="flex items-start justify-between gap-4 mb-4">
                                 <div>
-                                    <h3 class="text-sm font-bold text-bleuone">Période du module</h3>
+                                    <h3 class="text-sm font-bold text-bleuone">Période de la formation</h3>
                                     <p class="text-xs text-gray-500 mt-1">{{ $moduleTitle }}</p>
                                 </div>
                                 <button type="button" class="text-gray-400 hover:text-gray-600" @click="datesOpen = false">
@@ -375,7 +375,7 @@
                 </div>
                 <h3 class="text-lg font-bold text-gray-900">Aucun résultat enregistré</h3>
                 <a href="{{ route('stagiaire.modules') }}" class="btn-oneduc-blue mt-6 !px-4 !py-2 !text-sm">
-                    Aller aux modules
+                    Aller aux formations
                 </a>
             </div>
         @endforelse

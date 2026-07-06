@@ -121,7 +121,7 @@ Une comparaison du code sur `main` (85 contrôleurs, 61 modèles, 411 routes) av
 - [ ] Audit d'accessibilité WCAG 2.1 niveau AA et corrections (contrastes, ARIA, navigation clavier)
 - [ ] Documentation utilisateur : guide stagiaire, guide formateur (PDF + vidéo)
 - [ ] Nettoyer les vues de template génériques (`resources/views/content/apps/*`)
-- [ ] Appliquer dans les menus la convention du glossaire : "Ma formation" côté stagiaire, "Mes parcours" et "Mes modules" côté formateur
+- [x] Appliquer dans les menus la convention du glossaire : "Ma formation" côté stagiaire, "Catalogue" / "Créations" / "Parcours" côté formateur (2026, voir [12-glossaire.md](12-glossaire.md))
 
 ---
 
@@ -189,7 +189,7 @@ Le bloc SCORM (juillet 2026, voir [docs/wiki/05-modules-scorm-quiz.md](05-module
 |-----|-------------|--------------|
 | Maturité technique | Build au vert, tests verts (124), architecture encore concentrée dans gros contrôleurs | Policies, FormRequests corrigées, contrôleurs découpés |
 | Maturité pédagogique | Modules, quiz, SCORM, outils live et parcours déjà exploitables | Certificats, exports, prérequis et preuves SCORM complètes |
-| Expérience utilisateur | Espaces par rôle complets, accès stagiaire simplifié, convention vocabulaire documentée | Menus alignés sur "Ma formation", "Mes parcours", "Mes modules" et multi-groupe stagiaire corrigé |
+| Expérience utilisateur | Espaces par rôle complets, accès stagiaire simplifié, menus alignés sur "Ma formation" / "Catalogue" / "Créations" / "Parcours" | Multi-groupe stagiaire corrigé |
 | Publication GitHub | Base légale/documentaire en place, checklist sécurité S3-S9 résolue (5 juillet 2026) | Historique Git vérifié, gap `isVisibleTo()` (StagiaireModuleDetail/LectureController) traité, crawl public vert |
 
 ---

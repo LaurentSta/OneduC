@@ -60,7 +60,7 @@ function moduleTitleMatches(item, expectedTitle) {
 
 function validateSimulationPathItems(items) {
   if (items.length !== 5) {
-    return 'Le parcours doit contenir exactement 5 étapes : un nuage de mots, trois modules, puis un sondage.';
+    return 'Le parcours doit contenir exactement 5 étapes : un nuage de mots, trois formations, puis un sondage.';
   }
 
   if (items[0]?.type !== 'wordcloud') {
@@ -68,15 +68,15 @@ function validateSimulationPathItems(items) {
   }
 
   if (!moduleTitleMatches(items[1], 'Securite alimentaire 2026')) {
-    return 'La deuxième étape doit être le module Sécurité alimentaire 2026.';
+    return 'La deuxième étape doit être la formation Sécurité alimentaire 2026.';
   }
 
   if (!moduleTitleMatches(items[2], 'Hygiene en cuisine professionnelle')) {
-    return 'La troisième étape doit être le module Hygiène en cuisine professionnelle.';
+    return 'La troisième étape doit être la formation Hygiène en cuisine professionnelle.';
   }
 
   if (!moduleTitleMatches(items[3], 'Nettoyage et desinfection des espaces')) {
-    return 'La quatrième étape doit être le module Nettoyage et désinfection des espaces.';
+    return 'La quatrième étape doit être la formation Nettoyage et désinfection des espaces.';
   }
 
   if (items[4]?.type !== 'poll') {
@@ -98,7 +98,7 @@ function normalizeAvailableModules(rawModules) {
     seen.add(id);
     out.push({
       id,
-      title: String(raw?.title ?? raw?.module_title ?? '').trim() || `Module #${id}`,
+      title: String(raw?.title ?? raw?.module_title ?? '').trim() || `Formation #${id}`,
       lesson_count:   Math.max(0, Number(raw?.lesson_count ?? 0) || 0),
       question_count: Math.max(0, Number(raw?.question_count ?? 0) || 0),
       duration_label: String(raw?.duration_label ?? '').trim() || 'Rythme libre',
@@ -148,7 +148,7 @@ function normalizeSelectedItems(rawItems, moduleMap) {
         type:           'module',
         id:             moduleId,
         position:       toPositiveInt(raw?.position) || index + 1,
-        title:          mod?.title || String(raw?.title ?? '').trim() || `Module #${moduleId}`,
+        title:          mod?.title || String(raw?.title ?? '').trim() || `Formation #${moduleId}`,
         lesson_count:   mod?.lesson_count   ?? Number(raw?.lesson_count ?? 0),
         question_count: mod?.question_count ?? Number(raw?.question_count ?? 0),
         duration_label: (mod?.duration_label ?? String(raw?.duration_label ?? '').trim()) || 'Rythme libre',
@@ -320,7 +320,7 @@ function WordCloudForm({ onAdd, onCancel, initialValues = null }) {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           maxLength={255}
-          placeholder="Ex : Bilan du module"
+          placeholder="Ex : Bilan de la formation"
           className="w-full rounded-[8px] border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
         />
       </div>
@@ -424,7 +424,7 @@ function PollQuestionBlock({ pq, index, total, onChange, onRemove }) {
       </div>
       <input type="text" value={pq.question}
         onChange={(e) => onChange({ ...pq, question: e.target.value })}
-        maxLength={500} placeholder="Ex : Comment vous sentez-vous après ce module ?"
+        maxLength={500} placeholder="Ex : Comment vous sentez-vous après cette formation ?"
         className="w-full rounded-[8px] border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
       />
       <div className="space-y-1.5 pl-2 border-l-2 border-teal-100">
@@ -698,12 +698,12 @@ function ParcoursBuilder({ availableModules = [], initialItems = [], csrfToken, 
     const moduleId = toPositiveInt(newModuleId);
     if (!moduleId) return;
     if (selectedModuleIds.has(moduleId)) {
-      setAddError('Ce module est déjà dans le parcours.');
+      setAddError('Cette formation est déjà dans le parcours.');
       setNewModuleId('');
       return;
     }
     const mod = availableModuleMap.get(moduleId);
-    if (!mod) { setAddError('Module introuvable.'); return; }
+    if (!mod) { setAddError('Formation introuvable.'); return; }
     setItems((current) => renumber([
       ...current,
       { type: 'module', id: mod.id, title: mod.title, position: current.length + 1,
@@ -881,7 +881,7 @@ function ParcoursBuilder({ availableModules = [], initialItems = [], csrfToken, 
                   onChange={(e) => { setAddError(''); setNewModuleId(e.target.value); }}
                   className="w-full rounded-[10px] border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E94D2A]"
                 >
-                  <option value="">— Sélectionner un module à ajouter —</option>
+                  <option value="">— Sélectionner une formation à ajouter —</option>
                   {selectableModules.map((m) => (
                     <option key={`opt-${m.id}`} value={m.id}>{m.title}</option>
                   ))}
@@ -893,7 +893,7 @@ function ParcoursBuilder({ availableModules = [], initialItems = [], csrfToken, 
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
                 </svg>
-                Ajouter un module
+                Ajouter une formation
               </button>
             </div>
           </div>
@@ -901,7 +901,7 @@ function ParcoursBuilder({ availableModules = [], initialItems = [], csrfToken, 
           <div className="bg-white rounded-[20px] shadow-md overflow-hidden">
             {items.length === 0 ? (
               <div className="px-8 py-10 text-center text-gray-400">
-                Ajoutez des modules ci-dessus.
+                Ajoutez des formations ci-dessus.
               </div>
             ) : (
               <table className="min-w-full text-left text-sm text-gray-800">
@@ -927,7 +927,7 @@ function ParcoursBuilder({ availableModules = [], initialItems = [], csrfToken, 
                             ? <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-700"><CloudIcon className="h-3 w-3" />Nuage de mots</span>
                             : isPoll
                               ? <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-teal-100 text-teal-700"><PollIcon className="h-3 w-3" />Sondage</span>
-                              : <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 text-[#004461]"><OpenBookIcon className="h-3 w-3" />Module</span>
+                              : <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 text-[#004461]"><OpenBookIcon className="h-3 w-3" />Formation</span>
                           }
                           <span className="font-medium">
                             {isWc ? item.wc_title : isPoll ? pollTitle(item) : item.title}
@@ -1039,7 +1039,7 @@ function ParcoursBuilder({ availableModules = [], initialItems = [], csrfToken, 
                 onChange={(e) => { setAddError(''); setNewModuleId(e.target.value); }}
                 className="w-full rounded-[10px] border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E94D2A]"
               >
-                <option value="">— Sélectionner un module à ajouter —</option>
+                <option value="">— Sélectionner une formation à ajouter —</option>
                 {selectableModules.map((m) => (
                   <option key={`opt-${m.id}`} value={m.id}>{m.title}</option>
                 ))}
@@ -1051,7 +1051,7 @@ function ParcoursBuilder({ availableModules = [], initialItems = [], csrfToken, 
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
               </svg>
-              Ajouter un module
+              Ajouter une formation
             </button>
           </div>
 
@@ -1068,7 +1068,7 @@ function ParcoursBuilder({ availableModules = [], initialItems = [], csrfToken, 
       <div className="bg-white rounded-[20px] shadow-md overflow-hidden">
         {items.length === 0 ? (
           <div className="px-8 py-10 text-center text-gray-400">
-            {isPreview ? 'Aucune étape dans ce parcours.' : (isSimulation ? 'Ajoutez des modules ci-dessus.' : 'Ajoutez des modules, des nuages de mots ou des sondages ci-dessus.')}
+            {isPreview ? 'Aucune étape dans ce parcours.' : (isSimulation ? 'Ajoutez des formations ci-dessus.' : 'Ajoutez des formations, des nuages de mots ou des sondages ci-dessus.')}
           </div>
         ) : (
           <table className="min-w-full text-left text-sm text-gray-800">
@@ -1095,7 +1095,7 @@ function ParcoursBuilder({ availableModules = [], initialItems = [], csrfToken, 
                           ? <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-700"><CloudIcon className="h-3 w-3" />Nuage de mots</span>
                           : isPoll
                             ? <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-teal-100 text-teal-700"><PollIcon className="h-3 w-3" />Sondage</span>
-                            : <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 text-[#004461]"><OpenBookIcon className="h-3 w-3" />Module</span>
+                            : <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 text-[#004461]"><OpenBookIcon className="h-3 w-3" />Formation</span>
                         }
                         <span className="font-medium">
                           {isWc ? item.wc_title : isPoll ? pollTitle(item) : item.title}
@@ -1194,7 +1194,7 @@ function ParcoursBuilder({ availableModules = [], initialItems = [], csrfToken, 
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <span>
-            Ce parcours ne contient pas encore de module. Vous pouvez l'enregistrer tel quel, mais il ne pourra pas être utilisé dans un groupe. Ajoutez au moins une étape de type <strong>module</strong> pour débloquer cette fonctionnalité.
+            Ce parcours ne contient pas encore de formation. Vous pouvez l'enregistrer tel quel, mais il ne pourra pas être utilisé dans un groupe. Ajoutez au moins une étape de type <strong>formation</strong> pour débloquer cette fonctionnalité.
           </span>
         </div>
       )}

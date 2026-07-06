@@ -18,7 +18,7 @@
           Suivez l’avancement des groupes et repérez ceux qui ont besoin d’accompagnement.
         </p>
         <p class="mt-3 max-w-2xl font-lisible text-sm leading-relaxed text-slate-700">
-          Cette vue synthétise l’activité par groupe : stagiaires, modules, leçons terminées, temps total passé et taux de réussite.
+          Cette vue synthétise l’activité par groupe : stagiaires, formations, leçons terminées, temps total passé et taux de réussite.
         </p>
 
         {{-- 📊 Statistiques --}}
@@ -73,7 +73,7 @@
         <a href="{{ route('formateur.progressions.modules') }}"
            class="btn-oneduc h-10 !text-sm">
           <x-icons.module-iconify class="h-4 w-4" />
-          Suivi par module
+          Suivi par formation
         </a>
       </div>
 
@@ -93,7 +93,7 @@
             <th class="px-6 py-3">#</th>
             <th class="px-6 py-3">Groupe</th>
             <th class="px-6 py-3 text-center">Stagiaires</th>
-            <th class="px-6 py-3 text-center">Modules</th>
+            <th class="px-6 py-3 text-center">Formations</th>
             <th class="px-6 py-3 text-center">Leçons terminées</th>
             <th class="px-6 py-3 text-center">Temps total site</th>
             <th class="px-6 py-3 text-center">Taux de réussite</th>

@@ -7,7 +7,7 @@
     <h1 class="text-titre font-raleway text-bleuone">Documentation stagiaire</h1>
     <p class="text-sous-titre font-varela text-orangeone mt-2">Guide pour suivre vos formations sur Oneduc</p>
     <p class="text-gray-700 mt-3">
-      Retrouvez ici les étapes clés pour avancer dans vos modules, réussir vos quiz et contacter le support.
+      Retrouvez ici les étapes clés pour avancer dans vos formations, réussir vos quiz et contacter le support.
     </p>
   </header>
 
@@ -22,10 +22,10 @@
     </article>
 
     <article class="bg-white rounded-[20px] shadow-md p-6">
-      <h2 class="text-xl font-semibold text-bleuone">2. Suivre vos modules</h2>
+      <h2 class="text-xl font-semibold text-bleuone">2. Suivre vos formations</h2>
       <ul class="mt-3 text-gray-700 space-y-2 list-disc list-inside">
-        <li>Accédez à <strong>Formations</strong> pour voir les modules disponibles.</li>
-        <li>Ouvrez un module, puis ses sections et leçons dans l'ordre recommandé.</li>
+        <li>Accédez à <strong>Formations</strong> pour voir les formations disponibles.</li>
+        <li>Ouvrez une formation, puis ses sections et leçons dans l'ordre recommandé.</li>
         <li>Votre progression se met à jour au fil de votre lecture.</li>
       </ul>
     </article>
@@ -62,7 +62,7 @@
       <ul class="mt-3 text-gray-700 space-y-2 list-disc list-inside">
         <li>Le support est accessible via Discord pour une réponse rapide.</li>
         <li>Si vous ne pouvez pas utiliser Discord, le formulaire d'assistance reste disponible.</li>
-        <li>Décrivez précisément le problème (module, leçon, message d'erreur, navigateur).</li>
+        <li>Décrivez précisément le problème (formation, leçon, message d'erreur, navigateur).</li>
       </ul>
     </article>
   </section>
@@ -106,7 +106,7 @@
       <article class="rounded-xl border border-gray-200 p-4">
         <h3 class="font-semibold text-bleuone">Avant de poster votre demande</h3>
         <ul class="mt-3 text-gray-700 space-y-2 list-disc list-inside">
-          <li>Précisez le module, la section et la leçon concernés.</li>
+          <li>Précisez la formation, la section et la leçon concernées.</li>
           <li>Ajoutez le message d’erreur exact si vous en avez un.</li>
           <li>Indiquez votre navigateur et votre appareil (PC, mobile).</li>
           <li>Ajoutez une capture d’écran si possible.</li>

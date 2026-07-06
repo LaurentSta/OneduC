@@ -68,7 +68,7 @@
 
     <div class="mt-8">
       <h2 class="text-lg font-bold text-bleuone">Analyse question par question</h2>
-      <p class="text-sm text-gray-600 mt-1">Detail complet pour corriger rapidement la pedagogie du module.</p>
+      <p class="text-sm text-gray-600 mt-1">Detail complet pour corriger rapidement la pedagogie de la formation.</p>
 
       <div class="mt-4 space-y-4">
         @foreach($rows as $row)

@@ -38,7 +38,7 @@
       <div class="mt-6 flex flex-wrap gap-3">
         <a href="{{ route('stagiaire.modules') }}"
            class="inline-block px-4 py-2 rounded-lg bg-bleuone text-white">
-          Retour aux modules
+          Retour aux formations
         </a>
 
         {{-- Refaire l’évaluation : renvoie vers la vue iFrame --}}

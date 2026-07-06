@@ -13,12 +13,12 @@
         <x-typography variant="titre">Personnaliser les leçons</x-typography>
 
         <x-typography variant="sous-titre" class="font-varela text-sous-titre text-orangeone">
-          Définissez le cheminement pédagogique du groupe pour ce module.
+          Définissez le cheminement pédagogique du groupe pour cette formation.
         </x-typography>
 
         <x-typography>
           Groupe : <span class="font-semibold">{{ $group->name }}</span>
-          — Module : <span class="font-semibold">{{ $module->module_title }}</span>
+          — Formation : <span class="font-semibold">{{ $module->module_title }}</span>
         </x-typography>
 
         <div class="mt-5 flex flex-col gap-3 md:flex-row md:items-center">
@@ -39,7 +39,7 @@
             </button>
             <x-confirm-modal
               name="reset-lecons-{{ $group->id }}-{{ $module->id }}"
-              title="Réinitialiser le cheminement de ce groupe pour ce module ?"
+              title="Réinitialiser le cheminement de ce groupe pour cette formation ?"
               :action="route('formateur.groupes.modules.lecons.reset', ['group' => $group->id, 'module' => $module->id])"
               method="POST"
               confirm-label="Réinitialiser"
@@ -80,7 +80,7 @@
 
       <div class="col-span-12 md:col-span-3 flex justify-center md:justify-end">
         <img src="{{ asset('images/svg/Modules.svg') }}"
-             alt="Illustration des modules de formation"
+             alt="Illustration des formations"
              class="max-w-[220px] h-auto">
       </div>
 
@@ -137,7 +137,7 @@
   @endphp
 
   <x-formateur.hierarchy-breadcrumb
-      :module="['label' => 'Module', 'title' => $module->module_title, 'url' => null]"
+      :module="['label' => 'Formation', 'title' => $module->module_title, 'url' => null]"
       :group="['label' => 'Groupe', 'title' => $group->name, 'url' => null]"
   />
 

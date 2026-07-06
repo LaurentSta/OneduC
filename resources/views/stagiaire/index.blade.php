@@ -21,10 +21,10 @@
       <div class="col-span-12 md:col-span-8">
         <p class="font-raleway text-titre text-bleuone leading-tight mb-4">Tableau de bord stagiaire</p>
         <p class="font-varela text-sous-titre text-orangeone leading-snug mb-3">
-          Suivez votre progression et vos modules de formation.
+          Suivez votre progression et vos formations.
         </p>
         <p class="font-lisible text-lg text-gray-800 leading-loose">
-          Accédez à vos modules, vos statistiques de progression, votre formateur référent et plus encore.
+          Accédez à vos formations, vos statistiques de progression, votre formateur référent et plus encore.
         </p>
 
         <nav class="text-sm font-varela text-gray-600 mt-4" aria-label="Fil d'Ariane">

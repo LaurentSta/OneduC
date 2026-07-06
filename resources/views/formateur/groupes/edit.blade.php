@@ -68,7 +68,7 @@
 
         return [
           'id' => $id,
-          'title' => (string) data_get($moduleMeta, 'title', "Module #{$id}"),
+          'title' => (string) data_get($moduleMeta, 'title', "Formation #{$id}"),
           'position' => $index + 1,
           'persisted' => $isPersisted,
           'manage_url' => $isPersisted
@@ -93,7 +93,7 @@
         $isPersisted = $group->modules->contains('id', $item->module_id);
         return [
           'id'             => (int) $item->module_id,
-          'title'          => (string) data_get($meta, 'title', "Module #{$item->module_id}"),
+          'title'          => (string) data_get($meta, 'title', "Formation #{$item->module_id}"),
           'position'       => (int) $item->position,
           'persisted'      => $isPersisted,
           'manage_url'     => $isPersisted
@@ -153,7 +153,7 @@
             Modification du groupe : <br/><span class="text-orangeone">{{ $group->name }}</span>
         </h1>
         <p class="font-varela text-gray-600 mb-4">
-          Gérez la configuration, la liste des apprenants et l'ordre pédagogique des modules.
+          Gérez la configuration, la liste des apprenants et l'ordre pédagogique des formations.
         </p>
 
         {{-- Pastilles d'info --}}
@@ -164,7 +164,7 @@
             </div>
             <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orangeone/10 text-orangeone border border-orangeone/20">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
-                <span class="font-bold">{{ $moduleBadgeCount }}</span> Modules
+                <span class="font-bold">{{ $moduleBadgeCount }}</span> Formations
             </div>
             @if($group->coFormateurs->isNotEmpty())
                 <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-bleuone/10 text-bleuone border border-bleuone/20">
@@ -247,7 +247,7 @@
                     : 'bg-white text-bleuone border border-bleuone hover:bg-bleuone/5'"
                 class="w-full px-6 py-4 rounded-full transition font-varela text-lg font-bold focus:outline-none flex items-center justify-center gap-2">
                 <span>3.</span>
-                <span>Modules</span>
+                <span>Formations</span>
             </button>
         </div>
         <div class="h-1 w-full bg-gray-100 rounded mt-6 mb-2"></div>
@@ -638,13 +638,13 @@ Lucas;Bernard;lucas.bernard@entreprise.fr</pre>
         
         <div class="mb-6">
             <div class="flex items-center gap-2">
-              <h3 class="text-xl font-bold text-bleuone font-raleway">Organisation des modules</h3>
+              <h3 class="text-xl font-bold text-bleuone font-raleway">Organisation des formations</h3>
               <div class="relative group">
                 <button type="button" aria-label="Information sur le parcours pédagogique" class="inline-flex h-5 w-5 items-center justify-center rounded-full border border-gray-300 bg-white text-[11px] font-bold text-gray-600">
                   ?
                 </button>
                 <div class="pointer-events-none absolute left-1/2 top-full z-20 mt-2 hidden w-80 -translate-x-1/2 rounded-lg border border-gray-200 bg-white p-3 text-xs text-gray-700 shadow-lg group-hover:block group-focus-within:block">
-                  Ajoutez les modules utiles pour ce groupe, organisez-les dans l'ordre souhaite, puis utilisez le bouton de gestion des lecons pour personnaliser le contenu de chaque module si besoin.
+                  Ajoutez les formations utiles pour ce groupe, organisez-les dans l'ordre souhaite, puis utilisez le bouton de gestion des lecons pour personnaliser le contenu de chaque formation si besoin.
                 </div>
               </div>
             </div>
