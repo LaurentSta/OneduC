@@ -1,7 +1,7 @@
 @extends('formateur.dashboard')
 
 @section('formateur')
-<div class="w-full px-6 lg:px-8" x-data="{ filtre: 'all' }">
+<div class="w-full px-6 lg:px-8" x-data="{ filtre: 'all', selectedTool: null }">
 
   {{-- En-tête --}}
   <div class="rounded-[20px] border border-gray-100 bg-white shadow-md my-6">
@@ -64,12 +64,17 @@
     </button>
   </div>
 
-  {{-- Grille des outils : tuiles compactes, détails au survol/focus --}}
-  <div class="grid grid-cols-3 gap-4 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 mb-8">
+  {{-- Grille des outils + panneau d'explication --}}
+  <div class="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-start mb-8">
+
+  {{-- Grille des outils : tuiles compactes, détail au clic --}}
+  <div class="lg:col-span-8">
+  <div class="grid grid-cols-3 gap-4 sm:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5">
 
     {{-- ── NUAGE DE MOTS ──────────────────────────────────────────────── --}}
     <x-oneduc.outil-tile
       x-show="filtre === 'all' || filtre === 'interaction'"
+      tool-id="nuage-de-mots"
       title="Nuage de mots"
       icon-bg="bg-amber-500"
       :badge-count="$recentWordclouds->count()"
@@ -114,6 +119,7 @@
     {{-- ── QUIZ EN DIRECT ─────────────────────────────────────────────── --}}
     <x-oneduc.outil-tile
       x-show="filtre === 'all' || filtre === 'interaction'"
+      tool-id="quiz"
       title="Quiz en direct"
       icon-bg="bg-[#004461]"
       cta-route="{{ route('formateur.outils.quiz.index') }}"
@@ -138,6 +144,7 @@
     {{-- ── TABLEAU BLANC ──────────────────────────────────────────────── --}}
     <x-oneduc.outil-tile
       x-show="filtre === 'all' || filtre === 'collaboration'"
+      tool-id="tableau-blanc"
       title="Tableau blanc"
       icon-bg="bg-[#E94D2A]"
       :badge-count="$groups->count()"
@@ -183,6 +190,7 @@
     {{-- ── MUR DE QUESTIONS ANONYME ─────────────────────────────────── --}}
     <x-oneduc.outil-tile
       x-show="filtre === 'all' || filtre === 'interaction'"
+      tool-id="mur-questions"
       title="Mur de questions"
       icon-bg="bg-indigo-600"
       :badge-count="$recentQuestionWalls->count()"
@@ -229,6 +237,7 @@
     {{-- ── SONDAGE ─────────────────────────────────────────────────────── --}}
     <x-oneduc.outil-tile
       x-show="filtre === 'all' || filtre === 'interaction'"
+      tool-id="sondage"
       title="Sondage"
       icon-bg="bg-teal-600"
       :badge-count="$recentPolls->count()"
@@ -278,6 +287,7 @@
     {{-- ── ÉCHELLE DE POSITIONNEMENT ──────────────────────────────────── --}}
     <x-oneduc.outil-tile
       x-show="filtre === 'all' || filtre === 'interaction'"
+      tool-id="echelle"
       title="Échelle de positionnement"
       icon-bg="bg-indigo-600"
       :badge-count="$recentScales->count()"
@@ -325,6 +335,7 @@
     {{-- ── ROUE ALÉATOIRE ─────────────────────────────────────────────── --}}
     <x-oneduc.outil-tile
       x-show="filtre === 'all' || filtre === 'animation'"
+      tool-id="roue"
       title="Roue aléatoire"
       icon-bg="bg-violet-600"
       cta-route="{{ route('formateur.roue.index') }}"
@@ -350,6 +361,7 @@
     @if(config('outils.minuteur.enabled'))
     <x-oneduc.outil-tile
       x-show="filtre === 'all' || filtre === 'animation'"
+      tool-id="minuteur"
       title="Minuteur"
       icon-bg="bg-rose-600"
       :badge-count="$groups->count()"
@@ -393,6 +405,7 @@
     {{-- ── MES MODULES (MODULE BUILDER) ───────────────────────────────── --}}
     <x-oneduc.outil-tile
       x-show="filtre === 'all'"
+      tool-id="modules"
       title="Mes modules"
       icon-bg="bg-emerald-600"
       :badge-count="$recentModules->count()"
@@ -439,6 +452,7 @@
     {{-- ── PAGE COLLABORATIVE (HEDGEDOC) ─────────────────────────────── --}}
     <x-oneduc.outil-tile
       x-show="filtre === 'all' || filtre === 'collaboration'"
+      tool-id="page-collaborative"
       title="Page collaborative"
       icon-bg="bg-cyan-600"
       cta-route="{{ route('formateur.pages-collaboratives.index') }}"
@@ -459,6 +473,21 @@
         <span class="rounded-full bg-cyan-100 px-2.5 py-0.5 font-semibold text-cyan-700">Markdown</span>
       </x-slot:badges>
     </x-oneduc.outil-tile>
+
+  </div>
+  </div>
+
+  {{-- Panneau d'explication de l'outil sélectionné --}}
+  <aside class="lg:col-span-4 lg:sticky lg:top-8">
+    <div id="outil-detail-panel" class="rounded-2xl border border-gray-100 bg-white p-5 shadow-md">
+      <div x-show="!selectedTool">
+        <h3 class="mb-2 font-bold text-gray-900">Découvrez vos outils</h3>
+        <p class="text-xs leading-relaxed text-gray-600">
+          Cliquez sur un outil dans la liste pour voir à quoi il sert, dans quel contexte l'utiliser (présentiel, distanciel, synchrone...) et accéder directement à sa gestion.
+        </p>
+      </div>
+    </div>
+  </aside>
 
   </div>
 
