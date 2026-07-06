@@ -9,7 +9,7 @@ Bienvenue sur la documentation d'Oneduc, un LMS dédié à l'inclusion numériqu
 Tout le wiki n'est pas à lire par tout le monde. Voici les parcours conseillés :
 
 **Formateur** — vous voulez savoir ce que la plateforme permet de faire :
-[Présentation](01-presentation.md) → [Profils utilisateurs](04-profils-utilisateurs.md) → [Groupes & Parcours](06-groupes-parcours.md) → [Outils d'animation](07-outils-animation.md) → [Tableaux de bord](08-tableaux-de-bord.md). Le [Glossaire](12-glossaire.md) sert de référence pour le vocabulaire.
+[Présentation](01-presentation.md) → [Profils utilisateurs](04-profils-utilisateurs.md) → [Groupes & Parcours](06-groupes-parcours.md) → [Outils d'animation](07-outils-animation.md) → [Génération de contenu par IA](15-generation-ia.md) → [Tableaux de bord](08-tableaux-de-bord.md). Le [Glossaire](12-glossaire.md) sert de référence pour le vocabulaire.
 
 **Développeur** — vous voulez contribuer au code :
 [Installation](02-installation.md) → [Architecture](03-architecture.md) → [Roadmap](11-roadmap.md), puis les pages du domaine sur lequel vous travaillez. Lisez la [Checklist de publication](13-publication-github.md) avant tout travail touchant à la sécurité.
@@ -42,6 +42,7 @@ Chaque page indique en tête son public visé. Les pages mixtes regroupent la pa
 | 12 | [Glossaire](12-glossaire.md) | Vocabulaire unifié du projet |
 | 13 | [Prêt à publier sur GitHub](13-publication-github.md) | Checklist avant publication — sécurité, licence, nettoyage |
 | 14 | [Audit site du 5 juillet 2026](14-audit-site-2026-07-05.md) | Crawl public, état des routes, tests/build, priorités de correction |
+| 15 | [Génération de contenu par IA](15-generation-ia.md) | Génération de leçons/formations par IA (Mistral), garde-fous, configuration |
 
 ---
 
