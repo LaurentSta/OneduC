@@ -13,7 +13,7 @@ Ce qui la distingue de Moodle, Canvas ou 360Learning tient en quatre points :
 1. Un stagiaire rejoint sa formation avec un code court. Pas de compte email, pas de mot de passe à retenir dans les parcours simples.
 2. Le formateur référent reste visible partout. L'apprenant sait qui l'accompagne.
 3. Un formateur peut partir d'un module du catalogue, le dupliquer, le modifier, puis l'affecter à ses groupes. Il n'est pas obligé de tout créer de zéro, ni de se contenter du catalogue.
-4. Les outils d'animation de séance (quiz live, sondages, nuage de mots, tableau blanc...) sont intégrés. Pas besoin de jongler avec Wooclap ou Klaxoon à côté.
+4. Les outils d'animation de séance (quiz live, sondages, nuage de mots, tableau blanc...) sont développés en natif, pour éviter de jongler avec Wooclap ou Klaxoon à côté. Au 5 juillet 2026, ils ne sont pas encore activés en environnement de production (voir [Outils d'animation](07-outils-animation.md)).
 
 ---
 
@@ -76,9 +76,9 @@ Le wiki distingue deux notions de parcours : le parcours formateur Oneduc (la pr
 
 ### L'animation en séance
 
-Quiz live, nuage de mots, sondage, échelle de positionnement, mur de questions, roue aléatoire, tableau blanc collaboratif, minuteur, pages collaboratives HedgeDoc. Tout vit dans le même environnement que les modules et les groupes.
+Quiz live, nuage de mots, sondage, échelle de positionnement, mur de questions, roue aléatoire, tableau blanc collaboratif, minuteur, pages collaboratives HedgeDoc. Prévus pour vivre dans le même environnement que les modules et les groupes, avec l'objectif qu'une séance n'ait pas besoin de trois onglets et deux comptes externes pour fonctionner.
 
-L'objectif : qu'une séance n'ait pas besoin de trois onglets et deux comptes externes pour fonctionner.
+**Statut au 5 juillet 2026** : ces outils sont développés côté code mais pas encore activés en environnement de production (détail dans [Outils d'animation](07-outils-animation.md)).
 
 ### Le suivi
 
@@ -90,16 +90,15 @@ Le formateur voit ses groupes, repère les stagiaires actifs, inactifs ou à ris
 
 ## Où en est le projet aujourd'hui
 
-Au 5 juillet 2026, Oneduc est une application Laravel complète : 411 routes, plus de 290 vues, une soixantaine de modèles, des tests automatisés. Espaces public, administrateur, formateur, stagiaire et observateur sont opérationnels, ainsi que le builder, les outils d'animation et les tableaux de bord.
+Au 5 juillet 2026, Oneduc est une application Laravel complète : 411 routes, plus de 290 vues, une soixantaine de modèles, des tests automatisés. Espaces public, administrateur, formateur, stagiaire et observateur sont opérationnels, ainsi que le builder et les tableaux de bord. Les outils d'animation sont développés mais pas encore activés en production.
 
-La plateforme est utilisable dès maintenant en pilote contrôlé : 10 à 50 stagiaires, 3 à 5 formateurs, dans un contexte associatif. Avant une ouverture plus large, plusieurs points de sécurité et quelques bugs connus doivent être traités (détail dans [Sécurité & RGPD](https://github.com/LaurentSta/Oneduc/wiki/10-securite-rgpd) et la [Checklist GitHub](https://github.com/LaurentSta/Oneduc/wiki/13-publication-github)).
+La plateforme est utilisable dès maintenant en pilote contrôlé : 10 à 50 stagiaires, 3 à 5 formateurs, dans un contexte associatif. Les correctifs de sécurité S3 à S9 ont été appliqués le 5 juillet 2026 (throttling, contrôle d'appartenance SCORM, `Module::isVisibleTo()`, etc.) ; un gap reste identifié sur deux contrôleurs qui ne vérifient pas encore l'appartenance groupe (détail dans [Sécurité & RGPD](https://github.com/LaurentSta/Oneduc/wiki/10-securite-rgpd) et la [Checklist GitHub](https://github.com/LaurentSta/Oneduc/wiki/13-publication-github)).
 
 ## Et ensuite
 
 Les évolutions prioritaires de la roadmap :
 
-- Sécurisation des accès : throttling de la connexion par code, policies Laravel centralisées, contrôle plus strict des écritures SCORM.
-- Correction des points bloquants connus : page `/inscription`, upload image du builder, route de feedback leçon.
+- Policies Laravel centralisées pour les autorisations (Phase 2), et fermeture du gap `StagiaireModuleDetail`/`LectureController` identifié lors du correctif `isVisibleTo()`.
 - Exports de progression en CSV et PDF pour les formateurs.
 - Certificats de fin de module.
 - Prérequis : débloquer un module ou une leçon selon une progression ou un score.
@@ -140,16 +139,16 @@ Cette section s'adresse aux développeurs et administrateurs système. Les forma
 | Migrations post-baseline | 5 migrations |
 | Routes déclarées | 411 routes |
 | Fichiers de test | 43 fichiers PHP |
-| Suite de tests | 103 tests passés, 1 échec, 505 assertions (audit du 5 juillet) |
+| Suite de tests | 124 tests passés, 0 échec, 580 assertions (correctifs sécurité du 5 juillet) |
 
 ### Maturité
 
 | Axe | État | Commentaire |
 |-----|------|-------------|
-| Technique | En consolidation | Build Vite OK ; 1 test en échec (contrat d'upload image du builder) ; plusieurs contrôleurs restent volumineux |
-| Pédagogique | Solide pour un pilote | Modules, quiz, SCORM, parcours, outils live et suivi formateur opérationnels |
+| Technique | En consolidation | Build Vite OK ; suite de tests verte (124 tests) ; plusieurs contrôleurs restent volumineux |
+| Pédagogique | Solide pour un pilote | Modules, quiz, SCORM, parcours et suivi formateur opérationnels ; outils live développés mais pas encore activés en production |
 | Expérience utilisateur | Bonne base terrain | Accès stagiaire simplifié ; convention de vocabulaire définie dans le glossaire, à appliquer dans les menus |
-| Publication | Proche | Licence, README, templates GitHub et wiki présents ; `/inscription`, contrôle d'accès et historique Git à revoir avant |
+| Publication | Proche | Licence, README, templates GitHub et wiki présents ; checklist sécurité S3-S9 résolue, historique Git et gap `isVisibleTo()` à revoir avant |
 | Capacité LMS globale | Réelle mais incomplète | Manquent : certificats, exports, prérequis bloquants, policies d'accès centralisées |
 
 ---

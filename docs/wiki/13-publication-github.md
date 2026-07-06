@@ -134,7 +134,8 @@ Les packages SCORM importés ne doivent pas être dans le dépôt git (ils peuve
 ### Paramètres du dépôt
 
 - [ ] Le dépôt est mis en **Public** (ou restera privé temporairement le temps des corrections)
-- [ ] Description du dépôt renseignée : "LMS pour l'inclusion numérique — Laravel 11, SCORM, quiz natifs, outils d'animation"
+- [ ] Description du dépôt renseignée : "LMS pour l'inclusion numérique — Laravel 11, SCORM, quiz natifs"  
+  Ne pas mentionner les outils d'animation live : implémentés mais pas encore activés en environnement de production (voir [07 — Outils d'animation](07-outils-animation.md))
 - [ ] Topics GitHub ajoutés : `lms`, `laravel`, `scorm`, `inclusion-numerique`, `formation`, `php`, `tailwind`
 - [ ] Site web renseigné : `https://oneduc.fr`
 

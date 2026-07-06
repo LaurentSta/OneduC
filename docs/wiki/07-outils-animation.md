@@ -2,6 +2,8 @@
 
 *Public : formateurs pour la présentation des outils ; la partie technique en fin de page s'adresse aux développeurs.*
 
+**Statut au 5 juillet 2026** : ces outils sont développés côté code (modèles, contrôleurs, routes) mais **ne sont pas encore activés en environnement de production**. Le contenu ci-dessous décrit le fonctionnement prévu/en place dans le code, pas une fonctionnalité disponible pour les formateurs aujourd'hui.
+
 Oneduc intègre 8 activités live plus une intégration de pages collaboratives HedgeDoc. Ils fonctionnent en présentiel, en distanciel ou en hybride, et vivent dans le même environnement que les modules et les groupes. Une séance n'a donc pas besoin de trois onglets et deux comptes externes pour fonctionner.
 
 Seuls les stagiaires membres du groupe peuvent participer à un outil actif. Les résultats s'affichent côté formateur avec un délai de 2 à 3 secondes.
