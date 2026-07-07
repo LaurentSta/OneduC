@@ -19,9 +19,9 @@ L'émargement est accessible depuis deux endroits :
 - le bouton **« Émargement »**, à côté de « Filtrer », sur la page **Mes stagiaires** ;
 - la carte **« Émargement »** du tableau **Outils numériques**, avec un badge qui indique combien de séances sont actuellement ouvertes.
 
-L'outil s'active **groupe par groupe** : par défaut, aucun groupe n'est concerné. Sur l'écran d'accueil de l'outil, chaque groupe du formateur apparaît sous forme de carte :
-- s'il n'est **pas encore activé**, un bouton « Activer pour ce groupe » suffit à démarrer ;
-- s'il est **déjà activé**, la carte est cliquable et ouvre directement la gestion de ses séances (un lien permet de désactiver à tout moment, sans perdre l'historique des séances déjà créées).
+L'outil s'active **groupe par groupe** : par défaut, aucun groupe n'est concerné. Deux façons de l'activer :
+- directement dans les **options du groupe**, à la création ou depuis sa modification (onglet « Informations »), à côté du bouton « Activer le groupe » ;
+- ou depuis l'écran d'accueil de l'outil Émargement, où chaque groupe du formateur apparaît sous forme de carte : s'il n'est **pas encore activé**, un bouton « Activer pour ce groupe » suffit à démarrer ; s'il est **déjà activé**, la carte est cliquable et ouvre directement la gestion de ses séances (un lien permet de désactiver à tout moment, sans perdre l'historique des séances déjà créées).
 
 Une fois un groupe activé, le formateur peut :
 - **créer une séance** : une date, un créneau (matin, après-midi, journée complète ou soirée), et un titre facultatif ;
@@ -66,7 +66,7 @@ seance_presences (
 
 Le roster (`seance_presences`) est **figé au moment de la création de la séance** à partir de `$group->students()` — pas recalculé dynamiquement — pour que la feuille reste fidèle à qui était présent ce jour-là même si la composition du groupe change ensuite.
 
-L'activation par groupe est un simple booléen `groups.emargement_enabled` (défaut `false`, même famille que `is_active`/`is_sandbox`) — ce n'est qu'un filtre d'affichage sur `EmargementController::index()` : désactiver un groupe ne touche ni ne supprime ses séances existantes, ça masque juste l'accès à la gestion depuis la vue dédiée tant qu'il n'est pas réactivé.
+L'activation par groupe est un simple booléen `groups.emargement_enabled` (défaut `false`, même famille que `is_active`/`is_sandbox`) — ce n'est qu'un filtre d'affichage sur `EmargementController::index()` : désactiver un groupe ne touche ni ne supprime ses séances existantes, ça masque juste l'accès à la gestion depuis la vue dédiée tant qu'il n'est pas réactivé. Deux points d'écriture pour ce même champ : `Formateur\GroupeController::store()`/`update()` (toggle dans les options du groupe, pattern identique à `is_active` — hidden input + checkbox) et `EmargementController::activerGroupe()`/`desactiverGroupe()` (depuis la vue dédiée). Validation `nullable|boolean` (pas `required` comme `is_active`) pour rester rétrocompatible avec les appels existants au formulaire groupe qui ne connaissent pas ce champ.
 
 ### Emplacement du code
 
