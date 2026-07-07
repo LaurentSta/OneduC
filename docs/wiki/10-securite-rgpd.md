@@ -68,6 +68,17 @@ C'est ce mécanisme qui fait tenir le modèle associatif : l'accès formateur re
 | Tests liés au middleware `association.member` | La suite du 5 juillet passe sur ces scénarios |
 | `/inscription`, connexion par code, `LessonFeedbackController::store()`, `Module::isVisibleTo()`, SCORM (`save-progress`/`save-block-progress`/`evaluation-progress`), `last_session_time`, contrat d'upload image du builder | Corrigés le 5 juillet 2026 (voir [Checklist de publication](13-publication-github.md), Axe 1, S3 à S9). Suite de tests complète verte (124 tests). |
 
+### Corrections du 7 juillet 2026
+
+| Point | Correctif |
+|-------|-----------|
+| XSS stocké dans les blocs de contenu texte libre (builder de module) | `NettoyeurBlocsModule` filtre désormais le HTML par allowlist de balises/attributs avant stockage |
+| Open redirect sur la validation de leçon | `Frontend\LectureController` valide que la cible de redirection reste un chemin interne |
+| Zip slip / manifest hors-répertoire à l'import SCORM | `ScormImporter` rejette les entrées ZIP avec segments `..` et vérifie que le manifest reste dans le dossier extrait |
+| IDOR sur `FormateurModuleController::updateQuizCount()` | Vérification d'appartenance du module au formateur (même contrôle que `preview()`) ajoutée avant modification |
+| Upload SVG accepté comme photo de profil (XSS stocké potentiel) | `UserController::UserProfilStore()` et `FormateurProfileController::FormateurProfilStore()` restreignent désormais l'upload à `mimes:jpg,jpeg,png` |
+| Upload SVG accepté comme image de catégorie/sous-catégorie | `CategoryController` retire `image/svg+xml` des types acceptés |
+
 ### Gap identifié lors du correctif S3 (à traiter)
 
 `Module::isVisibleTo()` est désormais le point de vérité pour la visibilité d'un module, mais deux points d'accès ne l'appellent pas et n'ont **aucune** vérification d'appartenance groupe :
@@ -83,6 +94,8 @@ Un stagiaire authentifié (ou, pour `showScorm`, un visiteur non authentifié) p
 | 8 | `StoreModuleRequest::authorize()` et `StoreGroupeRequest::authorize()` retournent `false` | `app/Http/Requests/` | FormRequests inutilisables tant qu'ils ne sont pas corrigés |
 | 9 | `AdminController::AdminProfilStore()` ne valide pas l'unicité email avec exclusion de l'utilisateur courant | `AdminController` | Collision possible avec l'email d'un autre compte |
 | 10 | Import mort `ScormInteractionController` | `routes/scorm.php` | Dette technique faible, à nettoyer |
+| 11 | `/register` (scaffold Breeze) reste public et crée des comptes `role => 'stagiaire'` sans code d'accès ni invitation | `routes/auth.php`, `Auth\RegisteredUserController::store` | Contourne le modèle d'accès par code documenté plus haut. **Décision produit à trancher** : désactiver la route ou assumer l'auto-inscription. Non modifié lors de l'audit du 7 juillet 2026. |
+| 12 | Modèle d'autorisation incohérent entre les 7 outils interactifs : Nuage de mots et Roue aléatoire sont accessibles sans authentification, les 5 autres (Sondage, Mur de questions, Quiz live, Tableau blanc, Minuteur) exigent une authentification et/ou une appartenance de groupe | `routes/web.php` (routes de participation), contrôleurs `Formateur/*Controller` | Confidentialité effective variable d'un outil à l'autre pour un usage a priori similaire. **Décision produit à trancher** avant toute uniformisation. Non modifié lors de l'audit du 7 juillet 2026. |
 
 ---
 
