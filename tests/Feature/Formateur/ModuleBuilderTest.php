@@ -61,7 +61,7 @@ it('lets a trainer create, edit and assign a self-authored module, and renders i
     expect($mediaUrl)->toBeString();
 
     $blocks = [
-        ['type' => 'text', 'html' => '<p>Bonjour <strong>monde</strong></p><script>alert(1)</script>'],
+        ['type' => 'text', 'html' => '<p onclick="alert(1)" style="color:red">Bonjour <strong>monde</strong> <a href=javascript:alert(9) target="_blank" onclick="alert(8)">lien</a> <a href="https://example.test/path">ok</a></p><script>alert(1)</script>'],
         ['type' => 'image', 'media_id' => $mediaId, 'caption' => '<b>Legende</b>'],
         ['type' => 'quote', 'text' => '<script>alert(2)</script>Citation test', 'source' => 'Auteur'],
         ['type' => 'divider'],
@@ -84,6 +84,11 @@ it('lets a trainer create, edit and assign a self-authored module, and renders i
     $textBlock = $saved->firstWhere('type', 'text');
     expect($textBlock['html'])->toContain('<strong>monde</strong>');
     expect($textBlock['html'])->not->toContain('<script>');
+    expect($textBlock['html'])->not->toContain('onclick');
+    expect($textBlock['html'])->not->toContain('style=');
+    expect($textBlock['html'])->not->toContain('javascript:');
+    expect($textBlock['html'])->toContain('<a>lien</a>');
+    expect($textBlock['html'])->toContain('href="https://example.test/path"');
 
     $imageBlock = $saved->firstWhere('type', 'image');
     expect($imageBlock['media_id'])->toBe($mediaId);

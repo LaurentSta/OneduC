@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\ContentBlockScormScore;
 use App\Models\ModuleLecture;
 use App\Models\Progression;
 use App\Models\ScormPackageVersion;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class LectureController extends Controller
@@ -38,8 +38,8 @@ class LectureController extends Controller
         );
 
         // Redirection automatique si spécifiée
-        if ($request->has('redirect_to')) {
-            return redirect($request->input('redirect_to'));
+        if ($request->has('redirect_to') && ($redirectTo = $this->internalRedirectPath($request->input('redirect_to')))) {
+            return redirect()->to($redirectTo);
         }
 
         return redirect()->back()->with('success', 'Leçon validée !');
@@ -52,7 +52,7 @@ class LectureController extends Controller
 
         $path = $lecture->scorm_index_path;
 
-        if (!$path) {
+        if (! $path) {
             // Au lieu d'un 404 brutal, on peut rediriger avec un message d'erreur
             return redirect()->back()->with('error', 'Le contenu SCORM n\'a pas encore été importé pour cette leçon.');
         }
@@ -124,5 +124,23 @@ class LectureController extends Controller
             'lecture' => $lecture,
             'slides' => $slides,
         ]);
+    }
+
+    private function internalRedirectPath(mixed $target): ?string
+    {
+        $target = trim((string) $target);
+
+        if (
+            $target === ''
+            || str_contains($target, "\0")
+            || preg_match('/[\r\n]/', $target)
+            || preg_match('/^[a-z][a-z0-9+.-]*:/i', $target)
+            || str_starts_with($target, '//')
+            || ! str_starts_with($target, '/')
+        ) {
+            return null;
+        }
+
+        return $target;
     }
 }

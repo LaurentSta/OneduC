@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers\Backend;
 
+use App\Domains\ModulesFormateur\Support\NettoyeurBlocsModule;
 use App\Http\Controllers\Controller;
+use App\Models\LectureObjective;
 use App\Models\ModuleLecture;
 use App\Models\ModuleSection;
-use App\Models\LectureObjective;
 use App\Models\QuizQuestion;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -20,12 +21,12 @@ class ModuleSectionController extends Controller
         $cid = $request->module_id;
 
         ModuleSection::insert([
-            'module_id'     => $cid,
+            'module_id' => $cid,
             'section_title' => $request->section_title,
         ]);
 
         return redirect()->back()->with([
-            'message'    => 'Section ajoutée',
+            'message' => 'Section ajoutée',
             'alert-type' => 'success',
         ]);
     }
@@ -41,23 +42,16 @@ class ModuleSectionController extends Controller
     {
         $request->validate([
             'section_title' => ['required', 'string', 'max:255'],
-            'section_html'  => ['nullable', 'string', 'max:20000'],
-            'video_url'     => ['nullable', 'string', 'max:255'],
-            'video_file'    => ['nullable', 'file', 'mimes:mp4,m4v,mov,avi,webm', 'max:307200'],
-            'stay'          => ['nullable', 'boolean'],
+            'section_html' => ['nullable', 'string', 'max:20000'],
+            'video_url' => ['nullable', 'string', 'max:255'],
+            'video_file' => ['nullable', 'file', 'mimes:mp4,m4v,mov,avi,webm', 'max:307200'],
+            'stay' => ['nullable', 'boolean'],
         ]);
 
         $section = ModuleSection::findOrFail($id);
 
-        $allowedTags = '<p><br><strong><em><u><ul><ol><li>';
-        $sectionHtml = strip_tags((string) $request->input('section_html', ''), $allowedTags);
-
-        $normalize = function (string $html): ?string {
-            $html = trim($html);
-            if ($html === '') return null;
-            $plain = trim(strip_tags($html));
-            return $plain === '' ? null : $html;
-        };
+        $sectionHtml = app(NettoyeurBlocsModule::class)
+            ->sanitizeHtmlFragment((string) $request->input('section_html', ''));
 
         $videoUrl = trim((string) $request->input('video_url', ''));
         $videoUrl = $videoUrl === '' ? null : $videoUrl;
@@ -68,8 +62,8 @@ class ModuleSectionController extends Controller
 
         $section->update([
             'section_title' => $request->input('section_title'),
-            'section_html'  => $normalize($sectionHtml),
-            'video_url'     => $videoUrl,
+            'section_html' => $sectionHtml,
+            'video_url' => $videoUrl,
         ]);
 
         if ($request->boolean('stay')) {
@@ -109,7 +103,7 @@ class ModuleSectionController extends Controller
         $this->cleanupOrphanQuizQuestions();
 
         return redirect()->back()->with([
-            'message'    => 'Section supprimée',
+            'message' => 'Section supprimée',
             'alert-type' => 'success',
         ]);
     }
@@ -117,11 +111,11 @@ class ModuleSectionController extends Controller
     private function storeSectionVideo(ModuleSection $section, UploadedFile $video): string
     {
         $videosBase = trim((string) config('learning_assets.videos_base', 'modules/videos'), '/');
-        $relativeFolder = 'sections/section_' . $section->id;
-        $storageFolder = $videosBase . '/' . $relativeFolder;
+        $relativeFolder = 'sections/section_'.$section->id;
+        $storageFolder = $videosBase.'/'.$relativeFolder;
         $disk = Storage::disk('public');
 
-        if (!$disk->exists($storageFolder)) {
+        if (! $disk->exists($storageFolder)) {
             $disk->makeDirectory($storageFolder);
         }
 
@@ -130,13 +124,13 @@ class ModuleSectionController extends Controller
         if ($oldVideo !== '') {
             $normalizedOld = ltrim($oldVideo, '/');
 
-            if (Str::startsWith($oldVideo, $relativeFolder . '/')) {
-                $oldCandidates[] = $videosBase . '/' . $oldVideo;
+            if (Str::startsWith($oldVideo, $relativeFolder.'/')) {
+                $oldCandidates[] = $videosBase.'/'.$oldVideo;
             }
             if (Str::startsWith($normalizedOld, 'storage/')) {
                 $oldCandidates[] = Str::after($normalizedOld, 'storage/');
             }
-            if (Str::startsWith($normalizedOld, $videosBase . '/')) {
+            if (Str::startsWith($normalizedOld, $videosBase.'/')) {
                 $oldCandidates[] = $normalizedOld;
             }
             if (Str::startsWith($normalizedOld, 'media/storage/')) {
@@ -160,18 +154,18 @@ class ModuleSectionController extends Controller
             $extension = 'mp4';
         }
 
-        $fileName = now()->format('Ymd_His') . '_' . Str::random(6) . '_' . $baseName . '.' . $extension;
+        $fileName = now()->format('Ymd_His').'_'.Str::random(6).'_'.$baseName.'.'.$extension;
         $disk->putFileAs($storageFolder, $video, $fileName);
 
-        return route('media.storage', ['path' => $storageFolder . '/' . $fileName], false);
+        return route('media.storage', ['path' => $storageFolder.'/'.$fileName], false);
     }
 
     private function deleteLectureAndDependencies(ModuleLecture $lecture): void
     {
-        if (!empty($lecture->slides_path)) {
+        if (! empty($lecture->slides_path)) {
             Storage::disk('public')->deleteDirectory($lecture->slides_path);
         }
-        if (!empty($lecture->slides_source_path)) {
+        if (! empty($lecture->slides_source_path)) {
             Storage::disk('local')->delete($lecture->slides_source_path);
         }
 
@@ -187,10 +181,10 @@ class ModuleSectionController extends Controller
             ->orderBy('id')
             ->chunkById(200, function ($questions): void {
                 foreach ($questions as $question) {
-                    if (!empty($question->image_path)) {
+                    if (! empty($question->image_path)) {
                         Storage::disk('public')->delete($question->image_path);
                     }
-                    if (!empty($question->audio_path)) {
+                    if (! empty($question->audio_path)) {
                         Storage::disk('public')->delete($question->audio_path);
                     }
                     $question->delete();
@@ -207,10 +201,10 @@ class ModuleSectionController extends Controller
             ->orderBy('id')
             ->chunkById(200, function ($questions) use (&$deleted): void {
                 foreach ($questions as $question) {
-                    if (!empty($question->image_path)) {
+                    if (! empty($question->image_path)) {
                         Storage::disk('public')->delete($question->image_path);
                     }
-                    if (!empty($question->audio_path)) {
+                    if (! empty($question->audio_path)) {
                         Storage::disk('public')->delete($question->audio_path);
                     }
                     $question->delete();

@@ -21,17 +21,17 @@ class ScormImporter
         $basePath = public_path($targetPath);
         File::ensureDirectoryExists($basePath);
         $importedAt = now();
-        $releaseFolder = 'release_' . $importedAt->format('Ymd_His_u') . '_' . Str::lower(Str::random(6));
-        $extractPath = $basePath . DIRECTORY_SEPARATOR . $releaseFolder;
+        $releaseFolder = 'release_'.$importedAt->format('Ymd_His_u').'_'.Str::lower(Str::random(6));
+        $extractPath = $basePath.DIRECTORY_SEPARATOR.$releaseFolder;
         File::ensureDirectoryExists($extractPath);
 
         $realZipPath = $zipFile->getRealPath();
-        if (!$realZipPath) {
+        if (! $realZipPath) {
             throw new RuntimeException('Fichier ZIP introuvable après upload.');
         }
         $zipHash = hash_file('sha256', $realZipPath) ?: null;
 
-        $zip = new ZipArchive();
+        $zip = new ZipArchive;
         if ($zip->open($realZipPath) !== true) {
             throw new RuntimeException('Impossible d\'ouvrir le ZIP.');
         }
@@ -43,11 +43,11 @@ class ScormImporter
         }
 
         $relativeIndex = $this->findIndexPath($extractPath);
-        if (!$relativeIndex) {
+        if (! $relativeIndex) {
             throw new RuntimeException('Index SCORM introuvable.');
         }
 
-        $fullIndexPath = $extractPath . DIRECTORY_SEPARATOR . $relativeIndex;
+        $fullIndexPath = $extractPath.DIRECTORY_SEPARATOR.$relativeIndex;
         $this->injectApiScript($fullIndexPath);
 
         // Package (slug stable = nom du dossier)
@@ -59,7 +59,7 @@ class ScormImporter
         );
 
         // Version : vous voulez "écraser" => on force une version unique (1)
-        $indexPath = $targetPath . '/' . $releaseFolder . '/' . $relativeIndex;
+        $indexPath = $targetPath.'/'.$releaseFolder.'/'.$relativeIndex;
 
         $version = ScormPackageVersion::updateOrCreate(
             [
@@ -102,15 +102,15 @@ class ScormImporter
         $manifest = collect(File::allFiles($basePath))
             ->first(fn ($f) => strtolower($f->getFilename()) === 'imsmanifest.xml');
 
-        if (!$manifest) {
+        if (! $manifest) {
             return null;
         }
 
-        $manifestDir = $manifest->getPathname();
-        $manifestXml = File::get($manifestDir);
+        $manifestPath = $manifest->getPathname();
+        $manifestXml = File::get($manifestPath);
 
         // 2) Lire le href du manifest (resource href)
-        $dom = new DOMDocument();
+        $dom = new DOMDocument;
         $dom->preserveWhiteSpace = false;
 
         // évite les warnings XML en production
@@ -122,28 +122,30 @@ class ScormImporter
 
         foreach ($resources as $res) {
             if ($res->hasAttribute('href')) {
-                $href = ltrim($res->getAttribute('href'), '/');
+                $href = trim(str_replace('\\', '/', $res->getAttribute('href')));
+
+                if ($href === '' || str_starts_with($href, '/') || preg_match('/^[a-z][a-z0-9+.-]*:/i', $href)) {
+                    continue;
+                }
 
                 // Le href est relatif au dossier du manifest
-                $abs = dirname($manifestDir) . DIRECTORY_SEPARATOR . $href;
+                $abs = dirname($manifestPath).DIRECTORY_SEPARATOR.$href;
+                $rel = $this->relativePathInsideBase($basePath, $abs);
 
-                if (File::exists($abs)) {
-                    // Retourner un chemin relatif à $basePath
-                    $rel = str_replace($basePath . DIRECTORY_SEPARATOR, '', $abs);
-
-                    return str_replace('\\', '/', $rel);
+                if ($rel !== null) {
+                    return $rel;
                 }
             }
         }
 
         // 3) Solution de repli (cas simples)
-        if (File::exists($basePath . '/res/index.html')) {
+        if (File::exists($basePath.'/res/index.html')) {
             return 'res/index.html';
         }
-        if (File::exists($basePath . '/index_lms.html')) {
+        if (File::exists($basePath.'/index_lms.html')) {
             return 'index_lms.html';
         }
-        if (File::exists($basePath . '/index.html')) {
+        if (File::exists($basePath.'/index.html')) {
             return 'index.html';
         }
 
@@ -156,9 +158,9 @@ class ScormImporter
     private function injectApiScript(string $indexPath): void
     {
         $html = File::get($indexPath);
-        if (!str_contains($html, 'scorm_core/js/API.js')) {
+        if (! str_contains($html, 'scorm_core/js/API.js')) {
             $script = "\n<script src=\"/scorm_core/js/API.js\"></script>\n";
-            $html = preg_replace('#</head>#i', $script . '</head>', $html, 1);
+            $html = preg_replace('#</head>#i', $script.'</head>', $html, 1);
             File::put($indexPath, $html);
         }
     }
@@ -177,13 +179,20 @@ class ScormImporter
 
             // Normalisation des séparateurs pour appliquer les contrôles de sécurité.
             $name = str_replace('\\', '/', $name);
+            $segments = array_values(array_filter(explode('/', $name), fn ($segment) => $segment !== ''));
 
             // Refuser chemins absolus et traversée de dossiers.
-            if (str_starts_with($name, '/') || str_contains($name, '../')) {
+            if (
+                $name === ''
+                || str_contains($name, "\0")
+                || str_starts_with($name, '/')
+                || preg_match('/^[A-Za-z]:/', $name)
+                || in_array('..', $segments, true)
+            ) {
                 throw new RuntimeException('ZIP invalide : chemin non autorisé détecté.');
             }
 
-            $dest = $basePath . DIRECTORY_SEPARATOR . $name;
+            $dest = $basePath.DIRECTORY_SEPARATOR.$name;
 
             // Répertoires.
             if (str_ends_with($name, '/')) {
@@ -198,7 +207,7 @@ class ScormImporter
             // Écrire le fichier.
             $stream = $zip->getStream($name);
             if ($stream === false) {
-                throw new RuntimeException('Extraction impossible : ' . $name);
+                throw new RuntimeException('Extraction impossible : '.$name);
             }
 
             $contents = stream_get_contents($stream);
@@ -206,5 +215,29 @@ class ScormImporter
 
             File::put($dest, $contents);
         }
+    }
+
+    private function relativePathInsideBase(string $basePath, string $candidatePath): ?string
+    {
+        $baseReal = realpath($basePath);
+        $candidateReal = realpath($candidatePath);
+
+        if ($baseReal === false || $candidateReal === false) {
+            return null;
+        }
+
+        $baseReal = rtrim(str_replace('\\', '/', $baseReal), '/').'/';
+        $candidateReal = str_replace('\\', '/', $candidateReal);
+
+        if (! str_starts_with($candidateReal, $baseReal)) {
+            return null;
+        }
+
+        $relative = ltrim(substr($candidateReal, strlen($baseReal)), '/');
+        if ($relative === '' || str_contains($relative, "\0")) {
+            return null;
+        }
+
+        return $relative;
     }
 }
