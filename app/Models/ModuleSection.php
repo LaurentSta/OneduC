@@ -18,13 +18,13 @@ class ModuleSection extends Model
         'contexte',
         'scorm_video_path',
         'video_url',
+        'position',
     ];
 
     public function lectures()
     {
         return $this->hasMany(ModuleLecture::class, 'section_id')->orderBy('position');
     }
-
 
     public function module()
     {

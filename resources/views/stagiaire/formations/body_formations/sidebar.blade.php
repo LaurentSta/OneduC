@@ -3,6 +3,12 @@
 <aside
   x-cloak
   x-show="sidebarOpen"
+  x-transition:enter="transition ease-out duration-200"
+  x-transition:enter-start="opacity-0 scale-95"
+  x-transition:enter-end="opacity-100 scale-100"
+  x-transition:leave="transition ease-in duration-150"
+  x-transition:leave-start="opacity-100 scale-100"
+  x-transition:leave-end="opacity-0 scale-95"
   class="w-80 flex-shrink-0 bg-white border-r border-gray-100 flex flex-col fixed md:sticky z-20"
   style="top: var(--app-header-h, 86px); height: calc(100vh - var(--app-header-h, 86px));"
 >
@@ -186,7 +192,7 @@
       >
         <div class="mb-3 flex items-start justify-between gap-3">
           <div class="flex items-start gap-2 min-w-0">
-            <h2 class="text-sm font-bold text-bleuone">Ressources du module</h2>
+            <h2 class="text-sm font-bold text-bleuone">Ressources de la formation</h2>
             <div x-data="{ open: false }" class="relative">
               <button
                 type="button"
@@ -195,17 +201,23 @@
                 @focus="open = true"
                 @blur="open = false"
                 class="inline-flex h-5 w-5 items-center justify-center rounded-full border border-gray-200 bg-white text-[10px] font-black text-bleuone transition hover:border-bleuone"
-                aria-label="Aide sur les ressources du module"
+                aria-label="Aide sur les ressources de la formation"
               >
                 ?
               </button>
               <div
                 x-show="open"
                 x-cloak
+                x-transition:enter="transition ease-out duration-200"
+                x-transition:enter-start="opacity-0 scale-95"
+                x-transition:enter-end="opacity-100 scale-100"
+                x-transition:leave="transition ease-in duration-150"
+                x-transition:leave-start="opacity-100 scale-100"
+                x-transition:leave-end="opacity-0 scale-95"
                 class="absolute left-0 top-full z-20 mt-2 w-52 rounded-xl border border-slate-200 bg-slate-900 px-3 py-2 text-[11px] leading-relaxed text-white shadow-xl"
                 style="display: none;"
               >
-                Documents et supports utilises dans le module.
+                Documents et supports utilises dans la formation.
               </div>
             </div>
           </div>

@@ -11,12 +11,15 @@
             data-drawer-toggle="formateur-sidebar"
             aria-controls="formateur-sidebar"
             type="button"
-            @click="sidebarOpen = !sidebarOpen"
-            class="text-gray-600 hover:text-orangeone inline-flex lg:hidden">
+            @click="window.innerWidth >= 1024 ? (sidebarCollapsed = !sidebarCollapsed) : (sidebarOpen = !sidebarOpen)"
+            :aria-expanded="(window.innerWidth >= 1024 ? !sidebarCollapsed : sidebarOpen).toString()"
+            class="text-gray-600 hover:text-orangeone inline-flex">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
             <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
             </svg>
         </button>
+
+        <div class="h-6 w-px bg-gray-300" aria-hidden="true"></div>
 
         <!-- Logo juste à droite du burger -->
         <a href="{{ url('/') }}" class="inline-flex items-center">
@@ -25,20 +28,6 @@
       </div>
 
       <div class="flex items-center gap-3">
-
-        <form action="{{ route('formateur.objectifs.index') }}"
-              method="GET"
-              class="hidden md:flex items-center">
-          <label for="formateur-objectives-search" class="sr-only">Rechercher un objectif</label>
-          <div class="flex items-center rounded-full border border-gray-200 bg-gray-50 px-3 py-2 shadow-sm transition focus-within:border-orangeone focus-within:bg-white">
-            <input id="formateur-objectives-search"
-                   name="search"
-                   type="search"
-                   value="{{ request()->routeIs('formateur.objectifs.index') ? request('search') : '' }}"
-                   placeholder="Mots-cles objectif"
-                   class="w-44 lg:w-56 border-0 bg-transparent p-0 text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none focus:ring-0">
-          </div>
-        </form>
 
         @include('components.user-notification-bell')
 

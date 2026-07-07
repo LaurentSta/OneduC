@@ -62,7 +62,14 @@
   </div>
 
   @foreach($questions as $qi => $question)
-    <section x-show="activeQ === {{ $qi }}" x-cloak class="bg-white rounded-[20px] shadow-md p-6 mb-6"
+    <section x-show="activeQ === {{ $qi }}" x-cloak
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 scale-95"
+             x-transition:enter-end="opacity-100 scale-100"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100 scale-100"
+             x-transition:leave-end="opacity-0 scale-95"
+             class="bg-white rounded-[20px] shadow-md p-6 mb-6"
              data-question-block="{{ $qi }}">
       <div class="flex items-center justify-between gap-3 mb-4">
         <h2 class="text-base font-bold text-bleuone">{{ $question['question'] ?? 'Question' }}</h2>

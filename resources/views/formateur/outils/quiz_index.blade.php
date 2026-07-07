@@ -59,7 +59,7 @@
 
         @if($toolGroups->isEmpty())
           <div class="rounded-[10px] bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-700">
-            Aucun groupe avec quiz disponible. Assignez des modules contenant des questions actives à vos groupes.
+            Aucun groupe avec quiz disponible. Assignez des formations contenant des questions actives à vos groupes.
           </div>
         @else
           <form method="POST"
@@ -83,12 +83,12 @@
               </select>
             </div>
 
-            {{-- Module --}}
+            {{-- Formation --}}
             <div>
-              <label class="block text-xs font-semibold text-gray-600 mb-1">Module</label>
+              <label class="block text-xs font-semibold text-gray-600 mb-1">Formation</label>
               <select x-model="moduleId" :disabled="!modules.length" required
                       class="w-full rounded-[10px] border border-gray-300 px-3 py-2.5 text-sm focus:border-[#004461] focus:outline-none focus:ring-2 focus:ring-[#004461]/20 disabled:opacity-50">
-                <option value="">Choisir un module…</option>
+                <option value="">Choisir une formation…</option>
                 <template x-for="m in modules" :key="m.id">
                   <option :value="String(m.id)" x-text="m.title"></option>
                 </template>
@@ -123,7 +123,7 @@
           <div class="mt-5 rounded-[10px] bg-[#004461]/5 border border-[#004461]/10 px-4 py-3">
             <p class="text-xs text-[#004461] font-semibold mb-1">Comment ça marche ?</p>
             <ol class="text-[11px] text-gray-600 space-y-1 list-decimal list-inside leading-relaxed">
-              <li>Choisissez groupe, module et leçon</li>
+              <li>Choisissez groupe, formation et leçon</li>
               <li>Cliquez "Lancer" — le cockpit s'ouvre</li>
               <li>Les stagiaires scannent le QR code ou saisissent le code</li>
               <li>Pilotez les questions, affichez les corrections</li>

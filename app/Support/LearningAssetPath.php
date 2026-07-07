@@ -15,6 +15,13 @@ class LearningAssetPath
         return $base . '/lecture_' . $lectureId;
     }
 
+    public static function lessonBlockScormFolder(int $moduleId, string $contentBlockKey): string
+    {
+        $base = trim((string) config('learning_assets.lessons_scorm_blocks_base', 'modules/00_Lecons_blocks'), '/');
+
+        return $base . '/module_' . $moduleId . '/block_' . $contentBlockKey;
+    }
+
     public static function resolveSectionVideoUrl(?string $raw): ?string
     {
         return self::resolveVideoUrl($raw);

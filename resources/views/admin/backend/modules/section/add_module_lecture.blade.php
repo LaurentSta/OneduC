@@ -104,18 +104,23 @@
                                 Ajouter une leçon
                             </button>
 
-                            <form action="{{ route('admin.sections.delete', ['id' => $item->id]) }}" method="POST"
-                                  onsubmit="return confirm('Supprimer cette section ?')" class="inline-block">
-                                @csrf
-                                <button
-                                    type="submit"
-                                    class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-red-200 text-red-700 hover:bg-red-600 hover:text-white transition text-xs font-varela cursor-pointer"
-                                    title="Supprimer cette section"
-                                >
-                                    <i class="ti ti-trash" aria-hidden="true"></i>
-                                    Supprimer la section
-                                </button>
-                            </form>
+                            <button
+                                type="button"
+                                x-data
+                                x-on:click="$dispatch('open-modal', 'delete-section-{{ $item->id }}')"
+                                class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-red-200 text-red-700 hover:bg-red-600 hover:text-white transition text-xs font-varela cursor-pointer"
+                                title="Supprimer cette section"
+                            >
+                                <i class="ti ti-trash" aria-hidden="true"></i>
+                                Supprimer la section
+                            </button>
+                            <x-confirm-modal
+                                name="delete-section-{{ $item->id }}"
+                                title="Supprimer cette section ?"
+                                :action="route('admin.sections.delete', ['id' => $item->id])"
+                                method="POST"
+                                confirm-label="Supprimer"
+                            />
                         </div>
                     </div>
 
@@ -159,14 +164,17 @@
                                                     <i class="ti ti-edit"></i>
                                                     Editer
                                                 </a>
-                                                <form action="{{ route('admin.lectures.delete', ['id' => $lecture->id]) }}" method="POST" class="inline-block" onsubmit="return confirm('Supprimer cette leçon ?')">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-red-200 text-red-700 hover:bg-red-600 hover:text-white transition text-xs font-varela cursor-pointer">
-                                                        <i class="ti ti-trash"></i>
-                                                        Supprimer
-                                                    </button>
-                                                </form>
+                                                <button type="button" x-data x-on:click="$dispatch('open-modal', 'delete-lecture-{{ $lecture->id }}')" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-red-200 text-red-700 hover:bg-red-600 hover:text-white transition text-xs font-varela cursor-pointer">
+                                                    <i class="ti ti-trash"></i>
+                                                    Supprimer
+                                                </button>
+                                                <x-confirm-modal
+                                                    name="delete-lecture-{{ $lecture->id }}"
+                                                    title="Supprimer cette leçon ?"
+                                                    :action="route('admin.lectures.delete', ['id' => $lecture->id])"
+                                                    method="DELETE"
+                                                    confirm-label="Supprimer"
+                                                />
                                             </div>
                                         </td>
                                     </tr>

@@ -128,7 +128,14 @@
             </div>
 
             {{-- Libellé actif --}}
-            <p x-show="label" x-text="label" class="text-lg font-semibold text-bleuone text-center"></p>
+            <p x-show="label" x-text="label"
+               x-transition:enter="transition ease-out duration-200"
+               x-transition:enter-start="opacity-0 scale-95"
+               x-transition:enter-end="opacity-100 scale-100"
+               x-transition:leave="transition ease-in duration-150"
+               x-transition:leave-start="opacity-100 scale-100"
+               x-transition:leave-end="opacity-0 scale-95"
+               class="text-lg font-semibold text-bleuone text-center"></p>
 
             {{-- Cercle SVG + temps --}}
             <div class="relative flex items-center justify-center">
@@ -152,6 +159,12 @@
             <div class="flex items-center gap-3 flex-wrap justify-center">
                 <button type="button" @click="isRunning ? pause() : start()"
                         x-show="!isFinished"
+                        x-transition:enter="transition ease-out duration-200"
+                        x-transition:enter-start="opacity-0 scale-95"
+                        x-transition:enter-end="opacity-100 scale-100"
+                        x-transition:leave="transition ease-in duration-150"
+                        x-transition:leave-start="opacity-100 scale-100"
+                        x-transition:leave-end="opacity-0 scale-95"
                         :class="isRunning
                             ? 'bg-amber-500 hover:bg-amber-600'
                             : 'bg-green-600 hover:bg-green-700'"
@@ -161,6 +174,12 @@
 
                 <button type="button" @click="reset()"
                         x-show="!isIdle"
+                        x-transition:enter="transition ease-out duration-200"
+                        x-transition:enter-start="opacity-0 scale-95"
+                        x-transition:enter-end="opacity-100 scale-100"
+                        x-transition:leave="transition ease-in duration-150"
+                        x-transition:leave-start="opacity-100 scale-100"
+                        x-transition:leave-end="opacity-0 scale-95"
                         class="inline-flex items-center gap-2 rounded-[10px] border border-gray-300 bg-white px-5 py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-50 transition">
                     ↺ Réinitialiser
                 </button>

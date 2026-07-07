@@ -1,5 +1,7 @@
 # 02 — Installation & Configuration
 
+*Public : développeurs et administrateurs système.*
+
 ## Prérequis
 
 | Outil | Version minimale |
@@ -8,7 +10,9 @@
 | Composer | 2.x |
 | Node.js | 18+ |
 | NPM | 9+ |
-| MySQL / MariaDB | 8.0+ / 10.4+ |
+| MySQL / MariaDB | 8.0+ / 10.4+ recommandé |
+
+> Le fichier `.env.example` Laravel indique encore `DB_CONNECTION=sqlite`, mais le dépôt contient une baseline de schéma **MySQL** (`database/schema/mysql-schema.sql`). Pour une installation fiable d'Oneduc, utiliser MySQL/MariaDB ou générer explicitement une baseline SQLite équivalente.
 
 ---
 
@@ -40,12 +44,14 @@ php artisan key:generate
 ### 4. Créer la base de données et migrer
 
 ```bash
-# Créer la base MySQL au préalable
+# Créer la base MySQL/MariaDB au préalable
 # Dans .env : DB_CONNECTION=mysql, DB_HOST, DB_DATABASE, DB_USERNAME, DB_PASSWORD
 
 php artisan migrate
 php artisan db:seed   # optionnel — données de démonstration
 ```
+
+Laravel applique d'abord le schéma baseline situé dans `database/schema/mysql-schema.sql`, puis les migrations post-baseline présentes dans `database/migrations/`.
 
 ### 5. Lancer l'environnement de développement
 
@@ -63,11 +69,11 @@ php artisan queue:listen  # Queue de travail
 
 ## Configuration du HMR Vite (développement)
 
-Le fichier `vite.config.js` contient une adresse IP en dur pour le Hot Module Replacement :
+Le fichier `vite.config.js` écoute sur `0.0.0.0`, impose le port Vite (`strictPort: true`) et contient une adresse IP en dur pour le Hot Module Replacement :
 
 ```js
 hmr: {
-    host: '192.168.x.x' // <- remplacer par l'IP de votre machine de dev
+    host: '192.168.189.129' // <- IP Debian actuelle
 }
 ```
 
@@ -85,7 +91,10 @@ Mettre à jour cette valeur avec l'IP locale de la machine de développement pou
 | `APP_ENV` | Environnement | `local` / `production` |
 | `APP_URL` | URL de base | `http://localhost:8000` |
 | `APP_DEBUG` | Mode debug | `true` (dev), `false` (prod) |
-| `DB_CONNECTION` | Driver BDD | `mysql` |
+| `APP_LOCALE` | Langue principale | `fr` |
+| `APP_FALLBACK_LOCALE` | Langue fallback | `fr` |
+| `APP_TIMEZONE` | Fuseau horaire | `Europe/Paris` en production France |
+| `DB_CONNECTION` | Driver BDD | `mysql` recommandé |
 | `DB_HOST` | Hôte BDD | `127.0.0.1` |
 | `DB_PORT` | Port BDD | `3306` |
 | `DB_DATABASE` | Nom de la base | `oneduc` |
@@ -106,6 +115,11 @@ Mettre à jour cette valeur avec l'IP locale de la machine de développement pou
 | `DISCORD_SUPPORT_WEBHOOK_URL` | Webhook Discord pour les notifications support | Non |
 | `DISCORD_SUPPORT_INVITE_URL` | URL d'invitation Discord affichée aux utilisateurs | Non |
 | `DISCORD_SERVER_ID` | ID du serveur Discord | Non |
+| `NOCAPTCHA_SITEKEY` | Clé publique reCAPTCHA si les formulaires publics l'utilisent | Selon usage |
+| `NOCAPTCHA_SECRET` | Secret reCAPTCHA | Selon usage |
+| `COOKIE_CONSENT_ENABLED` | Active/désactive le bandeau cookies Spatie | Non (défaut : `true`) |
+| `MISTRAL_API_KEY` | Clé API Mistral pour la génération de leçon par IA (builder formateur) | Non (fonctionnalité désactivée sans clé) |
+| `MISTRAL_MODEL` | Modèle Mistral utilisé | Non (défaut : `mistral-large-latest`) |
 
 ---
 
@@ -119,6 +133,8 @@ Mettre à jour cette valeur avec l'IP locale de la machine de développement pou
 | `anhskohbo/no-captcha` | Captcha sur formulaires publics |
 | `spatie/laravel-cookie-consent` | Bandeau RGPD cookies |
 | `laravel-lang/common` | Traductions Laravel |
+| `smalot/pdfparser` | Extraction de texte PDF (génération de leçon par IA) |
+| `phpoffice/phpword` | Extraction de texte Word `.docx` (génération de leçon par IA) |
 
 ### Dev PHP
 
@@ -155,7 +171,15 @@ php artisan tinker                                  # Console interactive
 
 ## Stockage des assets SCORM
 
-Les packages SCORM importés ne sont **pas versionnés dans git**. Ils sont stockés dans `storage/` et `public/modules/` selon la configuration dans `config/learning_assets.php`.
+Les packages SCORM importés ne sont **pas versionnés dans git**. Les chemins applicatifs sont centralisés dans `config/learning_assets.php` :
+
+| Type | Chemin principal |
+|------|------------------|
+| Leçons SCORM | `modules/00_Lecons` |
+| Vidéos | `modules/videos` |
+| Évaluations SCORM | `modules/evaluations/scorm` |
+
+Des chemins legacy restent déclarés pour relire les anciens imports (`modules/scorm/00_Lecons`, `modules/scorm/01_evaluations`, `modules/scorm/02_videos`).
 
 En production, ces dossiers doivent être sauvegardés séparément du code source.
 
@@ -167,6 +191,7 @@ En production, ces dossiers doivent être sauvegardés séparément du code sour
 - Configurer un vrai driver mail (SMTP)
 - Configurer `QUEUE_CONNECTION=database` et lancer un worker queue en continu (`php artisan queue:work`)
 - Configurer le scheduler Laravel dans cron (`php artisan schedule:run`)
+- Vérifier que `APP_NAME`, `APP_LOCALE`, `APP_FALLBACK_LOCALE`, `APP_TIMEZONE` et les valeurs mail ne gardent pas les valeurs génériques de `.env.example`
 - Vérifier les routes exposées publiquement (voir [Sécurité](10-securite-rgpd.md))
 
 ---

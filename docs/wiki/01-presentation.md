@@ -2,93 +2,160 @@
 
 ## Qu'est-ce qu'Oneduc ?
 
-Oneduc est une plateforme de gestion de l'apprentissage (LMS) développée en Laravel, conçue spécifiquement pour accompagner les publics éloignés du numérique. Elle s'adresse aux formateurs qui animent des sessions d'inclusion numérique dans les associations, ateliers numériques, collectivités et organismes de formation.
+Oneduc est une plateforme web de formation accompagnée. Elle réunit dans un même outil la diffusion de contenus pédagogiques, l'animation de groupes en séance et le suivi de progression.
 
-Le positionnement d'Oneduc se distingue des LMS généralistes (Moodle, 360Learning, Canvas) sur deux axes :
+On peut la décrire comme un LMS, mais l'étiquette est un peu courte. La plupart des LMS sont construits autour du contenu ; Oneduc est construit autour du groupe et du formateur qui l'accompagne. Le contenu est là, structuré et suivi, mais il n'est pas le centre de gravité.
 
-1. **Simplification maximale de l'accès apprenant** — un code court suffit pour rejoindre une formation, sans création de compte email ni mot de passe initial
-2. **Accompagnement visible du formateur** — le formateur référent est affiché en permanence côté stagiaire, les outils d'animation live sont intégrés nativement sans plugin externe
+Le nom est un acronyme : **O**utils **N**umériques **ÉDUC**atifs.
 
----
+Ce qui la distingue de Moodle, Canvas ou 360Learning tient en quatre points :
 
-## Contexte et origine
-
-Le projet est porté par l'**association Oneduc** (loi 1901), dont l'objet est de favoriser l'inclusion numérique par la formation accompagnée. La plateforme est développée pour les formateurs et stagiaires du réseau Oneduc.fr.
-
-Il répond à un besoin terrain identifié : les LMS généralistes créent trop de friction pour des publics peu à l'aise avec le numérique. L'association Oneduc pilote le développement et détient les droits sur le logiciel.
-
-Le modèle de gouvernance est associatif : les formateurs accèdent à la plateforme via un système d'adhésion intégré directement dans le code (`adhesion_status`, `adhesion_valid_until`).
+1. Un stagiaire rejoint sa formation avec un code court. Pas de compte email, pas de mot de passe à retenir dans les parcours simples.
+2. Le formateur référent reste visible partout. L'apprenant sait qui l'accompagne.
+3. Un formateur peut partir d'un module du catalogue, le dupliquer, le modifier, puis l'affecter à ses groupes. Il n'est pas obligé de tout créer de zéro, ni de se contenter du catalogue.
+4. Les outils d'animation de séance (quiz live, sondages, nuage de mots, tableau blanc...) sont développés en natif, pour éviter de jongler avec Wooclap ou Klaxoon à côté. Au 5 juillet 2026, ils ne sont pas encore activés en environnement de production (voir [Outils d'animation](07-outils-animation.md)).
 
 ---
 
-## Ce que la plateforme fait
+## D'où vient le projet
 
-| Domaine | Capacités |
-|---------|-----------|
-| **Gestion des utilisateurs** | 4 profils distincts (Admin, Formateur, Stagiaire, Observateur) avec espaces séparés |
-| **Contenu pédagogique** | Modules → Sections → Leçons (SCORM, slides, quiz natifs, vidéo, ressources) |
-| **Groupes de formation** | Création, co-formateurs, personnalisation des leçons par groupe |
-| **Suivi de progression** | Multi-sources (quiz, SCORM, vidéo, temps de connexion) |
-| **Animation live** | 9 outils intégrés : Quiz live, Nuage de mots, Sondage, Échelle, Mur de questions, Roue aléatoire, Tableau blanc, Minuteur |
-| **Tableaux de bord** | Analytique formateur avec identification des apprenants à risque |
-| **Accès simplifié** | Connexion par code court pour les stagiaires |
+Oneduc est porté par l'**association Oneduc** (loi 1901). Le terrain de départ est l'inclusion numérique : des publics peu à l'aise avec les outils, et des formateurs pour qui la relation humaine passe avant la richesse fonctionnelle.
+
+Ce contexte explique des choix qui, ailleurs, sembleraient des limitations. La connexion par code existe parce que demander une adresse email à quelqu'un qui n'en a pas encore est un mur. Les interfaces sont séparées par rôle parce qu'un stagiaire débutant n'a pas à voir la complexité d'un back-office.
+
+Le besoin dépasse pourtant l'inclusion numérique. Beaucoup de formations ont besoin de relier un contenu, un groupe et un formateur dans le même espace, avec une progression mesurable. C'est ce qu'Oneduc cherche à faire, quel que soit le public.
+
+L'association pilote le développement et détient les droits sur le logiciel. L'accès formateur passe par un système d'adhésion intégré.
 
 ---
 
-## Ce que la plateforme ne fait pas encore
+## À qui peut servir Oneduc ?
 
-- Génération de certificats (le champ `certificat` existe en base mais le flux n'est pas implémenté)
-- Export de données de progression (CSV, PDF)
-- Multi-organisation (un seul tenant)
-- Prérequis bloquants entre modules
-- Interactions SCORM enregistrées au niveau des leçons (uniquement pour les évaluations)
+Associations de médiation numérique, organismes de formation, collectivités, tiers-lieux, écoles, formateurs indépendants, services formation en entreprise. La liste est large parce que le besoin l'est.
+
+Le vrai critère n'est pas le type de structure. Oneduc est pertinent quand la formation est un accompagnement de personnes, pas un catalogue de vidéos en libre-service. Si vos apprenants avancent seuls sans jamais croiser un formateur, d'autres outils feront aussi bien.
 
 ---
 
-## Stack technique
+## Ce que la plateforme permet de faire
+
+### Quatre profils, quatre espaces
+
+- L'**administrateur** pilote le catalogue, les utilisateurs, les référentiels et les indicateurs système.
+- Le **formateur** crée ou adapte des modules, gère ses groupes, anime des séances et suit les progressions.
+- Le **stagiaire** accède à ses modules, suit ses leçons, répond aux quiz et consulte ses résultats.
+- L'**observateur** consulte les progressions d'un périmètre défini, sans pouvoir créer ni animer.
+
+Chacun ne voit que ce qui le concerne. Un stagiaire débutant n'est jamais confronté à un écran de gestion.
+
+### Le contenu pédagogique
+
+La hiérarchie est simple :
+
+```text
+Module
+└── Chapitre / Section
+    └── Leçon
+```
+
+Une leçon peut mélanger du texte, des images, des vidéos, des ressources à télécharger, des quiz natifs ou des contenus SCORM. On peut donc construire de vrais supports structurés, pas seulement déposer des PDF.
+
+### La création de modules par les formateurs
+
+Le formateur dispose d'un builder pour créer ses propres modules : créer des chapitres et des leçons, les réordonner, dupliquer une leçon, éditer le contenu en blocs, téléverser des médias ou des packages SCORM.
+
+Il peut aussi dupliquer un module du catalogue pour l'adapter à son public. C'est souvent le chemin le plus rapide : partir d'une base qui existe, puis modifier ce qui doit l'être.
+
+### Les groupes
+
+Le groupe est l'unité centrale d'Oneduc. Il relie des stagiaires, un formateur principal, d'éventuels co-formateurs, des observateurs et des modules.
+
+Le formateur peut adapter l'ordre ou la visibilité de certaines leçons pour un groupe précis. Le même module de base peut donc servir différemment selon le public ou le rythme de la session.
+
+Le wiki distingue deux notions de parcours : le parcours formateur Oneduc (la prise en main de la plateforme par les formateurs) et les parcours créés par le formateur pour ses propres groupes.
+
+### L'animation en séance
+
+Quiz live, nuage de mots, sondage, échelle de positionnement, mur de questions, roue aléatoire, tableau blanc collaboratif, minuteur, pages collaboratives HedgeDoc. Prévus pour vivre dans le même environnement que les modules et les groupes, avec l'objectif qu'une séance n'ait pas besoin de trois onglets et deux comptes externes pour fonctionner.
+
+**Statut au 5 juillet 2026** : ces outils sont développés côté code mais pas encore activés en environnement de production (détail dans [Outils d'animation](07-outils-animation.md)).
+
+### Le suivi
+
+La progression est agrégée depuis plusieurs sources : validation manuelle des leçons, scores SCORM, tentatives de quiz, lecture vidéo, temps de connexion.
+
+Le formateur voit ses groupes, repère les stagiaires actifs, inactifs ou à risque, et peut descendre au niveau d'un stagiaire ou d'un module. Le stagiaire voit sa propre progression dans un espace simplifié.
+
+---
+
+## Où en est le projet aujourd'hui
+
+Au 5 juillet 2026, Oneduc est une application Laravel complète : 411 routes, plus de 290 vues, une soixantaine de modèles, des tests automatisés. Espaces public, administrateur, formateur, stagiaire et observateur sont opérationnels, ainsi que le builder et les tableaux de bord. Les outils d'animation sont développés mais pas encore activés en production.
+
+La plateforme est utilisable dès maintenant en pilote contrôlé : 10 à 50 stagiaires, 3 à 5 formateurs, dans un contexte associatif. Les correctifs de sécurité S3 à S9 ont été appliqués le 5 juillet 2026 (throttling, contrôle d'appartenance SCORM, `Module::isVisibleTo()`, etc.) ; un gap reste identifié sur deux contrôleurs qui ne vérifient pas encore l'appartenance groupe (détail dans [Sécurité & RGPD](https://github.com/LaurentSta/Oneduc/wiki/10-securite-rgpd) et la [Checklist GitHub](https://github.com/LaurentSta/Oneduc/wiki/13-publication-github)).
+
+## Et ensuite
+
+Les évolutions prioritaires de la roadmap :
+
+- Policies Laravel centralisées pour les autorisations (Phase 2), et fermeture du gap `StagiaireModuleDetail`/`LectureController` identifié lors du correctif `isVisibleTo()`.
+- Exports de progression en CSV et PDF pour les formateurs.
+- Certificats de fin de module.
+- Prérequis : débloquer un module ou une leçon selon une progression ou un score.
+- Meilleure collecte des interactions SCORM, pour des tableaux de bord plus fins.
+- Multi-groupe, puis multi-organisation.
+- Nouveaux blocs de leçon : flashcards, tri, carrousel.
+- Le nécessaire pour une exploitation professionnelle : conformité RGPD documentée, sauvegardes, supervision, exports institutionnels.
+
+---
+
+## Partie technique
+
+Cette section s'adresse aux développeurs et administrateurs système. Les formateurs peuvent s'arrêter ici.
+
+### Stack
 
 | Composant | Technologie |
 |-----------|-------------|
 | Backend | Laravel 11 / PHP 8.2+ |
-| Frontend | Tailwind CSS v4 + Vite + Alpine.js |
+| Frontend | Blade, Tailwind CSS v4, Vite, Alpine.js |
+| Écrans riches | React 19, Excalidraw, Tiptap, XYFlow |
 | Base de données | MySQL / MariaDB |
 | Standard e-learning | SCORM 1.2 et 2004 (API.js natif) |
 | Tests | Pest / PHPUnit |
 | Formatage PHP | Laravel Pint |
 | Interactivité temps réel | Polling AJAX (pas de WebSockets) |
 
----
-
-## Volume du projet (mai 2026)
+### Volume (5 juillet 2026)
 
 | Élément | Volume |
 |---------|--------|
 | Contrôleurs PHP | 85 fichiers |
-| Modèles Eloquent | 58 modèles |
-| Vues Blade | 468 fichiers |
-| Migrations | 102 fichiers |
-| Routes déclarées | ~376 routes |
-| Fichiers de test | 37 fichiers Pest |
+| Modèles Eloquent | 61 modèles |
+| Services métier | 6 fichiers |
+| Domaines internes | 26 fichiers dans `app/Domains` |
+| Vues Blade | 291 fichiers |
+| Tables (schéma MySQL baseline) | 72 tables |
+| Migrations post-baseline | 5 migrations |
+| Routes déclarées | 411 routes |
+| Fichiers de test | 43 fichiers PHP |
+| Suite de tests | 124 tests passés, 0 échec, 580 assertions (correctifs sécurité du 5 juillet) |
 
----
+### Maturité
 
-## Niveau de maturité (audit mai 2026)
-
-| Axe | Note | Commentaire |
+| Axe | État | Commentaire |
 |-----|------|-------------|
-| Maturité technique | 11/20 | Fondations solides, bugs structurels à corriger, tests à stabiliser |
-| Maturité pédagogique | 14/20 | Vision juste, outils live remarquables, preuves et prérequis manquants |
-| Expérience utilisateur | 13/20 | Interface stagiaire adaptée, vocabulaire à unifier |
-| Potentiel commercial | 15/20 | Positionnement différenciant, pilote exploitable |
-| Capacité LMS globale | 12/20 | LMS réel mais incomplet sur SCORM, certificats, exports |
-
-La plateforme est utilisable dès aujourd'hui en **pilote contrôlé** (10 à 50 stagiaires, 3 à 5 formateurs, contexte associatif). Elle nécessite une consolidation technique avant mise en production large ou présentation institutionnelle.
+| Technique | En consolidation | Build Vite OK ; suite de tests verte (124 tests) ; plusieurs contrôleurs restent volumineux |
+| Pédagogique | Solide pour un pilote | Modules, quiz, SCORM, parcours et suivi formateur opérationnels ; outils live développés mais pas encore activés en production |
+| Expérience utilisateur | Bonne base terrain | Accès stagiaire simplifié ; convention de vocabulaire définie dans le glossaire, à appliquer dans les menus |
+| Publication | Proche | Licence, README, templates GitHub et wiki présents ; checklist sécurité S3-S9 résolue, historique Git et gap `isVisibleTo()` à revoir avant |
+| Capacité LMS globale | Réelle mais incomplète | Manquent : certificats, exports, prérequis bloquants, policies d'accès centralisées |
 
 ---
 
 ## Liens utiles
 
-- [Architecture technique](03-architecture.md)
-- [Profils utilisateurs](04-profils-utilisateurs.md)
-- [Roadmap](11-roadmap.md)
-- [Retour au wiki](README.md)
+- [Architecture technique](https://github.com/LaurentSta/Oneduc/wiki/03-architecture)
+- [Profils utilisateurs](https://github.com/LaurentSta/Oneduc/wiki/04-profils-utilisateurs)
+- [Roadmap](https://github.com/LaurentSta/Oneduc/wiki/11-roadmap)
+- [Retour au wiki](https://github.com/LaurentSta/Oneduc/wiki)

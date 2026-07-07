@@ -2,14 +2,14 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\Facades\URL;
-use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\View;
-use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use Illuminate\Cache\RateLimiting\Limit;
-use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\View;
+use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -45,6 +45,18 @@ class AppServiceProvider extends ServiceProvider
                 Limit::perHour(20)->by($request->ip()),
             ];
         });
+        RateLimiter::for('connexion-code', function (Request $request) {
+            return [
+                // 10 tentatives / minute par IP
+                Limit::perMinute(10)->by($request->ip())
+                    ->response(function () {
+                        return back()
+                            ->withErrors(['code_acces' => 'Trop de tentatives. Réessayez dans une minute.'])
+                            ->withInput()
+                            ->setStatusCode(429);
+                    }),
+            ];
+        });
         // Partage de données vues
         View::composer('*', function ($view) {
             if (Auth::check()) {
@@ -53,6 +65,4 @@ class AppServiceProvider extends ServiceProvider
             }
         });
     }
-    
-
 }

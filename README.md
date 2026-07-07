@@ -2,13 +2,14 @@
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 
-Oneduc est une plateforme de gestion de l'apprentissage concue pour l'inclusion numerique et la formation accompagnee. Elle combine un socle Laravel, des espaces par role, des contenus SCORM, des quiz natifs et des outils d'animation pour suivre finement les parcours des apprenants.
+Oneduc est une plateforme de gestion de l'apprentissage concue pour l'inclusion numerique et la formation accompagnee. Elle combine un socle Laravel, des espaces par role, des contenus SCORM et des quiz natifs pour suivre finement les parcours des apprenants.
 
 ## Points Cles
 
 - **Architecture metier** : espaces Admin, Formateur, Stagiaire et Observateur.
 - **E-learning** : integration SCORM 1.2 / 2004, quiz, progression et resultats.
-- **Accompagnement** : groupes, parcours, tableaux de bord et outils live pour les formateurs.
+- **Accompagnement** : groupes, parcours et tableaux de bord pour les formateurs.
+- **Outils d'animation live** (nuage de mots, sondage, tableau blanc...) : developpes, pas encore actives en environnement de production.
 - **Accessibilite** : interface Tailwind CSS orientee lisibilite et usages terrain.
 - **Gouvernance ouverte** : projet associatif distribue sous AGPL v3.
 

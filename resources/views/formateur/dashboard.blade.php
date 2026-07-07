@@ -12,6 +12,7 @@
   <link rel="icon" href="{{ asset('backend/assets/img/favicon/favicon.ico') }}" type="image/x-icon">
 
   {{-- Alpine.js --}}
+  <script src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.x.x/dist/cdn.min.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 
   {{-- jQuery & DataTables --}}
@@ -24,8 +25,16 @@
   <meta name="csrf-token" content="{{ csrf_token() }}">
 </head>
 <body
-  x-data="{ sidebarOpen: window.innerWidth >= 1024 }"
-  x-init="window.addEventListener('resize', () => { sidebarOpen = window.innerWidth >= 1024 ? true : false })"
+  x-data="{
+    sidebarOpen: window.innerWidth >= 1024,
+    sidebarCollapsed: localStorage.getItem('oneduc-formateur-sidebar-collapsed') === '1',
+    sidebarTransitionsReady: false,
+  }"
+  x-init="
+    window.addEventListener('resize', () => { sidebarOpen = window.innerWidth >= 1024 ? true : false });
+    $watch('sidebarCollapsed', value => localStorage.setItem('oneduc-formateur-sidebar-collapsed', value ? '1' : '0'));
+    $nextTick(() => sidebarTransitionsReady = true);
+  "
   class="bg-gray-100 text-gray-900 font-sans">
 
     {{-- HEADER FIXE EN HAUT --}}
@@ -33,7 +42,11 @@
   {{-- SIDEBAR FIXE A GAUCHE --}}
   @include('formateur.body_dashboard.sidebar')
   {{-- CONTENU PRINCIPAL --}}
-  <main class="flex-1 p-6 lg:ml-56" style="padding-top: calc(var(--app-header-h, 86px) + 12px);">
+  <main
+    id="page-transition"
+    class="flex-1 p-6"
+    :class="{ 'transition-[margin-left] duration-300': sidebarTransitionsReady, 'lg:ml-48': !sidebarCollapsed }"
+    style="padding-top: calc(var(--app-header-h, 86px) + 12px);">
     @yield('formateur')
   </main>
 

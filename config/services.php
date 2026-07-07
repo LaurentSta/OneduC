@@ -37,7 +37,7 @@ return [
 
     'captcha' => [
         'sitekey' => env('NOCAPTCHA_SITEKEY'),
-        'secret'  => env('NOCAPTCHA_SECRET'),
+        'secret' => env('NOCAPTCHA_SECRET'),
     ],
 
     'discord' => [
@@ -51,5 +51,15 @@ return [
         'new_path' => env('HEDGEDOC_NEW_PATH', '/new'),
     ],
 
+    'mistral' => [
+        'api_key' => env('MISTRAL_API_KEY', ''),
+        'model' => env('MISTRAL_MODEL', 'mistral-large-latest'),
+        'monthly_token_limit' => env('MISTRAL_MONTHLY_TOKEN_LIMIT', 500000),
+    ],
+
+    'piper' => [
+        'binary' => env('PIPER_BINARY_PATH', storage_path('app/piper/piper/piper')),
+        'model' => env('PIPER_MODEL_PATH', storage_path('app/piper/voices/fr_FR-siwis-medium.onnx')),
+    ],
 
 ];

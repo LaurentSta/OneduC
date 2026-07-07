@@ -104,7 +104,7 @@
                                     </div>
                                 </button>
 
-                                <div x-show="openObjectives" x-collapse>
+                                <div x-show="openObjectives" x-collapse.duration.400ms>
                                     <div class="p-5 pt-0 text-gray-600 leading-relaxed">
                                         <div class="space-y-8">
 	                                            @foreach ($currentChapter['lessons'] as $lesson)
@@ -164,7 +164,7 @@
                                     </div>
                                 </button>
 
-                                <div x-show="openQuestions" x-collapse>
+                                <div x-show="openQuestions" x-collapse.duration.400ms>
                                     <div class="p-5 pt-0 text-gray-600 leading-relaxed">
                                         <div class="prose prose-sm max-w-none prose-p:text-gray-600 prose-li:text-gray-600 prose-strong:text-bleuone">
                                             <p>{{ $currentChapter['description'] }}</p>

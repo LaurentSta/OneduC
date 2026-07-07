@@ -16,7 +16,7 @@
           Accédez à vos contenus et suivez votre progression.
         </p>
         <p class="font-lisible text-lg text-gray-800 leading-loose mb-6">
-          Chaque module regroupe plusieurs sections. Vous pouvez reprendre une leçon à tout moment.
+          Chaque formation regroupe plusieurs sections. Vous pouvez reprendre une leçon à tout moment.
         </p>
 
         {{-- Fil d’Ariane --}}
@@ -32,7 +32,7 @@
               </a>
               <span class="mx-2 text-gray-400" aria-hidden="true">/</span>
             </li>
-            <li class="text-gray-400">Mes modules</li>
+            <li class="text-gray-400">Mes formations</li>
           </ol>
         </nav>
       </div>
@@ -40,7 +40,7 @@
       {{-- Image (3) --}}
       <div class="col-span-12 md:col-span-4 flex justify-center md:justify-end">
         <img src="{{ asset('images/svg/FormationStagiaire.svg') }}"
-             alt="Illustration des modules de formation"
+             alt="Illustration des formations"
              class="max-w-[400px] h-auto">
       </div>
 
@@ -69,7 +69,7 @@
 
     @if($modules->isEmpty() && !$parcours)
       <div class="text-center py-20 bg-white rounded-[20px] w-full shadow-inner">
-        <p class="text-gray-500 font-lisible">Aucun module ne vous a encore été attribué.</p>
+        <p class="text-gray-500 font-lisible">Aucune formation ne vous a encore été attribuée.</p>
       </div>
     @endif
 
@@ -120,7 +120,7 @@
                 </div>
                 <div class="flex-1 min-w-0">
                   <p class="text-sm font-semibold text-gray-900 truncate">
-                    {{ $mod ? ($mod->module_title ?? 'Module') : ($item->module_id ? "Module #{$item->module_id}" : 'Module') }}
+                    {{ $mod ? ($mod->module_title ?? 'Formation') : ($item->module_id ? "Formation #{$item->module_id}" : 'Formation') }}
                   </p>
                   @if($mod)
                     <div class="mt-1 flex items-center gap-2">

@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Formateur;
 
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Formateur\Concerns\ProgressionHelpers;
-use App\Models\Group;
 use App\Models\Progression;
+use App\Models\SeancePresence;
 use App\Models\User;
 use App\Services\LearningAnalyticsService;
 use Carbon\Carbon;
@@ -19,8 +19,7 @@ class ProgressionStagiaireController extends Controller
 
     public function __construct(
         private readonly LearningAnalyticsService $learningAnalytics,
-    ) {
-    }
+    ) {}
 
     public function show(Request $request, User $user)
     {
@@ -33,11 +32,13 @@ class ProgressionStagiaireController extends Controller
             ->where('role', 'stagiaire')
             ->where(function ($q) use ($accessibleGroupIds, $formateurId) {
                 $q->where('formateur_id', $formateurId)
-                  ->orWhereHas('groupesStagiaire', fn($g) => $g->whereIn('groups.id', $accessibleGroupIds->all()));
+                    ->orWhereHas('groupesStagiaire', fn ($g) => $g->whereIn('groups.id', $accessibleGroupIds->all()));
             })
             ->exists();
 
-        if (!$allowed) abort(403, 'Ce stagiaire ne fait pas partie de vos groupes.');
+        if (! $allowed) {
+            abort(403, 'Ce stagiaire ne fait pas partie de vos groupes.');
+        }
 
         $stagiaire = User::findOrFail($user->id);
         $userId = $stagiaire->id;
@@ -46,7 +47,7 @@ class ProgressionStagiaireController extends Controller
             $formateurId,
             $groupId
         );
-        $restrictToSelectedGroup = !is_null($selectedGroup);
+        $restrictToSelectedGroup = ! is_null($selectedGroup);
 
         // --- A. CALCULS DE TEMPS & ENGAGEMENT ---
         $scormTimeQuery = DB::table('scorm_scores')
@@ -91,9 +92,10 @@ class ProgressionStagiaireController extends Controller
             if ($interaction->latency) {
                 try {
                     [$h, $m, $s] = array_pad(explode(':', $interaction->latency), 3, 0);
-                    $totalLatencySeconds += ((int)$h * 3600 + (int)$m * 60 + (int)$s);
+                    $totalLatencySeconds += ((int) $h * 3600 + (int) $m * 60 + (int) $s);
                     $totalQuestionsCount++;
-                } catch (\Exception $e) {}
+                } catch (\Exception $e) {
+                }
             }
         }
 
@@ -116,13 +118,14 @@ class ProgressionStagiaireController extends Controller
 
         // --- C. ANALYSE DÉTAILLÉE (DROIT À L'ERREUR) ---
         $rawAnswers = \App\Models\QuizAttemptQuestion::with(['question', 'attempt.lecture.module'])
-            ->whereHas('attempt', fn($q) => $q->where('user_id', $userId))
+            ->whereHas('attempt', fn ($q) => $q->where('user_id', $userId))
             ->when($restrictToSelectedGroup, function ($query) use ($selectedGroupModuleIds) {
                 if ($selectedGroupModuleIds === []) {
                     $query->whereRaw('1 = 0');
+
                     return;
                 }
-                $query->whereHas('attempt.lecture.section', fn($sectionQuery) => $sectionQuery->whereIn('module_id', $selectedGroupModuleIds));
+                $query->whereHas('attempt.lecture.section', fn ($sectionQuery) => $sectionQuery->whereIn('module_id', $selectedGroupModuleIds));
             })
             ->whereNotNull('answered_at')
             ->orderBy('answered_at', 'asc')
@@ -130,14 +133,15 @@ class ProgressionStagiaireController extends Controller
 
         $consolidatedQuestions = $rawAnswers->groupBy('question_id')->map(function ($answers) {
             $firstTry = $answers->first();
-            $lastTry  = $answers->last();
+            $lastTry = $answers->last();
+
             return (object) [
-                'question_text'  => $firstTry->question->question_text ?? 'Question supprimée',
-                'module_title'   => $firstTry->attempt->lecture->module->module_title ?? 'Module inconnu',
+                'question_text' => $firstTry->question->question_text ?? 'Question supprimée',
+                'module_title' => $firstTry->attempt->lecture->module->module_title ?? 'Module inconnu',
                 'attempts_count' => $answers->count(),
-                'first_result'   => (bool) $firstTry->is_correct,
-                'final_status'   => $answers->contains('is_correct', 1),
-                'last_date'      => $lastTry->answered_at,
+                'first_result' => (bool) $firstTry->is_correct,
+                'final_status' => $answers->contains('is_correct', 1),
+                'last_date' => $lastTry->answered_at,
             ];
         })->sortByDesc('last_date');
 
@@ -153,9 +157,10 @@ class ProgressionStagiaireController extends Controller
             ->when($restrictToSelectedGroup, function ($query) use ($selectedGroupModuleIds) {
                 if ($selectedGroupModuleIds === []) {
                     $query->whereRaw('1 = 0');
+
                     return;
                 }
-                $query->whereHas('lecture.section', fn($sectionQuery) => $sectionQuery->whereIn('module_id', $selectedGroupModuleIds));
+                $query->whereHas('lecture.section', fn ($sectionQuery) => $sectionQuery->whereIn('module_id', $selectedGroupModuleIds));
             })
             ->orderByDesc('completed_at')
             ->paginate(20);
@@ -178,6 +183,7 @@ class ProgressionStagiaireController extends Controller
             $contextStartAt,
             $dailyActivity
         );
+        $emargementSummary = $this->buildEmargementSummary($userId, $selectedGroup, $groupMemberships);
         $activityTimeline = $this->buildTimelineWindow($dailyActivity, $contextStartAt);
         $timelineMaxScore = max(1, (int) $activityTimeline->max('activity_score'));
 
@@ -194,6 +200,7 @@ class ProgressionStagiaireController extends Controller
             'groupMemberships',
             'selectedGroup',
             'presenceSummary',
+            'emargementSummary',
             'activityTimeline',
             'activityFeed',
             'timelineMaxScore'
@@ -218,6 +225,7 @@ class ProgressionStagiaireController extends Controller
                 $membership->joined_at = $membership->joined_at
                     ? Carbon::parse($membership->joined_at)
                     : null;
+
                 return $membership;
             })
             ->values();
@@ -248,6 +256,7 @@ class ProgressionStagiaireController extends Controller
 
         if ($moduleIds === []) {
             $query->whereRaw('1 = 0');
+
             return;
         }
 
@@ -406,7 +415,7 @@ class ProgressionStagiaireController extends Controller
             'title' => $row->lecture_title ?: 'Quiz',
             'module_title' => $row->module_title ?: 'Module inconnu',
             'detail' => $row->passed ? 'Quiz valide avec succes.' : 'Tentative de quiz en cours ou a reprendre.',
-            'metric' => is_null($row->percent) ? null : ((int) $row->percent) . '%',
+            'metric' => is_null($row->percent) ? null : ((int) $row->percent).'%',
         ]));
 
         $videos = DB::table('video_segment_trackings')
@@ -448,10 +457,27 @@ class ProgressionStagiaireController extends Controller
             'title' => $row->lecture_title ?: 'Activite SCORM',
             'module_title' => $row->module_title ?: 'Module inconnu',
             'detail' => 'Interactions detectees dans le contenu.',
-            'metric' => (int) $row->interactions_count . ' actions',
+            'metric' => (int) $row->interactions_count.' actions',
         ]));
 
         return $feed->sortByDesc('activity_at')->take(25)->values();
+    }
+
+    private function buildEmargementSummary(int $userId, ?object $selectedGroup, Collection $groupMemberships): array
+    {
+        $groupIds = $selectedGroup ? [$selectedGroup->id] : $groupMemberships->pluck('id')->all();
+
+        if ($groupIds === []) {
+            return ['signed' => 0, 'total' => 0];
+        }
+
+        $query = fn () => SeancePresence::where('user_id', $userId)
+            ->whereHas('seance', fn ($q) => $q->whereIn('group_id', $groupIds));
+
+        return [
+            'signed' => $query()->where('statut', 'present')->count(),
+            'total' => $query()->count(),
+        ];
     }
 
     private function buildPresenceSummary(

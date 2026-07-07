@@ -7,7 +7,8 @@
   $lecture = $selectedLecture ?? null;
   $contentType = (string) ($lecture->content_type ?? 'scorm');
   $isSlidesSelected = $contentType === 'slides';
-  $isScormSelected = ! $isSlidesSelected;
+  $isBlocksSelected = $contentType === 'blocks';
+  $isScormSelected = ! $isSlidesSelected && ! $isBlocksSelected;
   $q = array_merge(($contextQuery ?? []), ['anonymous' => 1]);
   $appendQuery = static function (string $url, array $query): string {
       if (empty($query)) {
@@ -103,6 +104,12 @@
               Leçon suivante
             </a>
           </div>
+        </div>
+      </div>
+    @elseif ($lecture && $isBlocksSelected)
+      <div class="relative w-full overflow-y-auto bg-white" style="height: calc(100vh - var(--app-header-h, 86px));">
+        <div class="max-w-3xl mx-auto px-6 py-10">
+          @include('shared.lecture_blocks', ['blocks' => $lecture->content_blocks ?? [], 'lecture' => $lecture])
         </div>
       </div>
     @elseif ($lecture && $isScormSelected && $scormSrc)

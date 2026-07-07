@@ -1,5 +1,7 @@
 # 10 — Sécurité & RGPD
 
+*Public : développeurs et administrateurs système.*
+
 ## Authentification
 
 ### Mode standard
@@ -13,10 +15,10 @@ Route : `POST /stagiaire/connexion-code`
 Contrôleur : `UserController::loginByCode()`  
 Fonctionnement : le stagiaire saisit uniquement un code alphanumérique 6 caractères (`users.code_acces`). Aucun email ni mot de passe n'est requis.
 
-**Point de vigilance** : cette route n'a pas de throttling. Un code à 6 caractères est attaquable par force brute. Voir [Roadmap Phase 1](11-roadmap.md).
+Throttling : rate limiter nommé `connexion-code` (10 tentatives/minute par IP, 429 au-delà), défini dans `AppServiceProvider` et appliqué à la route depuis le 5 juillet 2026.
 
 ### Première connexion
-Le middleware `ForcePasswordChange` bloque l'accès à l'espace formateur et stagiaire tant que `users.password_changed_at` est nul. L'utilisateur est redirigé vers un formulaire de changement de mot de passe (validation `min:8`).
+Le middleware `ForcePasswordChange` bloque l'accès à l'espace stagiaire tant que `users.password_changed_at` est nul, sauf pour les routes `/stagiaire/premiere-connexion`. L'utilisateur est redirigé vers un formulaire de changement de mot de passe (validation `min:8`). Au 5 juillet 2026, ce middleware n'est pas appliqué à l'espace formateur.
 
 ---
 
@@ -30,7 +32,7 @@ SI adhesion_status = 'pending' ET created_at + 30 jours > aujourd'hui → Accès
 SINON → Redirection vers /adhesion
 ```
 
-Ce mécanisme est stratégiquement pertinent pour le modèle associatif d'Oneduc.
+C'est ce mécanisme qui fait tenir le modèle associatif : l'accès formateur reste conditionné à une adhésion à jour.
 
 ---
 
@@ -50,29 +52,37 @@ Ce mécanisme est stratégiquement pertinent pour le modèle associatif d'Oneduc
 |--------|-----------|
 | Mots de passe utilisateurs | Hash bcrypt via Laravel (irréversible) |
 | Code d'accès temporaire groupe | Chiffrement via cast Laravel `encrypted` (réversible pour affichage) |
-| Codes d'accès SCORM | Générés aléatoirement par `CodeGeneratorService` |
+| Codes d'accès stagiaires | Générés aléatoirement par `CodeGeneratorService` (`users.code_acces`) |
+| Codes d'accès outils live | Générés par les contrôleurs d'outils (`access_code` sur les sessions) |
 
 ---
 
-## Risques de sécurité identifiés (audit mai 2026)
+## Risques de sécurité identifiés (analyse 5 juillet 2026)
 
-### Critiques (à corriger avant mise en production)
+### Points corrigés depuis l'ancien audit
+
+| Point | État vérifié |
+|-------|--------------|
+| Route `/admin/stagiaires/{id}/debug-progression` | Aucune route correspondante trouvée dans `php artisan route:list --json` |
+| `POST /admin/stagiaires/{user}/reset-progression` | Route présente dans `routes/admin.php`, protégée par `auth`, `role:admin`, `admin.activity` |
+| Tests liés au middleware `association.member` | La suite du 5 juillet passe sur ces scénarios |
+| `/inscription`, connexion par code, `LessonFeedbackController::store()`, `Module::isVisibleTo()`, SCORM (`save-progress`/`save-block-progress`/`evaluation-progress`), `last_session_time`, contrat d'upload image du builder | Corrigés le 5 juillet 2026 (voir [Checklist de publication](13-publication-github.md), Axe 1, S3 à S9). Suite de tests complète verte (124 tests). |
+
+### Gap identifié lors du correctif S3 (à traiter)
+
+`Module::isVisibleTo()` est désormais le point de vérité pour la visibilité d'un module, mais deux points d'accès ne l'appellent pas et n'ont **aucune** vérification d'appartenance groupe :
+- `StagiaireController::StagiaireModuleDetail()` (route `stagiaire.module.detail`) — ne vérifie que `Module::active()`
+- `Frontend\LectureController` (`show`, `showScorm`, `showScormBlock`, `showSlides`) — aucune vérification ; `showScorm` (route `lecture.scorm`) n'est même pas derrière le middleware `auth`
+
+Un stagiaire authentifié (ou, pour `showScorm`, un visiteur non authentifié) peut donc encore accéder au détail ou au contenu d'une leçon dont le module n'est pas affecté à son groupe, en devinant/énumérant les identifiants. À corriger avant publication, ou au minimum documenter le risque.
+
+### Points restants (hors périmètre du correctif du 5 juillet 2026)
 
 | # | Risque | Localisation | Impact |
 |---|--------|--------------|--------|
-| 1 | Route `/admin/stagiaires/{id}/debug-progression` accessible sans authentification | `routes/web.php` ligne 220 | Fuite de données de progression en JSON brut |
-| 2 | Route `POST /admin/stagiaires/{user}/reset-progression` hors middleware admin | `routes/web.php` ligne 273 | Réinitialisation non autorisée de la progression d'un stagiaire |
-| 3 | `Module::isVisibleTo()` retourne `true` pour tout module actif sans vérifier le groupe | `app/Models/Module.php` | Accès aux contenus de modules non affectés via URL directe |
-| 4 | Connexion par code sans throttling | Route `/stagiaire/connexion-code` | Brute-force possible sur les codes à 6 caractères |
-| 5 | `LessonFeedbackController::store()` redirige vers une route inexistante | `app/Http/Controllers/LessonFeedbackController.php:32` | Erreur 500 à chaque soumission de retour |
-
-### Importants (production dégradée)
-
-| # | Risque | Localisation | Impact |
-|---|--------|--------------|--------|
-| 6 | `POST /scorm/save-progress` sans CSRF ni vérification d'appartenance à la leçon | `routes/scorm.php` | Un utilisateur authentifié peut soumettre des scores pour une leçon qui n'est pas la sienne |
-| 7 | `AdminController::AdminProfilStore()` ne valide pas l'unicité de l'email | `AdminController` | Un admin peut usurper l'email d'un autre utilisateur |
-| 8 | Import mort `ScormInteractionController` dans `routes/scorm.php` | `routes/scorm.php:6` | Erreur potentielle en mode strict |
+| 8 | `StoreModuleRequest::authorize()` et `StoreGroupeRequest::authorize()` retournent `false` | `app/Http/Requests/` | FormRequests inutilisables tant qu'ils ne sont pas corrigés |
+| 9 | `AdminController::AdminProfilStore()` ne valide pas l'unicité email avec exclusion de l'utilisateur courant | `AdminController` | Collision possible avec l'email d'un autre compte |
+| 10 | Import mort `ScormInteractionController` | `routes/scorm.php` | Dette technique faible, à nettoyer |
 
 ---
 
@@ -90,9 +100,9 @@ La suppression d'un compte formateur via `cleanupOwnedGroupsAndLinkedStagiaires(
 
 ## SCORM et CSRF
 
-Les routes `/scorm/save-progress` et `/scorm/evaluation-progress` désactivent le middleware CSRF (`VerifyCsrfToken::class`). C'est techniquement nécessaire car les packages SCORM s'exécutent dans un iframe et ne peuvent pas inclure le token CSRF Laravel.
+Les routes `/scorm/save-progress`, `/scorm/save-block-progress` et `/scorm/evaluation-progress` désactivent le middleware CSRF (`VerifyCsrfToken::class`). C'est techniquement nécessaire car les packages SCORM s'exécutent dans un iframe et ne peuvent pas inclure le token CSRF Laravel.
 
-La compensation de sécurité consiste à vérifier que `Auth::id()` existe dans le contrôleur. **Il manque** la vérification que l'utilisateur authentifié est bien le titulaire de la leçon en cours.
+La compensation de sécurité vérifie que `Auth::id()` existe (middleware `auth`, ajouté le 5 juillet 2026 sur les 3 routes) **et** que l'utilisateur authentifié est bien autorisé à écrire la progression de la leçon/évaluation en cours (`User::aAccesAuModule()` — stagiaire d'un groupe actif auquel le module est affecté), avec 403 sinon. `scorm_scores` contient désormais `last_session_time`, au même titre que `content_block_scorm_scores`.
 
 ---
 

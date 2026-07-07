@@ -2,39 +2,44 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\VideoSegmentTracking;
-use App\Models\ScormScore;
-use App\Models\ScormInteraction;
-use App\Models\ScormEvaluationScore;
-use App\Models\LessonFeedback;
+use App\Domains\Learners\Support\LearnerModuleProgress;
+use App\Models\FormateurMessage;
 use App\Models\Group;
-use App\Models\Module;
-use Illuminate\Support\Facades\Auth;
-use App\Models\QuizAttemptQuestion;
-use Illuminate\Support\Facades\DB;
-use App\Models\User;
-use App\Models\QuizAttempt;            
-use App\Models\ModuleLecture;
-use App\Models\Progression;
-use App\Models\WordCloud;
-use App\Models\WordCloudEntry;
-use App\Models\PollSession;
-use App\Models\PollSessionResponse;
-use App\Models\LiveQuizSession;
-use App\Models\LiveQuizSessionParticipant;
-use App\Models\QuestionWall;
-use App\Models\QuestionWallQuestion;
+use App\Models\GroupTimer;
 use App\Models\GroupWhiteboard;
 use App\Models\GroupWhiteboardItem;
-use App\Models\GroupTimer;
+use App\Models\LessonFeedback;
+use App\Models\LiveQuizSession;
+use App\Models\LiveQuizSessionParticipant;
+use App\Models\Module;
+use App\Models\ModuleLecture;
+use App\Models\PollSession;
+use App\Models\PollSessionResponse;
+use App\Models\Progression;
+use App\Models\QuestionWall;
+use App\Models\QuestionWallQuestion;
+use App\Models\QuizAttempt;
+use App\Models\QuizAttemptQuestion;
 use App\Models\RandomWheelSession;
 use App\Models\ScaleSession;
-use App\Models\FormateurMessage;
 use App\Models\ScaleSessionResponse;
+use App\Models\ScormEvaluationScore;
+use App\Models\ScormInteraction;
+use App\Models\ScormScore;
+use App\Models\Seance;
+use App\Models\SeancePresence;
+use App\Models\VideoSegmentTracking;
+use App\Models\WordCloud;
+use App\Models\WordCloudEntry;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class StagiaireController extends Controller
 {
+    public function __construct(
+        private readonly LearnerModuleProgress $moduleProgress,
+    ) {}
+
     /** ========= DETAIL MODULE ========= */
     public function StagiaireModuleDetail($id)
     {
@@ -52,7 +57,7 @@ class StagiaireController extends Controller
             ->pluck('total', 'lecture_id');
 
         $lectureIds = $module->sections->flatMap->lectures->pluck('id')->values()->all();
-        [$quizAttempts, $quizAttemptAgg] = $this->loadLatestQuizAttemptsData($lectureIds, (int) $user->id);
+        [$quizAttempts, $quizAttemptAgg] = $this->moduleProgress->latestQuizAttemptsData($lectureIds, (int) $user->id);
 
         // Statut par leçon : priorité aux tentatives réelles pour les quiz natifs.
         $lessonStatuses = [];
@@ -60,7 +65,7 @@ class StagiaireController extends Controller
             if ((bool) ($lecture->quiz_enabled ?? false)) {
                 $attempt = $quizAttempts->get($lecture->id);
                 $agg = $attempt ? $quizAttemptAgg->get($attempt->id) : null;
-                $status = $this->quizProgressStatus($attempt, $agg);
+                $status = $this->moduleProgress->quizProgressStatus($attempt, $agg);
             } else {
                 $nbScorm = (int) ($scormCounts[$lecture->id] ?? 0);
                 $status = $nbScorm > 0 ? 'completed' : 'not_started';
@@ -117,7 +122,7 @@ class StagiaireController extends Controller
         $videoStats = VideoSegmentTracking::where('user_id', $userId)
             ->selectRaw('SUM(total_watch_time) as watch_time, COUNT(*) as segments, SUM(watch_count) - COUNT(*) as replays')
             ->first();
-        
+
         $videoTime = (int) ($videoStats->watch_time ?? 0);
         $totalVideoSegments = (int) ($videoStats->segments ?? 0);
         $totalVideoReplays = (int) ($videoStats->replays ?? 0);
@@ -127,10 +132,10 @@ class StagiaireController extends Controller
         $scormTime = (int) ScormScore::where('user_id', $userId)->sum('session_time');
         // Temps Quiz Natifs
         $quizTime = (int) DB::table('quiz_attempts')->where('user_id', $userId)->sum('total_time_seconds');
-        
+
         // Temps total passé à "travailler" (Vidéos + Exercices)
         $engagementTotal = $scormTime + $quizTime + $videoTime;
-        
+
         // Temps de connexion global (Session)
         $totalSiteTime = (int) ($user->total_site_time ?? 0);
 
@@ -155,7 +160,7 @@ class StagiaireController extends Controller
         // Totaux fusionnés
         $answeredCount = $scormTotal + $quizTotal;
         $totalCorrect = $scormCorrect + $quizCorrect;
-        
+
         // Taux de réussite global
         $tauxBonnesReponses = $answeredCount > 0 ? (int) round(($totalCorrect / $answeredCount) * 100) : 0;
 
@@ -166,32 +171,33 @@ class StagiaireController extends Controller
             if ($interaction->latency) {
                 try {
                     [$h, $m, $s] = array_pad(explode(':', $interaction->latency), 3, 0);
-                    $totalLatency += ((int)$h * 3600 + (int)$m * 60 + (int)$s);
-                } catch (\Exception $e) {}
+                    $totalLatency += ((int) $h * 3600 + (int) $m * 60 + (int) $s);
+                } catch (\Exception $e) {
+                }
             }
         }
         // Latence Quiz (déjà en secondes)
         $totalLatency += $quizQuestions->sum('time_seconds');
-        
+
         $averageLatencyTime = $answeredCount > 0 ? (int) round($totalLatency / $answeredCount) : 0;
 
         // --- 5. GROUPES & MODULES ---
         $groupes = $user->groupesStagiaire()
             ->active()
             ->with([
-                'modules' => function($q) {
+                'modules' => function ($q) {
                     $q->withPivot('position')->orderBy('group_module.position', 'asc');
                 },
                 'modules.sections.lectures:id,section_id,module_id,quiz_questions_per_attempt',
-                'instructor'
+                'instructor',
             ])
             ->get();
 
-        $modules   = $groupes->flatMap->modules->unique('id')->values();
+        $modules = $groupes->flatMap->modules->unique('id')->values();
         $formateur = $groupes->first()?->instructor;
 
         // Calcul de la progression par module
-        $this->attachProgressAttributes($modules, $userId);
+        $this->moduleProgress->attachProgressAttributes($modules, $userId);
 
         // Progression Globale (Moyenne des modules en cours)
         $progressionGlobale = $modules->isNotEmpty() ? (int) round($modules->avg('progression_percent')) : 0;
@@ -224,40 +230,40 @@ class StagiaireController extends Controller
 
     /** ========= LISTE MODULES ========= */
     public function StagiaireModules()
-{
-    $user = Auth::user();
+    {
+        $user = Auth::user();
 
-    // 1. On récupère le groupe avec ses modules, en demandant explicitement la colonne de pivot 'position'
-    // et en triant par celle-ci.
-    $group = Group::with([
-        'modules' => function ($query) {
-            $query->active()
-                  ->with(['sections.lectures:id,section_id,module_id,duration,question_count,quiz_enabled,quiz_questions_per_attempt'])
-                  ->withPivot('position')
-                  ->orderBy('group_module.position', 'asc');
-        },
-        'formateurParcours' => function ($query) {
-            $query->with(['items' => fn ($q) => $q->orderBy('position')]);
-        },
-    ])
-    ->active()
-    ->whereHas('students', fn ($q) => $q->where('email', $user->email))
-    ->first();
+        // 1. On récupère le groupe avec ses modules, en demandant explicitement la colonne de pivot 'position'
+        // et en triant par celle-ci.
+        $group = Group::with([
+            'modules' => function ($query) {
+                $query->active()
+                    ->with(['sections.lectures:id,section_id,module_id,duration,question_count,quiz_enabled,quiz_questions_per_attempt'])
+                    ->withPivot('position')
+                    ->orderBy('group_module.position', 'asc');
+            },
+            'formateurParcours' => function ($query) {
+                $query->with(['items' => fn ($q) => $q->orderBy('position')]);
+            },
+        ])
+            ->active()
+            ->whereHas('students', fn ($q) => $q->where('email', $user->email))
+            ->first();
 
-    $modules = $group ? $group->modules : collect();
-    $this->attachProgressAttributes($modules, $user->id);
+        $modules = $group ? $group->modules : collect();
+        $this->moduleProgress->attachProgressAttributes($modules, $user->id);
 
-    $parcours        = $group?->formateurParcours;
-    $parcoursItems   = $parcours?->items ?? collect();
-    $modulesById     = $modules->keyBy('id');
+        $parcours = $group?->formateurParcours;
+        $parcoursItems = $parcours?->items ?? collect();
+        $modulesById = $modules->keyBy('id');
 
-    // Outils numériques actifs du groupe (nuages de mots)
-    $activeWordClouds = $group
-        ? $group->wordClouds()->where('is_active', true)->orderByDesc('opened_at')->get()
-        : collect();
+        // Outils numériques actifs du groupe (nuages de mots)
+        $activeWordClouds = $group
+            ? $group->wordClouds()->where('is_active', true)->orderByDesc('opened_at')->get()
+            : collect();
 
-    return view('stagiaire.stagiaire_modules', compact('modules', 'parcours', 'parcoursItems', 'modulesById', 'activeWordClouds'));
-}
+        return view('stagiaire.stagiaire_modules', compact('modules', 'parcours', 'parcoursItems', 'modulesById', 'activeWordClouds'));
+    }
 
     public function StagiaireResultats()
     {
@@ -268,67 +274,64 @@ class StagiaireController extends Controller
         // Temps SCORM + Quiz + Vidéo
         $scormTime = (int) ScormScore::where('user_id', $userId)->sum('session_time');
         $quizTime = (int) DB::table('quiz_attempts')->where('user_id', $userId)->sum('total_time_seconds');
-        
+
         // Stats Vidéo
         $videoStatsObj = VideoSegmentTracking::where('user_id', $userId)
             ->selectRaw('SUM(total_watch_time) as watch_time')
             ->first();
         $videoTime = (int) ($videoStatsObj->watch_time ?? 0);
-        
+
         $engagementTotal = $scormTime + $quizTime + $videoTime;
 
-
         // --- 2. RÉCUPÉRATION ET ANALYSE DES QUESTIONS (Logique "Droit à l'erreur") ---
-        
+
         // On récupère TOUTES les réponses, triées par date (du plus vieux au plus récent)
         $rawAnswers = QuizAttemptQuestion::with(['question', 'attempt.lecture.module'])
-            ->whereHas('attempt', fn($q) => $q->where('user_id', $userId))
+            ->whereHas('attempt', fn ($q) => $q->where('user_id', $userId))
             ->whereNotNull('answered_at')
             ->orderBy('answered_at', 'asc') // Important : ASC pour identifier le 1er essai
             ->get();
 
         // On groupe par Question ID pour l'analyse
         $consolidatedQuestions = $rawAnswers->groupBy('question_id')->map(function ($answers) {
-            
+
             $firstTry = $answers->first(); // Le tout premier essai
-            $lastTry  = $answers->last();  // Le dernier en date
-            
+            $lastTry = $answers->last();  // Le dernier en date
+
             // RÈGLE D'OR : Est considéré validé si AU MOINS UNE réponse est correcte dans l'historique
             $isValidated = $answers->contains('is_correct', 1);
 
             return (object) [
-                'question_id'   => $firstTry->question_id,
+                'question_id' => $firstTry->question_id,
                 'question_text' => $firstTry->question->question_text ?? 'Question introuvable',
-                'module_title'  => $firstTry->attempt->lecture->module->module_title ?? 'Module inconnu',
-                'attempts_count'=> $answers->count(),      // Compteur de tentatives
-                'first_result'  => (bool) $firstTry->is_correct, // Mémoire de la 1ère fois
-                'final_status'  => $isValidated,           // Statut "Sanctuarisé"
-                'last_date'     => $lastTry->answered_at,
+                'module_title' => $firstTry->attempt->lecture->module->module_title ?? 'Module inconnu',
+                'attempts_count' => $answers->count(),      // Compteur de tentatives
+                'first_result' => (bool) $firstTry->is_correct, // Mémoire de la 1ère fois
+                'final_status' => $isValidated,           // Statut "Sanctuarisé"
+                'last_date' => $lastTry->answered_at,
             ];
         })->sortByDesc('last_date'); // On affiche les questions travaillées récemment en haut
 
-
         // --- 3. STATISTIQUES DÉRIVÉES ---
-        
+
         // Latence moyenne (Temps de réflexion)
         $totalLatency = 0;
         $totalQuestions = $rawAnswers->count();
         // Pour les quiz natifs
         $totalLatency += $rawAnswers->sum('time_seconds');
-        
+
         $averageLatencyTime = $totalQuestions > 0 ? (int) round($totalLatency / $totalQuestions) : 0;
 
         // Taux de réussite "Intelligent" (Basé sur les questions validées vs total questions tentées)
         $uniqueQuestionsCount = $consolidatedQuestions->count();
         $validatedQuestionsCount = $consolidatedQuestions->where('final_status', true)->count();
-        
-        $tauxBonnesReponses = $uniqueQuestionsCount > 0 
-            ? (int) round(($validatedQuestionsCount / $uniqueQuestionsCount) * 100) 
+
+        $tauxBonnesReponses = $uniqueQuestionsCount > 0
+            ? (int) round(($validatedQuestionsCount / $uniqueQuestionsCount) * 100)
             : 0;
 
         // Réessais (Questions tentées plus d'une fois)
         $reessayeCount = $consolidatedQuestions->where('attempts_count', '>', 1)->count();
-
 
         // --- 4. RÉSULTATS DÉTAILLÉS PAR MODULE (CONSOLIDÉS PAR LEÇON) ---
         // Objectif: 1 seule ligne par leçon, même si SCORM + Quiz coexistent.
@@ -357,7 +360,7 @@ class StagiaireController extends Controller
 
         $attemptAgg = collect();
         $attemptIds = $nativeAttempts->pluck('id')->all();
-        if (!empty($attemptIds)) {
+        if (! empty($attemptIds)) {
             $attemptAgg = QuizAttemptQuestion::query()
                 ->select([
                     'attempt_id',
@@ -432,7 +435,7 @@ class StagiaireController extends Controller
             $progressionsByLecture
         ) {
             $lecture = $lecturesById->get($lectureId);
-            if (!$lecture) {
+            if (! $lecture) {
                 return null;
             }
 
@@ -448,9 +451,9 @@ class StagiaireController extends Controller
             $scormAnswered = $scormTotal;
 
             $scormScore = null;
-            if (!is_null($sc?->last_score)) {
+            if (! is_null($sc?->last_score)) {
                 $scormScore = (int) $sc->last_score;
-            } elseif (!is_null($sc?->best_score)) {
+            } elseif (! is_null($sc?->best_score)) {
                 $scormScore = (int) $sc->best_score;
             } elseif ($scormTotal > 0) {
                 $scormScore = (int) round(($scormCorrect / max(1, $scormTotal)) * 100);
@@ -460,14 +463,14 @@ class StagiaireController extends Controller
             $quizAnswered = (int) ($quizStats->answered ?? 0);
             $quizCorrect = (int) ($quizStats->correct ?? 0);
 
-            if ($quizAnswered === 0 && !is_null($displayQuiz?->finished_at) && $quizTotal > 0) {
+            if ($quizAnswered === 0 && ! is_null($displayQuiz?->finished_at) && $quizTotal > 0) {
                 $quizAnswered = $quizTotal;
             }
 
             $quizScore = null;
-            if (!is_null($displayQuiz?->percent)) {
+            if (! is_null($displayQuiz?->percent)) {
                 $quizScore = (int) $displayQuiz->percent;
-            } elseif (!is_null($displayQuiz?->score)) {
+            } elseif (! is_null($displayQuiz?->score)) {
                 $quizScore = (int) $displayQuiz->score;
             } elseif ($quizTotal > 0) {
                 $quizScore = (int) round(($quizCorrect / max(1, $quizTotal)) * 100);
@@ -482,22 +485,22 @@ class StagiaireController extends Controller
             $scormCompleted = in_array($lessonStatus, ['completed', 'passed'], true) || (bool) ($sc?->is_completed ?? false);
             $hasScormActivity = $scormTotal > 0
                 || $scormTime > 0
-                || !is_null($sc?->last_score)
-                || !is_null($sc?->last_attempt_at)
+                || ! is_null($sc?->last_score)
+                || ! is_null($sc?->last_attempt_at)
                 || in_array($lessonStatus, ['incomplete', 'browsed', 'in_progress', 'failed'], true);
 
-            $hasQuizActivity = !is_null($displayQuiz)
+            $hasQuizActivity = ! is_null($displayQuiz)
                 && (
                     $quizAnswered > 0
                     || $quizTime > 0
-                    || !is_null($displayQuiz->started_at)
-                    || !is_null($displayQuiz->finished_at)
+                    || ! is_null($displayQuiz->started_at)
+                    || ! is_null($displayQuiz->finished_at)
                 );
 
-            $hasVideoActivity = $videoTime > 0 || !is_null($videoBounds?->first_seen_at);
-            $hasProgression = !empty($progressionsByLecture[$lectureId]);
+            $hasVideoActivity = $videoTime > 0 || ! is_null($videoBounds?->first_seen_at);
+            $hasProgression = ! empty($progressionsByLecture[$lectureId]);
 
-            $useQuizMetrics = $hasQuizActivity || (!is_null($displayQuiz) && (bool) ($lecture->quiz_enabled ?? false));
+            $useQuizMetrics = $hasQuizActivity || (! is_null($displayQuiz) && (bool) ($lecture->quiz_enabled ?? false));
 
             $scorePercent = $useQuizMetrics ? $quizScore : $scormScore;
             $totalQ = $useQuizMetrics ? $quizTotal : $scormTotal;
@@ -507,7 +510,7 @@ class StagiaireController extends Controller
             if ($totalQ <= 0 && $useQuizMetrics) {
                 $totalQ = (int) ($lecture->quiz_questions_per_attempt ?? 0);
             }
-            if ($totalQ <= 0 && !$useQuizMetrics) {
+            if ($totalQ <= 0 && ! $useQuizMetrics) {
                 $totalQ = (int) ($lecture->question_count ?? 0);
             }
 
@@ -519,7 +522,7 @@ class StagiaireController extends Controller
             }
             $wrong = max(0, $answered - $correct);
 
-            if ($useQuizMetrics && !is_null($displayQuiz?->finished_at)) {
+            if ($useQuizMetrics && ! is_null($displayQuiz?->finished_at)) {
                 $statusKey = ($scorePercent ?? 0) >= 50 ? 'completed' : 'failed';
             } elseif ($scormCompleted || $hasProgression) {
                 $statusKey = 'completed';
@@ -571,7 +574,7 @@ class StagiaireController extends Controller
                 $sourceLabel = 'Quiz';
             }
 
-            $progressCompletedAt = !empty($progressionsByLecture[$lectureId])
+            $progressCompletedAt = ! empty($progressionsByLecture[$lectureId])
                 ? \Illuminate\Support\Carbon::parse($progressionsByLecture[$lectureId])
                 : null;
 
@@ -579,7 +582,7 @@ class StagiaireController extends Controller
                 $displayQuiz?->started_at,
                 $displayQuiz?->created_at,
                 $sc?->created_at,
-                !is_null($videoBounds?->first_seen_at)
+                ! is_null($videoBounds?->first_seen_at)
                     ? \Illuminate\Support\Carbon::parse($videoBounds->first_seen_at)
                     : null,
             ])->filter()->sortBy(function ($dt) {
@@ -593,7 +596,7 @@ class StagiaireController extends Controller
                 $latestQuiz?->updated_at,
                 $sc?->last_attempt_at,
                 $sc?->updated_at,
-                !is_null($videoBounds?->last_seen_at)
+                ! is_null($videoBounds?->last_seen_at)
                     ? \Illuminate\Support\Carbon::parse($videoBounds->last_seen_at)
                     : null,
             ])->filter()->sortByDesc(function ($dt) {
@@ -620,12 +623,12 @@ class StagiaireController extends Controller
                 'completed_at' => $progressionsByLecture[$lectureId] ?? null,
             ];
         })
-        ->filter()
-        ->sortBy([
-            ['module_title', 'asc'],
-            ['lecture_title', 'asc'],
-        ])
-        ->values();
+            ->filter()
+            ->sortBy([
+                ['module_title', 'asc'],
+                ['lecture_title', 'asc'],
+            ])
+            ->values();
 
         $totalSiteTime = (int) ($user->total_site_time ?? 0);
         $videoStats = $videoStatsObj;
@@ -645,7 +648,7 @@ class StagiaireController extends Controller
     /** ========= OUTILS NUMÉRIQUES ========= */
     public function StagiaireOutils()
     {
-        $user   = auth()->user();
+        $user = auth()->user();
         $userId = $user->id;
 
         $group = Group::active()
@@ -654,27 +657,27 @@ class StagiaireController extends Controller
 
         if (! $group) {
             return view('stagiaire.stagiaire_outils', [
-                'tools'     => collect(),
-                'group'     => null,
+                'tools' => collect(),
+                'group' => null,
                 'formateur' => null,
             ]);
         }
 
-        $groupId   = $group->id;
+        $groupId = $group->id;
         $formateur = $group->instructor;
-        $tools     = collect();
+        $tools = collect();
 
         // Nuage de mots
         $wordClouds = WordCloud::where('group_id', $groupId)->get();
         if ($wordClouds->count() > 0) {
             $wcIds = $wordClouds->pluck('id');
-            $tools->push((object)[
-                'key'          => 'wordcloud',
-                'label'        => 'Nuage de mots',
-                'sessions'     => $wordClouds->count(),
+            $tools->push((object) [
+                'key' => 'wordcloud',
+                'label' => 'Nuage de mots',
+                'sessions' => $wordClouds->count(),
                 'participated' => WordCloudEntry::whereIn('word_cloud_id', $wcIds)->where('user_id', $userId)->distinct('word_cloud_id')->count('word_cloud_id'),
-                'trackable'    => true,
-                'last_used'    => $wordClouds->max('opened_at') ?? $wordClouds->max('created_at'),
+                'trackable' => true,
+                'last_used' => $wordClouds->max('opened_at') ?? $wordClouds->max('created_at'),
             ]);
         }
 
@@ -682,13 +685,13 @@ class StagiaireController extends Controller
         $polls = PollSession::where('group_id', $groupId)->get();
         if ($polls->count() > 0) {
             $pollIds = $polls->pluck('id');
-            $tools->push((object)[
-                'key'          => 'poll',
-                'label'        => 'Sondage',
-                'sessions'     => $polls->count(),
+            $tools->push((object) [
+                'key' => 'poll',
+                'label' => 'Sondage',
+                'sessions' => $polls->count(),
                 'participated' => PollSessionResponse::whereIn('poll_session_id', $pollIds)->where('user_id', $userId)->distinct('poll_session_id')->count('poll_session_id'),
-                'trackable'    => true,
-                'last_used'    => $polls->max('opened_at') ?? $polls->max('created_at'),
+                'trackable' => true,
+                'last_used' => $polls->max('opened_at') ?? $polls->max('created_at'),
             ]);
         }
 
@@ -696,13 +699,13 @@ class StagiaireController extends Controller
         $liveQuizzes = LiveQuizSession::where('group_id', $groupId)->get();
         if ($liveQuizzes->count() > 0) {
             $lqIds = $liveQuizzes->pluck('id');
-            $tools->push((object)[
-                'key'          => 'live_quiz',
-                'label'        => 'Quiz en direct',
-                'sessions'     => $liveQuizzes->count(),
+            $tools->push((object) [
+                'key' => 'live_quiz',
+                'label' => 'Quiz en direct',
+                'sessions' => $liveQuizzes->count(),
                 'participated' => LiveQuizSessionParticipant::whereIn('live_quiz_session_id', $lqIds)->where('user_id', $userId)->distinct('live_quiz_session_id')->count('live_quiz_session_id'),
-                'trackable'    => true,
-                'last_used'    => $liveQuizzes->max('ended_at') ?? $liveQuizzes->max('started_at') ?? $liveQuizzes->max('created_at'),
+                'trackable' => true,
+                'last_used' => $liveQuizzes->max('ended_at') ?? $liveQuizzes->max('started_at') ?? $liveQuizzes->max('created_at'),
             ]);
         }
 
@@ -710,52 +713,54 @@ class StagiaireController extends Controller
         $questionWalls = QuestionWall::where('group_id', $groupId)->get();
         if ($questionWalls->count() > 0) {
             $qwIds = $questionWalls->pluck('id');
-            $tools->push((object)[
-                'key'          => 'question_wall',
-                'label'        => 'Mur de questions',
-                'sessions'     => $questionWalls->count(),
+            $tools->push((object) [
+                'key' => 'question_wall',
+                'label' => 'Mur de questions',
+                'sessions' => $questionWalls->count(),
                 'participated' => QuestionWallQuestion::whereIn('question_wall_id', $qwIds)->where('user_id', $userId)->distinct('question_wall_id')->count('question_wall_id'),
-                'trackable'    => true,
-                'last_used'    => $questionWalls->max('updated_at') ?? $questionWalls->max('created_at'),
+                'trackable' => true,
+                'last_used' => $questionWalls->max('updated_at') ?? $questionWalls->max('created_at'),
             ]);
         }
 
         // Tableau blanc (1 par groupe)
         $whiteboard = GroupWhiteboard::where('group_id', $groupId)->first();
         if ($whiteboard) {
-            $tools->push((object)[
-                'key'          => 'whiteboard',
-                'label'        => 'Tableau blanc',
-                'sessions'     => 1,
+            $tools->push((object) [
+                'key' => 'whiteboard',
+                'label' => 'Tableau blanc',
+                'sessions' => 1,
                 'participated' => GroupWhiteboardItem::where('group_whiteboard_id', $whiteboard->id)->where('created_by', $userId)->exists() ? 1 : 0,
-                'trackable'    => true,
-                'last_used'    => $whiteboard->updated_at ?? $whiteboard->created_at,
+                'trackable' => true,
+                'last_used' => $whiteboard->updated_at ?? $whiteboard->created_at,
             ]);
         }
 
         // Minuteur (1 par groupe, pas de participation individuelle)
-        $timer = GroupTimer::where('group_id', $groupId)->first();
-        if ($timer) {
-            $tools->push((object)[
-                'key'          => 'timer',
-                'label'        => 'Minuteur',
-                'sessions'     => 1,
-                'participated' => null,
-                'trackable'    => false,
-                'last_used'    => $timer->updated_at ?? $timer->created_at,
-            ]);
+        if (config('outils.minuteur.enabled')) {
+            $timer = GroupTimer::where('group_id', $groupId)->first();
+            if ($timer) {
+                $tools->push((object) [
+                    'key' => 'timer',
+                    'label' => 'Minuteur',
+                    'sessions' => 1,
+                    'participated' => null,
+                    'trackable' => false,
+                    'last_used' => $timer->updated_at ?? $timer->created_at,
+                ]);
+            }
         }
 
         // Roue aléatoire (pas de participation individuelle)
         $randomWheels = RandomWheelSession::where('group_id', $groupId)->get();
         if ($randomWheels->count() > 0) {
-            $tools->push((object)[
-                'key'          => 'random_wheel',
-                'label'        => 'Roue aléatoire',
-                'sessions'     => $randomWheels->count(),
+            $tools->push((object) [
+                'key' => 'random_wheel',
+                'label' => 'Roue aléatoire',
+                'sessions' => $randomWheels->count(),
                 'participated' => null,
-                'trackable'    => false,
-                'last_used'    => $randomWheels->max('spun_at') ?? $randomWheels->max('created_at'),
+                'trackable' => false,
+                'last_used' => $randomWheels->max('spun_at') ?? $randomWheels->max('created_at'),
             ]);
         }
 
@@ -763,142 +768,32 @@ class StagiaireController extends Controller
         $scales = ScaleSession::where('group_id', $groupId)->get();
         if ($scales->count() > 0) {
             $scaleIds = $scales->pluck('id');
-            $tools->push((object)[
-                'key'          => 'scale',
-                'label'        => 'Échelle de positionnement',
-                'sessions'     => $scales->count(),
+            $tools->push((object) [
+                'key' => 'scale',
+                'label' => 'Échelle de positionnement',
+                'sessions' => $scales->count(),
                 'participated' => ScaleSessionResponse::whereIn('scale_session_id', $scaleIds)->where('user_id', $userId)->distinct('scale_session_id')->count('scale_session_id'),
-                'trackable'    => true,
-                'last_used'    => $scales->max('opened_at') ?? $scales->max('created_at'),
+                'trackable' => true,
+                'last_used' => $scales->max('opened_at') ?? $scales->max('created_at'),
             ]);
         }
 
-        return view('stagiaire.stagiaire_outils', compact('tools', 'group', 'formateur'));
-    }
-
-    /** ========= HELPER PROGRESSION =========
-     * Calcule la progression par module et attache:
-     * - progress (pour le carrousel)
-     * - progression_percent, progression_status (pour la liste)
-     * Règle: pour les quiz natifs, la progression suit la dernière tentative réelle.
-     */
-    private function attachProgressAttributes($modules, int $userId): void
-    {
-        // 1. Bulk chargement des réponses SCORM
-        $scormAnswers = ScormInteraction::where('user_id', $userId)
-            ->whereNotNull('lecture_id')
-            ->select('lecture_id', DB::raw('COUNT(*) as count'))
-            ->groupBy('lecture_id')
-            ->pluck('count', 'lecture_id');
-
-        $lectureIds = $modules
-            ->flatMap(fn ($module) => $module->sections->flatMap->lectures)
-            ->pluck('id')
-            ->unique()
-            ->values()
-            ->all();
-
-        [$quizAttempts, $quizAttemptAgg] = $this->loadLatestQuizAttemptsData($lectureIds, $userId);
-
-        foreach ($modules as $module) {
-            $lectures = $module->sections->flatMap->lectures;
-            $total = $lectures->count();
-            $completed = 0;
-            $started = false;
-
-            foreach ($lectures as $lec) {
-                if ((bool) ($lec->quiz_enabled ?? false)) {
-                    $attempt = $quizAttempts->get($lec->id);
-                    $agg = $attempt ? $quizAttemptAgg->get($attempt->id) : null;
-                    $status = $this->quizProgressStatus($attempt, $agg);
-
-                    if ($status !== 'not_started') {
-                        $started = true;
-                    }
-                    if ($status === 'completed') {
-                        $completed++;
-                    }
-
-                    continue;
-                }
-
-                $cntScorm = (int) ($scormAnswers[$lec->id] ?? 0);
-                if ($cntScorm > 0) {
-                    $started = true;
-                    $completed++;
-                }
-            }
-
-            $percent = $total > 0 ? (int) floor(($completed / $total) * 100) : 0;
-            $status  = $percent === 100 ? 'completed' : ($started ? 'in_progress' : 'not_started');
-
-            // Carrousel
-            $module->setAttribute('progress', $percent);
-            // Liste
-            $module->setAttribute('progression_percent', $percent);
-            $module->setAttribute('progression_status',  $status);
-        }
-    }
-
-    private function loadLatestQuizAttemptsData(array $lectureIds, int $userId): array
-    {
-        if (empty($lectureIds)) {
-            return [collect(), collect()];
+        // Émargement
+        $seances = Seance::where('group_id', $groupId)->get();
+        $openSeance = $seances->firstWhere('statut', 'ouverte');
+        if ($seances->count() > 0) {
+            $seanceIds = $seances->pluck('id');
+            $tools->push((object) [
+                'key' => 'emargement',
+                'label' => 'Émargement',
+                'sessions' => $seances->count(),
+                'participated' => SeancePresence::whereIn('seance_id', $seanceIds)->where('user_id', $userId)->where('statut', 'present')->count(),
+                'trackable' => true,
+                'last_used' => $seances->max('date'),
+            ]);
         }
 
-        $attempts = QuizAttempt::query()
-            ->where('user_id', $userId)
-            ->whereIn('lecture_id', $lectureIds)
-            ->orderByDesc('finished_at')
-            ->orderByDesc('started_at')
-            ->orderByDesc('id')
-            ->get()
-            ->groupBy('lecture_id')
-            ->map(function ($rows) {
-                return $rows->sortByDesc(function ($attempt) {
-                    return $attempt->finished_at?->timestamp
-                        ?? $attempt->started_at?->timestamp
-                        ?? $attempt->created_at?->timestamp
-                        ?? 0;
-                })->first();
-            });
-
-        $attemptIds = $attempts->filter()->pluck('id')->all();
-        $attemptAgg = collect();
-
-        if (!empty($attemptIds)) {
-            $attemptAgg = QuizAttemptQuestion::query()
-                ->select([
-                    'attempt_id',
-                    DB::raw('COUNT(*) as total'),
-                    DB::raw('SUM(CASE WHEN answered_at IS NOT NULL THEN 1 ELSE 0 END) as answered'),
-                    DB::raw('SUM(CASE WHEN is_correct = 1 THEN 1 ELSE 0 END) as correct'),
-                ])
-                ->whereIn('attempt_id', $attemptIds)
-                ->groupBy('attempt_id')
-                ->get()
-                ->keyBy('attempt_id');
-        }
-
-        return [$attempts, $attemptAgg];
-    }
-
-    private function quizProgressStatus(?QuizAttempt $attempt, mixed $agg): string
-    {
-        if (!$attempt) {
-            return 'not_started';
-        }
-
-        $answered = (int) data_get($agg, 'answered', 0);
-        $hasStarted = $answered > 0
-            || !is_null($attempt->started_at)
-            || !is_null($attempt->finished_at);
-
-        if (!is_null($attempt->finished_at) && (bool) ($attempt->passed ?? false)) {
-            return 'completed';
-        }
-
-        return $hasStarted ? 'incomplete' : 'not_started';
+        return view('stagiaire.stagiaire_outils', compact('tools', 'group', 'formateur', 'openSeance'));
     }
 
     /** ========= MESSAGES ========= */

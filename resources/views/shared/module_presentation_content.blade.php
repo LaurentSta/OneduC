@@ -60,7 +60,7 @@
             @elseif($isFormateurView)
                 <li><a href="{{ route('formateur.dashboard') }}" class="text-gray-400 hover:text-orangeone transition">Accueil</a></li>
                 <li class="text-gray-300">/</li>
-                <li><a href="{{ route('formateur.formations.index') }}" class="text-gray-400 hover:text-orangeone transition">Mes modules</a></li>
+                <li><a href="{{ route('formateur.formations.index') }}" class="text-gray-400 hover:text-orangeone transition">Mes formations</a></li>
             @else
                 <li><a href="{{ url('/') }}" class="text-gray-400 hover:text-orangeone transition">Accueil</a></li>
                 <li class="text-gray-300">/</li>
@@ -129,12 +129,12 @@
                             @if(\Illuminate\Support\Facades\Route::has('login.selection'))
                                 <a href="{{ route('login.selection') }}"
                                    class="btn-oneduc !px-6 !py-3 !text-base">
-                                    Se connecter pour suivre ce module
+                                    Se connecter pour suivre cette formation
                                 </a>
                             @else
                                 <a href="{{ route('connexion') }}"
                                    class="btn-oneduc !px-6 !py-3 !text-base">
-                                    Se connecter pour suivre ce module
+                                    Se connecter pour suivre cette formation
                                 </a>
                             @endif
                             <a href="{{ route('stagiaire.code.form') }}"
@@ -163,9 +163,26 @@
                             <span class="inline-block bg-yellow-100 text-yellow-700 text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded">Valeur sure</span>
                         @endif
                     </div>
-                    <h1 class="text-2xl md:text-3xl font-raleway font-medium text-bleuone leading-tight">
-                        {{ $module->module_title ?? $module->module_name }}
-                    </h1>
+                    <div class="flex flex-wrap items-start justify-between gap-3">
+                        <h1 class="text-2xl md:text-3xl font-raleway font-medium text-bleuone leading-tight">
+                            {{ $module->module_title ?? $module->module_name }}
+                        </h1>
+
+                        @if($isFormateurView && ! $module->is_trainer_authored)
+                            <button type="button" x-data x-on:click="$dispatch('open-modal', 'duplicate-module-{{ $module->id }}')"
+                                    class="inline-flex items-center gap-2 rounded-[10px] border border-emerald-300 bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-700 hover:bg-emerald-100 transition whitespace-nowrap">
+                                Dupliquer pour la modifier
+                            </button>
+                            <x-confirm-modal
+                                name="duplicate-module-{{ $module->id }}"
+                                title="Dupliquer cette formation ?"
+                                message="Elle sera copiée dans 'Mes créations' pour que vous puissiez la modifier librement."
+                                :action="route('formateur.modules.builder.duplicate', $module)"
+                                method="POST"
+                                confirm-label="Dupliquer"
+                            />
+                        @endif
+                    </div>
                 </header>
             @endunless
 
@@ -209,7 +226,7 @@
                         Prerequis recommandes
                     </h4>
                     <div class="text-gray-700 pl-6 text-sm">
-                        {!! nl2br(e($module->prerequi ?? 'Aucun prerequis specifique pour ce module.')) !!}
+                        {!! nl2br(e($module->prerequi ?? 'Aucun prerequis specifique pour cette formation.')) !!}
                     </div>
                 </div>
             </div>
@@ -368,7 +385,7 @@
                             @else
                                 <button type="button" @click="showAuthModal = true"
                                     class="btn-oneduc-blue w-full !px-6 !py-4">
-                                    Se connecter pour suivre ce module
+                                    Se connecter pour suivre cette formation
                                 </button>
                             @endif
                         @else
@@ -394,7 +411,7 @@
 
                     @if($isPublicView && !auth()->check())
                         <p class="mt-4 text-sm leading-relaxed text-gray-500 font-lisible">
-                            Les objectifs pedagogiques et le plan du module sont visibles avant connexion.
+                            Les objectifs pedagogiques et le plan de la formation sont visibles avant connexion.
                             L'ouverture des lecons demande ensuite une connexion.
                         </p>
                     @endif

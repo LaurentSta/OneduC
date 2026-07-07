@@ -6,50 +6,47 @@
 <div class="max-w-[1285px] mx-auto px-8">
 
   {{-- 🧩 EN-TÊTE DE PAGE FORMATEUR – Groupes --}}
-<header class="bg-white rounded-[20px] shadow-md px-8 pt-4 pb-6 w-full mb-6">
-  <div class="grid grid-cols-12 gap-6 items-center">
+  <div class="rounded-[20px] border border-gray-100 bg-white shadow-md mb-6">
+    <div class="grid gap-6 px-6 py-6 md:px-8 md:py-7 lg:grid-cols-12 lg:items-center">
 
-    {{-- Bloc texte (9 colonnes) --}}
-    <div class="col-span-12 md:col-span-9">
-      <p class="font-raleway text-titre text-bleuone leading-tight mb-4">
-        Mes groupes de formation
-      </p>
-      <p class="font-varela text-sous-titre text-orangeone leading-snug mb-3">
-        Gérez facilement vos groupes, modules et stagiaires.
-      </p>
-      <p class="font-lisible text-lg text-gray-800 leading-loose mb-6">
-        Retrouvez ici tous vos groupes. Vous pouvez les modifier, leur associer des modules ou ajouter des stagiaires.
-      </p>
+      {{-- Bloc texte --}}
+      <div class="lg:col-span-8">
+        {{-- 📍 Fil d’Ariane --}}
+        <x-oneduc.breadcrumb :items="[['label' => 'Accueil', 'url' => route('formateur.dashboard')], ['label' => 'Mes groupes']]" />
 
-      {{-- 📍 Fil d’Ariane --}}
-      <nav class="text-sm font-varela text-gray-600 mt-2" aria-label="Fil d'Ariane">
-        <ol class="inline-flex items-center space-x-1">
-          <li class="flex items-center">
-            <a href="{{ route('formateur.dashboard') }}" 
-               class="text-orangeone hover:underline flex items-center">
-              <span class="sr-only">Accueil</span>
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" 
-                   fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M3 9.75L12 3l9 6.75V19a2 2 0 01-2 2h-4a1 1 0 01-1-1v-5H10v5a1 1 0 01-1 1H5a2 2 0 01-2-2V9.75z"/>
-              </svg>
-            </a>
-            <span class="mx-2 text-gray-400" aria-hidden="true">/</span>
-          </li>
-          <li class="text-gray-400">Mes groupes</li>
-        </ol>
-      </nav>
+        <h1 class="font-raleway text-2xl font-medium leading-tight text-bleuone md:text-3xl">
+          Mes groupes de formation
+        </h1>
+        <p class="mt-0.5 font-varela text-base text-orangeone md:text-lg">
+          Gérez facilement vos groupes, formations et stagiaires.
+        </p>
+        <p class="mt-3 max-w-2xl font-lisible text-sm leading-relaxed text-slate-700">
+          Retrouvez ici tous vos groupes. Vous pouvez les modifier, leur associer des formations ou ajouter des stagiaires.
+        </p>
+
+        {{-- 📊 Statistiques --}}
+        <div class="mt-4 flex flex-wrap gap-2 text-xs font-varela">
+          <span class="inline-flex items-center gap-1.5 rounded-full border border-bleuone/15 bg-bleuone/5 px-3 py-1 text-bleuone">
+            {{ $groupes->count() }} groupes
+          </span>
+          <span class="inline-flex items-center gap-1.5 rounded-full border border-vertone/20 bg-vertone/10 px-3 py-1 text-vertone">
+            {{ $groupes->where('is_active', true)->count() }} actifs
+          </span>
+          <span class="inline-flex items-center gap-1.5 rounded-full border border-orangeone/20 bg-orangeone/10 px-3 py-1 text-orangeone">
+            {{ $groupes->sum(fn ($groupe) => $groupe->students->count()) }} stagiaires
+          </span>
+        </div>
+      </div>
+
+      {{-- Bloc image --}}
+      <div class="lg:col-span-4 flex justify-center lg:justify-end">
+        <img src="{{ asset('images/svg/Groupes.svg') }}"
+             alt="Illustration des groupes de formation"
+             class="max-w-[220px] h-auto">
+      </div>
+
     </div>
-
-    {{-- Bloc image (3 colonnes) --}}
-    <div class="col-span-12 md:col-span-3 flex justify-center md:justify-end">
-      <img src="{{ asset('images/svg/Groupes.svg') }}"
-           alt="Illustration des groupes de formation"
-           class="max-w-[256px] h-auto">
-    </div>
-
   </div>
-</header>
 
 
   {{-- 💼 CONTENU PRINCIPAL --}}
@@ -81,59 +78,55 @@
           <article class="flex flex-col rounded-[20px] border border-gray-200 bg-white p-6 shadow">
             <div class="flex-1 space-y-5">
               <div class="border-b border-gray-100 pb-4">
-                <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                  <div class="min-w-0">
-                    <h3 class="truncate font-raleway text-xl font-bold text-bleuone">
-                      {{ $groupe->name }}
-                    </h3>
-                    <p class="mt-2 text-xs italic text-gray-400 font-lisible">
-                      Créé le {{ optional($groupe->created_at)->format('d/m/Y') ?? '—' }}
-                    </p>
-                  </div>
+                <h3 class="break-words font-raleway text-xl font-bold text-bleuone">
+                  {{ $groupe->name }}
+                </h3>
+                <p class="mt-2 text-xs italic text-gray-400 font-lisible">
+                  Créé le {{ optional($groupe->created_at)->format('d/m/Y') ?? '—' }}
+                </p>
 
-                  <div class="flex flex-wrap items-center gap-2 sm:justify-end">
-                    <span class="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-bold {{ $groupe->is_active ? 'border-vertone/20 bg-vertone/10 text-vertone' : 'border-gray-200 bg-gray-100 text-gray-600' }}">
-                      <span class="inline-flex h-2.5 w-2.5 rounded-full {{ $groupe->is_active ? 'bg-vertone' : 'bg-gray-400' }}"></span>
-                      {{ $groupe->is_active ? 'Actif' : 'Inactif' }}
+                <div class="mt-3 flex flex-wrap items-center gap-2">
+                  <span class="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-bold {{ $groupe->is_active ? 'border-vertone/20 bg-vertone/10 text-vertone' : 'border-gray-200 bg-gray-100 text-gray-600' }}">
+                    <span class="inline-flex h-2.5 w-2.5 rounded-full {{ $groupe->is_active ? 'bg-vertone' : 'bg-gray-400' }}"></span>
+                    {{ $groupe->is_active ? 'Actif' : 'Inactif' }}
+                  </span>
+
+                  @unless($isPrimaryTrainer)
+                    <span class="inline-flex items-center rounded-full border border-orangeone/20 bg-orangeone/10 px-3 py-1 text-xs font-bold text-orangeone">
+                      Co-formateur
                     </span>
+                  @endunless
 
-                    @unless($isPrimaryTrainer)
-                      <span class="inline-flex items-center rounded-full border border-orangeone/20 bg-orangeone/10 px-3 py-1 text-xs font-bold text-orangeone">
-                        Co-formateur
+                  @if($groupe->coFormateurs->isNotEmpty())
+                    <div class="relative inline-flex group">
+                      <span class="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700 cursor-default">
+                        {{ $groupe->coFormateurs->count() }} co-formateur{{ $groupe->coFormateurs->count() > 1 ? 's' : '' }}
                       </span>
-                    @endunless
-
-                    @if($groupe->coFormateurs->isNotEmpty())
-                      <div class="relative inline-flex group">
-                        <span class="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700 cursor-default">
-                          {{ $groupe->coFormateurs->count() }} co-formateur{{ $groupe->coFormateurs->count() > 1 ? 's' : '' }}
-                        </span>
-                        <div class="pointer-events-none absolute right-0 top-full z-20 mt-2 hidden w-max max-w-xs rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 shadow-lg group-hover:block group-focus-within:block">
-                          @foreach($groupe->coFormateurs as $trainer)
-                            <div>{{ $trainer->email }}</div>
-                          @endforeach
-                        </div>
+                      <div class="pointer-events-none absolute left-0 top-full z-20 mt-2 hidden w-max max-w-xs rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 shadow-lg group-hover:block group-focus-within:block">
+                        @foreach($groupe->coFormateurs as $trainer)
+                          <div>{{ $trainer->email }}</div>
+                        @endforeach
                       </div>
-                    @endif
+                    </div>
+                  @endif
 
-                    @if($groupe->observers->isNotEmpty())
-                      <div class="relative inline-flex group">
-                        <span class="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700 cursor-default">
-                          Groupe suivi
-                        </span>
-                        <div class="pointer-events-none absolute right-0 top-full z-20 mt-2 hidden w-max max-w-xs rounded-lg border border-blue-200 bg-white px-3 py-2 text-xs text-blue-900 shadow-lg group-hover:block group-focus-within:block">
-                          @foreach($groupe->observers as $observer)
-                            <div>{{ trim(($observer->prenom ?? '').' '.($observer->name ?? '')) }}</div>
-                          @endforeach
-                        </div>
+                  @if($groupe->observers->isNotEmpty())
+                    <div class="relative inline-flex group">
+                      <span class="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700 cursor-default">
+                        Groupe suivi
+                      </span>
+                      <div class="pointer-events-none absolute left-0 top-full z-20 mt-2 hidden w-max max-w-xs rounded-lg border border-blue-200 bg-white px-3 py-2 text-xs text-blue-900 shadow-lg group-hover:block group-focus-within:block">
+                        @foreach($groupe->observers as $observer)
+                          <div>{{ trim(($observer->prenom ?? '').' '.($observer->name ?? '')) }}</div>
+                        @endforeach
                       </div>
-                    @endif
-                  </div>
+                    </div>
+                  @endif
                 </div>
               </div>
 
               @if ($groupe->description)
-                <p class="text-sm leading-7 text-gray-700 font-lisible line-clamp-3">
+                <p class="text-sm leading-7 text-gray-700 font-lisible line-clamp-2">
                   {{ $groupe->description }}
                 </p>
               @endif
@@ -170,11 +163,41 @@
                 </div>
               @endif
 
-              <div class="rounded-2xl bg-gray-50/80 p-4 space-y-4">
-                <div>
-                  <h4 class="mb-2 text-[11px] font-bold uppercase tracking-[0.16em] text-gray-500 font-varela">Modules associés</h4>
-                  <div class="flex flex-wrap gap-2">
-                    @forelse ($groupe->modules as $module)
+              <div class="rounded-2xl bg-gray-50/80 p-4" x-data="{ open: false }">
+                <div class="mb-2 flex items-center justify-between gap-2">
+                  <h4 class="text-[11px] font-bold uppercase tracking-[0.16em] text-gray-500 font-varela">Formations associées</h4>
+                  @if($groupe->modules->count() > 3)
+                    <button type="button"
+                            x-on:click="open = !open"
+                            :aria-expanded="open"
+                            aria-label="Afficher toutes les formations"
+                            class="shrink-0 rounded-full p-1 text-gray-400 transition hover:bg-white hover:text-orangeone">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform duration-200" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                  @endif
+                </div>
+
+                <div class="flex flex-wrap gap-2">
+                  @forelse ($groupe->modules->take(3) as $module)
+                    @php
+                      $moduleUrl = !empty($module->category_id)
+                        ? route('frontend.modules.show', ['category' => $module->category_id, 'module' => $module->id])
+                        : route('frontend.modules.show.legacy', ['module' => $module->id]);
+                    @endphp
+                    <a href="{{ $moduleUrl }}"
+                       class="inline-flex items-center rounded-full bg-vertone/10 px-3 py-1 text-xs font-varela text-vertone transition hover:bg-vertone/20">
+                      {{ Str::limit($module->module_title, 30) }}
+                    </a>
+                  @empty
+                    <p class="text-sm italic text-gray-400 font-lisible">Aucune formation</p>
+                  @endforelse
+                </div>
+
+                @if($groupe->modules->count() > 3)
+                  <div x-show="open" x-collapse.duration.300ms class="mt-2 flex flex-wrap gap-2">
+                    @foreach ($groupe->modules->slice(3) as $module)
                       @php
                         $moduleUrl = !empty($module->category_id)
                           ? route('frontend.modules.show', ['category' => $module->category_id, 'module' => $module->id])
@@ -184,21 +207,17 @@
                          class="inline-flex items-center rounded-full bg-vertone/10 px-3 py-1 text-xs font-varela text-vertone transition hover:bg-vertone/20">
                         {{ Str::limit($module->module_title, 30) }}
                       </a>
-                    @empty
-                      <p class="text-sm italic text-gray-400 font-lisible">Aucun module</p>
-                    @endforelse
+                    @endforeach
                   </div>
-                </div>
+                @endif
+              </div>
 
-                <div class="flex items-center justify-between gap-3 border-t border-gray-200 pt-4">
-                  <div>
-                    <h4 class="text-[11px] font-bold uppercase tracking-[0.16em] text-gray-500 font-varela">Stagiaires</h4>
-                  </div>
-                  <a href="{{ route('formateur.stagiaires.index') }}"
-                     class="shrink-0 text-sm font-semibold text-orangeone hover:underline font-lisible">
-                    {{ $groupe->students->count() }} stagiaire{{ $groupe->students->count() > 1 ? 's' : '' }}
-                  </a>
-                </div>
+              <div class="flex items-center justify-between gap-3 rounded-2xl bg-gray-50/80 p-4">
+                <h4 class="text-[11px] font-bold uppercase tracking-[0.16em] text-gray-500 font-varela">Stagiaires</h4>
+                <a href="{{ route('formateur.stagiaires.index') }}"
+                   class="shrink-0 text-sm font-semibold text-orangeone hover:underline font-lisible">
+                  {{ $groupe->students->count() }} stagiaire{{ $groupe->students->count() > 1 ? 's' : '' }}
+                </a>
               </div>
             </div>
 
@@ -207,15 +226,16 @@
                 Modifier
               </a>
               @if($isPrimaryTrainer)
-                <form action="{{ route('formateur.groupes.destroy', $groupe->id) }}" method="POST"
-                      onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce groupe ?');"
-                      class="w-1/2">
-                  @csrf
-                  @method('DELETE')
-                  <button type="submit" class="btn-oneduc-blue w-full">
-                    Supprimer
-                  </button>
-                </form>
+                <button type="button" x-data x-on:click="$dispatch('open-modal', 'delete-groupe-{{ $groupe->id }}')" class="btn-oneduc-blue w-1/2">
+                  Supprimer
+                </button>
+                <x-confirm-modal
+                  name="delete-groupe-{{ $groupe->id }}"
+                  title="Êtes-vous sûr de vouloir supprimer ce groupe ?"
+                  :action="route('formateur.groupes.destroy', $groupe->id)"
+                  method="DELETE"
+                  confirm-label="Supprimer"
+                />
               @endif
             </div>
 

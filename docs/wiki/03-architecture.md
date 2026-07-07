@@ -1,5 +1,7 @@
 # 03 — Architecture technique
 
+*Public : développeurs.*
+
 ## Vue d'ensemble
 
 Oneduc suit une architecture **Laravel MVC standard** avec une séparation nette par rôle utilisateur au niveau des routes, contrôleurs et vues.
@@ -11,8 +13,8 @@ routes/
 ├── formateur.php     ← espace /formateur (middleware: auth, role:formateur, association.member)
 ├── stagiaire.php     ← espace /stagiaire (middleware: auth, role:stagiaire, track.time)
 ├── observateur.php   ← espace /observateur (middleware: auth, role:observateur)
-├── scorm.php         ← API SCORM (middleware partiel, sans CSRF)
-└── feedback.php      ← retours stagiaires
+├── scorm.php         ← API SCORM (middleware partiel, routes sans CSRF pour iframe)
+└── feedback.php      ← fichier présent mais non importé ; les routes feedback actives sont dans web.php
 ```
 
 ---
@@ -23,10 +25,12 @@ routes/
 |--------|-------------|------------|----------------------|
 | Admin | `/admin` | `auth, role:admin, admin.activity` | `App\Http\Controllers\` (sous-dossier `Backend/`) |
 | Formateur | `/formateur` | `auth, role:formateur, association.member` | `App\Http\Controllers\Formateur\` |
-| Stagiaire | `/stagiaire` | `auth, role:stagiaire, track.time` | `App\Http\Controllers\Stagiaire\` |
+| Stagiaire | `/stagiaire` | `auth, role:stagiaire, track.time`, puis `force.password.change` sauf première connexion | `App\Http\Controllers\Stagiaire\` |
 | Observateur | `/observateur` | `auth, role:observateur` | `App\Http\Controllers\Observateur\` |
 
-Le middleware `force.password.change` est appliqué comme groupe interne dans les espaces stagiaire et formateur. Il bloque l'accès jusqu'à ce que l'utilisateur définisse son mot de passe à la première connexion (`users.password_changed_at` nul).
+Le middleware `force.password.change` est appliqué dans l'espace stagiaire après les routes de première connexion. Il bloque l'accès jusqu'à ce que l'utilisateur définisse son mot de passe (`users.password_changed_at` nul). Le formateur n'a pas ce middleware dans `routes/formateur.php` au 5 juillet 2026.
+
+Le dépôt expose 411 routes déclarées via `php artisan route:list --json`, dont 128 sous `/admin`, 144 sous `/formateur`, 49 sous `/stagiaire` et 9 sous `/observateur`.
 
 ---
 
@@ -36,7 +40,7 @@ Le middleware `force.password.change` est appliqué comme groupe interne dans le
 app/Http/Controllers/
 ├── AdminController.php              ← Dashboard admin
 ├── FormateurController.php          ← Dashboard formateur (analytics)
-├── StagiaireController.php          ← Dashboard stagiaire
+├── StagiaireController.php          ← Dashboard stagiaire (794 lignes, progression extraite)
 ├── UserController.php               ← Auth, profil, connexion par code
 ├── LessonFeedbackController.php     ← Retours sur les leçons
 │
@@ -54,6 +58,7 @@ app/Http/Controllers/
 ├── Formateur/
 │   ├── GroupeController.php         ← Gestion groupes formateur (686 lignes)
 │   ├── GroupeModuleLessonController.php ← Personnalisation leçons par groupe
+│   ├── ModuleBuilderController.php  ← Orchestration HTTP du builder de modules formateur (455 lignes)
 │   ├── MesFormationsController.php  ← FormateurParcours
 │   ├── ParcoursController.php       ← Parcours onboarding formateur
 │   ├── ProgressionGroupesController.php
@@ -67,7 +72,65 @@ app/Http/Controllers/
 
 ---
 
-## Modèles Eloquent (58 modèles)
+## Monolithe modulaire
+
+Oneduc reste volontairement un **monolithe Laravel** : une application, une base de données, un déploiement. La trajectoire recommandée est de le faire évoluer vers un **monolithe modulaire** : les contrôleurs gardent l'orchestration HTTP, tandis que la logique métier est extraite dans `app/Domains/`.
+
+Objectifs :
+- réduire les contrôleurs de plusieurs centaines de lignes ;
+- faciliter les tests ciblés ;
+- rendre les zones fonctionnelles plus lisibles pour les développeurs et pour l'IA ;
+- éviter la complexité prématurée des microservices.
+
+Domaines extraits :
+
+```text
+app/Domains/
+├── ModulesFormateur/
+│   ├── Actions/
+│   │   ├── CreerModule.php
+│   │   ├── DupliquerModuleCatalogue.php
+│   │   ├── CreerChapitre.php
+│   │   ├── CreerLecon.php
+│   │   ├── GenererLeconIA.php
+│   │   ├── GenererStructureFormationIA.php
+│   │   ├── GenererAudioLecon.php
+│   │   ├── ImporterImagesDocument.php
+│   │   ├── ModifierLecon.php
+│   │   ├── ReordonnerChapitres.php
+│   │   ├── ReordonnerLecons.php
+│   │   ├── DeplacerLecon.php
+│   │   ├── PromouvoirLeconEnChapitre.php
+│   │   ├── TeleverserImageModule.php
+│   │   ├── TeleverserVideoModule.php
+│   │   ├── TeleverserScormModule.php
+│   │   ├── ModifierOptionsModule.php
+│   │   └── AssignerGroupesModule.php
+│   └── Support/
+│       ├── AccesModule.php
+│       ├── DonneesModule.php
+│       ├── NettoyeurBlocsModule.php
+│       ├── ExtracteurTexteDocument.php
+│       ├── MistralClient.php
+│       ├── PiperTtsClient.php
+│       ├── GardeFouPromptIA.php
+│       └── LimiteurGenerationIA.php
+└── Learners/
+    └── Support/
+        └── LearnerModuleProgress.php
+```
+
+Les noms de fichiers/classes de `ModulesFormateur` sont volontairement en français (convention retenue pour tout le code métier propre à Oneduc, par opposition aux termes techniques génériques du framework Laravel qui restent en anglais). `ModuleBuilderController` délègue maintenant la création, duplication, réordonnancement, déplacement de leçons, promotion en chapitre, upload d'images/vidéos/SCORM, options module et assignation aux groupes à `ModulesFormateur`. `StagiaireController` délègue le calcul de progression des modules et les statuts de quiz natifs à `Learners\Support\LearnerModuleProgress`.
+
+Prochaines zones candidates :
+- `Backend/ModuleController` : navigation module/section/leçon, progression, médias ;
+- `StagiaireController` : dashboard, modules, résultats, outils ;
+- `Formateur/GroupeController` : création groupe, stagiaires, co-formateurs, invitations ;
+- `ProgressionStagiaireController` : timeline, présence, risque d'abandon.
+
+---
+
+## Modèles Eloquent (61 modèles)
 
 ### Modèles centraux
 
@@ -103,6 +166,8 @@ app/Http/Controllers/
 | `ScormPackage` | `scorm_packages` | Référence d'un package SCORM (slug stable) |
 | `ScormPackageVersion` | `scorm_package_versions` | Version d'un package SCORM importé |
 
+Le modèle `Module` utilise `SoftDeletes` et distingue les modules catalogue des modules créés par les formateurs via `is_trainer_authored`.
+
 ---
 
 ## Services métier
@@ -113,6 +178,7 @@ app/Services/
 ├── QuizService.php                 ← Logique quiz (démarrage, réponses, scoring)
 ├── CodeGeneratorService.php        ← Génération de codes d'accès 6 caractères alphanumériques
 ├── ModuleCompletionNotifier.php    ← Notification formateur en fin de module
+├── TrainerPathQualityDashboardService.php ← Qualité du parcours formateur côté admin
 └── Scorm/
     └── ScormImporter.php           ← Import ZIP SCORM sécurisé avec versioning
 ```
@@ -130,27 +196,55 @@ La méthode `collectSnapshots()` produit un snapshot unifié par paire `(user_id
 
 ---
 
+## Écrans riches côté frontend
+
+Les écrans Blade restent majoritaires, mais plusieurs interfaces chargent React à la demande via `resources/js/app.js`.
+
+| Point de montage | Bundle chargé | Usage |
+|------------------|---------------|-------|
+| `[data-outline-editor]` | `resources/js/outline-editor/OutlineEditor.jsx` | Plan continu du builder de modules formateur |
+| `[data-block-editor]` | `resources/js/formateur-module-builder-editor.jsx` | Édition riche du contenu d'une leçon en blocs |
+| `[data-whiteboard-app]` | `resources/js/group-whiteboard-excalidraw.jsx` | Tableau blanc de groupe |
+| `[data-parcours-builder]` | `resources/js/formateur-parcours-builder.jsx` | Assemblage de parcours formateur |
+
+Le nouvel éditeur de plan du module builder utilise Tiptap/ProseMirror avec deux noeuds métier (`chapterHeading`, `lessonItem`). Le dossier `resources/js/outline-editor/` contient :
+- `OutlineEditor.jsx` : montage React et configuration Tiptap ;
+- `outline-keymap.js` : raccourcis clavier (`Entrée`, `Maj+Entrée`, `Alt+↑/↓`) ;
+- `reconcile.js` et `sync-queue.js` : création/renommage avec debounce et file de synchronisation ;
+- `api.js` : appels JSON vers `ModuleBuilderController`.
+
+Le contenu détaillé des leçons reste séparé dans la page `resources/views/formateur/modules-builder/lecture-edit.blade.php`, qui monte l'éditeur de blocs existant.
+
+---
+
 ## Middleware applicatif
 
 | Middleware | Classe | Rôle |
 |-----------|--------|------|
 | `role` | `Role` | Vérifie `user.role` + `user.status = actif` |
 | `association.member` | `EnsureAssociationMembership` | Vérifie l'adhésion formateur (active ou grâce d'un mois) |
-| `track.time` | `TrackLearningTime` | Enregistre le temps de connexion stagiaire |
-| `force.password.change` | `ForcePasswordChange` | Bloque jusqu'au changement de mot de passe initial |
+| `track.time` | `TrackSessionTime` | Enregistre le temps de connexion stagiaire dans `users.total_site_time` |
+| `force.password.change` | `ForcePasswordChange` | Bloque l'espace stagiaire jusqu'au changement de mot de passe initial |
 | `admin.activity` | `RecordAdminActivity` | Journalise les actions POST/PUT/PATCH/DELETE admin |
 
 ---
 
 ## Pattern d'outils interactifs
 
-Tous les outils d'animation (Quiz live, Nuage de mots, Sondage, etc.) suivent le même patron de conception :
+La plupart des outils d'animation (Quiz live, Nuage de mots, Sondage, Échelle, Mur de questions, etc.) suivent le même patron de conception :
 
 1. **Deux tables** : une table de session (`*_sessions`) avec `group_id`, `formateur_id`, `is_active`, `access_code` ; une table de réponses (`*_responses`) avec `user_id`, `session_id`
 2. **Contrôleur formateur** dans `Formateur/` — CRUD + lancement/fermeture + endpoint JSON résultats
 3. **Contrôleur stagiaire** dans `Stagiaire/` — affichage formulaire + soumission réponse
-4. **Temps réel** : polling AJAX toutes les 2–3 secondes via Alpine.js `setInterval` (pas de WebSockets)
+4. **Temps réel** : polling AJAX toutes les 2–3 secondes via Alpine.js ou fetch côté React selon l'écran (pas de WebSockets)
 5. **Accès** : vérifié via `$group->students()->where('users.id', auth()->id())->exists()`
+
+Exceptions notables :
+- le tableau blanc utilise Excalidraw et persiste des éléments/snapshots de groupe ;
+- le minuteur est unique par groupe (`GroupTimer`) ;
+- les pages collaboratives ouvrent une instance HedgeDoc externe configurée par `HEDGEDOC_BASE_URL`.
+
+Le Minuteur sert de pilote pour une structure par domaine (`app/Domains/Outils/<Outil>/` : contrôleurs, garde d'accès, routes et un `ServiceProvider` dédié), activable/désactivable indépendamment via `config/outils.php`, sans toucher au reste de l'application. Ce pattern est évalué comme modèle avant généralisation aux 6 autres outils.
 
 ---
 
@@ -177,19 +271,45 @@ php artisan test                                      # Tous les tests
 php artisan test --filter NomDuTest                   # Filtre par nom
 ```
 
-État actuel : **40 tests en échec sur 85** principalement à cause du middleware `association.member` qui n'est pas satisfait dans les factories par défaut. Voir [Roadmap](11-roadmap.md) pour le plan de correction.
+Dernière validation documentée le 5 juillet 2026 :
+
+```bash
+php artisan test
+# 103 tests passés, 1 échec, 505 assertions
+# Échec : Tests\Feature\Formateur\ModuleBuilderTest attend un champ JSON `path`
+# après upload image, alors que le contrôleur retourne `media_id` et `url`.
+
+npm run build
+# Build réussi, avec avertissements de taille de chunks Vite
+```
+
+Les factories formateur initialisent désormais une adhésion active par défaut, ce qui évite les faux échecs liés au middleware `association.member`. Le module builder formateur est couvert par `tests/Feature/Formateur/ModuleBuilderTest.php` pour la création, la duplication, le réordonnancement, le déplacement de leçons, la promotion d'une leçon vide en chapitre et les contrôles d'accès.
 
 ---
 
-## Migrations
+## Schéma et migrations
 
-102 migrations tracent l'évolution complète du schéma depuis la création du projet. Elles sont nommées chronologiquement et documentent chaque évolution du modèle de données.
+Les migrations historiques ont été élaguées après génération d'une baseline. L'état de référence est :
+
+```text
+database/schema/mysql-schema.sql   # 72 tables
+database/migrations/               # 5 migrations post-baseline
+```
+
+Les cinq migrations actuelles :
+- suppriment `contacts` si la table legacy est vide ;
+- suppriment `learning_objectives` si la table legacy est vide ;
+- ajoutent `position` à `module_sections`.
+- créent la table `media` de Spatie Media Library ;
+- créent `content_block_scorm_results` et `content_block_scorm_scores` pour les blocs SCORM intégrés aux leçons.
 
 ```bash
 php artisan migrate          # Appliquer les migrations en attente
 php artisan migrate:status   # État de toutes les migrations
 php artisan migrate:fresh    # Remettre à zéro (détruit les données !)
 ```
+
+La baseline fournie est MySQL. Pour utiliser SQLite en développement, il faut générer une baseline SQLite ou restaurer une série complète de migrations compatible.
 
 ---
 

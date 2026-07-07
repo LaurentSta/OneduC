@@ -45,6 +45,11 @@
     if (nextButtonShown) return;
 
     const context = getContext();
+
+    // Un bloc SCORM embarqué dans une leçon mixte ne pilote pas le bouton "leçon
+    // suivante" de la leçon englobante (ambigu s'il y a plusieurs blocs) : on se
+    // contente de suivre sa progression, sans chercher le DOM du wrapper.
+    if (context?.embedded === true) return;
     const parentDoc = window.parent?.document;
     const wrappers = Array.from(parentDoc?.querySelectorAll("#next-lesson-wrapper") ?? []);
     const boutons = Array.from(parentDoc?.querySelectorAll("#next-lesson-button") ?? []);
@@ -152,20 +157,22 @@
     const lectureId = getLectureId();
     if (!lectureId || !shouldSend(key, value)) return null;
 
+    const context = getContext();
+    const blockKey = context?.content_block_key || null;
+    const endpoint = blockKey ? "/scorm/save-block-progress" : "/scorm/save-progress";
+    const body = { lecture_id: lectureId, scorm_key: key, scorm_value: value };
+    if (blockKey) body.content_block_key = blockKey;
+
     try {
-      const res = await fetch("/scorm/save-progress", {
+      const res = await fetch(endpoint, {
         method: "POST",
-        headers: { 
+        headers: {
             "Content-Type": "application/json",
             "X-CSRF-TOKEN": window.parent?.document.querySelector('meta[name="csrf-token"]')?.content || ""
         },
         credentials: "same-origin",
         keepalive: true,
-        body: JSON.stringify({
-          lecture_id: lectureId,
-          scorm_key: key,
-          scorm_value: value
-        })
+        body: JSON.stringify(body)
       });
 
       const data = await res.json().catch(() => null);

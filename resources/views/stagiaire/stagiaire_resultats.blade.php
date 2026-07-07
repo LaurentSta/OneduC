@@ -185,7 +185,7 @@
 
     {{-- 4. DÉTAIL PAR MODULE (ACCORDÉONS) --}}
     <div class="space-y-6">
-        <h2 class="text-lg font-raleway font-bold text-gray-800 mb-4 px-1">Détail des scores par module</h2>
+        <h2 class="text-lg font-raleway font-bold text-gray-800 mb-4 px-1">Détail des scores par formation</h2>
 
         {{-- On groupe par titre de module --}}
         @forelse ($resultats->groupBy(fn($item) => $item->module_title ?? 'Autre') as $moduleTitle => $scores)
@@ -266,6 +266,12 @@
                     <div
                         x-show="datesOpen"
                         x-cloak
+                        x-transition:enter="transition ease-out duration-200"
+                        x-transition:enter-start="opacity-0 scale-95"
+                        x-transition:enter-end="opacity-100 scale-100"
+                        x-transition:leave="transition ease-in duration-150"
+                        x-transition:leave-start="opacity-100 scale-100"
+                        x-transition:leave-end="opacity-0 scale-95"
                         class="fixed inset-0 flex items-center justify-center p-4"
                         style="z-index: 99999;"
                         aria-modal="true"
@@ -276,7 +282,7 @@
                         <div class="relative w-full max-w-md bg-white rounded-2xl shadow-xl border border-gray-100 p-6" @click.stop>
                             <div class="flex items-start justify-between gap-4 mb-4">
                                 <div>
-                                    <h3 class="text-sm font-bold text-bleuone">Période du module</h3>
+                                    <h3 class="text-sm font-bold text-bleuone">Période de la formation</h3>
                                     <p class="text-xs text-gray-500 mt-1">{{ $moduleTitle }}</p>
                                 </div>
                                 <button type="button" class="text-gray-400 hover:text-gray-600" @click="datesOpen = false">
@@ -305,7 +311,7 @@
                 </template>
 
                 {{-- CONTENU DÉTAILLÉ --}}
-                <div x-show="open" x-collapse>
+                <div x-show="open" x-collapse.duration.400ms>
                     <div class="border-t border-gray-100 bg-gray-50/30">
                         @foreach ($scores as $score)
                             <div class="px-6 py-4 border-b border-gray-100 last:border-0 hover:bg-white transition-colors">
@@ -369,7 +375,7 @@
                 </div>
                 <h3 class="text-lg font-bold text-gray-900">Aucun résultat enregistré</h3>
                 <a href="{{ route('stagiaire.modules') }}" class="btn-oneduc-blue mt-6 !px-4 !py-2 !text-sm">
-                    Aller aux modules
+                    Aller aux formations
                 </a>
             </div>
         @endforelse

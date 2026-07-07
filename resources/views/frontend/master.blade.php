@@ -68,17 +68,6 @@
 @include('cookie-consent::index')
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    document.body.classList.add('page-is-entering');
-
-    requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-            document.body.classList.remove('page-is-entering');
-        });
-    });
-});
-</script>
-<script>
-document.addEventListener('DOMContentLoaded', () => {
   const popup = document.getElementById('beta-popup');
   const continueBtn = document.getElementById('beta-popup-continue');
 

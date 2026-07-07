@@ -50,11 +50,14 @@
                     <a class="text-bleuone hover:underline" href="{{ route('admin.nuage.show', $cloud) }}">Session</a>
                     <a class="text-bleuone hover:underline" href="{{ route('admin.nuage.live', $cloud) }}">Live</a>
                     <a class="text-bleuone hover:underline" href="{{ route('admin.nuage.edit', $cloud) }}">Éditer</a>
-                    <form method="POST" action="{{ route('admin.nuage.destroy', $cloud) }}" onsubmit="return confirm('Supprimer ce nuage ?')">
-                      @csrf
-                      @method('DELETE')
-                      <button type="submit" class="text-red-600 hover:underline">Supprimer</button>
-                    </form>
+                    <button type="button" x-data x-on:click="$dispatch('open-modal', 'delete-cloud-{{ $cloud->id }}')" class="text-red-600 hover:underline">Supprimer</button>
+                    <x-confirm-modal
+                      name="delete-cloud-{{ $cloud->id }}"
+                      title="Supprimer ce nuage ?"
+                      :action="route('admin.nuage.destroy', $cloud)"
+                      method="DELETE"
+                      confirm-label="Supprimer"
+                    />
                   </div>
                 </td>
               </tr>

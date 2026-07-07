@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Group;
 use App\Models\LessonResource;
 use App\Models\Module;
 use App\Models\ModuleLecture;
@@ -74,6 +75,22 @@ function seedLessonResourceContext(): array
         'lecture_title' => 'Lecon 1',
         'position' => 1,
         'content_type' => 'scorm',
+    ]);
+
+    $group = Group::query()->create([
+        'name' => 'Groupe ressources '.uniqid(),
+        'instructor_id' => $formateur->id,
+    ]);
+
+    DB::table('group_user')->insert([
+        'group_id' => $group->id,
+        'user_id' => $stagiaire->id,
+        'role_in_group' => 'stagiaire',
+    ]);
+
+    DB::table('group_module')->insert([
+        'group_id' => $group->id,
+        'module_id' => $module->id,
     ]);
 
     return compact('formateur', 'stagiaire', 'module', 'section', 'lecture');

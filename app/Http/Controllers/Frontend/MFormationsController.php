@@ -12,7 +12,7 @@ class MFormationsController extends Controller
     {
         $categories = Category::all();
 
-        $modulesQuery = Module::with(['category', 'formateur']);
+        $modulesQuery = Module::with(['category', 'formateur'])->publiclyListable();
 
         if ($request->filled('category_id')) {
             $modulesQuery->where('category_id', $request->category_id);
@@ -58,6 +58,8 @@ class MFormationsController extends Controller
 
     private function renderModuleDetail(Module $module)
     {
+        abort_unless((bool) $module->status && ! $module->is_trainer_authored, 404);
+
         $module->loadMissing([
             'category',
             'subCategory',

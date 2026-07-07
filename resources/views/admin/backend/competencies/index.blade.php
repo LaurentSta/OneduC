@@ -144,21 +144,25 @@
                                         </button>
                                     </form>
 
-                                    <form method="POST" action="{{ route('admin.competencies.destroy', $c->id) }}"
-                                          class="inline" onsubmit="return confirm('Supprimer définitivement cette compétence ?');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit"
-                                                class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-varela
-                                                       {{ $isUsed
-                                                            ? 'border-red-200 bg-red-50 text-red-300 cursor-not-allowed'
-                                                            : 'border-red-200 text-red-700 hover:bg-red-600 hover:text-white transition cursor-pointer' }}"
-                                                {{ $isUsed ? 'disabled aria-disabled=true' : '' }}
-                                                title="{{ $isUsed ? 'Suppression impossible : compétence déjà utilisée' : 'Supprimer' }}">
-                                            <i class="ti ti-trash"></i>
-                                            Supprimer
-                                        </button>
-                                    </form>
+                                    <button type="button"
+                                            x-data
+                                            x-on:click="$dispatch('open-modal', 'delete-competency-{{ $c->id }}')"
+                                            class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-varela
+                                                   {{ $isUsed
+                                                        ? 'border-red-200 bg-red-50 text-red-300 cursor-not-allowed'
+                                                        : 'border-red-200 text-red-700 hover:bg-red-600 hover:text-white transition cursor-pointer' }}"
+                                            {{ $isUsed ? 'disabled aria-disabled=true' : '' }}
+                                            title="{{ $isUsed ? 'Suppression impossible : compétence déjà utilisée' : 'Supprimer' }}">
+                                        <i class="ti ti-trash"></i>
+                                        Supprimer
+                                    </button>
+                                    <x-confirm-modal
+                                        name="delete-competency-{{ $c->id }}"
+                                        title="Supprimer définitivement cette compétence ?"
+                                        :action="route('admin.competencies.destroy', $c->id)"
+                                        method="DELETE"
+                                        confirm-label="Supprimer"
+                                    />
                                 </div>
                             </td>
                         </tr>

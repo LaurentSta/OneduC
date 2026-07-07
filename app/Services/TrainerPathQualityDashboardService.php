@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Data\ParcoursFormateur;
+use App\Models\TrainerPathActivityAttempt;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -25,7 +26,7 @@ class TrainerPathQualityDashboardService
             ->orderBy('prenom')
             ->get(['id', 'prenom', 'name', 'username', 'email']);
 
-        $attempts = DB::table('trainer_path_activity_attempts')
+        $attempts = TrainerPathActivityAttempt::query()
             ->where('module_key', self::MODULE_KEY)
             ->orderBy('submitted_at')
             ->get();

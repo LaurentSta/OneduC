@@ -1,5 +1,7 @@
 # 13 — Checklist : prêt à publier sur GitHub
 
+*Public : développeurs et mainteneurs du projet.*
+
 Cette checklist doit être complétée avant de rendre le dépôt public sur GitHub. Elle couvre quatre axes : sécurité du code, nettoyage de l'historique git, conformité légale, et configuration GitHub.
 
 ---
@@ -8,20 +10,32 @@ Cette checklist doit être complétée avant de rendre le dépôt public sur Git
 
 Ces points doivent être corrigés AVANT de publier. Publier avec ces failles expose vos utilisateurs et donne une carte d'attaque publique.
 
-- [ ] **S1** — Déplacer la route `/admin/stagiaires/{id}/debug-progression` dans `routes/admin.php` sous middleware complet, ou la supprimer  
-  `routes/web.php` ligne 220
+- [x] **S1** — Route `/admin/stagiaires/{id}/debug-progression` supprimée ou absente
+  Vérifié le 5 juillet 2026 : aucune route `debug-progression` dans `php artisan route:list --json`
 
-- [ ] **S2** — Déplacer `POST /admin/stagiaires/{user}/reset-progression` dans `routes/admin.php`  
-  `routes/web.php` ligne 273
+- [x] **S2** — `POST /admin/stagiaires/{user}/reset-progression` protégé côté admin
+  Vérifié : route `admin.stagiaires.reset` dans `routes/admin.php`, sous `auth`, `role:admin`, `admin.activity`
 
-- [ ] **S3** — Corriger `Module::isVisibleTo()` pour vérifier l'appartenance groupe du stagiaire  
-  `app/Models/Module.php` ligne 84
+- [x] **S3** — Corriger `Module::isVisibleTo()` pour vérifier l'appartenance groupe du stagiaire  
+  Corrigé le 5 juillet 2026 : `app/Models/Module.php` — stagiaire vérifié via `User::aAccesAuModule()` (groupe actif + module affecté), formateur via `formateur_id`/`is_trainer_authored` ou `Group::scopeAccessibleByTrainer()`. **Gap restant identifié** : `StagiaireController::StagiaireModuleDetail()` (route `stagiaire.module.detail`) et `Frontend\LectureController` (`show`, `showScorm`, `showScormBlock`, `showSlides`) n'appellent pas `isVisibleTo()` et n'ont aucune vérification d'appartenance groupe — à traiter en Phase 2.
 
-- [ ] **S4** — Ajouter throttling sur `/stagiaire/connexion-code`  
-  `routes/web.php` — ajouter `->middleware('throttle:10,1')`
+- [x] **S4** — Ajouter throttling sur `/stagiaire/connexion-code`  
+  Corrigé le 5 juillet 2026 : rate limiter nommé `connexion-code` (10/minute par IP) via `RateLimiter::for()` dans `AppServiceProvider`, appliqué à la route dans `routes/web.php`.
 
-- [ ] **S5** — Corriger `LessonFeedbackController::store()` (route inexistante → erreur 500)  
-  `app/Http/Controllers/LessonFeedbackController.php` ligne 32
+- [x] **S5** — Corriger `LessonFeedbackController::store()` (route inexistante → erreur 500)  
+  Corrigé le 5 juillet 2026 : `redirect()->back()` remplace la redirection vers `module.lesson` (route inexistante).
+
+- [x] **S6** — Corriger le cumul temps SCORM legacy
+  Corrigé le 5 juillet 2026 : migration ajoutant `last_session_time` à `scorm_scores` (même type que `content_block_scorm_scores`).
+
+- [x] **S7** — Ajouter la vérification d'appartenance à la leçon dans `POST /scorm/save-progress`
+  Corrigé le 5 juillet 2026 : `User::aAccesAuModule()` appliqué dans `SCORMController`, `ContentBlockScormController` et `EvaluationSCORMController` (403 sinon), middleware `auth` ajouté sur les 3 routes (CSRF reste désactivé pour l'iframe).
+
+- [x] **S8** — Corriger la page publique `/inscription`
+  Corrigé le 5 juillet 2026 : redirection 301 vers `/inscription-formateur` (seul parcours d'inscription fonctionnel).
+
+- [x] **S9** — Remettre `php artisan test` au vert
+  Corrigé le 5 juillet 2026 : le test attendait `path`, contrat obsolète antérieur à la migration Media Library. Test mis à jour pour valider `media_id`/`url` (contrat réellement utilisé par le contrôleur et le frontend). Suite complète verte (124 tests).
 
 ---
 
@@ -63,6 +77,8 @@ find . -name "*.sqlite" -not -path "./.git/*"
 
 Tout email ou nom réel doit être remplacé par des données fictives (`test@example.com`, `jean.dupont@exemple.fr`).
 
+État local partiel au 5 juillet 2026 : `git log --all --full-history -- .env` ne retourne rien. Le scan complet des secrets reste à faire avant passage public.
+
 ### Vérification du .gitignore
 
 ```bash
@@ -99,7 +115,7 @@ Les packages SCORM importés ne doivent pas être dans le dépôt git (ils peuve
 ## Axe 3 — Conformité légale
 
 - [ ] Le fichier `LICENSE` contient le texte intégral de l'AGPL v3  
-  → Copier depuis `https://www.gnu.org/licenses/agpl-3.0.txt` et coller dans `LICENSE`
+  → État local : le texte AGPL v3 complet est présent
 
 - [ ] Le fichier `NOTICE` mentionne `© Association Oneduc` avec les années correctes
 
@@ -118,7 +134,8 @@ Les packages SCORM importés ne doivent pas être dans le dépôt git (ils peuve
 ### Paramètres du dépôt
 
 - [ ] Le dépôt est mis en **Public** (ou restera privé temporairement le temps des corrections)
-- [ ] Description du dépôt renseignée : "LMS pour l'inclusion numérique — Laravel 11, SCORM, quiz natifs, outils d'animation"
+- [ ] Description du dépôt renseignée : "LMS pour l'inclusion numérique — Laravel 11, SCORM, quiz natifs"  
+  Ne pas mentionner les outils d'animation live : implémentés mais pas encore activés en environnement de production (voir [07 — Outils d'animation](07-outils-animation.md))
 - [ ] Topics GitHub ajoutés : `lms`, `laravel`, `scorm`, `inclusion-numerique`, `formation`, `php`, `tailwind`
 - [ ] Site web renseigné : `https://oneduc.fr`
 
@@ -134,6 +151,8 @@ Les packages SCORM importés ne doivent pas être dans le dépôt git (ils peuve
 - [ ] `.github/ISSUE_TEMPLATE/bug_report.md` — template de rapport de bug
 - [ ] `.github/ISSUE_TEMPLATE/feature_request.md` — template de demande de fonctionnalité
 - [ ] `.github/PULL_REQUEST_TEMPLATE.md` — template de Pull Request (inclure rappel du CLA)
+
+État local : ces trois fichiers existent dans `.github/`.
 
 ### Branches et protection
 
@@ -162,9 +181,10 @@ Le `README.md` à la racine est la première chose que les visiteurs GitHub voie
 
 | Priorité | Action | Bloquant ? |
 |----------|--------|------------|
-| 1 | Corriger les 5 failles de sécurité (S1 à S5) | Oui |
+| 1 | ~~Corriger les points sécurité et santé applicative restants (S3 à S9)~~ — fait le 5 juillet 2026, voir Axe 1 | Oui |
+| 1bis | Traiter le gap identifié lors du correctif S3 : `StagiaireModuleDetail` et `Frontend\LectureController` ne vérifient pas l'appartenance groupe | Oui |
 | 2 | Vérifier et nettoyer l'historique git (secrets, données personnelles) | Oui |
-| 3 | Compléter le fichier LICENSE avec le texte AGPL v3 intégral | Oui |
+| 3 | Synchroniser `SECURITY.md` avec l'état réel de la checklist | Recommandé |
 | 4 | Vérifier convention formation / statuts association | Recommandé |
 | 5 | Configurer GitHub (topics, protections de branche, templates) | Non |
 | 6 | Mettre à jour le README principal avec badge et sections | Non |

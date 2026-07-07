@@ -61,11 +61,16 @@
                                         <a href="{{ route('admin.referentiels.domains.index', $ref) }}" class="block px-4 py-2 hover:bg-gray-50" role="menuitem">Gérer les domaines</a>
                                         <a href="{{ route('admin.referentiels.skills.index', $ref) }}" class="block px-4 py-2 hover:bg-gray-50" role="menuitem">Gérer les compétences</a>
                                         <div class="my-2 border-t"></div>
-                                        <form id="delete-form-{{ $ref->id }}" action="{{ route('admin.referentiels.destroy', $ref->id) }}" method="POST" class="px-4">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="button" onclick="confirmDelete({{ $ref->id }})" class="w-full text-left px-0 py-2 text-red-700 hover:text-red-800" role="menuitem">Supprimer</button>
-                                        </form>
+                                        <div class="px-4">
+                                            <button type="button" x-on:click="$dispatch('open-modal', 'delete-referentiel-{{ $ref->id }}')" class="w-full text-left px-0 py-2 text-red-700 hover:text-red-800" role="menuitem">Supprimer</button>
+                                        </div>
+                                        <x-confirm-modal
+                                            name="delete-referentiel-{{ $ref->id }}"
+                                            title="Supprimer ce référentiel ?"
+                                            :action="route('admin.referentiels.destroy', $ref->id)"
+                                            method="DELETE"
+                                            confirm-label="Supprimer"
+                                        />
                                     </div>
                                 </div>
                             </div>
@@ -83,12 +88,6 @@
 </div>
 
 <script>
-    function confirmDelete(id) {
-        if (confirm("Êtes-vous sûr de vouloir supprimer ce référentiel ?")) {
-            document.getElementById('delete-form-' + id).submit();
-        }
-    }
-
     $(document).ready(function () {
         const hasRows = $('#referentialTable tbody tr').length > 0;
         if (!hasRows) return;

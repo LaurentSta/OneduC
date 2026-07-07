@@ -276,7 +276,14 @@
                     <p class="mt-3 text-base leading-7 text-white/90" x-text="message"></p>
                 </div>
 
-                <div x-show="!completed" x-cloak class="max-h-[55vh] overflow-y-auto px-6 py-5">
+                <div x-show="!completed" x-cloak
+                     x-transition:enter="transition ease-out duration-200"
+                     x-transition:enter-start="opacity-0 scale-95"
+                     x-transition:enter-end="opacity-100 scale-100"
+                     x-transition:leave="transition ease-in duration-150"
+                     x-transition:leave-start="opacity-100 scale-100"
+                     x-transition:leave-end="opacity-0 scale-95"
+                     class="max-h-[55vh] overflow-y-auto px-6 py-5">
                     <template x-if="wrongItems.length > 0">
                         <div class="grid gap-3">
                             <template x-for="item in wrongItems" :key="item.id">
@@ -330,7 +337,14 @@
         {{-- ===== FIN MODAL FEEDBACK ===== --}}
 
         {{-- ===== MODAL CONSIGNE ===== --}}
-        <div x-show="showInstructions" x-cloak class="fixed inset-0 z-50">
+        <div x-show="showInstructions" x-cloak
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="fixed inset-0 z-50">
             <div class="absolute inset-0 bg-slate-900/45" @click="showInstructions = false"></div>
             <section
                 x-transition:enter="transition ease-out duration-200"
@@ -475,6 +489,12 @@
                         type="button"
                         x-show="fullscreenSupported"
                         x-cloak
+                        x-transition:enter="transition ease-out duration-200"
+                        x-transition:enter-start="opacity-0 scale-95"
+                        x-transition:enter-end="opacity-100 scale-100"
+                        x-transition:leave="transition ease-in duration-150"
+                        x-transition:leave-start="opacity-100 scale-100"
+                        x-transition:leave-end="opacity-0 scale-95"
                         @click="toggleFullscreen()"
                         class="pointer-events-auto inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/95 px-3 py-2 text-[11px] font-bold uppercase tracking-wide text-slate-700 shadow-sm backdrop-blur transition hover:bg-white"
                         :aria-pressed="fullscreenActive.toString()"
@@ -589,6 +609,12 @@
                                                         <span
                                                             x-show="!completed"
                                                             x-cloak
+                                                            x-transition:enter="transition ease-out duration-200"
+                                                            x-transition:enter-start="opacity-0 scale-95"
+                                                            x-transition:enter-end="opacity-100 scale-100"
+                                                            x-transition:leave="transition ease-in duration-150"
+                                                            x-transition:leave-start="opacity-100 scale-100"
+                                                            x-transition:leave-end="opacity-0 scale-95"
                                                             @click.stop="moveCardToPool(card.id)"
                                                             class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-sm font-bold text-slate-400 transition hover:border-orangeone hover:text-orangeone"
                                                         >
@@ -666,6 +692,12 @@
                                 <div
                                     x-show="message"
                                     x-cloak
+                                    x-transition:enter="transition ease-out duration-200"
+                                    x-transition:enter-start="opacity-0 scale-95"
+                                    x-transition:enter-end="opacity-100 scale-100"
+                                    x-transition:leave="transition ease-in duration-150"
+                                    x-transition:leave-start="opacity-100 scale-100"
+                                    x-transition:leave-end="opacity-0 scale-95"
                                     class="rounded-[20px] border px-5 py-4"
                                     :class="completed ? 'border-teal-200 bg-teal-50 text-teal-800' : 'border-orange-200 bg-orange-50 text-orange-900'"
                                 >
@@ -717,8 +749,21 @@
                                 </div>
 
                                 {{-- Droite : état normal --}}
-                                <div x-show="!completed" class="flex flex-wrap items-center gap-3">
-                                    <p class="text-sm text-slate-500" x-show="selectedCardId" x-cloak>
+                                <div x-show="!completed"
+                                     x-transition:enter="transition ease-out duration-200"
+                                     x-transition:enter-start="opacity-0 scale-95"
+                                     x-transition:enter-end="opacity-100 scale-100"
+                                     x-transition:leave="transition ease-in duration-150"
+                                     x-transition:leave-start="opacity-100 scale-100"
+                                     x-transition:leave-end="opacity-0 scale-95"
+                                     class="flex flex-wrap items-center gap-3">
+                                    <p class="text-sm text-slate-500" x-show="selectedCardId" x-cloak
+                                       x-transition:enter="transition ease-out duration-200"
+                                       x-transition:enter-start="opacity-0 scale-95"
+                                       x-transition:enter-end="opacity-100 scale-100"
+                                       x-transition:leave="transition ease-in duration-150"
+                                       x-transition:leave-start="opacity-100 scale-100"
+                                       x-transition:leave-end="opacity-0 scale-95">
                                         Sélectionné : <span class="font-semibold text-bleuone" x-text="selectedCardLabel()"></span>
                                     </p>
                                     <button
@@ -732,7 +777,14 @@
                                 </div>
 
                                 {{-- Droite : état complété --}}
-                                <div x-show="completed" x-cloak class="flex flex-wrap items-center gap-3">
+                                <div x-show="completed" x-cloak
+                                     x-transition:enter="transition ease-out duration-200"
+                                     x-transition:enter-start="opacity-0 scale-95"
+                                     x-transition:enter-end="opacity-100 scale-100"
+                                     x-transition:leave="transition ease-in duration-150"
+                                     x-transition:leave-start="opacity-100 scale-100"
+                                     x-transition:leave-end="opacity-0 scale-95"
+                                     class="flex flex-wrap items-center gap-3">
                                     <button
                                         type="button"
                                         @click="resetActivity()"

@@ -4,27 +4,48 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Image\Enums\Fit;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
-class Module extends Model
+class Module extends Model implements HasMedia
 {
+    use InteractsWithMedia;
     use SoftDeletes;
 
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('lesson-images')
+            ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
+
+        $this->addMediaCollection('lesson-videos')
+            ->acceptsMimeTypes(['video/mp4', 'video/webm', 'video/ogg']);
+    }
+
+    public function registerMediaConversions(?Media $media = null): void
+    {
+        $this->addMediaConversion('display')
+            ->fit(Fit::Max, 1600, 1600)
+            ->nonQueued();
+    }
+
     private const DEFAULT_ESTIMATED_SECONDS_PER_QUESTION = 30;
-    
+
     protected $fillable = [
-        'category_id','subcategory_id','formateur_id',
-        'module_image','header_image',
-        'module_title','module_name','module_name_slug','description','objectifs',
-        'module_video','label','duree','resources','certificat','prerequi',
-        'bestseller','vedette','surevalue','status','evaluation_id',
+        'category_id', 'subcategory_id', 'formateur_id', 'is_trainer_authored',
+        'module_image', 'header_image',
+        'module_title', 'module_name', 'module_name_slug', 'description', 'objectifs',
+        'module_video', 'label', 'duree', 'resources', 'certificat', 'prerequi',
+        'bestseller', 'vedette', 'surevalue', 'status', 'evaluation_id',
         'estimated_question_seconds',
     ];
-   
+
     public function category()
     {
         return $this->belongsTo(Category::class);
     }
-    
+
     public function subCategory()
     {
         return $this->belongsTo(\App\Models\SubCategory::class, 'subcategory_id');
@@ -45,7 +66,7 @@ class Module extends Model
 
     public function sections()
     {
-        return $this->hasMany(ModuleSection::class);
+        return $this->hasMany(ModuleSection::class)->orderBy('position');
     }
 
     public function lectures()
@@ -75,16 +96,55 @@ class Module extends Model
         return $q->where('status', 1);
     }
 
+    public function scopeAuthoredByTrainer($q, int $trainerId)
+    {
+        return $q->where('formateur_id', $trainerId)->where('is_trainer_authored', true);
+    }
+
+    public function scopePubliclyListable($q)
+    {
+        return $q->where('status', 1)->where('is_trainer_authored', false);
+    }
+
     protected $casts = [
-        'status'                     => 'boolean',
-        'objectifs'                  => 'array',
+        'status' => 'boolean',
+        'is_trainer_authored' => 'boolean',
+        'objectifs' => 'array',
         'estimated_question_seconds' => 'integer',
     ];
 
     public function isVisibleTo(?\App\Models\User $user): bool
     {
-        if ($user && $user->role === 'admin') return true; 
-        return (bool) $this->status;                        
+        if (! $this->status) {
+            return false;
+        }
+
+        if (! $user) {
+            return false;
+        }
+
+        if ($user->role === 'admin') {
+            return true;
+        }
+
+        if ($user->role === 'formateur') {
+            // Module de catalogue (auteur admin) : parcourable/duplicable par tout formateur.
+            if (! $this->is_trainer_authored) {
+                return true;
+            }
+
+            if ((int) $this->formateur_id === (int) $user->id) {
+                return true;
+            }
+
+            return $this->groups()->accessibleByTrainer((int) $user->id)->exists();
+        }
+
+        if ($user->role === 'stagiaire') {
+            return $user->aAccesAuModule($this->id);
+        }
+
+        return false;
     }
 
     // --- C'EST ICI QU'ON AJOUTE LE CALCUL DU TEMPS ---
@@ -135,7 +195,7 @@ class Module extends Model
 
     public function getEstimatedSecondsForUser(?int $userId): int
     {
-        if (!$userId) {
+        if (! $userId) {
             return $this->total_seconds;
         }
 

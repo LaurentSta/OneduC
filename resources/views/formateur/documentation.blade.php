@@ -33,8 +33,8 @@
     <article class="bg-white rounded-[20px] shadow-md p-6">
       <h2 class="text-xl font-semibold text-bleuone">3. Formations et parcours</h2>
       <ul class="mt-3 text-gray-700 space-y-2 list-disc list-inside">
-        <li>Accédez à <strong>Formations</strong> pour visualiser vos modules publiés.</li>
-        <li>Ouvrez le détail d'un module pour prévisualiser le parcours comme un stagiaire.</li>
+        <li>Accédez à <strong>Formations</strong> pour visualiser vos formations publiées.</li>
+        <li>Ouvrez le détail d'une formation pour prévisualiser le parcours comme un stagiaire.</li>
         <li>Personnalisez l'ordre/activation des leçons par groupe pour adapter la pédagogie.</li>
       </ul>
     </article>
@@ -43,7 +43,7 @@
       <h2 class="text-xl font-semibold text-bleuone">4. Quiz et évaluation</h2>
       <ul class="mt-3 text-gray-700 space-y-2 list-disc list-inside">
         <li>Les quiz se lancent dans les leçons et suivent un cycle question/réponse/résultat.</li>
-        <li>Le nombre de questions peut être ajusté selon la configuration du module.</li>
+        <li>Le nombre de questions peut être ajusté selon la configuration de la formation.</li>
         <li>Utilisez les résultats pour repérer les points de blocage récurrents.</li>
       </ul>
     </article>
@@ -51,7 +51,7 @@
     <article class="bg-white rounded-[20px] shadow-md p-6">
       <h2 class="text-xl font-semibold text-bleuone">5. Progression et pilotage</h2>
       <ul class="mt-3 text-gray-700 space-y-2 list-disc list-inside">
-        <li>Analyse par groupes, par stagiaires et par modules depuis l'espace <strong>Progression</strong>.</li>
+        <li>Analyse par groupes, par stagiaires et par formations depuis l'espace <strong>Progression</strong>.</li>
         <li>Suivi d'achèvement des leçons et indicateurs de complétion.</li>
         <li>En cas d'anomalie, vérifiez l'état d'accès du stagiaire et l'affectation au groupe.</li>
       </ul>
@@ -61,7 +61,7 @@
       <h2 class="text-xl font-semibold text-bleuone">6. Support et bonnes pratiques</h2>
       <ul class="mt-3 text-gray-700 space-y-2 list-disc list-inside">
         <li>Support rapide: utilisez le bouton <strong>Support</strong> (Discord + formulaire).</li>
-        <li>Préférez des intitulés de modules explicites et des leçons courtes.</li>
+        <li>Préférez des intitulés de formations explicites et des leçons courtes.</li>
         <li>Planifiez une revue hebdomadaire des progressions pour relancer les apprenants.</li>
       </ul>
     </article>
@@ -108,7 +108,7 @@
         <h3 class="font-semibold text-bleuone">Format conseillé d’une demande</h3>
         <ul class="mt-3 text-gray-700 space-y-2 list-disc list-inside">
           <li>Objet clair: “Progression figée groupe X”.</li>
-          <li>Contexte: module, section, leçon et utilisateurs impactés.</li>
+          <li>Contexte: formation, section, leçon et utilisateurs impactés.</li>
           <li>Impact: combien de stagiaires concernés et depuis quand.</li>
           <li>Actions déjà testées (reconnexion, autre navigateur, etc.).</li>
         </ul>
@@ -118,7 +118,7 @@
         <h3 class="font-semibold text-bleuone">Cas fréquents traités sur Discord</h3>
         <ul class="mt-3 text-gray-700 space-y-2 list-disc list-inside">
           <li>Stagiaire bloqué dans une leçon ou un quiz.</li>
-          <li>Problème d’affectation groupe/module.</li>
+          <li>Problème d’affectation groupe/formation.</li>
           <li>Suivi de progression incohérent.</li>
           <li>Besoin d’assistance sur l’import ou la structuration de contenu.</li>
         </ul>
@@ -136,7 +136,7 @@
 
       <details class="rounded-lg border border-gray-200 p-4">
         <summary class="cursor-pointer font-semibold text-bleuone">Comment signaler un problème de progression ?</summary>
-        <p class="mt-2 text-gray-700">Indiquez le groupe, le module, les stagiaires concernés et le dernier écran validé.</p>
+        <p class="mt-2 text-gray-700">Indiquez le groupe, la formation, les stagiaires concernés et le dernier écran validé.</p>
       </details>
 
       <details class="rounded-lg border border-gray-200 p-4">

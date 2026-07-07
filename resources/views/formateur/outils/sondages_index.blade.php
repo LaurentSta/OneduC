@@ -98,6 +98,12 @@
                     <p class="text-xs font-bold text-gray-500" x-text="'Question ' + (qi + 1)"></p>
                     <button type="button"
                             x-show="questions.length > 1"
+                            x-transition:enter="transition ease-out duration-200"
+                            x-transition:enter-start="opacity-0 scale-95"
+                            x-transition:enter-end="opacity-100 scale-100"
+                            x-transition:leave="transition ease-in duration-150"
+                            x-transition:leave-start="opacity-100 scale-100"
+                            x-transition:leave-end="opacity-0 scale-95"
                             @click="removeQuestion(qi)"
                             class="text-[11px] font-semibold text-red-500 hover:text-red-600">
                       Supprimer
@@ -132,6 +138,12 @@
                                :placeholder="'Choix ' + (ci + 1)">
                         <button type="button"
                                 x-show="q.choices.length > 2"
+                                x-transition:enter="transition ease-out duration-200"
+                                x-transition:enter-start="opacity-0 scale-95"
+                                x-transition:enter-end="opacity-100 scale-100"
+                                x-transition:leave="transition ease-in duration-150"
+                                x-transition:leave-start="opacity-100 scale-100"
+                                x-transition:leave-end="opacity-0 scale-95"
                                 @click="removeChoice(qi, ci)"
                                 class="shrink-0 rounded-[6px] border border-red-200 bg-white px-2 py-1 text-[11px] font-semibold text-red-500 hover:bg-red-50">
                           X

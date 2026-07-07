@@ -62,7 +62,14 @@
 
   {{-- Blocs par question --}}
   @foreach($questions as $qi => $question)
-    <div x-show="activeQ === {{ $qi }}" x-cloak class="space-y-5">
+    <div x-show="activeQ === {{ $qi }}" x-cloak
+      x-transition:enter="transition ease-out duration-200"
+      x-transition:enter-start="opacity-0 scale-95"
+      x-transition:enter-end="opacity-100 scale-100"
+      x-transition:leave="transition ease-in duration-150"
+      x-transition:leave-start="opacity-100 scale-100"
+      x-transition:leave-end="opacity-0 scale-95"
+      class="space-y-5">
 
       {{-- Carte question + formulaire --}}
       <div class="bg-white rounded-[20px] shadow-md px-8 py-6">

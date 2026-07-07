@@ -1,7 +1,12 @@
 <aside
   id="observateur-sidebar"
-  :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
-  class="fixed left-0 z-40 w-[12.5rem] lg:translate-x-0 transition-transform duration-300 flex flex-col bg-[#004461] text-white shadow-lg"
+  :class="{
+    'translate-x-0': sidebarOpen,
+    '-translate-x-full': !sidebarOpen,
+    'lg:translate-x-0': !sidebarCollapsed,
+    'lg:-translate-x-full': sidebarCollapsed,
+  }"
+  class="fixed left-0 z-40 w-48 transition-transform duration-300 flex flex-col bg-[#004461] text-white shadow-lg"
   style="top: var(--app-header-h, 86px); height: calc(100vh - var(--app-header-h, 86px));"
   aria-label="Navigation observateur">
 

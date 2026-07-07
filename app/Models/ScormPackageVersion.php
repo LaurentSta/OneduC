@@ -33,4 +33,24 @@ class ScormPackageVersion extends Model
     {
         return $this->hasMany(ModuleLecture::class, 'scorm_package_version_id');
     }
+
+    public function getCacheTokenAttribute(): ?string
+    {
+        if ($this->imported_at) {
+            return (string) $this->imported_at->timestamp;
+        }
+
+        return $this->updated_at ? (string) $this->updated_at->timestamp : null;
+    }
+
+    public function getAssetUrlAttribute(): ?string
+    {
+        if (! $this->index_path) {
+            return null;
+        }
+
+        $token = $this->cache_token;
+
+        return $token ? asset($this->index_path).'?v='.$token : asset($this->index_path);
+    }
 }

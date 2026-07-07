@@ -6,13 +6,21 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use App\Models\ScormPackage;
-use App\Models\ScormPackageVersion;
 use Illuminate\Support\Str;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
-class ModuleLecture extends Model
+class ModuleLecture extends Model implements HasMedia
 {
     use HasFactory;
+    use InteractsWithMedia;
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('lesson-audio')
+            ->singleFile()
+            ->acceptsMimeTypes(['audio/wav', 'audio/x-wav']);
+    }
 
     protected $fillable = [
         'module_id',
@@ -25,6 +33,8 @@ class ModuleLecture extends Model
         'scorm_package_version_id',
         'use_active_scorm_version',
         'content_type',
+        'html_content',
+        'content_blocks',
         'duration',
         'slide_count',
         'question_count',
@@ -44,6 +54,7 @@ class ModuleLecture extends Model
         'live_quiz_entry_enabled' => 'boolean',
         'use_active_scorm_version' => 'boolean',
         'slides_converted_at' => 'datetime',
+        'content_blocks' => 'array',
     ];
 
     public function section()
@@ -133,17 +144,17 @@ class ModuleLecture extends Model
         }
 
         $token = $this->scorm_cache_token;
-        if (!$token) {
+        if (! $token) {
             return $url;
         }
 
-        return $url . (str_contains($url, '?') ? '&' : '?') . 'v=' . rawurlencode($token);
+        return $url.(str_contains($url, '?') ? '&' : '?').'v='.rawurlencode($token);
     }
 
     public function objectives()
     {
         return $this->hasMany(LectureObjective::class, 'lecture_id')
-                    ->orderBy('position');
+            ->orderBy('position');
     }
 
     public function lessonResources(): HasMany

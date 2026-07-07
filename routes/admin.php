@@ -15,11 +15,13 @@ use App\Http\Controllers\Backend\SkillDomainController;
 use App\Http\Controllers\Backend\SkillController;
 use App\Http\Controllers\Backend\QuizQuestionController;
 use App\Http\Controllers\Backend\ScormLibraryController;
+use App\Http\Controllers\Backend\StagiaireController;
 use App\Http\Controllers\Backend\CompetencyController;
 use App\Http\Controllers\Backend\BadgeController;
 use App\Http\Controllers\Backend\ObservateurController;
 use App\Http\Controllers\Backend\PilotageController;
 use App\Http\Controllers\Backend\TrainerPathQualityController;
+use App\Http\Controllers\Backend\ConsommationIAController;
 use App\Http\Controllers\Backend\WordCloudController;
 
 Route::middleware(['auth', 'role:admin', 'admin.activity'])
@@ -45,6 +47,7 @@ Route::middleware(['auth', 'role:admin', 'admin.activity'])
 
         Route::get('/stagiaires', [AdminController::class, 'AllStagiaires'])->name('stagiaires.index');
         Route::delete('/stagiaires/{user}', [AdminController::class, 'DestroyStagiaire'])->name('stagiaires.destroy');
+        Route::post('/stagiaires/{user}/reset-progression', [StagiaireController::class, 'resetProgression'])->name('stagiaires.reset');
         Route::delete('/observateurs/{user}', [AdminController::class, 'DestroyObservateur'])->name('observateurs.destroy');
 
         Route::prefix('observateurs')->name('observateurs.')->group(function () {
@@ -183,6 +186,8 @@ Route::middleware(['auth', 'role:admin', 'admin.activity'])
             Route::get('/journal', [PilotageController::class, 'journal'])->name('journal');
             Route::get('/qualite-parcours-formateur', [TrainerPathQualityController::class, 'index'])
                 ->name('qualite-parcours-formateur');
+            Route::get('/consommation-ia', [ConsommationIAController::class, 'index'])
+                ->name('consommation-ia');
 
             Route::get('/notifications', [PilotageController::class, 'notifications'])->name('notifications.index');
             Route::post('/notifications/read-all', [PilotageController::class, 'markAllNotificationsRead'])->name('notifications.read-all');

@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Formateur;
 
 use App\Http\Controllers\Controller;
 use App\Models\Group;
+use App\Models\Module;
 use App\Models\PollSession;
 use App\Models\QuestionWall;
 use App\Models\ScaleSession;
+use App\Models\Seance;
 use App\Models\WordCloud;
 use Illuminate\View\View;
 
@@ -53,6 +55,15 @@ class OutilsNumeriquesController extends Controller
             ->limit(5)
             ->get();
 
-        return view('formateur.outils.index', compact('recentWordclouds', 'groups', 'recentQuestionWalls', 'recentPolls', 'recentScales'));
+        $recentModules = Module::query()
+            ->authoredByTrainer($formateurId)
+            ->withCount(['sections', 'groups'])
+            ->latest('updated_at')
+            ->limit(5)
+            ->get();
+
+        $openSeancesCount = Seance::whereIn('group_id', $groups->pluck('id'))->where('statut', 'ouverte')->count();
+
+        return view('formateur.outils.index', compact('recentWordclouds', 'groups', 'recentQuestionWalls', 'recentPolls', 'recentScales', 'recentModules', 'openSeancesCount'));
     }
 }

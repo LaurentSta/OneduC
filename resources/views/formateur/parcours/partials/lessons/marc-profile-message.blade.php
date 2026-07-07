@@ -128,6 +128,12 @@
             <div
                 x-show="feedback"
                 x-cloak
+                x-transition:enter="transition ease-out duration-200"
+                x-transition:enter-start="opacity-0 scale-95"
+                x-transition:enter-end="opacity-100 scale-100"
+                x-transition:leave="transition ease-in duration-150"
+                x-transition:leave-start="opacity-100 scale-100"
+                x-transition:leave-end="opacity-0 scale-95"
                 class="mt-6 rounded-[18px] border px-4 py-3"
                 :class="feedback && feedback.type === 'success' ? 'border-vertone/25 bg-vertone/10 text-vertone' : 'border-orangeone/25 bg-orangeone/10 text-orangeone'"
             >
@@ -150,7 +156,14 @@
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5">
                             <path d="M3 8L10.89 13.26C11.2204 13.4793 11.6056 13.5963 12 13.5963C12.3944 13.5963 12.7796 13.4793 13.11 13.26L21 8M5 19H19C19.5304 19 20.0391 18.7893 20.4142 18.4142C20.7893 18.0391 21 17.5304 21 17V7C21 6.46957 20.7893 5.96086 20.4142 5.58579C20.0391 5.21071 19.5304 5 19 5H5C4.46957 5 3.96086 5.21071 3.58579 5.58579C3.21071 5.96086 3 6.46957 3 7V17C3 17.5304 3.21071 18.0391 3.58579 18.4142C3.96086 18.7893 4.46957 19 5 19Z"/>
                         </svg>
-                        <span x-show="sent" x-cloak class="absolute -right-1 -top-1 h-3 w-3 rounded-full bg-vertone"></span>
+                        <span x-show="sent" x-cloak
+                              x-transition:enter="transition ease-out duration-200"
+                              x-transition:enter-start="opacity-0 scale-95"
+                              x-transition:enter-end="opacity-100 scale-100"
+                              x-transition:leave="transition ease-in duration-150"
+                              x-transition:leave-start="opacity-100 scale-100"
+                              x-transition:leave-end="opacity-0 scale-95"
+                              class="absolute -right-1 -top-1 h-3 w-3 rounded-full bg-vertone"></span>
                     </button>
 
                     <button type="button" @click="save()" class="btn-oneduc w-full px-8 py-3 text-lg md:w-auto">
@@ -161,7 +174,14 @@
         </main>
     </div>
 
-    <div x-show="showInstructions" x-cloak class="fixed inset-0 z-50">
+    <div x-show="showInstructions" x-cloak
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-50">
         <div class="absolute inset-0 bg-slate-900/45" @click="showInstructions = false"></div>
         <section
             x-transition:enter="transition ease-out duration-200"
@@ -202,7 +222,14 @@
         </section>
     </div>
 
-    <div x-show="drawerOpen" x-cloak class="fixed inset-0 z-50">
+    <div x-show="drawerOpen" x-cloak
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-50">
         <div class="absolute inset-0 bg-black/30" @click="drawerOpen = false"></div>
         <section
             x-transition:enter="transition-transform duration-300 ease-out"

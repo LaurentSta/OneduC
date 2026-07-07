@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Module;
+use App\Models\ScormEvaluationInteraction;
+use App\Models\ScormEvaluationResult;
+use App\Models\ScormEvaluationScore;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use App\Models\ScormEvaluationResult;
-use App\Models\ScormEvaluationScore;
-use App\Models\ScormEvaluationInteraction;
 
 class EvaluationSCORMController extends Controller
 {
@@ -18,14 +19,22 @@ class EvaluationSCORMController extends Controller
         $scormKey = $request->input('scorm_key');
         $scormValue = $request->input('scorm_value');
 
-        if (!$userId || !$evaluationId || !$scormKey) {
+        if (! $userId || ! $evaluationId || ! $scormKey) {
             Log::warning('⚠️ Contexte SCORM incomplet (évaluation)');
+
             return response()->json(['error' => 'Contenu manquant'], 400);
         }
 
         if (is_null($scormValue)) {
             Log::warning('⚠️ scorm_value est nul (évaluation)', compact('userId', 'evaluationId', 'scormKey'));
+
             return response()->json(['error' => 'scorm_value est requis'], 400);
+        }
+
+        $moduleIds = Module::where('evaluation_id', $evaluationId)->pluck('id');
+        $hasAccess = $moduleIds->contains(fn ($moduleId) => Auth::user()->aAccesAuModule($moduleId));
+        if (! $hasAccess) {
+            return response()->json(['error' => 'Accès non autorisé à cette évaluation'], 403);
         }
 
         // 🔁 1. Résultat brut
@@ -68,7 +77,7 @@ class EvaluationSCORMController extends Controller
                 ->where('evaluation_id', $evaluationId)
                 ->first();
 
-            if (!$existing) {
+            if (! $existing) {
                 ScormEvaluationScore::create([
                     'user_id' => $userId,
                     'evaluation_id' => $evaluationId,
@@ -112,7 +121,7 @@ class EvaluationSCORMController extends Controller
                     [
                         'user_id' => $userId,
                         'evaluation_id' => $evaluationId,
-                        'interaction_id' => $data['id'] ?? "interaction_$index"
+                        'interaction_id' => $data['id'] ?? "interaction_$index",
                     ],
                     [
                         'interaction_type' => $data['type'] ?? null,
@@ -130,6 +139,7 @@ class EvaluationSCORMController extends Controller
 
         return response()->json(['status' => 'ok']);
     }
+
     public function fin(Evaluation $evaluation)
     {
         $userId = auth()->id();
@@ -143,14 +153,14 @@ class EvaluationSCORMController extends Controller
             ->count();
 
         $base = $this->viewBase(); // 'formateur.formations' | 'stagiaire.formations'
+
         return view("$base.evaluations.fin_evaluation", [
-            'evaluation'         => $evaluation,
-            'lastScore'          => $score?->last_score,
-            'bestScore'          => $score?->best_score,
-            'attempts'           => $score?->attempts_count ?? 1,
+            'evaluation' => $evaluation,
+            'lastScore' => $score?->last_score,
+            'bestScore' => $score?->best_score,
+            'attempts' => $score?->attempts_count ?? 1,
             'sessionTimeSeconds' => $score?->session_time ?? 0,
-            'questionsAnswered'  => $answered,
+            'questionsAnswered' => $answered,
         ]);
     }
-
 }

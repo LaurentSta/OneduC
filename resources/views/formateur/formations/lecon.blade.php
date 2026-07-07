@@ -12,7 +12,8 @@
     $sectionId = $lecture ? (int) $lecture->section_id : null;
     $contentType = (string) ($lecture->content_type ?? 'scorm');
     $isSlidesSelected = $contentType === 'slides';
-    $isScormSelected = !$isSlidesSelected;
+    $isBlocksSelected = $contentType === 'blocks';
+    $isScormSelected = !$isSlidesSelected && !$isBlocksSelected;
     $st = $lectureId ? ($lectureStats[$lectureId] ?? []) : [];
     $currentStatus = strtolower((string) ($st['status'] ?? 'not_started'));
     $isAlreadyDone = in_array($currentStatus, ['completed', 'passed'], true);
@@ -91,7 +92,7 @@
     $whiteboardGroups = collect($whiteboardGroups ?? []);
     $currentWhiteboardGroup = $currentWhiteboardGroup ?? null;
     $wordClouds = collect($wordClouds ?? []);
-    $moduleLabel = $module->module_title ?? $module->module_name ?? ('Module #' . $module->id);
+    $moduleLabel = $module->module_title ?? $module->module_name ?? ('Formation #' . $module->id);
     $chapterIndex = collect($module->sections ?? [])
         ->values()
         ->search(fn ($item) => (int) $item->id === (int) ($section->id ?? $sectionId ?? 0));
@@ -237,7 +238,13 @@
           </div>
 
           {{-- Onglets Inspecteur (visibles seulement en mode formateur) --}}
-          <div x-show="mode === 'formateur'" x-cloak>
+          <div x-show="mode === 'formateur'" x-cloak
+               x-transition:enter="transition ease-out duration-200"
+               x-transition:enter-start="opacity-0 scale-95"
+               x-transition:enter-end="opacity-100 scale-100"
+               x-transition:leave="transition ease-in duration-150"
+               x-transition:leave-start="opacity-100 scale-100"
+               x-transition:leave-end="opacity-0 scale-95">
               <div class="flex h-14 items-stretch overflow-hidden">
                   <button @click="activeTab = 'objectifs'"
                           :class="activeTab === 'objectifs' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-300 hover:bg-white hover:text-gray-900'"
@@ -276,6 +283,12 @@
         </button>
         <div x-show="inspectorHelpOpen"
              x-cloak
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 scale-95"
+             x-transition:enter-end="opacity-100 scale-100"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100 scale-100"
+             x-transition:leave-end="opacity-0 scale-95"
              class="absolute right-0 top-full z-40 mt-2 w-72 rounded-2xl border border-slate-200 bg-white p-4 text-xs font-medium leading-relaxed text-slate-600 shadow-2xl"
              style="display: none;">
           Cette barre permet de basculer entre la vue formateur et la vue stagiaire, puis d'acceder rapidement aux quiz, ressources et outils lies a la lecon.
@@ -286,7 +299,7 @@
   {{-- FIL D'ARIANE HIÉRARCHIQUE --}}
   <div class="shrink-0 border-b border-gray-100 bg-gray-50 px-5 py-2">
       <x-formateur.hierarchy-breadcrumb
-          :module="['label' => 'Module', 'title' => $moduleLabel, 'url' => $moduleDetailUrl]"
+          :module="['label' => 'Formation', 'title' => $moduleLabel, 'url' => $moduleDetailUrl]"
           :chapter="['label' => $chapterNo ? 'Ch. '.$chapterNo : 'Chapitre', 'title' => $section->section_title ?? '', 'url' => $chapterDetailUrl]"
           :lesson="['label' => $lessonNo ? 'Leç. '.$lessonNo : 'Leçon', 'title' => $lecture->lecture_title, 'url' => null]"
       />
@@ -303,6 +316,12 @@
                   <button type="button"
                           x-show="fullscreenSupported"
                           x-cloak
+                          x-transition:enter="transition ease-out duration-200"
+                          x-transition:enter-start="opacity-0 scale-95"
+                          x-transition:enter-end="opacity-100 scale-100"
+                          x-transition:leave="transition ease-in duration-150"
+                          x-transition:leave-start="opacity-100 scale-100"
+                          x-transition:leave-end="opacity-0 scale-95"
                           @click="toggleFullscreen()"
                           class="pointer-events-auto inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/95 px-3 py-2 text-[11px] font-bold uppercase tracking-wide text-slate-700 shadow-sm backdrop-blur transition hover:bg-white"
                           :aria-pressed="fullscreenActive.toString()">
@@ -398,6 +417,12 @@
                         <p class="mt-2">Mode Slides actif, mais aucun support converti n'est disponible.</p>
                       </div>
                   </div>
+              @elseif ($lecture && $isBlocksSelected)
+                  <div class="h-full overflow-y-auto bg-white">
+                      <div class="max-w-3xl mx-auto px-6 py-10">
+                          @include('shared.lecture_blocks', ['blocks' => $lecture->content_blocks ?? [], 'lecture' => $lecture])
+                      </div>
+                  </div>
               @elseif ($lecture && $isScormSelected && $scormUrl)
                   <iframe
                     title="Contenu de la leçon"
@@ -463,7 +488,7 @@
                           </nav>
                       </div>
                       <span class="shrink-0 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-bleuone">
-                          {{ $contentType === 'slides' ? 'Slides' : 'SCORM' }}
+                          {{ $isSlidesSelected ? 'Slides' : ($isBlocksSelected ? 'Texte' : 'SCORM') }}
                       </span>
                   </div>
 
@@ -474,7 +499,14 @@
                   </div>
               </div>
 
-              <div x-show="activeTab === 'objectifs'" style="display: none;">
+              <div x-show="activeTab === 'objectifs'"
+                   x-transition:enter="transition ease-out duration-200"
+                   x-transition:enter-start="opacity-0 scale-95"
+                   x-transition:enter-end="opacity-100 scale-100"
+                   x-transition:leave="transition ease-in duration-150"
+                   x-transition:leave-start="opacity-100 scale-100"
+                   x-transition:leave-end="opacity-0 scale-95"
+                   style="display: none;">
                   <div class="mb-4">
                       <h3 class="font-raleway text-lg font-bold text-orangeone">Objectifs</h3>
                   </div>
@@ -502,7 +534,13 @@
                   @endif
               </div>
 
-              <div x-show="activeTab === 'quiz'" x-data="{ helpPanel: null, settingsOpen: false, correctionHelpOpen: false }">
+              <div x-show="activeTab === 'quiz'" x-data="{ helpPanel: null, settingsOpen: false, correctionHelpOpen: false }"
+                   x-transition:enter="transition ease-out duration-200"
+                   x-transition:enter-start="opacity-0 scale-95"
+                   x-transition:enter-end="opacity-100 scale-100"
+                   x-transition:leave="transition ease-in duration-150"
+                   x-transition:leave-start="opacity-100 scale-100"
+                   x-transition:leave-end="opacity-0 scale-95">
                   <div class="mb-4">
                       <h3 class="font-raleway text-lg font-bold text-orangeone">Quiz & Corrigés</h3>
                   </div>
@@ -529,7 +567,14 @@
                                           ?
                                       </button>
                                   </div>
-                                  <div x-show="helpPanel === 'test'" x-cloak class="mt-3 rounded-xl border border-bleuone/15 bg-bleuone/5 px-4 py-3 text-[12px] leading-relaxed text-slate-600" style="display: none;">
+                                  <div x-show="helpPanel === 'test'" x-cloak
+                                       x-transition:enter="transition ease-out duration-200"
+                                       x-transition:enter-start="opacity-0 scale-95"
+                                       x-transition:enter-end="opacity-100 scale-100"
+                                       x-transition:leave="transition ease-in duration-150"
+                                       x-transition:leave-start="opacity-100 scale-100"
+                                       x-transition:leave-end="opacity-0 scale-95"
+                                       class="mt-3 rounded-xl border border-bleuone/15 bg-bleuone/5 px-4 py-3 text-[12px] leading-relaxed text-slate-600" style="display: none;">
                                       <p>
                                           Le quiz test ouvre le quiz dans une vue de verification, avant de le proposer aux stagiaires.
                                       </p>
@@ -575,7 +620,14 @@
                           </div>
                       </div>
 
-                      <div x-show="correctionHelpOpen" x-cloak class="mt-4 rounded-xl border border-bleuone/15 bg-bleuone/5 px-4 py-3 text-[12px] leading-relaxed text-slate-600" style="display: none;">
+                      <div x-show="correctionHelpOpen" x-cloak
+                           x-transition:enter="transition ease-out duration-200"
+                           x-transition:enter-start="opacity-0 scale-95"
+                           x-transition:enter-end="opacity-100 scale-100"
+                           x-transition:leave="transition ease-in duration-150"
+                           x-transition:leave-start="opacity-100 scale-100"
+                           x-transition:leave-end="opacity-0 scale-95"
+                           class="mt-4 rounded-xl border border-bleuone/15 bg-bleuone/5 px-4 py-3 text-[12px] leading-relaxed text-slate-600" style="display: none;">
                           <p>
                               Cette section vous permet de relire toutes les questions configurees dans cette lecon sans lancer une tentative complete.
                           </p>
@@ -587,7 +639,7 @@
                           </p>
                       </div>
 
-                      <div x-show="settingsOpen" x-collapse class="mt-4 space-y-4">
+                      <div x-show="settingsOpen" x-collapse.duration.400ms class="mt-4 space-y-4">
                           <div class="rounded-xl border border-slate-200 bg-white p-4">
                               <div class="flex items-center justify-between gap-3 mb-3">
                                   <h4 class="font-bold text-bleuone text-xs uppercase">Parametres du tirage</h4>
@@ -644,7 +696,7 @@
                                           </span>
                                       </button>
 
-                                      <div x-show="open" x-collapse class="border-t border-gray-200 px-4 pb-4 pt-2">
+                                      <div x-show="open" x-collapse.duration.400ms class="border-t border-gray-200 px-4 pb-4 pt-2">
                                           <ul class="space-y-2 pl-1">
                                               @foreach($q->answers as $ans)
                                                   <li class="text-xs flex items-start gap-2 p-2 rounded-lg {{ $ans->is_correct ? 'bg-green-50 border border-green-100 text-green-800' : 'text-gray-500' }}">
@@ -673,29 +725,23 @@
                       @else
                       <div class="mt-6 text-center py-10 bg-gray-50 rounded-xl border border-dashed border-gray-300">
                           <p class="text-gray-500 text-sm font-medium">Aucun quiz configuré pour cette leçon.</p>
-                          <p class="text-xs text-gray-400 mt-1">Activez l'option "Quiz" dans l'édition du module.</p>
+                          <p class="text-xs text-gray-400 mt-1">Activez l'option "Quiz" dans l'édition de la formation.</p>
                       </div>
                   @endif
                   </div>
               </div>
 
-              <div x-show="activeTab === 'ressources'" style="display: none;">
+              <div x-show="activeTab === 'ressources'"
+                   x-transition:enter="transition ease-out duration-200"
+                   x-transition:enter-start="opacity-0 scale-95"
+                   x-transition:enter-end="opacity-100 scale-100"
+                   x-transition:leave="transition ease-in duration-150"
+                   x-transition:leave-start="opacity-100 scale-100"
+                   x-transition:leave-end="opacity-0 scale-95"
+                   style="display: none;">
                   <div class="mb-4 flex items-center gap-2">
                       <h3 class="font-raleway text-lg font-bold text-orangeone">Ressources</h3>
-                      <div x-data="{ open: false }" class="relative">
-                          <button type="button"
-                                  @mouseenter="open = true"
-                                  @mouseleave="open = false"
-                                  @focus="open = true"
-                                  @blur="open = false"
-                                  class="inline-flex h-6 w-6 items-center justify-center rounded-full border border-slate-300 bg-white text-[11px] font-black text-bleuone transition hover:border-bleuone"
-                                  aria-label="Aide sur les ressources">
-                              ?
-                          </button>
-                          <div x-show="open" x-cloak class="absolute left-1/2 top-full z-20 mt-2 w-56 -translate-x-1/2 rounded-xl border border-slate-200 bg-slate-900 px-3 py-2 text-[11px] font-medium leading-relaxed text-white shadow-xl" style="display: none;">
-                              Documents partages sur l'ensemble du module.
-                          </div>
-                      </div>
+                      <x-help-tooltip message="Documents partages sur l'ensemble de la formation." aria-label="Aide sur les ressources" />
                   </div>
 
                   <div class="space-y-5">
@@ -770,7 +816,7 @@
                                               ?
                                           </button>
                                           <div x-show="open" x-cloak class="absolute left-0 top-full z-20 mt-2 w-56 rounded-xl border border-slate-200 bg-slate-900 px-3 py-2 text-[11px] leading-relaxed text-white shadow-xl" style="display: none;">
-                                              Le stagiaire peut consulter cette ressource depuis son espace ressources du module.
+                                              Le stagiaire peut consulter cette ressource depuis son espace ressources de la formation.
                                           </div>
                                       </div>
                                   </div>
@@ -856,32 +902,32 @@
                                                   </button>
                                               </form>
 
-                                              <form action="{{ route('formateur.formations.lesson.resources.destroy', ['module' => $module->id, 'section' => $section->id, 'lecture' => $lecture->id, 'resource' => $resource->id]) }}"
-                                                    method="POST"
-                                                    onsubmit="return confirm('Supprimer cette ressource ?');"
-                                                    class="inline-flex">
-                                                  @csrf
-                                                  @method('DELETE')
-                                                  <button type="submit"
-                                                          title="Supprimer"
-                                                          aria-label="Supprimer la ressource"
-                                                          class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-red-200 bg-red-50 text-red-700 transition hover:bg-red-100">
-                                                      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                                          <path d="M3 6h18"></path>
-                                                          <path d="M8 6V4h8v2"></path>
-                                                          <path d="M19 6l-1 14H6L5 6"></path>
-                                                          <path d="M10 11v6"></path>
-                                                          <path d="M14 11v6"></path>
-                                                      </svg>
-                                                      <span class="sr-only">Supprimer</span>
-                                                  </button>
-                                              </form>
+                                              <button type="button" x-data x-on:click="$dispatch('open-modal', 'delete-resource-{{ $resource->id }}')"
+                                                      title="Supprimer"
+                                                      aria-label="Supprimer la ressource"
+                                                      class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-red-200 bg-red-50 text-red-700 transition hover:bg-red-100">
+                                                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                                      <path d="M3 6h18"></path>
+                                                      <path d="M8 6V4h8v2"></path>
+                                                      <path d="M19 6l-1 14H6L5 6"></path>
+                                                      <path d="M10 11v6"></path>
+                                                      <path d="M14 11v6"></path>
+                                                  </svg>
+                                                  <span class="sr-only">Supprimer</span>
+                                              </button>
+                                              <x-confirm-modal
+                                                  name="delete-resource-{{ $resource->id }}"
+                                                  title="Supprimer cette ressource ?"
+                                                  :action="route('formateur.formations.lesson.resources.destroy', ['module' => $module->id, 'section' => $section->id, 'lecture' => $lecture->id, 'resource' => $resource->id])"
+                                                  method="DELETE"
+                                                  confirm-label="Supprimer"
+                                              />
                                           </div>
                                       </div>
                                   </div>
                               @empty
                                   <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-center">
-                                      <p class="text-sm font-medium text-slate-500">Aucune ressource sur ce module.</p>
+                                      <p class="text-sm font-medium text-slate-500">Aucune ressource sur cette formation.</p>
                                   </div>
                               @endforelse
                           </div>
@@ -889,7 +935,14 @@
                   </div>
               </div>
 
-              <div x-show="activeTab === 'outils'" style="display: none;">
+              <div x-show="activeTab === 'outils'"
+                   x-transition:enter="transition ease-out duration-200"
+                   x-transition:enter-start="opacity-0 scale-95"
+                   x-transition:enter-end="opacity-100 scale-100"
+                   x-transition:leave="transition ease-in duration-150"
+                   x-transition:leave-start="opacity-100 scale-100"
+                   x-transition:leave-end="opacity-0 scale-95"
+                   style="display: none;">
                   <div class="mb-4">
                       <h3 class="font-raleway text-lg font-bold text-orangeone">Outils numeriques</h3>
                   </div>
@@ -901,17 +954,17 @@
                                       @click="selectedTool = 'module_setup'"
                                       :class="selectedTool === 'module_setup' ? 'bg-orange-50 text-orangeone border-orange-200' : 'bg-white text-slate-700 border-transparent hover:bg-slate-50'"
                                       class="flex flex-1 items-center rounded-2xl border px-3 py-3 text-left text-sm font-semibold transition">
-                                  Personnaliser le module
+                                  Personnaliser la formation
                               </button>
                               <button type="button"
                                       @click.stop="open = !open"
                                       :aria-expanded="open.toString()"
                                       class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-300 bg-white text-[11px] font-black text-bleuone transition hover:border-bleuone hover:bg-slate-50"
-                                      aria-label="Aide sur personnaliser le module">
+                                      aria-label="Aide sur personnaliser la formation">
                                   ?
                               </button>
                               <div x-show="open" x-cloak class="absolute left-0 top-full z-20 mt-2 w-64 rounded-xl border border-slate-200 bg-slate-900 px-3 py-2 text-[11px] leading-relaxed text-white shadow-xl" style="display: none;">
-                                  Permet d'ajuster le module pour un groupe precis, avec ses reglages et sa personnalisation pedagogique.
+                                  Permet d'ajuster la formation pour un groupe precis, avec ses reglages et sa personnalisation pedagogique.
                               </div>
                           </div>
 
@@ -951,12 +1004,12 @@
                                   </div>
 
                                   <div>
-                                      <label for="tool-module" class="mb-1 block text-xs font-semibold text-slate-600">Module</label>
+                                      <label for="tool-module" class="mb-1 block text-xs font-semibold text-slate-600">Formation</label>
                                       <select id="tool-module"
                                               x-model="selectedToolModuleId"
                                               class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm focus:border-orangeone focus:ring-orangeone"
                                               :disabled="selectedToolModules().length === 0">
-                                          <option value="">Choisir un module</option>
+                                          <option value="">Choisir une formation</option>
                                           <template x-for="moduleItem in selectedToolModules()" :key="moduleItem.id">
                                               <option :value="String(moduleItem.id)" x-text="moduleItem.title"></option>
                                           </template>
@@ -965,7 +1018,14 @@
                               </div>
                           </div>
 
-                          <section x-show="selectedTool === 'whiteboard'" x-cloak class="rounded-[22px] border border-slate-200 bg-white p-5 shadow-sm" style="display: none;">
+                          <section x-show="selectedTool === 'whiteboard'" x-cloak
+                                   x-transition:enter="transition ease-out duration-200"
+                                   x-transition:enter-start="opacity-0 scale-95"
+                                   x-transition:enter-end="opacity-100 scale-100"
+                                   x-transition:leave="transition ease-in duration-150"
+                                   x-transition:leave-start="opacity-100 scale-100"
+                                   x-transition:leave-end="opacity-0 scale-95"
+                                   class="rounded-[22px] border border-slate-200 bg-white p-5 shadow-sm" style="display: none;">
                               <div class="flex items-start justify-between gap-3">
                                   <div>
                                       <h4 class="text-lg font-bold text-bleuone">Tableau blanc</h4>
@@ -984,11 +1044,18 @@
                               </div>
                           </section>
 
-                          <section x-show="selectedTool === 'module_setup'" x-cloak class="rounded-[22px] border border-slate-200 bg-white p-5 shadow-sm" style="display: none;">
+                          <section x-show="selectedTool === 'module_setup'" x-cloak
+                                   x-transition:enter="transition ease-out duration-200"
+                                   x-transition:enter-start="opacity-0 scale-95"
+                                   x-transition:enter-end="opacity-100 scale-100"
+                                   x-transition:leave="transition ease-in duration-150"
+                                   x-transition:leave-start="opacity-100 scale-100"
+                                   x-transition:leave-end="opacity-0 scale-95"
+                                   class="rounded-[22px] border border-slate-200 bg-white p-5 shadow-sm" style="display: none;">
                               <div class="flex items-start justify-between gap-3">
                                   <div>
-                                      <h4 class="text-lg font-bold text-bleuone">Personnaliser le module</h4>
-                                      <p class="mt-1 text-xs text-slate-500">Accédez au paramétrage pédagogique du module sélectionné pour ce groupe.</p>
+                                      <h4 class="text-lg font-bold text-bleuone">Personnaliser la formation</h4>
+                                      <p class="mt-1 text-xs text-slate-500">Accédez au paramétrage pédagogique de la formation sélectionnée pour ce groupe.</p>
                                   </div>
                               </div>
 
@@ -998,7 +1065,7 @@
                                      rel="noopener"
                                      class="inline-flex items-center justify-center rounded-xl bg-orangeone px-4 py-2.5 text-xs font-bold uppercase text-white transition hover:bg-orange-600"
                                      :class="selectedToolManageUrl() === '#' ? 'pointer-events-none opacity-50' : ''">
-                                      Ouvrir la personnalisation du module
+                                      Ouvrir la personnalisation de la formation
                                   </a>
                               </div>
                           </section>

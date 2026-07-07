@@ -5,44 +5,38 @@
 <div class="max-w-[1285px] mx-auto px-8">
 
   {{-- EN-TÊTE --}}
-  <header class="bg-white rounded-[20px] shadow-md px-8 pt-4 pb-6 w-full mb-6">
-    <div class="grid grid-cols-12 gap-6 items-center">
+  <div class="rounded-[20px] border border-gray-100 bg-white shadow-md mb-6">
+    <div class="grid gap-6 px-6 py-6 md:px-8 md:py-7 lg:grid-cols-12 lg:items-center">
 
-      <div class="col-span-12 md:col-span-8">
-        <x-typography variant="titre">Progression par groupe</x-typography>
-        <x-typography variant="sous-titre" class="font-varela text-sous-titre text-orangeone">
+      <div class="lg:col-span-8">
+        <x-oneduc.breadcrumb :items="[['label' => 'Accueil', 'url' => route('formateur.dashboard')], ['label' => 'Progression par groupe']]" />
+
+        <h1 class="font-raleway text-2xl font-medium leading-tight text-bleuone md:text-3xl">
+          Progression par groupe
+        </h1>
+        <p class="mt-0.5 font-varela text-base text-orangeone md:text-lg">
           Suivez l’avancement des groupes et repérez ceux qui ont besoin d’accompagnement.
-        </x-typography>
-        <x-typography>
-          Cette vue synthétise l’activité par groupe : stagiaires, modules, leçons terminées, temps total passé et taux de réussite.
-        </x-typography>
+        </p>
+        <p class="mt-3 max-w-2xl font-lisible text-sm leading-relaxed text-slate-700">
+          Cette vue synthétise l’activité par groupe : stagiaires, formations, leçons terminées, temps total passé et taux de réussite.
+        </p>
 
-        <nav class="text-sm font-varela text-gray-600 mt-2" aria-label="Fil d'Ariane">
-          <ol class="inline-flex items-center space-x-1">
-            <li class="flex items-center">
-              <a href="{{ route('formateur.dashboard') }}" class="text-orangeone hover:underline flex items-center">
-                <span class="sr-only">Accueil</span>
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1"
-                     fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M3 9.75L12 3l9 6.75V19a2 2 0 01-2 2h-4a1 1 0 01-1-1v-5H10v5a1 1 0 01-1 1H5a2 2 0 01-2-2V9.75z"/>
-                </svg>
-              </a>
-              <span class="mx-2 text-gray-400" aria-hidden="true">/</span>
-            </li>
-            <li class="text-gray-400">Progression par groupe</li>
-          </ol>
-        </nav>
+        {{-- 📊 Statistiques --}}
+        <div class="mt-4 flex flex-wrap gap-2 text-xs font-varela">
+          <span class="inline-flex items-center gap-1.5 rounded-full border border-bleuone/15 bg-bleuone/5 px-3 py-1 text-bleuone">
+            {{ $totalGroupes }} groupes
+          </span>
+        </div>
       </div>
 
-      <div class="col-span-12 md:col-span-4 flex justify-center md:justify-end">
+      <div class="lg:col-span-4 flex justify-center lg:justify-end">
         <img src="{{ asset('images/svg/Progressions.svg') }}"
              alt="Illustration progression par groupe"
-             class="max-w-[260px] h-auto">
+             class="max-w-[220px] h-auto">
       </div>
 
     </div>
-  </header>
+  </div>
 
   <main class="space-y-8">
 
@@ -79,7 +73,7 @@
         <a href="{{ route('formateur.progressions.modules') }}"
            class="btn-oneduc h-10 !text-sm">
           <x-icons.module-iconify class="h-4 w-4" />
-          Suivi par module
+          Suivi par formation
         </a>
       </div>
 
@@ -92,14 +86,14 @@
     </form>
 
     {{-- Tableau --}}
-    <div class="overflow-x-auto bg-white shadow-md rounded-[20px] border-2 border-bleuone/20">
+    <div class="overflow-x-auto overflow-y-visible bg-white rounded-md border-2 border-bleuone/20">
       <table class="min-w-full bg-white text-sm text-left text-gray-800 font-lisible">
         <thead class="bg-bleuone uppercase text-xs text-white font-varela sticky top-0 z-10">
           <tr>
             <th class="px-6 py-3">#</th>
             <th class="px-6 py-3">Groupe</th>
             <th class="px-6 py-3 text-center">Stagiaires</th>
-            <th class="px-6 py-3 text-center">Modules</th>
+            <th class="px-6 py-3 text-center">Formations</th>
             <th class="px-6 py-3 text-center">Leçons terminées</th>
             <th class="px-6 py-3 text-center">Temps total site</th>
             <th class="px-6 py-3 text-center">Taux de réussite</th>
@@ -150,11 +144,16 @@
               </td>
 
               <td class="px-6 py-4">
-                <a href="{{ route('formateur.progressions.stagiaires', ['group_id' => $g->id]) }}"
-                   class="btn-oneduc !px-3 !py-1 !text-sm">
-                  <x-icons.eye-iconify class="h-4 w-4" />
-                  Voir les stagiaires
-                </a>
+                <div class="relative inline-flex group">
+                  <a href="{{ route('formateur.progressions.stagiaires', ['group_id' => $g->id]) }}"
+                     class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-orangeone/20 bg-orangeone/10 text-orangeone transition hover:border-orangeone hover:bg-orangeone hover:text-white"
+                     aria-label="Voir les stagiaires du groupe {{ $g->name }}">
+                    <x-icons.eye-iconify class="h-4 w-4" />
+                  </a>
+                  <span class="pointer-events-none absolute -top-9 left-1/2 z-20 hidden -translate-x-1/2 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 shadow-lg group-hover:block">
+                    Voir les stagiaires
+                  </span>
+                </div>
               </td>
             </tr>
           @empty

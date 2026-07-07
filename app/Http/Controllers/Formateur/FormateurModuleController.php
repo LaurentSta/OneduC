@@ -62,7 +62,13 @@ class FormateurModuleController extends Controller
             ->orderByDesc('created_at')
             ->get();
 
-        return view('formateur.formations.index', compact('modules', 'search', 'mesParcours'));
+        $mesCreations = Module::query()
+            ->authoredByTrainer($formateurId)
+            ->withCount(['sections', 'groups'])
+            ->orderByDesc('updated_at')
+            ->get();
+
+        return view('formateur.formations.index', compact('modules', 'search', 'mesParcours', 'mesCreations'));
     }
 
     public function moduleDetail(Request $request, Module $module)
@@ -172,7 +178,7 @@ class FormateurModuleController extends Controller
         $firstLecture = $firstSection?->lectures->first();
 
         if (!$firstSection || !$firstLecture) {
-            return back()->with('error', 'Aucune leçon disponible à tester.');
+            return back()->with('error', 'Ajoutez au moins un chapitre et une leçon avant de pouvoir accéder à l\'aperçu.');
         }
 
         return redirect()->route('formateur.formations.lecture', [

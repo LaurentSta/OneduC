@@ -2,11 +2,11 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -29,6 +29,7 @@ class User extends Authenticatable
         static::deleting(function (User $user): void {
             if ($user->role === 'stagiaire') {
                 $user->cleanupRelatedStagiaireData();
+
                 return;
             }
 
@@ -65,6 +66,7 @@ class User extends Authenticatable
         'password',
         'remember_token',
     ];
+
     // ✅ Casts de champs
     protected function casts(): array
     {
@@ -77,6 +79,7 @@ class User extends Authenticatable
             'password_changed_at' => 'datetime', // <--- AJOUTER CETTE LIGNE
         ];
     }
+
     protected function email(): Attribute
     {
         return Attribute::make(
@@ -118,16 +121,25 @@ class User extends Authenticatable
     public function groupesStagiaire()
     {
         return $this->belongsToMany(Group::class, 'group_user', 'user_id', 'group_id')
-                    ->withPivot('role_in_group')
-                    ->wherePivot('role_in_group', 'stagiaire');
+            ->withPivot('role_in_group')
+            ->wherePivot('role_in_group', 'stagiaire');
+    }
+
+    // ✅ Vrai si ce stagiaire appartient à un groupe actif auquel ce module est affecté
+    public function aAccesAuModule(int $moduleId): bool
+    {
+        return $this->groupesStagiaire()
+            ->active()
+            ->whereHas('modules', fn ($q) => $q->where('modules.id', $moduleId))
+            ->exists();
     }
 
     // ✅ Groupes où l'utilisateur est formateur (via table pivot OU colonne instructor_id sur groups)
     public function groupesFormateur()
     {
         return $this->belongsToMany(Group::class, 'group_user', 'user_id', 'group_id')
-                    ->withPivot('role_in_group')
-                    ->wherePivot('role_in_group', 'formateur');
+            ->withPivot('role_in_group')
+            ->wherePivot('role_in_group', 'formateur');
     }
 
     public function groupesObserve()
@@ -190,11 +202,13 @@ class User extends Authenticatable
         return $this->hasValidAssociationMembership()
             || $this->hasActiveAssociationGracePeriod();
     }
+
     // ✅ Helper pour savoir si l'utilisateur doit changer son mot de passe
     public function getMustChangePasswordAttribute(): bool
     {
         return is_null($this->password_changed_at);
     }
+
     // Ce stagiaire appartient à un formateur
     public function formateur()
     {
@@ -206,6 +220,7 @@ class User extends Authenticatable
     {
         return $this->hasMany(User::class, 'formateur_id');
     }
+
     public function progressions()
     {
         return $this->hasMany(\App\Models\Progression::class);
@@ -310,7 +325,6 @@ class User extends Authenticatable
             'pilot_subscriptions',
             'pilot_notification_preferences',
             'word_cloud_entries',
-            'learning_objectives',
             'sessions',
             'activity_journal_entries',
         ];
@@ -339,5 +353,4 @@ class User extends Authenticatable
                 ->delete();
         }
     }
-
 }

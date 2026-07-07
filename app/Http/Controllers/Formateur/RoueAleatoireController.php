@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Group;
 use App\Models\RandomWheelSession;
 use App\Models\User;
+use App\Services\CodeGeneratorService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -52,7 +53,7 @@ class RoueAleatoireController extends Controller
         $session = RandomWheelSession::create([
             'formateur_id' => $formateurId,
             'group_id' => $group->id,
-            'access_code' => $this->generateCode(),
+            'access_code' => CodeGeneratorService::generateUniqueCode(RandomWheelSession::class),
             'entries' => $entries,
             'active_entry_ids' => collect($entries)->pluck('id')->all(),
             'picks' => [],
@@ -203,19 +204,6 @@ class RoueAleatoireController extends Controller
             'is_exhausted' => $session->isExhausted(),
             'state_key' => $session->stateKey(),
         ];
-    }
-
-    private function generateCode(): string
-    {
-        $alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-        do {
-            $code = '';
-            for ($i = 0; $i < 6; $i++) {
-                $code .= $alphabet[random_int(0, strlen($alphabet) - 1)];
-            }
-        } while (RandomWheelSession::where('access_code', $code)->exists());
-
-        return $code;
     }
 
     public static function syncEntriesFromGroup(RandomWheelSession $session): void
