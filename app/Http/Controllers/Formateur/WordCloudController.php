@@ -5,11 +5,11 @@ namespace App\Http\Controllers\Formateur;
 use App\Http\Controllers\Controller;
 use App\Models\Group;
 use App\Models\WordCloud;
+use App\Services\CodeGeneratorService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class WordCloudController extends Controller
@@ -37,9 +37,9 @@ class WordCloudController extends Controller
         $formateurId = (int) auth()->id();
 
         $data = $request->validate([
-            'group_id'    => ['required', 'exists:groups,id'],
-            'title'       => ['required', 'string', 'max:255'],
-            'questions'   => ['required', 'array', 'min:1', 'max:10'],
+            'group_id' => ['required', 'exists:groups,id'],
+            'title' => ['required', 'string', 'max:255'],
+            'questions' => ['required', 'array', 'min:1', 'max:10'],
             'questions.*' => ['required', 'string', 'max:500'],
         ]);
 
@@ -49,15 +49,15 @@ class WordCloudController extends Controller
             ->firstOrFail();
 
         $wordCloud = WordCloud::query()->create([
-            'group_id'    => $group->id,
-            'module_id'   => null,
-            'title'       => (string) $data['title'],
-            'questions'   => $data['questions'],
-            'question'    => $data['questions'][0], // rétro-compatibilité
-            'access_code' => $this->generateCode(),
-            'is_active'   => true,
-            'opened_at'   => now(),
-            'closed_at'   => null,
+            'group_id' => $group->id,
+            'module_id' => null,
+            'title' => (string) $data['title'],
+            'questions' => $data['questions'],
+            'question' => $data['questions'][0], // rétro-compatibilité
+            'access_code' => CodeGeneratorService::generateUniqueCode(WordCloud::class),
+            'is_active' => true,
+            'opened_at' => now(),
+            'closed_at' => null,
         ]);
 
         return redirect()
@@ -72,7 +72,7 @@ class WordCloudController extends Controller
 
         return view('formateur.wordcloud.live', [
             'wordCloud' => $wordCloud,
-            'joinUrl'   => route('wordcloud.join.code', ['code' => $wordCloud->access_code]),
+            'joinUrl' => route('wordcloud.join.code', ['code' => $wordCloud->access_code]),
         ]);
     }
 
@@ -97,11 +97,11 @@ class WordCloudController extends Controller
             ->count('user_id');
 
         return response()->json([
-            'active'        => $wordCloud->is_active,
+            'active' => $wordCloud->is_active,
             'total_entries' => $words->sum('score'),
-            'respondents'   => $respondents,
-            'words'         => $words,
-            'updated_at'    => now()->toIso8601String(),
+            'respondents' => $respondents,
+            'words' => $words,
+            'updated_at' => now()->toIso8601String(),
         ]);
     }
 
@@ -111,14 +111,5 @@ class WordCloudController extends Controller
             (int) ($wordCloud->group?->instructor_id ?? 0) === (int) auth()->id(),
             403
         );
-    }
-
-    private function generateCode(): string
-    {
-        do {
-            $code = strtoupper(Str::random(6));
-        } while (WordCloud::query()->where('access_code', $code)->exists());
-
-        return $code;
     }
 }

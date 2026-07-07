@@ -1,8 +1,10 @@
 <?php
+
 // /home/laurents/Oneduc_Dev/app/Http/Controllers/Backend/ModuleController.php
 
 namespace App\Http\Controllers\Backend;
 
+use App\Http\Controllers\Concerns\InteractsWithLectureProgressStats;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Evaluation;
@@ -13,22 +15,22 @@ use App\Models\ModuleSection;
 use App\Models\QuizAttempt;
 use App\Models\QuizAttemptQuestion;
 use App\Models\ScormInteraction;
-use App\Models\ScormResult;
 use App\Models\ScormScore;
 use App\Models\SubCategory;
 use App\Models\User;
 use App\Models\VideoSegmentTracking;
 use App\Models\WordCloud;
-use Illuminate\Http\UploadedFile;
+use App\Services\ModuleCompletionNotifier;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use App\Services\ModuleCompletionNotifier;
-
 
 class ModuleController extends Controller
 {
+    use InteractsWithLectureProgressStats;
+
     private function viewBase(): string
     {
         $name = optional(request()->route())->getName();
@@ -68,10 +70,10 @@ class ModuleController extends Controller
 
     public function AddModule()
     {
-        $categories    = Category::orderBy('category_name', 'asc')->get();
+        $categories = Category::orderBy('category_name', 'asc')->get();
         $subcategories = SubCategory::orderBy('subcategory_name', 'asc')->get();
-        $formateurs    = User::where('role', 'formateur')->orderBy('name')->get();
-        $evaluations   = Evaluation::orderBy('titre')->get();
+        $formateurs = User::where('role', 'formateur')->orderBy('name')->get();
+        $evaluations = Evaluation::orderBy('titre')->get();
 
         return view('admin.backend.modules.add_module', compact('categories', 'subcategories', 'formateurs', 'evaluations'));
     }
@@ -79,22 +81,22 @@ class ModuleController extends Controller
     public function StoreModule(Request $request)
     {
         $request->validate([
-            'module_name'     => 'required|string|max:255',
-            'module_title'    => 'required|string|max:255',
-            'formateur_id'    => 'required|exists:users,id',
-            'category_id'     => 'required|exists:categories,id',
-            'subcategory_id'  => 'nullable|exists:subcategories,id',
-            'certificat'      => 'required|in:1,0',
-            'label'           => 'nullable|string|max:255',
-            'duree'           => 'nullable|string|max:100',
+            'module_name' => 'required|string|max:255',
+            'module_title' => 'required|string|max:255',
+            'formateur_id' => 'required|exists:users,id',
+            'category_id' => 'required|exists:categories,id',
+            'subcategory_id' => 'nullable|exists:subcategories,id',
+            'certificat' => 'required|in:1,0',
+            'label' => 'nullable|string|max:255',
+            'duree' => 'nullable|string|max:100',
             'estimated_question_seconds' => 'nullable|integer|min:1|max:600',
-            'resources'       => 'nullable|string|max:255',
-            'prerequi'        => 'nullable|string',
-            'module_image'    => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-            'header_image'    => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-            'module_video'    => 'nullable|string|max:255',
+            'resources' => 'nullable|string|max:255',
+            'prerequi' => 'nullable|string',
+            'module_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'header_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'module_video' => 'nullable|string|max:255',
             'module_video_file' => 'nullable|file|mimes:mp4,m4v,mov,avi,webm|max:307200',
-            'evaluation_id'   => 'nullable|exists:evaluations,id',
+            'evaluation_id' => 'nullable|exists:evaluations,id',
         ]);
 
         $moduleVideo = trim((string) $request->input('module_video', ''));
@@ -103,41 +105,41 @@ class ModuleController extends Controller
         $imagePath = null;
         if ($request->hasFile('module_image')) {
             $image = $request->file('module_image');
-            $imageName = time() . '_' . Str::slug($request->module_name) . '.' . $image->getClientOriginalExtension();
+            $imageName = time().'_'.Str::slug($request->module_name).'.'.$image->getClientOriginalExtension();
             $image->storeAs('uploads/modules/images', $imageName, 'public');
-            $imagePath = 'uploads/modules/images/' . $imageName;
+            $imagePath = 'uploads/modules/images/'.$imageName;
         }
 
         $headerImagePath = null;
         if ($request->hasFile('header_image')) {
             $headerImage = $request->file('header_image');
-            $headerImageName = time() . '_header_' . Str::slug($request->module_name) . '.' . $headerImage->getClientOriginalExtension();
+            $headerImageName = time().'_header_'.Str::slug($request->module_name).'.'.$headerImage->getClientOriginalExtension();
             $headerImage->storeAs('uploads/modules/headers', $headerImageName, 'public');
-            $headerImagePath = 'uploads/modules/headers/' . $headerImageName;
+            $headerImagePath = 'uploads/modules/headers/'.$headerImageName;
         }
 
         $module = Module::create([
-            'category_id'       => $request->category_id,
-            'subcategory_id'    => $request->subcategory_id,
-            'formateur_id'      => $request->formateur_id,
-            'module_name'       => $request->module_name,
-            'module_name_slug'  => Str::slug($request->module_name),
-            'module_title'      => $request->module_title,
-            'description'       => $request->description,
-            'module_image'      => $imagePath,
-            'header_image'      => $headerImagePath,
-            'module_video'      => $moduleVideo,
-            'label'             => $request->label,
-            'duree'             => $request->duree,
+            'category_id' => $request->category_id,
+            'subcategory_id' => $request->subcategory_id,
+            'formateur_id' => $request->formateur_id,
+            'module_name' => $request->module_name,
+            'module_name_slug' => Str::slug($request->module_name),
+            'module_title' => $request->module_title,
+            'description' => $request->description,
+            'module_image' => $imagePath,
+            'header_image' => $headerImagePath,
+            'module_video' => $moduleVideo,
+            'label' => $request->label,
+            'duree' => $request->duree,
             'estimated_question_seconds' => (int) ($request->input('estimated_question_seconds', 30) ?: 30),
-            'resources'         => $request->resources,
-            'certificat'        => $request->certificat,
-            'prerequi'          => $request->prerequi,
-            'bestseller'        => $request->has('bestseller') ? 1 : 0,
-            'vedette'           => $request->has('vedette') ? 1 : 0,
-            'surevalue'         => $request->has('surevalue') ? 1 : 0,
-            'status'            => $request->has('status') ? 1 : 0,
-            'evaluation_id'     => $request->evaluation_id,
+            'resources' => $request->resources,
+            'certificat' => $request->certificat,
+            'prerequi' => $request->prerequi,
+            'bestseller' => $request->has('bestseller') ? 1 : 0,
+            'vedette' => $request->has('vedette') ? 1 : 0,
+            'surevalue' => $request->has('surevalue') ? 1 : 0,
+            'status' => $request->has('status') ? 1 : 0,
+            'evaluation_id' => $request->evaluation_id,
         ]);
 
         if ($request->hasFile('module_video_file')) {
@@ -151,11 +153,11 @@ class ModuleController extends Controller
 
     public function EditModule($id)
     {
-        $module        = Module::findOrFail($id);
-        $categories    = Category::orderBy('category_name', 'asc')->get();
+        $module = Module::findOrFail($id);
+        $categories = Category::orderBy('category_name', 'asc')->get();
         $subcategories = SubCategory::orderBy('subcategory_name', 'asc')->get();
-        $formateurs    = User::where('role', 'formateur')->orderBy('name')->get();
-        $evaluations   = Evaluation::orderBy('titre')->get();
+        $formateurs = User::where('role', 'formateur')->orderBy('name')->get();
+        $evaluations = Evaluation::orderBy('titre')->get();
 
         return view('admin.backend.modules.edit_module', compact('module', 'categories', 'subcategories', 'formateurs', 'evaluations'));
     }
@@ -165,17 +167,17 @@ class ModuleController extends Controller
         $module = Module::findOrFail($id);
 
         $request->validate([
-            'module_name'     => 'required|string|max:255',
-            'module_title'    => 'required|string|max:255',
-            'category_id'     => 'required|integer|exists:categories,id',
-            'subcategory_id'  => 'nullable|integer|exists:subcategories,id',
-            'certificat'      => 'required|in:1,0',
-            'module_video'    => 'nullable|string|max:255',
+            'module_name' => 'required|string|max:255',
+            'module_title' => 'required|string|max:255',
+            'category_id' => 'required|integer|exists:categories,id',
+            'subcategory_id' => 'nullable|integer|exists:subcategories,id',
+            'certificat' => 'required|in:1,0',
+            'module_video' => 'nullable|string|max:255',
             'module_video_file' => 'nullable|file|mimes:mp4,m4v,mov,avi,webm|max:307200',
-            'evaluation_id'   => 'nullable|exists:evaluations,id',
-            'formateur_id'    => 'required|exists:users,id',
-            'module_image'    => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-            'header_image'    => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'evaluation_id' => 'nullable|exists:evaluations,id',
+            'formateur_id' => 'required|exists:users,id',
+            'module_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'header_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
             'estimated_question_seconds' => 'nullable|integer|min:1|max:600',
         ]);
 
@@ -192,9 +194,9 @@ class ModuleController extends Controller
                 Storage::disk('public')->delete($module->module_image);
             }
             $image = $request->file('module_image');
-            $imageName = time() . '_' . Str::slug($request->module_name) . '.' . $image->getClientOriginalExtension();
+            $imageName = time().'_'.Str::slug($request->module_name).'.'.$image->getClientOriginalExtension();
             $image->storeAs('uploads/modules/images', $imageName, 'public');
-            $imagePath = 'uploads/modules/images/' . $imageName;
+            $imagePath = 'uploads/modules/images/'.$imageName;
         }
 
         $headerImagePath = $module->header_image;
@@ -203,9 +205,9 @@ class ModuleController extends Controller
                 Storage::disk('public')->delete($module->header_image);
             }
             $headerImage = $request->file('header_image');
-            $headerImageName = time() . '_header_' . Str::slug($request->module_name) . '.' . $headerImage->getClientOriginalExtension();
+            $headerImageName = time().'_header_'.Str::slug($request->module_name).'.'.$headerImage->getClientOriginalExtension();
             $headerImage->storeAs('uploads/modules/headers', $headerImageName, 'public');
-            $headerImagePath = 'uploads/modules/headers/' . $headerImageName;
+            $headerImagePath = 'uploads/modules/headers/'.$headerImageName;
         }
 
         if ($request->hasFile('module_video_file')) {
@@ -215,27 +217,27 @@ class ModuleController extends Controller
         }
 
         $module->update([
-            'category_id'       => $request->category_id,
-            'subcategory_id'    => $request->subcategory_id,
-            'formateur_id'      => $request->formateur_id,
-            'module_name'       => $request->module_name,
-            'module_name_slug'  => Str::slug($request->module_name),
-            'module_title'      => $request->module_title,
-            'description'       => $request->description,
-            'module_image'      => $imagePath,
-            'header_image'      => $headerImagePath,
-            'module_video'      => $moduleVideo,
-            'label'             => $request->label,
-            'duree'             => $request->duree,
+            'category_id' => $request->category_id,
+            'subcategory_id' => $request->subcategory_id,
+            'formateur_id' => $request->formateur_id,
+            'module_name' => $request->module_name,
+            'module_name_slug' => Str::slug($request->module_name),
+            'module_title' => $request->module_title,
+            'description' => $request->description,
+            'module_image' => $imagePath,
+            'header_image' => $headerImagePath,
+            'module_video' => $moduleVideo,
+            'label' => $request->label,
+            'duree' => $request->duree,
             'estimated_question_seconds' => (int) ($request->input('estimated_question_seconds', 30) ?: 30),
-            'resources'         => $request->resources,
-            'certificat'        => $request->certificat,
-            'prerequi'          => $request->prerequi,
-            'bestseller'        => $request->has('bestseller') ? 1 : 0,
-            'vedette'           => $request->has('vedette') ? 1 : 0,
-            'surevalue'         => $request->has('surevalue') ? 1 : 0,
-            'status'            => $request->has('status') ? 1 : 0,
-            'evaluation_id'     => $request->evaluation_id,
+            'resources' => $request->resources,
+            'certificat' => $request->certificat,
+            'prerequi' => $request->prerequi,
+            'bestseller' => $request->has('bestseller') ? 1 : 0,
+            'vedette' => $request->has('vedette') ? 1 : 0,
+            'surevalue' => $request->has('surevalue') ? 1 : 0,
+            'status' => $request->has('status') ? 1 : 0,
+            'evaluation_id' => $request->evaluation_id,
         ]);
 
         return redirect()->route('admin.modules')->with('success', 'Module mis à jour avec succès !');
@@ -262,7 +264,7 @@ class ModuleController extends Controller
     {
         $module = Module::with('sections.lectures.objectives')->findOrFail($id);
 
-        if (!$module->isVisibleTo(auth()->user())) {
+        if (! $module->isVisibleTo(auth()->user())) {
             abort(404);
         }
 
@@ -290,25 +292,25 @@ class ModuleController extends Controller
         $module->load([
             'sections' => function ($q) {
                 $q->orderBy('id')
-                ->with(['lectures' => function ($qq) {
-                    $qq->orderBy('position')
-                        ->orderBy('id')
-                        ->with(['objectives' => function ($oq) {
-                            $oq->orderBy('position')->orderBy('id');
-                        }]);
-                }]);
+                    ->with(['lectures' => function ($qq) {
+                        $qq->orderBy('position')
+                            ->orderBy('id')
+                            ->with(['objectives' => function ($oq) {
+                                $oq->orderBy('position')->orderBy('id');
+                            }]);
+                    }]);
             },
         ]);
 
-        $mode          = (string) $request->query('mode', 'groupe');
-        $isStaff       = in_array($user->role ?? null, ['formateur', 'admin', 'observateur'], true);
+        $mode = (string) $request->query('mode', 'groupe');
+        $isStaff = in_array($user->role ?? null, ['formateur', 'admin', 'observateur'], true);
         $includeHidden = $request->boolean('include_hidden') && $isStaff;
-        $anonymous     = $request->boolean('anonymous') || ($user->role ?? null) === 'observateur';
+        $anonymous = $request->boolean('anonymous') || ($user->role ?? null) === 'observateur';
 
         $groupId = $this->resolveGroupIdForContext($request, $user, (int) $module->id);
 
         if ($mode !== 'officiel') {
-            $this->applyGroupLessonOverrides($module, $groupId, !$includeHidden);
+            $this->applyGroupLessonOverrides($module, $groupId, ! $includeHidden);
         }
 
         $section = $module->sections->firstWhere('id', (int) $section->id);
@@ -331,10 +333,13 @@ class ModuleController extends Controller
             ? collect()
             : $module->sections->mapWithKeys(function ($sec) use ($lectureStats) {
                 $total = $sec->lectures->count();
-                if ($total === 0) return [$sec->id => 'not_started'];
+                if ($total === 0) {
+                    return [$sec->id => 'not_started'];
+                }
 
                 $ok = $sec->lectures->filter(function ($lec) use ($lectureStats) {
                     $st = $lectureStats[$lec->id]['status'] ?? null;
+
                     return $st === 'completed';
                 })->count();
 
@@ -342,10 +347,10 @@ class ModuleController extends Controller
             });
 
         $contextQuery = array_filter([
-            'mode'           => $mode,
-            'group_id'       => ($mode !== 'officiel' ? ($groupId ?: null) : null),
+            'mode' => $mode,
+            'group_id' => ($mode !== 'officiel' ? ($groupId ?: null) : null),
             'include_hidden' => ($includeHidden ? 1 : null),
-            'anonymous'      => ($anonymous ? 1 : null),
+            'anonymous' => ($anonymous ? 1 : null),
         ]);
 
         if ($isFormateurRoute && ($user->role ?? null) === 'formateur') {
@@ -356,12 +361,12 @@ class ModuleController extends Controller
                 ->get(['groups.id', 'groups.name', 'groups.description'])
                 ->map(function ($group) use ($groupId) {
                     return [
-                        'id'              => (int) $group->id,
-                        'name'            => (string) $group->name,
-                        'description'     => (string) ($group->description ?? ''),
-                        'is_current'      => (int) $group->id === (int) $groupId,
-                        'has_whiteboard'  => ! is_null($group->whiteboard),
-                        'whiteboard_url'  => route('formateur.groupes.whiteboard.show', ['group' => $group->id]),
+                        'id' => (int) $group->id,
+                        'name' => (string) $group->name,
+                        'description' => (string) ($group->description ?? ''),
+                        'is_current' => (int) $group->id === (int) $groupId,
+                        'has_whiteboard' => ! is_null($group->whiteboard),
+                        'whiteboard_url' => route('formateur.groupes.whiteboard.show', ['group' => $group->id]),
                     ];
                 })
                 ->values();
@@ -371,30 +376,30 @@ class ModuleController extends Controller
         }
 
         $view = match (true) {
-            $anonymous && ($user->role ?? null) === 'formateur'   => 'formateur.formations.anonyme.chapitre',
+            $anonymous && ($user->role ?? null) === 'formateur' => 'formateur.formations.anonyme.chapitre',
             $anonymous && ($user->role ?? null) === 'observateur' => 'observateur.formations.anonyme.chapitre',
-            default => $this->viewBase() . '.chapitre',
+            default => $this->viewBase().'.chapitre',
         };
 
         return view($view, [
-            'module'                 => $module,
-            'selectedSection'        => $section,
-            'section'                => $section,
-            'selectedLecture'        => null,
-            'lectureStats'           => $lectureStats,
-            'sectionStatuses'        => $sectionStatuses,
-            'formateur'              => $module->formateur ?? null,
-            'contextQuery'           => $contextQuery,
-            'mode'                   => $mode,
-            'groupId'                => $groupId,
-            'includeHidden'          => $includeHidden,
-            'anonymous'              => $anonymous,
-            'lessonResources'        => $moduleResources,
-            'moduleResources'        => $moduleResources,
-            'whiteboardGroups'       => $whiteboardGroups,
+            'module' => $module,
+            'selectedSection' => $section,
+            'section' => $section,
+            'selectedLecture' => null,
+            'lectureStats' => $lectureStats,
+            'sectionStatuses' => $sectionStatuses,
+            'formateur' => $module->formateur ?? null,
+            'contextQuery' => $contextQuery,
+            'mode' => $mode,
+            'groupId' => $groupId,
+            'includeHidden' => $includeHidden,
+            'anonymous' => $anonymous,
+            'lessonResources' => $moduleResources,
+            'moduleResources' => $moduleResources,
+            'whiteboardGroups' => $whiteboardGroups,
             'currentWhiteboardGroup' => $currentWhiteboardGroup,
-            'toolGroups'             => $toolGroups,
-            'wordClouds'             => $wordClouds,
+            'toolGroups' => $toolGroups,
+            'wordClouds' => $wordClouds,
         ]);
     }
 
@@ -402,7 +407,7 @@ class ModuleController extends Controller
     {
         $user = auth()->user();
         $isFormateurRoute = $request->routeIs('formateur.*');
-        $isObserverRoute  = $request->routeIs('observateur.*');
+        $isObserverRoute = $request->routeIs('observateur.*');
 
         abort_unless((int) $section->module_id === (int) $module->id, 404);
         abort_unless((int) $lecture->module_id === (int) $module->id, 404);
@@ -414,21 +419,21 @@ class ModuleController extends Controller
         $module->load([
             'sections' => function ($q) {
                 $q->orderBy('id')
-                ->with(['lectures' => function ($qq) {
-                    $qq->orderBy('position')->orderBy('id');
-                }]);
+                    ->with(['lectures' => function ($qq) {
+                        $qq->orderBy('position')->orderBy('id');
+                    }]);
             },
         ]);
 
-        $mode          = (string) $request->query('mode', 'groupe');
-        $isStaff       = in_array($user->role ?? null, ['formateur', 'admin', 'observateur'], true);
+        $mode = (string) $request->query('mode', 'groupe');
+        $isStaff = in_array($user->role ?? null, ['formateur', 'admin', 'observateur'], true);
         $includeHidden = $request->boolean('include_hidden') && $isStaff;
-        $anonymous     = $request->boolean('anonymous') || ($user->role ?? null) === 'observateur';
+        $anonymous = $request->boolean('anonymous') || ($user->role ?? null) === 'observateur';
 
         $groupId = $this->resolveGroupIdForContext($request, $user, (int) $module->id);
 
         if ($mode !== 'officiel') {
-            $this->applyGroupLessonOverrides($module, $groupId, !$includeHidden);
+            $this->applyGroupLessonOverrides($module, $groupId, ! $includeHidden);
         }
 
         $section = $module->sections->firstWhere('id', (int) $section->id);
@@ -436,13 +441,13 @@ class ModuleController extends Controller
 
         $visibleIds = $module->sections->flatMap(fn ($s) => $s->lectures)->pluck('id')->map(fn ($id) => (int) $id)->all();
 
-        if (!in_array((int) $lecture->id, $visibleIds, true)) {
-            if ($mode !== 'officiel' && !($isStaff && $includeHidden)) {
+        if (! in_array((int) $lecture->id, $visibleIds, true)) {
+            if ($mode !== 'officiel' && ! ($isStaff && $includeHidden)) {
                 abort(404);
             }
         }
 
-        $lectures     = $module->sections->flatMap(fn ($s) => $s->lectures)->values();
+        $lectures = $module->sections->flatMap(fn ($s) => $s->lectures)->values();
         $lectureStats = $anonymous ? [] : $this->buildLectureStats($lectures, (int) $user->id);
 
         $lectureRouteName = $isFormateurRoute
@@ -455,24 +460,24 @@ class ModuleController extends Controller
             ? 'formateur.formations.detail'
             : ($isObserverRoute ? 'observateur.groupes.index' : 'stagiaire.module.fin');
 
-        $nextLecturePayload    = null;
+        $nextLecturePayload = null;
         $currentSectionLectures = $section->lectures ?? collect();
         $idx = $currentSectionLectures->search(fn ($l) => (int) $l->id === (int) $lecture->id);
 
         if ($idx !== false && isset($currentSectionLectures[$idx + 1])) {
             $nextLec = $currentSectionLectures[$idx + 1];
             $nextLecturePayload = [
-                'type'       => 'lecture',
-                'id'         => (int) $nextLec->id,
+                'type' => 'lecture',
+                'id' => (int) $nextLec->id,
                 'section_id' => (int) $nextLec->section_id,
-                'url'        => route($lectureRouteName, [
-                    'module'  => $module->id,
+                'url' => route($lectureRouteName, [
+                    'module' => $module->id,
                     'section' => (int) $nextLec->section_id,
                     'lecture' => (int) $nextLec->id,
                 ]),
             ];
         } else {
-            $sections            = $module->sections->sortBy('id')->values();
+            $sections = $module->sections->sortBy('id')->values();
             $currentSectionIndex = $sections->search(fn ($s) => (int) $s->id === (int) $section->id);
 
             $nextSection = null;
@@ -485,16 +490,16 @@ class ModuleController extends Controller
             if ($nextSection) {
                 $nextLecturePayload = [
                     'type' => 'section',
-                    'id'   => (int) $nextSection->id,
-                    'url'  => route($sectionRouteName, [
-                        'module'  => $module->id,
+                    'id' => (int) $nextSection->id,
+                    'url' => route($sectionRouteName, [
+                        'module' => $module->id,
                         'section' => (int) $nextSection->id,
                     ]),
                 ];
             } else {
                 $nextLecturePayload = [
                     'type' => 'fin',
-                    'url'  => route($finalRouteName, ['module' => $module->id]),
+                    'url' => route($finalRouteName, ['module' => $module->id]),
                 ];
             }
         }
@@ -503,26 +508,29 @@ class ModuleController extends Controller
             ? collect()
             : $module->sections->mapWithKeys(function ($sec) use ($lectureStats) {
                 $total = $sec->lectures->count();
-                if ($total === 0) return [$sec->id => 'not_started'];
+                if ($total === 0) {
+                    return [$sec->id => 'not_started'];
+                }
                 $ok = $sec->lectures->filter(function ($lec) use ($lectureStats) {
                     return ($lectureStats[$lec->id]['status'] ?? null) === 'completed';
                 })->count();
+
                 return [$sec->id => ($ok === $total ? 'completed' : ($ok > 0 ? 'in_progress' : 'not_started'))];
             });
 
         $contextQuery = array_filter([
-            'mode'           => $mode,
-            'group_id'       => ($mode !== 'officiel' ? ($groupId ?: null) : null),
+            'mode' => $mode,
+            'group_id' => ($mode !== 'officiel' ? ($groupId ?: null) : null),
             'include_hidden' => ($includeHidden ? 1 : null),
-            'anonymous'      => $anonymous,
+            'anonymous' => $anonymous,
         ]);
 
-        $quizData       = null;
+        $quizData = null;
         $moduleResources = collect();
-        $whiteboardGroups       = collect();
+        $whiteboardGroups = collect();
         $currentWhiteboardGroup = null;
-        $toolGroups  = collect();
-        $wordClouds  = collect();
+        $toolGroups = collect();
+        $wordClouds = collect();
 
         if ($isStaff && $lecture->quiz_enabled) {
             $quizData = $lecture->quizQuestions()
@@ -543,17 +551,17 @@ class ModuleController extends Controller
                 ->get(['groups.id', 'groups.name', 'groups.description'])
                 ->map(function ($group) use ($groupId, $module, $section, $lecture) {
                     return [
-                        'id'             => (int) $group->id,
-                        'name'           => (string) $group->name,
-                        'description'    => (string) ($group->description ?? ''),
-                        'is_current'     => (int) $group->id === (int) $groupId,
+                        'id' => (int) $group->id,
+                        'name' => (string) $group->name,
+                        'description' => (string) ($group->description ?? ''),
+                        'is_current' => (int) $group->id === (int) $groupId,
                         'has_whiteboard' => ! is_null($group->whiteboard),
                         'whiteboard_url' => route('formateur.groupes.whiteboard.show', ['group' => $group->id]),
-                        'lesson_url'     => route('formateur.formations.lecture', [
-                            'module'   => $module->id,
-                            'section'  => $section->id,
-                            'lecture'  => $lecture->id,
-                            'mode'     => 'groupe',
+                        'lesson_url' => route('formateur.formations.lecture', [
+                            'module' => $module->id,
+                            'section' => $section->id,
+                            'lecture' => $lecture->id,
+                            'mode' => 'groupe',
                             'group_id' => $group->id,
                         ]),
                     ];
@@ -565,33 +573,33 @@ class ModuleController extends Controller
         }
 
         $view = match (true) {
-            $anonymous && ($user->role ?? null) === 'formateur'   => 'formateur.formations.anonyme.lecon',
+            $anonymous && ($user->role ?? null) === 'formateur' => 'formateur.formations.anonyme.lecon',
             $anonymous && ($user->role ?? null) === 'observateur' => 'observateur.formations.anonyme.lecon',
-            default => $this->viewBase() . '.lecon',
+            default => $this->viewBase().'.lecon',
         };
 
         return view($view, [
-            'module'                 => $module,
-            'section'                => $section,
-            'selectedSection'        => $section,
-            'lecture'                => $lecture,
-            'selectedLecture'        => $lecture,
-            'lectureStats'           => $lectureStats,
-            'sectionStatuses'        => $sectionStatuses,
-            'nextLecture'            => $nextLecturePayload,
-            'formateur'              => $module->formateur ?? null,
-            'contextQuery'           => $contextQuery,
-            'mode'                   => $mode,
-            'groupId'                => $groupId,
-            'includeHidden'          => $includeHidden,
-            'anonymous'              => $anonymous,
-            'quizData'               => $quizData,
-            'lessonResources'        => $moduleResources,
-            'moduleResources'        => $moduleResources,
-            'whiteboardGroups'       => $whiteboardGroups,
+            'module' => $module,
+            'section' => $section,
+            'selectedSection' => $section,
+            'lecture' => $lecture,
+            'selectedLecture' => $lecture,
+            'lectureStats' => $lectureStats,
+            'sectionStatuses' => $sectionStatuses,
+            'nextLecture' => $nextLecturePayload,
+            'formateur' => $module->formateur ?? null,
+            'contextQuery' => $contextQuery,
+            'mode' => $mode,
+            'groupId' => $groupId,
+            'includeHidden' => $includeHidden,
+            'anonymous' => $anonymous,
+            'quizData' => $quizData,
+            'lessonResources' => $moduleResources,
+            'moduleResources' => $moduleResources,
+            'whiteboardGroups' => $whiteboardGroups,
             'currentWhiteboardGroup' => $currentWhiteboardGroup,
-            'toolGroups'             => $toolGroups,
-            'wordClouds'             => $wordClouds,
+            'toolGroups' => $toolGroups,
+            'wordClouds' => $wordClouds,
         ]);
     }
 
@@ -600,37 +608,39 @@ class ModuleController extends Controller
         $userId = (int) auth()->id();
 
         $module = Module::with('sections.lectures')->findOrFail($moduleId);
-        if (!$module->isVisibleTo(auth()->user())) abort(404);
+        if (! $module->isVisibleTo(auth()->user())) {
+            abort(404);
+        }
 
-        $sections   = $module->sections;
-        $lectures   = $sections->flatMap->lectures->values();
+        $sections = $module->sections;
+        $lectures = $sections->flatMap->lectures->values();
         $lectureIds = $lectures->pluck('id')->map(fn ($id) => (int) $id)->all();
 
         $totalSections = $sections->count();
         $totalLectures = $lectures->count();
 
         $totalQuestionsPlanned = 0;
-        $questionsAnswered     = 0;
-        $totalCorrectAnswers   = 0;
+        $questionsAnswered = 0;
+        $totalCorrectAnswers = 0;
 
-        $latestAttempts  = collect();
-        $quizAttemptAgg  = collect();
-        $scormAgg        = collect();
+        $latestAttempts = collect();
+        $quizAttemptAgg = collect();
+        $scormAgg = collect();
 
-        $quizTimeSeconds  = 0;
+        $quizTimeSeconds = 0;
         $scormTimeSeconds = 0;
         $videoTimeSeconds = 0;
 
-        $quizLatencyTotalSeconds  = 0;
-        $quizLatencySamples       = 0;
+        $quizLatencyTotalSeconds = 0;
+        $quizLatencySamples = 0;
         $scormLatencyTotalSeconds = 0;
-        $scormLatencySamples      = 0;
+        $scormLatencySamples = 0;
 
         $scormInteractionsCount = 0;
-        $videoSegmentsCount     = 0;
-        $videoReplayCount       = 0;
+        $videoSegmentsCount = 0;
+        $videoReplayCount = 0;
 
-        if (!empty($lectureIds)) {
+        if (! empty($lectureIds)) {
             $latestAttempts = QuizAttempt::query()
                 ->where('user_id', $userId)
                 ->whereIn('lecture_id', $lectureIds)
@@ -642,7 +652,7 @@ class ModuleController extends Controller
 
             $latestAttemptIds = $latestAttempts->pluck('id')->all();
 
-            if (!empty($latestAttemptIds)) {
+            if (! empty($latestAttemptIds)) {
                 $quizAttemptAgg = QuizAttemptQuestion::query()
                     ->select([
                         'attempt_id',
@@ -656,7 +666,7 @@ class ModuleController extends Controller
                     ->keyBy('attempt_id');
 
                 $quizLatencyTotalSeconds = (int) $quizAttemptAgg->sum(fn ($agg) => (int) ($agg->time_spent ?? 0));
-                $quizLatencySamples      = (int) $quizAttemptAgg->sum(fn ($agg) => (int) ($agg->answered ?? 0));
+                $quizLatencySamples = (int) $quizAttemptAgg->sum(fn ($agg) => (int) ($agg->answered ?? 0));
             }
 
             $quizTimeSeconds = (int) $latestAttempts->sum(fn ($attempt) => (int) ($attempt->total_time_seconds ?? 0));
@@ -707,46 +717,46 @@ class ModuleController extends Controller
                 ->get(['watch_count', 'total_watch_time']);
 
             $videoSegmentsCount = $videoRows->count();
-            $videoTimeSeconds   = (int) round((float) $videoRows->sum('total_watch_time'));
-            $videoReplayCount   = (int) $videoRows->sum(fn ($row) => max(0, ((int) $row->watch_count) - 1));
+            $videoTimeSeconds = (int) round((float) $videoRows->sum('total_watch_time'));
+            $videoReplayCount = (int) $videoRows->sum(fn ($row) => max(0, ((int) $row->watch_count) - 1));
         }
 
         foreach ($lectures as $lecture) {
             $plannedScorm = (int) ($lecture->question_count ?? 0);
-            $plannedQuiz  = (bool) ($lecture->quiz_enabled ?? false)
+            $plannedQuiz = (bool) ($lecture->quiz_enabled ?? false)
                 ? (int) ($lecture->quiz_questions_per_attempt ?? 0)
                 : 0;
             $planned = max($plannedScorm, $plannedQuiz);
 
             $scormAnswered = (int) ($scormAgg->get($lecture->id)?->answered ?? 0);
-            $scormCorrect  = (int) ($scormAgg->get($lecture->id)?->correct ?? 0);
+            $scormCorrect = (int) ($scormAgg->get($lecture->id)?->correct ?? 0);
 
             $quizAnswered = 0;
-            $quizCorrect  = 0;
+            $quizCorrect = 0;
             $attempt = $latestAttempts->get($lecture->id);
 
             if ($attempt) {
-                $attemptAgg   = $quizAttemptAgg->get($attempt->id);
+                $attemptAgg = $quizAttemptAgg->get($attempt->id);
                 $quizAnswered = (int) ($attemptAgg?->answered ?? 0);
-                $quizCorrect  = (int) ($attemptAgg?->correct ?? 0);
+                $quizCorrect = (int) ($attemptAgg?->correct ?? 0);
             }
 
             $answered = max($scormAnswered, $quizAnswered);
-            $correct  = max($scormCorrect, $quizCorrect);
+            $correct = max($scormCorrect, $quizCorrect);
 
             if ($planned > 0) {
                 $answered = min($answered, $planned);
-                $correct  = min($correct, $answered);
+                $correct = min($correct, $answered);
             } elseif ($answered > 0) {
                 $planned = $answered;
             }
 
             $totalQuestionsPlanned += $planned;
-            $questionsAnswered     += $answered;
-            $totalCorrectAnswers   += $correct;
+            $questionsAnswered += $answered;
+            $totalCorrectAnswers += $correct;
         }
 
-        $lectureStats = !empty($lectureIds)
+        $lectureStats = ! empty($lectureIds)
             ? $this->buildLectureStats($lectures, $userId)
             : [];
 
@@ -755,13 +765,16 @@ class ModuleController extends Controller
             ->count();
 
         $completedSections = $sections->filter(function ($section) use ($lectureStats) {
-            if ($section->lectures->isEmpty()) return false;
+            if ($section->lectures->isEmpty()) {
+                return false;
+            }
+
             return $section->lectures->every(function ($lecture) use ($lectureStats) {
                 return ($lectureStats[$lecture->id]['status'] ?? null) === 'completed';
             });
         })->count();
 
-        $moduleCompletionPercent  = $totalLectures > 0
+        $moduleCompletionPercent = $totalLectures > 0
             ? (int) round(($completedLectures / $totalLectures) * 100)
             : 100;
 
@@ -773,45 +786,45 @@ class ModuleController extends Controller
             ? (int) round(($totalCorrectAnswers / $questionsAnswered) * 100)
             : null;
 
-        $latencySamples        = $quizLatencySamples + $scormLatencySamples;
+        $latencySamples = $quizLatencySamples + $scormLatencySamples;
         $averageLatencySeconds = $latencySamples > 0
             ? (int) round(($quizLatencyTotalSeconds + $scormLatencyTotalSeconds) / $latencySamples)
             : null;
 
         $totalLearningSeconds = $scormTimeSeconds + $quizTimeSeconds + $videoTimeSeconds;
-        $trackedInteractions  = $scormInteractionsCount + $quizLatencySamples + $videoSegmentsCount;
-        $completionToast      = null;
+        $trackedInteractions = $scormInteractionsCount + $quizLatencySamples + $videoSegmentsCount;
+        $completionToast = null;
 
         if ($moduleCompletionPercent >= 100 && auth()->user()?->role === 'stagiaire') {
             $notifyResult = app(ModuleCompletionNotifier::class)->notify($module, auth()->user());
 
             if (($notifyResult['created_for_stagiaire'] ?? false) === true) {
-                $completionToast = 'Vous avez termine le module "' . $module->module_name . '".';
+                $completionToast = 'Vous avez termine le module "'.$module->module_name.'".';
             }
         }
 
         return view('stagiaire.fin_module', [
-            'module'                => $module,
-            'totalSections'         => $totalSections,
-            'totalLectures'         => $totalLectures,
+            'module' => $module,
+            'totalSections' => $totalSections,
+            'totalLectures' => $totalLectures,
             'totalQuestionsPlanned' => $totalQuestionsPlanned,
-            'questionsAnswered'     => $questionsAnswered,
-            'usabilityStats'        => [
-                'completed_lectures'         => $completedLectures,
-                'completed_sections'         => $completedSections,
-                'module_completion_percent'  => $moduleCompletionPercent,
+            'questionsAnswered' => $questionsAnswered,
+            'usabilityStats' => [
+                'completed_lectures' => $completedLectures,
+                'completed_sections' => $completedSections,
+                'module_completion_percent' => $moduleCompletionPercent,
                 'section_completion_percent' => $sectionCompletionPercent,
-                'success_rate_percent'       => $successRatePercent,
-                'total_learning_seconds'     => $totalLearningSeconds,
-                'scorm_time_seconds'         => $scormTimeSeconds,
-                'quiz_time_seconds'          => $quizTimeSeconds,
-                'video_time_seconds'         => $videoTimeSeconds,
-                'average_latency_seconds'    => $averageLatencySeconds,
-                'tracked_interactions'       => $trackedInteractions,
-                'scorm_interactions'         => $scormInteractionsCount,
-                'quiz_answers'               => $quizLatencySamples,
-                'video_segments'             => $videoSegmentsCount,
-                'video_replays'              => $videoReplayCount,
+                'success_rate_percent' => $successRatePercent,
+                'total_learning_seconds' => $totalLearningSeconds,
+                'scorm_time_seconds' => $scormTimeSeconds,
+                'quiz_time_seconds' => $quizTimeSeconds,
+                'video_time_seconds' => $videoTimeSeconds,
+                'average_latency_seconds' => $averageLatencySeconds,
+                'tracked_interactions' => $trackedInteractions,
+                'scorm_interactions' => $scormInteractionsCount,
+                'quiz_answers' => $quizLatencySamples,
+                'video_segments' => $videoSegmentsCount,
+                'video_replays' => $videoReplayCount,
             ],
             'completionToast' => $completionToast,
         ]);
@@ -819,47 +832,53 @@ class ModuleController extends Controller
 
     private function storeModuleVideo(Module $module, UploadedFile $video): string
     {
-        $videosBase     = trim((string) config('learning_assets.videos_base', 'modules/videos'), '/');
-        $relativeFolder = 'modules/module_' . $module->id;
-        $storageFolder  = $videosBase . '/' . $relativeFolder;
-        $disk           = Storage::disk('public');
+        $videosBase = trim((string) config('learning_assets.videos_base', 'modules/videos'), '/');
+        $relativeFolder = 'modules/module_'.$module->id;
+        $storageFolder = $videosBase.'/'.$relativeFolder;
+        $disk = Storage::disk('public');
 
-        if (!$disk->exists($storageFolder)) {
+        if (! $disk->exists($storageFolder)) {
             $disk->makeDirectory($storageFolder);
         }
 
         $this->deleteManagedModuleVideo($module->module_video, $module->id);
 
         $baseName = Str::slug(pathinfo((string) $video->getClientOriginalName(), PATHINFO_FILENAME));
-        if ($baseName === '') $baseName = 'module-video';
+        if ($baseName === '') {
+            $baseName = 'module-video';
+        }
 
         $extension = strtolower((string) $video->getClientOriginalExtension());
-        if ($extension === '') $extension = 'mp4';
+        if ($extension === '') {
+            $extension = 'mp4';
+        }
 
-        $fileName = now()->format('Ymd_His') . '_' . Str::random(6) . '_' . $baseName . '.' . $extension;
+        $fileName = now()->format('Ymd_His').'_'.Str::random(6).'_'.$baseName.'.'.$extension;
         $disk->putFileAs($storageFolder, $video, $fileName);
 
-        return route('media.storage', ['path' => $storageFolder . '/' . $fileName], false);
+        return route('media.storage', ['path' => $storageFolder.'/'.$fileName], false);
     }
 
     private function deleteManagedModuleVideo(?string $videoPath, int $moduleId): void
     {
         $videoPath = trim((string) $videoPath);
-        if ($videoPath === '') return;
+        if ($videoPath === '') {
+            return;
+        }
 
-        $videosBase     = trim((string) config('learning_assets.videos_base', 'modules/videos'), '/');
-        $relativeFolder = 'modules/module_' . $moduleId;
-        $normalized     = ltrim($videoPath, '/');
-        $disk           = Storage::disk('public');
+        $videosBase = trim((string) config('learning_assets.videos_base', 'modules/videos'), '/');
+        $relativeFolder = 'modules/module_'.$moduleId;
+        $normalized = ltrim($videoPath, '/');
+        $disk = Storage::disk('public');
         $candidatePaths = [];
 
         if (Str::startsWith($videoPath, '/media/storage/')) {
             $candidatePaths[] = Str::after($videoPath, '/media/storage/');
         }
-        if (Str::startsWith($videoPath, $relativeFolder . '/')) {
-            $candidatePaths[] = $videosBase . '/' . $videoPath;
+        if (Str::startsWith($videoPath, $relativeFolder.'/')) {
+            $candidatePaths[] = $videosBase.'/'.$videoPath;
         }
-        if (Str::startsWith($normalized, $videosBase . '/' . $relativeFolder . '/')) {
+        if (Str::startsWith($normalized, $videosBase.'/'.$relativeFolder.'/')) {
             $candidatePaths[] = $normalized;
         }
 
@@ -869,139 +888,16 @@ class ModuleController extends Controller
             }
         }
 
-        $folderPath = $videosBase . '/' . $relativeFolder;
+        $folderPath = $videosBase.'/'.$relativeFolder;
         if ($disk->exists($folderPath) && count($disk->allFiles($folderPath)) === 0) {
             $disk->deleteDirectory($folderPath);
         }
     }
 
-    private function buildLectureStats($lectures, int $userId): array
-    {
-        $lectureIds = $lectures->pluck('id')->all();
-
-        $attempts = QuizAttempt::query()
-            ->where('user_id', $userId)
-            ->whereIn('lecture_id', $lectureIds)
-            ->orderByDesc('finished_at')
-            ->orderByDesc('id')
-            ->get()
-            ->groupBy('lecture_id')
-            ->map(fn ($rows) => $rows->first());
-
-        $attemptIds = $attempts->filter()->pluck('id')->all();
-
-        $attemptAgg = collect();
-        if (!empty($attemptIds)) {
-            $attemptAgg = QuizAttemptQuestion::query()
-                ->select([
-                    'attempt_id',
-                    DB::raw('COUNT(*) as total'),
-                    DB::raw('SUM(CASE WHEN answered_at IS NOT NULL THEN 1 ELSE 0 END) as answered'),
-                    DB::raw('SUM(CASE WHEN is_correct = 1 THEN 1 ELSE 0 END) as correct'),
-                ])
-                ->whereIn('attempt_id', $attemptIds)
-                ->groupBy('attempt_id')
-                ->get()
-                ->keyBy('attempt_id');
-        }
-
-        $scores = ScormScore::query()
-            ->where('user_id', $userId)
-            ->whereIn('lecture_id', $lectureIds)
-            ->get()
-            ->keyBy('lecture_id');
-
-        $started = ScormResult::query()
-            ->where('user_id', $userId)
-            ->whereIn('lecture_id', $lectureIds)
-            ->select('lecture_id', DB::raw('COUNT(*) as c'))
-            ->groupBy('lecture_id')
-            ->pluck('c', 'lecture_id');
-
-        $stats = [];
-
-        foreach ($lectures as $lec) {
-            if ((bool) ($lec->quiz_enabled ?? false)) {
-                $attempt = $attempts->get($lec->id);
-                $planned = (int) ($lec->quiz_questions_per_attempt ?? 0);
-
-                if (!$attempt) {
-                    $stats[$lec->id] = [
-                        'status'             => 'not_started',
-                        'quiz'               => true,
-                        'questions_total'    => $planned,
-                        'questions_answered' => 0,
-                        'questions_correct'  => 0,
-                        'quiz_score'         => null,
-                        'quiz_finished'      => false,
-                        'slides'             => (int) ($lec->slide_count ?? 0),
-                        'session_time'       => null,
-                    ];
-                    continue;
-                }
-
-                $agg      = $attemptAgg->get($attempt->id);
-                $total    = (int) ($agg->total ?? $attempt->total_questions ?? $planned ?? 0);
-                $answered = (int) ($agg->answered ?? 0);
-                $correct  = (int) ($agg->correct ?? 0);
-                $score    = !is_null($attempt->percent)
-                    ? (int) $attempt->percent
-                    : (($total > 0) ? (int) round(($correct / $total) * 100) : null);
-                $finished = !is_null($attempt->finished_at);
-
-                if (!$finished) {
-                    $status = $answered > 0 ? 'in_progress' : 'not_started';
-                } else {
-                    $status = ($score !== null && $score >= 50) ? 'completed' : 'failed';
-                }
-
-                $stats[$lec->id] = [
-                    'status'             => $status,
-                    'quiz'               => true,
-                    'questions_total'    => $total,
-                    'questions_answered' => $answered,
-                    'questions_correct'  => $correct,
-                    'quiz_score'         => $score,
-                    'quiz_finished'      => $finished,
-                    'slides'             => (int) ($lec->slide_count ?? 0),
-                    'session_time'       => null,
-                ];
-                continue;
-            }
-
-            $hasStarted  = (int) ($started[$lec->id] ?? 0) > 0;
-            $sc          = $scores->get($lec->id);
-            $lessonStatus = strtolower((string) ($sc->lesson_status ?? ''));
-            $isCompleted  = in_array($lessonStatus, ['completed', 'passed'], true) || (bool) ($sc->is_completed ?? false);
-
-            if (!$hasStarted) {
-                $status = 'not_started';
-            } elseif ($isCompleted) {
-                $status = 'completed';
-            } else {
-                $status = 'in_progress';
-            }
-
-            $stats[$lec->id] = [
-                'status'             => $status,
-                'quiz'               => false,
-                'questions_total'    => 0,
-                'questions_answered' => 0,
-                'questions_correct'  => 0,
-                'quiz_score'         => null,
-                'quiz_finished'      => false,
-                'slides'             => (int) ($lec->slide_count ?? 0),
-                'session_time'       => $sc->session_time ?? null,
-            ];
-        }
-
-        return $stats;
-    }
-
     private function resolveGroupIdForContext(Request $request, $user, int $moduleId): ?int
     {
         $forcedGroupId = (int) $request->query('group_id', 0);
-        $isStaff       = in_array($user->role ?? null, ['formateur', 'admin', 'observateur'], true);
+        $isStaff = in_array($user->role ?? null, ['formateur', 'admin', 'observateur'], true);
 
         if ($forcedGroupId > 0 && $isStaff) {
             $hasModule = DB::table('group_module')
@@ -1009,7 +905,9 @@ class ModuleController extends Controller
                 ->where('module_id', $moduleId)
                 ->exists();
 
-            if (!$hasModule) return null;
+            if (! $hasModule) {
+                return null;
+            }
 
             if (($user->role ?? null) === 'formateur') {
                 $isAccessible = Group::query()
@@ -1017,7 +915,9 @@ class ModuleController extends Controller
                     ->where('id', $forcedGroupId)
                     ->exists();
 
-                if (! $isAccessible) return null;
+                if (! $isAccessible) {
+                    return null;
+                }
             }
 
             if (($user->role ?? null) === 'observateur') {
@@ -1027,7 +927,9 @@ class ModuleController extends Controller
                     ->where('role_in_group', 'observateur')
                     ->exists();
 
-                if (! $isObserved) return null;
+                if (! $isObserved) {
+                    return null;
+                }
             }
 
             return $forcedGroupId;
@@ -1043,7 +945,9 @@ class ModuleController extends Controller
             ->whereHas('modules', fn ($query) => $query->where('modules.id', $moduleId))
             ->value('groups.id');
 
-        if ($formateurGroupId) return (int) $formateurGroupId;
+        if ($formateurGroupId) {
+            return (int) $formateurGroupId;
+        }
 
         $gid = DB::table('group_user')
             ->join('group_module', 'group_module.group_id', '=', 'group_user.group_id')
@@ -1052,37 +956,6 @@ class ModuleController extends Controller
             ->value('group_user.group_id');
 
         return $gid ? (int) $gid : null;
-    }
-
-    private function applyGroupLessonOverrides(Module $module, ?int $groupId, bool $filterHidden = true): void
-    {
-        if (!$groupId) return;
-
-        $over = \App\Models\GroupModuleLecture::query()
-            ->where('group_id', $groupId)
-            ->where('module_id', $module->id)
-            ->get()
-            ->keyBy('lecture_id');
-
-        if ($over->isEmpty()) return;
-
-        $module->sections->each(function ($sec) use ($over, $filterHidden) {
-            $lectures = $sec->lectures;
-
-            if ($filterHidden) {
-                $lectures = $lectures->filter(function ($lec) use ($over) {
-                    $row = $over->get($lec->id);
-                    return $row ? (bool) $row->is_enabled : true;
-                });
-            }
-
-            $lectures = $lectures->sortBy(function ($lec) use ($over) {
-                $row = $over->get($lec->id);
-                return $row ? (int) $row->position : (int) $lec->position;
-            })->values();
-
-            $sec->setRelation('lectures', $lectures);
-        });
     }
 
     private function buildToolGroupsAndWordClouds($user, Module $module): array
@@ -1117,20 +990,20 @@ class ModuleController extends Controller
                         ->flatMap(function (ModuleSection $moduleSection) {
                             return $moduleSection->lectures->map(function (ModuleLecture $moduleLecture) use ($moduleSection) {
                                 return [
-                                    'id'         => (int) $moduleLecture->id,
+                                    'id' => (int) $moduleLecture->id,
                                     'section_id' => (int) $moduleLecture->section_id,
-                                    'title'      => (string) $moduleLecture->lecture_title,
-                                    'label'      => trim((string) $moduleSection->section_title . ' · ' . (string) $moduleLecture->lecture_title),
+                                    'title' => (string) $moduleLecture->lecture_title,
+                                    'label' => trim((string) $moduleSection->section_title.' · '.(string) $moduleLecture->lecture_title),
                                 ];
                             });
                         })
                         ->values();
 
                     return [
-                        'id'         => (int) $groupModule->id,
-                        'title'      => (string) ($groupModule->module_title ?: $groupModule->module_name ?: 'Module'),
+                        'id' => (int) $groupModule->id,
+                        'title' => (string) ($groupModule->module_title ?: $groupModule->module_name ?: 'Module'),
                         'manage_url' => route('formateur.groupes.modules.lecons.edit', [
-                            'group'  => $group->id,
+                            'group' => $group->id,
                             'module' => $groupModule->id,
                         ]),
                         'lectures' => $lectures,
@@ -1138,10 +1011,10 @@ class ModuleController extends Controller
                 })->values();
 
                 return [
-                    'id'            => (int) $group->id,
-                    'name'          => (string) $group->name,
-                    'whiteboard_url'=> route('formateur.groupes.whiteboard.show', ['group' => $group->id]),
-                    'modules'       => $modules,
+                    'id' => (int) $group->id,
+                    'name' => (string) $group->name,
+                    'whiteboard_url' => route('formateur.groupes.whiteboard.show', ['group' => $group->id]),
+                    'modules' => $modules,
                 ];
             })
             ->values();
@@ -1166,15 +1039,15 @@ class ModuleController extends Controller
             ->get()
             ->map(function (WordCloud $wordCloud) {
                 return [
-                    'id'               => (int) $wordCloud->id,
-                    'title'            => (string) $wordCloud->title,
-                    'question'         => (string) $wordCloud->question,
-                    'module_id'        => (int) ($wordCloud->module_id ?? 0),
-                    'group_id'         => (int) ($wordCloud->group_id ?? 0),
-                    'access_code'      => (string) $wordCloud->access_code,
-                    'is_active'        => (bool) $wordCloud->is_active,
-                    'live_url'         => route('formateur.wordclouds.live', ['wordCloud' => $wordCloud->id]),
-                    'join_url'         => route('wordcloud.join.code', ['code' => $wordCloud->access_code]),
+                    'id' => (int) $wordCloud->id,
+                    'title' => (string) $wordCloud->title,
+                    'question' => (string) $wordCloud->question,
+                    'module_id' => (int) ($wordCloud->module_id ?? 0),
+                    'group_id' => (int) ($wordCloud->group_id ?? 0),
+                    'access_code' => (string) $wordCloud->access_code,
+                    'is_active' => (bool) $wordCloud->is_active,
+                    'live_url' => route('formateur.wordclouds.live', ['wordCloud' => $wordCloud->id]),
+                    'join_url' => route('wordcloud.join.code', ['code' => $wordCloud->access_code]),
                     'updated_at_human' => $wordCloud->updated_at?->diffForHumans(),
                 ];
             })

@@ -5,11 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\ContentBlockScormResult;
 use App\Models\ContentBlockScormScore;
 use App\Models\ModuleLecture;
+use App\Support\Scorm\InteractsWithScormProgress;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class ContentBlockScormController extends Controller
 {
+    use InteractsWithScormProgress;
+
     /**
      * Sauvegarde la progression d'un bloc SCORM embarqué dans une leçon mixte.
      * Miroir de SCORMController::saveProgress, mais scopé par content_block_key
@@ -74,31 +77,12 @@ class ContentBlockScormController extends Controller
         $sc->last_attempt_at = now();
         $sc->save();
 
+        $this->recomputeMonotoneStatus($sc, $lectureId);
+
         return response()->json([
             'success' => true,
             'lesson_status' => $sc->is_completed ? 'completed' : 'in_progress',
             'scorm_lesson_status' => $sc->lesson_status,
         ]);
-    }
-
-    private function handleSessionTime(ContentBlockScormScore $sc, string $scormValue)
-    {
-        $cleanTime = explode('.', $scormValue)[0];
-        $parts = explode(':', $cleanTime);
-
-        if (count($parts) === 3) {
-            [$h, $m, $s] = array_map('intval', $parts);
-            $durationSeconds = ($h * 3600) + ($m * 60) + $s;
-
-            $lastSessionTime = (int) $sc->last_session_time;
-            $delta = $durationSeconds - $lastSessionTime;
-
-            if ($delta > 0) {
-                $sc->session_time = (int) $sc->session_time + $delta;
-                $sc->last_session_time = $durationSeconds;
-            } elseif ($durationSeconds < $lastSessionTime) {
-                $sc->last_session_time = $durationSeconds;
-            }
-        }
     }
 }

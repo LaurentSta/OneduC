@@ -6,11 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Group;
 use App\Models\ScaleSession;
 use App\Models\ScaleSessionResponse;
+use App\Services\CodeGeneratorService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class OutilsEchelleController extends Controller
@@ -41,14 +40,14 @@ class OutilsEchelleController extends Controller
         $formateurId = (int) auth()->id();
 
         $data = $request->validate([
-            'group_id'                  => ['required', 'exists:groups,id'],
-            'title'                     => ['nullable', 'string', 'max:255'],
-            'questions'                 => ['required', 'array', 'min:1', 'max:10'],
-            'questions.*.question'      => ['required', 'string', 'max:500'],
-            'questions.*.label_min'     => ['nullable', 'string', 'max:100'],
-            'questions.*.label_max'     => ['nullable', 'string', 'max:100'],
-            'questions.*.min'           => ['required', 'integer', 'min:1', 'max:9'],
-            'questions.*.max'           => ['required', 'integer', 'min:2', 'max:10'],
+            'group_id' => ['required', 'exists:groups,id'],
+            'title' => ['nullable', 'string', 'max:255'],
+            'questions' => ['required', 'array', 'min:1', 'max:10'],
+            'questions.*.question' => ['required', 'string', 'max:500'],
+            'questions.*.label_min' => ['nullable', 'string', 'max:100'],
+            'questions.*.label_max' => ['nullable', 'string', 'max:100'],
+            'questions.*.min' => ['required', 'integer', 'min:1', 'max:9'],
+            'questions.*.max' => ['required', 'integer', 'min:2', 'max:10'],
         ]);
 
         $group = Group::query()
@@ -59,12 +58,13 @@ class OutilsEchelleController extends Controller
             ->map(function (array $q): array {
                 $min = (int) $q['min'];
                 $max = (int) $q['max'];
+
                 return [
-                    'question'  => trim((string) $q['question']),
+                    'question' => trim((string) $q['question']),
                     'label_min' => trim((string) ($q['label_min'] ?? '')),
                     'label_max' => trim((string) ($q['label_max'] ?? '')),
-                    'min'       => min($min, $max - 1),
-                    'max'       => max($max, $min + 1),
+                    'min' => min($min, $max - 1),
+                    'max' => max($max, $min + 1),
                 ];
             })
             ->filter(fn (array $q): bool => $q['question'] !== '')
@@ -74,13 +74,13 @@ class OutilsEchelleController extends Controller
 
         $session = ScaleSession::query()->create([
             'formateur_id' => $formateurId,
-            'group_id'     => $group->id,
-            'title'        => trim((string) ($data['title'] ?? '')) ?: 'Échelle de positionnement',
-            'questions'    => $questions->all(),
-            'access_code'  => $this->generateCode(),
-            'is_active'    => true,
-            'opened_at'    => now(),
-            'closed_at'    => null,
+            'group_id' => $group->id,
+            'title' => trim((string) ($data['title'] ?? '')) ?: 'Échelle de positionnement',
+            'questions' => $questions->all(),
+            'access_code' => CodeGeneratorService::generateUniqueCode(ScaleSession::class),
+            'is_active' => true,
+            'opened_at' => now(),
+            'closed_at' => null,
         ]);
 
         return redirect()->route('formateur.echelle.show', $session);
@@ -95,8 +95,8 @@ class OutilsEchelleController extends Controller
 
         return view('formateur.outils.echelle_show', [
             'scaleSession' => $scaleSession,
-            'joinUrl'      => route('echelle.join.code', $scaleSession->access_code),
-            'stats'        => $stats,
+            'joinUrl' => route('echelle.join.code', $scaleSession->access_code),
+            'stats' => $stats,
         ]);
     }
 
@@ -107,9 +107,9 @@ class OutilsEchelleController extends Controller
         $newStatus = ! $scaleSession->is_active;
 
         $scaleSession->update([
-            'is_active'  => $newStatus,
-            'opened_at'  => $newStatus ? now() : $scaleSession->opened_at,
-            'closed_at'  => $newStatus ? null : now(),
+            'is_active' => $newStatus,
+            'opened_at' => $newStatus ? now() : $scaleSession->opened_at,
+            'closed_at' => $newStatus ? null : now(),
         ]);
 
         return back()->with(
@@ -145,12 +145,12 @@ class OutilsEchelleController extends Controller
                 ->map(fn ($v) => (int) $v);
 
             $respondents = $values->count();
-            $average     = $respondents > 0 ? round($values->avg(), 1) : null;
+            $average = $respondents > 0 ? round($values->avg(), 1) : null;
 
-            $sorted  = $values->sort()->values();
-            $median  = null;
+            $sorted = $values->sort()->values();
+            $median = null;
             if ($respondents > 0) {
-                $mid    = (int) floor(($respondents - 1) / 2);
+                $mid = (int) floor(($respondents - 1) / 2);
                 $median = $respondents % 2 === 1
                     ? $sorted[$mid]
                     : round(($sorted[$mid] + $sorted[$mid + 1]) / 2, 1);
@@ -159,48 +159,35 @@ class OutilsEchelleController extends Controller
             $countsByValue = $values->countBy()->all();
 
             $distribution = collect(range($min, $max))->map(function (int $v) use ($countsByValue, $respondents): array {
-                $count   = (int) ($countsByValue[$v] ?? 0);
+                $count = (int) ($countsByValue[$v] ?? 0);
                 $percent = $respondents > 0 ? (int) round(($count / $respondents) * 100) : 0;
+
                 return compact('v', 'count', 'percent') + ['value' => $v];
             })->values()->all();
 
             return [
-                'question'    => (string) ($question['question'] ?? ''),
-                'label_min'   => (string) ($question['label_min'] ?? ''),
-                'label_max'   => (string) ($question['label_max'] ?? ''),
-                'min'         => $min,
-                'max'         => $max,
+                'question' => (string) ($question['question'] ?? ''),
+                'label_min' => (string) ($question['label_min'] ?? ''),
+                'label_max' => (string) ($question['label_max'] ?? ''),
+                'min' => $min,
+                'max' => $max,
                 'respondents' => $respondents,
-                'average'     => $average,
-                'median'      => $median,
+                'average' => $average,
+                'median' => $median,
                 'distribution' => $distribution,
             ];
         })->values()->all();
 
         return [
-            'is_active'        => (bool) $scaleSession->is_active,
+            'is_active' => (bool) $scaleSession->is_active,
             'respondents_total' => (int) $totalRespondents,
-            'questions'        => $questionsPayload,
-            'updated_at'       => now()->toIso8601String(),
+            'questions' => $questionsPayload,
+            'updated_at' => now()->toIso8601String(),
         ];
     }
 
     private function assertOwnership(ScaleSession $scaleSession): void
     {
         abort_unless((int) $scaleSession->formateur_id === (int) auth()->id(), 403);
-    }
-
-    private function generateCode(): string
-    {
-        $alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-
-        do {
-            $code = '';
-            for ($i = 0; $i < 6; $i++) {
-                $code .= $alphabet[random_int(0, strlen($alphabet) - 1)];
-            }
-        } while (ScaleSession::query()->where('access_code', Str::upper($code))->exists());
-
-        return Str::upper($code);
     }
 }

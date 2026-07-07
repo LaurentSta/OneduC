@@ -5,12 +5,12 @@ namespace App\Http\Controllers\Backend;
 use App\Http\Controllers\Controller;
 use App\Models\Module;
 use App\Models\WordCloud;
+use App\Services\CodeGeneratorService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class WordCloudController extends Controller
@@ -45,8 +45,8 @@ class WordCloudController extends Controller
 
         $wordCloud = WordCloud::create([
             ...$data,
-            'access_code' => $this->generateCode(),
-            'is_active' => (bool)($data['is_active'] ?? true),
+            'access_code' => CodeGeneratorService::generateUniqueCode(WordCloud::class),
+            'is_active' => (bool) ($data['is_active'] ?? true),
             'opened_at' => ($data['is_active'] ?? true) ? now() : null,
         ]);
 
@@ -81,7 +81,7 @@ class WordCloudController extends Controller
             'is_active' => ['nullable', 'boolean'],
         ]);
 
-        $isActive = (bool)($data['is_active'] ?? false);
+        $isActive = (bool) ($data['is_active'] ?? false);
 
         $wordCloud->update([
             ...$data,
@@ -123,14 +123,5 @@ class WordCloudController extends Controller
             'words' => $words,
             'updated_at' => now()->toIso8601String(),
         ]);
-    }
-
-    private function generateCode(): string
-    {
-        do {
-            $code = strtoupper(Str::random(6));
-        } while (WordCloud::where('access_code', $code)->exists());
-
-        return $code;
     }
 }

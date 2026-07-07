@@ -1,18 +1,17 @@
 <?php
+
 // /home/laurents/Oneduc_Dev/app/Http/Controllers/Stagiaire/QuizController.php
 
 namespace App\Http\Controllers\Stagiaire;
 
+use App\Http\Controllers\Concerns\InteractsWithLectureProgressStats;
 use App\Http\Controllers\Controller;
-use App\Models\GroupModuleLecture;
 use App\Models\Module;
 use App\Models\ModuleLecture;
 use App\Models\ModuleSection;
 use App\Models\QuizAttempt;
 use App\Models\QuizAttemptQuestion;
 use App\Models\QuizQuestion;
-use App\Models\ScormResult;
-use App\Models\ScormScore;
 use App\Services\QuizService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -23,10 +22,11 @@ use Illuminate\Support\Facades\URL;
 
 class QuizController extends Controller
 {
+    use InteractsWithLectureProgressStats;
+
     public function __construct(
         private readonly QuizService $quizService
-    ) {
-    }
+    ) {}
 
     /**
      * Lance le quiz depuis une leçon (URL signée).
@@ -68,7 +68,7 @@ class QuizController extends Controller
         $attempt = null;
 
         // Reprise (stagiaire uniquement)
-        if (!$forceNew) {
+        if (! $forceNew) {
             $attempt = QuizAttempt::query()
                 ->where('user_id', auth()->id())
                 ->where('lecture_id', $lecture->id)
@@ -77,7 +77,7 @@ class QuizController extends Controller
                 ->first();
         }
 
-        if (!$attempt) {
+        if (! $attempt) {
             $attempt = DB::transaction(function () use ($lecture, $perAttempt) {
                 $attempt = QuizAttempt::create($this->attemptCreatePayload($lecture));
 
@@ -90,10 +90,10 @@ class QuizController extends Controller
 
                 foreach ($picked as $i => $q) {
                     QuizAttemptQuestion::create([
-                        'attempt_id'  => $attempt->id,
+                        'attempt_id' => $attempt->id,
                         'question_id' => $q->id,
-                        'position'    => $i + 1,
-                        'time_seconds'=> 0, // Initialisation
+                        'position' => $i + 1,
+                        'time_seconds' => 0, // Initialisation
                     ]);
                 }
 
@@ -138,7 +138,7 @@ class QuizController extends Controller
         $lectureStats = $this->buildLectureStats($lectures, (int) auth()->id());
         $sectionStatuses = $this->computeSectionStatuses($module, $lectureStats);
 
-        if (!is_null($attempt->finished_at)) {
+        if (! is_null($attempt->finished_at)) {
             return $this->redirectResult($module, $section, $lecture, $attempt);
         }
 
@@ -148,8 +148,9 @@ class QuizController extends Controller
             ->orderBy('position')
             ->first();
 
-        if (!$aq) {
+        if (! $aq) {
             $this->finalizeAttempt($attempt);
+
             return $this->redirectResult($module, $section, $lecture, $attempt);
         }
 
@@ -164,17 +165,17 @@ class QuizController extends Controller
         $view = $isFormateur ? 'formateur.formations.quiz.question' : 'stagiaire.formations.quiz.question';
 
         return view($view, [
-            'module'          => $module,
-            'section'         => $section,
-            'lecture'         => $lecture,
+            'module' => $module,
+            'section' => $section,
+            'lecture' => $lecture,
             'selectedLecture' => $lecture,
-            'attempt'         => $attempt,
-            'aq'              => $aq,
-            'question'        => $question,
-            'lectureStats'    => $lectureStats,
+            'attempt' => $attempt,
+            'aq' => $aq,
+            'question' => $question,
+            'lectureStats' => $lectureStats,
             'sectionStatuses' => $sectionStatuses,
-            'contextQuery'    => $this->buildContextQuery(),
-            'isFormateur'     => $isFormateur,
+            'contextQuery' => $this->buildContextQuery(),
+            'isFormateur' => $isFormateur,
         ]);
     }
 
@@ -186,7 +187,7 @@ class QuizController extends Controller
         $this->assertLectureContext($module, $section, $lecture);
         $this->assertAttemptContext($attempt, $lecture);
 
-        abort_if(!is_null($attempt->finished_at), 403);
+        abort_if(! is_null($attempt->finished_at), 403);
 
         $current = $attempt->attemptQuestions()
             ->whereNull('answered_at')
@@ -205,7 +206,7 @@ class QuizController extends Controller
             ]);
         } elseif ((string) $question->type === 'multiple') {
             $request->validate([
-                'answers'   => ['required', 'array', 'min:1'],
+                'answers' => ['required', 'array', 'min:1'],
                 'answers.*' => ['integer'],
             ], [
                 'answers.required' => 'Veuillez sélectionner au moins une réponse avant de valider.',
@@ -213,7 +214,7 @@ class QuizController extends Controller
             ]);
         } elseif ((string) $question->type === 'cloze') {
             $request->validate([
-                'answers'   => ['required', 'array', 'min:1'],
+                'answers' => ['required', 'array', 'min:1'],
                 'answers.*' => ['nullable', 'string'],
             ], [
                 'answers.required' => 'Veuillez compléter les champs avant de valider.',
@@ -240,13 +241,15 @@ class QuizController extends Controller
             // Là aussi, on sécurise avec abs()
             $duration = (int) abs(now()->diffInSeconds($lastActivity));
             // On plafonne à 5min (300s) pour éviter les valeurs folles
-            if ($duration > 300) $duration = 300; 
+            if ($duration > 300) {
+                $duration = 300;
+            }
         }
         // ------------------------------------------
 
         $updateAttemptQuestion = [
-            'is_correct'   => (int) ($graded['is_correct'] ?? false),
-            'answered_at'  => now(),
+            'is_correct' => (int) ($graded['is_correct'] ?? false),
+            'answered_at' => now(),
             'time_seconds' => $duration, // Sera toujours >= 0 maintenant
         ];
 
@@ -261,7 +264,7 @@ class QuizController extends Controller
         }
 
         $current->update($updateAttemptQuestion);
-        
+
         // On touche aussi le updated_at de la tentative pour le fallback de la question suivante
         $attempt->touch();
 
@@ -328,10 +331,10 @@ class QuizController extends Controller
         $correctCount = $rows->where('is_correct', true)->count();
 
         // --- NOUVELLE LOGIQUE DE NAVIGATION PÉDAGOGIQUE ---
-        
+
         // 1. Détecter la position de la leçon dans la section actuelle
         $sectionLectures = $section->lectures->sortBy('position')->values();
-        $currentIndexInSec = $sectionLectures->search(fn($l) => (int)$l->id === (int)$lecture->id);
+        $currentIndexInSec = $sectionLectures->search(fn ($l) => (int) $l->id === (int) $lecture->id);
         $isLastInSection = ($currentIndexInSec === $sectionLectures->count() - 1);
 
         $nextUrl = '#';
@@ -344,10 +347,10 @@ class QuizController extends Controller
             $allModuleLectures = $lectures;
             $globalIdx = $allModuleLectures->search(fn ($l) => (int) $l->id === (int) $lecture->id);
             $nextLec = ($globalIdx !== false) ? $allModuleLectures->get($globalIdx + 1) : null;
-            
+
             if ($nextLec) {
                 $nextUrl = route('formateur.formations.lecture', [
-                    'module'  => $module->id,
+                    'module' => $module->id,
                     'section' => $nextLec->section_id,
                     'lecture' => $nextLec->id,
                 ] + $contextQuery);
@@ -356,11 +359,11 @@ class QuizController extends Controller
             }
         } else {
             // Logique Stagiaire : Chapitre par Chapitre
-            if (!$isLastInSection) {
+            if (! $isLastInSection) {
                 // Il reste des leçons dans le chapitre actuel
                 $nextLec = $sectionLectures->get($currentIndexInSec + 1);
                 $nextUrl = route('stagiaire.module.lecture', [
-                    'module'  => $module->id,
+                    'module' => $module->id,
                     'section' => $section->id,
                     'lecture' => $nextLec->id,
                 ] + $contextQuery);
@@ -370,12 +373,12 @@ class QuizController extends Controller
                     ->filter(fn ($candidate) => (int) $candidate->id > (int) $section->id)
                     ->sortBy('id')
                     ->first(fn ($candidate) => $candidate->lectures->isNotEmpty());
-                
+
                 if ($nextSection) {
                     // Redirection vers la page de garde du chapitre suivant (Objectifs)
                     $nextUrl = route('stagiaire.module.section', [
-                        'module'  => $module->id,
-                        'section' => $nextSection->id
+                        'module' => $module->id,
+                        'section' => $nextSection->id,
                     ] + $contextQuery);
                 } else {
                     // Fin du module complet
@@ -387,18 +390,18 @@ class QuizController extends Controller
         $view = $isFormateur ? 'formateur.formations.quiz.result' : 'stagiaire.formations.quiz.result';
 
         return view($view, [
-            'module'          => $module,
-            'section'         => $section,
-            'lecture'         => $lecture,
+            'module' => $module,
+            'section' => $section,
+            'lecture' => $lecture,
             'selectedLecture' => $lecture,
-            'attempt'         => $attempt,
-            'rows'            => $rows,
-            'correctCount'    => $correctCount,
-            'nextUrl'         => $nextUrl,
-            'lectureStats'    => $lectureStats,
+            'attempt' => $attempt,
+            'rows' => $rows,
+            'correctCount' => $correctCount,
+            'nextUrl' => $nextUrl,
+            'lectureStats' => $lectureStats,
             'sectionStatuses' => $sectionStatuses,
-            'contextQuery'    => $contextQuery,
-            'isFormateur'     => $isFormateur,
+            'contextQuery' => $contextQuery,
+            'isFormateur' => $isFormateur,
         ]);
     }
 
@@ -408,13 +411,13 @@ class QuizController extends Controller
         $this->assertLectureContext($module, $section, $lecture);
         $this->assertAttemptContext($attempt, $lecture);
 
-        if (!$this->isFormateur()) {
+        if (! $this->isFormateur()) {
             abort_if(is_null($attempt->finished_at), 403);
         }
 
         return redirect()->to(
             URL::signedRoute($this->routeName('quiz.start'), [
-                'module'  => $module->id,
+                'module' => $module->id,
                 'section' => $section->id,
                 'lecture' => $lecture->id,
                 'restart' => 1,
@@ -446,15 +449,15 @@ class QuizController extends Controller
     private function attemptCreatePayload(ModuleLecture $lecture): array
     {
         return [
-            'user_id'              => auth()->id(),
-            'lecture_id'           => $lecture->id,
-            'started_at'           => now(),
-            'finished_at'          => null,
-            'total_questions'      => (int) $lecture->quiz_questions_per_attempt,
-            'score'                => 0,
-            'percent'              => 0,
-            'passed'               => 0,
-            'total_time_seconds'   => 0,
+            'user_id' => auth()->id(),
+            'lecture_id' => $lecture->id,
+            'started_at' => now(),
+            'finished_at' => null,
+            'total_questions' => (int) $lecture->quiz_questions_per_attempt,
+            'score' => 0,
+            'percent' => 0,
+            'passed' => 0,
+            'total_time_seconds' => 0,
         ];
     }
 
@@ -471,7 +474,7 @@ class QuizController extends Controller
     private function redirectQuestion(Module $module, ModuleSection $section, ModuleLecture $lecture, QuizAttempt $attempt)
     {
         return redirect()->route($this->routeName('lesson.quiz.question'), [
-            'module'  => $module->id,
+            'module' => $module->id,
             'section' => $section->id,
             'lecture' => $lecture->id,
             'attempt' => $attempt->id,
@@ -481,7 +484,7 @@ class QuizController extends Controller
     private function redirectResult(Module $module, ModuleSection $section, ModuleLecture $lecture, QuizAttempt $attempt)
     {
         return redirect()->route($this->routeName('lesson.quiz.result'), [
-            'module'  => $module->id,
+            'module' => $module->id,
             'section' => $section->id,
             'lecture' => $lecture->id,
             'attempt' => $attempt->id,
@@ -491,14 +494,15 @@ class QuizController extends Controller
     private function routeName(string $suffix): string
     {
         $prefix = $this->isFormateur() ? 'formateur' : 'stagiaire';
-        $name = $prefix . '.' . $suffix;
+        $name = $prefix.'.'.$suffix;
 
-        if (!Route::has($name)) {
-            $fallback = 'stagiaire.' . $suffix;
+        if (! Route::has($name)) {
+            $fallback = 'stagiaire.'.$suffix;
             if (Route::has($fallback)) {
                 return $fallback;
             }
         }
+
         return $name;
     }
 
@@ -510,7 +514,7 @@ class QuizController extends Controller
     private function buildContextQuery(): array
     {
         $mode = (string) request()->query('mode', '');
-        if (!in_array($mode, ['groupe', 'officiel'], true)) {
+        if (! in_array($mode, ['groupe', 'officiel'], true)) {
             $mode = null;
         }
 
@@ -518,10 +522,10 @@ class QuizController extends Controller
         $groupId = is_numeric($groupIdRaw) ? (int) $groupIdRaw : null;
 
         return array_filter([
-            'mode'           => $mode,
-            'group_id'       => $groupId ?: null,
+            'mode' => $mode,
+            'group_id' => $groupId ?: null,
             'include_hidden' => request()->boolean('include_hidden') ? 1 : null,
-            'anonymous'      => request()->boolean('anonymous') ? 1 : null,
+            'anonymous' => request()->boolean('anonymous') ? 1 : null,
         ], static fn ($v) => $v !== null && $v !== '');
     }
 
@@ -532,154 +536,8 @@ class QuizController extends Controller
             ->where('group_user.user_id', $userId)
             ->where('group_module.module_id', $moduleId)
             ->value('group_user.group_id');
+
         return $gid ? (int) $gid : null;
-    }
-
-    private function applyGroupLessonOverrides(Module $module, ?int $groupId): void
-    {
-        if (!$groupId) return;
-        $over = GroupModuleLecture::query()
-            ->where('group_id', $groupId)
-            ->where('module_id', $module->id)
-            ->get()
-            ->keyBy('lecture_id');
-        if ($over->isEmpty()) return;
-
-        $module->sections->each(function ($sec) use ($over) {
-            $sec->setRelation('lectures', $sec->lectures
-                ->filter(function ($lec) use ($over) {
-                    $row = $over->get($lec->id);
-                    return $row ? (bool) $row->is_enabled : true;
-                })
-                ->sortBy(function ($lec) use ($over) {
-                    $row = $over->get($lec->id);
-                    return $row ? (int) $row->position : (int) ($lec->position ?? 999999);
-                })
-                ->values()
-            );
-        });
-    }
-
-    private function buildLectureStats($lectures, int $userId): array
-    {
-        // (Copiez votre méthode buildLectureStats existante ici, elle ne change pas pour le timer)
-        // ... Code existant ...
-        $lectureIds = $lectures->pluck('id')->all();
-
-        $attempts = QuizAttempt::query()
-            ->where('user_id', $userId)
-            ->whereIn('lecture_id', $lectureIds)
-            ->orderByDesc('finished_at')
-            ->orderByDesc('id')
-            ->get()
-            ->groupBy('lecture_id')
-            ->map(fn ($rows) => $rows->first());
-
-        $attemptIds = $attempts->filter()->pluck('id')->all();
-
-        $attemptAgg = collect();
-        if (!empty($attemptIds)) {
-            $attemptAgg = QuizAttemptQuestion::query()
-                ->select([
-                    'attempt_id',
-                    DB::raw('COUNT(*) as total'),
-                    DB::raw('SUM(CASE WHEN answered_at IS NOT NULL THEN 1 ELSE 0 END) as answered'),
-                    DB::raw('SUM(CASE WHEN is_correct = 1 THEN 1 ELSE 0 END) as correct'),
-                ])
-                ->whereIn('attempt_id', $attemptIds)
-                ->groupBy('attempt_id')
-                ->get()
-                ->keyBy('attempt_id');
-        }
-
-        $scores = ScormScore::query()
-            ->where('user_id', $userId)
-            ->whereIn('lecture_id', $lectureIds)
-            ->get()
-            ->keyBy('lecture_id');
-
-        $started = ScormResult::query()
-            ->where('user_id', $userId)
-            ->whereIn('lecture_id', $lectureIds)
-            ->select('lecture_id', DB::raw('COUNT(*) as c'))
-            ->groupBy('lecture_id')
-            ->pluck('c', 'lecture_id');
-
-        $stats = [];
-
-        foreach ($lectures as $lec) {
-            if ((bool) ($lec->quiz_enabled ?? false)) {
-                $attempt = $attempts->get($lec->id);
-                $planned = (int) ($lec->quiz_questions_per_attempt ?? 0);
-
-                if (!$attempt) {
-                    $stats[$lec->id] = [
-                        'status'             => 'not_started',
-                        'quiz'               => true,
-                        'questions_total'    => $planned,
-                        'questions_answered' => 0,
-                        'questions_correct'  => 0,
-                        'quiz_score'         => null,
-                        'quiz_finished'      => false,
-                        'slides'             => (int) ($lec->slide_count ?? 0),
-                        'session_time'       => null,
-                    ];
-                    continue;
-                }
-
-                $agg      = $attemptAgg->get($attempt->id);
-                $total    = (int) ($agg->total ?? $attempt->total_questions ?? $planned ?? 0);
-                $answered = (int) ($agg->answered ?? 0);
-                $correct  = (int) ($agg->correct ?? 0);
-                $score    = !is_null($attempt->percent)
-                    ? (int) $attempt->percent
-                    : (($total > 0) ? (int) round(($correct / $total) * 100) : null);
-                $finished = !is_null($attempt->finished_at);
-
-                if (!$finished) {
-                    $status = $answered > 0 ? 'in_progress' : 'not_started';
-                } else {
-                    $status = ($score !== null && $score >= 50) ? 'completed' : 'failed';
-                }
-
-                $stats[$lec->id] = [
-                    'status'             => $status,
-                    'quiz'               => true,
-                    'questions_total'    => $total,
-                    'questions_answered' => $answered,
-                    'questions_correct'  => $correct,
-                    'quiz_score'         => $score,
-                    'quiz_finished'      => $finished,
-                    'slides'             => (int) ($lec->slide_count ?? 0),
-                    'session_time'       => null,
-                ];
-                continue;
-            }
-
-            // Sinon : SCORM
-            $hasStarted   = (int) ($started[$lec->id] ?? 0) > 0;
-            $sc           = $scores->get($lec->id);
-            $lessonStatus = strtolower((string) ($sc->lesson_status ?? ''));
-            $isCompleted  = in_array($lessonStatus, ['completed', 'passed'], true) || (bool) ($sc->is_completed ?? false);
-
-            if (!$hasStarted) $status = 'not_started';
-            elseif ($isCompleted) $status = 'completed';
-            else $status = 'in_progress';
-
-            $stats[$lec->id] = [
-                'status'             => $status,
-                'quiz'               => false,
-                'questions_total'    => 0,
-                'questions_answered' => 0,
-                'questions_correct'  => 0,
-                'quiz_score'         => null,
-                'quiz_finished'      => false,
-                'slides'             => (int) ($lec->slide_count ?? 0),
-                'session_time'       => $sc->session_time ?? null,
-            ];
-        }
-
-        return $stats;
     }
 
     private function computeSectionStatuses(Module $module, array $lectureStats): array
@@ -689,6 +547,7 @@ class QuizController extends Controller
             $total = $sec->lectures->count();
             if ($total === 0) {
                 $out[$sec->id] = 'not_started';
+
                 continue;
             }
             $ok = $sec->lectures->filter(function ($lec) use ($lectureStats) {
@@ -696,6 +555,7 @@ class QuizController extends Controller
             })->count();
             $out[$sec->id] = ($ok === $total) ? 'completed' : ($ok > 0 ? 'in_progress' : 'not_started');
         }
+
         return $out;
     }
 }
