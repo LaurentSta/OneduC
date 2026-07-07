@@ -26,6 +26,8 @@ use App\Models\ScaleSessionResponse;
 use App\Models\ScormEvaluationScore;
 use App\Models\ScormInteraction;
 use App\Models\ScormScore;
+use App\Models\Seance;
+use App\Models\SeancePresence;
 use App\Models\VideoSegmentTracking;
 use App\Models\WordCloud;
 use App\Models\WordCloudEntry;
@@ -646,7 +648,7 @@ class StagiaireController extends Controller
     /** ========= OUTILS NUMÉRIQUES ========= */
     public function StagiaireOutils()
     {
-        $user   = auth()->user();
+        $user = auth()->user();
         $userId = $user->id;
 
         $group = Group::active()
@@ -655,27 +657,27 @@ class StagiaireController extends Controller
 
         if (! $group) {
             return view('stagiaire.stagiaire_outils', [
-                'tools'     => collect(),
-                'group'     => null,
+                'tools' => collect(),
+                'group' => null,
                 'formateur' => null,
             ]);
         }
 
-        $groupId   = $group->id;
+        $groupId = $group->id;
         $formateur = $group->instructor;
-        $tools     = collect();
+        $tools = collect();
 
         // Nuage de mots
         $wordClouds = WordCloud::where('group_id', $groupId)->get();
         if ($wordClouds->count() > 0) {
             $wcIds = $wordClouds->pluck('id');
-            $tools->push((object)[
-                'key'          => 'wordcloud',
-                'label'        => 'Nuage de mots',
-                'sessions'     => $wordClouds->count(),
+            $tools->push((object) [
+                'key' => 'wordcloud',
+                'label' => 'Nuage de mots',
+                'sessions' => $wordClouds->count(),
                 'participated' => WordCloudEntry::whereIn('word_cloud_id', $wcIds)->where('user_id', $userId)->distinct('word_cloud_id')->count('word_cloud_id'),
-                'trackable'    => true,
-                'last_used'    => $wordClouds->max('opened_at') ?? $wordClouds->max('created_at'),
+                'trackable' => true,
+                'last_used' => $wordClouds->max('opened_at') ?? $wordClouds->max('created_at'),
             ]);
         }
 
@@ -683,13 +685,13 @@ class StagiaireController extends Controller
         $polls = PollSession::where('group_id', $groupId)->get();
         if ($polls->count() > 0) {
             $pollIds = $polls->pluck('id');
-            $tools->push((object)[
-                'key'          => 'poll',
-                'label'        => 'Sondage',
-                'sessions'     => $polls->count(),
+            $tools->push((object) [
+                'key' => 'poll',
+                'label' => 'Sondage',
+                'sessions' => $polls->count(),
                 'participated' => PollSessionResponse::whereIn('poll_session_id', $pollIds)->where('user_id', $userId)->distinct('poll_session_id')->count('poll_session_id'),
-                'trackable'    => true,
-                'last_used'    => $polls->max('opened_at') ?? $polls->max('created_at'),
+                'trackable' => true,
+                'last_used' => $polls->max('opened_at') ?? $polls->max('created_at'),
             ]);
         }
 
@@ -697,13 +699,13 @@ class StagiaireController extends Controller
         $liveQuizzes = LiveQuizSession::where('group_id', $groupId)->get();
         if ($liveQuizzes->count() > 0) {
             $lqIds = $liveQuizzes->pluck('id');
-            $tools->push((object)[
-                'key'          => 'live_quiz',
-                'label'        => 'Quiz en direct',
-                'sessions'     => $liveQuizzes->count(),
+            $tools->push((object) [
+                'key' => 'live_quiz',
+                'label' => 'Quiz en direct',
+                'sessions' => $liveQuizzes->count(),
                 'participated' => LiveQuizSessionParticipant::whereIn('live_quiz_session_id', $lqIds)->where('user_id', $userId)->distinct('live_quiz_session_id')->count('live_quiz_session_id'),
-                'trackable'    => true,
-                'last_used'    => $liveQuizzes->max('ended_at') ?? $liveQuizzes->max('started_at') ?? $liveQuizzes->max('created_at'),
+                'trackable' => true,
+                'last_used' => $liveQuizzes->max('ended_at') ?? $liveQuizzes->max('started_at') ?? $liveQuizzes->max('created_at'),
             ]);
         }
 
@@ -711,26 +713,26 @@ class StagiaireController extends Controller
         $questionWalls = QuestionWall::where('group_id', $groupId)->get();
         if ($questionWalls->count() > 0) {
             $qwIds = $questionWalls->pluck('id');
-            $tools->push((object)[
-                'key'          => 'question_wall',
-                'label'        => 'Mur de questions',
-                'sessions'     => $questionWalls->count(),
+            $tools->push((object) [
+                'key' => 'question_wall',
+                'label' => 'Mur de questions',
+                'sessions' => $questionWalls->count(),
                 'participated' => QuestionWallQuestion::whereIn('question_wall_id', $qwIds)->where('user_id', $userId)->distinct('question_wall_id')->count('question_wall_id'),
-                'trackable'    => true,
-                'last_used'    => $questionWalls->max('updated_at') ?? $questionWalls->max('created_at'),
+                'trackable' => true,
+                'last_used' => $questionWalls->max('updated_at') ?? $questionWalls->max('created_at'),
             ]);
         }
 
         // Tableau blanc (1 par groupe)
         $whiteboard = GroupWhiteboard::where('group_id', $groupId)->first();
         if ($whiteboard) {
-            $tools->push((object)[
-                'key'          => 'whiteboard',
-                'label'        => 'Tableau blanc',
-                'sessions'     => 1,
+            $tools->push((object) [
+                'key' => 'whiteboard',
+                'label' => 'Tableau blanc',
+                'sessions' => 1,
                 'participated' => GroupWhiteboardItem::where('group_whiteboard_id', $whiteboard->id)->where('created_by', $userId)->exists() ? 1 : 0,
-                'trackable'    => true,
-                'last_used'    => $whiteboard->updated_at ?? $whiteboard->created_at,
+                'trackable' => true,
+                'last_used' => $whiteboard->updated_at ?? $whiteboard->created_at,
             ]);
         }
 
@@ -738,13 +740,13 @@ class StagiaireController extends Controller
         if (config('outils.minuteur.enabled')) {
             $timer = GroupTimer::where('group_id', $groupId)->first();
             if ($timer) {
-                $tools->push((object)[
-                    'key'          => 'timer',
-                    'label'        => 'Minuteur',
-                    'sessions'     => 1,
+                $tools->push((object) [
+                    'key' => 'timer',
+                    'label' => 'Minuteur',
+                    'sessions' => 1,
                     'participated' => null,
-                    'trackable'    => false,
-                    'last_used'    => $timer->updated_at ?? $timer->created_at,
+                    'trackable' => false,
+                    'last_used' => $timer->updated_at ?? $timer->created_at,
                 ]);
             }
         }
@@ -752,13 +754,13 @@ class StagiaireController extends Controller
         // Roue aléatoire (pas de participation individuelle)
         $randomWheels = RandomWheelSession::where('group_id', $groupId)->get();
         if ($randomWheels->count() > 0) {
-            $tools->push((object)[
-                'key'          => 'random_wheel',
-                'label'        => 'Roue aléatoire',
-                'sessions'     => $randomWheels->count(),
+            $tools->push((object) [
+                'key' => 'random_wheel',
+                'label' => 'Roue aléatoire',
+                'sessions' => $randomWheels->count(),
                 'participated' => null,
-                'trackable'    => false,
-                'last_used'    => $randomWheels->max('spun_at') ?? $randomWheels->max('created_at'),
+                'trackable' => false,
+                'last_used' => $randomWheels->max('spun_at') ?? $randomWheels->max('created_at'),
             ]);
         }
 
@@ -766,17 +768,32 @@ class StagiaireController extends Controller
         $scales = ScaleSession::where('group_id', $groupId)->get();
         if ($scales->count() > 0) {
             $scaleIds = $scales->pluck('id');
-            $tools->push((object)[
-                'key'          => 'scale',
-                'label'        => 'Échelle de positionnement',
-                'sessions'     => $scales->count(),
+            $tools->push((object) [
+                'key' => 'scale',
+                'label' => 'Échelle de positionnement',
+                'sessions' => $scales->count(),
                 'participated' => ScaleSessionResponse::whereIn('scale_session_id', $scaleIds)->where('user_id', $userId)->distinct('scale_session_id')->count('scale_session_id'),
-                'trackable'    => true,
-                'last_used'    => $scales->max('opened_at') ?? $scales->max('created_at'),
+                'trackable' => true,
+                'last_used' => $scales->max('opened_at') ?? $scales->max('created_at'),
             ]);
         }
 
-        return view('stagiaire.stagiaire_outils', compact('tools', 'group', 'formateur'));
+        // Émargement
+        $seances = Seance::where('group_id', $groupId)->get();
+        $openSeance = $seances->firstWhere('statut', 'ouverte');
+        if ($seances->count() > 0) {
+            $seanceIds = $seances->pluck('id');
+            $tools->push((object) [
+                'key' => 'emargement',
+                'label' => 'Émargement',
+                'sessions' => $seances->count(),
+                'participated' => SeancePresence::whereIn('seance_id', $seanceIds)->where('user_id', $userId)->where('statut', 'present')->count(),
+                'trackable' => true,
+                'last_used' => $seances->max('date'),
+            ]);
+        }
+
+        return view('stagiaire.stagiaire_outils', compact('tools', 'group', 'formateur', 'openSeance'));
     }
 
     /** ========= MESSAGES ========= */

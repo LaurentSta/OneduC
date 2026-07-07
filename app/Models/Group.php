@@ -15,6 +15,7 @@ class Group extends Model
         'description',
         'is_active',
         'is_sandbox',
+        'emargement_enabled',
         'start_date',
         'end_date',
         'temporary_password',
@@ -25,6 +26,7 @@ class Group extends Model
     protected $casts = [
         'is_active' => 'boolean',
         'is_sandbox' => 'boolean',
+        'emargement_enabled' => 'boolean',
         'start_date' => 'date',
         'end_date' => 'date',
         'temporary_password' => 'encrypted',
@@ -48,15 +50,16 @@ class Group extends Model
     public function students()
     {
         return $this->belongsToMany(User::class, 'group_user', 'group_id', 'user_id')
-                    ->wherePivot('role_in_group', 'stagiaire');
+            ->wherePivot('role_in_group', 'stagiaire');
     }
 
     public function modules()
     {
         return $this->belongsToMany(Module::class, 'group_module')
-        ->withPivot('position')
-        ->orderBy('group_module.position');
+            ->withPivot('position')
+            ->orderBy('group_module.position');
     }
+
     public function users()
     {
         return $this->belongsToMany(User::class, 'group_user', 'group_id', 'user_id');
@@ -132,5 +135,10 @@ class Group extends Model
     public function pollSessions()
     {
         return $this->hasMany(PollSession::class);
+    }
+
+    public function seances()
+    {
+        return $this->hasMany(Seance::class);
     }
 }

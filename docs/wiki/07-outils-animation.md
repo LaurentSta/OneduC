@@ -6,6 +6,8 @@
 
 Oneduc intègre 8 activités live plus une intégration de pages collaboratives HedgeDoc. Ils fonctionnent en présentiel, en distanciel ou en hybride, et vivent dans le même environnement que les modules et les groupes. Une séance n'a donc pas besoin de trois onglets et deux comptes externes pour fonctionner.
 
+Ces outils sont volontairement distincts de l'**émargement** (feuille de présence, document administratif à valeur d'audit) — voir la page dédiée [16 — Émargement](16-emargement.md).
+
 Seuls les stagiaires membres du groupe peuvent participer à un outil actif. Les résultats s'affichent côté formateur avec un délai de 2 à 3 secondes.
 
 ---
@@ -65,7 +67,7 @@ Huit pistes produit supplémentaires sont identifiées. Détail dans [docs/idees
 | OF-001 | Cockpit de séance formateur (tableau de pilotage unifié) | Haute |
 | OF-002 | Ticket de sortie (micro-bilan fin de séquence) | Haute |
 | OF-003 | Mur de questions anonyme avec vote | Haute |
-| OF-004 | Émargement par QR code | Moyenne |
+| OF-004 | Émargement par QR code (l'émargement par signature existe déjà, voir [page 16](16-emargement.md) — le scan QR reste à faire) | Moyenne |
 | OF-005 | Générateur d'activités par IA | Moyenne |
 | OF-006 | Groupes intelligents (binômes, sous-groupes, rôles) | Moyenne |
 | OF-007 | Débrief / rétrospective de session | Moyenne |

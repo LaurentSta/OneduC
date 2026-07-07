@@ -56,7 +56,15 @@
 
     {{-- 🔎 Filtres --}}
     <div x-data="{ filtersOpen: {{ (request()->filled('search') || request()->filled('group_id') || (int) request('per_page', 10) !== 10) ? 'true' : 'false' }} }">
-      <div class="flex justify-end">
+      <div class="flex justify-end gap-3">
+        <a href="{{ route('formateur.emargement.index', request()->filled('group_id') ? ['group_id' => request('group_id')] : []) }}"
+           class="btn-oneduc-outline inline-flex h-10 items-center gap-2 !text-sm">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M9 11l6.586-6.586a2 2 0 112.828 2.828L11.828 13.828a4 4 0 01-1.414.94l-3.536 1.178a.5.5 0 01-.632-.632l1.178-3.536a4 4 0 01.94-1.414z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 21h14"/>
+          </svg>
+          <span>Émargement</span>
+        </a>
         <button type="button"
                 @click="filtersOpen = !filtersOpen"
                 :aria-expanded="filtersOpen"

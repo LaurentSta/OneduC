@@ -152,6 +152,16 @@
     </div>
   </div>
 
+  @if($emargementSummary['total'] > 0)
+    <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mb-10 flex items-center justify-between">
+      <div>
+        <p class="text-[11px] font-bold uppercase text-gray-400">Émargements signés</p>
+        <p class="text-sm text-gray-500 mt-1">Preuves de présence avec signature, distinctes de l'activité en ligne ci-dessus.</p>
+      </div>
+      <p class="text-2xl font-bold text-bleuone">{{ $emargementSummary['signed'] }} / {{ $emargementSummary['total'] }}</p>
+    </div>
+  @endif
+
   <div class="grid grid-cols-1 xl:grid-cols-5 gap-8 mb-10">
     <div class="xl:col-span-3 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
       <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-5">
