@@ -42,6 +42,8 @@ Bouton **« Piloter »** sur une séance → page dédiée (`/formateur/groupes/
 
 Sur son tableau de bord `/stagiaire/outils`, la carte **« Émargement »** affiche un bouton **« Signer maintenant »** uniquement quand une séance est ouverte pour son groupe. Le stagiaire dessine sa signature du doigt/souris sur un pad, puis valide — la signature ne peut être posée qu'une seule fois par séance (une correction ultérieure ne peut venir que du formateur).
 
+Une alerte apparaît aussi dans la **cloche de notification** (visible sur toutes les pages stagiaire, pas seulement Outils) dès qu'une séance s'ouvre pour l'un de ses groupes actifs et que sa signature est encore en attente — item « Émargement à signer » avec le nom du groupe, cliquable directement vers l'écran de signature. L'alerte disparaît d'elle-même une fois signée. Pas d'email pour l'instant (canal jugé moins fiable pour ce public, cf. décision ci-dessous) — seulement le canal in-app, cohérent avec Whiteboard/Mur de questions/Quiz live.
+
 ## Partie technique
 
 ### Schéma de données
@@ -76,7 +78,7 @@ L'activation par groupe est un simple booléen `groups.emargement_enabled` (déf
 |---|---|
 | Modèles | `app/Models/Seance.php`, `app/Models/SeancePresence.php` |
 | Logique métier (français, cf. convention CLAUDE.md) | `app/Domains/Outils/Emargement/Actions/` (`CreerSeance`, `OuvrirSeance`, `ClorerSeance`, `SignerPresence`, `CorrigerPresence`) et `Support/` (`AccesEmargement`, `SignatureImage`, `GenererPdfEmargement`) |
-| Contrôleurs | `app/Http/Controllers/Formateur/EmargementController.php` (méthode `index()` = vue dédiée), `app/Http/Controllers/Stagiaire/EmargementController.php` |
+| Contrôleurs | `app/Http/Controllers/Formateur/EmargementController.php` (méthode `index()` = vue dédiée), `app/Http/Controllers/Stagiaire/EmargementController.php` (dont `notificationStatus()` pour la cloche) |
 | Vues | `resources/views/formateur/emargement/` (`index.blade.php` = vue dédiée avec choix de groupe, `seances-panel.blade.php` = partial liste/création réutilisé par `index.blade.php`), `resources/views/stagiaire/emargement/` |
 
 ### Écarts volontaires par rapport au pattern des autres outils (page 07)
@@ -85,6 +87,7 @@ L'activation par groupe est un simple booléen `groups.emargement_enabled` (déf
 - **Pad de signature en canvas HTML5 natif** (`resources/views/components/oneduc/signature-pad.blade.php`, Pointer Events, `canvas.toDataURL('image/png')`), pas de dépendance JS externe — le tableau blanc utilise Excalidraw (React), largement surdimensionné pour un simple pad de signature.
 - **Stockage de la signature via Spatie Media Library**, disque `local` (privé, jamais servi par une URL publique) — une signature manuscrite est une donnée sensible à valeur de preuve légale. L'image est toujours relue et embarquée en base64 côté serveur (JSON de polling, template PDF), jamais exposée par une route de fichier dédiée.
 - **Export PDF** via `barryvdh/laravel-dompdf` (nouvelle dépendance — aucune génération PDF n'existait avant dans le projet). Le template (`formateur/emargement/pdf.blade.php`) utilise du CSS inline, pas de classes Tailwind (dompdf ne consomme pas le build Vite).
+- **Alerte stagiaire par polling, pas par notification native Laravel** : `resources/views/components/user-notification-bell.blade.php` mélange déjà deux systèmes (notifications Eloquent natives + polling JS toutes les 5s pour Whiteboard/Quiz live/Mur de questions). L'émargement suit le second pattern — `Stagiaire\EmargementController::notificationStatus()` (route `stagiaire.emargement.notification-status`) renvoie `has_open_seance`/`group_name`/`opened_at_human`/`join_url`, consommé par un `updateEmargement()`/`pollEmargementStatus()` dédié dans le même fichier. La condition de disparition n'est pas juste "séance ouverte" mais "séance ouverte **et** ma `SeancePresence` est encore `en_attente`" — l'alerte s'éteint dès la signature, avant même la clôture de la séance.
 - **Deux familles de routes formateur** : `formateur.emargement.index` (top-level, sans `{group}` — la vue dédiée avec choix/activation de groupe, + `formateur.emargement.activer`/`.desactiver` en `POST /formateur/emargement/groupes/{group}/...`) et `formateur.groupes.emargement.*` (scopées `{group}`, pour créer/piloter/corriger/exporter — inchangées depuis la conception initiale). `EmargementController::store()` redirige systématiquement vers `formateur.emargement.index` avec le `group_id` de la séance créée.
 - **Activation par groupe, pas par défaut** : contrairement aux autres outils (toujours disponibles pour tout groupe), l'émargement est opt-in via `groups.emargement_enabled`. Ce n'est pas une contrainte de sécurité (les routes scopées `{group}` restent protégées par `AccesEmargement::assertFormateurAccess()` indépendamment de ce flag) — uniquement un filtre d'affichage sur la vue dédiée, pour que la liste de groupes n'impose pas l'outil à des formations qui n'en ont pas besoin.
 

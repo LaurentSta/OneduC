@@ -70,6 +70,7 @@ Route::middleware(['auth', 'role:stagiaire', 'track.time'])
             Route::prefix('/emargement')
                 ->name('emargement.')
                 ->group(function () {
+                    Route::get('/notification-status', [EmargementController::class, 'notificationStatus'])->name('notification-status');
                     Route::get('/groupes/{group}', [EmargementController::class, 'show'])->name('show');
                     Route::post('/groupes/{group}/signer', [EmargementController::class, 'signer'])->name('signer');
                 });
