@@ -140,7 +140,10 @@
   $oldIsActive = old('is_active', $group->is_active);
   $isGroupActive = filter_var($oldIsActive, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
   $isGroupActive = $isGroupActive ?? in_array((string) $oldIsActive, ['1', 'on'], true);
-  $showOptionsPanel = $errors->has('start_date') || $errors->has('end_date') || $errors->has('is_active') || $errors->has('co_formateurs') || $errors->has('co_formateurs.*');
+  $oldEmargementEnabled = old('emargement_enabled', $group->emargement_enabled);
+  $isEmargementEnabled = filter_var($oldEmargementEnabled, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+  $isEmargementEnabled = $isEmargementEnabled ?? in_array((string) $oldEmargementEnabled, ['1', 'on'], true);
+  $showOptionsPanel = $errors->has('start_date') || $errors->has('end_date') || $errors->has('is_active') || $errors->has('emargement_enabled') || $errors->has('co_formateurs') || $errors->has('co_formateurs.*');
 @endphp
 
 <div class="max-w-[1285px] mx-auto px-8">
@@ -343,6 +346,41 @@
                     ></label>
                   </div>
                   @error('is_active')
+                    <p class="mt-2 text-sm text-red-700">{{ $message }}</p>
+                  @enderror
+                </div>
+
+                <div class="rounded-[18px] border {{ $errors->has('emargement_enabled') ? 'border-red-300 bg-red-50/70' : 'border-white/70 bg-white/80' }} px-4 py-3">
+                  <div class="flex items-center justify-between gap-4">
+                    <input type="hidden" name="emargement_enabled" value="0">
+                    <label for="emargement_enabled" class="flex items-center gap-3 text-base font-medium text-gray-900">
+                      <span class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-slate-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M9 11l6.586-6.586a2 2 0 112.828 2.828L11.828 13.828a4 4 0 01-1.414.94l-3.536 1.178a.5.5 0 01-.632-.632l1.178-3.536a4 4 0 01.94-1.414z"/>
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 21h14"/>
+                        </svg>
+                      </span>
+                      <span>
+                        Activer l'émargement
+                        <span class="block text-xs font-normal text-gray-500">Feuille de présence par séance, avec signature des stagiaires.</span>
+                      </span>
+                    </label>
+
+                    <input
+                      id="emargement_enabled"
+                      name="emargement_enabled"
+                      type="checkbox"
+                      value="1"
+                      class="peer sr-only"
+                      {{ $isEmargementEnabled ? 'checked' : '' }}
+                    >
+                    <label
+                      for="emargement_enabled"
+                      aria-label="Activer ou désactiver l'émargement pour ce groupe"
+                      class="relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full bg-gray-300 transition-colors duration-200 after:absolute after:left-1 after:top-1 after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow-sm after:transition-transform after:duration-200 after:content-[''] peer-checked:bg-slate-600 peer-checked:after:translate-x-5"
+                    ></label>
+                  </div>
+                  @error('emargement_enabled')
                     <p class="mt-2 text-sm text-red-700">{{ $message }}</p>
                   @enderror
                 </div>
