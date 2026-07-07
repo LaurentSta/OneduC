@@ -1046,7 +1046,7 @@ class ModuleController extends Controller
                     'group_id' => (int) ($wordCloud->group_id ?? 0),
                     'access_code' => (string) $wordCloud->access_code,
                     'is_active' => (bool) $wordCloud->is_active,
-                    'live_url' => route('formateur.wordclouds.live', ['wordCloud' => $wordCloud->id]),
+                    'live_url' => route('formateur.nuages.live', ['wordCloud' => $wordCloud->id]),
                     'join_url' => route('wordcloud.join.code', ['code' => $wordCloud->access_code]),
                     'updated_at_human' => $wordCloud->updated_at?->diffForHumans(),
                 ];
