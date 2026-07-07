@@ -4,7 +4,7 @@
 
 <div
     x-data="{
-        storageKey: 'oneduc-formateur-welcome-dismissed',
+        storageKey: 'oneduc-formateur-welcome-dismissed-{{ auth()->id() }}',
         open: false,
         disableFuture: false,
         init() {
