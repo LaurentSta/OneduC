@@ -67,7 +67,7 @@
         :class="{ 'sidebar-closed': !sidebarOpen }"
     >
         {{-- CONTENU --}}
-        <main class="flex-1 p-6">
+        <main id="page-transition" class="flex-1 p-6">
             @yield('admin')
         </main>
 

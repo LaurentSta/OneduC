@@ -28,10 +28,12 @@
   x-data="{
     sidebarOpen: window.innerWidth >= 1024,
     sidebarCollapsed: localStorage.getItem('oneduc-stagiaire-sidebar-collapsed') === '1',
+    sidebarTransitionsReady: false,
   }"
   x-init="
     window.addEventListener('resize', () => { sidebarOpen = window.innerWidth >= 1024 ? true : false });
     $watch('sidebarCollapsed', value => localStorage.setItem('oneduc-stagiaire-sidebar-collapsed', value ? '1' : '0'));
+    $nextTick(() => sidebarTransitionsReady = true);
   "
   class="bg-gray-100 text-gray-900 font-sans">
 
@@ -43,8 +45,9 @@
 
         {{-- CONTENU PRINCIPAL --}}
         <main
-            class="flex-1 p-6 transition-[margin-left] duration-300"
-            :class="sidebarCollapsed ? '' : 'lg:ml-48'"
+            id="page-transition"
+            class="flex-1 p-6"
+            :class="{ 'transition-[margin-left] duration-300': sidebarTransitionsReady, 'lg:ml-48': !sidebarCollapsed }"
             style="padding-top: calc(var(--app-header-h, 86px) + 12px);">
             @yield('content')
         </main>

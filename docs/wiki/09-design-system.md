@@ -129,6 +129,22 @@ Le pattern de carte utilisé dans tous les tableaux de bord :
 
 ---
 
+## Transition de page (fondu)
+
+Toutes les pages (front public, dashboards formateur/stagiaire/observateur/admin) partagent le même mécanisme de fondu à la navigation, centralisé dans `resources/js/app.js` (fonction `initPageTransitions`) et `resources/css/app.css` (règles `#page-transition`).
+
+Fonctionnement :
+- Chaque layout place le contenu de page dans `<main id="page-transition">`.
+- Au chargement, `body.page-is-entering` fait apparaître le contenu en fondu (translateY + opacity, ~260ms).
+- Au clic sur un lien interne, `body.page-is-leaving` fait disparaître le contenu (~180ms) avant la navigation réelle.
+- Respecte `prefers-reduced-motion: reduce` (désactivé si l'utilisateur le demande).
+
+Pour ajouter la transition à un nouveau layout : donner l'id `page-transition` à l'élément qui englobe le `@yield`/contenu de page. Aucune classe `body` particulière n'est requise, le script détecte l'élément automatiquement.
+
+Note sidebar : dans les layouts formateur/stagiaire/observateur, la classe `transition-[margin-left] duration-300` sur le `<main>` n'est activée qu'après le premier tick Alpine (`sidebarTransitionsReady`), pour éviter un saut visuel au chargement le temps qu'Alpine restaure l'état replié/déplié depuis `localStorage`.
+
+---
+
 ## Interactivité Alpine.js
 
 Alpine.js est utilisé pour :
