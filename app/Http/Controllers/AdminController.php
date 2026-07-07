@@ -3,19 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Data\ParcoursFormateur;
+use App\Models\Category;
+use App\Models\Module;
+use App\Models\SubCategory;
+use App\Models\TrainerPathActivityAttempt;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
-use App\Models\User;
 use Illuminate\Support\Facades\Hash;
-use App\Models\Module;
-use App\Models\Category;
-use App\Models\SubCategory;
-use App\Models\ScormResult;
-use App\Models\ModuleLecture;
-use App\Models\ModuleSection;
-use App\Models\TrainerPathActivityAttempt;
+use Illuminate\Support\Str;
 
 class AdminController extends Controller
 {
@@ -30,6 +27,7 @@ class AdminController extends Controller
 
         return view('admin.admin_dashboard');
     }
+
     public function processLogin(Request $request)
     {
         $request->validate([
@@ -41,8 +39,9 @@ class AdminController extends Controller
 
         if (Auth::attempt($credentials)) {
 
-            if (!Auth::user()->status) {
+            if (! Auth::user()->status) {
                 Auth::logout();
+
                 return redirect()->route('connexion')->withErrors(['status' => 'Votre compte est désactivé.']);
             }
 
@@ -56,78 +55,80 @@ class AdminController extends Controller
             'email' => 'Email ou mot de passe incorrect.',
         ]);
     }
+
     public function AdminParametre()
-{
-    $profileData = Auth::user();
-    return view('admin.admin_parametre', compact('profileData'));
-}
+    {
+        $profileData = Auth::user();
 
-public function AdminProfilStore(Request $request)
-{
-    $user = Auth::user();
-
-    $validated = $request->validate([
-        'firstName'    => ['nullable','string','max:255'],
-        'lastName'     => ['nullable','string','max:255'],
-        'email'        => ['required','email','max:255'],
-        'phoneNumber'  => ['nullable','string','max:50'],
-        'photo'        => ['nullable','image','mimes:jpg,jpeg,png','max:800'],
-    ]);
-
-    // Attention : chez toi "firstName" mappe sur username (historique) -> à clarifier.
-    // Ici je conserve ton mapping actuel :
-    $user->username = $validated['firstName'] ?? $user->username;
-    $user->name     = $validated['lastName']  ?? $user->name;
-    $user->email    = $validated['email'];
-    $user->phone    = $validated['phoneNumber'] ?? null;
-
-    if ($request->hasFile('photo')) {
-        $file = $request->file('photo');
-        $filename = Str::uuid() . '.' . $file->extension();
-        $file->move(public_path('upload/admin_images'), $filename);
-        $user->photo = $filename;
+        return view('admin.admin_parametre', compact('profileData'));
     }
 
-    $user->save();
+    public function AdminProfilStore(Request $request)
+    {
+        $user = Auth::user();
 
-    return back()->with('message', 'Modifications enregistrées.');
-}
+        $validated = $request->validate([
+            'firstName' => ['nullable', 'string', 'max:255'],
+            'lastName' => ['nullable', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255'],
+            'phoneNumber' => ['nullable', 'string', 'max:50'],
+            'photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:800'],
+        ]);
 
-public function AdminSecurite()
-{
-    return view('admin.admin_securite');
-}
+        // Attention : chez toi "firstName" mappe sur username (historique) -> à clarifier.
+        // Ici je conserve ton mapping actuel :
+        $user->username = $validated['firstName'] ?? $user->username;
+        $user->name = $validated['lastName'] ?? $user->name;
+        $user->email = $validated['email'];
+        $user->phone = $validated['phoneNumber'] ?? null;
 
-public function AdminSecuriteUpdate(Request $request)
-{
-    $request->validate([
-        'currentPassword' => ['required', 'current_password'], // règle Laravel
-        'newPassword' => ['required', 'string', 'min:12', 'confirmed'],
-    ]);
+        if ($request->hasFile('photo')) {
+            $file = $request->file('photo');
+            $filename = Str::uuid().'.'.$file->extension();
+            $file->move(public_path('upload/admin_images'), $filename);
+            $user->photo = $filename;
+        }
 
-    $user = Auth::user();
-    $user->password = Hash::make($request->newPassword);
-    $user->save();
+        $user->save();
 
-    return back()->with('message', 'Mot de passe mis à jour.');
-}
+        return back()->with('message', 'Modifications enregistrées.');
+    }
+
+    public function AdminSecurite()
+    {
+        return view('admin.admin_securite');
+    }
+
+    public function AdminSecuriteUpdate(Request $request)
+    {
+        $request->validate([
+            'currentPassword' => ['required', 'current_password'], // règle Laravel
+            'newPassword' => ['required', 'string', 'min:12', 'confirmed'],
+        ]);
+
+        $user = Auth::user();
+        $user->password = Hash::make($request->newPassword);
+        $user->save();
+
+        return back()->with('message', 'Mot de passe mis à jour.');
+    }
+
     private function redirectUserByRole()
     {
         return match (Auth::user()->role) {
-            'admin'     => 'admin.dashboard',
+            'admin' => 'admin.dashboard',
             'formateur' => 'formateur.dashboard',
             'observateur' => 'observateur.dashboard',
             'stagiaire' => 'stagiaire.dashboard',
-            default     => 'dashboard',
+            default => 'dashboard',
         };
     }
-
 
     /* -------------------------------------------------------------------------
      | ADMIN Dashboard, Logout & Profil
      |-------------------------------------------------------------------------- */
 
-     public function AdminDashboard()
+    public function AdminDashboard()
     {
         $moduleCount = Module::count();
         $categoryCount = Category::count();
@@ -138,46 +139,20 @@ public function AdminSecuriteUpdate(Request $request)
         $groupCount = \App\Models\Group::count(); // ✅ Nouveau compteur
         $sectionCount = \App\Models\ModuleSection::count();
         $lectureCount = \App\Models\ModuleLecture::count();
-        // Synthèse SCORM par utilisateur et module
-        $scormSummaries = ScormResult::with(['user', 'lecture'])
-            ->selectRaw('user_id, lecture_id, MAX(updated_at) as last_update')
-            ->groupBy('user_id', 'lecture_id')
-            ->get()
-            ->map(function ($row) {
-                $score = ScormResult::where('user_id', $row->user_id)
-                    ->where('lecture_id', $row->lecture_id)
-                    ->where('scorm_key', 'cmi.core.score.raw')
-                    ->orderByDesc('updated_at')
-                    ->first();
 
-                $status = ScormResult::where('user_id', $row->user_id)
-                    ->where('lecture_id', $row->lecture_id)
-                    ->where('scorm_key', 'cmi.core.lesson_status')
-                    ->orderByDesc('updated_at')
-                    ->first();
-
-                return [
-                    'user' => $row->user?->username ?? 'N/A',
-                    'module' => $row->lecture?->lecture_title ?? 'N/A',
-                    'score' => $score?->scorm_value ?? '-',
-                    'status' => $status?->scorm_value ?? '-',
-                    'date' => $row->last_update,
-                ];
-            });
-
-            return view('admin.index', compact(
-                'moduleCount',
-                'categoryCount',
-                'subCategoryCount',
-                'formateurCount',
-                'stagiaireCount',
-                'groupCount',
-                'sectionCount',
-                'lectureCount',
-                'scormSummaries'
-            ));
+        return view('admin.index', compact(
+            'moduleCount',
+            'categoryCount',
+            'subCategoryCount',
+            'formateurCount',
+            'stagiaireCount',
+            'groupCount',
+            'sectionCount',
+            'lectureCount'
+        ));
 
     }
+
     public function AdminLogout(Request $request)
     {
         Auth::guard('web')->logout();
@@ -196,14 +171,11 @@ public function AdminSecuriteUpdate(Request $request)
         return view('admin.admin_profile_view', compact('profileData'));
     }
 
+    /* -------------------------------------------------------------------------
+         | Liste et statut des formateurs
+         |-------------------------------------------------------------------------- */
 
-
-
-/* -------------------------------------------------------------------------
-     | Liste et statut des formateurs
-     |-------------------------------------------------------------------------- */
-
-     public function AllFormateur()
+    public function AllFormateur()
     {
         $allFormateur = User::where('role', 'formateur')
             ->withCount('stagiaires')
@@ -283,7 +255,6 @@ public function AdminSecuriteUpdate(Request $request)
         })->all();
     }
 
-
     public function UpdateUserStatus(Request $request)
     {
         $request->validate([
@@ -294,10 +265,10 @@ public function AdminSecuriteUpdate(Request $request)
         $user = User::findOrFail($request->user_id);
 
         // ✅ Autoriser uniquement les rôles modifiables : formateur OU stagiaire
-        if (!in_array($user->role, ['formateur', 'stagiaire', 'observateur'])) {
+        if (! in_array($user->role, ['formateur', 'stagiaire', 'observateur'])) {
             return response()->json([
                 'success' => false,
-                'message' => 'Action non autorisée.'
+                'message' => 'Action non autorisée.',
             ], 403);
         }
 
@@ -307,7 +278,7 @@ public function AdminSecuriteUpdate(Request $request)
         return response()->json([
             'success' => true,
             'message' => 'Le statut de l’utilisateur a été mis à jour avec succès.',
-            'new_status' => $user->status ? 'Actif' : 'Inactif'
+            'new_status' => $user->status ? 'Actif' : 'Inactif',
         ]);
     }
 
@@ -341,29 +312,49 @@ public function AdminSecuriteUpdate(Request $request)
 
     public function DestroyFormateur(\App\Models\User $user)
     {
-        if ($user->id === auth()->id())          return $this->deny('Vous ne pouvez pas vous supprimer.');
-        if ($user->role !== 'formateur')         return $this->deny('Action non autorisée.');
-        if (!\Schema::hasColumn('users','deleted_at')) return $this->deny('Soft delete indisponible.');
+        if ($user->id === auth()->id()) {
+            return $this->deny('Vous ne pouvez pas vous supprimer.');
+        }
+        if ($user->role !== 'formateur') {
+            return $this->deny('Action non autorisée.');
+        }
+        if (! \Schema::hasColumn('users', 'deleted_at')) {
+            return $this->deny('Soft delete indisponible.');
+        }
 
         $user->delete(); // soft delete
+
         return $this->ok('Formateur supprimé.', $user->id);
     }
 
     public function DestroyStagiaire(\App\Models\User $user)
     {
-        if ($user->id === auth()->id())          return $this->deny('Vous ne pouvez pas vous supprimer.');
-        if ($user->role !== 'stagiaire')         return $this->deny('Action non autorisée.');
-        if (!\Schema::hasColumn('users','deleted_at')) return $this->deny('Soft delete indisponible.');
+        if ($user->id === auth()->id()) {
+            return $this->deny('Vous ne pouvez pas vous supprimer.');
+        }
+        if ($user->role !== 'stagiaire') {
+            return $this->deny('Action non autorisée.');
+        }
+        if (! \Schema::hasColumn('users', 'deleted_at')) {
+            return $this->deny('Soft delete indisponible.');
+        }
 
         $user->delete(); // soft delete
+
         return $this->ok('Stagiaire supprimé.', $user->id);
     }
 
     public function DestroyObservateur(\App\Models\User $user)
     {
-        if ($user->id === auth()->id())          return $this->deny('Vous ne pouvez pas vous supprimer.');
-        if ($user->role !== 'observateur')       return $this->deny('Action non autorisée.');
-        if (!\Schema::hasColumn('users','deleted_at')) return $this->deny('Soft delete indisponible.');
+        if ($user->id === auth()->id()) {
+            return $this->deny('Vous ne pouvez pas vous supprimer.');
+        }
+        if ($user->role !== 'observateur') {
+            return $this->deny('Action non autorisée.');
+        }
+        if (! \Schema::hasColumn('users', 'deleted_at')) {
+            return $this->deny('Soft delete indisponible.');
+        }
 
         \Illuminate\Support\Facades\DB::table('group_user')
             ->where('user_id', $user->id)
@@ -375,13 +366,22 @@ public function AdminSecuriteUpdate(Request $request)
         return $this->ok('Observateur supprimé.', $user->id);
     }
 
-    private function ok($msg, $id){
-        if (request()->ajax()) return response()->json(['success'=>true,'message'=>$msg,'id'=>$id]);
-        return back()->with('success',$msg);
+    private function ok($msg, $id)
+    {
+        if (request()->ajax()) {
+            return response()->json(['success' => true, 'message' => $msg, 'id' => $id]);
+        }
+
+        return back()->with('success', $msg);
     }
-    private function deny($msg){
-        if (request()->ajax()) return response()->json(['success'=>false,'message'=>$msg], 422);
-        return back()->with('error',$msg);
+
+    private function deny($msg)
+    {
+        if (request()->ajax()) {
+            return response()->json(['success' => false, 'message' => $msg], 422);
+        }
+
+        return back()->with('error', $msg);
     }
 
     /* -------------------------------------------------------------------------
@@ -417,9 +417,9 @@ public function AdminSecuriteUpdate(Request $request)
             'status' => false, // En attente de validation par l'admin
         ]);
 
-
         return redirect()->route('devenir.formateur')->with('success', 'Inscription réussie ! En attente de validation par un administrateur.');
     }
+
     public function AllStagiaires()
     {
         $allStagiaires = \App\Models\User::where('role', 'stagiaire')
@@ -429,8 +429,4 @@ public function AdminSecuriteUpdate(Request $request)
 
         return view('admin.backend.stagiaire.all_stagiaire', compact('allStagiaires'));
     }
-
-
-
-
 }
