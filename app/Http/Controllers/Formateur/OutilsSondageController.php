@@ -6,11 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\Group;
 use App\Models\PollSession;
 use App\Models\PollSessionResponse;
+use App\Services\CodeGeneratorService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class OutilsSondageController extends Controller
@@ -41,12 +41,12 @@ class OutilsSondageController extends Controller
         $formateurId = (int) auth()->id();
 
         $data = $request->validate([
-            'group_id'                     => ['required', 'exists:groups,id'],
-            'title'                        => ['nullable', 'string', 'max:255'],
-            'questions'                    => ['required', 'array', 'min:1', 'max:10'],
-            'questions.*.question'         => ['required', 'string', 'max:500'],
-            'questions.*.choices'          => ['required', 'array', 'min:2', 'max:5'],
-            'questions.*.choices.*'        => ['required', 'string', 'max:200'],
+            'group_id' => ['required', 'exists:groups,id'],
+            'title' => ['nullable', 'string', 'max:255'],
+            'questions' => ['required', 'array', 'min:1', 'max:10'],
+            'questions.*.question' => ['required', 'string', 'max:500'],
+            'questions.*.choices' => ['required', 'array', 'min:2', 'max:5'],
+            'questions.*.choices.*' => ['required', 'string', 'max:200'],
         ]);
 
         $group = Group::query()
@@ -74,7 +74,7 @@ class OutilsSondageController extends Controller
             'group_id' => $group->id,
             'title' => trim((string) ($data['title'] ?? '')) ?: 'Sondage',
             'questions' => $questions->all(),
-            'access_code' => $this->generateCode(),
+            'access_code' => CodeGeneratorService::generateUniqueCode(PollSession::class),
             'is_active' => true,
             'opened_at' => now(),
             'closed_at' => null,
@@ -181,19 +181,5 @@ class OutilsSondageController extends Controller
     private function assertOwnership(PollSession $pollSession): void
     {
         abort_unless((int) $pollSession->formateur_id === (int) auth()->id(), 403);
-    }
-
-    private function generateCode(): string
-    {
-        $alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-
-        do {
-            $code = '';
-            for ($i = 0; $i < 6; $i++) {
-                $code .= $alphabet[random_int(0, strlen($alphabet) - 1)];
-            }
-        } while (PollSession::query()->where('access_code', Str::upper($code))->exists());
-
-        return Str::upper($code);
     }
 }

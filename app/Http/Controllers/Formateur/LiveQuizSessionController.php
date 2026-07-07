@@ -9,6 +9,7 @@ use App\Models\Module;
 use App\Models\ModuleLecture;
 use App\Models\ModuleSection;
 use App\Models\QuizQuestion;
+use App\Services\CodeGeneratorService;
 use App\Support\LiveQuiz\InteractsWithLiveQuizAttempts;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -185,7 +186,7 @@ class LiveQuizSessionController extends Controller
             }
         }
 
-        $answeredRows = $currentRows->filter(fn ($row) => !is_null($row->answered_at));
+        $answeredRows = $currentRows->filter(fn ($row) => ! is_null($row->answered_at));
         $distribution = [];
 
         if ($currentQuestion && (string) $currentQuestion->type !== 'cloze') {
@@ -249,20 +250,6 @@ class LiveQuizSessionController extends Controller
         });
     }
 
-    private function generateAccessCode(): string
-    {
-        $alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-
-        do {
-            $code = '';
-            for ($i = 0; $i < 6; $i++) {
-                $code .= $alphabet[random_int(0, strlen($alphabet) - 1)];
-            }
-        } while (LiveQuizSession::query()->where('access_code', $code)->exists());
-
-        return $code;
-    }
-
     private function assertLectureContext(Module $module, ModuleSection $section, ModuleLecture $lecture): void
     {
         abort_unless((int) $lecture->module_id === (int) $module->id, 404);
@@ -314,7 +301,7 @@ class LiveQuizSessionController extends Controller
                 'module_id' => $module->id,
                 'section_id' => $section->id,
                 'lecture_id' => $lecture->id,
-                'access_code' => $this->generateAccessCode(),
+                'access_code' => CodeGeneratorService::generateUniqueCode(LiveQuizSession::class),
                 'status' => LiveQuizSession::STATUS_WAITING,
                 'current_position' => 0,
                 'total_questions' => $questions->count(),

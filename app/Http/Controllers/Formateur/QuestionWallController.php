@@ -6,10 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Group;
 use App\Models\QuestionWall;
 use App\Models\QuestionWallQuestion;
+use App\Services\CodeGeneratorService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class QuestionWallController extends Controller
@@ -52,7 +52,7 @@ class QuestionWallController extends Controller
             'formateur_id' => $formateurId,
             'group_id' => $group->id,
             'title' => trim((string) ($data['title'] ?? 'Mur de questions')) ?: 'Mur de questions',
-            'access_code' => $this->generateCode(),
+            'access_code' => CodeGeneratorService::generateUniqueCode(QuestionWall::class),
             'is_active' => true,
         ]);
 
@@ -132,19 +132,5 @@ class QuestionWallController extends Controller
     private function assertOwnership(QuestionWall $wall): void
     {
         abort_unless((int) $wall->formateur_id === (int) auth()->id(), 403);
-    }
-
-    private function generateCode(): string
-    {
-        $alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-
-        do {
-            $code = '';
-            for ($i = 0; $i < 6; $i++) {
-                $code .= $alphabet[random_int(0, strlen($alphabet) - 1)];
-            }
-        } while (QuestionWall::query()->where('access_code', $code)->exists());
-
-        return Str::upper($code);
     }
 }
