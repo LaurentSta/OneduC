@@ -10,6 +10,7 @@ use App\Models\Module;
 use App\Models\User;
 use App\Notifications\GroupCoTrainerAddedNotification;
 use App\Services\CodeGeneratorService;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -17,7 +18,6 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\QueryException;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -514,7 +514,7 @@ class GroupeController extends Controller
             ->where('role', 'formateur')
             ->where('status', 1)
             ->whereNotNull('email')
-            ->where('email', 'like', mb_strtolower($term) . '%')
+            ->where('email', 'like', mb_strtolower($term).'%')
             ->when($excludeIds->isNotEmpty(), fn ($query) => $query->whereNotIn('id', $excludeIds->all()))
             ->orderBy('email')
             ->limit(10)

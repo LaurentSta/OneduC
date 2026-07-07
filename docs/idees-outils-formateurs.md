@@ -11,7 +11,7 @@ Cette note regroupe des idees d'outils numeriques pour aider les formateurs en p
 | OF-001 | A developper | Cockpit de seance formateur | Piloter une session live depuis un seul ecran | Haute |
 | OF-002 | A developper | Ticket de sortie | Mesurer la comprehension en fin de sequence | Haute |
 | OF-003 | A developper | Mur de questions anonyme | Recuperer et prioriser les questions des stagiaires | Haute |
-| OF-004 | A developper | Emargement par QR code | Suivre presence et participation | Moyenne |
+| OF-004 | Partiellement developpe | Emargement par QR code | Suivre presence et participation | Moyenne |
 | OF-005 | A developper | Generateur d'activites IA | Produire rapidement quiz, cas pratiques et animations | Moyenne |
 | OF-006 | A developper | Groupes intelligents | Creer binomes, sous-groupes et roles automatiquement | Moyenne |
 | OF-007 | A developper | Debrief / retrospective de session | Capitaliser les retours et points de blocage | Moyenne |
@@ -63,14 +63,11 @@ Inspiration : outils de live polling comme PollN, et pratiques de retrospective 
 
 ## OF-004 - Emargement par QR code
 
-Statut : `A developper`
+Statut : `Partiellement developpe`
 
-Le formateur affiche un QR code de session. Les stagiaires scannent pour signaler leur presence, eventuellement avec une confirmation d'identite, un horodatage et un indicateur d'energie ou de disponibilite.
+La partie feuille de presence est developpee : par seance datee (matin/apres-midi/journee/soiree), avec signature graphique de chaque stagiaire, correction manuelle formateur, et export PDF pour audit Qualiopi/OPCO. Voir [docs/wiki/16-emargement.md](wiki/16-emargement.md) pour l'usage et le detail technique.
 
-Interet :
-- simplifier l'emargement en presentiel ;
-- donner une preuve de presence en distanciel ;
-- suivre la participation sans tableau externe.
+Reste a faire : le volet QR code lui-meme (le formateur affiche un QR de session, les stagiaires scannent pour rejoindre directement l'ecran de signature au lieu de naviguer depuis leur tableau de bord). Non bloquant pour l'usage actuel, simple gain d'ergonomie en presentiel.
 
 Inspiration : Campus QR pour le check-in par QR code et la validation rapide des presences.
 

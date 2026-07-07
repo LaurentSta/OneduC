@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Backend\ModuleController;
+use App\Http\Controllers\Formateur\EmargementController;
 use App\Http\Controllers\Formateur\FormateurModuleController;
 use App\Http\Controllers\Formateur\FormateurProfileController;
 use App\Http\Controllers\Formateur\FormateurStagiaireController;
@@ -93,6 +94,22 @@ Route::middleware(['auth', 'role:formateur', 'association.member'])
                 Route::post('/items', [WhiteboardController::class, 'upsert'])->name('items.upsert');
                 Route::delete('/items/{item}', [WhiteboardController::class, 'destroy'])->name('items.destroy');
                 Route::post('/clear', [WhiteboardController::class, 'clear'])->name('clear');
+            });
+
+        // ✍️ Émargement (feuille de présence, par groupe)
+        Route::get('/emargement', [EmargementController::class, 'index'])->name('emargement.index');
+        Route::post('/emargement/groupes/{group}/activer', [EmargementController::class, 'activerGroupe'])->name('emargement.activer');
+        Route::post('/emargement/groupes/{group}/desactiver', [EmargementController::class, 'desactiverGroupe'])->name('emargement.desactiver');
+        Route::prefix('/groupes/{group}/emargement')
+            ->name('groupes.emargement.')
+            ->group(function () {
+                Route::post('/', [EmargementController::class, 'store'])->name('store');
+                Route::get('/{seance}', [EmargementController::class, 'show'])->name('show');
+                Route::get('/{seance}/state', [EmargementController::class, 'state'])->name('state');
+                Route::post('/{seance}/ouvrir', [EmargementController::class, 'ouvrir'])->name('ouvrir');
+                Route::post('/{seance}/fermer', [EmargementController::class, 'fermer'])->name('fermer');
+                Route::post('/{seance}/presences/{presence}/corriger', [EmargementController::class, 'corrigerPresence'])->name('presences.corriger');
+                Route::get('/{seance}/export-pdf', [EmargementController::class, 'exportPdf'])->name('export-pdf');
             });
 
         // 🌥️ Nuages de mots (parcours, par groupe)

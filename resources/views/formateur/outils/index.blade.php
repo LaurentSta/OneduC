@@ -402,6 +402,32 @@
     </x-oneduc.outil-tile>
     @endif
 
+    {{-- ── ÉMARGEMENT (FEUILLE DE PRÉSENCE) ─────────────────────────────── --}}
+    <x-oneduc.outil-tile
+      x-show="filtre === 'all'"
+      tool-id="emargement"
+      title="Émargement"
+      icon-bg="bg-slate-600"
+      :badge-count="$openSeancesCount"
+      cta-route="{{ route('formateur.emargement.index') }}"
+      cta-label="Gérer l'émargement"
+      cta-bg="bg-slate-600 hover:bg-slate-700"
+    >
+      <x-slot:icon>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M9 11l6.586-6.586a2 2 0 112.828 2.828L11.828 13.828a4 4 0 01-1.414.94l-3.536 1.178a.5.5 0 01-.632-.632l1.178-3.536a4 4 0 01.94-1.414z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 21h14"/>
+        </svg>
+      </x-slot:icon>
+      <x-slot:description>
+        Feuille de présence par séance datée, avec signature graphique de chaque stagiaire. Document administratif conforme aux exigences d'audit Qualiopi/OPCO, exportable en PDF.
+      </x-slot:description>
+      <x-slot:badges>
+        <span class="rounded-full bg-green-100 px-2.5 py-0.5 font-semibold text-green-700">Présentiel</span>
+        <span class="rounded-full bg-gray-100 px-2.5 py-0.5 font-semibold text-gray-500">Administratif</span>
+      </x-slot:badges>
+    </x-oneduc.outil-tile>
+
     {{-- ── MES MODULES (MODULE BUILDER) ───────────────────────────────── --}}
     <x-oneduc.outil-tile
       x-show="filtre === 'all'"

@@ -1,16 +1,18 @@
 <?php
+
 // routes/stagiaire.php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\UserController;
-use App\Http\Controllers\StagiaireController;
 use App\Http\Controllers\Backend\ModuleController;
+use App\Http\Controllers\Stagiaire\EmargementController;
+use App\Http\Controllers\Stagiaire\FirstLoginController;
 use App\Http\Controllers\Stagiaire\LiveQuizSessionController;
-use App\Http\Controllers\Stagiaire\QuizController;
-use App\Http\Controllers\Stagiaire\FirstLoginController; // ✅ Import du nouveau contrôleur
-use App\Http\Controllers\Stagiaire\WhiteboardController;
 use App\Http\Controllers\Stagiaire\ParcoursWordCloudController;
 use App\Http\Controllers\Stagiaire\QuestionWallController;
+use App\Http\Controllers\Stagiaire\QuizController; // ✅ Import du nouveau contrôleur
+use App\Http\Controllers\Stagiaire\WhiteboardController;
+use App\Http\Controllers\StagiaireController;
+use App\Http\Controllers\UserController;
+use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'role:stagiaire', 'track.time'])
     ->prefix('stagiaire')
@@ -28,7 +30,6 @@ Route::middleware(['auth', 'role:stagiaire', 'track.time'])
 
         Route::post('/premiere-connexion', [FirstLoginController::class, 'store'])
             ->name('password.init.store');
-
 
         /*
         |--------------------------------------------------------------------------
@@ -64,6 +65,13 @@ Route::middleware(['auth', 'role:stagiaire', 'track.time'])
                     Route::post('/groupes/{group}/excalidraw-save', [WhiteboardController::class, 'save'])->name('excalidraw.save');
                     Route::post('/groupes/{group}/items', [WhiteboardController::class, 'upsert'])->name('items.upsert');
                     Route::delete('/groupes/{group}/items/{item}', [WhiteboardController::class, 'destroy'])->name('items.destroy');
+                });
+
+            Route::prefix('/emargement')
+                ->name('emargement.')
+                ->group(function () {
+                    Route::get('/groupes/{group}', [EmargementController::class, 'show'])->name('show');
+                    Route::post('/groupes/{group}/signer', [EmargementController::class, 'signer'])->name('signer');
                 });
 
             Route::prefix('/mur-questions')
