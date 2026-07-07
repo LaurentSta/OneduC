@@ -221,6 +221,7 @@ Route::middleware(['auth', 'role:formateur', 'association.member'])
         // 🧩 Mes modules (module builder formateur)
         Route::prefix('/mes-modules')->name('modules.builder.')->group(function () {
             Route::get('/', [ModuleBuilderController::class, 'index'])->name('index');
+            Route::get('/consommation-ia', [ModuleBuilderController::class, 'consommationIA'])->name('consommation-ia');
             Route::get('/creer', [ModuleBuilderController::class, 'create'])->name('create');
             Route::post('/', [ModuleBuilderController::class, 'store'])->name('store');
             Route::post('/generer-ia', [ModuleBuilderController::class, 'generateStructureIA'])->name('generate-structure-ia');

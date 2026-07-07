@@ -22,6 +22,10 @@
         <p class="text-sm text-gray-500 mt-1">Créez vos propres formations (chapitres + leçons en texte riche) et assignez-les à vos groupes.</p>
         </div>
       </div>
+      <a href="{{ route('formateur.modules.builder.consommation-ia') }}"
+         class="text-sm font-medium text-orangeone hover:underline whitespace-nowrap">
+        Ma consommation IA
+      </a>
     </div>
   </header>
 
