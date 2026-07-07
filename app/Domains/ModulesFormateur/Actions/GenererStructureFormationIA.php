@@ -4,6 +4,7 @@ namespace App\Domains\ModulesFormateur\Actions;
 
 use App\Domains\ModulesFormateur\Support\ExtracteurTexteDocument;
 use App\Domains\ModulesFormateur\Support\GardeFouPromptIA;
+use App\Domains\ModulesFormateur\Support\LimiteurBudgetTokensIA;
 use App\Domains\ModulesFormateur\Support\LimiteurGenerationIA;
 use App\Domains\ModulesFormateur\Support\MistralClient;
 use App\Models\Module;
@@ -52,6 +53,7 @@ PROMPT;
         private readonly ExtracteurTexteDocument $extracteur,
         private readonly GardeFouPromptIA $gardeFou,
         private readonly LimiteurGenerationIA $limiteur,
+        private readonly LimiteurBudgetTokensIA $limiteurBudget,
         private readonly ImporterImagesDocument $importerImages,
     ) {}
 
@@ -59,6 +61,12 @@ PROMPT;
     {
         if ($this->limiteur->tropDeTentatives($trainerId)) {
             throw new RuntimeException('Limite de 3 générations IA par jour atteinte. Réessayez demain.');
+        }
+
+        if ($this->limiteurBudget->budgetDepasse($trainerId)) {
+            throw new RuntimeException(
+                'Vous avez atteint votre plafond mensuel de '.number_format($this->limiteurBudget->limiteMensuelle(), 0, ',', ' ').' tokens IA. Réessayez le mois prochain.'
+            );
         }
 
         $theme = trim((string) $theme);

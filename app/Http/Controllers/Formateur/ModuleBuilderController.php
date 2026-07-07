@@ -27,6 +27,7 @@ use App\Models\Group;
 use App\Models\Module;
 use App\Models\ModuleLecture;
 use App\Models\ModuleSection;
+use App\Services\ConsommationIADashboardService;
 use Illuminate\Http\Request;
 
 class ModuleBuilderController extends Controller
@@ -52,6 +53,7 @@ class ModuleBuilderController extends Controller
         private readonly TeleverserScormModule $televerserScormModule,
         private readonly AssignerGroupesModule $assignerGroupesModule,
         private readonly ModifierOptionsModule $modifierOptionsModule,
+        private readonly ConsommationIADashboardService $consommationIADashboardService,
     ) {}
 
     public function index()
@@ -66,6 +68,13 @@ class ModuleBuilderController extends Controller
 
         return view('formateur.modules-builder.index', [
             'modules' => $modules,
+        ]);
+    }
+
+    public function consommationIA()
+    {
+        return view('formateur.modules-builder.consommation-ia', [
+            'resume' => $this->consommationIADashboardService->resumePourFormateur(auth()->id()),
         ]);
     }
 

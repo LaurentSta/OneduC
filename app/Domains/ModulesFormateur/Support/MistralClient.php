@@ -2,6 +2,7 @@
 
 namespace App\Domains\ModulesFormateur\Support;
 
+use App\Models\ConsommationIA;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use RuntimeException;
@@ -79,6 +80,15 @@ class MistralClient
     {
         Log::channel('mistral')->info($type, [
             'trainer_id' => $trainerId,
+            'model' => $model,
+            'prompt_tokens' => $usage['prompt_tokens'] ?? null,
+            'completion_tokens' => $usage['completion_tokens'] ?? null,
+            'total_tokens' => $usage['total_tokens'] ?? null,
+        ]);
+
+        ConsommationIA::create([
+            'formateur_id' => $trainerId,
+            'type' => $type,
             'model' => $model,
             'prompt_tokens' => $usage['prompt_tokens'] ?? null,
             'completion_tokens' => $usage['completion_tokens'] ?? null,

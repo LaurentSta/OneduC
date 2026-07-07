@@ -131,14 +131,26 @@ Point d'attention : `Illuminate\Http\Client\ConnectionException` (timeout résea
 Les deux actions IA appliquent systématiquement, dans cet ordre, avant tout appel de génération coûteux :
 
 1. **Quota** (`LimiteurGenerationIA`) : vérifie via `RateLimiter::tooManyAttempts()` qu'un formateur n'a pas dépassé **3 générations IA par jour** (clé `ia-generation-formateur:{type}:{id}`, fenêtre glissante de 24 h). `$type` vaut `texte` (défaut, partagé par `GenererLeconIA` et `GenererStructureFormationIA`) ou `audio` (`GenererAudioLecon`) — deux compteurs indépendants. Si dépassé, lève une `RuntimeException` immédiatement, avant tout appel réseau.
-2. **Modération** (`GardeFouPromptIA` + `MistralClient::moderate()`) : envoie le thème et/ou le texte extrait du document à l'endpoint `POST /v1/moderations` (modèle `mistral-moderation-latest`). Catégories bloquantes : `sexual`, `hate_and_discrimination`, `violence_and_threats`, `dangerous`, `criminal`, `selfharm`, `jailbreaking`. **Volontairement exclues** : `health`, `financial`, `law`, `pii` — une plateforme de formation professionnelle traite légitimement ces sujets (premiers secours, gestion budgétaire, droit du travail, protection des données), les inclure aurait généré trop de faux positifs. Rejet immédiat (`RuntimeException` avec le nom des catégories déclenchées) si une catégorie bloquante est détectée à `true`.
-3. Seulement si la modération passe, `LimiteurGenerationIA::enregistrerTentative()` incrémente le compteur de quota — **juste avant** l'appel de génération proprement dit, donc un contenu rejeté par la modération ne consomme pas de quota, mais un timeout Mistral (après modération) en consomme un (l'appel a réellement eu lieu).
+2. **Budget mensuel** (`LimiteurBudgetTokensIA`) : compare la somme des `total_tokens` de la table `consommations_ia` du formateur pour le mois en cours à un plafond configurable (`MISTRAL_MONTHLY_TOKEN_LIMIT`, `config('services.mistral.monthly_token_limit')`, défaut **500 000 tokens/mois**). Si atteint ou dépassé, `RuntimeException` immédiate — avant même l'extraction du document ou l'appel de modération, pour ne pas consommer davantage de tokens inutilement. Blocage dur : pas de dépassement toléré, le compteur se réinitialise au mois suivant (basé sur `created_at`, pas de table de reset séparée).
+3. **Modération** (`GardeFouPromptIA` + `MistralClient::moderate()`) : envoie le thème et/ou le texte extrait du document à l'endpoint `POST /v1/moderations` (modèle `mistral-moderation-latest`). Catégories bloquantes : `sexual`, `hate_and_discrimination`, `violence_and_threats`, `dangerous`, `criminal`, `selfharm`, `jailbreaking`. **Volontairement exclues** : `health`, `financial`, `law`, `pii` — une plateforme de formation professionnelle traite légitimement ces sujets (premiers secours, gestion budgétaire, droit du travail, protection des données), les inclure aurait généré trop de faux positifs. Rejet immédiat (`RuntimeException` avec le nom des catégories déclenchées) si une catégorie bloquante est détectée à `true`.
+4. Seulement si la modération passe, `LimiteurGenerationIA::enregistrerTentative()` incrémente le compteur de quota — **juste avant** l'appel de génération proprement dit, donc un contenu rejeté par la modération ne consomme pas de quota, mais un timeout Mistral (après modération) en consomme un (l'appel a réellement eu lieu).
+
+La page « Ma consommation IA » du formateur (`/formateur/mes-modules/consommation-ia`) affiche une barre de progression du plafond mensuel, pour que le formateur comprenne pourquoi la génération est bloquée sans avoir à consulter les logs.
 
 `GenererLeconIA::execute()` et `GenererStructureFormationIA::execute()` prennent donc un paramètre `int $trainerId` en plus du document/thème.
 
-### Journalisation de la consommation de tokens
+### Suivi de la consommation de tokens
 
-Chaque appel Mistral (`chat()` et `moderate()`) écrit une ligne dans un canal de log dédié `mistral` (`config/logging.php`, driver `daily`, fichier `storage/logs/mistral-{date}.log`, conservé 30 jours) — volontairement séparé de `laravel.log` pour rester discret (aucune UI, aucune table dédiée). Champs loggés : `trainer_id`, `model`, `prompt_tokens`, `completion_tokens`, `total_tokens` (lus depuis le champ `usage` de la réponse API). Sert à suivre la conso réelle en complément du dashboard de facturation Mistral (console.mistral.ai).
+Chaque appel Mistral (`chat()` et `moderate()`) est tracé à deux endroits, dans `MistralClient::logUsage()` :
+
+1. **Log fichier** : une ligne dans le canal dédié `mistral` (`config/logging.php`, driver `daily`, fichier `storage/logs/mistral-{date}.log`, conservé 30 jours) — volontairement séparé de `laravel.log` pour rester discret. Sert de complément brut au dashboard de facturation Mistral (console.mistral.ai).
+2. **Table `consommations_ia`** (modèle `ConsommationIA`) : un enregistrement durable par appel — `formateur_id`, `type` (`chat`/`moderate`), `model`, `prompt_tokens`, `completion_tokens`, `total_tokens`. C'est la source de données des deux tableaux de bord de suivi (le log fichier n'a pas de rétention longue et n'est pas exploitable en UI).
+
+Deux vues exploitent `ConsommationIADashboardService` (`app/Services/ConsommationIADashboardService.php`) :
+- **Admin** — `/admin/pilotage/consommation-ia` (`admin.pilotage.consommation-ia`, `ConsommationIAController`) : total de tokens et de générations par formateur, tous formateurs confondus, triés par consommation décroissante.
+- **Formateur** — `/formateur/mes-modules/consommation-ia` (`formateur.modules.builder.consommation-ia`, `ModuleBuilderController::consommationIA()`) : ses propres totaux (générations, tokens prompt/réponse) + historique paginé de ses générations. Lien accessible depuis l'en-tête de la page « Mes créations ».
+
+Volontairement limité aux tokens bruts, sans estimation de coût en euros : les tarifs Mistral varient selon le modèle et changent dans le temps, un coût affiché deviendrait vite trompeur sans mise à jour manuelle régulière.
 
 ### Extraction d'images des documents (détail technique)
 
