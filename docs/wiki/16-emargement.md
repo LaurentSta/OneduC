@@ -9,40 +9,36 @@ L'émargement permet à un formateur de produire, pour chaque groupe, une **feui
 C'est volontairement un document **administratif**, distinct des outils d'animation ludiques décrits en page [07](07-outils-animation.md) :
 - l'accès stagiaire se fait par appartenance vérifiée au groupe, jamais par un simple code public partagé ;
 - la preuve de présence est une **signature graphique** (pad de dessin), pas un pointage en un clic ;
-- il n'y a pas de notion de "session relançable" : une séance correspond à un vrai créneau calendaire, unique par groupe/date/créneau.
+- chaque séance correspond à un vrai créneau daté (impossible d'en recréer une identique par erreur pour le même groupe).
 
 L'émargement est distinct de l'**assiduité plateforme** déjà suivie dans Progression (temps de connexion, jours actifs) — les deux indicateurs sont affichés côte à côte, sans être fusionnés, car ils ne mesurent pas la même chose.
 
 ## Utilisation côté formateur
 
-L'émargement est un **outil à part entière**, avec sa propre vue dédiée (`/formateur/emargement`) :
+L'émargement est accessible depuis deux endroits :
+- le bouton **« Émargement »**, à côté de « Filtrer », sur la page **Mes stagiaires** ;
+- la carte **« Émargement »** du tableau **Outils numériques**, avec un badge qui indique combien de séances sont actuellement ouvertes.
 
-- accessible via le bouton **« Émargement »** à côté de « Filtrer » sur `/formateur/stagiaires` (hérite du groupe actif dans le filtre de cette liste, s'il y en a un) ;
-- accessible aussi depuis `/formateur/outils`, avec un badge indiquant le nombre de séances actuellement ouvertes.
+L'outil s'active **groupe par groupe** : par défaut, aucun groupe n'est concerné. Sur l'écran d'accueil de l'outil, chaque groupe du formateur apparaît sous forme de carte :
+- s'il n'est **pas encore activé**, un bouton « Activer pour ce groupe » suffit à démarrer ;
+- s'il est **déjà activé**, la carte est cliquable et ouvre directement la gestion de ses séances (un lien permet de désactiver à tout moment, sans perdre l'historique des séances déjà créées).
 
-L'émargement s'**active groupe par groupe** — aucun groupe n'a l'outil actif par défaut. La vue liste tous les groupes du formateur :
-- un groupe **non activé** affiche juste un bouton « Activer pour ce groupe » ;
-- un groupe **activé** est une carte cliquable (badge « Activé ») qui ouvre sa gestion de séances.
+Une fois un groupe activé, le formateur peut :
+- **créer une séance** : une date, un créneau (matin, après-midi, journée complète ou soirée), et un titre facultatif ;
+- consulter la **liste des séances** déjà créées, avec le nombre de stagiaires ayant signé pour chacune.
 
-Une fois un groupe activé et sélectionné (`?group_id=`) :
-- création d'une séance (date, créneau, titre optionnel) — une seule séance par couple (groupe, date, créneau) ;
-- liste des séances existantes avec le nombre de signatures obtenues ;
-- un lien discret « Désactiver l'émargement pour ce groupe » redonne la main sans perdre l'historique des séances déjà créées (elles restent en base, juste masquées de cette vue tant que le groupe n'est pas réactivé).
-
-Bouton **« Piloter »** sur une séance → page dédiée (`/formateur/groupes/{group}/emargement/{seance}`) :
-- **Ouvrir la séance** : à partir de là, les stagiaires du groupe peuvent signer depuis leur espace ;
-- suivi en direct de qui a signé (rafraîchissement automatique toutes les 3 secondes), avec la signature affichée ;
-- **Marquer absent** (avec motif optionnel) ou **Signer à sa place** (pour un stagiaire sans compte actif ou ayant oublié) ;
-- **Clôturer la séance** : les stagiaires ne peuvent plus s'auto-signer, mais les corrections formateur restent possibles ;
-- **Exporter en PDF** à tout moment (disponible aussi depuis la vue dédiée pour l'historique).
-
-> **Historique du placement** : v1 (2026-07-07 matin) mettait la gestion dans un 4ᵉ onglet de la fiche groupe — rejeté sur retour terrain ("le workflow ne colle pas au terrain"). v2 (même jour, après-midi) déplaçait la création/liste sur la fiche individuelle du stagiaire. v3 en a fait un outil à part entière avec sa propre vue dédiée, reliée depuis la liste des stagiaires plutôt qu'une fiche stagiaire précise — cohérent avec la façon dont les autres outils (Sondage, Quiz...) ont chacun leur page dédiée. v4 (même jour) a ajouté l'activation par groupe, pour éviter que l'outil s'impose à des groupes qui n'en ont pas l'usage (formations informelles, groupes sandbox...).
+En cliquant sur **« Piloter »** pour une séance, le formateur arrive sur un écran de suivi en direct où il peut :
+- **ouvrir la séance**, ce qui permet aux stagiaires de signer depuis leur propre espace ;
+- voir en temps réel qui a signé, avec l'image de chaque signature ;
+- **marquer un stagiaire absent** (avec un motif facultatif), ou **signer à sa place** s'il n'a pas de compte actif ou a oublié ;
+- **clôturer la séance** une fois terminée — les stagiaires ne peuvent alors plus signer eux-mêmes, mais le formateur garde la main pour corriger si besoin ;
+- **exporter la feuille en PDF** à tout moment, pour la conserver ou la fournir lors d'un contrôle Qualiopi/OPCO.
 
 ## Utilisation côté stagiaire
 
-Sur son tableau de bord `/stagiaire/outils`, la carte **« Émargement »** affiche un bouton **« Signer maintenant »** uniquement quand une séance est ouverte pour son groupe. Le stagiaire dessine sa signature du doigt/souris sur un pad, puis valide — la signature ne peut être posée qu'une seule fois par séance (une correction ultérieure ne peut venir que du formateur).
+Quand une séance est ouverte pour son groupe, le stagiaire voit apparaître un bouton **« Signer maintenant »** sur la carte Émargement de son tableau **Outils**. Il dessine sa signature du doigt ou à la souris, puis valide. Une fois signée, seul le formateur peut encore modifier cette présence.
 
-Une alerte apparaît aussi dans la **cloche de notification** (visible sur toutes les pages stagiaire, pas seulement Outils) dès qu'une séance s'ouvre pour l'un de ses groupes actifs et que sa signature est encore en attente — item « Émargement à signer » avec le nom du groupe, cliquable directement vers l'écran de signature. L'alerte disparaît d'elle-même une fois signée. Pas d'email pour l'instant (canal jugé moins fiable pour ce public, cf. décision ci-dessous) — seulement le canal in-app, cohérent avec Whiteboard/Mur de questions/Quiz live.
+Une alerte apparaît également dans la **cloche de notification**, en haut de toutes les pages de son espace — pas besoin d'aller chercher la bonne page pour s'en rendre compte. Elle disparaît automatiquement dès que la signature est faite. Il n'y a pas encore d'alerte par email : la notification dans l'application a été jugée plus fiable pour ce public.
 
 ## Partie technique
 
@@ -90,6 +86,10 @@ L'activation par groupe est un simple booléen `groups.emargement_enabled` (déf
 - **Alerte stagiaire par polling, pas par notification native Laravel** : `resources/views/components/user-notification-bell.blade.php` mélange déjà deux systèmes (notifications Eloquent natives + polling JS toutes les 5s pour Whiteboard/Quiz live/Mur de questions). L'émargement suit le second pattern — `Stagiaire\EmargementController::notificationStatus()` (route `stagiaire.emargement.notification-status`) renvoie `has_open_seance`/`group_name`/`opened_at_human`/`join_url`, consommé par un `updateEmargement()`/`pollEmargementStatus()` dédié dans le même fichier. La condition de disparition n'est pas juste "séance ouverte" mais "séance ouverte **et** ma `SeancePresence` est encore `en_attente`" — l'alerte s'éteint dès la signature, avant même la clôture de la séance.
 - **Deux familles de routes formateur** : `formateur.emargement.index` (top-level, sans `{group}` — la vue dédiée avec choix/activation de groupe, + `formateur.emargement.activer`/`.desactiver` en `POST /formateur/emargement/groupes/{group}/...`) et `formateur.groupes.emargement.*` (scopées `{group}`, pour créer/piloter/corriger/exporter — inchangées depuis la conception initiale). `EmargementController::store()` redirige systématiquement vers `formateur.emargement.index` avec le `group_id` de la séance créée.
 - **Activation par groupe, pas par défaut** : contrairement aux autres outils (toujours disponibles pour tout groupe), l'émargement est opt-in via `groups.emargement_enabled`. Ce n'est pas une contrainte de sécurité (les routes scopées `{group}` restent protégées par `AccesEmargement::assertFormateurAccess()` indépendamment de ce flag) — uniquement un filtre d'affichage sur la vue dédiée, pour que la liste de groupes n'impose pas l'outil à des formations qui n'en ont pas besoin.
+
+### Historique du placement (pour archive)
+
+Trois emplacements ont été essayés avant la version actuelle, tous le 2026-07-07 : (1) un 4ᵉ onglet de la fiche groupe, retiré car le formateur pense d'abord au stagiaire à faire signer, pas à l'administration du groupe ; (2) une section sur la fiche individuelle du stagiaire, remplacée pour que l'outil ait un point d'entrée unique plutôt que dispersé sur chaque fiche ; (3) la version actuelle — vue dédiée reliée depuis la liste des stagiaires, cohérente avec la façon dont Sondage/Quiz ont chacun leur propre page.
 
 ### Suite de tests
 
