@@ -5,12 +5,15 @@ namespace App\Http\Controllers;
 use App\Models\ModuleLecture;
 use App\Models\ScormResult;
 use App\Models\ScormScore;
+use App\Support\Scorm\InteractsWithScormProgress;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 class SCORMController extends Controller
 {
+    use InteractsWithScormProgress;
+
     /**
      * Sauvegarde la progression envoyée par l'API SCORM 1.2 (JS).
      */
@@ -82,63 +85,12 @@ class SCORMController extends Controller
         $sc->save();
 
         // 4) Recalcul optionnel de la complétion interne (ex: si score >= 50)
-        $this->recomputeMonotoneStatus($sc);
+        $this->recomputeMonotoneStatus($sc, $lectureId);
 
         return response()->json([
             'success' => true,
             'lesson_status' => $sc->is_completed ? 'completed' : 'in_progress', // Statut interne Oneduc
             'scorm_lesson_status' => $sc->lesson_status, // Statut SCORM d'origine (pour API.js)
         ]);
-    }
-
-    /**
-     * Calcule le temps cumulé en gérant les deltas de session.
-     */
-    private function handleSessionTime(ScormScore $sc, string $scormValue)
-    {
-        // On ignore les centièmes de secondes potentiels
-        $cleanTime = explode('.', $scormValue)[0];
-        $parts = explode(':', $cleanTime);
-
-        if (count($parts) === 3) {
-            [$h, $m, $s] = array_map('intval', $parts);
-            $durationSeconds = ($h * 3600) + ($m * 60) + $s;
-
-            $lastSessionTime = (int) $sc->last_session_time;
-            $delta = $durationSeconds - $lastSessionTime;
-
-            // On cumule uniquement si le temps est positif (nouvelle donnée)
-            if ($delta > 0) {
-                $sc->session_time = (int) $sc->session_time + $delta;
-                $sc->last_session_time = $durationSeconds;
-            } elseif ($durationSeconds < $lastSessionTime) {
-                // Si le player a reset son compteur interne, on met juste à jour le repère
-                $sc->last_session_time = $durationSeconds;
-            }
-        }
-    }
-
-    /**
-     * Force la complétion si les conditions métier sont remplies.
-     */
-    private function recomputeMonotoneStatus(ScormScore $sc): void
-    {
-        if ($sc->is_completed) {
-            return;
-        }
-
-        $lecture = ModuleLecture::find($sc->lecture_id);
-        if (! $lecture) {
-            return;
-        }
-
-        // Seuil de réussite par défaut à 50% ou selon vos besoins
-        $passThreshold = 50;
-
-        if ($sc->best_score >= $passThreshold) {
-            $sc->lesson_status = 'completed';
-            $sc->is_completed = true;
-            $sc->save();
-        }
     }
 }
