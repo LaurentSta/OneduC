@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\ContentBlockScormScore;
 use App\Models\ModuleLecture;
 use App\Models\Progression;
 use App\Models\ScormPackageVersion;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class LectureController extends Controller
@@ -15,6 +15,8 @@ class LectureController extends Controller
     public function show($id)
     {
         $lecture = ModuleLecture::with(['section.module.sections.lectures'])->findOrFail($id);
+        $this->assertCanViewLecture($lecture);
+
         $module = $lecture->section->module;
 
         return view('frontend.contenu.lecture_show', compact('lecture', 'module'));
@@ -49,10 +51,11 @@ class LectureController extends Controller
     {
         // On récupère la leçon avec ses relations SCORM si nécessaire
         $lecture = \App\Models\ModuleLecture::with(['scormPackage.activeVersion', 'scormPackageVersion'])->findOrFail($id);
+        $this->assertCanViewLecture($lecture);
 
         $path = $lecture->scorm_index_path;
 
-        if (!$path) {
+        if (! $path) {
             // Au lieu d'un 404 brutal, on peut rediriger avec un message d'erreur
             return redirect()->back()->with('error', 'Le contenu SCORM n\'a pas encore été importé pour cette leçon.');
         }
@@ -67,6 +70,7 @@ class LectureController extends Controller
     public function showScormBlock($id, $key)
     {
         $lecture = ModuleLecture::findOrFail($id);
+        $this->assertCanViewLecture($lecture);
 
         $block = collect($lecture->content_blocks ?? [])
             ->first(fn ($b) => ($b['type'] ?? null) === 'scorm' && ($b['content_block_key'] ?? null) === $key);
@@ -94,6 +98,7 @@ class LectureController extends Controller
     public function showSlides($id)
     {
         $lecture = \App\Models\ModuleLecture::findOrFail($id);
+        $this->assertCanViewLecture($lecture);
 
         if (($lecture->content_type ?? 'scorm') !== 'slides') {
             return redirect()->back()->with('error', 'Cette leçon n\'est pas en mode Slides.');
@@ -124,5 +129,14 @@ class LectureController extends Controller
             'lecture' => $lecture,
             'slides' => $slides,
         ]);
+    }
+
+    private function assertCanViewLecture(ModuleLecture $lecture): void
+    {
+        $lecture->loadMissing('section.module');
+
+        $module = $lecture->section?->module;
+
+        abort_unless($module && $module->isVisibleTo(auth()->user()), 404);
     }
 }

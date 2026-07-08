@@ -1,11 +1,14 @@
 <?php
 
+use App\Http\Controllers\BuzzerParticipationController;
+use App\Http\Controllers\ComponentFinderParticipationController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PollParticipationController;
 use App\Http\Controllers\QuestionWallParticipationController;
 use App\Http\Controllers\RoueAleatoireParticipationController;
 use App\Http\Controllers\ScaleParticipationController;
+use App\Http\Controllers\VraiFauxParticipationController;
 use App\Http\Controllers\WordCloudParticipationController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
@@ -96,7 +99,9 @@ Route::middleware(['auth'])->group(function () {
 // 🎥 Lecture d’une leçon
 // ----------------------------------------------------------
 // Affiche une leçon précise
-Route::get('/lecture/{id}', [\App\Http\Controllers\Frontend\LectureController::class, 'show'])->name('lecture.show');
+Route::get('/lecture/{id}', [\App\Http\Controllers\Frontend\LectureController::class, 'show'])
+    ->middleware('auth')
+    ->name('lecture.show');
 
 // ----------------------------------------------------------
 // ☁️ Jeu - Nuage de mot (participation)
@@ -142,17 +147,65 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // ----------------------------------------------------------
+// ✅ Vrai/Faux (participation)
+// ----------------------------------------------------------
+if (config('outils.vraifaux.enabled')) {
+    Route::middleware(['auth'])->group(function () {
+        Route::get('/oneduc/vrai-faux', [VraiFauxParticipationController::class, 'home'])->name('vraifaux.join');
+        Route::post('/oneduc/vrai-faux', [VraiFauxParticipationController::class, 'resolveCode'])->name('vraifaux.resolve');
+        Route::get('/oneduc/vrai-faux/{code}', [VraiFauxParticipationController::class, 'joinByCode'])->name('vraifaux.join.code');
+        Route::post('/oneduc/vrai-faux/{code}/reponses', [VraiFauxParticipationController::class, 'submit'])
+            ->middleware('throttle:60,1')
+            ->name('vraifaux.submit');
+        Route::get('/oneduc/vrai-faux/{code}/data', [VraiFauxParticipationController::class, 'data'])->name('vraifaux.data');
+    });
+}
+
+// ----------------------------------------------------------
 // 📏 Échelle de positionnement (participation)
 // ----------------------------------------------------------
-Route::middleware(['auth'])->group(function () {
-    Route::get('/oneduc/echelle', [ScaleParticipationController::class, 'home'])->name('echelle.join');
-    Route::post('/oneduc/echelle', [ScaleParticipationController::class, 'resolveCode'])->name('echelle.resolve');
-    Route::get('/oneduc/echelle/{code}', [ScaleParticipationController::class, 'joinByCode'])->name('echelle.join.code');
-    Route::post('/oneduc/echelle/{code}/reponses', [ScaleParticipationController::class, 'submit'])
-        ->middleware('throttle:60,1')
-        ->name('echelle.submit');
-    Route::get('/oneduc/echelle/{code}/data', [ScaleParticipationController::class, 'data'])->name('echelle.data');
-});
+if (config('outils.echelle.enabled')) {
+    Route::middleware(['auth'])->group(function () {
+        Route::get('/oneduc/echelle', [ScaleParticipationController::class, 'home'])->name('echelle.join');
+        Route::post('/oneduc/echelle', [ScaleParticipationController::class, 'resolveCode'])->name('echelle.resolve');
+        Route::get('/oneduc/echelle/{code}', [ScaleParticipationController::class, 'joinByCode'])->name('echelle.join.code');
+        Route::post('/oneduc/echelle/{code}/reponses', [ScaleParticipationController::class, 'submit'])
+            ->middleware('throttle:60,1')
+            ->name('echelle.submit');
+        Route::get('/oneduc/echelle/{code}/data', [ScaleParticipationController::class, 'data'])->name('echelle.data');
+    });
+}
+
+// ----------------------------------------------------------
+// 🔍 Trouve le composant (participation)
+// ----------------------------------------------------------
+if (config('outils.composants.enabled')) {
+    Route::middleware(['auth'])->group(function () {
+        Route::get('/oneduc/composant', [ComponentFinderParticipationController::class, 'home'])->name('composants.join');
+        Route::post('/oneduc/composant', [ComponentFinderParticipationController::class, 'resolveCode'])->name('composants.resolve');
+        Route::get('/oneduc/composant/{code}', [ComponentFinderParticipationController::class, 'joinByCode'])->name('composants.join.code');
+        Route::post('/oneduc/composant/{code}/reponses', [ComponentFinderParticipationController::class, 'submit'])
+            ->middleware('throttle:60,1')
+            ->name('composants.submit');
+    });
+}
+
+// ----------------------------------------------------------
+// 🔔 Buzzer Quiz (participation)
+// ----------------------------------------------------------
+if (config('outils.buzzer.enabled')) {
+    Route::middleware(['auth'])->group(function () {
+        Route::get('/oneduc/buzzer', [BuzzerParticipationController::class, 'home'])->name('buzzer.join');
+        Route::post('/oneduc/buzzer', [BuzzerParticipationController::class, 'resolveCode'])->name('buzzer.resolve');
+        Route::get('/oneduc/buzzer/{code}', [BuzzerParticipationController::class, 'joinByCode'])->name('buzzer.join.code');
+        Route::post('/oneduc/buzzer/{code}/buzz', [BuzzerParticipationController::class, 'buzz'])
+            ->middleware('throttle:30,1')
+            ->name('buzzer.buzz');
+        Route::get('/oneduc/buzzer/{code}/snapshot', [BuzzerParticipationController::class, 'snapshot'])
+            ->middleware('throttle:120,1')
+            ->name('buzzer.snapshot');
+    });
+}
 
 // ----------------------------------------------------------
 // 🔐 Authentification

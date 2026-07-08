@@ -3,12 +3,15 @@
 namespace App\Http\Controllers\Formateur;
 
 use App\Http\Controllers\Controller;
+use App\Models\BuzzerSession;
+use App\Models\ComponentFinderSession;
 use App\Models\Group;
 use App\Models\Module;
 use App\Models\PollSession;
 use App\Models\QuestionWall;
 use App\Models\ScaleSession;
 use App\Models\Seance;
+use App\Models\TrueFalseSession;
 use App\Models\WordCloud;
 use Illuminate\View\View;
 
@@ -26,7 +29,7 @@ class OutilsNumeriquesController extends Controller
             ->get();
 
         $groups = Group::query()
-            ->where('instructor_id', $formateurId)
+            ->accessibleByTrainer($formateurId)
             ->withCount('students')
             ->orderBy('name')
             ->get();
@@ -47,13 +50,45 @@ class OutilsNumeriquesController extends Controller
             ->limit(5)
             ->get();
 
-        $recentScales = ScaleSession::query()
-            ->where('formateur_id', $formateurId)
-            ->with('group:id,name')
-            ->withCount('responses')
-            ->latest()
-            ->limit(5)
-            ->get();
+        $recentScales = config('outils.echelle.enabled')
+            ? ScaleSession::query()
+                ->whereHas('group', fn ($q) => $q->accessibleByTrainer($formateurId))
+                ->with('group:id,name')
+                ->withCount('responses')
+                ->latest()
+                ->limit(5)
+                ->get()
+            : collect();
+
+        $recentTrueFalseSessions = config('outils.vraifaux.enabled')
+            ? TrueFalseSession::query()
+                ->whereHas('group', fn ($q) => $q->accessibleByTrainer($formateurId))
+                ->with('group:id,name')
+                ->withCount('responses')
+                ->latest()
+                ->limit(5)
+                ->get()
+            : collect();
+
+        $recentBuzzerSessions = config('outils.buzzer.enabled')
+            ? BuzzerSession::query()
+                ->whereHas('group', fn ($q) => $q->accessibleByTrainer($formateurId))
+                ->with('group:id,name')
+                ->withCount('participants')
+                ->latest()
+                ->limit(5)
+                ->get()
+            : collect();
+
+        $recentComponentFinderSessions = config('outils.composants.enabled')
+            ? ComponentFinderSession::query()
+                ->whereHas('group', fn ($q) => $q->accessibleByTrainer($formateurId))
+                ->with('group:id,name')
+                ->withCount('attempts')
+                ->latest()
+                ->limit(5)
+                ->get()
+            : collect();
 
         $recentModules = Module::query()
             ->authoredByTrainer($formateurId)
@@ -64,6 +99,6 @@ class OutilsNumeriquesController extends Controller
 
         $openSeancesCount = Seance::whereIn('group_id', $groups->pluck('id'))->where('statut', 'ouverte')->count();
 
-        return view('formateur.outils.index', compact('recentWordclouds', 'groups', 'recentQuestionWalls', 'recentPolls', 'recentScales', 'recentModules', 'openSeancesCount'));
+        return view('formateur.outils.index', compact('recentWordclouds', 'groups', 'recentQuestionWalls', 'recentPolls', 'recentScales', 'recentTrueFalseSessions', 'recentBuzzerSessions', 'recentComponentFinderSessions', 'recentModules', 'openSeancesCount'));
     }
 }

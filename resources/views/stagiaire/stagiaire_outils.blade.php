@@ -142,6 +142,9 @@
             'timer'         => 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z',
             'random_wheel'  => 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15',
             'scale'         => 'M3 6h18M3 12h18M3 18h18',
+            'true_false'    => 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
+            'buzzer_quiz'   => 'M13 10V3L4 14h7v7l9-11h-7z',
+            'component_finder' => 'M21 21l-4.35-4.35M17 10a7 7 0 11-14 0 7 7 0 0114 0z',
             'emargement'    => 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4',
             default         => 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z',
           };
@@ -215,6 +218,20 @@
             <a href="{{ route('stagiaire.emargement.show', $group->id) }}"
                class="inline-flex items-center justify-center rounded-full bg-bleuone px-4 py-2 text-xs font-bold text-white hover:bg-bleuone/90 transition self-start">
               Signer maintenant
+            </a>
+          @endif
+
+          @if ($tool->key === 'true_false' && ! empty($tool->active_url))
+            <a href="{{ $tool->active_url }}"
+               class="inline-flex items-center justify-center rounded-full bg-orangeone px-4 py-2 text-xs font-bold text-white hover:bg-orangeone-hover transition self-start">
+              Répondre maintenant
+            </a>
+          @endif
+
+          @if (in_array($tool->key, ['buzzer_quiz', 'component_finder'], true) && ! empty($tool->active_url))
+            <a href="{{ $tool->active_url }}"
+               class="inline-flex items-center justify-center rounded-full bg-bleuone px-4 py-2 text-xs font-bold text-white hover:bg-bleuone/90 transition self-start">
+              Participer maintenant
             </a>
           @endif
 

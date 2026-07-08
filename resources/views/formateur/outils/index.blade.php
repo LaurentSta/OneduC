@@ -284,7 +284,109 @@
       @endif
     </x-oneduc.outil-tile>
 
+    {{-- ── VRAI OU FAUX ───────────────────────────────────────────────── --}}
+    @if(config('outils.vraifaux.enabled'))
+    <x-oneduc.outil-tile
+      x-show="filtre === 'all' || filtre === 'interaction'"
+      tool-id="vrai-faux"
+      title="Vrai ou Faux"
+      icon-bg="bg-orangeone"
+      :badge-count="$recentTrueFalseSessions->count()"
+      cta-route="{{ route('formateur.vraifaux.index') }}"
+      cta-label="Gérer les Vrai/Faux"
+      cta-bg="bg-orangeone hover:bg-orangeone-hover"
+    >
+      <x-slot:icon>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </x-slot:icon>
+      <x-slot:description>
+        Affichez des affirmations courtes, les stagiaires répondent Vrai ou Faux, puis vous commentez les résultats et les explications en direct.
+      </x-slot:description>
+      <x-slot:badges>
+        <span class="rounded-full bg-green-100 px-2.5 py-0.5 font-semibold text-green-700">Présentiel</span>
+        <span class="rounded-full bg-blue-100 px-2.5 py-0.5 font-semibold text-blue-700">Distanciel</span>
+        <span class="rounded-full bg-orange-100 px-2.5 py-0.5 font-semibold text-orange-700">Vérification</span>
+      </x-slot:badges>
+      @if($recentTrueFalseSessions->isNotEmpty())
+        <x-slot:body>
+          <p class="mb-2 text-[10px] font-bold uppercase tracking-wider text-gray-400">Vrai/Faux récents</p>
+          <div class="space-y-2">
+            @foreach($recentTrueFalseSessions as $session)
+              @php $firstStatement = collect($session->questions ?? [])->first(); @endphp
+              <div class="flex items-center justify-between gap-2">
+                <div class="min-w-0">
+                  <p class="text-xs font-semibold text-gray-800 truncate">
+                    {{ $firstStatement['statement'] ?? $session->title }}
+                  </p>
+                  <p class="text-[10px] text-gray-400 truncate">
+                    {{ $session->group?->name }} · {{ $session->responses_count }} réponse{{ $session->responses_count > 1 ? 's' : '' }}
+                  </p>
+                </div>
+                <a href="{{ route('formateur.vraifaux.show', $session) }}"
+                   class="shrink-0 rounded-[6px] bg-orange-100 px-2 py-1 text-[10px] font-bold text-orange-700 hover:bg-orange-200 transition">
+                  Ouvrir
+                </a>
+              </div>
+            @endforeach
+          </div>
+        </x-slot:body>
+      @endif
+    </x-oneduc.outil-tile>
+    @endif
+
+    {{-- ── BUZZER QUIZ ───────────────────────────────────────────────── --}}
+    @if(config('outils.buzzer.enabled'))
+    <x-oneduc.outil-tile
+      x-show="filtre === 'all' || filtre === 'interaction'"
+      tool-id="buzzer"
+      title="Buzzer Quiz"
+      icon-bg="bg-red-600"
+      :badge-count="$recentBuzzerSessions->count()"
+      cta-route="{{ route('formateur.buzzer.index') }}"
+      cta-label="Gérer les buzzers"
+      cta-bg="bg-red-600 hover:bg-red-700"
+    >
+      <x-slot:icon>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+        </svg>
+      </x-slot:icon>
+      <x-slot:description>
+        Lancez un quiz rythmé : les stagiaires buzzent, le plus rapide répond, puis vous attribuez les points en direct.
+      </x-slot:description>
+      <x-slot:badges>
+        <span class="rounded-full bg-green-100 px-2.5 py-0.5 font-semibold text-green-700">Présentiel</span>
+        <span class="rounded-full bg-blue-100 px-2.5 py-0.5 font-semibold text-blue-700">Distanciel</span>
+        <span class="rounded-full bg-red-100 px-2.5 py-0.5 font-semibold text-red-700">Compétition</span>
+      </x-slot:badges>
+      @if($recentBuzzerSessions->isNotEmpty())
+        <x-slot:body>
+          <p class="mb-2 text-[10px] font-bold uppercase tracking-wider text-gray-400">Buzzers récents</p>
+          <div class="space-y-2">
+            @foreach($recentBuzzerSessions as $session)
+              <div class="flex items-center justify-between gap-2">
+                <div class="min-w-0">
+                  <p class="text-xs font-semibold text-gray-800 truncate">{{ $session->title }}</p>
+                  <p class="text-[10px] text-gray-400 truncate">
+                    {{ $session->group?->name }} · {{ $session->participants_count }} joueur{{ $session->participants_count > 1 ? 's' : '' }}
+                  </p>
+                </div>
+                <a href="{{ route('formateur.buzzer.show', $session) }}"
+                   class="shrink-0 rounded-[6px] bg-red-100 px-2 py-1 text-[10px] font-bold text-red-700 hover:bg-red-200 transition">
+                  Ouvrir
+                </a>
+              </div>
+            @endforeach
+          </div>
+        </x-slot:body>
+      @endif
+    </x-oneduc.outil-tile>
+    @endif
+
     {{-- ── ÉCHELLE DE POSITIONNEMENT ──────────────────────────────────── --}}
+    @if(config('outils.echelle.enabled'))
     <x-oneduc.outil-tile
       x-show="filtre === 'all' || filtre === 'interaction'"
       tool-id="echelle"
@@ -331,6 +433,56 @@
         </x-slot:body>
       @endif
     </x-oneduc.outil-tile>
+    @endif
+
+    {{-- ── TROUVE LE COMPOSANT ───────────────────────────────────────── --}}
+    @if(config('outils.composants.enabled'))
+    <x-oneduc.outil-tile
+      x-show="filtre === 'all' || filtre === 'interaction'"
+      tool-id="composants"
+      title="Trouve le composant"
+      icon-bg="bg-orangeone"
+      :badge-count="$recentComponentFinderSessions->count()"
+      cta-route="{{ route('formateur.composants.index') }}"
+      cta-label="Gérer les composants"
+      cta-bg="bg-orangeone hover:bg-orangeone-hover"
+    >
+      <x-slot:icon>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 10a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+      </x-slot:icon>
+      <x-slot:description>
+        Chargez une image, définissez les zones à retrouver, puis demandez aux stagiaires de cliquer sur les bons composants.
+      </x-slot:description>
+      <x-slot:badges>
+        <span class="rounded-full bg-green-100 px-2.5 py-0.5 font-semibold text-green-700">Présentiel</span>
+        <span class="rounded-full bg-blue-100 px-2.5 py-0.5 font-semibold text-blue-700">Distanciel</span>
+        <span class="rounded-full bg-orange-100 px-2.5 py-0.5 font-semibold text-orange-700">Repérage</span>
+      </x-slot:badges>
+      @if($recentComponentFinderSessions->isNotEmpty())
+        <x-slot:body>
+          <p class="mb-2 text-[10px] font-bold uppercase tracking-wider text-gray-400">Jeux récents</p>
+          <div class="space-y-2">
+            @foreach($recentComponentFinderSessions as $session)
+              <div class="flex items-center justify-between gap-2">
+                <div class="min-w-0">
+                  <p class="text-xs font-semibold text-gray-800 truncate">{{ $session->title }}</p>
+                  <p class="text-[10px] text-gray-400 truncate">
+                    {{ $session->group?->name }} · {{ $session->attempts_count }} participation{{ $session->attempts_count > 1 ? 's' : '' }}
+                  </p>
+                </div>
+                <a href="{{ route('formateur.composants.show', $session) }}"
+                   class="shrink-0 rounded-[6px] bg-orange-100 px-2 py-1 text-[10px] font-bold text-orange-700 hover:bg-orange-200 transition">
+                  Ouvrir
+                </a>
+              </div>
+            @endforeach
+          </div>
+        </x-slot:body>
+      @endif
+    </x-oneduc.outil-tile>
+    @endif
 
     {{-- ── ROUE ALÉATOIRE ─────────────────────────────────────────────── --}}
     <x-oneduc.outil-tile

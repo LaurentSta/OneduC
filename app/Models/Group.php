@@ -137,6 +137,21 @@ class Group extends Model
         return $this->hasMany(PollSession::class);
     }
 
+    public function trueFalseSessions()
+    {
+        return $this->hasMany(TrueFalseSession::class);
+    }
+
+    public function buzzerSessions()
+    {
+        return $this->hasMany(BuzzerSession::class);
+    }
+
+    public function componentFinderSessions()
+    {
+        return $this->hasMany(ComponentFinderSession::class);
+    }
+
     public function seances()
     {
         return $this->hasMany(Seance::class);
