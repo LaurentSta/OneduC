@@ -25,7 +25,7 @@ class OutilsEchelleController extends Controller
             ->get(['id', 'name']);
 
         $sessions = ScaleSession::query()
-            ->where('formateur_id', $formateurId)
+            ->whereHas('group', fn ($query) => $query->accessibleByTrainer($formateurId))
             ->with('group')
             ->withCount('responses')
             ->latest()
@@ -188,6 +188,11 @@ class OutilsEchelleController extends Controller
 
     private function assertOwnership(ScaleSession $scaleSession): void
     {
-        abort_unless((int) $scaleSession->formateur_id === (int) auth()->id(), 403);
+        abort_unless(
+            $scaleSession->group()
+                ->accessibleByTrainer((int) auth()->id())
+                ->exists(),
+            403
+        );
     }
 }

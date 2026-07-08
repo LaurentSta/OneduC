@@ -14,11 +14,14 @@ use App\Http\Controllers\Formateur\MesFormationsController;
 use App\Http\Controllers\Formateur\ModuleBuilderController;
 use App\Http\Controllers\Formateur\ObjectiveController;
 use App\Http\Controllers\Formateur\OnboardingController;
+use App\Http\Controllers\Formateur\OutilsBuzzerController;
+use App\Http\Controllers\Formateur\OutilsComposantController;
 use App\Http\Controllers\Formateur\OutilsEchelleController;
 use App\Http\Controllers\Formateur\OutilsLiveQuizController;
 use App\Http\Controllers\Formateur\OutilsNumeriquesController;
 use App\Http\Controllers\Formateur\OutilsPagesCollaborativesController;
 use App\Http\Controllers\Formateur\OutilsSondageController;
+use App\Http\Controllers\Formateur\OutilsVraiFauxController;
 use App\Http\Controllers\Formateur\ParcoursController;
 use App\Http\Controllers\Formateur\ProgressionController;
 use App\Http\Controllers\Formateur\ProgressionGroupesController;
@@ -156,13 +159,51 @@ Route::middleware(['auth', 'role:formateur', 'association.member'])
             Route::get('/{pollSession}/state', [OutilsSondageController::class, 'state'])->name('state');
         });
 
-        Route::prefix('/echelle')->name('echelle.')->group(function () {
-            Route::get('/', [OutilsEchelleController::class, 'index'])->name('index');
-            Route::post('/', [OutilsEchelleController::class, 'store'])->name('store');
-            Route::get('/{scaleSession}', [OutilsEchelleController::class, 'show'])->name('show');
-            Route::post('/{scaleSession}/toggle', [OutilsEchelleController::class, 'toggle'])->name('toggle');
-            Route::get('/{scaleSession}/state', [OutilsEchelleController::class, 'state'])->name('state');
-        });
+        if (config('outils.vraifaux.enabled')) {
+            Route::prefix('/vrai-faux')->name('vraifaux.')->group(function () {
+                Route::get('/', [OutilsVraiFauxController::class, 'index'])->name('index');
+                Route::post('/', [OutilsVraiFauxController::class, 'store'])->name('store');
+                Route::get('/{trueFalseSession}', [OutilsVraiFauxController::class, 'show'])->name('show');
+                Route::post('/{trueFalseSession}/toggle', [OutilsVraiFauxController::class, 'toggle'])->name('toggle');
+                Route::get('/{trueFalseSession}/state', [OutilsVraiFauxController::class, 'state'])->name('state');
+            });
+        }
+
+        if (config('outils.echelle.enabled')) {
+            Route::prefix('/echelle')->name('echelle.')->group(function () {
+                Route::get('/', [OutilsEchelleController::class, 'index'])->name('index');
+                Route::post('/', [OutilsEchelleController::class, 'store'])->name('store');
+                Route::get('/{scaleSession}', [OutilsEchelleController::class, 'show'])->name('show');
+                Route::post('/{scaleSession}/toggle', [OutilsEchelleController::class, 'toggle'])->name('toggle');
+                Route::get('/{scaleSession}/state', [OutilsEchelleController::class, 'state'])->name('state');
+            });
+        }
+
+        if (config('outils.composants.enabled')) {
+            Route::prefix('/trouve-le-composant')->name('composants.')->group(function () {
+                Route::get('/', [OutilsComposantController::class, 'index'])->name('index');
+                Route::post('/', [OutilsComposantController::class, 'store'])->name('store');
+                Route::get('/{componentFinderSession}', [OutilsComposantController::class, 'show'])->name('show');
+                Route::post('/{componentFinderSession}/toggle', [OutilsComposantController::class, 'toggle'])->name('toggle');
+                Route::delete('/{componentFinderSession}', [OutilsComposantController::class, 'destroy'])->name('destroy');
+            });
+        }
+
+        if (config('outils.buzzer.enabled')) {
+            Route::prefix('/buzzer')->name('buzzer.')->group(function () {
+                Route::get('/', [OutilsBuzzerController::class, 'index'])->name('index');
+                Route::post('/', [OutilsBuzzerController::class, 'store'])->name('store');
+                Route::get('/{buzzerSession}', [OutilsBuzzerController::class, 'show'])->name('show');
+                Route::get('/{buzzerSession}/snapshot', [OutilsBuzzerController::class, 'snapshot'])->name('snapshot');
+                Route::post('/{buzzerSession}/start', [OutilsBuzzerController::class, 'start'])->name('start');
+                Route::post('/{buzzerSession}/correct', [OutilsBuzzerController::class, 'correct'])->name('correct');
+                Route::post('/{buzzerSession}/incorrect', [OutilsBuzzerController::class, 'incorrect'])->name('incorrect');
+                Route::post('/{buzzerSession}/skip', [OutilsBuzzerController::class, 'skip'])->name('skip');
+                Route::post('/{buzzerSession}/next', [OutilsBuzzerController::class, 'next'])->name('next');
+                Route::post('/{buzzerSession}/close', [OutilsBuzzerController::class, 'close'])->name('close');
+                Route::delete('/{buzzerSession}', [OutilsBuzzerController::class, 'destroy'])->name('destroy');
+            });
+        }
 
         Route::get('/pages-collaboratives', [OutilsPagesCollaborativesController::class, 'index'])
             ->name('pages-collaboratives.index');

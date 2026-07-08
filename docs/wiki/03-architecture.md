@@ -231,7 +231,7 @@ Le contenu détaillé des leçons reste séparé dans la page `resources/views/f
 
 ## Pattern d'outils interactifs
 
-La plupart des outils d'animation (Quiz live, Nuage de mots, Sondage, Échelle, Mur de questions, etc.) suivent le même patron de conception :
+La plupart des outils d'animation (Quiz live, Nuage de mots, Sondage, Vrai/Faux, Buzzer Quiz, Échelle, Trouve le composant, Mur de questions, etc.) suivent le même patron de conception :
 
 1. **Deux tables** : une table de session (`*_sessions`) avec `group_id`, `formateur_id`, `is_active`, `access_code` ; une table de réponses (`*_responses`) avec `user_id`, `session_id`
 2. **Contrôleur formateur** dans `Formateur/` — CRUD + lancement/fermeture + endpoint JSON résultats
@@ -240,11 +240,13 @@ La plupart des outils d'animation (Quiz live, Nuage de mots, Sondage, Échelle, 
 5. **Accès** : vérifié via `$group->students()->where('users.id', auth()->id())->exists()`
 
 Exceptions notables :
+- le Buzzer Quiz ajoute `buzzer_questions`, `buzzer_attempts` et `buzzer_participants` pour gérer le buzz, le verdict et le classement ;
+- Trouve le composant stocke l'image et les zones dans `component_finder_sessions`, puis les scores dans `component_finder_attempts` ;
 - le tableau blanc utilise Excalidraw et persiste des éléments/snapshots de groupe ;
 - le minuteur est unique par groupe (`GroupTimer`) ;
 - les pages collaboratives ouvrent une instance HedgeDoc externe configurée par `HEDGEDOC_BASE_URL`.
 
-Le Minuteur sert de pilote pour une structure par domaine (`app/Domains/Outils/<Outil>/` : contrôleurs, garde d'accès, routes et un `ServiceProvider` dédié), activable/désactivable indépendamment via `config/outils.php`, sans toucher au reste de l'application. Ce pattern est évalué comme modèle avant généralisation aux 6 autres outils.
+Le Minuteur sert de pilote pour une structure par domaine (`app/Domains/Outils/<Outil>/` : contrôleurs, garde d'accès, routes et un `ServiceProvider` dédié), activable/désactivable indépendamment via `config/outils.php`, sans toucher au reste de l'application. Vrai/Faux, Échelle, Buzzer Quiz et Trouve le composant ajoutent aussi des clés dédiées (`OUTILS_VRAIFAUX_ENABLED`, `OUTILS_ECHELLE_ENABLED`, `OUTILS_BUZZER_ENABLED`, `OUTILS_COMPOSANTS_ENABLED`) afin de masquer leurs routes et leurs tuiles sans impacter les autres outils.
 
 ---
 

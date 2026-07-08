@@ -94,6 +94,24 @@ test('a foreign formateur cannot open the lesson of a trainer-authored module th
         ->assertNotFound();
 });
 
+test('legacy lecture routes do not expose a module to an unrelated stagiaire', function () {
+    ['lecture' => $lecture] = seedModuleVisibilityContext();
+
+    $otherStagiaire = User::factory()->create(['role' => 'stagiaire', 'password_changed_at' => now()]);
+
+    $this->actingAs($otherStagiaire)
+        ->get(route('lecture.show', ['id' => $lecture->id]))
+        ->assertNotFound();
+
+    $this->actingAs($otherStagiaire)
+        ->get(route('lecture.scorm', ['id' => $lecture->id]))
+        ->assertNotFound();
+
+    $this->actingAs($otherStagiaire)
+        ->get(route('lecture.slides', ['id' => $lecture->id]))
+        ->assertNotFound();
+});
+
 test('any formateur can open the lesson of a catalog module regardless of ownership', function () {
     ['module' => $module, 'section' => $section, 'lecture' => $lecture] = seedModuleVisibilityContext(['is_trainer_authored' => false]);
 

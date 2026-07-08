@@ -2,18 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ModuleLecture;
+use App\Models\ScormScore;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
-use App\Models\ScormInteraction;
-use App\Models\LessonFeedback;
-use App\Models\VideoSegmentTracking;
-use App\Models\ScormEvaluationScore;
-use App\Models\ModuleLecture;
-use App\Models\ScormScore;
 
 class UserController extends Controller
 {
@@ -40,8 +36,6 @@ class UserController extends Controller
         return view('frontend.contenu.adhesion');
     }
 
-
-
     /* -------------------------------------------------------------------------
      | Auth & Session
      |-------------------------------------------------------------------------- */
@@ -59,7 +53,6 @@ class UserController extends Controller
      | Stagiaire Dashboard & Profil
      |-------------------------------------------------------------------------- */
 
-    
     // Vue du profil stagiaire
     public function UserProfile()
     {
@@ -78,53 +71,50 @@ class UserController extends Controller
         return view('stagiaire.stagiaire_parametre', compact('profileData'));
     }
 
-
     public function UserProfilStore(Request $request)
-{
-    $id = Auth::id();
-    $user = User::findOrFail($id);
+    {
+        $id = Auth::id();
+        $user = User::findOrFail($id);
 
-    // ✅ Validation sécurisée
-    $request->validate([
-        'name' => 'required|string|max:255',
-        'prenom' => 'required|string|max:255',
-        'email' => 'required|email|max:255',
-        'phoneNumber' => 'nullable|string|max:20',
-        'address' => 'nullable|string|max:255',
-        'photo' => 'nullable|image|max:2048',
-    ]);
+        // ✅ Validation sécurisée
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'prenom' => 'required|string|max:255',
+            'email' => 'required|email|max:255',
+            'phoneNumber' => 'nullable|string|max:20',
+            'address' => 'nullable|string|max:255',
+            'photo' => 'nullable|image|max:2048',
+        ]);
 
-    // ✅ Mise à jour des champs
-    if ($request->has('name')) {
-    $user->name = $request->name;
+        // ✅ Mise à jour des champs
+        if ($request->has('name')) {
+            $user->name = $request->name;
+        }
+        if ($request->has('prenom')) {
+            $user->prenom = $request->prenom;
+        }
+        if ($request->has('email')) {
+            $user->email = $request->email;
+        }
+        if ($request->has('phoneNumber')) {
+            $user->phone = $request->phoneNumber;
+        }
+        if ($request->has('address')) {
+            $user->address = $request->address;
+        }
+
+        // ✅ Upload image si présente
+        if ($request->file('photo')) {
+            $file = $request->file('photo');
+            $filename = Str::uuid().'.'.$file->extension();
+            $file->move(public_path('/upload/user_images'), $filename);
+            $user->photo = $filename;
+        }
+
+        $user->save();
+
+        return redirect()->back()->with('message', 'Profil mis à jour avec succès.');
     }
-    if ($request->has('prenom')) {
-        $user->prenom = $request->prenom;
-    }
-    if ($request->has('email')) {
-        $user->email = $request->email;
-    }
-    if ($request->has('phoneNumber')) {
-        $user->phone = $request->phoneNumber;
-    }
-    if ($request->has('address')) {
-        $user->address = $request->address;
-    }
-
-
-    // ✅ Upload image si présente
-    if ($request->file('photo')) {
-        $file = $request->file('photo');
-        $filename = Str::uuid() . '.' . $file->extension();
-        $file->move(public_path('/upload/user_images'), $filename);
-        $user->photo = $filename;
-    }
-
-    $user->save();
-
-    return redirect()->back()->with('message', 'Profil mis à jour avec succès.');
-}
-
 
     /* -------------------------------------------------------------------------
      | Sécurité / Mot de passe
@@ -149,7 +139,7 @@ class UserController extends Controller
         ]);
 
         // Vérification du mot de passe actuel
-        if (!Hash::check($request->currentPassword, $user->password)) {
+        if (! Hash::check($request->currentPassword, $user->password)) {
             return back()->withErrors([
                 'currentPassword' => 'Le mot de passe actuel est incorrect.',
             ]);
@@ -217,6 +207,7 @@ class UserController extends Controller
     {
         return view('frontend.contenu.code_login');
     }
+
     public function loginByCode(Request $request)
     {
         $request->validate([
@@ -225,8 +216,9 @@ class UserController extends Controller
 
         $user = User::where('code_acces', strtoupper($request->code_acces))->first();
 
-        if ($user && $user->role === 'stagiaire') {
+        if ($user && $user->role === 'stagiaire' && $user->status) {
             Auth::login($user);
+
             return redirect()->route('stagiaire.dashboard')->with('success', 'Bienvenue !');
         }
 
@@ -234,6 +226,7 @@ class UserController extends Controller
             'code_acces' => 'Code d’accès invalide ou utilisateur non autorisé.',
         ]);
     }
+
     public function getProgressionJson($moduleId)
     {
         $userId = Auth::id();
@@ -262,7 +255,7 @@ class UserController extends Controller
         }
 
         return response()->json([
-            'progression' => $progression
+            'progression' => $progression,
         ]);
     }
 
@@ -302,10 +295,4 @@ class UserController extends Controller
 
         return $resultats;
     }
-
-
-
-
-
-
 }

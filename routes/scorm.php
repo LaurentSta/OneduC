@@ -19,11 +19,15 @@ Route::post('/scorm/save-block-progress', [ContentBlockScormController::class, '
     ->middleware('auth')
     ->withoutMiddleware([VerifyCsrfToken::class]);
 
-Route::get('/lecture/{id}/scorm', [LectureController::class, 'showScorm'])->name('lecture.scorm');
+Route::get('/lecture/{id}/scorm', [LectureController::class, 'showScorm'])
+    ->middleware('auth')
+    ->name('lecture.scorm');
 Route::get('/lecture/{id}/scorm-block/{key}', [LectureController::class, 'showScormBlock'])
     ->middleware('auth')
     ->name('lecture.scorm-block');
-Route::get('/lecture/{id}/slides', [LectureController::class, 'showSlides'])->name('lecture.slides');
+Route::get('/lecture/{id}/slides', [LectureController::class, 'showSlides'])
+    ->middleware('auth')
+    ->name('lecture.slides');
 
 Route::post('/scorm/evaluation-progress', [EvaluationSCORMController::class, 'saveEvaluationProgress'])
     ->middleware('auth')

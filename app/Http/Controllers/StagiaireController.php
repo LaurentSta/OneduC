@@ -3,6 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Domains\Learners\Support\LearnerModuleProgress;
+use App\Models\BuzzerAttempt;
+use App\Models\BuzzerSession;
+use App\Models\ComponentFinderAttempt;
+use App\Models\ComponentFinderSession;
 use App\Models\FormateurMessage;
 use App\Models\Group;
 use App\Models\GroupTimer;
@@ -28,6 +32,8 @@ use App\Models\ScormInteraction;
 use App\Models\ScormScore;
 use App\Models\Seance;
 use App\Models\SeancePresence;
+use App\Models\TrueFalseSession;
+use App\Models\TrueFalseSessionResponse;
 use App\Models\VideoSegmentTracking;
 use App\Models\WordCloud;
 use App\Models\WordCloudEntry;
@@ -764,18 +770,86 @@ class StagiaireController extends Controller
             ]);
         }
 
+        // Vrai ou Faux
+        if (config('outils.vraifaux.enabled')) {
+            $trueFalseSessions = TrueFalseSession::where('group_id', $groupId)->get();
+            if ($trueFalseSessions->count() > 0) {
+                $trueFalseIds = $trueFalseSessions->pluck('id');
+                $activeSession = $trueFalseSessions
+                    ->where('is_active', true)
+                    ->sortByDesc(fn ($session) => $session->opened_at ?? $session->created_at)
+                    ->first();
+
+                $tools->push((object) [
+                    'key' => 'true_false',
+                    'label' => 'Vrai ou Faux',
+                    'sessions' => $trueFalseSessions->count(),
+                    'participated' => TrueFalseSessionResponse::whereIn('true_false_session_id', $trueFalseIds)->where('user_id', $userId)->distinct('true_false_session_id')->count('true_false_session_id'),
+                    'trackable' => true,
+                    'last_used' => $trueFalseSessions->max('opened_at') ?? $trueFalseSessions->max('created_at'),
+                    'active_url' => $activeSession ? route('vraifaux.join.code', $activeSession->access_code) : null,
+                ]);
+            }
+        }
+
+        // Buzzer Quiz
+        if (config('outils.buzzer.enabled')) {
+            $buzzerSessions = BuzzerSession::where('group_id', $groupId)->get();
+            if ($buzzerSessions->count() > 0) {
+                $buzzerIds = $buzzerSessions->pluck('id');
+                $activeSession = $buzzerSessions
+                    ->where('status', '!=', BuzzerSession::STATUS_CLOSED)
+                    ->sortByDesc(fn ($session) => $session->opened_at ?? $session->created_at)
+                    ->first();
+
+                $tools->push((object) [
+                    'key' => 'buzzer_quiz',
+                    'label' => 'Buzzer Quiz',
+                    'sessions' => $buzzerSessions->count(),
+                    'participated' => BuzzerAttempt::whereIn('buzzer_session_id', $buzzerIds)->where('user_id', $userId)->distinct('buzzer_session_id')->count('buzzer_session_id'),
+                    'trackable' => true,
+                    'last_used' => $buzzerSessions->max('opened_at') ?? $buzzerSessions->max('created_at'),
+                    'active_url' => $activeSession ? route('buzzer.join.code', $activeSession->access_code) : null,
+                ]);
+            }
+        }
+
+        // Trouve le composant
+        if (config('outils.composants.enabled')) {
+            $componentFinderSessions = ComponentFinderSession::where('group_id', $groupId)->get();
+            if ($componentFinderSessions->count() > 0) {
+                $componentFinderIds = $componentFinderSessions->pluck('id');
+                $activeSession = $componentFinderSessions
+                    ->where('is_active', true)
+                    ->sortByDesc(fn ($session) => $session->opened_at ?? $session->created_at)
+                    ->first();
+
+                $tools->push((object) [
+                    'key' => 'component_finder',
+                    'label' => 'Trouve le composant',
+                    'sessions' => $componentFinderSessions->count(),
+                    'participated' => ComponentFinderAttempt::whereIn('component_finder_session_id', $componentFinderIds)->where('user_id', $userId)->distinct('component_finder_session_id')->count('component_finder_session_id'),
+                    'trackable' => true,
+                    'last_used' => $componentFinderSessions->max('opened_at') ?? $componentFinderSessions->max('created_at'),
+                    'active_url' => $activeSession ? route('composants.join.code', $activeSession->access_code) : null,
+                ]);
+            }
+        }
+
         // Échelle de positionnement
-        $scales = ScaleSession::where('group_id', $groupId)->get();
-        if ($scales->count() > 0) {
-            $scaleIds = $scales->pluck('id');
-            $tools->push((object) [
-                'key' => 'scale',
-                'label' => 'Échelle de positionnement',
-                'sessions' => $scales->count(),
-                'participated' => ScaleSessionResponse::whereIn('scale_session_id', $scaleIds)->where('user_id', $userId)->distinct('scale_session_id')->count('scale_session_id'),
-                'trackable' => true,
-                'last_used' => $scales->max('opened_at') ?? $scales->max('created_at'),
-            ]);
+        if (config('outils.echelle.enabled')) {
+            $scales = ScaleSession::where('group_id', $groupId)->get();
+            if ($scales->count() > 0) {
+                $scaleIds = $scales->pluck('id');
+                $tools->push((object) [
+                    'key' => 'scale',
+                    'label' => 'Échelle de positionnement',
+                    'sessions' => $scales->count(),
+                    'participated' => ScaleSessionResponse::whereIn('scale_session_id', $scaleIds)->where('user_id', $userId)->distinct('scale_session_id')->count('scale_session_id'),
+                    'trackable' => true,
+                    'last_used' => $scales->max('opened_at') ?? $scales->max('created_at'),
+                ]);
+            }
         }
 
         // Émargement
