@@ -166,6 +166,16 @@
                class="inline-flex items-center gap-1.5 rounded-[8px] border border-gray-300 bg-white px-3 py-1.5 text-xs font-bold text-gray-600 hover:bg-gray-50 transition">
               Lien stagiaire
             </a>
+            <form method="POST"
+                  action="{{ route('formateur.nuages.destroy', $wc) }}"
+                  onsubmit="return confirm('Supprimer ce nuage de mots ? Les réponses associées seront supprimées.');">
+              @csrf
+              @method('DELETE')
+              <button type="submit"
+                      class="inline-flex items-center gap-1.5 rounded-[8px] border border-red-200 bg-white px-3 py-1.5 text-xs font-bold text-red-600 hover:bg-red-50 transition">
+                Supprimer
+              </button>
+            </form>
           </div>
         </div>
       @empty

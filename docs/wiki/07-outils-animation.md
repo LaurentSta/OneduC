@@ -22,6 +22,12 @@ Le formateur lance un quiz en direct, les stagiaires répondent sur leur apparei
 
 Les stagiaires soumettent un ou plusieurs mots sur un thème donné. Le nuage se construit en temps réel, la taille des mots suit leur fréquence. Utile pour faire émerger les représentations initiales d'un groupe. Peut être intégré dans un parcours.
 
+Le formateur peut l'utiliser comme outil autonome en choisissant un groupe et en lançant une session active, ou l'insérer dans un parcours. Côté stagiaire, l'accès reste centralisé : la carte "Nuage de mots" de `/stagiaire/outils` affiche un bouton de participation vers la session active ou, à défaut, vers le nuage du parcours actif. Quand un nuage autonome est ouvert pour son groupe, un message est créé dans `/stagiaire/messages`, une notification non lue alimente le macaron orange de la cloche, et l'alerte de cloche affiche aussi le code avec le lien de participation.
+
+La vue stagiaire reste volontairement centrée sur la saisie des mots : elle n'affiche pas le nuage en direct. La projection du nuage collectif est portée par la vue live formateur, utilisable en présentiel comme en distanciel via partage d'écran.
+
+Un formateur peut supprimer un nuage autonome depuis la liste des nuages. La suppression retire le nuage et ses réponses associées, sans supprimer le groupe ni les comptes stagiaires.
+
 ### 3. Sondage
 
 Choix unique ou multiple. Le formateur crée les options, les stagiaires votent, les résultats s'affichent en barres ou en camembert. Se lance en quelques secondes. Peut être intégré dans un parcours.
@@ -151,6 +157,8 @@ Pour ajouter un outil à cette page : invoquer `<x-oneduc.outil-tile>` avec ses 
 ### Agrégateur stagiaire
 
 `StagiaireController::StagiaireOutils()` récupère les sessions liées au premier groupe actif du stagiaire — d'où la limite multi-groupe mentionnée plus haut.
+
+Pour le nuage de mots, l'agrégateur additionne les sessions autonomes `WordCloud` du groupe et les items `wordcloud` du parcours actif. Le lien d'action privilégie une session autonome active (`wordcloud.join.code`) puis bascule vers le premier item de parcours (`stagiaire.wordcloud.parcours.show`). La cloche utilise `stagiaire.wordcloud.notification-status` pour signaler uniquement les sessions autonomes ouvertes. Le nombre affiché sur le macaron orange de la cloche correspond en priorité aux notifications non lues du stagiaire.
 
 ---
 

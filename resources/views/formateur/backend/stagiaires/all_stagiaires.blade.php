@@ -56,7 +56,7 @@
 
     {{-- 🔎 Filtres --}}
     <div x-data="{ filtersOpen: {{ (request()->filled('search') || request()->filled('group_id') || (int) request('per_page', 10) !== 10) ? 'true' : 'false' }} }">
-      <div class="flex justify-end gap-3">
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <a href="{{ route('formateur.emargement.index', request()->filled('group_id') ? ['group_id' => request('group_id')] : []) }}"
            class="btn-oneduc-outline inline-flex h-10 items-center gap-2 !text-sm">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -65,13 +65,21 @@
           </svg>
           <span>Émargement</span>
         </a>
-        <button type="button"
-                @click="filtersOpen = !filtersOpen"
-                :aria-expanded="filtersOpen"
-                class="btn-oneduc-blue inline-flex h-10 items-center gap-2 !text-sm">
-          <x-icons.filter-iconify class="h-4 w-4 shrink-0" />
-          <span>Filtrer</span>
-        </button>
+
+        <div class="flex flex-col gap-3 sm:flex-row sm:justify-end">
+          <button type="button"
+                  @click="filtersOpen = !filtersOpen"
+                  :aria-expanded="filtersOpen"
+                  class="btn-oneduc-blue inline-flex h-10 items-center gap-2 !text-sm">
+            <x-icons.filter-iconify class="h-4 w-4 shrink-0" />
+            <span>Filtrer</span>
+          </button>
+          <a href="{{ route('formateur.stagiaires.create', request()->filled('group_id') ? ['group_id' => request('group_id')] : []) }}"
+             class="btn-oneduc-blue inline-flex h-10 items-center gap-2 !text-sm">
+            <x-icons.add-stagiaire-button-iconify class="h-4 w-4 shrink-0" />
+            Ajouter un stagiaire
+          </a>
+        </div>
       </div>
 
       <form method="GET" x-show="filtersOpen" x-collapse.duration.300ms x-cloak class="mt-3 space-y-3">
@@ -117,12 +125,6 @@
             <x-icons.filter-iconify class="h-4 w-4 shrink-0" />
             <span>Filtrer</span>
           </button>
-
-          <a href="{{ route('formateur.stagiaires.create', request()->filled('group_id') ? ['group_id' => request('group_id')] : []) }}"
-             class="btn-oneduc-blue h-10 w-full sm:w-[200px] !text-sm">
-            <x-icons.add-stagiaire-button-iconify class="h-4 w-4 shrink-0" />
-            Ajouter un stagiaire
-          </a>
 
           @if(request()->filled('search') || request()->filled('group_id') || request('per_page', 10) != 10)
             <a href="{{ route('formateur.stagiaires.index') }}"

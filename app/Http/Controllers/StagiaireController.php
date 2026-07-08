@@ -657,7 +657,9 @@ class StagiaireController extends Controller
         $user = auth()->user();
         $userId = $user->id;
 
-        $group = Group::active()
+        $group = Group::query()
+            ->with(['formateurParcours.items' => fn ($query) => $query->orderBy('position')])
+            ->active()
             ->whereHas('students', fn ($q) => $q->where('email', $user->email))
             ->first();
 
@@ -675,15 +677,41 @@ class StagiaireController extends Controller
 
         // Nuage de mots
         $wordClouds = WordCloud::where('group_id', $groupId)->get();
-        if ($wordClouds->count() > 0) {
+        $parcoursWordCloudItems = $group->formateurParcours?->items
+            ? $group->formateurParcours->items->where('type', 'wordcloud')->values()
+            : collect();
+
+        if ($wordClouds->count() > 0 || $parcoursWordCloudItems->count() > 0) {
             $wcIds = $wordClouds->pluck('id');
+            $parcoursWordCloudItemIds = $parcoursWordCloudItems->pluck('id');
+            $activeWordCloud = $wordClouds
+                ->where('is_active', true)
+                ->sortByDesc(fn ($wordCloud) => $wordCloud->opened_at ?? $wordCloud->created_at)
+                ->first();
+            $firstParcoursWordCloud = $parcoursWordCloudItems
+                ->sortBy('position')
+                ->first();
+            $lastWordCloudActivity = collect([
+                $wordClouds->max('opened_at'),
+                $wordClouds->max('created_at'),
+                $parcoursWordCloudItems->max('updated_at'),
+                $parcoursWordCloudItems->max('created_at'),
+            ])
+                ->filter()
+                ->sortByDesc(fn ($date) => $date instanceof \DateTimeInterface ? $date->getTimestamp() : strtotime((string) $date))
+                ->first();
+
             $tools->push((object) [
                 'key' => 'wordcloud',
                 'label' => 'Nuage de mots',
-                'sessions' => $wordClouds->count(),
-                'participated' => WordCloudEntry::whereIn('word_cloud_id', $wcIds)->where('user_id', $userId)->distinct('word_cloud_id')->count('word_cloud_id'),
+                'sessions' => $wordClouds->count() + $parcoursWordCloudItems->count(),
+                'participated' => WordCloudEntry::whereIn('word_cloud_id', $wcIds)->where('user_id', $userId)->distinct('word_cloud_id')->count('word_cloud_id')
+                    + WordCloudEntry::whereIn('formateur_parcours_item_id', $parcoursWordCloudItemIds)->where('user_id', $userId)->distinct('formateur_parcours_item_id')->count('formateur_parcours_item_id'),
                 'trackable' => true,
-                'last_used' => $wordClouds->max('opened_at') ?? $wordClouds->max('created_at'),
+                'last_used' => $lastWordCloudActivity,
+                'active_url' => $activeWordCloud
+                    ? route('wordcloud.join.code', ['code' => $activeWordCloud->access_code])
+                    : ($firstParcoursWordCloud ? route('stagiaire.wordcloud.parcours.show', $firstParcoursWordCloud) : null),
             ]);
         }
 

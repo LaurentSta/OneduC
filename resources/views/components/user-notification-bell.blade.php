@@ -9,6 +9,7 @@
       : 0;
   $latestUnread = $latestNotifications->firstWhere('read_at', null);
   $activeLiveQuizSession = null;
+  $activeWordCloud = null;
   $availableWhiteboardGroup = null;
   $activeQuestionWall = null;
   $openSeanceForStagiaire = null;
@@ -54,6 +55,18 @@
           ->latest('updated_at')
           ->first();
 
+      $activeWordCloud = \App\Models\WordCloud::query()
+          ->where('is_active', true)
+          ->whereHas('group', function ($query) use ($authUser): void {
+              $query
+                  ->active()
+                  ->whereHas('students', fn ($studentQuery) => $studentQuery->where('users.id', (int) $authUser->id));
+          })
+          ->with('group')
+          ->latest('opened_at')
+          ->latest('id')
+          ->first();
+
       $openSeanceForStagiaire = \App\Models\Seance::query()
           ->where('statut', 'ouverte')
           ->whereIn('group_id', $authUser->groupesStagiaire()->active()->pluck('groups.id'))
@@ -79,6 +92,14 @@
   $activeQuestionWallUrl = $activeQuestionWall
       ? route('questions.join.code', ['code' => $activeQuestionWall->access_code])
       : null;
+  $activeWordCloudUrl = $activeWordCloud
+      ? route('wordcloud.join.code', ['code' => $activeWordCloud->access_code])
+      : null;
+  $wordCloudNotificationStatusUrl = $authUser
+      && ($authUser->role ?? null) === 'stagiaire'
+      && \Illuminate\Support\Facades\Route::has('stagiaire.wordcloud.notification-status')
+      ? route('stagiaire.wordcloud.notification-status')
+      : null;
   $activeEmargementUrl = $openSeanceForStagiaire
       ? route('stagiaire.emargement.show', ['group' => $openSeanceForStagiaire->group_id])
       : null;
@@ -87,7 +108,8 @@
       && \Illuminate\Support\Facades\Route::has('stagiaire.emargement.notification-status')
       ? route('stagiaire.emargement.notification-status')
       : null;
-  $bellIndicatorCount = $unreadCount + ($activeLiveQuizSession ? 1 : 0) + ($availableWhiteboardGroup ? 1 : 0) + ($activeQuestionWall ? 1 : 0) + ($openSeanceForStagiaire ? 1 : 0);
+  $activeToolIndicatorCount = ($activeLiveQuizSession ? 1 : 0) + ($activeWordCloud ? 1 : 0) + ($availableWhiteboardGroup ? 1 : 0) + ($activeQuestionWall ? 1 : 0) + ($openSeanceForStagiaire ? 1 : 0);
+  $bellIndicatorCount = $unreadCount > 0 ? $unreadCount : $activeToolIndicatorCount;
   $liveQuizUrl = $activeLiveQuizSession
       ? route('stagiaire.live-quiz.join-code', ['code' => $activeLiveQuizSession->access_code])
       : null;
@@ -132,6 +154,7 @@
   data-live-quiz-bell
   data-base-count="{{ $unreadCount }}"
   data-status-url="{{ $liveQuizNotificationStatusUrl }}"
+  data-wordcloud-status-url="{{ $wordCloudNotificationStatusUrl }}"
   data-whiteboard-status-url="{{ $whiteboardNotificationStatusUrl }}"
   data-question-wall-status-url="{{ $questionWallNotificationStatusUrl }}"
   data-emargement-status-url="{{ $emargementNotificationStatusUrl }}"
@@ -155,7 +178,7 @@
     </svg>
     <span
       data-bell-badge
-      class="absolute top-[10px] right-0 translate-x-1/2 {{ $bellIndicatorCount > 0 ? 'flex' : 'hidden' }} {{ $activeLiveQuizSession ? 'bg-orangeone oneduc-live-pulse' : ($availableWhiteboardGroup ? 'bg-teal-600' : ($activeQuestionWall ? 'bg-indigo-600' : 'bg-red-600')) }} text-white text-[10px] min-w-[18px] h-[18px] px-1 rounded-full items-center justify-center"
+      class="absolute top-[10px] right-0 translate-x-1/2 {{ $bellIndicatorCount > 0 ? 'flex' : 'hidden' }} {{ $unreadCount > 0 ? 'bg-orangeone' : ($activeLiveQuizSession ? 'bg-orangeone oneduc-live-pulse' : ($activeWordCloud ? 'bg-amber-600' : ($availableWhiteboardGroup ? 'bg-teal-600' : ($activeQuestionWall ? 'bg-indigo-600' : 'bg-red-600')))) }} text-white text-[10px] min-w-[18px] h-[18px] px-1 rounded-full items-center justify-center"
     >
       {{ $bellIndicatorCount > 9 ? '9+' : $bellIndicatorCount }}
     </span>
@@ -198,6 +221,39 @@
               <p data-live-quiz-meta class="mt-1 text-[11px] text-gray-500">Appuyer pour rejoindre</p>
             </div>
             <span class="mt-1 inline-flex h-2.5 w-2.5 rounded-full bg-orangeone oneduc-live-pulse"></span>
+          </div>
+        </a>
+      @endif
+    </div>
+
+    <div
+      data-wordcloud-item
+      class="{{ $activeWordCloud && $activeWordCloudUrl ? '' : 'hidden' }} px-4 py-3 border-b border-amber-100 bg-amber-50"
+    >
+      @if($activeWordCloud && $activeWordCloudUrl)
+        <a href="{{ $activeWordCloudUrl }}" class="block">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <p class="text-xs font-semibold text-amber-700">Nuage de mots en cours</p>
+              <p data-wordcloud-title class="text-xs text-gray-700 mt-1">
+                {{ $activeWordCloud->title }}
+              </p>
+              <p data-wordcloud-meta class="mt-1 text-[11px] text-gray-500">
+                Code {{ $activeWordCloud->access_code }} · Ajouter mes mots
+              </p>
+            </div>
+            <span class="mt-1 inline-flex h-2.5 w-2.5 rounded-full bg-amber-500"></span>
+          </div>
+        </a>
+      @else
+        <a href="#" class="block">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <p class="text-xs font-semibold text-amber-700">Nuage de mots en cours</p>
+              <p data-wordcloud-title class="text-xs text-gray-700 mt-1">Un nuage de mots est disponible</p>
+              <p data-wordcloud-meta class="mt-1 text-[11px] text-gray-500">Ajouter mes mots</p>
+            </div>
+            <span class="mt-1 inline-flex h-2.5 w-2.5 rounded-full bg-amber-500"></span>
           </div>
         </a>
       @endif
@@ -359,7 +415,7 @@
   </script>
 @endif
 
-@if($liveQuizNotificationStatusUrl || $whiteboardNotificationStatusUrl || $questionWallNotificationStatusUrl || $emargementNotificationStatusUrl)
+@if($liveQuizNotificationStatusUrl || $wordCloudNotificationStatusUrl || $whiteboardNotificationStatusUrl || $questionWallNotificationStatusUrl || $emargementNotificationStatusUrl)
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       const root = document.querySelector('[data-live-quiz-bell]');
@@ -368,6 +424,7 @@
       }
 
       const statusUrl = root.dataset.statusUrl;
+      const wordCloudStatusUrl = root.dataset.wordcloudStatusUrl;
       const whiteboardStatusUrl = root.dataset.whiteboardStatusUrl;
       const questionWallStatusUrl = root.dataset.questionWallStatusUrl;
       const emargementStatusUrl = root.dataset.emargementStatusUrl;
@@ -378,6 +435,10 @@
       const liveLink = liveItem ? liveItem.querySelector('a') : null;
       const liveTitle = root.querySelector('[data-live-quiz-title]');
       const liveMeta = root.querySelector('[data-live-quiz-meta]');
+      const wordCloudItem = root.querySelector('[data-wordcloud-item]');
+      const wordCloudLink = wordCloudItem ? wordCloudItem.querySelector('a') : null;
+      const wordCloudTitle = root.querySelector('[data-wordcloud-title]');
+      const wordCloudMeta = root.querySelector('[data-wordcloud-meta]');
       const whiteboardItem = root.querySelector('[data-whiteboard-item]');
       const whiteboardLink = whiteboardItem ? whiteboardItem.querySelector('a') : null;
       const whiteboardTitle = root.querySelector('[data-whiteboard-title]');
@@ -392,13 +453,17 @@
       const emargementMeta = root.querySelector('[data-emargement-meta]');
       const baseCount = Number.parseInt(root.dataset.baseCount || '0', 10) || 0;
       let liveQuizCount = {{ $activeLiveQuizSession ? 1 : 0 }};
+      let wordCloudCount = {{ $activeWordCloud ? 1 : 0 }};
       let whiteboardCount = {{ $availableWhiteboardGroup ? 1 : 0 }};
       let questionWallCount = {{ $activeQuestionWall ? 1 : 0 }};
       let emargementCount = {{ $openSeanceForStagiaire ? 1 : 0 }};
 
       const renderBadge = function () {
-        const totalCount = baseCount + liveQuizCount + whiteboardCount + questionWallCount + emargementCount;
+        const hasUnreadNotifications = baseCount > 0;
+        const activeToolCount = liveQuizCount + wordCloudCount + whiteboardCount + questionWallCount + emargementCount;
+        const totalCount = hasUnreadNotifications ? baseCount : activeToolCount;
         const hasLiveQuiz = liveQuizCount > 0;
+        const hasWordCloud = wordCloudCount > 0;
         const hasWhiteboard = whiteboardCount > 0;
         const hasQuestionWall = questionWallCount > 0;
         const hasEmargement = emargementCount > 0;
@@ -411,12 +476,13 @@
         if (badge) {
           badge.classList.toggle('hidden', totalCount === 0);
           badge.classList.toggle('flex', totalCount > 0);
-          badge.classList.toggle('bg-orangeone', hasLiveQuiz);
-          badge.classList.toggle('bg-teal-600', !hasLiveQuiz && hasWhiteboard);
-          badge.classList.toggle('bg-indigo-600', !hasLiveQuiz && !hasWhiteboard && hasQuestionWall);
-          badge.classList.toggle('bg-slate-600', !hasLiveQuiz && !hasWhiteboard && !hasQuestionWall && hasEmargement);
-          badge.classList.toggle('bg-red-600', !hasLiveQuiz && !hasWhiteboard && !hasQuestionWall && !hasEmargement);
-          badge.classList.toggle('oneduc-live-pulse', hasLiveQuiz);
+          badge.classList.toggle('bg-orangeone', hasUnreadNotifications || (!hasUnreadNotifications && hasLiveQuiz));
+          badge.classList.toggle('bg-amber-600', !hasUnreadNotifications && !hasLiveQuiz && hasWordCloud);
+          badge.classList.toggle('bg-teal-600', !hasUnreadNotifications && !hasLiveQuiz && !hasWordCloud && hasWhiteboard);
+          badge.classList.toggle('bg-indigo-600', !hasUnreadNotifications && !hasLiveQuiz && !hasWordCloud && !hasWhiteboard && hasQuestionWall);
+          badge.classList.toggle('bg-slate-600', !hasUnreadNotifications && !hasLiveQuiz && !hasWordCloud && !hasWhiteboard && !hasQuestionWall && hasEmargement);
+          badge.classList.toggle('bg-red-600', !hasUnreadNotifications && !hasLiveQuiz && !hasWordCloud && !hasWhiteboard && !hasQuestionWall && !hasEmargement);
+          badge.classList.toggle('oneduc-live-pulse', !hasUnreadNotifications && hasLiveQuiz);
           badge.textContent = totalCount > 9 ? '9+' : String(totalCount);
         }
       };
@@ -447,6 +513,35 @@
           liveMeta.textContent = data.access_code
             ? `Code ${data.access_code} · Rejoindre maintenant`
             : 'Rejoindre maintenant';
+        }
+      };
+
+      const updateWordCloud = function (data) {
+        const hasActiveWordCloud = Boolean(data && data.has_active_wordcloud);
+        wordCloudCount = hasActiveWordCloud ? 1 : 0;
+        renderBadge();
+
+        if (!wordCloudItem || !wordCloudLink) {
+          return;
+        }
+
+        wordCloudItem.classList.toggle('hidden', !hasActiveWordCloud);
+
+        if (!hasActiveWordCloud) {
+          wordCloudLink.setAttribute('href', '#');
+          return;
+        }
+
+        wordCloudLink.setAttribute('href', data.join_url || '#');
+
+        if (wordCloudTitle) {
+          wordCloudTitle.textContent = data.title || 'Un nuage de mots est disponible';
+        }
+
+        if (wordCloudMeta) {
+          wordCloudMeta.textContent = data.access_code
+            ? `Code ${data.access_code} · Ajouter mes mots`
+            : 'Ajouter mes mots';
         }
       };
 
@@ -560,6 +655,29 @@
           .catch(function () {});
       };
 
+      const pollWordCloudStatus = function () {
+        if (!wordCloudStatusUrl) {
+          return;
+        }
+
+        fetch(wordCloudStatusUrl, {
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json',
+          },
+          credentials: 'same-origin',
+        })
+          .then(function (response) {
+            if (!response.ok) {
+              throw new Error('Word cloud status request failed');
+            }
+
+            return response.json();
+          })
+          .then(updateWordCloud)
+          .catch(function () {});
+      };
+
       const pollWhiteboardStatus = function () {
         if (!whiteboardStatusUrl) {
           return;
@@ -631,6 +749,7 @@
 
       renderBadge();
       window.setInterval(pollLiveQuizStatus, 5000);
+      window.setInterval(pollWordCloudStatus, 5000);
       window.setInterval(pollWhiteboardStatus, 5000);
       window.setInterval(pollQuestionWallStatus, 5000);
       window.setInterval(pollEmargementStatus, 5000);
