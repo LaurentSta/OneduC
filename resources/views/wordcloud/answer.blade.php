@@ -7,9 +7,6 @@
   @vite(['resources/css/app.css'])
   <style>
     [x-cloak] { display:none !important; }
-    .wc-canvas-wrap { position:relative; min-height:260px; border-radius:0.75rem; border:1px solid #e5e7eb; background:#f9fafb; overflow:hidden; }
-    .wc-canvas-wrap canvas { display:block; }
-    .wc-empty { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; }
   </style>
 </head>
 <body class="min-h-screen bg-slate-100 p-4" x-data="{ activeQ: {{ session('answered_qi', old('question_index', 0)) }} }">
@@ -82,84 +79,10 @@
           </form>
         </div>
 
-        {{-- Nuage live --}}
-        <div class="rounded-2xl bg-white shadow-lg p-6">
-          <p class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-4">Nuage de mots en direct</p>
-          <div class="wc-canvas-wrap">
-            <canvas id="cloudCanvas-{{ $qi }}" style="display:none;"></canvas>
-            <div id="cloudEmpty-{{ $qi }}" class="wc-empty">
-              <p class="text-gray-400 text-sm">En attente des premières réponses…</p>
-            </div>
-          </div>
-        </div>
-
       </div>
     @endforeach
 
   </div>
-
-  <script src="https://cdn.jsdelivr.net/npm/wordcloud@1/src/wordcloud2.min.js"></script>
-  <script>
-    const _wcPalette = ['#0F766E','#1D4ED8','#B45309','#BE123C','#7C3AED','#0E7490','#15803D','#A16207'];
-    function _wcColor(w) {
-      let h = 0;
-      for (let i = 0; i < w.length; i++) { h = ((h << 5) - h) + w.charCodeAt(i); h |= 0; }
-      return _wcPalette[Math.abs(h) % _wcPalette.length];
-    }
-
-    @foreach($questions as $qi => $question)
-    (function() {
-      const canvas   = document.getElementById('cloudCanvas-{{ $qi }}');
-      const emptyEl  = document.getElementById('cloudEmpty-{{ $qi }}');
-      const dataUrl  = @json(route('wordcloud.live.data', $wordCloud->access_code)) + '?q={{ $qi }}';
-      let lastSig = '';
-      let lastW   = 0;
-
-      async function refresh() {
-        try {
-          const res   = await fetch(dataUrl, { headers: { 'Accept': 'application/json' } });
-          const data  = await res.json();
-          const words = data.words || [];
-          const sig   = JSON.stringify(words);
-
-          const W = Math.round(canvas.parentElement.getBoundingClientRect().width);
-          if (!W) { lastSig = ''; return; }
-
-          if (!words.length) {
-            emptyEl.style.display = 'flex';
-            canvas.style.display  = 'none';
-            lastSig = '';
-            return;
-          }
-
-          if (sig === lastSig && W === lastW) return;
-          lastSig = sig; lastW = W;
-
-          emptyEl.style.display = 'none';
-          canvas.style.display  = 'block';
-          canvas.width  = W;
-          canvas.height = 260;
-
-          const max = Math.max(...words.map(w => Number(w.score)));
-          WordCloud(canvas, {
-            list: words.map(item => [item.word, Number(item.score)]),
-            gridSize: Math.max(4, Math.round(6 * W / 600)),
-            weightFactor: function(s) { return Math.max(11, Math.round(11 + (s / max) * 48)); },
-            fontFamily: '"Varela Round", Arial, sans-serif',
-            color: function(word) { return _wcColor(word); },
-            rotateRatio: 0.3,
-            rotationSteps: 2,
-            backgroundColor: '#f9fafb',
-            clearCanvas: true,
-          });
-        } catch {}
-      }
-
-      refresh();
-      setInterval(refresh, 3000);
-    })();
-    @endforeach
-  </script>
 
   {{-- Alpine.js (depuis CDN si pas déjà chargé via Vite) --}}
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>

@@ -221,6 +221,13 @@
             </a>
           @endif
 
+          @if ($tool->key === 'wordcloud' && ! empty($tool->active_url))
+            <a href="{{ $tool->active_url }}"
+               class="inline-flex items-center justify-center rounded-full bg-orangeone px-4 py-2 text-xs font-bold text-white hover:bg-orangeone-hover transition self-start">
+              Participer maintenant
+            </a>
+          @endif
+
           @if ($tool->key === 'true_false' && ! empty($tool->active_url))
             <a href="{{ $tool->active_url }}"
                class="inline-flex items-center justify-center rounded-full bg-orangeone px-4 py-2 text-xs font-bold text-white hover:bg-orangeone-hover transition self-start">

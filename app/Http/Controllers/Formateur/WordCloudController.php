@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Formateur;
 
 use App\Http\Controllers\Controller;
+use App\Models\FormateurMessage;
 use App\Models\Group;
 use App\Models\WordCloud;
+use App\Notifications\FormateurMessageNotification;
 use App\Services\CodeGeneratorService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -60,6 +62,8 @@ class WordCloudController extends Controller
             'closed_at' => null,
         ]);
 
+        $this->notifyStudents($wordCloud);
+
         return redirect()
             ->route('formateur.nuages.live', $wordCloud)
             ->with('success', 'Nuage de mots lancé.');
@@ -74,6 +78,21 @@ class WordCloudController extends Controller
             'wordCloud' => $wordCloud,
             'joinUrl' => route('wordcloud.join.code', ['code' => $wordCloud->access_code]),
         ]);
+    }
+
+    public function destroy(WordCloud $wordCloud): RedirectResponse
+    {
+        $wordCloud->load('group');
+        $this->assertOwnership($wordCloud);
+
+        DB::transaction(function () use ($wordCloud): void {
+            $wordCloud->entries()->delete();
+            $wordCloud->delete();
+        });
+
+        return redirect()
+            ->route('formateur.nuages.index')
+            ->with('success', 'Nuage de mots supprimé.');
     }
 
     public function liveData(WordCloud $wordCloud, Request $request): JsonResponse
@@ -103,6 +122,40 @@ class WordCloudController extends Controller
             'words' => $words,
             'updated_at' => now()->toIso8601String(),
         ]);
+    }
+
+    private function notifyStudents(WordCloud $wordCloud): void
+    {
+        $wordCloud->loadMissing('group.students');
+        $group = $wordCloud->group;
+
+        if (! $group) {
+            return;
+        }
+
+        $joinUrl = route('wordcloud.join.code', ['code' => $wordCloud->access_code]);
+        $subject = 'Nuage de mots disponible';
+        $body = implode("\n", [
+            'Un nuage de mots est disponible pour votre groupe.',
+            '',
+            'Groupe : '.$group->name,
+            'Titre : '.$wordCloud->title,
+            'Code : '.$wordCloud->access_code,
+            'Lien de participation : '.$joinUrl,
+        ]);
+
+        foreach ($group->students as $stagiaire) {
+            $message = FormateurMessage::query()->create([
+                'formateur_id' => (int) auth()->id(),
+                'stagiaire_id' => $stagiaire->id,
+                'subject' => $subject,
+                'body' => $body,
+                'sent_as_notification' => true,
+                'sent_as_email' => false,
+            ]);
+
+            $stagiaire->notify(new FormateurMessageNotification($message, ['database']));
+        }
     }
 
     private function assertOwnership(WordCloud $wordCloud): void

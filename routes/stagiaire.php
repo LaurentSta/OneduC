@@ -10,6 +10,7 @@ use App\Http\Controllers\Stagiaire\ParcoursWordCloudController;
 use App\Http\Controllers\Stagiaire\QuestionWallController;
 use App\Http\Controllers\Stagiaire\QuizController; // ✅ Import du nouveau contrôleur
 use App\Http\Controllers\Stagiaire\WhiteboardController;
+use App\Http\Controllers\Stagiaire\WordCloudController;
 use App\Http\Controllers\StagiaireController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -172,6 +173,7 @@ Route::middleware(['auth', 'role:stagiaire', 'track.time'])
             Route::prefix('/wordcloud')
                 ->name('wordcloud.')
                 ->group(function () {
+                    Route::get('/notification-status', [WordCloudController::class, 'notificationStatus'])->name('notification-status');
                     Route::get('/{item}', [ParcoursWordCloudController::class, 'show'])->name('parcours.show');
                     Route::post('/{item}/submit', [ParcoursWordCloudController::class, 'submit'])->name('parcours.submit');
                     Route::get('/{item}/data', [ParcoursWordCloudController::class, 'liveData'])->name('parcours.data');

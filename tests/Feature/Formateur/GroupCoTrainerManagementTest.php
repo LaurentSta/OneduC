@@ -14,8 +14,8 @@ function createTrainerForCoTrainerTest(string $emailPrefix, bool $active = true)
     return User::factory()->create([
         'prenom' => 'Formateur',
         'name' => ucfirst($emailPrefix),
-        'username' => $emailPrefix . '_' . uniqid(),
-        'email' => $emailPrefix . '.' . uniqid() . '@example.test',
+        'username' => $emailPrefix.'_'.uniqid(),
+        'email' => $emailPrefix.'.'.uniqid().'@example.test',
         'password' => Hash::make('password'),
         'role' => 'formateur',
         'status' => $active,
@@ -26,23 +26,23 @@ function createTrainerForCoTrainerTest(string $emailPrefix, bool $active = true)
 function createActiveModuleForTrainer(User $formateur): Module
 {
     $category = Category::query()->create([
-        'category_name' => 'Categorie groupe ' . uniqid(),
-        'category_slug' => 'categorie-groupe-' . uniqid(),
+        'category_name' => 'Categorie groupe '.uniqid(),
+        'category_slug' => 'categorie-groupe-'.uniqid(),
     ]);
 
     $subcategory = SubCategory::query()->create([
         'category_id' => $category->id,
-        'subcategory_name' => 'Sous categorie groupe ' . uniqid(),
-        'subcategory_slug' => 'sous-categorie-groupe-' . uniqid(),
+        'subcategory_name' => 'Sous categorie groupe '.uniqid(),
+        'subcategory_slug' => 'sous-categorie-groupe-'.uniqid(),
     ]);
 
     return Module::query()->create([
         'category_id' => $category->id,
         'subcategory_id' => $subcategory->id,
         'formateur_id' => $formateur->id,
-        'module_title' => 'Module groupe ' . uniqid(),
-        'module_name' => 'Module groupe ' . uniqid(),
-        'module_name_slug' => 'module-groupe-' . uniqid(),
+        'module_title' => 'Module groupe '.uniqid(),
+        'module_name' => 'Module groupe '.uniqid(),
+        'module_name_slug' => 'module-groupe-'.uniqid(),
         'status' => 1,
     ]);
 }
@@ -50,7 +50,7 @@ function createActiveModuleForTrainer(User $formateur): Module
 function createSharedGroupForTrainer(User $owner, Module $module, User $coTrainer): Group
 {
     $group = Group::query()->create([
-        'name' => 'Groupe partage ' . uniqid(),
+        'name' => 'Groupe partage '.uniqid(),
         'description' => 'Groupe de test partage',
         'is_active' => true,
         'temporary_password' => 'password123',
@@ -78,23 +78,23 @@ it('attaches selected co-trainers and creates an internal notification when stor
     $owner = createTrainerForCoTrainerTest('owner');
     $coTrainer = createTrainerForCoTrainerTest('co');
     $module = createActiveModuleForTrainer($owner);
-    $groupName = 'Groupe wizard co-formateur ' . uniqid();
+    $groupName = 'Groupe wizard co-formateur '.uniqid();
     $token = Str::random(40);
 
     $response = $this
         ->withSession(['_token' => $token])
         ->actingAs($owner)
         ->post(route('formateur.groupes.store'), [
-        '_token' => $token,
-        'nom' => $groupName,
-        'description' => 'Groupe avec co-formateur',
-        'is_active' => '1',
-        'password' => 'password123',
-        'modules' => [$module->id],
-        'module_positions' => [$module->id => 1],
-        'co_formateurs' => [$coTrainer->id],
-        'stagiaires' => [],
-    ]);
+            '_token' => $token,
+            'nom' => $groupName,
+            'description' => 'Groupe avec co-formateur',
+            'is_active' => '1',
+            'password' => 'password123',
+            'modules' => [$module->id],
+            'module_positions' => [$module->id => 1],
+            'co_formateurs' => [$coTrainer->id],
+            'stagiaires' => [],
+        ]);
 
     $response->assertRedirect(route('formateur.groupes.index'));
 
@@ -123,7 +123,7 @@ it('attaches selected co-trainers and creates an internal notification when stor
 it('allows a short temporary access code when creating and editing a group', function () {
     $owner = createTrainerForCoTrainerTest('owner-short-code');
     $module = createActiveModuleForTrainer($owner);
-    $groupName = 'Groupe code court ' . uniqid();
+    $groupName = 'Groupe code court '.uniqid();
     $token = Str::random(40);
 
     $this
@@ -151,7 +151,7 @@ it('allows a short temporary access code when creating and editing a group', fun
         ->actingAs($owner)
         ->put(route('formateur.groupes.update', $group->id), [
             '_token' => $token,
-            'nom' => $groupName . ' modifie',
+            'nom' => $groupName.' modifie',
             'description' => 'Code court conserve',
             'is_active' => '1',
             'password' => 'B',
@@ -235,15 +235,15 @@ it('lets a co-trainer edit a shared group but not manage co-trainers or delete t
         ->withSession(['_token' => $token])
         ->actingAs($coTrainer)
         ->put(route('formateur.groupes.update', $group->id), [
-        '_token' => $token,
-        'nom' => 'Groupe partage modifie',
-        'description' => 'Description mise a jour',
-        'is_active' => '1',
-        'modules' => [$module->id],
-        'module_positions' => [$module->id => 1],
-        'co_formateurs' => [$otherTrainer->id],
-        'stagiaires' => [],
-    ]);
+            '_token' => $token,
+            'nom' => 'Groupe partage modifie',
+            'description' => 'Description mise a jour',
+            'is_active' => '1',
+            'modules' => [$module->id],
+            'module_positions' => [$module->id => 1],
+            'co_formateurs' => [$otherTrainer->id],
+            'stagiaires' => [],
+        ]);
 
     $updateResponse->assertRedirect(route('formateur.groupes.index'));
 
@@ -270,4 +270,67 @@ it('lets a co-trainer edit a shared group but not manage co-trainers or delete t
             '_token' => $token,
         ])
         ->assertForbidden();
+});
+
+it('deletes only the group links without deleting students or trainer-authored modules', function () {
+    $owner = createTrainerForCoTrainerTest('delete-owner');
+    $student = User::factory()->create([
+        'prenom' => 'Stagiaire',
+        'name' => 'Conserve',
+        'username' => 'stagiaire_conserve_'.uniqid(),
+        'email' => 'stagiaire.conserve.'.uniqid().'@example.test',
+        'password' => Hash::make('password'),
+        'role' => 'stagiaire',
+        'status' => true,
+        'password_changed_at' => now(),
+    ]);
+    $module = createActiveModuleForTrainer($owner);
+    $module->forceFill(['is_trainer_authored' => true])->save();
+
+    $group = Group::query()->create([
+        'name' => 'Groupe suppression liens '.uniqid(),
+        'description' => 'Groupe de test suppression',
+        'is_active' => true,
+        'temporary_password' => 'password123',
+        'instructor_id' => $owner->id,
+    ]);
+
+    DB::table('group_user')->insert([
+        'group_id' => $group->id,
+        'user_id' => $student->id,
+        'role_in_group' => 'stagiaire',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    DB::table('group_module')->insert([
+        'group_id' => $group->id,
+        'module_id' => $module->id,
+        'position' => 1,
+    ]);
+
+    $this
+        ->actingAs($owner)
+        ->delete(route('formateur.groupes.destroy', $group->id))
+        ->assertRedirect(route('formateur.groupes.index'));
+
+    $this->assertDatabaseMissing('groups', ['id' => $group->id]);
+    $this->assertDatabaseMissing('group_user', [
+        'group_id' => $group->id,
+        'user_id' => $student->id,
+    ]);
+    $this->assertDatabaseMissing('group_module', [
+        'group_id' => $group->id,
+        'module_id' => $module->id,
+    ]);
+    $this->assertDatabaseHas('users', [
+        'id' => $student->id,
+        'role' => 'stagiaire',
+    ]);
+    $this->assertDatabaseHas('modules', [
+        'id' => $module->id,
+        'formateur_id' => $owner->id,
+        'is_trainer_authored' => true,
+        'deleted_at' => null,
+    ]);
 });

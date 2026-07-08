@@ -303,6 +303,7 @@ Route::middleware(['auth', 'role:formateur', 'association.member'])
                 Route::post('/', [FormateurWordCloudController::class, 'store'])->name('store');
                 Route::get('/{wordCloud}/live', [FormateurWordCloudController::class, 'live'])->name('live');
                 Route::get('/{wordCloud}/live/data', [FormateurWordCloudController::class, 'liveData'])->name('live.data');
+                Route::delete('/{wordCloud}', [FormateurWordCloudController::class, 'destroy'])->name('destroy');
             });
 
         // Personnaliser les leçons d'un module pour un groupe

@@ -153,6 +153,8 @@ Alpine.js est utilisé pour :
 - Les composants modaux
 - L'affichage conditionnel dans les formulaires complexes
 
+Les modales partagées (`x-modal` / `x-confirm-modal`) sont téléportées dans le `<body>` et centrées dans le viewport. Elles ne doivent pas dépendre de la position de scroll ou d'un conteneur parent.
+
 Pattern de polling AJAX type :
 
 ```html
