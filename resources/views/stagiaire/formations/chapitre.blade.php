@@ -14,7 +14,7 @@
     
     {{-- EN-TÊTE DE CHAPITRE --}}
     <div class="mb-8 border-b border-gray-100 pb-6">
-        <h1 class="text-3xl md:text-4xl font-raleway font-medium text-bleuone leading-tight">
+        <h1 class="text-2xl md:text-3xl font-raleway font-medium text-bleuone leading-tight">
             {{ $chapterNo ? 'Ch. ' . $chapterNo . ' - ' : '' }}{{ $selectedSection->section_title }}
         </h1>
     </div>

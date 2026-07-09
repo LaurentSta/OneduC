@@ -27,40 +27,28 @@
 @endphp
 
 {{-- EN-TÊTE DE PAGE --}}
-<div class="bg-white rounded-[20px] shadow-md px-8 pt-4 w-full max-w-[1285px] mx-auto mb-6">
-  <div class="grid grid-cols-12 gap-6 items-start">
-    <div class="col-span-12">
-      <x-typography variant="titre">Mon profil</x-typography>
-      <x-typography variant="sous-titre" class="font-varela text-sous-titre text-orangeone">
+<div class="rounded-[20px] border border-gray-100 bg-white shadow-md px-6 py-6 md:px-8 md:py-7 w-full max-w-[1285px] mx-auto mb-6">
+  <div class="grid gap-6 lg:grid-cols-12 lg:items-start">
+    <div class="lg:col-span-8">
+      <x-oneduc.breadcrumb :items="[['label' => 'Accueil', 'url' => route('stagiaire.dashboard')], ['label' => 'Mon profil']]" />
+
+      <h1 class="font-raleway text-2xl font-medium leading-tight text-bleuone md:text-3xl">
+        Mon profil
+      </h1>
+      <p class="mt-0.5 font-varela text-base text-orangeone md:text-lg">
         Informations essentielles
-      </x-typography>
-      <x-typography>
+      </p>
+      <p class="mt-3 max-w-2xl font-lisible text-sm leading-relaxed text-slate-700">
         Consultez vos informations et accédez aux réglages (préférences et sécurité).
-      </x-typography>
+      </p>
 
       {{-- Mention RGPD (courte) --}}
-      <p class="mt-2 text-sm text-gray-600">
+      <p class="mt-3 max-w-2xl text-sm leading-relaxed text-gray-600">
         Vos données sont utilisées pour la gestion de votre compte et le suivi pédagogique.
         <a href="{{ $privacyUrl }}" class="text-orangeone hover:underline">Politique de confidentialité</a>.
         Pour exercer vos droits, contactez-nous via
         <a href="{{ $contactUrl }}" class="text-orangeone hover:underline">le formulaire de contact</a>.
       </p>
-
-      {{-- Fil d’Ariane --}}
-      <nav class="text-sm font-varela text-gray-600 mt-2 mb-6" aria-label="Fil d'Ariane">
-        <ol class="list-none p-0 inline-flex items-center space-x-1">
-          <li class="flex items-center">
-            <a href="{{ route('stagiaire.dashboard') }}" class="text-orangeone hover:underline flex items-center" aria-label="Retour au tableau de bord">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M3 9.75L12 3l9 6.75V19a2 2 0 01-2 2h-4a1 1 0 01-1-1v-5H10v5a1 1 0 01-1 1H5a2 2 0 01-2-2V9.75z"/>
-              </svg>
-            </a>
-            <span class="mx-2 text-gray-400">/</span>
-          </li>
-          <li class="text-gray-400">Mon profil</li>
-        </ol>
-      </nav>
     </div>
   </div>
 </div>

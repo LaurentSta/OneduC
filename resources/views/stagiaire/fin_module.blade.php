@@ -18,9 +18,13 @@
 @endphp
 
 <div class="max-w-[1285px] mx-auto px-8">
-  <header class="bg-white rounded-[20px] shadow-md px-8 pt-4 pb-6 w-full mb-6">
-    <p class="font-raleway text-titre text-bleuone leading-tight mb-2">Félicitations</p>
-    <p class="font-varela text-sous-titre text-orangeone">
+  <header class="rounded-[20px] border border-gray-100 bg-white shadow-md px-6 py-6 md:px-8 md:py-7 w-full mb-6">
+    <x-oneduc.breadcrumb :items="[['label' => 'Accueil', 'url' => route('stagiaire.dashboard')], ['label' => 'Formation terminée']]" />
+
+    <h1 class="font-raleway text-2xl font-medium leading-tight text-bleuone md:text-3xl">
+      Félicitations
+    </h1>
+    <p class="mt-0.5 font-varela text-base text-orangeone md:text-lg">
       Formation terminée : {{ $module->module_name }}
     </p>
   </header>
