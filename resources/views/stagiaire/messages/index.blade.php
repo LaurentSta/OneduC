@@ -51,6 +51,10 @@
             $formateurName = $message->formateur
               ? trim($message->formateur->prenom . ' ' . $message->formateur->name)
               : 'Votre formateur';
+            $wordCloudJoinUrl = preg_match('/https?:\/\/[^\s]+\/oneduc\/mot\/[A-Z0-9]+/i', $message->body, $matches)
+              ? $matches[0]
+              : null;
+            $bodyLines = preg_split('/\R/', $message->body) ?: [];
           @endphp
           <div x-data="{ open: false }"
                class="rounded-[16px] border overflow-hidden transition-colors"
@@ -111,7 +115,29 @@
             </button>
 
             <div x-show="open" x-cloak x-collapse.duration.400ms class="px-5 pb-5 border-t border-gray-100">
-              <p class="text-sm text-gray-700 whitespace-pre-wrap pt-4 font-lisible leading-relaxed">{{ $message->body }}</p>
+              @if($wordCloudJoinUrl)
+                <a href="{{ $wordCloudJoinUrl }}"
+                   class="mt-4 inline-flex items-center justify-center rounded-full bg-orangeone px-4 py-2 text-sm font-bold text-white transition hover:bg-orangeone-hover">
+                  Rejoindre le nuage de mots
+                </a>
+              @endif
+
+              <div class="pt-4 text-sm text-gray-700 font-lisible leading-relaxed">
+                @foreach($bodyLines as $line)
+                  @if(trim($line) === '')
+                    <div class="h-3"></div>
+                  @elseif($wordCloudJoinUrl && str_contains($line, $wordCloudJoinUrl))
+                    <p>
+                      {{ trim(str_replace($wordCloudJoinUrl, '', $line)) }}
+                      <a href="{{ $wordCloudJoinUrl }}" class="font-semibold text-orangeone underline underline-offset-2">
+                        {{ $wordCloudJoinUrl }}
+                      </a>
+                    </p>
+                  @else
+                    <p>{{ $line }}</p>
+                  @endif
+                @endforeach
+              </div>
               <p class="text-xs text-gray-400 mt-3">Reçu le {{ $message->created_at->format('d/m/Y à H:i') }}</p>
             </div>
           </div>

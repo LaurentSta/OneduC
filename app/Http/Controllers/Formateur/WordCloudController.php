@@ -45,6 +45,18 @@ class WordCloudController extends Controller
             'questions.*' => ['required', 'string', 'max:500'],
         ]);
 
+        $questions = collect($data['questions'])
+            ->map(fn ($question) => trim((string) $question))
+            ->filter()
+            ->values()
+            ->all();
+
+        if ($questions === []) {
+            return back()
+                ->withErrors(['questions' => 'Ajoutez au moins une question utile.'])
+                ->withInput();
+        }
+
         $group = Group::query()
             ->where('id', (int) $data['group_id'])
             ->where('instructor_id', $formateurId)
@@ -54,8 +66,9 @@ class WordCloudController extends Controller
             'group_id' => $group->id,
             'module_id' => null,
             'title' => (string) $data['title'],
-            'questions' => $data['questions'],
-            'question' => $data['questions'][0], // rétro-compatibilité
+            'questions' => $questions,
+            'question' => $questions[0], // rétro-compatibilité
+            'current_question_index' => 0,
             'access_code' => CodeGeneratorService::generateUniqueCode(WordCloud::class),
             'is_active' => true,
             'opened_at' => now(),
@@ -80,6 +93,42 @@ class WordCloudController extends Controller
         ]);
     }
 
+    public function setQuestion(WordCloud $wordCloud, Request $request): RedirectResponse
+    {
+        $wordCloud->load('group');
+        $this->assertOwnership($wordCloud);
+
+        $data = $request->validate([
+            'question_index' => ['required', 'integer', 'min:0'],
+        ]);
+
+        $maxIndex = max(0, count($wordCloud->questions_array) - 1);
+        $questionIndex = min((int) $data['question_index'], $maxIndex);
+
+        $wordCloud->forceFill([
+            'current_question_index' => $questionIndex,
+        ])->save();
+
+        return redirect()
+            ->route('formateur.nuages.live', $wordCloud)
+            ->with('success', 'Question active mise à jour.');
+    }
+
+    public function close(WordCloud $wordCloud): RedirectResponse
+    {
+        $wordCloud->load('group');
+        $this->assertOwnership($wordCloud);
+
+        $wordCloud->forceFill([
+            'is_active' => false,
+            'closed_at' => now(),
+        ])->save();
+
+        return redirect()
+            ->route('formateur.nuages.live', $wordCloud)
+            ->with('success', 'Nuage de mots terminé.');
+    }
+
     public function destroy(WordCloud $wordCloud): RedirectResponse
     {
         $wordCloud->load('group');
@@ -100,9 +149,10 @@ class WordCloudController extends Controller
         $this->assertOwnership($wordCloud);
 
         $qi = (int) $request->query('q', 0);
+        $questionIndex = min(max($qi, 0), max(0, count($wordCloud->questions_array) - 1));
 
         $words = $wordCloud->entries()
-            ->where('question_index', $qi)
+            ->where('question_index', $questionIndex)
             ->select('normalized_answer as word', DB::raw('count(*) as score'))
             ->groupBy('normalized_answer')
             ->orderByDesc('score')
@@ -110,15 +160,17 @@ class WordCloudController extends Controller
             ->limit(100)
             ->get();
 
-        $respondents = $wordCloud->entries()
-            ->where('question_index', $qi)
-            ->distinct('user_id')
-            ->count('user_id');
+        $responses = $wordCloud->entries()
+            ->where('question_index', $questionIndex)
+            ->count();
 
         return response()->json([
             'active' => $wordCloud->is_active,
+            'current_question_index' => $wordCloud->active_question_index,
+            'question_index' => $questionIndex,
+            'question_count' => count($wordCloud->questions_array),
             'total_entries' => $words->sum('score'),
-            'respondents' => $respondents,
+            'respondents' => $responses,
             'words' => $words,
             'updated_at' => now()->toIso8601String(),
         ]);

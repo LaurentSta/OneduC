@@ -100,6 +100,113 @@ it('exposes the active word cloud in the stagiaire notification status endpoint'
         ->assertJsonPath('join_url', route('wordcloud.join.code', ['code' => 'NUAGE2']));
 });
 
+it('only shows the active word cloud question to the stagiaire', function () {
+    $formateur = createWordCloudAccessUser('formateur');
+    $stagiaire = createWordCloudAccessUser('stagiaire');
+    $group = createWordCloudAccessGroup($formateur, $stagiaire);
+
+    $wordCloud = WordCloud::query()->create([
+        'group_id' => $group->id,
+        'title' => 'Nuage progressif',
+        'question' => 'Premiere question ?',
+        'questions' => ['Premiere question ?', 'Deuxieme question ?'],
+        'access_code' => 'PROG01',
+        'is_active' => true,
+        'opened_at' => now(),
+    ]);
+
+    $firstPage = $this->actingAs($stagiaire)->get(route('wordcloud.join.code', ['code' => $wordCloud->access_code]));
+
+    $firstPage->assertOk();
+    $firstPage->assertSeeText('Question 1 / 2');
+    $firstPage->assertSeeText('Premiere question ?');
+    $firstPage->assertDontSeeText('Deuxieme question ?');
+
+    $this->actingAs($formateur)->post(route('formateur.nuages.question', $wordCloud), [
+        'question_index' => 1,
+    ])->assertRedirect(route('formateur.nuages.live', $wordCloud));
+
+    $secondPage = $this->actingAs($stagiaire)->get(route('wordcloud.join.code', ['code' => $wordCloud->access_code]));
+
+    $secondPage->assertOk();
+    $secondPage->assertSeeText('Question 2 / 2');
+    $secondPage->assertSeeText('Deuxieme question ?');
+    $secondPage->assertDontSeeText('Premiere question ?');
+
+    $this->actingAs($stagiaire)
+        ->getJson(route('wordcloud.state', ['code' => $wordCloud->access_code]))
+        ->assertOk()
+        ->assertJsonPath('current_question_index', 1)
+        ->assertJsonPath('question', 'Deuxieme question ?');
+});
+
+it('rejects answers sent for a word cloud question that is no longer active', function () {
+    $formateur = createWordCloudAccessUser('formateur');
+    $stagiaire = createWordCloudAccessUser('stagiaire');
+    $group = createWordCloudAccessGroup($formateur, $stagiaire);
+
+    $wordCloud = WordCloud::query()->create([
+        'group_id' => $group->id,
+        'title' => 'Nuage question active',
+        'question' => 'Question un ?',
+        'questions' => ['Question un ?', 'Question deux ?'],
+        'current_question_index' => 1,
+        'access_code' => 'ACTIVE',
+        'is_active' => true,
+        'opened_at' => now(),
+    ]);
+
+    $this->actingAs($stagiaire)->post(route('wordcloud.submit', ['code' => $wordCloud->access_code]), [
+        'question_index' => 0,
+        'answer' => 'Ancienne',
+    ])->assertSessionHasErrors('answer');
+
+    expect($wordCloud->entries()->count())->toBe(0);
+
+    $this->actingAs($stagiaire)->post(route('wordcloud.submit', ['code' => $wordCloud->access_code]), [
+        'question_index' => 1,
+        'answer' => 'Nouvelle',
+    ])->assertSessionHasNoErrors();
+
+    expect($wordCloud->entries()->where('question_index', 1)->count())->toBe(1);
+});
+
+it('lets the owning formateur close a word cloud from the live cockpit', function () {
+    $formateur = createWordCloudAccessUser('formateur');
+    $stagiaire = createWordCloudAccessUser('stagiaire');
+    $group = createWordCloudAccessGroup($formateur, $stagiaire);
+
+    $wordCloud = WordCloud::query()->create([
+        'group_id' => $group->id,
+        'title' => 'Nuage a terminer',
+        'question' => 'Dernier mot ?',
+        'questions' => ['Dernier mot ?'],
+        'access_code' => 'CLOSE1',
+        'is_active' => true,
+        'opened_at' => now(),
+    ]);
+
+    $livePage = $this->actingAs($formateur)->get(route('formateur.nuages.live', $wordCloud));
+
+    $livePage->assertOk();
+    $livePage->assertSeeText('Action du moment');
+    $livePage->assertSeeText('Terminer le nuage');
+
+    $this->actingAs($formateur)
+        ->post(route('formateur.nuages.close', $wordCloud))
+        ->assertRedirect(route('formateur.nuages.live', $wordCloud));
+
+    $wordCloud->refresh();
+
+    expect($wordCloud->is_active)->toBeFalse()
+        ->and($wordCloud->closed_at)->not->toBeNull();
+
+    $this->actingAs($stagiaire)
+        ->getJson(route('wordcloud.state', ['code' => $wordCloud->access_code]))
+        ->assertOk()
+        ->assertJsonPath('active', false);
+});
+
 it('ignores active word clouds from inactive groups in the notification status endpoint', function () {
     $formateur = createWordCloudAccessUser('formateur');
     $stagiaire = createWordCloudAccessUser('stagiaire');
@@ -191,6 +298,12 @@ it('creates a stagiaire message and unread notification when a formateur launche
     $notification = $stagiaire->unreadNotifications()->first();
     expect(data_get($notification->data, 'url'))->toBe(route('stagiaire.messages.index'))
         ->and(data_get($notification->data, 'title'))->toBe('Nuage de mots disponible');
+
+    $messagesPage = $this->actingAs($stagiaire)->get(route('stagiaire.messages.index'));
+
+    $messagesPage->assertOk();
+    $messagesPage->assertSeeText('Rejoindre le nuage de mots');
+    $messagesPage->assertSee(route('wordcloud.join.code', ['code' => $wordCloud->access_code]), false);
 
     $toolsPage = $this->actingAs($stagiaire)->get(route('stagiaire.outils'));
 

@@ -14,6 +14,7 @@ class WordCloud extends Model
         'title',
         'question',
         'questions',
+        'current_question_index',
         'access_code',
         'is_active',
         'opened_at',
@@ -22,6 +23,7 @@ class WordCloud extends Model
 
     protected $casts = [
         'questions' => 'array',
+        'current_question_index' => 'integer',
         'is_active' => 'boolean',
         'opened_at' => 'datetime',
         'closed_at' => 'datetime',
@@ -30,9 +32,24 @@ class WordCloud extends Model
     public function getQuestionsArrayAttribute(): array
     {
         if (!empty($this->questions)) {
-            return $this->questions;
+            return array_values(array_filter(
+                $this->questions,
+                fn ($question) => is_string($question) && trim($question) !== ''
+            ));
         }
         return $this->question ? [$this->question] : [];
+    }
+
+    public function getActiveQuestionIndexAttribute(): int
+    {
+        $maxIndex = max(0, count($this->questions_array) - 1);
+
+        return min(max((int) ($this->current_question_index ?? 0), 0), $maxIndex);
+    }
+
+    public function getActiveQuestionAttribute(): ?string
+    {
+        return $this->questions_array[$this->active_question_index] ?? null;
     }
 
     public function module(): BelongsTo

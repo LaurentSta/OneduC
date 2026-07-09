@@ -302,6 +302,8 @@ Route::middleware(['auth', 'role:formateur', 'association.member'])
                 Route::get('/', [FormateurWordCloudController::class, 'index'])->name('index');
                 Route::post('/', [FormateurWordCloudController::class, 'store'])->name('store');
                 Route::get('/{wordCloud}/live', [FormateurWordCloudController::class, 'live'])->name('live');
+                Route::post('/{wordCloud}/question', [FormateurWordCloudController::class, 'setQuestion'])->name('question');
+                Route::post('/{wordCloud}/close', [FormateurWordCloudController::class, 'close'])->name('close');
                 Route::get('/{wordCloud}/live/data', [FormateurWordCloudController::class, 'liveData'])->name('live.data');
                 Route::delete('/{wordCloud}', [FormateurWordCloudController::class, 'destroy'])->name('destroy');
             });
