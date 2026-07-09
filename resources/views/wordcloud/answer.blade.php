@@ -1,90 +1,122 @@
+@php
+  $exitUrl = auth()->check() && (auth()->user()->role ?? null) === 'stagiaire' && \Illuminate\Support\Facades\Route::has('stagiaire.outils')
+    ? route('stagiaire.outils')
+    : route('wordcloud.join');
+  $activeQuestionIndex = (int) ($activeQuestionIndex ?? $wordCloud->active_question_index);
+  $questionCount = max(1, (int) ($questionCount ?? count($questions ?? [])));
+  $progressPercent = $questionCount > 1 ? (($activeQuestionIndex + 1) / $questionCount) * 100 : 100;
+@endphp
 <!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{{ $wordCloud->title }} — Nuage de mots</title>
+  <title>{{ $wordCloud->title }} - Nuage de mots</title>
   @vite(['resources/css/app.css'])
-  <style>
-    [x-cloak] { display:none !important; }
-  </style>
 </head>
-<body class="min-h-screen bg-slate-100 p-4" x-data="{ activeQ: {{ session('answered_qi', old('question_index', 0)) }} }">
+<body class="min-h-screen bg-[#f3f7f9]">
+  <main class="relative flex min-h-screen items-center justify-center px-4 py-10">
+    <a href="{{ $exitUrl }}"
+       class="absolute left-4 top-4 inline-flex items-center gap-2 rounded-full border border-[#004461]/20 bg-white px-4 py-2 text-sm font-semibold text-[#004461] shadow-sm transition hover:border-[#004461] hover:bg-[#004461] hover:text-white">
+      <span aria-hidden="true">&larr;</span>
+      Sortir de l'outil
+    </a>
 
-  <div class="mx-auto w-full max-w-2xl space-y-4">
-
-    {{-- En-tête --}}
-    <div class="rounded-2xl bg-white shadow-lg p-6">
-      <p class="text-xs uppercase tracking-wide text-gray-400">Code · {{ $wordCloud->access_code }}</p>
-      <h1 class="text-xl font-bold text-[#004461] mt-1">{{ $wordCloud->title }}</h1>
-
-      @if(!$wordCloud->is_active)
-        <div class="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
-          Cette session est actuellement fermée.
-        </div>
-      @endif
-
-      {{-- Onglets si plusieurs questions --}}
-      @if(count($questions) > 1)
-        <div class="mt-4 flex flex-wrap gap-2">
-          @foreach($questions as $qi => $q)
-            <button type="button"
-                    @click="activeQ = {{ $qi }}"
-                    :class="activeQ === {{ $qi }}
-                      ? 'bg-[#004461] text-white border-[#004461]'
-                      : 'bg-white text-gray-600 border-gray-300 hover:border-[#004461]'"
-                    class="rounded-full border px-4 py-1.5 text-sm font-semibold transition">
-              Question {{ $qi + 1 }}
-            </button>
-          @endforeach
-        </div>
-      @endif
-    </div>
-
-    {{-- Bloc par question --}}
-    @foreach($questions as $qi => $question)
-      <div x-show="activeQ === {{ $qi }}" x-cloak class="space-y-4">
-
-        {{-- Formulaire --}}
-        <div class="rounded-2xl bg-white shadow-lg p-6">
-          <p class="text-gray-700 font-medium mb-4">{{ $question }}</p>
-
-          @if(session('success') && (int) session('answered_qi') === $qi)
-            <div class="mb-4 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-800">
-              Mot envoyé !
-            </div>
-          @endif
-
-          @if($errors->has('answer') && (int) old('question_index') === $qi)
-            <p class="mb-3 text-red-600 text-xs">{{ $errors->first('answer') }}</p>
-          @endif
-
-          <form method="POST"
-                action="{{ route('wordcloud.submit', $wordCloud->access_code) }}"
-                class="flex gap-2">
-            @csrf
-            <input type="hidden" name="question_index" value="{{ $qi }}">
-            <input type="text"
-                   name="answer"
-                   maxlength="150"
-                   required
-                   {{ !$wordCloud->is_active ? 'disabled' : '' }}
-                   placeholder="1 à 3 mots…"
-                   class="flex-1 rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:border-[#004461] focus:outline-none focus:ring-2 focus:ring-[#004461]/20">
-            <button type="submit"
-                    {{ !$wordCloud->is_active ? 'disabled' : '' }}
-                    class="rounded-xl bg-[#004461] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#005577] transition disabled:opacity-50">
-              Envoyer
-            </button>
-          </form>
+    <section class="w-full max-w-xl overflow-hidden rounded-[22px] bg-white shadow-[0_18px_50px_-24px_rgba(0,68,97,0.55)]">
+      <div class="bg-[#004461] px-6 py-5 text-white">
+        <div class="flex items-center justify-between gap-3">
+          <div>
+            <p class="text-xs font-bold uppercase tracking-[0.18em] text-white/60">Nuage de mots</p>
+            <h1 class="mt-1 text-xl font-bold leading-tight">{{ $wordCloud->title }}</h1>
+          </div>
+          <span class="rounded-full bg-white/10 px-3 py-1 font-mono text-sm font-bold">
+            {{ $wordCloud->access_code }}
+          </span>
         </div>
 
+        <div class="mt-5">
+          <div class="flex items-center justify-between text-xs font-semibold text-white/70">
+            <span>Question {{ $activeQuestionIndex + 1 }} / {{ $questionCount }}</span>
+            @if($wordCloud->is_active)
+              <span>En cours</span>
+            @else
+              <span>Fermé</span>
+            @endif
+          </div>
+          <div class="mt-2 h-2 overflow-hidden rounded-full bg-white/15">
+            <div class="h-full rounded-full bg-[#E94D2A]" style="width: {{ min(100, max(0, $progressPercent)) }}%"></div>
+          </div>
+        </div>
       </div>
-    @endforeach
 
-  </div>
+      <div class="px-6 py-7">
+        @if(!$wordCloud->is_active)
+          <div class="mb-5 rounded-[14px] border border-orange-200 bg-orange-50 px-4 py-3 text-sm font-semibold text-orange-800">
+            Cette session est actuellement fermée.
+          </div>
+        @endif
 
-  {{-- Alpine.js (depuis CDN si pas déjà chargé via Vite) --}}
-  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+        @if(session('success') && (int) session('answered_qi') === $activeQuestionIndex)
+          <div class="mb-5 rounded-[14px] border border-green-200 bg-green-50 px-4 py-3 text-sm font-semibold text-green-800">
+            Mot envoyé. Vous pouvez en proposer un autre ou attendre la question suivante.
+          </div>
+        @endif
+
+        @if($errors->has('answer'))
+          <div class="mb-5 rounded-[14px] border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+            {{ $errors->first('answer') }}
+          </div>
+        @endif
+
+        <p class="text-sm font-bold uppercase tracking-[0.14em] text-[#E94D2A]">Votre réponse</p>
+        <p class="mt-2 text-2xl font-bold leading-snug text-[#004461]">
+          {{ $activeQuestion ?: 'Question en attente' }}
+        </p>
+        <p class="mt-3 text-sm leading-6 text-gray-500">
+          Répondez avec 1 à 3 mots. Le formateur fera avancer les questions une par une.
+        </p>
+
+        <form method="POST"
+              action="{{ route('wordcloud.submit', $wordCloud->access_code) }}"
+              class="mt-6 space-y-3">
+          @csrf
+          <input type="hidden" name="question_index" value="{{ $activeQuestionIndex }}">
+          <input type="text"
+                 name="answer"
+                 maxlength="150"
+                 required
+                 {{ !$wordCloud->is_active ? 'disabled' : '' }}
+                 placeholder="Ex : confiance, entraide..."
+                 class="w-full rounded-[14px] border border-gray-300 px-4 py-3 text-base focus:border-[#004461] focus:outline-none focus:ring-4 focus:ring-[#004461]/10 disabled:bg-gray-100">
+          <button type="submit"
+                  {{ !$wordCloud->is_active ? 'disabled' : '' }}
+                  class="inline-flex w-full items-center justify-center rounded-full bg-[#E94D2A] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#c43d1f] disabled:cursor-not-allowed disabled:opacity-50">
+            Envoyer mon mot
+          </button>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      const stateUrl = @json(route('wordcloud.state', $wordCloud->access_code));
+      const currentQuestion = {{ $activeQuestionIndex }};
+      const currentActive = {{ $wordCloud->is_active ? 'true' : 'false' }};
+
+      async function refreshIfQuestionChanged() {
+        try {
+          const response = await fetch(stateUrl, { headers: { 'Accept': 'application/json' } });
+          if (!response.ok) return;
+          const state = await response.json();
+          if (Number(state.current_question_index) !== currentQuestion || Boolean(state.active) !== currentActive) {
+            window.location.reload();
+          }
+        } catch (error) {}
+      }
+
+      setInterval(refreshIfQuestionChanged, 4000);
+    })();
+  </script>
 </body>
 </html>
