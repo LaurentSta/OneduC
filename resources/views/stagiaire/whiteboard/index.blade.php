@@ -2,21 +2,25 @@
 
 @section('content')
 <div class="mx-auto max-w-[1285px] px-8 py-8 space-y-8">
-    <header class="rounded-[24px] bg-white px-8 py-6 shadow-md">
-        <div class="grid grid-cols-12 items-center gap-6">
-            <div class="col-span-12 md:col-span-8">
-                <p class="font-raleway text-titre text-bleuone leading-tight mb-4">Tableaux blancs du groupe</p>
-                <p class="font-varela text-sous-titre text-orangeone leading-snug mb-3">
+    <header class="rounded-[20px] border border-gray-100 bg-white shadow-md">
+        <div class="grid gap-6 px-6 py-6 md:px-8 md:py-7 lg:grid-cols-12 lg:items-center">
+            <div class="lg:col-span-8">
+                <x-oneduc.breadcrumb :items="[['label' => 'Accueil', 'url' => route('stagiaire.dashboard')], ['label' => 'Tableaux blancs']]" />
+
+                <h1 class="font-raleway text-2xl font-medium leading-tight text-bleuone md:text-3xl">
+                    Tableaux blancs du groupe
+                </h1>
+                <p class="mt-0.5 font-varela text-base text-orangeone md:text-lg">
                     Un espace collaboratif pour partager idees, consignes et croquis avec votre promotion.
                 </p>
-                <p class="font-lisible text-lg text-gray-800 leading-loose">
+                <p class="mt-3 max-w-2xl font-lisible text-sm leading-relaxed text-slate-700">
                     Chaque groupe dispose de son propre tableau blanc. Entrez dans celui de votre groupe pour contribuer en direct.
                 </p>
             </div>
-            <div class="col-span-12 md:col-span-4 flex justify-center md:justify-end">
+            <div class="lg:col-span-4 flex justify-center lg:justify-end">
                 <img src="{{ asset('images/svg/TableauDeBordStagiaire.svg') }}"
                      alt="Illustration tableau blanc"
-                     class="max-w-[320px] h-auto">
+                     class="max-w-[220px] h-auto">
             </div>
         </div>
     </header>

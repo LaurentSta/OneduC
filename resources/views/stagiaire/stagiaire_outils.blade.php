@@ -5,39 +5,27 @@
 <div class="max-w-[1285px] mx-auto px-8">
 
   {{-- EN-TÊTE DE PAGE --}}
-  <header class="bg-white rounded-[20px] shadow-md px-8 pt-4 pb-6 w-full mb-6">
-    <div class="grid grid-cols-12 gap-6 items-center">
+  <header class="rounded-[20px] border border-gray-100 bg-white shadow-md mb-6">
+    <div class="grid gap-6 px-6 py-6 md:px-8 md:py-7 lg:grid-cols-12 lg:items-center">
 
-      <div class="col-span-12 md:col-span-8">
-        <p class="font-raleway text-titre text-bleuone leading-tight mb-4">Mes outils numériques</p>
-        <p class="font-varela text-sous-titre text-orangeone leading-snug mb-3">
+      <div class="lg:col-span-8">
+        <x-oneduc.breadcrumb :items="[['label' => 'Accueil', 'url' => route('stagiaire.dashboard')], ['label' => 'Mes outils']]" />
+
+        <h1 class="font-raleway text-2xl font-medium leading-tight text-bleuone md:text-3xl">
+          Mes outils numériques
+        </h1>
+        <p class="mt-0.5 font-varela text-base text-orangeone md:text-lg">
           Les outils interactifs utilisés dans votre groupe de formation.
         </p>
-        <p class="font-lisible text-lg text-gray-800 leading-loose mb-6">
+        <p class="mt-3 max-w-2xl font-lisible text-sm leading-relaxed text-slate-700">
           Retrouvez ici tous les outils activés par votre formateur et votre niveau de participation à chacun.
         </p>
-
-        <nav class="text-sm font-varela text-gray-600 mt-2" aria-label="Fil d'Ariane">
-          <ol class="inline-flex items-center space-x-1">
-            <li class="flex items-center">
-              <a href="{{ route('stagiaire.dashboard') }}" class="text-orangeone hover:underline flex items-center">
-                <span class="sr-only">Accueil</span>
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M3 9.75L12 3l9 6.75V19a2 2 0 01-2 2h-4a1 1 0 01-1-1v-5H10v5a1 1 0 01-1 1H5a2 2 0 01-2-2V9.75z"/>
-                </svg>
-              </a>
-              <span class="mx-2 text-gray-400" aria-hidden="true">/</span>
-            </li>
-            <li class="text-gray-400">Mes outils</li>
-          </ol>
-        </nav>
       </div>
 
-      <div class="col-span-12 md:col-span-4 flex justify-center md:justify-end">
+      <div class="lg:col-span-4 flex justify-center lg:justify-end">
         <img src="{{ asset('images/svg/MesFormationsStagiaire.svg') }}"
              alt="Illustration outils numériques"
-             class="max-w-[340px] h-auto">
+             class="max-w-[220px] h-auto">
       </div>
 
     </div>

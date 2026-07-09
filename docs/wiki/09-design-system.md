@@ -127,6 +127,25 @@ Le pattern de carte utilisé dans tous les tableaux de bord :
 
 `rounded-[20px]` est la valeur arbitraire Tailwind utilisée de façon cohérente sur l'ensemble des dashboards. Ne pas utiliser `rounded-3xl` (32px) ou `rounded-2xl` (16px) sur ces éléments pour maintenir la cohérence visuelle.
 
+## Pattern d'en-tête de page
+
+Les pages internes formateur et stagiaire utilisent un en-tête compact commun :
+
+```html
+<header class="rounded-[20px] border border-gray-100 bg-white shadow-md">
+  <div class="grid gap-6 px-6 py-6 md:px-8 md:py-7 lg:grid-cols-12 lg:items-center">
+    <div class="lg:col-span-8">
+      <x-oneduc.breadcrumb :items="$items" />
+      <h1 class="font-raleway text-2xl font-medium leading-tight text-bleuone md:text-3xl">Titre</h1>
+      <p class="mt-0.5 font-varela text-base text-orangeone md:text-lg">Sous-titre</p>
+      <p class="mt-3 max-w-2xl font-lisible text-sm leading-relaxed text-slate-700">Description courte.</p>
+    </div>
+  </div>
+</header>
+```
+
+Les anciennes tailles `text-titre` et `text-sous-titre` restent disponibles pour les pages publiques ou les héros, mais ne doivent plus être utilisées pour les en-têtes courants des dashboards stagiaire et formateur.
+
 ---
 
 ## Transition de page (fondu)

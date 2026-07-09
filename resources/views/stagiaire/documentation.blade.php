@@ -3,10 +3,14 @@
 
 @section('content')
 <div class="max-w-[1285px] mx-auto px-8 py-8 space-y-8">
-  <header class="bg-white rounded-[20px] shadow-md px-8 py-6">
-    <h1 class="text-titre font-raleway text-bleuone">Documentation stagiaire</h1>
-    <p class="text-sous-titre font-varela text-orangeone mt-2">Guide pour suivre vos formations sur Oneduc</p>
-    <p class="text-gray-700 mt-3">
+  <header class="rounded-[20px] border border-gray-100 bg-white shadow-md px-6 py-6 md:px-8 md:py-7">
+    <x-oneduc.breadcrumb :items="[['label' => 'Accueil', 'url' => route('stagiaire.dashboard')], ['label' => 'Documentation']]" />
+
+    <h1 class="font-raleway text-2xl font-medium leading-tight text-bleuone md:text-3xl">
+      Documentation stagiaire
+    </h1>
+    <p class="mt-0.5 font-varela text-base text-orangeone md:text-lg">Guide pour suivre vos formations sur Oneduc</p>
+    <p class="mt-3 max-w-2xl font-lisible text-sm leading-relaxed text-slate-700">
       Retrouvez ici les étapes clés pour avancer dans vos formations, réussir vos quiz et contacter le support.
     </p>
   </header>
