@@ -112,6 +112,13 @@
     $defaultToolGroupId = (string) data_get($defaultToolGroup, 'id', '');
     $defaultToolModuleId = (string) ($moduleId ?: data_get($defaultToolGroup, 'modules.0.id', ''));
     $defaultToolLectureId = (string) ($lectureId ?: data_get($defaultToolGroup, 'modules.0.lectures.0.id', ''));
+
+    // Edition de la leçon reservee a l'auteur de la formation (App\Domains\ModulesFormateur\Support\AccesModule::assertOwner)
+    $isModuleAuthor = (bool) ($module->is_trainer_authored ?? false)
+        && (int) ($module->formateur_id ?? 0) === (int) auth()->id();
+    $editLectureUrl = $lectureId
+        ? route('formateur.modules.builder.lectures.edit', ['lecture' => $lectureId])
+        : null;
 @endphp
 
 @if ($lectureId)
@@ -241,11 +248,23 @@
               </div>
 
               <div class="flex flex-wrap items-center gap-2">
+                  @if($isModuleAuthor && $editLectureUrl)
+                      <a href="{{ $editLectureUrl }}"
+                         class="inline-flex items-center justify-center rounded-full border border-white/25 px-4 py-2 text-xs font-bold uppercase tracking-wide text-white transition hover:bg-white hover:text-bleuone">
+                          Modifier
+                      </a>
+                  @else
+                      <span class="inline-flex items-center justify-center rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold uppercase tracking-wide text-white/40 cursor-not-allowed"
+                            title="Vous n'etes pas l'auteur de ce contenu : seul le formateur qui a cree cette formation peut la modifier.">
+                          Modifier
+                      </span>
+                  @endif
+
                   <button type="button"
-                          @click="openPanel('objectifs')"
+                          @click="inspectorOpen = true"
                           class="inline-flex items-center justify-center rounded-full border border-white/25 px-4 py-2 text-xs font-bold uppercase tracking-wide transition"
-                          :class="inspectorOpen && activeTab === 'objectifs' ? 'bg-white text-bleuone' : 'bg-white/10 text-white hover:bg-white hover:text-bleuone'">
-                      Reperes
+                          :class="inspectorOpen ? 'bg-white text-bleuone' : 'bg-white/10 text-white hover:bg-white hover:text-bleuone'">
+                      Reperes &amp; outils
                   </button>
 
                   @if($quizStartUrl)
@@ -261,13 +280,6 @@
                           :class="inspectorOpen && activeTab === 'ressources' ? 'bg-white text-bleuone' : 'bg-white/10 text-white hover:bg-white hover:text-bleuone'">
                       Ressources
                       <span class="rounded-full bg-white/20 px-2 py-0.5 text-[10px]">{{ $moduleResources->count() }}</span>
-                  </button>
-
-                  <button type="button"
-                          @click="openPanel('outils', 'live_quiz')"
-                          class="inline-flex items-center justify-center rounded-full border border-white/25 px-4 py-2 text-xs font-bold uppercase tracking-wide transition"
-                          :class="inspectorOpen && activeTab === 'outils' ? 'bg-white text-bleuone' : 'bg-white/10 text-white hover:bg-white hover:text-bleuone'">
-                      Lancer une activite
                   </button>
               </div>
           </div>

@@ -146,10 +146,10 @@
                   @endif
 
                   <button type="button"
-                          @click="openPanel('objectifs')"
+                          @click="inspectorOpen = true"
                           class="inline-flex items-center justify-center rounded-full border border-white/25 px-4 py-2 text-xs font-bold uppercase tracking-wide transition"
-                          :class="inspectorOpen && activeTab === 'objectifs' ? 'bg-white text-bleuone' : 'bg-white/10 text-white hover:bg-white hover:text-bleuone'">
-                      Reperes
+                          :class="inspectorOpen ? 'bg-white text-bleuone' : 'bg-white/10 text-white hover:bg-white hover:text-bleuone'">
+                      Reperes &amp; outils
                   </button>
 
                   <button type="button"
@@ -158,13 +158,6 @@
                           :class="inspectorOpen && activeTab === 'ressources' ? 'bg-white text-bleuone' : 'bg-white/10 text-white hover:bg-white hover:text-bleuone'">
                       Ressources
                       <span class="rounded-full bg-white/20 px-2 py-0.5 text-[10px]">{{ $moduleResources->count() }}</span>
-                  </button>
-
-                  <button type="button"
-                          @click="openPanel('outils', 'live_quiz')"
-                          class="inline-flex items-center justify-center rounded-full border border-white/25 px-4 py-2 text-xs font-bold uppercase tracking-wide transition"
-                          :class="inspectorOpen && activeTab === 'outils' ? 'bg-white text-bleuone' : 'bg-white/10 text-white hover:bg-white hover:text-bleuone'">
-                      Lancer une activite
                   </button>
               </div>
           </div>
