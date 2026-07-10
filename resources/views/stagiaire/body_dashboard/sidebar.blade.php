@@ -29,8 +29,7 @@
     'lg:translate-x-0': !sidebarCollapsed,
     'lg:-translate-x-full': sidebarCollapsed,
   }"
-  class="fixed left-0 z-40 w-48 transition-transform duration-300 flex flex-col bg-[#004461] text-white shadow-lg"
-  style="top: var(--app-header-h, 86px); height: calc(100vh - var(--app-header-h, 86px));"
+  class="fixed left-0 top-0 z-40 h-screen w-48 transition-transform duration-300 flex flex-col bg-[#004461] text-white shadow-lg"
   aria-label="Navigation stagiaire">
         <div class="flex-1 overflow-y-auto">
             <a
