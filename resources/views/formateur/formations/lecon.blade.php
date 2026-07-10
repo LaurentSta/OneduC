@@ -2,6 +2,8 @@
 
 @extends('formateur.formations.master_lecon')
 
+@section('hide_app_header', 'true')
+
 @section('content')
 <meta name="csrf-token" content="{{ csrf_token() }}">
 
@@ -110,13 +112,6 @@
     $defaultToolGroupId = (string) data_get($defaultToolGroup, 'id', '');
     $defaultToolModuleId = (string) ($moduleId ?: data_get($defaultToolGroup, 'modules.0.id', ''));
     $defaultToolLectureId = (string) ($lectureId ?: data_get($defaultToolGroup, 'modules.0.lectures.0.id', ''));
-    $studentPreviewUrl = ($moduleId && $sectionId && $lectureId)
-        ? $appendQuery(route('formateur.formations.lecture', [
-            'module' => $moduleId,
-            'section' => $sectionId,
-            'lecture' => $lectureId,
-        ]), array_merge($contextQuery, ['anonymous' => 1]))
-        : null;
 @endphp
 
 @if ($lectureId)
@@ -125,6 +120,7 @@
 
 {{-- Wrapper Principal avec Alpine pour gérer l'état Inspecteur --}}
 <div x-data="{
+    formateurBarOpen: true,
     inspectorOpen: false,
     activeTab: 'objectifs',
     fullscreenSupported: false,
@@ -234,64 +230,88 @@
 }" class="flex flex-col h-[calc(100vh-var(--app-header-h,86px))] bg-white overflow-hidden">
 
   {{-- BARRE D'ACTIONS FORMATEUR --}}
-  <div class="bg-bleuone px-5 py-3 text-white shadow-md z-30 shrink-0 border-b border-bleuone-dark font-varela">
-      <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div class="min-w-0">
-              <span class="font-semibold text-orangeone uppercase text-[11px] tracking-[0.18em]">Lecture formateur</span>
-              <p class="mt-1 truncate text-base font-semibold leading-tight md:text-lg" title="{{ $lecture->lecture_title }}">
-                  {{ $lecture->lecture_title }}
-              </p>
-          </div>
+  <div class="relative min-h-[2.25rem] bg-bleuone text-white shadow-md z-30 shrink-0 border-b border-bleuone-dark font-varela">
+      <div x-show="formateurBarOpen" x-collapse.duration.200ms class="px-5 py-3 pr-12">
+          <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <div class="min-w-0">
+                  <span class="font-semibold text-orangeone uppercase text-[11px] tracking-[0.18em]">Lecture formateur</span>
+                  <p class="mt-1 truncate text-base font-semibold leading-tight md:text-lg" title="{{ $lecture->lecture_title }}">
+                      {{ $lecture->lecture_title }}
+                  </p>
+              </div>
 
-          <div class="flex flex-wrap items-center gap-2">
-              @if($studentPreviewUrl)
-                  <a href="{{ $studentPreviewUrl }}"
-                     target="_blank"
-                     rel="noopener"
-                     class="inline-flex items-center justify-center rounded-full border border-white/25 bg-white/10 px-4 py-2 text-xs font-bold uppercase tracking-wide text-white transition hover:bg-white hover:text-bleuone">
-                      Vue stagiaire
-                  </a>
-              @endif
+              <div class="flex flex-wrap items-center gap-2">
+                  <button type="button"
+                          @click="openPanel('objectifs')"
+                          class="inline-flex items-center justify-center rounded-full border border-white/25 px-4 py-2 text-xs font-bold uppercase tracking-wide transition"
+                          :class="inspectorOpen && activeTab === 'objectifs' ? 'bg-white text-bleuone' : 'bg-white/10 text-white hover:bg-white hover:text-bleuone'">
+                      Reperes
+                  </button>
 
-              <button type="button"
-                      @click="openPanel('objectifs')"
-                      class="inline-flex items-center justify-center rounded-full border border-white/25 px-4 py-2 text-xs font-bold uppercase tracking-wide transition"
-                      :class="inspectorOpen && activeTab === 'objectifs' ? 'bg-white text-bleuone' : 'bg-white/10 text-white hover:bg-white hover:text-bleuone'">
-                  Reperes
-              </button>
+                  @if($quizStartUrl)
+                      <a href="{{ $quizStartUrl }}"
+                         class="inline-flex items-center justify-center rounded-full border border-orangeone bg-orangeone px-4 py-2 text-xs font-bold uppercase tracking-wide text-white transition hover:bg-orangeone-hover">
+                          Tester le quiz
+                      </a>
+                  @endif
 
-              @if($quizStartUrl)
-                  <a href="{{ $quizStartUrl }}"
-                     class="inline-flex items-center justify-center rounded-full border border-orangeone bg-orangeone px-4 py-2 text-xs font-bold uppercase tracking-wide text-white transition hover:bg-orangeone-hover">
-                      Tester le quiz
-                  </a>
-              @endif
+                  <button type="button"
+                          @click="openPanel('ressources')"
+                          class="inline-flex items-center justify-center gap-2 rounded-full border border-white/25 px-4 py-2 text-xs font-bold uppercase tracking-wide transition"
+                          :class="inspectorOpen && activeTab === 'ressources' ? 'bg-white text-bleuone' : 'bg-white/10 text-white hover:bg-white hover:text-bleuone'">
+                      Ressources
+                      <span class="rounded-full bg-white/20 px-2 py-0.5 text-[10px]">{{ $moduleResources->count() }}</span>
+                  </button>
 
-              <button type="button"
-                      @click="openPanel('ressources')"
-                      class="inline-flex items-center justify-center gap-2 rounded-full border border-white/25 px-4 py-2 text-xs font-bold uppercase tracking-wide transition"
-                      :class="inspectorOpen && activeTab === 'ressources' ? 'bg-white text-bleuone' : 'bg-white/10 text-white hover:bg-white hover:text-bleuone'">
-                  Ressources
-                  <span class="rounded-full bg-white/20 px-2 py-0.5 text-[10px]">{{ $moduleResources->count() }}</span>
-              </button>
-
-              <button type="button"
-                      @click="openPanel('outils', 'live_quiz')"
-                      class="inline-flex items-center justify-center rounded-full border border-white/25 px-4 py-2 text-xs font-bold uppercase tracking-wide transition"
-                      :class="inspectorOpen && activeTab === 'outils' ? 'bg-white text-bleuone' : 'bg-white/10 text-white hover:bg-white hover:text-bleuone'">
-                  Lancer une activite
-              </button>
+                  <button type="button"
+                          @click="openPanel('outils', 'live_quiz')"
+                          class="inline-flex items-center justify-center rounded-full border border-white/25 px-4 py-2 text-xs font-bold uppercase tracking-wide transition"
+                          :class="inspectorOpen && activeTab === 'outils' ? 'bg-white text-bleuone' : 'bg-white/10 text-white hover:bg-white hover:text-bleuone'">
+                      Lancer une activite
+                  </button>
+              </div>
           </div>
       </div>
+
+      <button type="button"
+              @click="formateurBarOpen = !formateurBarOpen"
+              class="absolute right-3 top-1.5 inline-flex h-7 w-7 items-center justify-center rounded-full text-white/70 transition hover:bg-white/10 hover:text-white"
+              :aria-expanded="formateurBarOpen.toString()"
+              aria-label="Réduire ou déployer la barre de lecture formateur"
+              title="Réduire ou déployer la barre de lecture formateur">
+          <svg class="h-4 w-4 transition-transform duration-200" :class="formateurBarOpen ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M6 9l6 6 6-6"></path>
+          </svg>
+      </button>
   </div>
 
   {{-- FIL D'ARIANE HIÉRARCHIQUE --}}
-  <div class="shrink-0 border-b border-gray-100 bg-gray-50 px-5 py-2">
-      <x-formateur.hierarchy-breadcrumb
-          :module="['label' => 'Formation', 'title' => $moduleLabel, 'url' => $moduleDetailUrl]"
-          :chapter="['label' => $chapterNo ? 'Ch. '.$chapterNo : 'Chapitre', 'title' => $section->section_title ?? '', 'url' => $chapterDetailUrl]"
-          :lesson="['label' => $lessonNo ? 'Leç. '.$lessonNo : 'Leçon', 'title' => $lecture->lecture_title, 'url' => null]"
-      />
+  <div class="shrink-0 flex items-center gap-3 border-b border-gray-100 bg-gray-50 px-5 py-2">
+      <button type="button"
+              @click="$dispatch('toggle-sidebar')"
+              aria-controls="module-sidebar-wrapper"
+              aria-label="Afficher ou masquer le plan"
+              title="Afficher ou masquer le plan"
+              class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-gray-300 bg-white text-gray-600 transition hover:border-bleuone hover:text-bleuone">
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M4 6h16" stroke-linecap="round"/>
+              <path d="M4 12h16" stroke-linecap="round"/>
+              <path d="M4 18h16" stroke-linecap="round"/>
+          </svg>
+      </button>
+
+      <div class="min-w-0 flex-1">
+          <x-formateur.hierarchy-breadcrumb
+              :module="['label' => 'Formation', 'title' => $moduleLabel, 'url' => $moduleDetailUrl]"
+              :chapter="['label' => $chapterNo ? 'Ch. '.$chapterNo : 'Chapitre', 'title' => $section->section_title ?? '', 'url' => $chapterDetailUrl]"
+              :lesson="['label' => $lessonNo ? 'Leç. '.$lessonNo : 'Leçon', 'title' => $lecture->lecture_title, 'url' => null]"
+          />
+      </div>
+
+      <a href="{{ route('formateur.dashboard') }}"
+         class="shrink-0 text-xs font-semibold text-gray-500 transition hover:text-orangeone hover:underline">
+          Tableau de bord
+      </a>
   </div>
 
   {{-- CORPS DE PAGE --}}

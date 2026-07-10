@@ -17,6 +17,9 @@
     }
   </style>
 </head>
+@php
+  $hideAppHeader = trim($__env->yieldContent('hide_app_header')) === 'true';
+@endphp
 <body class="bg-white text-gray-900">
   <div
     x-data="{ sidebarOpen: true }"
@@ -25,11 +28,13 @@
     @toggle-sidebar.window="sidebarOpen = !sidebarOpen"
   >
     {{-- HEADER formations formateur --}}
-    @include('formateur.formations.body_formations.header')
+    @unless($hideAppHeader)
+      @include('formateur.formations.body_formations.header')
+    @endunless
 
-    <div class="mx-auto px-4 md:px-6 py-0">
+    <div class="mx-auto py-0">
       <div
-        class="grid gap-6"
+        class="grid"
         :class="sidebarOpen
                   ? 'md:grid-cols-[18rem_1fr] xl:grid-cols-[20rem_1fr]'
                   : 'grid-cols-1'">
@@ -76,8 +81,8 @@
   </div>
   <script>
     function syncAppHeaderOffset() {
-      const header = document.getElementById('app-header') || document.querySelector('header');
-      const height = header ? header.offsetHeight : 86;
+      const header = document.getElementById('app-header');
+      const height = header ? header.offsetHeight : 0;
       document.documentElement.style.setProperty('--app-header-h', `${height}px`);
     }
 
