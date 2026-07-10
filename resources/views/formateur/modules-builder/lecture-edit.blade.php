@@ -20,7 +20,27 @@
         <li class="text-gray-400">{{ $lecture->lecture_title }}</li>
       </ol>
     </nav>
-    <a href="{{ route('formateur.modules.builder.edit', $module) }}" class="text-sm font-semibold text-gray-500 hover:text-orangeone">← Retour au plan de la formation</a>
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <a href="{{ route('formateur.modules.builder.edit', $module) }}" class="text-sm font-semibold text-gray-500 hover:text-orangeone">← Retour au plan de la formation</a>
+
+      <div class="flex items-center gap-2">
+        @if($leconPrecedente ?? null)
+          <a href="{{ route('formateur.modules.builder.lectures.edit', $leconPrecedente) }}"
+             title="{{ $leconPrecedente->lecture_title }}"
+             class="inline-flex items-center gap-1 rounded-full border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:border-orangeone hover:text-orangeone">
+            ← Précédent
+          </a>
+        @endif
+
+        @if($leconSuivante ?? null)
+          <a href="{{ route('formateur.modules.builder.lectures.edit', $leconSuivante) }}"
+             title="{{ $leconSuivante->lecture_title }}"
+             class="inline-flex items-center gap-1 rounded-full border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:border-orangeone hover:text-orangeone">
+            Suivant →
+          </a>
+        @endif
+      </div>
+    </div>
   </header>
 
   @if(session('success'))

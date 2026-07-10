@@ -413,11 +413,21 @@ class ModuleBuilderController extends Controller
 
         $lecture->load('section');
 
+        $leconsOrdonnees = $lecture->module->sections
+            ->flatMap(fn (ModuleSection $section) => $section->lectures)
+            ->values();
+
+        $indexActuel = $leconsOrdonnees->search(
+            fn (ModuleLecture $candidate) => (int) $candidate->id === (int) $lecture->id
+        );
+
         return view('formateur.modules-builder.lecture-edit', [
             'module' => $lecture->module,
             'section' => $lecture->section,
             'lecture' => $lecture,
             'initialBlocks' => $this->payloads->resolvedContentBlocks($lecture),
+            'leconPrecedente' => $indexActuel !== false ? $leconsOrdonnees->get($indexActuel - 1) : null,
+            'leconSuivante' => $indexActuel !== false ? $leconsOrdonnees->get($indexActuel + 1) : null,
         ]);
     }
 
