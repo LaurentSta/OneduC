@@ -2,9 +2,9 @@
 
 *Public : formateurs pour la présentation des outils ; la partie technique en fin de page s'adresse aux développeurs.*
 
-**Statut au 8 juillet 2026** : ces outils sont développés côté code (modèles, contrôleurs, routes) mais **ne sont pas encore activés en environnement de production**. Le contenu ci-dessous décrit le fonctionnement prévu/en place dans le code, pas une fonctionnalité disponible pour les formateurs aujourd'hui.
+**Statut au 10 juillet 2026** : ces outils sont développés côté code (contrôleurs, routes et accès aux données) mais **ne sont pas encore activés en environnement de production**. Le contenu ci-dessous décrit le fonctionnement prévu/en place dans le code, pas une fonctionnalité disponible pour les formateurs aujourd'hui.
 
-Oneduc intègre 11 activités live plus une intégration de pages collaboratives HedgeDoc. Ils fonctionnent en présentiel, en distanciel ou en hybride, et vivent dans le même environnement que les modules et les groupes. Une séance n'a donc pas besoin de trois onglets et deux comptes externes pour fonctionner.
+Oneduc intègre 13 activités live plus une intégration de pages collaboratives HedgeDoc. Ils fonctionnent en présentiel, en distanciel ou en hybride, et vivent dans le même environnement que les modules et les groupes. Une séance n'a donc pas besoin de trois onglets et deux comptes externes pour fonctionner.
 
 Ces outils sont volontairement distincts de l'**émargement** (feuille de présence, document administratif à valeur d'audit) — voir la page dédiée [16 — Émargement](16-emargement.md).
 
@@ -12,7 +12,7 @@ Seuls les stagiaires membres du groupe peuvent participer à un outil actif. Les
 
 ---
 
-## Les 12 outils
+## Les 14 outils
 
 ### 1. Quiz live
 
@@ -50,7 +50,7 @@ Les stagiaires positionnent leur avis sur une échelle de 1 à N : niveau de con
 
 L'outil est activable/désactivable via `config('outils.echelle.enabled')` (`OUTILS_ECHELLE_ENABLED`).
 
-### 7. Trouve le composant
+### 7. Zone de clic
 
 Le formateur importe une image, dessine des zones à retrouver et nomme chaque composant. Les stagiaires doivent cliquer au bon endroit ; leur score et la réussite par composant remontent côté formateur. L'outil utilise `component_finder_sessions` et `component_finder_attempts`.
 
@@ -72,7 +72,19 @@ Tableau blanc partagé basé sur [Excalidraw](https://github.com/excalidraw/exca
 
 Minuteur visible par tous les participants, contrôlé par le formateur (démarrer, pause, réinitialiser). Un seul minuteur actif par groupe. Utile pour rythmer des ateliers ou des activités chronométrées.
 
-### 12. Pages collaboratives (HedgeDoc)
+### 12. Jeu du pendu
+
+Le formateur choisit un mot ou une expression. Les stagiaires du groupe proposent collectivement des lettres et voient la partie évoluer toutes les trois secondes. Les co-formateurs du groupe peuvent aussi piloter la session. Les tables `hangman_sessions` et `hangman_guesses` sont gérées par le domaine autonome `app/Domains/Outils/Pendu/`.
+
+Le domaine utilise Query Builder et des transactions SQL, sans modèle Eloquent. Il est activable avec `OUTILS_PENDU_ENABLED` ; désactivé, il n'enregistre ni routes, ni vues de dashboard, ni requêtes liées au Pendu.
+
+### 13. Jeu de mémoire
+
+Le formateur prépare de trois à dix paires. Le stagiaire retourne les cartes, puis son nombre de coups, ses erreurs et sa durée alimentent le classement en direct. Le serveur recalcule les erreurs à partir du nombre de paires et de coups au lieu de faire confiance à la valeur envoyée par le navigateur.
+
+Les tables `memory_sessions` et `memory_attempts`, les routes et les vues sont contenues dans `app/Domains/Outils/Memoire/`. Le domaine fonctionne sans modèle Eloquent et s'active avec `OUTILS_MEMOIRE_ENABLED`.
+
+### 14. Pages collaboratives (HedgeDoc)
 
 Accès formateur à une page collaborative externe HedgeDoc, via `/formateur/pages-collaboratives`. Contrairement aux autres outils, il n'y a ni participation stagiaire ni stockage de réponses dans Oneduc — c'est une redirection vers l'instance HedgeDoc configurée.
 
@@ -81,6 +93,12 @@ Accès formateur à une page collaborative externe HedgeDoc, via `/formateur/pag
 ## Côté stagiaire
 
 Les outils actifs de son groupe sont regroupés dans un tableau de bord unique ("Activités de groupe"). Limite actuelle : comme pour les modules, un stagiaire dans plusieurs groupes actifs ne voit que le premier.
+
+## Accès contextuel depuis une formation
+
+Depuis les vues formateur d'un chapitre ou d'une leçon, l'action "Lancer une activité" ouvre un panneau latéral léger plutôt qu'un cockpit permanent. Le groupe, le module et la leçon courants sont préremplis lorsque l'URL contient déjà le contexte (`mode=groupe`, `group_id`, module, chapitre, leçon).
+
+Le panneau permet notamment de lancer un quiz en direct, d'ouvrir le tableau blanc du groupe ou d'accéder à la personnalisation de la formation. Il reste fermé par défaut afin que la consultation des leçons ne soit pas concurrencée par les outils d'animation.
 
 ---
 
@@ -138,13 +156,59 @@ $group->students()->where('users.id', auth()->id())->exists()
 ```
 
 Exceptions au pattern :
+- le Pendu et le Jeu de mémoire sont entièrement encapsulés dans leur domaine, avec vues namespacées, migrations locales, routes et providers dédiés ; leurs dépôts utilisent Query Builder sans Eloquent ;
 - le Buzzer Quiz ajoute une table de questions, une table de tentatives et une table de participants pour gérer le classement ;
-- Trouve le composant stocke l'image et les zones à trouver dans la session, puis les scores dans `component_finder_attempts` ;
+- Zone de clic stocke l'image et les zones à trouver dans la session, puis les scores dans `component_finder_attempts` ;
 - le tableau blanc a son propre modèle de snapshot/éléments Excalidraw (`GroupWhiteboard`, relation unique par groupe) ;
 - le minuteur n'a pas de table de réponses (`GroupTimer`, relation unique par groupe) ;
 - les pages collaboratives redirigent vers HedgeDoc (configuration `HEDGEDOC_BASE_URL` et `HEDGEDOC_NEW_PATH` ; si l'URL n'est pas configurée, l'interface affiche les variables à ajouter dans `.env`).
 
-Le minuteur sert de pilote pour l'architecture "outil auto-contenu" : contrôleurs et garde d'accès dans `app/Domains/Outils/Minuteur/`, routes enregistrées par `MinuteurServiceProvider`, activable via `config('outils.minuteur.enabled')` (`OUTILS_MINUTEUR_ENABLED`). Les outils Vrai/Faux, Échelle, Buzzer Quiz et Trouve le composant reprennent la séparation d'activation dans `config/outils.php` (`OUTILS_VRAIFAUX_ENABLED`, `OUTILS_ECHELLE_ENABLED`, `OUTILS_BUZZER_ENABLED`, `OUTILS_COMPOSANTS_ENABLED`) afin de masquer leurs routes et leurs tuiles sans impacter les autres outils.
+Le minuteur sert de pilote pour l'architecture "outil auto-contenu". Le Pendu et le Jeu de mémoire vont plus loin : chaque provider charge sa configuration, ses routes, ses migrations, ses vues namespacées et ses ajouts aux dashboards. Les seuls raccords génériques sont l'enregistrement des providers et les points d'extension Blade des hubs ; aucun contrôleur central ne connaît ces deux outils. Les variables `OUTILS_PENDU_ENABLED` et `OUTILS_MEMOIRE_ENABLED` permettent de les retirer complètement du runtime indépendamment l'un de l'autre.
+
+### Exploitation du Pendu et du Jeu de mémoire
+
+| Outil | Clé de configuration | Variable d'environnement | Tables | Espace formateur | Participation |
+|-------|----------------------|--------------------------|--------|-------------------|---------------|
+| Pendu | `outils.pendu.enabled` | `OUTILS_PENDU_ENABLED` | `hangman_sessions`, `hangman_guesses` | `/formateur/pendu` | `/oneduc/pendu` |
+| Jeu de mémoire | `outils.memoire.enabled` | `OUTILS_MEMOIRE_ENABLED` | `memory_sessions`, `memory_attempts` | `/formateur/memoire` | `/oneduc/memoire` |
+
+Les deux variables valent `true` par défaut. Pour préparer un environnement et activer les domaines :
+
+```dotenv
+OUTILS_PENDU_ENABLED=true
+OUTILS_MEMOIRE_ENABLED=true
+```
+
+```bash
+php artisan config:clear
+php artisan migrate --force
+php artisan config:cache
+```
+
+La migration doit être exécutée avant d'ouvrir les outils. Les providers vérifient l'existence de leurs tables avant d'ajouter leurs tuiles aux dashboards, mais leurs routes de gestion nécessitent bien le schéma correspondant. Cette étape évite les erreurs SQL de type « table inexistante » lors du premier accès.
+
+Pour désactiver un seul domaine, positionner sa variable à `false`, puis reconstruire le cache de configuration :
+
+```dotenv
+OUTILS_PENDU_ENABLED=false
+OUTILS_MEMOIRE_ENABLED=true
+```
+
+```bash
+php artisan config:cache
+```
+
+La désactivation retire les routes et les tuiles du domaine concerné sans toucher à ses tables ni aux autres outils. Les données existantes sont conservées pour une réactivation ultérieure. L'activation est actuellement une opération de configuration et de déploiement : aucun interrupteur n'est encore disponible dans l'interface d'administration.
+
+Règles d'accès communes :
+
+- le formateur responsable du groupe et ses co-formateurs peuvent créer, piloter et supprimer les sessions ;
+- seuls les stagiaires rattachés au groupe peuvent envoyer une lettre ou enregistrer une tentative ;
+- les formateurs autorisés peuvent prévisualiser la participation, mais ne peuvent pas soumettre de réponse stagiaire ;
+- un utilisateur extérieur au groupe reçoit une réponse `403` ;
+- les soumissions sont limitées par un throttle pour réduire les envois abusifs.
+
+Le Pendu verrouille la session pendant l'enregistrement d'une lettre afin d'éviter deux mises à jour concurrentes. Le Jeu de mémoire n'accepte qu'une tentative enregistrée par stagiaire et recalcule les erreurs côté serveur à partir du nombre de paires et de coups.
 
 ### Page d'entrée formateur (grille d'outils)
 
@@ -152,7 +216,7 @@ Le minuteur sert de pilote pour l'architecture "outil auto-contenu" : contrôleu
 
 Chaque outil est une tuile compacte (icône + titre) dans une grille à gauche ; un panneau fixe à droite (`#outil-detail-panel`) affiche un texte générique par défaut et bascule sur la description, les badges (Présentiel/Distanciel/...) et les sessions récentes de l'outil cliqué. Ce comportement est porté par le composant réutilisable `x-oneduc.outil-tile` (`resources/views/components/oneduc/outil-tile.blade.php`), avec les slots `icon`, `description`, `badges` et `body` : le contenu de détail est déplacé vers le panneau de droite via `x-teleport` (Alpine.js) et affiché avec `x-show="selectedTool === '...'"`, ce qui évite tout décalage de la grille (l'ancienne info-bulle au survol décalait la mise en page). L'état `selectedTool` et la barre de filtres "Famille" (`filtre`) sont portés par le conteneur parent (`formateur.outils.index`).
 
-Pour ajouter un outil à cette page : invoquer `<x-oneduc.outil-tile>` avec ses props (`title`, `icon-bg`, `tool-id` unique, `cta-route`, `cta-label`, `cta-bg`, `badge-count` optionnel) et ses slots. Pas besoin de dupliquer la structure de carte.
+Pour un outil historique, invoquer `<x-oneduc.outil-tile>` avec ses props (`title`, `icon-bg`, `tool-id` unique, `cta-route`, `cta-label`, `cta-bg`, `badge-count` optionnel) et ses slots. Un outil autonome enregistre plutôt sa vue de tuile depuis son provider dans le point d'extension `$outilsAutonomes`, sans modifier `OutilsNumeriquesController`.
 
 ### Agrégateur stagiaire
 

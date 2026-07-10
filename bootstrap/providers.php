@@ -3,4 +3,6 @@
 return [
     App\Providers\AppServiceProvider::class,
     App\Domains\Outils\Minuteur\MinuteurServiceProvider::class,
+    App\Domains\Outils\Pendu\PenduServiceProvider::class,
+    App\Domains\Outils\Memoire\MemoireServiceProvider::class,
 ];
