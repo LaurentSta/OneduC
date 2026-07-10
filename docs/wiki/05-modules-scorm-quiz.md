@@ -115,6 +115,17 @@ Depuis l'écran du plan de module, un bouton « + Générer une leçon (IA) » p
 
 ## Sections et Leçons
 
+### Lecture formateur allégée
+
+Les vues formateur de chapitre et de leçon (`resources/views/formateur/formations/chapitre.blade.php` et `resources/views/formateur/formations/lecon.blade.php`) privilégient désormais une lecture calme par défaut :
+- le contenu ou le point d'entrée du chapitre occupe toute la largeur utile ;
+- la vue stagiaire s'ouvre dans la prévisualisation anonyme (`anonymous=1`) au lieu d'être mélangée à la vue formateur ;
+- les objectifs, quiz/corrigés, ressources et outils numériques sont rangés dans un panneau latéral ouvert à la demande ;
+- la liste des ressources reste consultable rapidement, tandis que l'ajout, la visibilité stagiaire et la suppression sont repliés derrière l'action "Gérer" ;
+- les actions d'animation utilisent le contexte courant (`mode`, `group_id`, module, chapitre, leçon) pour éviter au formateur de ressaisir des choix déjà connus.
+
+Objectif UX : réduire la charge cognitive du formateur en séance sans retirer les contrôles pédagogiques existants.
+
 ### Types de contenu d'une leçon
 
 | Type | Champ | Description |

@@ -435,12 +435,12 @@
     </x-oneduc.outil-tile>
     @endif
 
-    {{-- ── TROUVE LE COMPOSANT ───────────────────────────────────────── --}}
+    {{-- ── ZONE DE CLIC ───────────────────────────────────────── --}}
     @if(config('outils.composants.enabled'))
     <x-oneduc.outil-tile
       x-show="filtre === 'all' || filtre === 'interaction'"
       tool-id="composants"
-      title="Trouve le composant"
+      title="Zone de clic"
       icon-bg="bg-orangeone"
       :badge-count="$recentComponentFinderSessions->count()"
       cta-route="{{ route('formateur.composants.index') }}"
@@ -651,6 +651,11 @@
         <span class="rounded-full bg-cyan-100 px-2.5 py-0.5 font-semibold text-cyan-700">Markdown</span>
       </x-slot:badges>
     </x-oneduc.outil-tile>
+
+    {{-- Point d'extension pour les outils autonomes enregistrés par leur provider. --}}
+    @foreach($outilsAutonomes ?? [] as $outilAutonome)
+      @include($outilAutonome['vue'], $outilAutonome['donnees'] ?? [])
+    @endforeach
 
   </div>
   </div>

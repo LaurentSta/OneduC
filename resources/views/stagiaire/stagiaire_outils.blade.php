@@ -121,7 +121,7 @@
           $participated    = $tool->trackable && $tool->participated > 0;
           $notParticipated = $tool->trackable && $tool->participated === 0;
 
-          $iconPath = match($tool->key) {
+          $iconPath = $tool->icon_path ?? match($tool->key) {
             'wordcloud'     => 'M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z',
             'poll'          => 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z',
             'live_quiz'     => 'M13 10V3L4 14h7v7l9-11h-7z',
@@ -227,6 +227,13 @@
             <a href="{{ $tool->active_url }}"
                class="inline-flex items-center justify-center rounded-full bg-bleuone px-4 py-2 text-xs font-bold text-white hover:bg-bleuone/90 transition self-start">
               Participer maintenant
+            </a>
+          @endif
+
+          @if (! empty($tool->active_url) && ! empty($tool->action_label))
+            <a href="{{ $tool->active_url }}"
+               class="inline-flex items-center justify-center rounded-full bg-bleuone px-4 py-2 text-xs font-bold text-white hover:bg-bleuone/90 transition self-start">
+              {{ $tool->action_label }}
             </a>
           @endif
 

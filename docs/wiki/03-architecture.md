@@ -231,7 +231,7 @@ Le contenu détaillé des leçons reste séparé dans la page `resources/views/f
 
 ## Pattern d'outils interactifs
 
-La plupart des outils d'animation (Quiz live, Nuage de mots, Sondage, Vrai/Faux, Buzzer Quiz, Échelle, Trouve le composant, Mur de questions, etc.) suivent le même patron de conception :
+La plupart des outils d'animation (Quiz live, Nuage de mots, Sondage, Vrai/Faux, Buzzer Quiz, Échelle, Zone de clic, Pendu, Mémoire, Mur de questions, etc.) suivent le même patron de conception :
 
 1. **Deux tables** : une table de session (`*_sessions`) avec `group_id`, `formateur_id`, `is_active`, `access_code` ; une table de réponses (`*_responses`) avec `user_id`, `session_id`
 2. **Contrôleur formateur** dans `Formateur/` — CRUD + lancement/fermeture + endpoint JSON résultats
@@ -240,13 +240,34 @@ La plupart des outils d'animation (Quiz live, Nuage de mots, Sondage, Vrai/Faux,
 5. **Accès** : vérifié via `$group->students()->where('users.id', auth()->id())->exists()`
 
 Exceptions notables :
+- le Pendu et le Jeu de mémoire n'utilisent aucun modèle Eloquent : chaque domaine contient ses dépôts Query Builder, sa logique métier, ses contrôleurs, ses routes, ses vues namespacées, sa configuration et ses migrations ;
 - le Buzzer Quiz ajoute `buzzer_questions`, `buzzer_attempts` et `buzzer_participants` pour gérer le buzz, le verdict et le classement ;
-- Trouve le composant stocke l'image et les zones dans `component_finder_sessions`, puis les scores dans `component_finder_attempts` ;
+- Zone de clic stocke l'image et les zones dans `component_finder_sessions`, puis les scores dans `component_finder_attempts` ;
 - le tableau blanc utilise Excalidraw et persiste des éléments/snapshots de groupe ;
 - le minuteur est unique par groupe (`GroupTimer`) ;
 - les pages collaboratives ouvrent une instance HedgeDoc externe configurée par `HEDGEDOC_BASE_URL`.
 
-Le Minuteur sert de pilote pour une structure par domaine (`app/Domains/Outils/<Outil>/` : contrôleurs, garde d'accès, routes et un `ServiceProvider` dédié), activable/désactivable indépendamment via `config/outils.php`, sans toucher au reste de l'application. Vrai/Faux, Échelle, Buzzer Quiz et Trouve le composant ajoutent aussi des clés dédiées (`OUTILS_VRAIFAUX_ENABLED`, `OUTILS_ECHELLE_ENABLED`, `OUTILS_BUZZER_ENABLED`, `OUTILS_COMPOSANTS_ENABLED`) afin de masquer leurs routes et leurs tuiles sans impacter les autres outils.
+Le Minuteur sert de pilote pour une structure par domaine. Pendu et Mémoire appliquent la version autonome complète : `PenduServiceProvider` et `MemoireServiceProvider` chargent conditionnellement routes, migrations, vues et composers de dashboard. Les variables `OUTILS_PENDU_ENABLED` et `OUTILS_MEMOIRE_ENABLED` peuvent retirer chaque outil sans requête résiduelle dans les contrôleurs communs. Les hubs possèdent un point d'extension générique, ce qui évite d'ajouter les noms ou modèles de ces outils à `OutilsNumeriquesController` et `StagiaireController`.
+
+### Contrat d'un outil autonome
+
+Pendu et Mémoire regroupent leur implémentation dans un seul domaine :
+
+```text
+app/Domains/Outils/<Outil>/
+├── Http/Controllers/Formateur/
+├── Http/Controllers/Stagiaire/
+├── Support/
+├── database/migrations/
+├── resources/views/
+├── config.php
+├── routes.php
+└── <Outil>ServiceProvider.php
+```
+
+Le provider constitue le point d'entrée du domaine. Quand sa clé `enabled` vaut `false`, son démarrage s'arrête avant le chargement des routes, migrations, vues et composers. Quand l'outil est actif, ses composers alimentent les points d'extension génériques des hubs formateur et stagiaire. Les deux seuls raccords avec le socle sont donc l'enregistrement du provider dans `bootstrap/providers.php` et les collections génériques rendues par les vues de dashboard.
+
+Les accès aux données de ces deux domaines utilisent exclusivement `DB` et `Schema` (Query Builder). Aucun modèle Eloquent ni relation ajoutée aux modèles communs n'est nécessaire. La suppression d'un domaine ou sa désactivation ne doit donc pas imposer de modification aux contrôleurs centraux ni aux autres outils.
 
 ---
 
