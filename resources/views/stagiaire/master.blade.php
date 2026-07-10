@@ -47,24 +47,13 @@
         <main
             id="page-transition"
             class="flex-1 p-6"
-            :class="{ 'transition-[margin-left] duration-300': sidebarTransitionsReady, 'lg:ml-48': !sidebarCollapsed }"
-            style="padding-top: calc(var(--app-header-h, 86px) + 12px);">
+            :class="{ 'transition-[margin-left] duration-300': sidebarTransitionsReady, 'lg:ml-48': !sidebarCollapsed }">
             @yield('content')
         </main>
 
     {{-- FOOTER --}}
     @include('stagiaire.body_dashboard.footer')
     <!-- Video.js JS -->
-     <script>
-  function syncAppHeaderOffset(){
-    var header = document.getElementById('app-header') || document.querySelector('header');
-    var h = (header && header.offsetHeight) ? header.offsetHeight : 86;
-    document.documentElement.style.setProperty('--app-header-h', h + 'px');
-  }
-  document.addEventListener('DOMContentLoaded', syncAppHeaderOffset);
-  window.addEventListener('resize', syncAppHeaderOffset);
-</script>
-
 <script src="https://vjs.zencdn.net/7.21.1/video.min.js"></script>
 @include('partials.a11y-scripts')
 </body>

@@ -1,5 +1,5 @@
 
-<header id="app-header" class="fixed top-0 left-0 right-0 py-3 bg-white border-b border-gray-200 shadow-sm w-full z-50">
+<header id="app-header" class="relative py-3 bg-white border-b border-gray-200 shadow-sm w-full z-50">
     <div class="flex items-center justify-between px-4 w-full">
 
       <!-- Burger menu + brand toggle -->

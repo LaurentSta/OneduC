@@ -37,7 +37,7 @@
   "
   class="bg-gray-100 text-gray-900 font-sans">
 
-    {{-- HEADER FIXE EN HAUT --}}
+    {{-- HEADER --}}
 @include('formateur.body_dashboard.header')
   {{-- SIDEBAR FIXE A GAUCHE --}}
   @include('formateur.body_dashboard.sidebar')
@@ -45,8 +45,7 @@
   <main
     id="page-transition"
     class="flex-1 p-6"
-    :class="{ 'transition-[margin-left] duration-300': sidebarTransitionsReady, 'lg:ml-48': !sidebarCollapsed }"
-    style="padding-top: calc(var(--app-header-h, 86px) + 12px);">
+    :class="{ 'transition-[margin-left] duration-300': sidebarTransitionsReady, 'lg:ml-48': !sidebarCollapsed }">
     @yield('formateur')
   </main>
 
@@ -58,17 +57,6 @@
   )
     @include('formateur.body_dashboard.welcome_modal')
   @endif
-
-  <script>
-    function syncAppHeaderOffset() {
-      const header = document.getElementById('app-header');
-      const height = header ? header.offsetHeight : 86;
-      document.documentElement.style.setProperty('--app-header-h', `${height}px`);
-    }
-
-    document.addEventListener('DOMContentLoaded', syncAppHeaderOffset);
-    window.addEventListener('resize', syncAppHeaderOffset);
-  </script>
 
 @include('partials.a11y-scripts')
 </body>
