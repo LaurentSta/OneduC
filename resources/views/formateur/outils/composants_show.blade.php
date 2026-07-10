@@ -10,7 +10,7 @@
           <ol class="inline-flex items-center space-x-1">
             <li><a href="{{ route('formateur.outils.index') }}" class="text-orangeone hover:underline">Outils numériques</a></li>
             <li><span class="mx-2 text-gray-400">/</span></li>
-            <li><a href="{{ route('formateur.composants.index') }}" class="text-orangeone hover:underline">Trouve le composant</a></li>
+            <li><a href="{{ route('formateur.composants.index') }}" class="text-orangeone hover:underline">Zone de clic</a></li>
             <li><span class="mx-2 text-gray-400">/</span></li>
             <li class="text-gray-400">{{ $session->title }}</li>
           </ol>

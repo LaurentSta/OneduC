@@ -10,10 +10,10 @@
           <ol class="inline-flex items-center space-x-1">
             <li><a href="{{ route('formateur.outils.index') }}" class="text-orangeone hover:underline">Outils numériques</a></li>
             <li><span class="mx-2 text-gray-400">/</span></li>
-            <li class="text-gray-400">Trouve le composant</li>
+            <li class="text-gray-400">Zone de clic</li>
           </ol>
         </nav>
-        <p class="font-raleway text-2xl text-bleuone">Trouve le composant</p>
+        <p class="font-raleway text-2xl text-bleuone">Zone de clic</p>
         <p class="text-sm text-gray-500 mt-1">Uploadez une image, dessinez les zones à trouver, puis diffusez le jeu via un code d'accès.</p>
       </div>
     </div>

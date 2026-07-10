@@ -79,7 +79,7 @@ class OutilsComposantController extends Controller
         $session = ComponentFinderSession::query()->create([
             'formateur_id' => $formateurId,
             'group_id' => $group->id,
-            'title' => trim((string) ($data['title'] ?? '')) ?: 'Trouve le composant',
+            'title' => trim((string) ($data['title'] ?? '')) ?: 'Zone de clic',
             'image_path' => $imagePath,
             'zones' => $zones->all(),
             'access_code' => CodeGeneratorService::generateUniqueCode(ComponentFinderSession::class),

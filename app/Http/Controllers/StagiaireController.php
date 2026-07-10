@@ -842,7 +842,7 @@ class StagiaireController extends Controller
             }
         }
 
-        // Trouve le composant
+        // Zone de clic
         if (config('outils.composants.enabled')) {
             $componentFinderSessions = ComponentFinderSession::where('group_id', $groupId)->get();
             if ($componentFinderSessions->count() > 0) {
@@ -854,7 +854,7 @@ class StagiaireController extends Controller
 
                 $tools->push((object) [
                     'key' => 'component_finder',
-                    'label' => 'Trouve le composant',
+                    'label' => 'Zone de clic',
                     'sessions' => $componentFinderSessions->count(),
                     'participated' => ComponentFinderAttempt::whereIn('component_finder_session_id', $componentFinderIds)->where('user_id', $userId)->distinct('component_finder_session_id')->count('component_finder_session_id'),
                     'trackable' => true,

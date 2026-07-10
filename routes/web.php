@@ -177,7 +177,7 @@ if (config('outils.echelle.enabled')) {
 }
 
 // ----------------------------------------------------------
-// 🔍 Trouve le composant (participation)
+// 🔍 Zone de clic (participation)
 // ----------------------------------------------------------
 if (config('outils.composants.enabled')) {
     Route::middleware(['auth'])->group(function () {

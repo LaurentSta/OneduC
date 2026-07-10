@@ -65,7 +65,7 @@ test('only a stagiaire from the group can submit a component finder attempt', fu
     $session = ComponentFinderSession::query()->create([
         'formateur_id' => $formateur->id,
         'group_id' => $group->id,
-        'title' => 'Trouve le composant',
+        'title' => 'Zone de clic',
         'image_path' => 'component_finder/demo.png',
         'zones' => [
             ['label' => 'Clavier', 'shape' => 'rectangle', 'x' => 10, 'y' => 10, 'w' => 20, 'h' => 10],

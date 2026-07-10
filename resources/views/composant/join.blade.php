@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Oneduc - Trouve le composant</title>
+  <title>Oneduc - Zone de clic</title>
   @vite(['resources/css/app.css'])
 </head>
 <body class="min-h-screen bg-slate-100 flex items-center justify-center p-4">
   <div class="w-full max-w-md bg-white rounded-2xl shadow-lg p-6">
-    <h1 class="text-xl font-semibold text-bleuone">Rejoindre Trouve le composant</h1>
+    <h1 class="text-xl font-semibold text-bleuone">Rejoindre Zone de clic</h1>
     <p class="text-sm text-gray-600 mt-1">Entrez le code donné par votre formateur.</p>
 
     <form method="POST" action="{{ route('composants.resolve') }}" class="mt-6 space-y-4">
