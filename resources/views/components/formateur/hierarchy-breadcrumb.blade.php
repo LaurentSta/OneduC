@@ -36,7 +36,7 @@
 
 @if(count($items) > 0)
 <nav
-    class="flex flex-wrap items-center gap-x-1.5 gap-y-1 rounded-xl border border-gray-100 bg-white px-3 py-1.5 shadow-sm lg:px-4 lg:py-2"
+    class="flex flex-nowrap items-center gap-x-1.5 overflow-hidden rounded-xl border border-gray-100 bg-white px-3 py-1.5 shadow-sm lg:px-4 lg:py-2"
     aria-label="Position dans la hiérarchie"
 >
     @foreach($items as $i => $item)
