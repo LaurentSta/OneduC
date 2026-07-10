@@ -40,13 +40,24 @@
   $defaultToolGroupId = (string) data_get($defaultToolGroup, 'id', '');
   $defaultToolModuleId = (string) ($module->id ?: data_get($defaultToolGroup, 'modules.0.id', ''));
   $defaultToolLectureId = (string) (($firstLecture?->id) ?: data_get($defaultToolGroup, 'modules.0.lectures.0.id', ''));
+  $firstLectureUrl = $firstLecture
+    ? $appendQuery(route('formateur.formations.lecture', [
+        'module' => $module->id,
+        'section' => $selectedSection->id,
+        'lecture' => $firstLecture->id,
+      ]), $contextQuery)
+    : null;
+  $studentPreviewUrl = $appendQuery(route('formateur.formations.section', [
+    'module' => $module->id,
+    'section' => $selectedSection->id,
+  ]), array_merge($contextQuery, ['anonymous' => 1]));
 @endphp
 
 <div x-data="{
     mode: 'formateur',
+    inspectorOpen: false,
     activeTab: 'objectifs',
-    inspectorHelpOpen: false,
-    selectedTool: 'whiteboard',
+    selectedTool: 'live_quiz',
     toolGroups: @js($toolGroups),
     selectedToolGroupId: @js($defaultToolGroupId),
     selectedToolModuleId: @js($defaultToolModuleId),
@@ -72,6 +83,13 @@
     },
     selectedToolManageUrl() {
         return this.selectedToolModule()?.manage_url || '#';
+    },
+    openPanel(tab, tool = null) {
+        this.activeTab = tab;
+        if (tool) {
+            this.selectedTool = tool;
+        }
+        this.inspectorOpen = true;
     },
     syncToolSelections() {
         const modules = this.selectedToolModules();
@@ -110,76 +128,52 @@
     }
 }" class="flex flex-col h-[calc(100vh-var(--app-header-h,86px))] bg-white overflow-hidden">
 
-  <div class="bg-bleuone text-white px-5 py-3 flex items-center justify-between shadow-md z-30 shrink-0 border-b border-bleuone-dark font-varela">
-      <div class="flex items-center gap-8">
-          <div class="flex items-center gap-3">
-            <span class="font-semibold text-orangeone uppercase text-[11px] tracking-[0.18em]">Mode</span>
-
-            <button @click="mode = (mode === 'formateur' ? 'stagiaire' : 'formateur')"
-                    class="relative inline-flex items-center h-6 rounded-full w-11 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orangeone focus:ring-offset-bleuone"
-                    :class="mode === 'stagiaire' ? 'bg-green-500' : 'bg-gray-600'">
-                <span class="sr-only">Changer le mode de vue</span>
-                <span class="inline-block w-4 h-4 transform bg-white rounded-full transition-transform duration-200 ease-in-out"
-                      :class="mode === 'stagiaire' ? 'translate-x-6' : 'translate-x-1'"></span>
-            </button>
-            <span class="ml-1 text-base md:text-lg font-semibold leading-none" x-text="mode === 'formateur' ? 'Inspecteur (Vue Formateur)' : 'Reel (Vue Stagiaire)'"></span>
+  <div class="bg-bleuone px-5 py-3 text-white shadow-md z-30 shrink-0 border-b border-bleuone-dark font-varela">
+      <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div class="min-w-0">
+              <span class="font-semibold text-orangeone uppercase text-[11px] tracking-[0.18em]">Chapitre formateur</span>
+              <p class="mt-1 truncate text-base font-semibold leading-tight md:text-lg" title="{{ $selectedSection->section_title }}">
+                  {{ $selectedSection->section_title }}
+              </p>
           </div>
 
-          <div x-show="mode === 'formateur'" x-cloak
-               x-transition:enter="transition ease-out duration-200"
-               x-transition:enter-start="opacity-0 scale-95"
-               x-transition:enter-end="opacity-100 scale-100"
-               x-transition:leave="transition ease-in duration-150"
-               x-transition:leave-start="opacity-100 scale-100"
-               x-transition:leave-end="opacity-0 scale-95">
-              <div class="flex h-14 items-stretch overflow-hidden">
-                  <button @click="activeTab = 'objectifs'"
-                          :class="activeTab === 'objectifs' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-300 hover:bg-white hover:text-gray-900'"
-                          class="h-full rounded-none px-5 text-sm md:text-base font-semibold transition-all whitespace-nowrap">
-                      Objectifs
-                  </button>
-                  <span class="h-full w-px bg-white/80"></span>
-                  <button @click="activeTab = 'quiz'"
-                          :class="activeTab === 'quiz' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-300 hover:bg-white hover:text-gray-900'"
-                          class="h-full rounded-none px-5 text-sm md:text-base font-semibold transition-all whitespace-nowrap">
-                      Quiz & Corrigés
-                  </button>
-                  <span class="h-full w-px bg-white/80"></span>
-                  <button @click="activeTab = 'ressources'"
-                          :class="activeTab === 'ressources' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-300 hover:bg-white hover:text-gray-900'"
-                          class="h-full rounded-none px-5 text-sm md:text-base font-semibold transition-all whitespace-nowrap">
-                      Ressources
-                  </button>
-                  <span class="h-full w-px bg-white/80"></span>
-                  <button @click="activeTab = 'outils'"
-                          :class="activeTab === 'outils' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-300 hover:bg-white hover:text-gray-900'"
-                          class="h-full rounded-none px-5 text-sm md:text-base font-semibold transition-all whitespace-nowrap">
-                      Outils numeriques
-                  </button>
-              </div>
-          </div>
-      </div>
+          <div class="flex flex-wrap items-center gap-2">
+              <a href="{{ $studentPreviewUrl }}"
+                 target="_blank"
+                 rel="noopener"
+                 class="inline-flex items-center justify-center rounded-full border border-white/25 bg-white/10 px-4 py-2 text-xs font-bold uppercase tracking-wide text-white transition hover:bg-white hover:text-bleuone">
+                  Vue stagiaire
+              </a>
 
-      <div class="relative" @click.outside="inspectorHelpOpen = false">
-        <button type="button"
-                @click="inspectorHelpOpen = !inspectorHelpOpen"
-                :aria-expanded="inspectorHelpOpen.toString()"
-                class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/10 text-sm font-black text-white transition hover:bg-white hover:text-gray-900"
-                aria-label="A quoi sert cette barre ?">
-          ?
-        </button>
-        <div x-show="inspectorHelpOpen"
-             x-cloak
-             x-transition:enter="transition ease-out duration-200"
-             x-transition:enter-start="opacity-0 scale-95"
-             x-transition:enter-end="opacity-100 scale-100"
-             x-transition:leave="transition ease-in duration-150"
-             x-transition:leave-start="opacity-100 scale-100"
-             x-transition:leave-end="opacity-0 scale-95"
-             class="absolute right-0 top-full z-40 mt-2 w-72 rounded-2xl border border-slate-200 bg-white p-4 text-xs font-medium leading-relaxed text-slate-600 shadow-2xl"
-             style="display: none;">
-          Cette barre permet de basculer entre une vue formateur avec panneau d'inspection et une vue stagiaire plus immersive du chapitre.
-        </div>
+              @if($firstLectureUrl)
+                  <a href="{{ $firstLectureUrl }}"
+                     class="inline-flex items-center justify-center rounded-full border border-orangeone bg-orangeone px-4 py-2 text-xs font-bold uppercase tracking-wide text-white transition hover:bg-orangeone-hover">
+                      Commencer
+                  </a>
+              @endif
+
+              <button type="button"
+                      @click="openPanel('objectifs')"
+                      class="inline-flex items-center justify-center rounded-full border border-white/25 px-4 py-2 text-xs font-bold uppercase tracking-wide transition"
+                      :class="inspectorOpen && activeTab === 'objectifs' ? 'bg-white text-bleuone' : 'bg-white/10 text-white hover:bg-white hover:text-bleuone'">
+                  Reperes
+              </button>
+
+              <button type="button"
+                      @click="openPanel('ressources')"
+                      class="inline-flex items-center justify-center gap-2 rounded-full border border-white/25 px-4 py-2 text-xs font-bold uppercase tracking-wide transition"
+                      :class="inspectorOpen && activeTab === 'ressources' ? 'bg-white text-bleuone' : 'bg-white/10 text-white hover:bg-white hover:text-bleuone'">
+                  Ressources
+                  <span class="rounded-full bg-white/20 px-2 py-0.5 text-[10px]">{{ $moduleResources->count() }}</span>
+              </button>
+
+              <button type="button"
+                      @click="openPanel('outils', 'live_quiz')"
+                      class="inline-flex items-center justify-center rounded-full border border-white/25 px-4 py-2 text-xs font-bold uppercase tracking-wide transition"
+                      :class="inspectorOpen && activeTab === 'outils' ? 'bg-white text-bleuone' : 'bg-white/10 text-white hover:bg-white hover:text-bleuone'">
+                  Lancer une activite
+              </button>
+          </div>
       </div>
   </div>
 
@@ -194,7 +188,7 @@
   <div class="flex flex-1 overflow-hidden relative">
 
       <main class="relative bg-gray-50 transition-all duration-300 ease-in-out flex flex-col min-w-0"
-            :class="mode === 'formateur' ? 'w-2/3 border-r border-gray-200' : 'w-full'">
+            :class="inspectorOpen ? 'w-full lg:w-2/3 lg:border-r lg:border-gray-200' : 'w-full'">
 
           <div x-show="mode === 'formateur'" x-cloak
                x-transition:enter="transition ease-out duration-200"
@@ -289,13 +283,9 @@
                       @endif
                   </section>
 
-                  @if($firstLecture)
+                  @if($firstLectureUrl)
                       <section class="bg-white rounded-[20px] shadow-soft border border-gray-100 p-6">
-                          <a href="{{ route('formateur.formations.lecture', [
-                              'module' => $module->id,
-                              'section' => $selectedSection->id,
-                              'lecture' => $firstLecture->id,
-                          ]) }}"
+                          <a href="{{ $firstLectureUrl }}"
                              class="w-full inline-flex items-center justify-center rounded-[16px] px-5 py-3 bg-orangeone text-white font-varela font-semibold hover:bg-orangeone-hover transition focus:outline-none focus:ring-4 focus:ring-orange-200">
                               Tester cette section
                           </a>
@@ -558,13 +548,9 @@
                         @endif
                       </div>
 
-                      @if($firstLecture)
+                      @if($firstLectureUrl)
                         <div class="bg-white rounded-[20px] shadow-soft border border-gray-100 p-6">
-                          <a href="{{ route('formateur.formations.lecture', [
-                              'module'  => $module->id,
-                              'section' => $selectedSection->id,
-                              'lecture' => $firstLecture->id
-                          ]) }}"
+                          <a href="{{ $firstLectureUrl }}"
                           class="w-full inline-flex items-center justify-center rounded-[16px] px-5 py-3 bg-orangeone text-white font-varela font-semibold hover:bg-orangeone-hover transition focus:outline-none focus:ring-4 focus:ring-orange-200">
                             Tester cette section
                           </a>
@@ -580,12 +566,12 @@
           </div>
       </main>
 
-      <aside x-show="mode === 'formateur'"
+      <aside x-show="inspectorOpen"
              x-transition:enter="transition ease-out duration-300"
              x-transition:enter-start="translate-x-full"
              x-transition:enter-end="translate-x-0"
              x-cloak
-             class="w-1/3 bg-slate-50 border-l border-gray-200 flex flex-col shadow-xl z-20 absolute right-0 top-0 bottom-0 lg:relative lg:translate-x-0">
+             class="w-full max-w-xl bg-slate-50 border-l border-gray-200 flex flex-col shadow-xl z-20 absolute right-0 top-0 bottom-0 lg:relative lg:w-1/3 lg:max-w-none lg:translate-x-0">
           <div class="flex-1 overflow-y-auto custom-scrollbar p-6">
 
               <div class="mb-5 rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm">
@@ -601,6 +587,12 @@
                               <span title="{{ $selectedSection->section_title }}" class="text-bleuone">{{ $chapterNo ? 'Ch. ' . $chapterNo : 'Chapitre' }}</span>
                           </nav>
                       </div>
+                      <button type="button"
+                              @click="inspectorOpen = false"
+                              class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition hover:border-bleuone hover:text-bleuone"
+                              aria-label="Fermer le panneau">
+                          <span aria-hidden="true">&times;</span>
+                      </button>
                   </div>
 
                   <div class="mt-4 flex flex-wrap gap-2">
@@ -608,6 +600,33 @@
                           {{ $lecturesWithObjectives->count() }} lecon{{ $lecturesWithObjectives->count() > 1 ? 's' : '' }} avec objectifs
                       </span>
                   </div>
+              </div>
+
+              <div class="mb-5 grid grid-cols-2 gap-2 rounded-[20px] border border-slate-200 bg-white p-2 shadow-sm">
+                  <button type="button"
+                          @click="activeTab = 'objectifs'"
+                          :class="activeTab === 'objectifs' ? 'bg-bleuone text-white' : 'text-slate-600 hover:bg-slate-50'"
+                          class="rounded-2xl px-3 py-2 text-xs font-bold uppercase tracking-wide transition">
+                      Objectifs
+                  </button>
+                  <button type="button"
+                          @click="activeTab = 'quiz'"
+                          :class="activeTab === 'quiz' ? 'bg-bleuone text-white' : 'text-slate-600 hover:bg-slate-50'"
+                          class="rounded-2xl px-3 py-2 text-xs font-bold uppercase tracking-wide transition">
+                      Quiz
+                  </button>
+                  <button type="button"
+                          @click="activeTab = 'ressources'"
+                          :class="activeTab === 'ressources' ? 'bg-bleuone text-white' : 'text-slate-600 hover:bg-slate-50'"
+                          class="rounded-2xl px-3 py-2 text-xs font-bold uppercase tracking-wide transition">
+                      Ressources
+                  </button>
+                  <button type="button"
+                          @click="activeTab = 'outils'"
+                          :class="activeTab === 'outils' ? 'bg-bleuone text-white' : 'text-slate-600 hover:bg-slate-50'"
+                          class="rounded-2xl px-3 py-2 text-xs font-bold uppercase tracking-wide transition">
+                      Outils
+                  </button>
               </div>
 
               <div x-show="activeTab === 'objectifs'" x-cloak
@@ -738,6 +757,7 @@
               </div>
 
               <div x-show="activeTab === 'ressources'" x-cloak
+                   x-data="{ manageResources: @js($errors->has('title') || $errors->has('resource_file')) }"
                    x-transition:enter="transition ease-out duration-200"
                    x-transition:enter-start="opacity-0 scale-95"
                    x-transition:enter-end="opacity-100 scale-100"
@@ -754,7 +774,7 @@
                       <div class="rounded-[22px] border border-slate-200 bg-white p-5 shadow-sm">
                           <div class="flex items-center justify-between gap-3">
                               <div class="flex items-center gap-2">
-                                  <h4 class="text-sm font-bold text-bleuone">Ajouter</h4>
+                                  <h4 class="text-sm font-bold text-bleuone">Gestion</h4>
                                   <div x-data="{ open: false }" class="relative">
                                       <button type="button"
                                               @mouseenter="open = true"
@@ -769,15 +789,24 @@
                                       </div>
                                   </div>
                               </div>
-                              <span class="inline-flex items-center rounded-full bg-orange-50 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-orangeone">
-                                  {{ $moduleResources->count() }} fichier{{ $moduleResources->count() > 1 ? 's' : '' }}
-                              </span>
+                              <div class="flex items-center gap-2">
+                                  <span class="inline-flex items-center rounded-full bg-orange-50 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-orangeone">
+                                      {{ $moduleResources->count() }} fichier{{ $moduleResources->count() > 1 ? 's' : '' }}
+                                  </span>
+                                  <button type="button"
+                                          @click="manageResources = !manageResources"
+                                          class="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-bleuone transition hover:border-bleuone">
+                                      <span x-text="manageResources ? 'Masquer' : 'Gerer'"></span>
+                                  </button>
+                              </div>
                           </div>
 
                           @if($firstLecture)
                               <form action="{{ route('formateur.formations.lesson.resources.store', ['module' => $module->id, 'section' => $section->id, 'lecture' => $firstLecture->id]) }}"
                                     method="POST"
                                     enctype="multipart/form-data"
+                                    x-show="manageResources"
+                                    x-collapse.duration.300ms
                                     class="mt-4 space-y-4">
                                   @csrf
 
@@ -834,7 +863,9 @@
                                   </div>
                               </form>
                           @else
-                              <div class="mt-4 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-sm text-slate-500">
+                              <div x-show="manageResources"
+                                   x-collapse.duration.300ms
+                                   class="mt-4 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-sm text-slate-500">
                                   Ajout indisponible tant qu'aucune lecon n'est rattachee a ce chapitre.
                               </div>
                           @endif

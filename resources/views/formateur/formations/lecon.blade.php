@@ -110,6 +110,13 @@
     $defaultToolGroupId = (string) data_get($defaultToolGroup, 'id', '');
     $defaultToolModuleId = (string) ($moduleId ?: data_get($defaultToolGroup, 'modules.0.id', ''));
     $defaultToolLectureId = (string) ($lectureId ?: data_get($defaultToolGroup, 'modules.0.lectures.0.id', ''));
+    $studentPreviewUrl = ($moduleId && $sectionId && $lectureId)
+        ? $appendQuery(route('formateur.formations.lecture', [
+            'module' => $moduleId,
+            'section' => $sectionId,
+            'lecture' => $lectureId,
+        ]), array_merge($contextQuery, ['anonymous' => 1]))
+        : null;
 @endphp
 
 @if ($lectureId)
@@ -118,12 +125,11 @@
 
 {{-- Wrapper Principal avec Alpine pour gérer l'état Inspecteur --}}
 <div x-data="{
-    mode: 'formateur',
+    inspectorOpen: false,
     activeTab: 'objectifs',
-    inspectorHelpOpen: false,
     fullscreenSupported: false,
     fullscreenActive: false,
-    selectedTool: 'whiteboard',
+    selectedTool: 'live_quiz',
     toolGroups: @js($toolGroups),
     selectedToolGroupId: @js($defaultToolGroupId),
     selectedToolModuleId: @js($defaultToolModuleId),
@@ -155,6 +161,13 @@
     },
     selectedToolWordCloudGroupName() {
         return this.selectedToolGroup()?.name || '';
+    },
+    openPanel(tab, tool = null) {
+        this.activeTab = tab;
+        if (tool) {
+            this.selectedTool = tool;
+        }
+        this.inspectorOpen = true;
     },
     async toggleFullscreen() {
         const target = this.$refs.contentViewport;
@@ -220,79 +233,55 @@
     }
 }" class="flex flex-col h-[calc(100vh-var(--app-header-h,86px))] bg-white overflow-hidden">
 
-  {{-- BARRE D'OUTILS FORMATEUR (Cockpit) --}}
-  <div class="bg-bleuone text-white px-5 py-3 flex items-center justify-between shadow-md z-30 shrink-0 border-b border-bleuone-dark font-varela">
-      <div class="flex items-center gap-8">
-          <div class="flex items-center gap-3">
-            <span class="font-semibold text-orangeone uppercase text-[11px] tracking-[0.18em]">Mode</span>
-            
-            {{-- Toggle Switch --}}
-            <button @click="mode = (mode === 'formateur' ? 'stagiaire' : 'formateur')"
-                    class="relative inline-flex items-center h-6 rounded-full w-11 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orangeone focus:ring-offset-bleuone"
-                    :class="mode === 'stagiaire' ? 'bg-green-500' : 'bg-gray-600'">
-                <span class="sr-only">Changer le mode de vue</span>
-                <span class="inline-block w-4 h-4 transform bg-white rounded-full transition-transform duration-200 ease-in-out"
-                      :class="mode === 'stagiaire' ? 'translate-x-6' : 'translate-x-1'"></span>
-            </button>
-            <span class="ml-1 text-base md:text-lg font-semibold leading-none" x-text="mode === 'formateur' ? 'Inspecteur (Vue Formateur)' : 'Reel (Vue Stagiaire)'"></span>
+  {{-- BARRE D'ACTIONS FORMATEUR --}}
+  <div class="bg-bleuone px-5 py-3 text-white shadow-md z-30 shrink-0 border-b border-bleuone-dark font-varela">
+      <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div class="min-w-0">
+              <span class="font-semibold text-orangeone uppercase text-[11px] tracking-[0.18em]">Lecture formateur</span>
+              <p class="mt-1 truncate text-base font-semibold leading-tight md:text-lg" title="{{ $lecture->lecture_title }}">
+                  {{ $lecture->lecture_title }}
+              </p>
           </div>
 
-          {{-- Onglets Inspecteur (visibles seulement en mode formateur) --}}
-          <div x-show="mode === 'formateur'" x-cloak
-               x-transition:enter="transition ease-out duration-200"
-               x-transition:enter-start="opacity-0 scale-95"
-               x-transition:enter-end="opacity-100 scale-100"
-               x-transition:leave="transition ease-in duration-150"
-               x-transition:leave-start="opacity-100 scale-100"
-               x-transition:leave-end="opacity-0 scale-95">
-              <div class="flex h-14 items-stretch overflow-hidden">
-                  <button @click="activeTab = 'objectifs'"
-                          :class="activeTab === 'objectifs' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-300 hover:bg-white hover:text-gray-900'"
-                          class="h-full rounded-none px-5 text-sm md:text-base font-semibold transition-all whitespace-nowrap">
-                      Objectifs
-                  </button>
-                  <span class="h-full w-px bg-white/80"></span>
-                  <button @click="activeTab = 'quiz'" 
-                          :class="activeTab === 'quiz' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-300 hover:bg-white hover:text-gray-900'"
-                          class="h-full rounded-none px-5 text-sm md:text-base font-semibold transition-all whitespace-nowrap">
-                      Quiz & Corrigés
-                  </button>
-                  <span class="h-full w-px bg-white/80"></span>
-                  <button @click="activeTab = 'ressources'" 
-                          :class="activeTab === 'ressources' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-300 hover:bg-white hover:text-gray-900'"
-                          class="h-full rounded-none px-5 text-sm md:text-base font-semibold transition-all whitespace-nowrap">
-                      Ressources
-                  </button>
-                  <span class="h-full w-px bg-white/80"></span>
-                  <button @click="activeTab = 'outils'" 
-                          :class="activeTab === 'outils' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-300 hover:bg-white hover:text-gray-900'"
-                          class="h-full rounded-none px-5 text-sm md:text-base font-semibold transition-all whitespace-nowrap">
-                      Outils numeriques
-                  </button>
-              </div>
-          </div>
-      </div>
+          <div class="flex flex-wrap items-center gap-2">
+              @if($studentPreviewUrl)
+                  <a href="{{ $studentPreviewUrl }}"
+                     target="_blank"
+                     rel="noopener"
+                     class="inline-flex items-center justify-center rounded-full border border-white/25 bg-white/10 px-4 py-2 text-xs font-bold uppercase tracking-wide text-white transition hover:bg-white hover:text-bleuone">
+                      Vue stagiaire
+                  </a>
+              @endif
 
-      <div class="relative" @click.outside="inspectorHelpOpen = false">
-        <button type="button"
-                @click="inspectorHelpOpen = !inspectorHelpOpen"
-                :aria-expanded="inspectorHelpOpen.toString()"
-                class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/10 text-sm font-black text-white transition hover:bg-white hover:text-gray-900"
-                aria-label="A quoi sert cette barre ?">
-          ?
-        </button>
-        <div x-show="inspectorHelpOpen"
-             x-cloak
-             x-transition:enter="transition ease-out duration-200"
-             x-transition:enter-start="opacity-0 scale-95"
-             x-transition:enter-end="opacity-100 scale-100"
-             x-transition:leave="transition ease-in duration-150"
-             x-transition:leave-start="opacity-100 scale-100"
-             x-transition:leave-end="opacity-0 scale-95"
-             class="absolute right-0 top-full z-40 mt-2 w-72 rounded-2xl border border-slate-200 bg-white p-4 text-xs font-medium leading-relaxed text-slate-600 shadow-2xl"
-             style="display: none;">
-          Cette barre permet de basculer entre la vue formateur et la vue stagiaire, puis d'acceder rapidement aux quiz, ressources et outils lies a la lecon.
-        </div>
+              <button type="button"
+                      @click="openPanel('objectifs')"
+                      class="inline-flex items-center justify-center rounded-full border border-white/25 px-4 py-2 text-xs font-bold uppercase tracking-wide transition"
+                      :class="inspectorOpen && activeTab === 'objectifs' ? 'bg-white text-bleuone' : 'bg-white/10 text-white hover:bg-white hover:text-bleuone'">
+                  Reperes
+              </button>
+
+              @if($quizStartUrl)
+                  <a href="{{ $quizStartUrl }}"
+                     class="inline-flex items-center justify-center rounded-full border border-orangeone bg-orangeone px-4 py-2 text-xs font-bold uppercase tracking-wide text-white transition hover:bg-orangeone-hover">
+                      Tester le quiz
+                  </a>
+              @endif
+
+              <button type="button"
+                      @click="openPanel('ressources')"
+                      class="inline-flex items-center justify-center gap-2 rounded-full border border-white/25 px-4 py-2 text-xs font-bold uppercase tracking-wide transition"
+                      :class="inspectorOpen && activeTab === 'ressources' ? 'bg-white text-bleuone' : 'bg-white/10 text-white hover:bg-white hover:text-bleuone'">
+                  Ressources
+                  <span class="rounded-full bg-white/20 px-2 py-0.5 text-[10px]">{{ $moduleResources->count() }}</span>
+              </button>
+
+              <button type="button"
+                      @click="openPanel('outils', 'live_quiz')"
+                      class="inline-flex items-center justify-center rounded-full border border-white/25 px-4 py-2 text-xs font-bold uppercase tracking-wide transition"
+                      :class="inspectorOpen && activeTab === 'outils' ? 'bg-white text-bleuone' : 'bg-white/10 text-white hover:bg-white hover:text-bleuone'">
+                  Lancer une activite
+              </button>
+          </div>
       </div>
   </div>
 
@@ -310,7 +299,7 @@
       
       {{-- ZONE CONTENU (SCORM / SLIDES) --}}
       <main class="relative bg-gray-100 transition-all duration-300 ease-in-out flex flex-col min-w-0"
-            :class="mode === 'formateur' ? 'w-2/3 border-r border-gray-200' : 'w-full'">
+            :class="inspectorOpen ? 'w-full lg:w-2/3 lg:border-r lg:border-gray-200' : 'w-full'">
           <div x-ref="contentViewport" class="relative flex-1 min-h-0 overflow-hidden bg-gray-100">
               <div class="pointer-events-none absolute left-4 top-4 z-20 flex flex-wrap items-center gap-2">
                   <button type="button"
@@ -454,12 +443,12 @@
       </main>
 
       {{-- ZONE INSPECTEUR (Visible seulement en mode formateur) --}}
-      <aside x-show="mode === 'formateur'" 
+      <aside x-show="inspectorOpen"
              x-transition:enter="transition ease-out duration-300"
              x-transition:enter-start="translate-x-full"
              x-transition:enter-end="translate-x-0"
              x-cloak
-             class="w-1/3 bg-slate-50 border-l border-gray-200 flex flex-col shadow-xl z-20 absolute right-0 top-0 bottom-0 lg:relative lg:translate-x-0">
+             class="w-full max-w-xl bg-slate-50 border-l border-gray-200 flex flex-col shadow-xl z-20 absolute right-0 top-0 bottom-0 lg:relative lg:w-1/3 lg:max-w-none lg:translate-x-0">
           
           <div class="flex-1 overflow-y-auto custom-scrollbar p-6">
               @php
@@ -487,9 +476,17 @@
                               <span title="{{ $lecture->lecture_title }}" class="text-bleuone">{{ $lessonNo ? 'Leç. ' . $lessonNo : 'Leçon' }}</span>
                           </nav>
                       </div>
-                      <span class="shrink-0 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-bleuone">
-                          {{ $isSlidesSelected ? 'Slides' : ($isBlocksSelected ? 'Texte' : 'SCORM') }}
-                      </span>
+                      <div class="shrink-0 flex items-center gap-2">
+                          <span class="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-bleuone">
+                              {{ $isSlidesSelected ? 'Slides' : ($isBlocksSelected ? 'Texte' : 'SCORM') }}
+                          </span>
+                          <button type="button"
+                                  @click="inspectorOpen = false"
+                                  class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition hover:border-bleuone hover:text-bleuone"
+                                  aria-label="Fermer le panneau">
+                              <span aria-hidden="true">&times;</span>
+                          </button>
+                      </div>
                   </div>
 
                   <div class="mt-4 flex flex-wrap gap-2">
@@ -497,6 +494,33 @@
                           {{ $lectureObjectives->count() }} objectif{{ $lectureObjectives->count() > 1 ? 's' : '' }}
                       </span>
                   </div>
+              </div>
+
+              <div class="mb-5 grid grid-cols-2 gap-2 rounded-[20px] border border-slate-200 bg-white p-2 shadow-sm">
+                  <button type="button"
+                          @click="activeTab = 'objectifs'"
+                          :class="activeTab === 'objectifs' ? 'bg-bleuone text-white' : 'text-slate-600 hover:bg-slate-50'"
+                          class="rounded-2xl px-3 py-2 text-xs font-bold uppercase tracking-wide transition">
+                      Objectifs
+                  </button>
+                  <button type="button"
+                          @click="activeTab = 'quiz'"
+                          :class="activeTab === 'quiz' ? 'bg-bleuone text-white' : 'text-slate-600 hover:bg-slate-50'"
+                          class="rounded-2xl px-3 py-2 text-xs font-bold uppercase tracking-wide transition">
+                      Quiz
+                  </button>
+                  <button type="button"
+                          @click="activeTab = 'ressources'"
+                          :class="activeTab === 'ressources' ? 'bg-bleuone text-white' : 'text-slate-600 hover:bg-slate-50'"
+                          class="rounded-2xl px-3 py-2 text-xs font-bold uppercase tracking-wide transition">
+                      Ressources
+                  </button>
+                  <button type="button"
+                          @click="activeTab = 'outils'"
+                          :class="activeTab === 'outils' ? 'bg-bleuone text-white' : 'text-slate-600 hover:bg-slate-50'"
+                          class="rounded-2xl px-3 py-2 text-xs font-bold uppercase tracking-wide transition">
+                      Outils
+                  </button>
               </div>
 
               <div x-show="activeTab === 'objectifs'"
@@ -732,6 +756,7 @@
               </div>
 
               <div x-show="activeTab === 'ressources'"
+                   x-data="{ manageResources: @js($errors->has('title') || $errors->has('resource_file')) }"
                    x-transition:enter="transition ease-out duration-200"
                    x-transition:enter-start="opacity-0 scale-95"
                    x-transition:enter-end="opacity-100 scale-100"
@@ -748,7 +773,7 @@
                       <div class="rounded-[22px] border border-slate-200 bg-white p-5 shadow-sm">
                           <div class="flex items-center justify-between gap-3">
                               <div class="flex items-center gap-2">
-                                  <h4 class="text-sm font-bold text-bleuone">Ajouter</h4>
+                                  <h4 class="text-sm font-bold text-bleuone">Gestion</h4>
                                   <div x-data="{ open: false }" class="relative">
                                       <button type="button"
                                               @mouseenter="open = true"
@@ -763,14 +788,23 @@
                                       </div>
                                   </div>
                               </div>
-                              <span class="inline-flex items-center rounded-full bg-orange-50 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-orangeone">
-                                  {{ $moduleResources->count() }} fichier{{ $moduleResources->count() > 1 ? 's' : '' }}
-                              </span>
+                              <div class="flex items-center gap-2">
+                                  <span class="inline-flex items-center rounded-full bg-orange-50 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-orangeone">
+                                      {{ $moduleResources->count() }} fichier{{ $moduleResources->count() > 1 ? 's' : '' }}
+                                  </span>
+                                  <button type="button"
+                                          @click="manageResources = !manageResources"
+                                          class="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-bleuone transition hover:border-bleuone">
+                                      <span x-text="manageResources ? 'Masquer' : 'Gerer'"></span>
+                                  </button>
+                              </div>
                           </div>
 
                           <form action="{{ route('formateur.formations.lesson.resources.store', ['module' => $module->id, 'section' => $section->id, 'lecture' => $lecture->id]) }}"
                                 method="POST"
                                 enctype="multipart/form-data"
+                                x-show="manageResources"
+                                x-collapse.duration.300ms
                                 class="mt-4 space-y-4">
                               @csrf
 
@@ -970,6 +1004,25 @@
 
                           <div x-data="{ open: false }" class="relative flex items-center gap-2" @click.outside="open = false">
                               <button type="button"
+                                      @click="selectedTool = 'live_quiz'"
+                                      :class="selectedTool === 'live_quiz' ? 'bg-bleuone/10 text-bleuone border-bleuone/15' : 'bg-white text-slate-700 border-transparent hover:bg-slate-50'"
+                                      class="flex flex-1 items-center rounded-2xl border px-3 py-3 text-left text-sm font-semibold transition">
+                                  Quiz en direct
+                              </button>
+                              <button type="button"
+                                      @click.stop="open = !open"
+                                      :aria-expanded="open.toString()"
+                                      class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-300 bg-white text-[11px] font-black text-bleuone transition hover:border-bleuone hover:bg-slate-50"
+                                      aria-label="Aide sur quiz en direct">
+                                  ?
+                              </button>
+                              <div x-show="open" x-cloak class="absolute left-0 top-full z-20 mt-2 w-64 rounded-xl border border-slate-200 bg-slate-900 px-3 py-2 text-[11px] leading-relaxed text-white shadow-xl" style="display: none;">
+                                  Lance une session de quiz animee en temps reel pour le groupe et la lecon selectionnes.
+                              </div>
+                          </div>
+
+                          <div x-data="{ open: false }" class="relative flex items-center gap-2" @click.outside="open = false">
+                              <button type="button"
                                       @click="selectedTool = 'whiteboard'"
                                       :class="selectedTool === 'whiteboard' ? 'bg-teal-50 text-teal-800 border-teal-200' : 'bg-white text-slate-700 border-transparent hover:bg-slate-50'"
                                       class="flex flex-1 items-center rounded-2xl border px-3 py-3 text-left text-sm font-semibold transition">
@@ -1042,6 +1095,51 @@
                                       Ouvrir le tableau blanc
                                   </a>
                               </div>
+                          </section>
+
+                          <section x-show="selectedTool === 'live_quiz'" x-cloak
+                                   x-transition:enter="transition ease-out duration-200"
+                                   x-transition:enter-start="opacity-0 scale-95"
+                                   x-transition:enter-end="opacity-100 scale-100"
+                                   x-transition:leave="transition ease-in duration-150"
+                                   x-transition:leave-start="opacity-100 scale-100"
+                                   x-transition:leave-end="opacity-0 scale-95"
+                                   class="rounded-[22px] border border-slate-200 bg-white p-5 shadow-sm" style="display: none;">
+                              <div class="flex items-start justify-between gap-3">
+                                  <div>
+                                      <h4 class="text-lg font-bold text-bleuone">Quiz en direct</h4>
+                                      <p class="mt-1 text-xs text-slate-500">Choisissez un groupe, une formation et une lecon avant de lancer la session.</p>
+                                  </div>
+                              </div>
+
+                              <form method="POST"
+                                    action="{{ route('formateur.live-quiz.launch') }}"
+                                    target="_blank"
+                                    class="mt-4 space-y-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                                  @csrf
+                                  <input type="hidden" name="group_id" :value="selectedToolGroupId">
+                                  <input type="hidden" name="module_id" :value="selectedToolModuleId">
+
+                                  <div>
+                                      <label for="tool-lecture" class="mb-1 block text-xs font-semibold text-slate-600">Lecon</label>
+                                      <select id="tool-lecture"
+                                              name="lecture_id"
+                                              x-model="selectedToolLectureId"
+                                              class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm focus:border-orangeone focus:ring-orangeone"
+                                              :disabled="selectedToolLectures().length === 0">
+                                          <option value="">Choisir une lecon</option>
+                                          <template x-for="lectureItem in selectedToolLectures()" :key="lectureItem.id">
+                                              <option :value="String(lectureItem.id)" x-text="lectureItem.label"></option>
+                                          </template>
+                                      </select>
+                                  </div>
+
+                                  <button type="submit"
+                                          class="inline-flex items-center justify-center rounded-xl bg-bleuone px-4 py-2.5 text-xs font-bold uppercase text-white transition hover:bg-bleuone/90"
+                                          :class="!selectedToolGroupId || !selectedToolModuleId || !selectedToolLectureId ? 'pointer-events-none opacity-50' : ''">
+                                      Lancer une session
+                                  </button>
+                              </form>
                           </section>
 
                           <section x-show="selectedTool === 'module_setup'" x-cloak
