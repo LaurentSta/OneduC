@@ -112,6 +112,7 @@ Route::middleware(['auth', 'role:formateur', 'association.member'])
                 Route::post('/{seance}/ouvrir', [EmargementController::class, 'ouvrir'])->name('ouvrir');
                 Route::post('/{seance}/fermer', [EmargementController::class, 'fermer'])->name('fermer');
                 Route::post('/{seance}/presences/{presence}/corriger', [EmargementController::class, 'corrigerPresence'])->name('presences.corriger');
+                Route::post('/{seance}/presences/ajouter', [EmargementController::class, 'ajouterStagiaire'])->name('presences.ajouter');
                 Route::get('/{seance}/export-pdf', [EmargementController::class, 'exportPdf'])->name('export-pdf');
             });
 

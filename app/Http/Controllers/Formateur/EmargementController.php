@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers\Formateur;
 
+use App\Domains\Outils\Emargement\Actions\AjouterStagiaireSeance;
 use App\Domains\Outils\Emargement\Actions\ClorerSeance;
 use App\Domains\Outils\Emargement\Actions\CorrigerPresence;
 use App\Domains\Outils\Emargement\Actions\CreerSeance;
+use App\Domains\Outils\Emargement\Actions\GenererCodeAccesGroupe;
 use App\Domains\Outils\Emargement\Actions\OuvrirSeance;
 use App\Domains\Outils\Emargement\Support\AccesEmargement;
 use App\Domains\Outils\Emargement\Support\GenererPdfEmargement;
@@ -12,6 +14,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Group;
 use App\Models\Seance;
 use App\Models\SeancePresence;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -49,10 +52,11 @@ class EmargementController extends Controller
         ]);
     }
 
-    public function activerGroupe(Group $group): RedirectResponse
+    public function activerGroupe(Group $group, GenererCodeAccesGroupe $genererCode): RedirectResponse
     {
         $group = $this->acces->assertFormateurAccess($group);
         $group->update(['emargement_enabled' => true]);
+        $genererCode->execute($group);
 
         return redirect()->route('formateur.emargement.index', ['group_id' => $group->id]);
     }
@@ -92,18 +96,26 @@ class EmargementController extends Controller
             ->with('success', 'Séance créée.');
     }
 
-    public function show(Group $group, Seance $seance): View
+    public function show(Group $group, Seance $seance, GenererCodeAccesGroupe $genererCode): View
     {
         $group = $this->acces->assertFormateurAccess($group);
         abort_unless($seance->group_id === $group->id, 404);
 
+        $group = $genererCode->execute($group);
         $seance->load(['presences' => fn ($q) => $q->orderBy('stagiaire_nom_snapshot')]);
+
+        $stagiairesManquants = $group->students()
+            ->whereNotIn('users.id', $seance->presences->pluck('user_id'))
+            ->orderBy('name')
+            ->get(['users.id', 'name', 'prenom']);
 
         return view('formateur.emargement.show', [
             'group' => $group,
             'seance' => $seance,
             'stateUrl' => route('formateur.groupes.emargement.state', [$group->id, $seance->id]),
             'corrigerUrlTemplate' => route('formateur.groupes.emargement.presences.corriger', [$group->id, $seance->id, 'PRESENCE_ID']),
+            'joinUrl' => route('stagiaire.emargement.show', $group->id),
+            'stagiairesManquants' => $stagiairesManquants,
         ]);
     }
 
@@ -179,6 +191,33 @@ class EmargementController extends Controller
         return redirect()
             ->route('formateur.groupes.emargement.show', [$group->id, $seance->id])
             ->with('success', 'Présence mise à jour.');
+    }
+
+    public function ajouterStagiaire(
+        Request $request,
+        Group $group,
+        Seance $seance,
+        AjouterStagiaireSeance $ajouterStagiaire,
+    ): RedirectResponse {
+        $group = $this->acces->assertFormateurAccess($group);
+        abort_unless($seance->group_id === $group->id, 404);
+
+        $data = $request->validate([
+            'user_id' => [
+                'required',
+                'integer',
+                Rule::exists('group_user', 'user_id')->where(
+                    fn ($query) => $query->where('group_id', $group->id)->where('role_in_group', 'stagiaire')
+                ),
+            ],
+        ]);
+
+        $stagiaire = User::findOrFail($data['user_id']);
+        $ajouterStagiaire->execute($seance, $stagiaire);
+
+        return redirect()
+            ->route('formateur.groupes.emargement.show', [$group->id, $seance->id])
+            ->with('success', 'Stagiaire ajouté à la séance.');
     }
 
     public function exportPdf(Group $group, Seance $seance, GenererPdfEmargement $genererPdf): Response

@@ -3,6 +3,7 @@
 use App\Http\Controllers\BuzzerParticipationController;
 use App\Http\Controllers\ComponentFinderParticipationController;
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\EmargementJoinController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PollParticipationController;
 use App\Http\Controllers\QuestionWallParticipationController;
@@ -146,6 +147,19 @@ Route::middleware(['auth'])->group(function () {
         ->middleware('throttle:60,1')
         ->name('sondages.submit');
     Route::get('/oneduc/sondage/{code}/data', [PollParticipationController::class, 'data'])->name('sondages.data');
+});
+
+// ----------------------------------------------------------
+// ✍️ Émargement (raccourci d'accès QR / code court)
+// ----------------------------------------------------------
+Route::middleware(['auth'])->group(function () {
+    Route::get('/oneduc/emargement', [EmargementJoinController::class, 'home'])->name('emargement.join');
+    Route::post('/oneduc/emargement', [EmargementJoinController::class, 'resolveCode'])
+        ->middleware('throttle:emargement-code')
+        ->name('emargement.resolve');
+    Route::get('/oneduc/emargement/{code}', [EmargementJoinController::class, 'joinByCode'])
+        ->middleware('throttle:emargement-code')
+        ->name('emargement.join.code');
 });
 
 // ----------------------------------------------------------

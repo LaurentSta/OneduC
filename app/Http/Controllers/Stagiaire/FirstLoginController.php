@@ -42,7 +42,7 @@ class FirstLoginController extends Controller
             'password_changed_at' => now(), // C'est ici qu'on débloque l'utilisateur
         ]);
 
-        return redirect()->route('stagiaire.dashboard')
+        return redirect()->intended(route('stagiaire.dashboard'))
             ->with('success', 'Votre mot de passe a été mis à jour avec succès. Bienvenue !');
     }
 }

@@ -135,6 +135,35 @@ it('renders the signing page with the signature pad for a group member', functio
     $response->assertSee('signaturePadComponent', false);
 });
 
+it('shows a friendly message instead of crashing when the stagiaire joined the group after the seance was created', function () {
+    $formateur = createEmargementSignUser('formateur');
+    $stagiaire = createEmargementSignUser('stagiaire');
+    $latecomer = createEmargementSignUser('stagiaire');
+    $group = createEmargementSignGroup($formateur, [$stagiaire]);
+    openSeanceFor($group, $formateur);
+
+    // Latecomer joins the group after the seance (and its frozen roster) already exist.
+    DB::table('group_user')->insert([
+        'group_id' => $group->id,
+        'user_id' => $latecomer->id,
+        'role_in_group' => 'stagiaire',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $showResponse = $this->actingAs($latecomer)->get(route('stagiaire.emargement.show', $group->id));
+    $showResponse->assertOk();
+    $showResponse->assertSee('pas inscrit', false);
+
+    $signResponse = $this->actingAs($latecomer)->post(
+        route('stagiaire.emargement.signer', $group->id),
+        ['signature' => 'data:image/png;base64,'.TINY_PNG_BASE64]
+    );
+
+    $signResponse->assertRedirect(route('stagiaire.emargement.show', $group->id));
+    $signResponse->assertSessionHas('error');
+});
+
 it('renders an empty state when no seance is open', function () {
     $formateur = createEmargementSignUser('formateur');
     $stagiaire = createEmargementSignUser('stagiaire');

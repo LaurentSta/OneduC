@@ -30,6 +30,12 @@ class ForcePasswordChange
 
             // Si la route actuelle n'est pas dans la liste blanche, on redirige
             if (!in_array(Route::currentRouteName(), $allowedRoutes)) {
+                // On mémorise la destination d'origine (ex: lien d'émargement scanné avant
+                // la première connexion) pour y revenir une fois le mot de passe changé.
+                if ($request->isMethod('get')) {
+                    session(['url.intended' => $request->fullUrl()]);
+                }
+
                 return redirect()->route('stagiaire.password.init');
             }
         }

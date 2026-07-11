@@ -16,6 +16,7 @@ class Group extends Model
         'is_active',
         'is_sandbox',
         'emargement_enabled',
+        'emargement_code',
         'start_date',
         'end_date',
         'temporary_password',
