@@ -57,6 +57,12 @@ class AppServiceProvider extends ServiceProvider
                     }),
             ];
         });
+        RateLimiter::for('emargement-code', function (Request $request) {
+            return [
+                // 20 tentatives / minute par IP
+                Limit::perMinute(20)->by($request->ip()),
+            ];
+        });
         // Partage de données vues
         View::composer('*', function ($view) {
             if (Auth::check()) {

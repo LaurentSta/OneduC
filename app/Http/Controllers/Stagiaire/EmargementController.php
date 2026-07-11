@@ -40,7 +40,13 @@ class EmargementController extends Controller
         ]);
 
         $seance = $group->seances()->where('statut', 'ouverte')->latest('date')->firstOrFail();
-        $presence = $seance->presences()->where('user_id', auth()->id())->firstOrFail();
+        $presence = $seance->presences()->where('user_id', auth()->id())->first();
+
+        if (! $presence) {
+            return redirect()
+                ->route('stagiaire.emargement.show', $group->id)
+                ->with('error', "Vous n'êtes pas inscrit·e à cette séance. Contactez votre formateur.");
+        }
 
         $signerPresence->execute($presence, $request->user(), $data['signature']);
 

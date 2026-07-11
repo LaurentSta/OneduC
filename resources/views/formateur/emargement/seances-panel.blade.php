@@ -85,7 +85,9 @@
             </thead>
             <tbody class="divide-y divide-gray-100 bg-white">
                 @foreach ($seances as $seance)
-                    <tr class="{{ $loop->odd ? 'bg-white' : 'bg-slate-50' }}">
+                    @php $pilotageUrl = route('formateur.groupes.emargement.show', [$group->id, $seance->id]); @endphp
+                    <tr class="{{ $loop->odd ? 'bg-white' : 'bg-slate-50' }} cursor-pointer hover:bg-slate-100 transition"
+                        onclick="window.location.href='{{ $pilotageUrl }}'">
                         <td class="px-6 py-3 font-medium text-gray-900">
                             {{ $seance->date->format('d/m/Y') }}
                             @if ($seance->titre)
@@ -102,11 +104,12 @@
                             {{ $seance->presences_signees_count }} / {{ $seance->presences_count }}
                         </td>
                         <td class="px-6 py-3 text-right whitespace-nowrap">
-                            <a href="{{ route('formateur.groupes.emargement.show', [$group->id, $seance->id]) }}"
+                            <a href="{{ $pilotageUrl }}"
                                class="inline-flex items-center gap-1.5 rounded-[8px] bg-bleuone px-3 py-1.5 text-xs font-bold text-white hover:bg-bleuone/90 transition mr-2">
                                 Piloter
                             </a>
                             <a href="{{ route('formateur.groupes.emargement.export-pdf', [$group->id, $seance->id]) }}"
+                               onclick="event.stopPropagation()"
                                class="inline-flex items-center gap-1.5 rounded-[8px] border border-bleuone px-3 py-1.5 text-xs font-bold text-bleuone hover:bg-bleuone/5 transition">
                                 PDF
                             </a>

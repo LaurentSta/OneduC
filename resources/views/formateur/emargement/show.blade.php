@@ -1,6 +1,9 @@
 @extends('formateur.dashboard')
 
 @section('formateur')
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
 @php
     $creneauxLabels = [
         'matin' => 'Matin',
@@ -67,11 +70,46 @@
                 </a>
             </div>
         </div>
+
+        <div class="mt-6 pt-6 border-t border-gray-100 flex flex-wrap items-center gap-6">
+            <div id="emargement-qr" class="shrink-0"></div>
+            <div>
+                <p class="text-xs uppercase tracking-wide text-gray-400 font-semibold mb-1">Rejoindre rapidement</p>
+                <p class="text-3xl font-mono font-bold text-bleuone tracking-widest">{{ $group->emargement_code }}</p>
+                <p class="text-sm text-gray-500 mt-1">
+                    Scannez le QR code, ou allez sur <span class="font-semibold">{{ url('/oneduc/emargement') }}</span> et entrez ce code.
+                </p>
+                <p class="text-xs text-gray-400 mt-2">Réservé aux stagiaires — à scanner avec leur propre compte.</p>
+            </div>
+        </div>
     </header>
 
     @if (session('success'))
         <div class="mb-6 rounded-lg bg-vertone/10 text-vertone px-4 py-2 text-sm font-semibold">
             {{ session('success') }}
+        </div>
+    @endif
+
+    @if ($stagiairesManquants->isNotEmpty())
+        <div class="bg-white rounded-[20px] shadow-md px-8 py-5 mb-6">
+            <p class="text-sm font-bold text-bleuone uppercase mb-1">Entrée tardive</p>
+            <p class="text-xs text-gray-500 mb-3">
+                Ces stagiaires ont rejoint le groupe après la création de cette séance et n'y figurent pas encore.
+            </p>
+            <form method="POST" action="{{ route('formateur.groupes.emargement.presences.ajouter', [$group->id, $seance->id]) }}"
+                  class="flex flex-wrap items-end gap-3">
+                @csrf
+                <div>
+                    <label for="stagiaire_manquant" class="block text-xs font-bold text-gray-500 uppercase mb-1">Stagiaire</label>
+                    <select name="user_id" id="stagiaire_manquant" required
+                            class="rounded-[8px] border border-gray-300 px-3 py-2 text-sm focus:border-bleuone focus:ring-bleuone">
+                        @foreach ($stagiairesManquants as $manquant)
+                            <option value="{{ $manquant->id }}">{{ trim(($manquant->prenom ?? '').' '.$manquant->name) }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <button type="submit" class="btn-oneduc-outline !py-2 !text-sm">Ajouter à cette séance</button>
+            </form>
         </div>
     @endif
 
@@ -150,6 +188,12 @@
 </div>
 
 <script>
+new QRCode(document.getElementById('emargement-qr'), {
+    text: @json($joinUrl),
+    width: 120,
+    height: 120,
+});
+
 function emargementPilotage(config) {
     return {
         statut: config.statut,
