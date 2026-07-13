@@ -295,7 +295,7 @@ Les quiz natifs sont construits sur quatre modèles :
 
 ### Import par CSV
 
-La banque de questions admin (`Backend/QuizQuestionController`) supporte un import par fichier CSV pour créer des questions en masse.
+La banque de questions est disponible côté admin (`Backend\QuizQuestionController`) et côté formateur, pour ses propres leçons, depuis "Outils numériques" (tuile "Banque de questions", `formateur.outils.quiz-questions.index`) ou directement depuis l'onglet "Quiz" de la leçon (bouton "Gérer les questions"). Les deux contrôleurs (admin/formateur) délèguent la validation, la construction des options/payload cloze et l'import CSV au service partagé `App\Services\QuizQuestionBuilder`, pour éviter la duplication. Les questions créées par un formateur sont tracées via `quiz_questions.created_by`.
 
 ### Scoring
 

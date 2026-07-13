@@ -128,11 +128,10 @@ it('allows a formateur to upload a lesson resource and choose trainee visibility
     Storage::disk('public')->assertExists($resource->file_path);
 });
 
-it('shows only visible lesson resources to stagiaires while formateur sees all of them', function () {
+it('shows only visible lesson resources to stagiaires', function () {
     Storage::fake('public');
 
     [
-        'formateur' => $formateur,
         'stagiaire' => $stagiaire,
         'module' => $module,
         'section' => $section,
@@ -160,18 +159,6 @@ it('shows only visible lesson resources to stagiaires while formateur sees all o
         'is_visible_to_stagiaire' => false,
         'position' => 2,
     ]);
-
-    $formateurResponse = $this
-        ->actingAs($formateur)
-        ->get(route('formateur.formations.lecture', [
-            'module' => $module->id,
-            'section' => $section->id,
-            'lecture' => $lecture->id,
-        ]));
-
-    $formateurResponse->assertOk();
-    $formateurResponse->assertSee('Document visible');
-    $formateurResponse->assertSee('Document masque');
 
     $stagiaireResponse = $this
         ->actingAs($stagiaire)

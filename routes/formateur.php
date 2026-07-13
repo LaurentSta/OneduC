@@ -20,6 +20,7 @@ use App\Http\Controllers\Formateur\OutilsEchelleController;
 use App\Http\Controllers\Formateur\OutilsLiveQuizController;
 use App\Http\Controllers\Formateur\OutilsNumeriquesController;
 use App\Http\Controllers\Formateur\OutilsPagesCollaborativesController;
+use App\Http\Controllers\Formateur\OutilsQuizQuestionsController;
 use App\Http\Controllers\Formateur\OutilsSondageController;
 use App\Http\Controllers\Formateur\OutilsVraiFauxController;
 use App\Http\Controllers\Formateur\ParcoursController;
@@ -29,6 +30,7 @@ use App\Http\Controllers\Formateur\ProgressionModulesController;
 use App\Http\Controllers\Formateur\ProgressionStagiaireController;
 use App\Http\Controllers\Formateur\ProgressionStagiairesController;
 use App\Http\Controllers\Formateur\QuestionWallController;
+use App\Http\Controllers\Formateur\QuizQuestionController as FormateurQuizQuestionController;
 use App\Http\Controllers\Formateur\RoueAleatoireController;
 use App\Http\Controllers\Formateur\WhiteboardController;
 use App\Http\Controllers\Formateur\WordCloudController as FormateurWordCloudController;
@@ -151,6 +153,9 @@ Route::middleware(['auth', 'role:formateur', 'association.member'])
 
         Route::get('/quiz-en-direct', [OutilsLiveQuizController::class, 'index'])
             ->name('outils.quiz.index');
+
+        Route::get('/banque-de-questions-quiz', [OutilsQuizQuestionsController::class, 'index'])
+            ->name('outils.quiz-questions.index');
 
         Route::prefix('/sondages')->name('sondages.')->group(function () {
             Route::get('/', [OutilsSondageController::class, 'index'])->name('index');
@@ -294,6 +299,18 @@ Route::middleware(['auth', 'role:formateur', 'association.member'])
             Route::post('/lectures/{lecture}/promote', [ModuleBuilderController::class, 'promoteLectureToSection'])->name('lectures.promote');
 
             Route::put('/{module}/groupes', [ModuleBuilderController::class, 'assignGroups'])->name('groups.sync');
+
+            // Banque de questions de quiz d'une leçon (formateur propriétaire uniquement)
+            Route::prefix('lectures/{lecture}/quiz/questions')->name('lectures.quiz.questions.')->group(function () {
+                Route::get('/', [FormateurQuizQuestionController::class, 'index'])->name('index');
+                Route::get('/creer', [FormateurQuizQuestionController::class, 'create'])->name('create');
+                Route::post('/', [FormateurQuizQuestionController::class, 'store'])->name('store');
+                Route::post('/import', [FormateurQuizQuestionController::class, 'importCsv'])->name('import');
+                Route::get('/import/modele', [FormateurQuizQuestionController::class, 'downloadCsvTemplate'])->name('import.template');
+                Route::get('/{question}/edition', [FormateurQuizQuestionController::class, 'edit'])->name('edit');
+                Route::put('/{question}', [FormateurQuizQuestionController::class, 'update'])->name('update');
+                Route::delete('/{question}', [FormateurQuizQuestionController::class, 'destroy'])->name('destroy');
+            });
         });
 
         Route::redirect('/word-clouds', '/formateur/nuages-de-mots', 301);

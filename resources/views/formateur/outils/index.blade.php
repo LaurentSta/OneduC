@@ -141,6 +141,31 @@
       </x-slot:badges>
     </x-oneduc.outil-tile>
 
+    {{-- ── BANQUE DE QUESTIONS DE QUIZ ──────────────────────────────────── --}}
+    <x-oneduc.outil-tile
+      x-show="filtre === 'all' || filtre === 'interaction'"
+      tool-id="quiz-questions"
+      title="Banque de questions"
+      icon-bg="bg-orangeone"
+      cta-route="{{ route('formateur.outils.quiz-questions.index') }}"
+      cta-label="Gérer les questions de quiz"
+      cta-bg="bg-orangeone hover:bg-orangeone-hover"
+      :badge-count="$recentModules->count() ?: null"
+    >
+      <x-slot:icon>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </x-slot:icon>
+      <x-slot:description>
+        Créez, modifiez et importez (CSV) les questions du quiz de fin de leçon de vos formations. Ce quiz est celui proposé au stagiaire directement après la leçon.
+      </x-slot:description>
+      <x-slot:badges>
+        <span class="rounded-full bg-gray-100 px-2.5 py-0.5 font-semibold text-gray-500">Asynchrone</span>
+        <span class="rounded-full bg-blue-100 px-2.5 py-0.5 font-semibold text-blue-700">Autonomie stagiaire</span>
+      </x-slot:badges>
+    </x-oneduc.outil-tile>
+
     {{-- ── TABLEAU BLANC ──────────────────────────────────────────────── --}}
     <x-oneduc.outil-tile
       x-show="filtre === 'all' || filtre === 'collaboration'"

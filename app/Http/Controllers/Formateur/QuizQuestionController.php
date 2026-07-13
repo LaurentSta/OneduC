@@ -1,9 +1,11 @@
 <?php
 
-// /var/www/Oneduc_Prod/app/Http/Controllers/Backend/QuizQuestionController.php
+namespace App\Http\Controllers\Formateur;
 
-namespace App\Http\Controllers\Backend;
-
+use App\Domains\ModulesFormateur\Actions\CreerQuestionQuiz;
+use App\Domains\ModulesFormateur\Actions\ModifierQuestionQuiz;
+use App\Domains\ModulesFormateur\Actions\SupprimerQuestionQuiz;
+use App\Domains\ModulesFormateur\Support\AccesModule;
 use App\Http\Controllers\Controller;
 use App\Models\ModuleLecture;
 use App\Models\QuizQuestion;
@@ -14,107 +16,105 @@ use Illuminate\Support\MessageBag;
 class QuizQuestionController extends Controller
 {
     public function __construct(
-        private readonly QuizQuestionBuilder $builder
+        private readonly AccesModule $access,
+        private readonly QuizQuestionBuilder $builder,
+        private readonly CreerQuestionQuiz $creerQuestionQuiz,
+        private readonly ModifierQuestionQuiz $modifierQuestionQuiz,
+        private readonly SupprimerQuestionQuiz $supprimerQuestionQuiz,
     ) {}
 
     /**
-     * Liste des questions d’un quiz (par leçon).
+     * Liste des questions de la banque d'une leçon (formateur propriétaire uniquement).
      */
     public function index(ModuleLecture $lecture)
     {
+        $this->access->assertOwner($lecture->module);
+
         $questions = QuizQuestion::where('lecture_id', $lecture->id)
             ->with(['options' => fn ($q) => $q->orderBy('position')])
             ->withCount('options')
             ->orderBy('id')
             ->get();
 
-        return view('admin.backend.quiz.questions.index', [
+        return view('formateur.modules-builder.quiz-questions.index', [
             'lecture' => $lecture,
             'questions' => $questions,
         ]);
     }
 
-    /**
-     * Formulaire de création d’une question.
-     */
     public function create(ModuleLecture $lecture)
     {
-        return view('admin.backend.quiz.questions.create', [
+        $this->access->assertOwner($lecture->module);
+
+        return view('formateur.modules-builder.quiz-questions.create', [
             'lecture' => $lecture,
         ]);
     }
 
-    /**
-     * Enregistrement d’une nouvelle question + ses options.
-     */
     public function store(Request $request, ModuleLecture $lecture)
     {
+        $this->access->assertOwner($lecture->module);
+
         $data = $this->builder->validatePayload($request);
 
-        $this->builder->createQuestion($lecture, $data, $request);
+        $this->creerQuestionQuiz->execute($lecture, $data, $request);
 
         return redirect()
-            ->route('admin.quiz.questions.index', $lecture)
+            ->route('formateur.modules.builder.lectures.quiz.questions.index', $lecture)
             ->with('success', 'Question créée avec succès.');
     }
 
-    /**
-     * Formulaire d’édition d’une question.
-     */
     public function edit(ModuleLecture $lecture, QuizQuestion $question)
     {
+        $this->access->assertOwner($lecture->module);
         abort_unless($question->lecture_id === $lecture->id, 404);
 
         $question->load(['options' => fn ($q) => $q->orderBy('position')]);
 
-        return view('admin.backend.quiz.questions.edit', [
+        return view('formateur.modules-builder.quiz-questions.edit', [
             'lecture' => $lecture,
             'question' => $question,
         ]);
     }
 
-    /**
-     * Mise à jour d’une question + options.
-     */
     public function update(Request $request, ModuleLecture $lecture, QuizQuestion $question)
     {
+        $this->access->assertOwner($lecture->module);
         abort_unless($question->lecture_id === $lecture->id, 404);
 
         $data = $this->builder->validatePayload($request);
 
-        $this->builder->updateQuestion($question, $data, $request);
+        $this->modifierQuestionQuiz->execute($question, $data, $request);
 
         return redirect()
-            ->route('admin.quiz.questions.index', $lecture)
+            ->route('formateur.modules.builder.lectures.quiz.questions.index', $lecture)
             ->with('success', 'Question mise à jour.');
     }
 
-    /**
-     * Suppression d’une question.
-     */
     public function destroy(ModuleLecture $lecture, QuizQuestion $question)
     {
+        $this->access->assertOwner($lecture->module);
         abort_unless($question->lecture_id === $lecture->id, 404);
 
-        $this->builder->deleteQuestion($question);
+        $this->supprimerQuestionQuiz->execute($question);
 
         return redirect()
-            ->route('admin.quiz.questions.index', $lecture)
+            ->route('formateur.modules.builder.lectures.quiz.questions.index', $lecture)
             ->with('success', 'Question supprimée.');
     }
 
-    /**
-     * Import CSV en masse des questions d'une leçon.
-     */
     public function importCsv(Request $request, ModuleLecture $lecture)
     {
+        $this->access->assertOwner($lecture->module);
+
         $validated = $request->validate([
             'csv_file' => ['required', 'file', 'mimes:csv,txt', 'max:5120'],
         ]);
 
-        $result = $this->builder->importCsv($lecture, $validated['csv_file']);
+        $result = $this->builder->importCsv($lecture, $validated['csv_file'], (int) auth()->id());
 
-        $redirect = redirect()->route('admin.quiz.questions.index', $lecture)
+        $redirect = redirect()
+            ->route('formateur.modules.builder.lectures.quiz.questions.index', $lecture)
             ->with('success', "Import CSV terminé: {$result['created']} question(s) créée(s).");
 
         if (! empty($result['errors'])) {
@@ -136,11 +136,10 @@ class QuizQuestionController extends Controller
         return $redirect;
     }
 
-    /**
-     * Télécharge un modèle CSV d'import.
-     */
     public function downloadCsvTemplate(ModuleLecture $lecture)
     {
+        $this->access->assertOwner($lecture->module);
+
         return response($this->builder->csvTemplateContent(), 200, [
             'Content-Type' => 'text/csv; charset=UTF-8',
             'Content-Disposition' => 'attachment; filename="modele_import_questions_quiz.csv"',
