@@ -37,12 +37,18 @@ class DonneesModule
     public function resolvedContentBlocks(ModuleLecture $lecture): array
     {
         $mediaById = $lecture->module->getMedia('lesson-images')->keyBy('id');
+        $audioById = $lecture->module->getMedia('lesson-audios')->keyBy('id');
 
         return collect($lecture->content_blocks ?? [])
-            ->map(function (array $block) use ($mediaById) {
+            ->map(function (array $block) use ($mediaById, $audioById) {
                 if (($block['type'] ?? null) === 'image') {
                     $media = $mediaById->get($block['media_id'] ?? null);
                     $block['url'] = $media?->getUrl('display');
+                }
+
+                if (($block['type'] ?? null) === 'audio') {
+                    $media = $audioById->get($block['media_id'] ?? null);
+                    $block['url'] = $media?->getUrl();
                 }
 
                 if (($block['type'] ?? null) === 'scorm') {

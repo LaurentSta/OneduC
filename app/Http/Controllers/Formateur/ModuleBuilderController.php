@@ -17,6 +17,7 @@ use App\Domains\ModulesFormateur\Actions\ModifierOptionsModule;
 use App\Domains\ModulesFormateur\Actions\PromouvoirLeconEnChapitre;
 use App\Domains\ModulesFormateur\Actions\ReordonnerChapitres;
 use App\Domains\ModulesFormateur\Actions\ReordonnerLecons;
+use App\Domains\ModulesFormateur\Actions\TeleverserAudioModule;
 use App\Domains\ModulesFormateur\Actions\TeleverserImageModule;
 use App\Domains\ModulesFormateur\Actions\TeleverserScormModule;
 use App\Domains\ModulesFormateur\Actions\TeleverserVideoModule;
@@ -49,6 +50,7 @@ class ModuleBuilderController extends Controller
         private readonly DeplacerLecon $deplacerLecon,
         private readonly PromouvoirLeconEnChapitre $promouvoirLeconEnChapitre,
         private readonly TeleverserImageModule $televerserImageModule,
+        private readonly TeleverserAudioModule $televerserAudioModule,
         private readonly TeleverserVideoModule $televerserVideoModule,
         private readonly TeleverserScormModule $televerserScormModule,
         private readonly AssignerGroupesModule $assignerGroupesModule,
@@ -413,21 +415,11 @@ class ModuleBuilderController extends Controller
 
         $lecture->load('section');
 
-        $leconsOrdonnees = $lecture->module->sections
-            ->flatMap(fn (ModuleSection $section) => $section->lectures)
-            ->values();
-
-        $indexActuel = $leconsOrdonnees->search(
-            fn (ModuleLecture $candidate) => (int) $candidate->id === (int) $lecture->id
-        );
-
         return view('formateur.modules-builder.lecture-edit', [
             'module' => $lecture->module,
             'section' => $lecture->section,
             'lecture' => $lecture,
             'initialBlocks' => $this->payloads->resolvedContentBlocks($lecture),
-            'leconPrecedente' => $indexActuel !== false ? $leconsOrdonnees->get($indexActuel - 1) : null,
-            'leconSuivante' => $indexActuel !== false ? $leconsOrdonnees->get($indexActuel + 1) : null,
         ]);
     }
 
@@ -436,12 +428,15 @@ class ModuleBuilderController extends Controller
         $this->access->assertOwner($lecture->module);
 
         try {
-            $this->genererAudioLecon->execute($lecture, (int) auth()->id());
+            $media = $this->genererAudioLecon->execute($lecture, (int) auth()->id());
         } catch (\RuntimeException $e) {
-            return back()->with('error', $e->getMessage());
+            return response()->json(['message' => $e->getMessage()], 422);
         }
 
-        return back()->with('success', "Audio généré. Vous pouvez l'écouter ci-dessous.");
+        return response()->json([
+            'media_id' => $media->id,
+            'url' => $media->getUrl(),
+        ]);
     }
 
     public function moveLecture(Request $request, ModuleLecture $lecture)
@@ -510,6 +505,22 @@ class ModuleBuilderController extends Controller
         $media = $this->televerserVideoModule->execute($module, $request->file('video'));
 
         return response()->json([
+            'url' => $media->getUrl(),
+        ]);
+    }
+
+    public function uploadAudio(Request $request, Module $module)
+    {
+        $this->access->assertOwner($module);
+
+        $request->validate([
+            'audio' => 'required|mimes:mp3,wav,ogg,m4a|max:20480',
+        ]);
+
+        $media = $this->televerserAudioModule->execute($module, $request->file('audio'));
+
+        return response()->json([
+            'media_id' => $media->id,
             'url' => $media->getUrl(),
         ]);
     }

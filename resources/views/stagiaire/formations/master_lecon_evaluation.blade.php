@@ -7,9 +7,7 @@
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
-    {{-- AlpineJS + collapse --}}
-    <script src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.13.5/dist/cdn.min.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.5/dist/cdn.min.js" defer></script>
+    {{-- AlpineJS + collapse are already bundled and started via resources/js/app.js; loading the CDN copies too double-initializes Alpine and causes every @click/@x-data handler on this page to fire twice. --}}
     <style>
     [x-cloak] {
       display: none !important;
@@ -82,7 +80,7 @@
                         ])
                     </aside>
                 @endif
-                <main id="lesson-shell-main" class="min-w-0">
+                <main id="lesson-shell-main" class="min-w-0 oneduc-page-transition">
                     <div class="px-0 lg:px-0 py-0">
                         @yield('content')
                     </div>

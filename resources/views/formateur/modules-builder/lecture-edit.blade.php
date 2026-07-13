@@ -4,44 +4,24 @@
 @section('formateur')
 <div class="w-full px-6 lg:px-8">
 
-  <header class="bg-white rounded-[20px] shadow-md px-8 pt-5 pb-6 my-6">
-    <nav class="text-sm font-varela text-gray-500 mb-2">
-      <ol class="inline-flex items-center flex-wrap gap-1">
-        <li>
-          <a href="{{ route('formateur.modules.builder.index') }}" class="text-orangeone hover:underline">Mes créations</a>
-        </li>
-        <li><span class="mx-1 text-gray-400">/</span></li>
-        <li>
-          <a href="{{ route('formateur.modules.builder.edit', $module) }}" class="text-orangeone hover:underline">{{ $module->module_title }}</a>
-        </li>
-        <li><span class="mx-1 text-gray-400">/</span></li>
-        <li class="text-gray-400">{{ $section->section_title }}</li>
-        <li><span class="mx-1 text-gray-400">/</span></li>
-        <li class="text-gray-400">{{ $lecture->lecture_title }}</li>
-      </ol>
+  <div class="flex items-center gap-4 border-b border-gray-200 py-3">
+    <nav aria-label="Fil d'ariane" class="min-w-0 flex-1 truncate text-sm font-varela text-gray-500">
+      <a href="{{ route('formateur.modules.builder.index') }}" class="text-orangeone hover:underline">Mes créations</a>
+      <span class="mx-1 text-gray-400">/</span>
+      <a href="{{ route('formateur.modules.builder.edit', $module) }}" class="text-orangeone hover:underline">{{ $module->module_title }}</a>
+      <span class="mx-1 text-gray-400">/</span>
+      <span class="text-gray-400">{{ $section->section_title }}</span>
+      <span class="mx-1 text-gray-400">/</span>
+      <span class="font-semibold text-bleuone">{{ $lecture->lecture_title }}</span>
     </nav>
-    <div class="flex flex-wrap items-center justify-between gap-3">
+
+    <div class="flex shrink-0 items-center gap-3">
       <a href="{{ route('formateur.modules.builder.edit', $module) }}" class="text-sm font-semibold text-gray-500 hover:text-orangeone">← Retour au plan de la formation</a>
-
-      <div class="flex items-center gap-2">
-        @if($leconPrecedente ?? null)
-          <a href="{{ route('formateur.modules.builder.lectures.edit', $leconPrecedente) }}"
-             title="{{ $leconPrecedente->lecture_title }}"
-             class="inline-flex items-center gap-1 rounded-full border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:border-orangeone hover:text-orangeone">
-            ← Précédent
-          </a>
-        @endif
-
-        @if($leconSuivante ?? null)
-          <a href="{{ route('formateur.modules.builder.lectures.edit', $leconSuivante) }}"
-             title="{{ $leconSuivante->lecture_title }}"
-             class="inline-flex items-center gap-1 rounded-full border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:border-orangeone hover:text-orangeone">
-            Suivant →
-          </a>
-        @endif
-      </div>
+      <a href="{{ route('formateur.formations.lecture', ['module' => $module->id, 'section' => $section->id, 'lecture' => $lecture->id]) }}"
+         target="_blank" rel="noopener"
+         class="btn-oneduc-outline !px-4 !py-1.5 !text-xs">Aperçu</a>
     </div>
-  </header>
+  </div>
 
   @if(session('success'))
     <div class="mb-6 rounded-[10px] bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-700">
@@ -52,26 +32,6 @@
   @if(session('error'))
     <div class="mb-6 rounded-[10px] bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
       {{ session('error') }}
-    </div>
-  @endif
-
-  @if(!in_array($lecture->content_type, ['scorm', 'slides'], true))
-    <div class="bg-white rounded-[20px] shadow-md px-10 py-6 mb-6">
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <p class="font-varela text-sm font-bold text-bleuone">Audio de la leçon</p>
-          <p class="text-xs text-gray-400">Génère une lecture audio du texte de la leçon (voix française).</p>
-        </div>
-        <form method="POST" action="{{ route('formateur.modules.builder.lectures.generate-audio', $lecture) }}">
-          @csrf
-          <button type="submit" class="btn-oneduc-outline !px-4 !py-2 !text-xs">
-            {{ $lecture->getFirstMedia('lesson-audio') ? "Régénérer l'audio" : "Générer l'audio" }}
-          </button>
-        </form>
-      </div>
-      @if($audio = $lecture->getFirstMedia('lesson-audio'))
-        <audio controls class="mt-4 w-full" src="{{ $audio->getUrl() }}"></audio>
-      @endif
     </div>
   @endif
 
@@ -94,6 +54,8 @@
            data-update-url="{{ route('formateur.modules.builder.lectures.update', $lecture) }}"
            data-upload-url="{{ route('formateur.modules.builder.images.store', $module) }}"
            data-video-upload-url="{{ route('formateur.modules.builder.videos.store', $module) }}"
+           data-audio-upload-url="{{ route('formateur.modules.builder.audios.store', $module) }}"
+           data-audio-generate-url="{{ route('formateur.modules.builder.lectures.generate-audio', $lecture) }}"
            data-scorm-upload-url="{{ route('formateur.modules.builder.scorm.store', $module) }}"
            data-initial-title="{{ $lecture->lecture_title }}"
            data-initial-blocks="{{ json_encode($initialBlocks ?? []) }}"></div>

@@ -59,7 +59,7 @@
         @endif
 
         {{-- CONTENU --}}
-        <main class="min-w-0">
+        <main class="min-w-0 oneduc-page-transition">
           <div class="px-0 lg:px-0 py-0">
             @yield('content')
           </div>

@@ -269,6 +269,7 @@ Route::middleware(['auth', 'role:formateur', 'association.member'])
             Route::post('/depuis-catalogue/{catalogModule}', [ModuleBuilderController::class, 'duplicate'])->name('duplicate');
             Route::post('/{module}/images', [ModuleBuilderController::class, 'uploadImage'])->name('images.store');
             Route::post('/{module}/videos', [ModuleBuilderController::class, 'uploadVideo'])->name('videos.store');
+            Route::post('/{module}/audios', [ModuleBuilderController::class, 'uploadAudio'])->name('audios.store');
             Route::post('/{module}/scorm', [ModuleBuilderController::class, 'uploadScorm'])->name('scorm.store');
             Route::get('/{module}/edition', [ModuleBuilderController::class, 'edit'])->name('edit');
             Route::put('/{module}', [ModuleBuilderController::class, 'update'])->name('update');

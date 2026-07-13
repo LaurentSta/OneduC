@@ -8,6 +8,27 @@ window.Alpine = Alpine;
 Alpine.plugin(collapse);
 Alpine.start();
 
+// Native `scrollBy({behavior:'smooth'})` duration/easing isn't controllable and
+// reads as an abrupt snap on most browsers. This gives lesson-content reveals a
+// slow, clearly-perceptible glide instead.
+function oneducSmoothScrollBy(el, amount, duration = 900) {
+  if (!el) return;
+  const start = el.scrollTop;
+  const startTime = performance.now();
+  const easeInOutCubic = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+
+  function step(now) {
+    const progress = Math.min((now - startTime) / duration, 1);
+    el.scrollTop = start + amount * easeInOutCubic(progress);
+    if (progress < 1) {
+      requestAnimationFrame(step);
+    }
+  }
+
+  requestAnimationFrame(step);
+}
+window.oneducSmoothScrollBy = oneducSmoothScrollBy;
+
 function loadGroupModuleFlowWhenNeeded() {
   if (!document.querySelector('[data-group-module-flow]')) return;
   import('./formateur-group-module-flow.jsx');

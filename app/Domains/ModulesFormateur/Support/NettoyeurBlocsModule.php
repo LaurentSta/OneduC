@@ -28,6 +28,13 @@ class NettoyeurBlocsModule
             ->pluck('id')
             ->flip();
 
+        $validAudioIds = Media::query()
+            ->where('model_type', Module::class)
+            ->where('model_id', $moduleId)
+            ->where('collection_name', 'lesson-audios')
+            ->pluck('id')
+            ->flip();
+
         $sanitized = [];
 
         foreach (array_slice($decoded, 0, 100) as $block) {
@@ -79,8 +86,24 @@ class NettoyeurBlocsModule
                     ];
                     break;
 
+                case 'audio':
+                    $mediaId = (int) ($block['media_id'] ?? 0);
+                    if ($mediaId <= 0 || ! isset($validAudioIds[$mediaId])) {
+                        break;
+                    }
+                    $sanitized[] = [
+                        'type' => 'audio',
+                        'media_id' => $mediaId,
+                        'caption' => Str::limit(strip_tags((string) ($block['caption'] ?? '')), 255, ''),
+                    ];
+                    break;
+
                 case 'divider':
-                    $sanitized[] = ['type' => 'divider'];
+                    $mode = (string) ($block['mode'] ?? 'simple');
+                    if (! in_array($mode, ['simple', 'reveal'], true)) {
+                        $mode = 'simple';
+                    }
+                    $sanitized[] = ['type' => 'divider', 'mode' => $mode];
                     break;
 
                 case 'scorm':

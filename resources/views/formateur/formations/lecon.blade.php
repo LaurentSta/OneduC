@@ -89,7 +89,6 @@
     };
 
     $moduleResources = collect($moduleResources ?? $lessonResources ?? []);
-    $lectureObjectives = collect($lecture?->objectives ?? []);
     $toolGroups = collect($toolGroups ?? []);
     $whiteboardGroups = collect($whiteboardGroups ?? []);
     $currentWhiteboardGroup = $currentWhiteboardGroup ?? null;
@@ -129,7 +128,7 @@
 <div x-data="{
     formateurBarOpen: true,
     inspectorOpen: false,
-    activeTab: 'objectifs',
+    activeTab: 'quiz',
     fullscreenSupported: false,
     fullscreenActive: false,
     selectedTool: 'live_quiz',
@@ -219,7 +218,7 @@
     },
     init() {
         const savedTab = window.localStorage.getItem(this.tabStorageKey);
-        if (savedTab === 'objectifs' || savedTab === 'quiz' || savedTab === 'ressources' || savedTab === 'outils' || savedTab === 'infos') {
+        if (savedTab === 'quiz' || savedTab === 'ressources' || savedTab === 'outils' || savedTab === 'infos') {
             this.activeTab = savedTab === 'infos' ? 'ressources' : savedTab;
         }
 
@@ -261,25 +260,18 @@
                   @endif
 
                   <button type="button"
-                          @click="inspectorOpen = true"
-                          class="inline-flex items-center justify-center rounded-full border border-white/25 px-4 py-2 text-xs font-bold uppercase tracking-wide transition"
+                          @click="inspectorOpen = !inspectorOpen"
+                          title="Outils &amp; ressources"
+                          aria-label="Outils et ressources"
+                          class="relative inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/25 transition"
                           :class="inspectorOpen ? 'bg-white text-bleuone' : 'bg-white/10 text-white hover:bg-white hover:text-bleuone'">
-                      Reperes &amp; outils
-                  </button>
-
-                  @if($quizStartUrl)
-                      <a href="{{ $quizStartUrl }}"
-                         class="inline-flex items-center justify-center rounded-full border border-orangeone bg-orangeone px-4 py-2 text-xs font-bold uppercase tracking-wide text-white transition hover:bg-orangeone-hover">
-                          Tester le quiz
-                      </a>
-                  @endif
-
-                  <button type="button"
-                          @click="openPanel('ressources')"
-                          class="inline-flex items-center justify-center gap-2 rounded-full border border-white/25 px-4 py-2 text-xs font-bold uppercase tracking-wide transition"
-                          :class="inspectorOpen && activeTab === 'ressources' ? 'bg-white text-bleuone' : 'bg-white/10 text-white hover:bg-white hover:text-bleuone'">
-                      Ressources
-                      <span class="rounded-full bg-white/20 px-2 py-0.5 text-[10px]">{{ $moduleResources->count() }}</span>
+                      <svg class="h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                          <rect x="3" y="4" width="14" height="12" rx="2"/>
+                          <path d="M12.5 4v12"/>
+                      </svg>
+                      @if($moduleResources->count() > 0)
+                          <span class="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-bleuone bg-orangeone"></span>
+                      @endif
                   </button>
               </div>
           </div>
@@ -330,8 +322,7 @@
   <div class="flex flex-1 overflow-hidden relative">
       
       {{-- ZONE CONTENU (SCORM / SLIDES) --}}
-      <main class="relative bg-gray-100 transition-all duration-300 ease-in-out flex flex-col min-w-0"
-            :class="inspectorOpen ? 'w-full lg:w-2/3 lg:border-r lg:border-gray-200' : 'w-full'">
+      <main class="relative bg-gray-100 transition-all duration-300 ease-in-out flex flex-col min-w-0 w-full">
           <div x-ref="contentViewport" class="relative flex-1 min-h-0 overflow-hidden bg-gray-100">
               <div class="pointer-events-none absolute left-4 top-4 z-20 flex flex-wrap items-center gap-2">
                   <button type="button"
@@ -439,9 +430,17 @@
                       </div>
                   </div>
               @elseif ($lecture && $isBlocksSelected)
-                  <div class="h-full overflow-y-auto bg-white">
-                      <div class="max-w-3xl mx-auto px-6 py-10">
-                          @include('shared.lecture_blocks', ['blocks' => $lecture->content_blocks ?? [], 'lecture' => $lecture])
+                  <div class="h-full flex flex-col bg-white">
+                      <div class="flex-1 overflow-y-auto py-10">
+                          @include('shared.lecture_blocks', ['blocks' => $lecture->content_blocks ?? [], 'lecture' => $lecture, 'interactif' => true])
+                      </div>
+                      <div class="border-t border-gray-200 bg-white px-4 py-3 flex items-center justify-end gap-3"
+                           x-data="{}" x-show="!$store.lectureProgress || $store.lectureProgress.isComplete" x-cloak>
+                          <a href="{{ $nextUrl !== '#' ? $nextUrl : $finalUrl }}"
+                             class="inline-flex items-center gap-2 px-4 py-2 bg-orangeone text-white rounded-full text-xs font-bold uppercase hover:bg-orangeone-hover transition">
+                              Lecon suivante
+                              <i class="ti ti-arrow-right"></i>
+                          </a>
                       </div>
                   </div>
               @elseif ($lecture && $isScormSelected && $scormUrl)
@@ -476,12 +475,25 @@
 
       {{-- ZONE INSPECTEUR (Visible seulement en mode formateur) --}}
       <aside x-show="inspectorOpen"
-             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter="transition-transform ease-in-out duration-1000"
              x-transition:enter-start="translate-x-full"
              x-transition:enter-end="translate-x-0"
+             x-transition:leave="transition-transform ease-in-out duration-1000"
+             x-transition:leave-start="translate-x-0"
+             x-transition:leave-end="translate-x-full"
              x-cloak
-             class="w-full max-w-xl bg-slate-50 border-l border-gray-200 flex flex-col shadow-xl z-20 absolute right-0 top-0 bottom-0 lg:relative lg:w-1/3 lg:max-w-none lg:translate-x-0">
-          
+             class="w-full transform-gpu bg-slate-50 border-l border-gray-200 flex flex-col shadow-2xl z-20 absolute right-0 top-0 bottom-0 will-change-transform"
+             :class="activeTab === 'outils' ? 'max-w-3xl' : 'max-w-xl'">
+
+          <button type="button"
+                  @click="inspectorOpen = false"
+                  class="absolute -left-4 top-24 inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-md transition hover:border-bleuone hover:text-bleuone z-10"
+                  aria-label="Fermer le panneau">
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M9 6l6 6-6 6"></path>
+              </svg>
+          </button>
+
           <div class="flex-1 overflow-y-auto custom-scrollbar p-6">
               @php
                   $totalInBank = isset($quizData) ? $quizData->count() : 0;
@@ -489,52 +501,7 @@
                   $percent = $totalInBank > 0 ? ($currentCount / $totalInBank) * 100 : 0;
               @endphp
 
-              <div class="mb-5 rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm">
-                  <div class="flex items-start justify-between gap-3">
-                      <div class="min-w-0">
-                          <nav class="flex flex-wrap items-center gap-2 text-sm font-semibold text-slate-500" aria-label="Fil d'ariane de la lecon">
-                              <a href="{{ $moduleDetailUrl }}"
-                                 class="truncate max-w-[10rem] transition hover:text-bleuone"
-                                 title="{{ $moduleLabel }}">
-                                  {{ $moduleLabel }}
-                              </a>
-                              <span class="text-slate-300">></span>
-                              <a href="{{ $chapterDetailUrl }}"
-                                 class="transition hover:text-bleuone"
-                                 title="{{ $section->section_title ?? 'Sans chapitre' }}">
-                                  {{ $chapterNo ? 'Ch. ' . $chapterNo : 'Chapitre' }}
-                              </a>
-                              <span class="text-slate-300">></span>
-                              <span title="{{ $lecture->lecture_title }}" class="text-bleuone">{{ $lessonNo ? 'Leç. ' . $lessonNo : 'Leçon' }}</span>
-                          </nav>
-                      </div>
-                      <div class="shrink-0 flex items-center gap-2">
-                          <span class="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-bleuone">
-                              {{ $isSlidesSelected ? 'Slides' : ($isBlocksSelected ? 'Texte' : 'SCORM') }}
-                          </span>
-                          <button type="button"
-                                  @click="inspectorOpen = false"
-                                  class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition hover:border-bleuone hover:text-bleuone"
-                                  aria-label="Fermer le panneau">
-                              <span aria-hidden="true">&times;</span>
-                          </button>
-                      </div>
-                  </div>
-
-                  <div class="mt-4 flex flex-wrap gap-2">
-                      <span class="inline-flex items-center rounded-full bg-orange-50 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-orangeone">
-                          {{ $lectureObjectives->count() }} objectif{{ $lectureObjectives->count() > 1 ? 's' : '' }}
-                      </span>
-                  </div>
-              </div>
-
-              <div class="mb-5 grid grid-cols-2 gap-2 rounded-[20px] border border-slate-200 bg-white p-2 shadow-sm">
-                  <button type="button"
-                          @click="activeTab = 'objectifs'"
-                          :class="activeTab === 'objectifs' ? 'bg-bleuone text-white' : 'text-slate-600 hover:bg-slate-50'"
-                          class="rounded-2xl px-3 py-2 text-xs font-bold uppercase tracking-wide transition">
-                      Objectifs
-                  </button>
+              <div class="mb-5 grid grid-cols-3 gap-2 rounded-[20px] border border-slate-200 bg-white p-2 shadow-sm">
                   <button type="button"
                           @click="activeTab = 'quiz'"
                           :class="activeTab === 'quiz' ? 'bg-bleuone text-white' : 'text-slate-600 hover:bg-slate-50'"
@@ -553,41 +520,6 @@
                           class="rounded-2xl px-3 py-2 text-xs font-bold uppercase tracking-wide transition">
                       Outils
                   </button>
-              </div>
-
-              <div x-show="activeTab === 'objectifs'"
-                   x-transition:enter="transition ease-out duration-200"
-                   x-transition:enter-start="opacity-0 scale-95"
-                   x-transition:enter-end="opacity-100 scale-100"
-                   x-transition:leave="transition ease-in duration-150"
-                   x-transition:leave-start="opacity-100 scale-100"
-                   x-transition:leave-end="opacity-0 scale-95"
-                   style="display: none;">
-                  <div class="mb-4">
-                      <h3 class="font-raleway text-lg font-bold text-orangeone">Objectifs</h3>
-                  </div>
-
-                  @if($lectureObjectives->isNotEmpty())
-                      <div class="space-y-4">
-                          @foreach($lectureObjectives as $objective)
-                              <div class="rounded-[22px] border border-slate-200 bg-white p-5 shadow-sm">
-                                  <div class="flex items-start gap-3">
-                                      <span class="mt-1 inline-flex h-2.5 w-2.5 shrink-0 rounded-full bg-orangeone"></span>
-                                      <div>
-                                          <h4 class="text-base font-bold text-bleuone">{{ $objective->title }}</h4>
-                                          @if(!empty($objective->description))
-                                              <p class="mt-2 text-sm leading-relaxed text-slate-600">{{ $objective->description }}</p>
-                                          @endif
-                                      </div>
-                                  </div>
-                              </div>
-                          @endforeach
-                      </div>
-                  @else
-                      <div class="rounded-[22px] border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-center">
-                          <p class="text-sm font-medium text-slate-500">Aucun objectif n'est renseigne pour cette lecon.</p>
-                      </div>
-                  @endif
               </div>
 
               <div x-show="activeTab === 'quiz'" x-data="{ helpPanel: null, settingsOpen: false, correctionHelpOpen: false }"

@@ -30,9 +30,9 @@ class GenererAudioLecon
 
         $audio = $this->piper->synthesize($texte);
 
-        return $lecture->addMediaFromString($audio)
-            ->usingFileName('lecon-'.$lecture->id.'.wav')
-            ->toMediaCollection('lesson-audio');
+        return $lecture->module->addMediaFromString($audio)
+            ->usingFileName('lecon-'.$lecture->id.'-'.now()->timestamp.'.wav')
+            ->toMediaCollection('lesson-audios');
     }
 
     private function extraireTexteLisible(ModuleLecture $lecture): string

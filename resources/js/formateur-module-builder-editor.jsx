@@ -9,6 +9,7 @@ const BLOCK_LABELS = {
   text: 'Texte',
   image: 'Image',
   video: 'Vidéo',
+  audio: 'Audio',
   quote: 'Citation',
   divider: 'Separateur',
   scorm: 'SCORM',
@@ -52,6 +53,16 @@ function QuoteBlockGlyph() {
   );
 }
 
+function AudioBlockGlyph() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+      <path d="M4 12V8a1 1 0 011-1h2l4-3v12l-4-3H5a1 1 0 01-1-1z" />
+      <path d="M14 7.5c.9.9.9 4.1 0 5" />
+      <path d="M16.2 5.5c1.8 1.8 1.8 7.2 0 9" />
+    </svg>
+  );
+}
+
 function DividerBlockGlyph() {
   return (
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" className="h-5 w-5">
@@ -76,6 +87,7 @@ const BLOCK_GLYPHS = {
   text: TextBlockGlyph,
   image: ImageBlockGlyph,
   video: VideoBlockGlyph,
+  audio: AudioBlockGlyph,
   quote: QuoteBlockGlyph,
   divider: DividerBlockGlyph,
   scorm: ScormBlockGlyph,
@@ -108,13 +120,15 @@ function createBlock(type) {
       return { clientId: nextClientId(), type, media_id: null, url: '', caption: '' };
     case 'video':
       return { clientId: nextClientId(), type, url: '', caption: '' };
+    case 'audio':
+      return { clientId: nextClientId(), type, media_id: null, url: '', caption: '' };
     case 'quote':
       return { clientId: nextClientId(), type, text: '', source: '' };
     case 'scorm':
       return { clientId: nextClientId(), type, content_block_key: generateContentBlockKey(), scorm_package_version_id: null, preview_url: '' };
     case 'divider':
     default:
-      return { clientId: nextClientId(), type: 'divider' };
+      return { clientId: nextClientId(), type: 'divider', mode: 'simple' };
   }
 }
 
@@ -496,6 +510,114 @@ function VideoBlockEditor({ block, onChange, uploadUrl }) {
   );
 }
 
+function AudioBlockEditor({ block, onChange, uploadUrl, generateUrl }) {
+  const [uploading, setUploading] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [error, setError] = useState('');
+  const fileInputRef = useRef(null);
+
+  const handleFile = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    setError('');
+
+    const formData = new FormData();
+    formData.append('audio', file);
+
+    try {
+      const response = await fetch(uploadUrl, {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': csrfToken(), Accept: 'application/json' },
+        body: formData,
+      });
+
+      if (!response.ok) throw new Error('upload failed');
+
+      const data = await response.json();
+      onChange({ ...block, media_id: data.media_id, url: data.url });
+    } catch (e) {
+      setError("Echec de l'envoi du fichier audio.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleGenerate = async () => {
+    setGenerating(true);
+    setError('');
+
+    try {
+      const response = await fetch(generateUrl, {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': csrfToken(), Accept: 'application/json' },
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'generation failed');
+
+      onChange({ ...block, media_id: data.media_id, url: data.url });
+    } catch (e) {
+      setError(e.message && e.message !== 'generation failed' ? e.message : "Echec de la generation audio.");
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const busy = uploading || generating;
+
+  return (
+    <div className="space-y-2">
+      {block.url ? (
+        <audio controls className="w-full" src={block.url} />
+      ) : (
+        <div className="flex h-16 items-center justify-center rounded-lg border border-dashed border-gray-300 text-xs text-gray-400">
+          Aucun audio
+        </div>
+      )}
+
+      <div className="flex flex-wrap items-center gap-3">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="audio/mpeg,audio/wav,audio/ogg,audio/mp4,audio/x-m4a"
+          onChange={handleFile}
+          disabled={busy}
+          className="hidden"
+        />
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={busy}
+          className="btn-oneduc disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {uploading ? 'Envoi en cours…' : block.url ? 'Changer le fichier' : 'Choisir un fichier audio'}
+        </button>
+        <span className="text-xs text-gray-400">ou</span>
+        <button
+          type="button"
+          onClick={handleGenerate}
+          disabled={busy}
+          className="btn-oneduc-outline disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {generating ? 'Generation en cours…' : 'Generer via IA'}
+        </button>
+      </div>
+      <p className="text-xs text-gray-400">La generation IA lit le texte de toute la lecon (blocs Texte et Citation).</p>
+      {error && <p className="text-xs text-red-500">{error}</p>}
+
+      <input
+        type="text"
+        placeholder="Legende (optionnel)"
+        value={block.caption || ''}
+        onChange={(e) => onChange({ ...block, caption: e.target.value })}
+        className="w-full rounded-[10px] border border-gray-300 px-3 py-2 text-sm focus:border-orangeone focus:outline-none"
+      />
+    </div>
+  );
+}
+
 function ScormBlockEditor({ block, onChange, uploadUrl }) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
@@ -582,7 +704,30 @@ function QuoteBlockEditor({ block, onChange }) {
   );
 }
 
-function BlockRow({ block, index, onChange, onRemove, onDragStart, onDragOver, onDrop, uploadUrl, videoUploadUrl, scormUploadUrl }) {
+const DIVIDER_MODES = [
+  { value: 'simple', label: 'Simple (ligne)' },
+  { value: 'reveal', label: 'Voir la suite (révélation progressive)' },
+];
+
+function DividerBlockEditor({ block, onChange }) {
+  const mode = block.mode || 'simple';
+  return (
+    <div className="space-y-2">
+      <select
+        value={mode}
+        onChange={(e) => onChange({ ...block, mode: e.target.value })}
+        className="w-full rounded-[10px] border border-gray-300 px-3 py-2 text-sm focus:border-orangeone focus:outline-none"
+      >
+        {DIVIDER_MODES.map((m) => (
+          <option key={m.value} value={m.value}>{m.label}</option>
+        ))}
+      </select>
+      <hr className="border-gray-300" />
+    </div>
+  );
+}
+
+function BlockRow({ block, index, onChange, onRemove, onDragStart, onDragOver, onDrop, uploadUrl, videoUploadUrl, audioUploadUrl, audioGenerateUrl, scormUploadUrl }) {
   return (
     <div
       draggable
@@ -603,9 +748,10 @@ function BlockRow({ block, index, onChange, onRemove, onDragStart, onDragOver, o
       {block.type === 'text' && <TextBlockEditor block={block} onChange={onChange} />}
       {block.type === 'image' && <ImageBlockEditor block={block} onChange={onChange} uploadUrl={uploadUrl} />}
       {block.type === 'video' && <VideoBlockEditor block={block} onChange={onChange} uploadUrl={videoUploadUrl} />}
+      {block.type === 'audio' && <AudioBlockEditor block={block} onChange={onChange} uploadUrl={audioUploadUrl} generateUrl={audioGenerateUrl} />}
       {block.type === 'quote' && <QuoteBlockEditor block={block} onChange={onChange} />}
       {block.type === 'scorm' && <ScormBlockEditor block={block} onChange={onChange} uploadUrl={scormUploadUrl} />}
-      {block.type === 'divider' && <hr className="border-gray-300" />}
+      {block.type === 'divider' && <DividerBlockEditor block={block} onChange={onChange} />}
     </div>
   );
 }
@@ -626,7 +772,7 @@ function SaveStatus({ status, savedAt }) {
   return null;
 }
 
-function LectureEditor({ lectureId, initialTitle, initialBlocks, updateUrl, uploadUrl, videoUploadUrl, scormUploadUrl }) {
+function LectureEditor({ lectureId, initialTitle, initialBlocks, updateUrl, uploadUrl, videoUploadUrl, audioUploadUrl, audioGenerateUrl, scormUploadUrl }) {
   const [title, setTitle] = useState(initialTitle || '');
   const [blocks, setBlocks] = useState(() =>
     (initialBlocks || []).map((block) => ({ ...block, clientId: nextClientId() }))
@@ -724,6 +870,8 @@ function LectureEditor({ lectureId, initialTitle, initialBlocks, updateUrl, uplo
             onDrop={handleDrop}
             uploadUrl={uploadUrl}
             videoUploadUrl={videoUploadUrl}
+            audioUploadUrl={audioUploadUrl}
+            audioGenerateUrl={audioGenerateUrl}
             scormUploadUrl={scormUploadUrl}
           />
         ))}
@@ -762,6 +910,8 @@ export function mountModuleBuilderEditors() {
     const updateUrl = container.dataset.updateUrl || '';
     const uploadUrl = container.dataset.uploadUrl || '';
     const videoUploadUrl = container.dataset.videoUploadUrl || '';
+    const audioUploadUrl = container.dataset.audioUploadUrl || '';
+    const audioGenerateUrl = container.dataset.audioGenerateUrl || '';
     const scormUploadUrl = container.dataset.scormUploadUrl || '';
     const initialTitle = container.dataset.initialTitle || '';
 
@@ -781,6 +931,8 @@ export function mountModuleBuilderEditors() {
         updateUrl={updateUrl}
         uploadUrl={uploadUrl}
         videoUploadUrl={videoUploadUrl}
+        audioUploadUrl={audioUploadUrl}
+        audioGenerateUrl={audioGenerateUrl}
         scormUploadUrl={scormUploadUrl}
       />
     );
