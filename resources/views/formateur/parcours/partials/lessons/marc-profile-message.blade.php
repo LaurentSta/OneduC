@@ -222,20 +222,24 @@
         </section>
     </div>
 
-    <div x-show="drawerOpen" x-cloak
-         x-transition:enter="transition ease-out duration-200"
-         x-transition:enter-start="opacity-0"
-         x-transition:enter-end="opacity-100"
-         x-transition:leave="transition ease-in duration-150"
-         x-transition:leave-start="opacity-100"
-         x-transition:leave-end="opacity-0"
-         class="fixed inset-0 z-50">
-        <div class="absolute inset-0 bg-black/30" @click="drawerOpen = false"></div>
+    <div x-cloak
+         class="pointer-events-none fixed inset-0 z-50"
+         :class="{ 'pointer-events-auto': drawerOpen }">
+        <div x-show="drawerOpen"
+             x-transition:enter="transition-opacity ease-in-out duration-1000"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition-opacity ease-in-out duration-1000"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="absolute inset-0 bg-black/30"
+             @click="drawerOpen = false"></div>
         <section
-            x-transition:enter="transition-transform duration-300 ease-out"
+            x-show="drawerOpen"
+            x-transition:enter="transition-transform duration-1000 ease-in-out"
             x-transition:enter-start="translate-x-full"
             x-transition:enter-end="translate-x-0"
-            x-transition:leave="transition-transform duration-200 ease-in"
+            x-transition:leave="transition-transform duration-1000 ease-in-out"
             x-transition:leave-start="translate-x-0"
             x-transition:leave-end="translate-x-full"
             class="absolute right-0 top-0 flex h-full w-full max-w-md flex-col bg-white shadow-xl"

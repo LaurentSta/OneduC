@@ -21,6 +21,9 @@ class Module extends Model implements HasMedia
 
         $this->addMediaCollection('lesson-videos')
             ->acceptsMimeTypes(['video/mp4', 'video/webm', 'video/ogg']);
+
+        $this->addMediaCollection('lesson-audios')
+            ->acceptsMimeTypes(['audio/mpeg', 'audio/wav', 'audio/x-wav', 'audio/ogg', 'audio/mp4', 'audio/x-m4a']);
     }
 
     public function registerMediaConversions(?Media $media = null): void

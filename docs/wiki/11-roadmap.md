@@ -105,6 +105,7 @@ Une comparaison du code sur `main` (85 contrôleurs, 61 modèles, 411 routes) av
 - [ ] Valider l'unicité de l'email dans `AdminController::AdminProfilStore()`
 - [x] Ajouter la vérification d'appartenance à la leçon dans `POST /scorm/save-progress` (et `save-block-progress`, `evaluation-progress`)
 - [ ] Découper `StagiaireController` : dashboard, modules, résultats, outils
+- [ ] Mettre en place une arborescence d'objectifs (objectif pédagogique général au niveau de la formation → objectifs opérationnels au niveau de chaque leçon, `LectureObjective`), construite soit au moment de la génération par IA, soit au moment de la création manuelle par le formateur
 
 ---
 

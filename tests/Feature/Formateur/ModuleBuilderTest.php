@@ -65,6 +65,8 @@ it('lets a trainer create, edit and assign a self-authored module, and renders i
         ['type' => 'image', 'media_id' => $mediaId, 'caption' => '<b>Legende</b>'],
         ['type' => 'quote', 'text' => '<script>alert(2)</script>Citation test', 'source' => 'Auteur'],
         ['type' => 'divider'],
+        ['type' => 'divider', 'mode' => 'reveal', 'label' => '<script>alert(3)</script>Voir la correction'],
+        ['type' => 'divider', 'mode' => 'not-a-real-mode'],
         // A media_id that does not belong to this module's media library entries must be rejected.
         ['type' => 'image', 'media_id' => 999999, 'caption' => ''],
     ];
@@ -79,7 +81,7 @@ it('lets a trainer create, edit and assign a self-authored module, and renders i
     expect($lecture->content_type)->toBe('blocks');
 
     $saved = collect($lecture->content_blocks);
-    expect($saved)->toHaveCount(4); // the out-of-scope image block must have been dropped
+    expect($saved)->toHaveCount(6); // the out-of-scope image block must have been dropped
 
     $textBlock = $saved->firstWhere('type', 'text');
     expect($textBlock['html'])->toContain('<strong>monde</strong>');
@@ -92,6 +94,12 @@ it('lets a trainer create, edit and assign a self-authored module, and renders i
     $quoteBlock = $saved->firstWhere('type', 'quote');
     expect($quoteBlock['text'])->not->toContain('<script>');
     expect($quoteBlock['text'])->toContain('Citation test');
+
+    $dividers = $saved->where('type', 'divider')->values();
+    expect($dividers)->toHaveCount(3);
+    expect($dividers[0])->toBe(['type' => 'divider', 'mode' => 'simple']); // legacy divider with no mode key at all
+    expect($dividers[1])->toBe(['type' => 'divider', 'mode' => 'reveal']); // stray 'label' input must be dropped, not persisted
+    expect($dividers[2])->toBe(['type' => 'divider', 'mode' => 'simple']); // invalid mode must be coerced back to 'simple'
 
     // Autre formateur : pas d'accès
     $this->actingAs($other)->get(route('formateur.modules.builder.edit', $module))->assertForbidden();

@@ -7,20 +7,10 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
-use Spatie\MediaLibrary\HasMedia;
-use Spatie\MediaLibrary\InteractsWithMedia;
 
-class ModuleLecture extends Model implements HasMedia
+class ModuleLecture extends Model
 {
     use HasFactory;
-    use InteractsWithMedia;
-
-    public function registerMediaCollections(): void
-    {
-        $this->addMediaCollection('lesson-audio')
-            ->singleFile()
-            ->acceptsMimeTypes(['audio/wav', 'audio/x-wav']);
-    }
 
     protected $fillable = [
         'module_id',

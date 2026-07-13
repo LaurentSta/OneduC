@@ -162,6 +162,8 @@ Pour ajouter la transition à un nouveau layout : donner l'id `page-transition` 
 
 Note sidebar : dans les layouts formateur/stagiaire/observateur, la classe `transition-[margin-left] duration-300` sur le `<main>` n'est activée qu'après le premier tick Alpine (`sidebarTransitionsReady`), pour éviter un saut visuel au chargement le temps qu'Alpine restaure l'état replié/déplié depuis `localStorage`.
 
+Note panneaux latéraux droits : les inspecteurs et tiroirs de contexte formateur qui entrent depuis la droite utilisent une transition `transform` lente et symétrique à l'ouverture comme à la fermeture (`duration-1000`). Éviter de mélanger cette animation avec une transition permanente de largeur sur le même élément, sinon le déplacement peut devenir instantané.
+
 ---
 
 ## Interactivité Alpine.js

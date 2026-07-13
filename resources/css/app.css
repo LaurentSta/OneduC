@@ -141,7 +141,8 @@
     }
   }
 
-  #page-transition {
+  #page-transition,
+  .oneduc-page-transition {
     animation: oneduc-page-enter var(--page-enter-duration) var(--page-enter-ease) both;
   }
 
@@ -150,7 +151,8 @@
       scroll-behavior: auto;
     }
 
-    #page-transition {
+    #page-transition,
+    .oneduc-page-transition {
       animation: none;
       opacity: 1;
       transform: none;

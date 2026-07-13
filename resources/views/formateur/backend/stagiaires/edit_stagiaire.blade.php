@@ -185,10 +185,10 @@
 
   {{-- Panneau latéral --}}
   <div x-show="open"
-       x-transition:enter="transition-transform duration-300 ease-out"
+       x-transition:enter="transition-transform duration-1000 ease-in-out"
        x-transition:enter-start="translate-x-full"
        x-transition:enter-end="translate-x-0"
-       x-transition:leave="transition-transform duration-200 ease-in"
+       x-transition:leave="transition-transform duration-1000 ease-in-out"
        x-transition:leave-start="translate-x-0"
        x-transition:leave-end="translate-x-full"
        class="fixed top-0 right-0 h-full w-full max-w-md bg-white shadow-xl z-50 flex flex-col">
