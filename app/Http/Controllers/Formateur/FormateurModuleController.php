@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Formateur;
 
+use App\Domains\ModulesFormateur\Support\AccesModule;
 use App\Http\Controllers\Controller;
 use App\Models\FormateurParcours;
 use App\Models\Group;
@@ -13,6 +14,10 @@ use Illuminate\Support\Facades\DB;
 
 class FormateurModuleController extends Controller
 {
+    public function __construct(
+        private readonly AccesModule $access,
+    ) {}
+
     private function accessibleTrainerGroupIds(int $formateurId): Collection
     {
         return Group::query()
@@ -33,12 +38,12 @@ class FormateurModuleController extends Controller
                 $q->whereHas('groups', function ($g) use ($accessibleGroupIds) {
                     $g->whereIn('groups.id', $accessibleGroupIds->all());
                 })
-                ->orWhere('formateur_id', $formateurId);
+                    ->orWhere('formateur_id', $formateurId);
             })
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('module_title', 'like', "%{$search}%")
-                      ->orWhere('module_name', 'like', "%{$search}%");
+                        ->orWhere('module_name', 'like', "%{$search}%");
                 });
             })
             ->with([
@@ -101,7 +106,7 @@ class FormateurModuleController extends Controller
             },
         ]);
 
-        $mode    = (string) $request->query('mode', 'officiel');
+        $mode = (string) $request->query('mode', 'officiel');
         $groupId = $this->resolveTrainerModuleDetailGroupId($request, $module, $formateurId);
 
         if ($mode !== 'officiel') {
@@ -109,17 +114,17 @@ class FormateurModuleController extends Controller
         }
 
         $contextQuery = array_filter([
-            'mode'     => $mode !== 'officiel' ? $mode : null,
+            'mode' => $mode !== 'officiel' ? $mode : null,
             'group_id' => $mode !== 'officiel' ? ($groupId ?: null) : null,
         ]);
 
-        $totalSections  = $module->sections->count();
-        $totalLectures  = $module->sections->flatMap->lectures->count();
-        $totalSlides    = (int) $module->sections->flatMap->lectures->sum('slide_count');
+        $totalSections = $module->sections->count();
+        $totalLectures = $module->sections->flatMap->lectures->count();
+        $totalSlides = (int) $module->sections->flatMap->lectures->sum('slide_count');
         $totalQuestions = (int) $module->sections->flatMap->lectures->sum('quiz_questions_per_attempt');
 
-        $groupCount     = $module->groups->count();
-        $stagiaires     = $module->groups->flatMap(fn ($g) => $g->users)->unique('id')->values();
+        $groupCount = $module->groups->count();
+        $stagiaires = $module->groups->flatMap(fn ($g) => $g->users)->unique('id')->values();
         $stagiaireCount = $stagiaires->count();
 
         $lessonObjectives = $module->sections
@@ -149,14 +154,18 @@ class FormateurModuleController extends Controller
     public function updateQuizCount(Request $request, $lectureId)
     {
         $lecture = ModuleLecture::findOrFail($lectureId);
+        $this->access->assertOwner($lecture->module);
+
         $totalQuestionsInBank = $lecture->quizQuestions()->count();
 
         $validated = $request->validate([
-            'questions_count' => 'required|integer|min:1|max:' . ($totalQuestionsInBank > 0 ? $totalQuestionsInBank : 1),
+            'questions_count' => 'required|integer|min:1|max:'.($totalQuestionsInBank > 0 ? $totalQuestionsInBank : 1),
+            'quiz_enabled' => 'nullable|boolean',
         ]);
 
         $lecture->update([
             'quiz_questions_per_attempt' => $validated['questions_count'],
+            'quiz_enabled' => $request->boolean('quiz_enabled'),
         ]);
 
         return back()->with('success', 'Le nombre de questions a été mis à jour.');
@@ -177,12 +186,12 @@ class FormateurModuleController extends Controller
         $firstSection = $module->sections->first();
         $firstLecture = $firstSection?->lectures->first();
 
-        if (!$firstSection || !$firstLecture) {
+        if (! $firstSection || ! $firstLecture) {
             return back()->with('error', 'Ajoutez au moins un chapitre et une leçon avant de pouvoir accéder à l\'aperçu.');
         }
 
         return redirect()->route('formateur.formations.lecture', [
-            'module'  => $module->id,
+            'module' => $module->id,
             'section' => $firstSection->id,
             'lecture' => $firstLecture->id,
         ]);
@@ -199,7 +208,9 @@ class FormateurModuleController extends Controller
                 ->whereIn('id', $accessibleGroupIds->all())
                 ->exists();
 
-            if (!$isAccessibleGroup) return null;
+            if (! $isAccessibleGroup) {
+                return null;
+            }
 
             $hasModule = DB::table('group_module')
                 ->where('group_id', $forcedGroupId)
@@ -217,7 +228,7 @@ class FormateurModuleController extends Controller
 
     private function applyTrainerGroupLessonOverrides(Module $module, ?int $groupId): void
     {
-        if (!$groupId || !$module->relationLoaded('sections')) {
+        if (! $groupId || ! $module->relationLoaded('sections')) {
             return;
         }
 
@@ -227,16 +238,20 @@ class FormateurModuleController extends Controller
             ->get()
             ->keyBy('lecture_id');
 
-        if ($overrides->isEmpty()) return;
+        if ($overrides->isEmpty()) {
+            return;
+        }
 
         $module->sections->each(function ($section) use ($overrides): void {
             $lectures = collect($section->lectures)
                 ->filter(function ($lecture) use ($overrides) {
                     $row = $overrides->get($lecture->id);
+
                     return $row ? (bool) $row->is_enabled : true;
                 })
                 ->sortBy(function ($lecture) use ($overrides) {
                     $row = $overrides->get($lecture->id);
+
                     return $row ? (int) $row->position : (int) $lecture->position;
                 })
                 ->values();
