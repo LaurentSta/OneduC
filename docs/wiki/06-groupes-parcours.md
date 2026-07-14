@@ -1,6 +1,6 @@
 # 06 — Groupes & Parcours
 
-*Public : formateurs pour la première partie ; la partie technique en fin de page s'adresse aux développeurs.*
+*Public : formateurs et administrateurs pour la première partie ; la partie technique en fin de page s'adresse aux développeurs.*
 
 ## Le groupe, unité centrale
 
@@ -36,6 +36,18 @@ Un module peut être affecté à plusieurs groupes en même temps, avec un ordre
 
 ---
 
+## Gérer un groupe (côté administrateur)
+
+L'espace administrateur propose un CRUD groupe distinct de l'interface formateur. La liste dense affiche le formateur principal, son statut, le nombre de stagiaires et la dernière mise à jour. À la création ou à la modification, l'administrateur renseigne un nom unique, une description optionnelle, choisit obligatoirement le formateur principal et sélectionne les stagiaires à rattacher.
+
+Le serveur vérifie que le formateur sélectionné existe, n'est pas supprimé logiquement et possède bien le rôle `formateur`. Chaque membre sélectionné doit de même exister, ne pas être supprimé logiquement et posséder le rôle `stagiaire`. La création ou la modification du groupe et la synchronisation de ses membres s'exécutent dans une même transaction. Les rattachements stagiaires sont enregistrés avec `group_user.role_in_group = 'stagiaire'` ; les rattachements d'un autre rôle ne sont pas convertis silencieusement.
+
+La gestion unifiée des utilisateurs permet en parallèle d'affecter un stagiaire à un ou plusieurs groupes et de définir son formateur principal. Si aucun formateur n'est choisi, le formateur principal du premier groupe sélectionné est repris dans `users.formateur_id`. Un code stagiaire unique de six caractères est généré lorsqu'aucun code n'est saisi.
+
+> **Avertissement :** la suppression d'un groupe depuis l'administration est immédiate et physique. La confirmation affichée dans l'interface évite une action involontaire, mais ne fournit ni corbeille ni restauration. Il faut vérifier les membres, modules et données de progression associés avant de confirmer.
+
+---
+
 ## Les parcours
 
 Convention de vocabulaire : côté formateur on parle de **parcours** ; côté stagiaire le même ensemble s'appelle **ma formation** ou **mon programme**. Le terme **module** reste réservé aux briques pédagogiques.
@@ -62,7 +74,7 @@ Fichier : `app/Models/Group.php`
 
 Champs principaux : `name`, `description`, `is_active`, `is_sandbox`, `start_date`, `end_date`, `instructor_id` (formateur principal), `temporary_password` (cast `encrypted` — jamais accessible en clair hors application), `formateur_parcours_id` (parcours associé, optionnel).
 
-Le code court de connexion stagiaire est porté par `users.code_acces`, généré par `CodeGeneratorService` à la création ou au rattachement.
+Le code court de connexion stagiaire est porté par `users.code_acces`. Dans la gestion admin unifiée, `CodeGeneratorService` génère un code unique de six caractères lorsqu'aucun code n'est fourni à la création ou à la modification du stagiaire.
 
 ### Scope formateur
 
@@ -109,7 +121,8 @@ La personnalisation des leçons par groupe passe par `group_module_lectures`, g�
 ### Limitations connues
 
 - Un stagiaire dans plusieurs groupes actifs ne voit que les modules du premier groupe retourné (`.first()` dans `StagiaireController::StagiaireModules()`). Bug à corriger en phase 2.
-- Le modèle `Group` n'a pas de `SoftDeletes` : une suppression de groupe est physique et peut laisser des données de progression orphelines.
+- Le modèle `Group` n'a pas de `SoftDeletes` : une suppression de groupe, y compris depuis le CRUD administrateur, est physique et peut laisser des données de progression orphelines. La confirmation d'interface ne constitue pas une sauvegarde.
+- La suppression d'un formateur déclenche la suppression physique de ses groupes. Les stagiaires sans autre formateur ni autre groupe principal peuvent alors être supprimés logiquement, avec purge immédiate d'une partie de leurs données liées.
 
 ---
 

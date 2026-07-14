@@ -68,6 +68,7 @@ class RecordAdminActivity
             str_starts_with($routeName, 'admin.quiz.') => 'Gestion questionnaire',
             str_starts_with($routeName, 'admin.categories.') => 'Gestion categories',
             str_starts_with($routeName, 'admin.subcategories.') => 'Gestion sous-categories',
+            str_starts_with($routeName, 'admin.utilisateurs.') => 'Gestion utilisateurs',
             default => Str::headline($method . ' ' . str_replace('admin.', '', $routeName)),
         };
     }
@@ -85,14 +86,40 @@ class RecordAdminActivity
             'currentPassword',
             'newPassword',
             'newPassword_confirmation',
+            'code_acces',
             'zip',
         ];
+
+        if ($request->routeIs(
+            'admin.utilisateurs.*',
+            'admin.observateurs.*',
+            'admin.profil.store'
+        )) {
+            $excluded = array_merge($excluded, [
+                'prenom',
+                'name',
+                'username',
+                'email',
+                'phone',
+                'phoneNumber',
+                'address',
+                'societe',
+                'firstName',
+                'lastName',
+                'photo',
+            ]);
+        }
 
         $context = Arr::except($request->all(), $excluded);
 
         foreach ($request->allFiles() as $key => $file) {
+            if (in_array($key, $excluded, true)) {
+                continue;
+            }
+
             if (is_array($file)) {
                 $context[$key] = array_map(fn ($item) => $item->getClientOriginalName(), $file);
+
                 continue;
             }
 
@@ -108,4 +135,3 @@ class RecordAdminActivity
         return $context;
     }
 }
-

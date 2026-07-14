@@ -15,11 +15,15 @@ La plateforme distingue quatre rôles. Chacun a son espace, son interface et ses
 
 ## Administrateur
 
-L'administrateur pilote la plateforme. Il gère le catalogue de modules, les comptes utilisateurs, les catégories, les référentiels de compétences, les badges et les évaluations. Toutes ses actions destructives sont journalisées automatiquement.
+L'administrateur pilote la plateforme. Il gère le catalogue de modules, les comptes utilisateurs, les groupes, les catégories, les référentiels de compétences, les badges et les évaluations. Ses actions d'écriture réussies sont journalisées automatiquement.
 
 ### Ce qu'il peut faire
 
-**Utilisateurs** : créer, modifier, activer ou désactiver les formateurs (avec gestion du statut d'adhésion), gérer les stagiaires (dont la remise à zéro de progression) et les observateurs. La suppression d'un compte nettoie les données liées.
+**Utilisateurs** : consulter un répertoire dense des formateurs et stagiaires, le filtrer par rôle, statut ou rattachement à un groupe, le rechercher et le paginer ; créer, modifier, activer ou désactiver ces comptes. Le rôle choisi à la création est ensuite immuable. Pour un formateur, l'administrateur gère aussi l'entreprise et l'adhésion. Pour un stagiaire, il choisit le formateur principal et les groupes ; un code d'accès unique de six caractères est généré si le champ reste vide. Les observateurs conservent leur interface d'administration séparée.
+
+**Groupes** : créer ou modifier un groupe en choisissant obligatoirement un formateur principal et, si nécessaire, des stagiaires existants ; consulter le nombre de membres et supprimer un groupe après confirmation.
+
+**Progression stagiaire** : remettre à zéro, dans une transaction unique, les quiz, progressions, temps de connexion, suivis vidéo et données SCORM classiques, d'évaluation et de blocs modernes.
 
 **Contenu pédagogique** : créer les modules du catalogue avec leurs sections et leçons, importer des packages SCORM et des slides, gérer la banque de questions quiz (avec import CSV), les évaluations SCORM et les catégories.
 
@@ -29,12 +33,18 @@ L'administrateur pilote la plateforme. Il gère le catalogue de modules, les com
 
 ### Ce qu'il ne peut pas encore faire
 
-Exporter des données en CSV ou PDF, générer des certificats, gérer plusieurs organisations. La mise à jour d'email admin ne valide pas encore l'unicité.
+Exporter des données en CSV ou PDF, générer des certificats, gérer plusieurs organisations.
 
 ### Détails techniques
 
 Routes : `routes/admin.php` — middleware `auth` + `role:admin` + `admin.activity`.
-Le middleware `RecordAdminActivity` journalise les actions POST/PUT/PATCH/DELETE dans `activity_journal_entries`, données sensibles sanitisées. La remise à zéro de progression passe par `admin.stagiaires.reset`, protégée par la chaîne complète. Le nettoyage à la suppression de compte est porté par `cleanupRelatedStagiaireData()`.
+Le contrôleur `UtilisateurController` et les routes `admin.utilisateurs.*` gèrent uniquement les rôles `formateur` et `stagiaire`. La création impose un email unique et un mot de passe confirmé d'au moins 12 caractères. La modification vérifie aussi l'unicité de l'email en excluant le compte courant ; le profil de l'administrateur applique désormais la même règle.
+
+Pour un stagiaire, les rattachements sélectionnés sont synchronisés dans `group_user` avec `role_in_group = 'stagiaire'`. Si aucun `formateur_id` n'est fourni mais qu'un groupe est sélectionné, le formateur principal du premier groupe devient le formateur référent. Pour un formateur, les statuts d'adhésion acceptés sont `pending`, `active` et `expired` ; une adhésion activée sans date reçoit par défaut une validité d'un an.
+
+Le middleware `RecordAdminActivity` journalise les actions POST/PUT/PATCH/DELETE réussies dans `activity_journal_entries`. Les nouveaux formulaires utilisateurs n'y versent pas les noms, coordonnées, identifiants, mots de passe ni codes d'accès ; les informations opérationnelles non nominatives, comme le rôle ou le statut, peuvent rester dans le contexte. La remise à zéro passe par `admin.stagiaires.reset`, protégée par la chaîne complète et refusée si le compte ciblé n'est pas stagiaire.
+
+> **Avertissement — suppressions destructives :** le trait `SoftDeletes` du compte ne rend pas toutes les données récupérables. Supprimer un stagiaire efface immédiatement de nombreuses données pédagogiques liées. Supprimer un formateur supprime physiquement ses groupes et peut aussi supprimer les stagiaires qui ne disposent d'aucun autre rattachement. La suppression d'un groupe admin est elle aussi physique. Ces actions doivent rester exceptionnelles et être confirmées après vérification des rattachements.
 
 ---
 

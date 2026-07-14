@@ -30,7 +30,7 @@ routes/
 
 Le middleware `force.password.change` est appliqué dans l'espace stagiaire après les routes de première connexion. Il bloque l'accès jusqu'à ce que l'utilisateur définisse son mot de passe (`users.password_changed_at` nul). Le formateur n'a pas ce middleware dans `routes/formateur.php` au 5 juillet 2026.
 
-Le dépôt expose 411 routes déclarées via `php artisan route:list --json`, dont 128 sous `/admin`, 144 sous `/formateur`, 49 sous `/stagiaire` et 9 sous `/observateur`.
+Au 14 juillet 2026, le dépôt expose 513 routes déclarées via `php artisan route:list --json`, dont 135 sous `/admin`, 208 sous `/formateur`, 53 sous `/stagiaire` et 9 sous `/observateur`.
 
 ---
 
@@ -39,6 +39,7 @@ Le dépôt expose 411 routes déclarées via `php artisan route:list --json`, do
 ```
 app/Http/Controllers/
 ├── AdminController.php              ← Dashboard admin
+├── UtilisateurController.php        ← Gestion unifiée admin des formateurs et stagiaires
 ├── FormateurController.php          ← Dashboard formateur (analytics)
 ├── StagiaireController.php          ← Dashboard stagiaire (794 lignes, progression extraite)
 ├── UserController.php               ← Auth, profil, connexion par code
@@ -50,8 +51,8 @@ app/Http/Controllers/
 │   ├── ModuleLectureController.php
 │   ├── ScormLibraryController.php   ← Import SCORM
 │   ├── QuizQuestionController.php   ← Banque de questions (775 lignes)
-│   ├── GroupeController.php         ← CRUD groupes admin
-│   ├── StagiaireController.php      ← Gestion stagiaires admin
+│   ├── GroupeController.php         ← CRUD groupes admin et rattachement des stagiaires
+│   ├── StagiaireController.php      ← Remise à zéro transactionnelle de la progression
 │   ├── PilotageController.php       ← Projets, tâches, journal (756 lignes)
 │   └── EvaluationController.php
 │
@@ -69,6 +70,29 @@ app/Http/Controllers/
     ├── QuizController.php            ← Quiz natifs (701 lignes, partagé formateur)
     └── [outils live]/ ...
 ```
+
+### Gestion administrateur des formateurs et stagiaires
+
+`UtilisateurController` centralise le répertoire, la création, la modification et l'activation des comptes `formateur` et `stagiaire`. Les administrateurs et observateurs restent gérés hors de ce contrôleur. Le répertoire est filtrable par rôle, statut, rattachement à un groupe et recherche textuelle ; il propose les tris récent, nom et ancien, avec une pagination serveur de 20, 50 ou 100 lignes.
+
+Les routes correspondantes sont regroupées sous `admin.utilisateurs.*` :
+
+| Action | Méthode et URL | Route nommée |
+|--------|----------------|--------------|
+| Répertoire | `GET /admin/utilisateurs` | `admin.utilisateurs.index` |
+| Formulaire de création | `GET /admin/utilisateurs/create` | `admin.utilisateurs.create` |
+| Création | `POST /admin/utilisateurs` | `admin.utilisateurs.store` |
+| Formulaire de modification | `GET /admin/utilisateurs/{utilisateur}/edit` | `admin.utilisateurs.edit` |
+| Modification | `PUT /admin/utilisateurs/{utilisateur}` | `admin.utilisateurs.update` |
+| Activation ou désactivation | `PATCH /admin/utilisateurs/{utilisateur}/statut` | `admin.utilisateurs.statut.update` |
+
+Le rôle est choisi à la création parmi `formateur` et `stagiaire`, puis devient immuable : la mise à jour se fonde sur le rôle déjà enregistré, sans accepter de changement de rôle dans la requête. Pour un formateur, le contrôleur administre notamment l'entreprise et l'adhésion. Pour un stagiaire, il synchronise les groupes avec `group_user.role_in_group = 'stagiaire'`, conserve un formateur principal dans `users.formateur_id` et génère un code d'accès unique de six caractères si aucun code n'est fourni. Les emails sont uniques à la création comme à la modification, avec exclusion du compte courant lors d'une mise à jour.
+
+Les suppressions restent portées par les routes historiques `admin.formateurs.destroy` et `admin.stagiaires.destroy`. Elles déclenchent les événements destructifs du modèle `User` décrits dans [Sécurité & RGPD](10-securite-rgpd.md).
+
+Le CRUD groupes admin est porté par `Backend\GroupeController`. La création et la modification sont transactionnelles, exigent un formateur principal existant dont le rôle vaut `formateur`, et n'acceptent comme membres que des comptes existants dont le rôle vaut `stagiaire`. Les comptes supprimés logiquement sont exclus par la validation. La synchronisation écrit explicitement le rôle `stagiaire` dans le pivot ; la suppression du groupe reste physique car `Group` n'utilise pas `SoftDeletes`.
+
+La remise à zéro de progression est réservée aux comptes `stagiaire` et s'exécute dans une transaction. Elle efface les tentatives de quiz, les progressions, les suivis vidéo, les données SCORM classiques, d'évaluation et de blocs de contenu modernes (`content_block_scorm_*`), puis remet `total_site_time` à zéro. Une erreur provoque le rollback de l'ensemble.
 
 ---
 
@@ -225,7 +249,9 @@ Le contenu détaillé des leçons reste séparé dans la page `resources/views/f
 | `association.member` | `EnsureAssociationMembership` | Vérifie l'adhésion formateur (active ou grâce d'un mois) |
 | `track.time` | `TrackSessionTime` | Enregistre le temps de connexion stagiaire dans `users.total_site_time` |
 | `force.password.change` | `ForcePasswordChange` | Bloque l'espace stagiaire jusqu'au changement de mot de passe initial |
-| `admin.activity` | `RecordAdminActivity` | Journalise les actions POST/PUT/PATCH/DELETE admin |
+| `admin.activity` | `RecordAdminActivity` | Journalise les actions POST/PUT/PATCH/DELETE admin réussies en excluant notamment les champs nominatifs, de contact, de mot de passe et de code d'accès des formulaires utilisateurs |
+
+La connexion standard par email ajoute `status = true` aux identifiants transmis à `Auth::attempt()` dans `LoginRequest`. Un compte inactif est donc refusé avant l'ouverture de la session, même si son mot de passe est correct ; le contrôle du middleware `role` reste une seconde barrière sur les espaces protégés.
 
 ---
 

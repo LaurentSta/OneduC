@@ -23,6 +23,7 @@ use App\Http\Controllers\Backend\PilotageController;
 use App\Http\Controllers\Backend\TrainerPathQualityController;
 use App\Http\Controllers\Backend\ConsommationIAController;
 use App\Http\Controllers\Backend\WordCloudController;
+use App\Http\Controllers\UtilisateurController;
 
 Route::middleware(['auth', 'role:admin', 'admin.activity'])
     ->prefix('admin')
@@ -49,6 +50,15 @@ Route::middleware(['auth', 'role:admin', 'admin.activity'])
         Route::delete('/stagiaires/{user}', [AdminController::class, 'DestroyStagiaire'])->name('stagiaires.destroy');
         Route::post('/stagiaires/{user}/reset-progression', [StagiaireController::class, 'resetProgression'])->name('stagiaires.reset');
         Route::delete('/observateurs/{user}', [AdminController::class, 'DestroyObservateur'])->name('observateurs.destroy');
+
+        Route::prefix('utilisateurs')->name('utilisateurs.')->group(function () {
+            Route::get('/', [UtilisateurController::class, 'index'])->name('index');
+            Route::get('/create', [UtilisateurController::class, 'create'])->name('create');
+            Route::post('/', [UtilisateurController::class, 'store'])->name('store');
+            Route::get('/{utilisateur}/edit', [UtilisateurController::class, 'edit'])->name('edit');
+            Route::put('/{utilisateur}', [UtilisateurController::class, 'update'])->name('update');
+            Route::patch('/{utilisateur}/statut', [UtilisateurController::class, 'mettreAJourStatut'])->name('statut.update');
+        });
 
         Route::prefix('observateurs')->name('observateurs.')->group(function () {
             Route::get('/', [ObservateurController::class, 'index'])->name('index');
@@ -82,7 +92,7 @@ Route::middleware(['auth', 'role:admin', 'admin.activity'])
             Route::post('/groupes', 'StoreGroupe')->name('groupes.store');
             Route::get('/groupes/{id}/edit', 'EditGroupe')->name('groupes.edit');
             Route::put('/groupes/{id}', 'UpdateGroupe')->name('groupes.update');
-            Route::delete('/groupes/{id}', 'DeleteGroupe')->name('groupes.delete');
+            Route::delete('/groupes/{id}', 'destroy')->name('groupes.delete');
         });
 
         // Modules - CRUD de base

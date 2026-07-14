@@ -10,6 +10,8 @@ Email + mot de passe (bcrypt via Laravel). Le middleware `role` vérifie simulta
 - que son `role` correspond à l'espace demandé
 - que son compte est actif (`users.status`)
 
+`LoginRequest` ajoute également `status = true` aux identifiants transmis à `Auth::attempt()`. Un compte dont `users.status = false` ne peut donc pas ouvrir de session par email, même avec le bon mot de passe. Il reçoit l'erreur générique d'authentification et reste déconnecté.
+
 ### Mode code d'accès (stagiaire)
 Route : `POST /stagiaire/connexion-code`  
 Contrôleur : `UserController::loginByCode()`  
@@ -38,11 +40,14 @@ C'est ce mécanisme qui fait tenir le modèle associatif : l'accès formateur re
 
 ## Middleware de journalisation admin
 
-`RecordAdminActivity` (`app/Http/Middleware/RecordAdminActivity.php`) journalise automatiquement toutes les actions destructives (POST/PUT/PATCH/DELETE) des routes `admin.*` dans `activity_journal_entries` :
+`RecordAdminActivity` (`app/Http/Middleware/RecordAdminActivity.php`) journalise automatiquement toutes les actions d'écriture (POST/PUT/PATCH/DELETE) des routes `admin.*` dans `activity_journal_entries` :
 
 - Action horodatée avec l'ID de l'admin
-- Données de la requête sanitisées (champs sensibles masqués, textes longs tronqués)
+- Uniquement les réponses réussies, dont le code HTTP est inférieur à 400
+- Données de la requête sanitisées (champs sensibles exclus, textes longs tronqués)
 - Consultable dans l'interface de pilotage admin
+
+Pour les nouveaux formulaires de gestion des formateurs et stagiaires, le contexte exclut les champs nominatifs et de contact (`prenom`, `name`, `username`, `email`, téléphone, adresse, société), les mots de passe et le code d'accès. Les champs nécessaires au suivi opérationnel, par exemple `role`, `status`, `formateur_id` ou les identifiants de groupes, peuvent encore être enregistrés.
 
 ---
 
@@ -57,7 +62,7 @@ C'est ce mécanisme qui fait tenir le modèle associatif : l'accès formateur re
 
 ---
 
-## Risques de sécurité identifiés (analyse 5 juillet 2026)
+## Risques de sécurité identifiés (analyse mise à jour le 14 juillet 2026)
 
 ### Points corrigés depuis l'ancien audit
 
@@ -67,6 +72,10 @@ C'est ce mécanisme qui fait tenir le modèle associatif : l'accès formateur re
 | `POST /admin/stagiaires/{user}/reset-progression` | Route présente dans `routes/admin.php`, protégée par `auth`, `role:admin`, `admin.activity` |
 | Tests liés au middleware `association.member` | La suite du 5 juillet passe sur ces scénarios |
 | `/inscription`, connexion par code, `LessonFeedbackController::store()`, `Module::isVisibleTo()`, SCORM (`save-progress`/`save-block-progress`/`evaluation-progress`), `last_session_time`, contrat d'upload image du builder | Corrigés le 5 juillet 2026 (voir [Checklist de publication](13-publication-github.md), Axe 1, S3 à S9). Suite de tests complète verte (124 tests). |
+| Connexion email d'un compte inactif | `LoginRequest` exige désormais `status = true` pendant l'authentification |
+| Unicité de l'email du profil administrateur | `AdminController::AdminProfilStore()` utilise `Rule::unique(...)->ignore($user->id)` |
+| Données personnelles des nouveaux formulaires utilisateurs dans le journal admin | Les champs nominatifs, coordonnées, mots de passe et codes d'accès sont exclus du contexte journalisé |
+| Remise à zéro partielle de la progression | L'opération est transactionnelle et couvre désormais quiz, progression, vidéo, SCORM classique, évaluations et blocs SCORM modernes |
 
 ### Gap identifié lors du correctif S3 (à traiter)
 
@@ -81,20 +90,31 @@ Un stagiaire authentifié (ou, pour `showScorm`, un visiteur non authentifié) p
 | # | Risque | Localisation | Impact |
 |---|--------|--------------|--------|
 | 8 | `StoreModuleRequest::authorize()` et `StoreGroupeRequest::authorize()` retournent `false` | `app/Http/Requests/` | FormRequests inutilisables tant qu'ils ne sont pas corrigés |
-| 9 | `AdminController::AdminProfilStore()` ne valide pas l'unicité email avec exclusion de l'utilisateur courant | `AdminController` | Collision possible avec l'email d'un autre compte |
 | 10 | Import mort `ScormInteractionController` | `routes/scorm.php` | Dette technique faible, à nettoyer |
+
+---
+
+## Remise à zéro de la progression stagiaire
+
+La route `POST /admin/stagiaires/{user}/reset-progression` (`admin.stagiaires.reset`) refuse toute cible dont le rôle n'est pas `stagiaire`. L'effacement est exécuté dans une transaction : réponses et tentatives de quiz, progressions, suivi vidéo, notifications de fin de module, temps total de connexion, ainsi que les résultats, scores et interactions SCORM classiques et d'évaluation sont supprimés. Les tables modernes `content_block_scorm_scores` et `content_block_scorm_results` sont également couvertes.
+
+Le contrôleur vérifie l'existence des tables optionnelles avant de les utiliser. Si une exception survient, la transaction est annulée et l'administrateur reçoit un message d'échec ; aucune réussite partielle ne doit être présentée comme une remise à zéro complète.
 
 ---
 
 ## Suppression de compte et données liées
 
-La suppression d'un compte stagiaire déclenche `cleanupRelatedStagiaireData()` dans le modèle `User`. Cette méthode supprime :
+> **Avertissement — opération irréversible :** les comptes `User` utilisent `SoftDeletes`, mais leurs événements de suppression exécutent aussi des purges physiques. Restaurer uniquement la ligne `users` ne restaure donc pas les groupes, progressions, scores ou réponses déjà effacés.
+
+La suppression d'un compte stagiaire déclenche immédiatement `cleanupRelatedStagiaireData()` dans le modèle `User`. Cette méthode supprime notamment :
 - Les progressions
 - Les scores SCORM
 - Les tentatives quiz
 - Les réponses aux outils
 
-La suppression d'un compte formateur via `cleanupOwnedGroupsAndLinkedStagiaires()` peut déclencher des suppressions en cascade sur les groupes et les stagiaires associés. C'est un mécanisme puissant qui nécessite une confirmation explicite et une trace dans le journal admin.
+La suppression d'un compte formateur via `cleanupOwnedGroupsAndLinkedStagiaires()` supprime physiquement tous les groupes dont il est `instructor_id`. Pour chaque stagiaire lié directement au formateur ou à l'un de ces groupes, le code recherche un autre formateur ou un autre groupe principal : il réaffecte le stagiaire lorsque c'est possible, sinon il supprime aussi son compte et déclenche sa purge de données liées.
+
+La suppression directe d'un groupe admin est également physique, car le modèle `Group` n'utilise pas `SoftDeletes`. Ces trois opérations nécessitent une confirmation explicite, une vérification préalable des rattachements et une trace dans le journal admin. Il n'existe actuellement ni corbeille de groupes ni restauration complète des données pédagogiques purgées.
 
 ---
 
@@ -130,8 +150,8 @@ Oneduc collecte des données d'apprentissage qui sont des **données personnelle
 
 ### Ce qui est déjà en place
 
-- Soft delete des utilisateurs (les données ne sont pas supprimées immédiatement)
-- Nettoyage des données liées à la suppression de compte
+- Soft delete de la ligne utilisateur, avec avertissement nécessaire car les données liées peuvent être purgées immédiatement par les événements du modèle
+- Nettoyage automatique des données liées à la suppression de compte, destructif et non intégralement réversible
 - Aucun tiers tracker côté frontend identifié
 - Cookie consent via `spatie/laravel-cookie-consent`
 

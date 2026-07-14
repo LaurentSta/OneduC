@@ -1,94 +1,239 @@
 @extends('admin.admin_dashboard')
+
+@section('title', 'Tableau de bord')
+
 @section('admin')
+    @php
+        $tauxComptesActifs = $utilisateurCount > 0
+            ? (int) round(($utilisateurActifCount / $utilisateurCount) * 100)
+            : 0;
+        $indicateursPrincipaux = [
+            [
+                'label' => 'Comptes gérés',
+                'value' => $utilisateurCount,
+                'detail' => $utilisateurActifCount.' actifs · '.$utilisateurInactifCount.' inactifs',
+                'icon' => 'ti-users',
+                'href' => route('admin.utilisateurs.index'),
+            ],
+            [
+                'label' => 'Formateurs',
+                'value' => $formateurCount,
+                'detail' => $formateursEnAttenteCount.' compte'.($formateursEnAttenteCount > 1 ? 's' : '').' à activer',
+                'icon' => 'ti-chalkboard',
+                'href' => route('admin.utilisateurs.index', ['role' => 'formateur']),
+            ],
+            [
+                'label' => 'Stagiaires',
+                'value' => $stagiaireCount,
+                'detail' => $stagiairesSansGroupeCount.' sans groupe',
+                'icon' => 'ti-school',
+                'href' => route('admin.utilisateurs.index', ['role' => 'stagiaire']),
+            ],
+            [
+                'label' => 'Groupes',
+                'value' => $groupCount,
+                'detail' => $groupesActifsCount.' actifs',
+                'icon' => 'ti-users-group',
+                'href' => route('admin.groupes'),
+            ],
+        ];
+        $pointsAttention = [
+            [
+                'label' => 'Comptes formateurs à activer',
+                'value' => $formateursEnAttenteCount,
+                'icon' => 'ti-user-pause',
+                'tone' => $formateursEnAttenteCount > 0 ? 'text-amber-700 bg-amber-50' : 'text-emerald-700 bg-emerald-50',
+                'href' => route('admin.utilisateurs.index', ['role' => 'formateur', 'statut' => 'inactif']),
+            ],
+            [
+                'label' => 'Adhésions formateurs à suivre',
+                'value' => $adhesionsARegulariserCount,
+                'icon' => 'ti-id-badge-2',
+                'tone' => $adhesionsARegulariserCount > 0 ? 'text-orange-700 bg-orange-50' : 'text-emerald-700 bg-emerald-50',
+                'href' => route('admin.utilisateurs.index', ['role' => 'formateur']),
+            ],
+            [
+                'label' => 'Stagiaires sans groupe',
+                'value' => $stagiairesSansGroupeCount,
+                'icon' => 'ti-user-question',
+                'tone' => $stagiairesSansGroupeCount > 0 ? 'text-amber-700 bg-amber-50' : 'text-emerald-700 bg-emerald-50',
+                'href' => route('admin.utilisateurs.index', ['role' => 'stagiaire', 'rattachement' => 'sans_groupe']),
+            ],
+            [
+                'label' => 'Groupes sans stagiaire',
+                'value' => $groupesSansStagiaireCount,
+                'icon' => 'ti-users-minus',
+                'tone' => $groupesSansStagiaireCount > 0 ? 'text-slate-700 bg-slate-100' : 'text-emerald-700 bg-emerald-50',
+                'href' => route('admin.groupes'),
+            ],
+        ];
+    @endphp
 
-@php
-  $stats = [
-    ['label' => 'Catégories', 'value' => $categoryCount ?? 0, 'accent' => 'text-orange-600', 'bg' => 'bg-orange-100', 'icon' => 'folder'],
-    ['label' => 'Sous-catégories', 'value' => $subCategoryCount ?? 0, 'accent' => 'text-cyan-600', 'bg' => 'bg-cyan-100', 'icon' => 'lines'],
-    ['label' => 'Modules', 'value' => $moduleCount ?? 0, 'accent' => 'text-yellow-600', 'bg' => 'bg-yellow-100', 'icon' => 'blocks'],
-    ['label' => 'Formateurs', 'value' => $formateurCount ?? 0, 'accent' => 'text-green-600', 'bg' => 'bg-green-100', 'icon' => 'user'],
-    ['label' => 'Stagiaires', 'value' => $stagiaireCount ?? 0, 'accent' => 'text-red-600', 'bg' => 'bg-red-100', 'icon' => 'users'],
-    ['label' => 'Groupes', 'value' => $groupCount ?? 0, 'accent' => 'text-fuchsia-600', 'bg' => 'bg-fuchsia-100', 'icon' => 'groups'],
-    ['label' => 'Sections', 'value' => $sectionCount ?? 0, 'accent' => 'text-blue-600', 'bg' => 'bg-blue-100', 'icon' => 'rows'],
-    ['label' => 'Leçons', 'value' => $lectureCount ?? 0, 'accent' => 'text-indigo-600', 'bg' => 'bg-indigo-100', 'icon' => 'plus'],
-  ];
-@endphp
+    <div class="mx-auto w-full max-w-[1600px] space-y-5">
+        <header class="flex flex-col gap-4 border-b border-slate-200 pb-5 xl:flex-row xl:items-end xl:justify-between">
+            <div>
+                <p class="mb-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Vue d’ensemble</p>
+                <h1 class="!mb-1 !text-2xl !font-semibold text-slate-950">Bonjour {{ Auth::user()->username ?: Auth::user()->prenom }}</h1>
+                <p class="text-sm text-slate-600">Voici les éléments qui demandent votre attention aujourd’hui.</p>
+            </div>
 
-<div class="mx-auto max-w-[1248px] px-3 py-6 sm:px-4 sm:py-8">
-  <section class="mb-8 rounded-2xl border border-blue-100 bg-gradient-to-r from-white to-blue-50 px-5 py-6 sm:px-7">
-    <p class="text-sm font-medium text-blue-700">Espace administrateur</p>
-    <h1 class="mt-1 text-2xl font-semibold text-bleuone sm:text-3xl">Bonjour {{ Auth::user()->username }}</h1>
-    <p class="mt-2 text-sm text-gray-600">Vue d'ensemble de la plateforme et des contenus suivis.</p>
-  </section>
+            <div class="flex flex-wrap gap-2">
+                <a href="{{ route('admin.utilisateurs.create', ['role' => 'formateur']) }}" class="inline-flex min-h-10 items-center gap-2 rounded-lg border border-slate-300 bg-white px-3.5 text-sm font-semibold text-slate-700 hover:border-bleuone hover:text-bleuone">
+                    <i class="ti ti-user-plus text-lg" aria-hidden="true"></i>
+                    Nouveau formateur
+                </a>
+                <a href="{{ route('admin.utilisateurs.create', ['role' => 'stagiaire']) }}" class="inline-flex min-h-10 items-center gap-2 rounded-lg bg-orangeone px-3.5 text-sm font-semibold text-white hover:bg-orangeone-hover">
+                    <i class="ti ti-school text-lg" aria-hidden="true"></i>
+                    Nouveau stagiaire
+                </a>
+            </div>
+        </header>
 
-  <section class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-    @foreach ($stats as $stat)
-      <article class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-        <div class="flex items-start justify-between gap-3">
-          <div>
-            <p class="text-sm font-medium text-gray-600">{{ $stat['label'] }}</p>
-            <p class="mt-1 text-2xl font-bold {{ $stat['accent'] }}">{{ number_format((int) $stat['value'], 0, ',', ' ') }}</p>
-          </div>
-          <span class="flex h-10 w-10 items-center justify-center rounded-full {{ $stat['bg'] }} {{ $stat['accent'] }}">
-            @if ($stat['icon'] === 'folder')
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M3 7h5l2 3h11v9H3V7z" />
-              </svg>
-            @elseif ($stat['icon'] === 'lines')
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-              </svg>
-            @elseif ($stat['icon'] === 'blocks')
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M3 5h8v6H3V5Zm10 0h8v14h-8V5ZM3 13h8v6H3v-6Z" />
-              </svg>
-            @elseif ($stat['icon'] === 'user')
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19a7 7 0 1 0-6 0m6 0a8.5 8.5 0 0 1-6 0" />
-              </svg>
-            @elseif ($stat['icon'] === 'users')
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M16 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM8 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm8 8a5 5 0 0 0-10 0m14 0a4 4 0 0 0-4-4" />
-              </svg>
-            @elseif ($stat['icon'] === 'groups')
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M17 20v-1a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1m18 0v-1a4 4 0 0 0-3-3.87M14 7a3 3 0 1 0-6 0 3 3 0 0 0 6 0Zm5 3a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z" />
-              </svg>
-            @elseif ($stat['icon'] === 'rows')
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M4 7h16M4 12h16M4 17h16" />
-              </svg>
-            @else
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m7-7H5" />
-              </svg>
-            @endif
-          </span>
+        <section class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label="Indicateurs principaux">
+            @foreach ($indicateursPrincipaux as $indicateur)
+                <a href="{{ $indicateur['href'] }}" class="group rounded-xl border border-slate-200 bg-white p-4 transition hover:border-bleuone/40 hover:bg-slate-50/60">
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ $indicateur['label'] }}</p>
+                            <p class="mt-1 text-3xl font-semibold tabular-nums text-slate-950">{{ number_format($indicateur['value'], 0, ',', ' ') }}</p>
+                            <p class="mt-1 text-xs text-slate-500">{{ $indicateur['detail'] }}</p>
+                        </div>
+                        <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-bleuone/10 text-bleuone transition group-hover:bg-bleuone group-hover:text-white">
+                            <i class="ti {{ $indicateur['icon'] }} text-xl" aria-hidden="true"></i>
+                        </span>
+                    </div>
+                </a>
+            @endforeach
+        </section>
+
+        <div class="grid gap-5 2xl:grid-cols-[minmax(0,1.65fr)_minmax(340px,0.8fr)]">
+            <section class="overflow-hidden rounded-xl border border-slate-200 bg-white" aria-labelledby="activite-recente-titre">
+                <div class="flex items-center justify-between gap-3 border-b border-slate-200 px-5 py-4">
+                    <div>
+                        <h2 id="activite-recente-titre" class="text-base font-semibold text-slate-950">Comptes récemment créés</h2>
+                        <p class="mt-0.5 text-sm text-slate-500">{{ $comptesCreesCeMoisCount }} création{{ $comptesCreesCeMoisCount > 1 ? 's' : '' }} depuis le début du mois.</p>
+                    </div>
+                    <a href="{{ route('admin.utilisateurs.index') }}" class="shrink-0 text-sm font-semibold text-bleuone hover:text-orangeone">Voir tous</a>
+                </div>
+
+                @if ($utilisateursRecents->isEmpty())
+                    <div class="px-6 py-12 text-center">
+                        <i class="ti ti-users-minus text-3xl text-slate-300" aria-hidden="true"></i>
+                        <p class="mt-2 text-sm text-slate-500">Aucun compte formateur ou stagiaire.</p>
+                    </div>
+                @else
+                    <div class="overflow-x-auto">
+                        <table class="admin-table-dense min-w-[720px] w-full text-left text-sm">
+                            <caption class="sr-only">Derniers comptes formateurs et stagiaires créés</caption>
+                            <thead>
+                                <tr>
+                                    <th scope="col">Utilisateur</th>
+                                    <th scope="col">Rôle</th>
+                                    <th scope="col">Rattachement</th>
+                                    <th scope="col">Statut</th>
+                                    <th scope="col" class="text-right">Création</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($utilisateursRecents as $utilisateur)
+                                    @php
+                                        $estFormateur = $utilisateur->role === 'formateur';
+                                        $nomComplet = trim($utilisateur->prenom.' '.$utilisateur->name);
+                                    @endphp
+                                    <tr>
+                                        <td>
+                                            <a href="{{ route('admin.utilisateurs.edit', $utilisateur) }}" class="font-semibold text-slate-900 hover:text-bleuone">{{ $nomComplet ?: $utilisateur->username }}</a>
+                                            <p class="mt-0.5 max-w-[230px] truncate text-xs text-slate-500">{{ $utilisateur->email }}</p>
+                                        </td>
+                                        <td>
+                                            <span class="admin-badge {{ $estFormateur ? 'admin-badge--blue' : 'admin-badge--violet' }}">{{ $estFormateur ? 'Formateur' : 'Stagiaire' }}</span>
+                                        </td>
+                                        <td class="text-slate-600">
+                                            @if ($estFormateur)
+                                                {{ $utilisateur->groupes_encadres_count }} piloté{{ $utilisateur->groupes_encadres_count > 1 ? 's' : '' }}
+                                                · {{ $utilisateur->groupes_formateur_count }} co-animé{{ $utilisateur->groupes_formateur_count > 1 ? 's' : '' }}
+                                            @else
+                                                {{ $utilisateur->groupes_stagiaire_count }} groupe{{ $utilisateur->groupes_stagiaire_count > 1 ? 's' : '' }}
+                                            @endif
+                                        </td>
+                                        <td>
+                                            <span class="admin-badge {{ $utilisateur->status ? 'admin-badge--success' : 'admin-badge--neutral' }}">{{ $utilisateur->status ? 'Actif' : 'Inactif' }}</span>
+                                        </td>
+                                        <td class="text-right text-slate-500">{{ $utilisateur->created_at?->format('d/m/Y') ?? '—' }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @endif
+            </section>
+
+            <div class="space-y-5">
+                <section class="rounded-xl border border-slate-200 bg-white" aria-labelledby="attention-titre">
+                    <div class="border-b border-slate-200 px-5 py-4">
+                        <h2 id="attention-titre" class="text-base font-semibold text-slate-950">Points d’attention</h2>
+                        <p class="mt-0.5 text-sm text-slate-500">Accès directs aux situations à traiter.</p>
+                    </div>
+                    <div class="divide-y divide-slate-100 px-2">
+                        @foreach ($pointsAttention as $point)
+                            <a href="{{ $point['href'] }}" class="flex items-center gap-3 rounded-lg px-3 py-3 hover:bg-slate-50">
+                                <span class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg {{ $point['tone'] }}">
+                                    <i class="ti {{ $point['icon'] }} text-lg" aria-hidden="true"></i>
+                                </span>
+                                <span class="min-w-0 flex-1 text-sm font-medium text-slate-700">{{ $point['label'] }}</span>
+                                <span class="text-lg font-semibold tabular-nums text-slate-950">{{ $point['value'] }}</span>
+                                <i class="ti ti-chevron-right text-slate-400" aria-hidden="true"></i>
+                            </a>
+                        @endforeach
+                    </div>
+                </section>
+
+                <section class="rounded-xl border border-slate-200 bg-bleuone p-5 text-white" aria-labelledby="sante-plateforme-titre">
+                    <div class="flex items-start justify-between gap-4">
+                        <div>
+                            <p class="text-xs font-semibold uppercase tracking-[0.14em] text-white/65">Accès plateforme</p>
+                            <h2 id="sante-plateforme-titre" class="mt-1 text-lg font-semibold text-white">{{ $tauxComptesActifs }} % des comptes actifs</h2>
+                        </div>
+                        <span class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-white/10">
+                            <i class="ti ti-shield-check text-xl" aria-hidden="true"></i>
+                        </span>
+                    </div>
+                    <div class="mt-4 h-2 overflow-hidden rounded-full bg-white/15" role="progressbar" aria-valuenow="{{ $tauxComptesActifs }}" aria-valuemin="0" aria-valuemax="100" aria-label="Part des comptes actifs">
+                        <div class="h-full rounded-full bg-vertone" style="width: {{ $tauxComptesActifs }}%"></div>
+                    </div>
+                    <dl class="mt-4 grid grid-cols-3 gap-3 border-t border-white/15 pt-4 text-center">
+                        <div>
+                            <dt class="text-xs text-white/65">Modules</dt>
+                            <dd class="mt-0.5 text-lg font-semibold">{{ $moduleCount }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-xs text-white/65">Sections</dt>
+                            <dd class="mt-0.5 text-lg font-semibold">{{ $sectionCount }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-xs text-white/65">Leçons</dt>
+                            <dd class="mt-0.5 text-lg font-semibold">{{ $lectureCount }}</dd>
+                        </div>
+                    </dl>
+                </section>
+            </div>
         </div>
-      </article>
-    @endforeach
-  </section>
 
-  <section class="mt-10 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
-    <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
-      <h2 class="text-xl font-semibold text-gray-900">Cours suivis</h2>
-      <span class="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">Suivi des progressions</span>
+        <section class="rounded-xl border border-slate-200 bg-white px-5 py-4" aria-labelledby="catalogue-titre">
+            <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                    <h2 id="catalogue-titre" class="text-base font-semibold text-slate-950">Catalogue pédagogique</h2>
+                    <p class="mt-0.5 text-sm text-slate-500">{{ $categoryCount }} catégories · {{ $subCategoryCount }} sous-catégories · {{ $moduleCount }} modules.</p>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <a href="{{ route('admin.categories.all') }}" class="inline-flex min-h-9 items-center rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">Catégories</a>
+                    <a href="{{ route('admin.modules') }}" class="inline-flex min-h-9 items-center rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">Modules</a>
+                    <a href="{{ route('admin.groupes.add') }}" class="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                        <i class="ti ti-plus" aria-hidden="true"></i>
+                        Groupe
+                    </a>
+                </div>
+            </div>
+        </section>
     </div>
-    <div class="overflow-x-auto">
-      <table class="datatables-academy-course min-w-full text-left text-sm font-lisible">
-        <thead class="border-b bg-gray-50 text-gray-700">
-          <tr>
-            <th class="px-2 py-3"></th>
-            <th class="px-2 py-3"></th>
-            <th class="px-2 py-3">Nom du cours</th>
-            <th class="px-2 py-3">Durée</th>
-            <th class="w-1/4 px-2 py-3">Progression</th>
-            <th class="w-1/4 px-2 py-3">Statut</th>
-          </tr>
-        </thead>
-      </table>
-    </div>
-  </section>
-</div>
-
 @endsection

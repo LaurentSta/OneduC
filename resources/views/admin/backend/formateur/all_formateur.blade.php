@@ -8,7 +8,7 @@
                 <h1 class="text-[20px] font-varela text-bleuone">Formateurs</h1>
                 <p class="text-sm text-gray-600">Gestion des comptes formateurs, activation, stagiaires et progression dans le parcours.</p>
             </div>
-            <a href="{{ route('formateur.inscription.form') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-orangeone text-white text-sm font-varela rounded-lg hover:bg-orangeone-hover transition cursor-pointer">
+            <a href="{{ route('admin.utilisateurs.create', ['role' => 'formateur']) }}" class="inline-flex items-center gap-2 px-4 py-2 bg-orangeone text-white text-sm font-varela rounded-lg hover:bg-orangeone-hover transition cursor-pointer">
                 <i class="ti ti-plus"></i>
                 Ajouter un formateur
             </a>
@@ -225,10 +225,15 @@
                     is_checked: isChecked,
                     _token: "{{ csrf_token() }}"
                 },
-                success: function(response){ toastr.success(response.message); },
+                success: function(response){
+                    window.toastr
+                        ? toastr.success(response.message)
+                        : window.alert(response.message);
+                },
                 error: function(){
-                    toastr.error("Une erreur est survenue lors de la mise à jour du statut.");
                     toggle.prop('checked', !isChecked);
+                    const message = "Une erreur est survenue lors de la mise à jour du statut.";
+                    window.toastr ? toastr.error(message) : window.alert(message);
                 }
             });
         });
@@ -272,7 +277,10 @@
 @if(session('success'))
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-        toastr.success('{{ session('success') }}', 'Succès', { closeButton: true, progressBar: true, timeOut: 5000 });
+        const message = @js(session('success'));
+        window.toastr
+            ? toastr.success(message, 'Succès', { closeButton: true, progressBar: true, timeOut: 5000 })
+            : window.alert(message);
     });
 </script>
 @endif
@@ -280,7 +288,10 @@
 @if(session('error'))
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-        toastr.error('{{ session('error') }}', 'Erreur', { closeButton: true, progressBar: true, timeOut: 5000 });
+        const message = @js(session('error'));
+        window.toastr
+            ? toastr.error(message, 'Erreur', { closeButton: true, progressBar: true, timeOut: 5000 })
+            : window.alert(message);
     });
 </script>
 @endif
