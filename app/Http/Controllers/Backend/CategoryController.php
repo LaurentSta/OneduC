@@ -3,30 +3,33 @@
 namespace App\Http\Controllers\Backend;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\Category;
-use App\Models\SubCategory;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Storage;
-use Intervention\Image\Facades\Image;
 use App\Models\Module;
+use App\Models\SubCategory;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Intervention\Image\Facades\Image;
 
 class CategoryController extends Controller
 {
     public function AllCategory()
     {
         $categories = Category::withCount('subcategories')->latest()->get();
+
         return view('admin.backend.categorie.categorie', compact('categories'));
     }
+
     public function AddCategory()
     {
         return view('admin.backend.categorie.ajout_categorie');
     }
+
     public function StoreCategory(Request $request)
     {
         $request->validate([
             'category_name' => 'required|string|max:255',
-            'category_image' => 'nullable|file|mimetypes:image/jpeg,image/png,image/jpg,image/gif,image/webp,image/svg+xml|max:2048',
+            'category_image' => 'nullable|file|mimetypes:image/jpeg,image/png,image/jpg,image/gif,image/webp|max:2048',
         ]);
         // Stocker l'image avec un nom unique
         $imagePath = $request->file('category_image')->store('category_images', 'public');
@@ -35,8 +38,9 @@ class CategoryController extends Controller
             'category_name' => $request->category_name,
             'category_description' => $request->category_description,
             'category_slug' => Str::slug($request->category_name),
-            'category_image' => $imagePath
+            'category_image' => $imagePath,
         ]);
+
         return redirect()->route('admin.categories.all')->with('success', 'Catégorie ajoutée avec succès 🎉');
     }
 
@@ -54,7 +58,7 @@ class CategoryController extends Controller
             'id' => 'required|exists:categories,id',
             'category_name' => 'required|string|max:255',
             'category_description' => 'nullable|string',
-            'category_image' => 'nullable|file|mimetypes:image/jpeg,image/png,image/jpg,image/gif,image/webp,image/svg+xml|max:2048',
+            'category_image' => 'nullable|file|mimetypes:image/jpeg,image/png,image/jpg,image/gif,image/webp|max:2048',
 
         ]);
 
@@ -87,20 +91,22 @@ class CategoryController extends Controller
         return redirect()->route('admin.categories.all')->with('success', 'Catégorie mise à jour avec succès 🎉');
     }
 
-        // Page front  categories
+    // Page front  categories
     public function FrontCategories()
     {
         $categories = Category::orderBy('created_at', 'asc')->get();
+
         return view('frontend.contenu.categories', compact('categories'));
     }
+
     // Affiche les sous-catégories d'une catégorie spécifique
     public function showSubCategories($id)
     {
         $category = Category::findOrFail($id);
         $subcategories = SubCategory::where('category_id', $id)
-                                    ->with('modules') // 👈 Important ici !
-                                    ->latest()
-                                    ->get();
+            ->with('modules') // 👈 Important ici !
+            ->latest()
+            ->get();
 
         return view('frontend.contenu.subcategories', compact('subcategories', 'category'));
     }
@@ -114,7 +120,7 @@ class CategoryController extends Controller
             ->with('formateur:id,name,prenom')
             ->where('category_id', $id)
             // visiteurs + rôles non admin → seulement actifs
-            ->when(!auth()->check() || auth()->user()->role !== 'admin', fn ($q) => $q->active())
+            ->when(! auth()->check() || auth()->user()->role !== 'admin', fn ($q) => $q->active())
             ->select([
                 'id',
                 'category_id',
@@ -147,8 +153,9 @@ class CategoryController extends Controller
 
         return redirect()->back()->with('success', 'Catégorie supprimée avec succès');
     }
-     // ✅ Liste toutes les sous-catégories
-     public function AllSubCategory(Request $request)
+
+    // ✅ Liste toutes les sous-catégories
+    public function AllSubCategory(Request $request)
     {
         $query = SubCategory::with('category')->latest();
 
@@ -164,9 +171,6 @@ class CategoryController extends Controller
         ]);
     }
 
-
-
-
     // ✅ Affiche le formulaire d'ajout
     public function AddSubCategory()
     {
@@ -176,40 +180,37 @@ class CategoryController extends Controller
         return view('admin.backend.souscategorie.ajout_sous-categorie', compact('categories'));
     }
 
-
     public function StoreSubCategory(Request $request)
-        {
-            $request->validate([
-                'category_id' => 'required|exists:categories,id',
-                'subcategory_name' => 'required|string|max:255|unique:subcategories,subcategory_name',
-                'subcategory_description' => 'nullable|string',
-                'subcategory_image' => 'nullable|file|mimetypes:image/jpeg,image/png,image/jpg,image/gif,image/webp,image/svg+xml|max:2048',
-            ]);
+    {
+        $request->validate([
+            'category_id' => 'required|exists:categories,id',
+            'subcategory_name' => 'required|string|max:255|unique:subcategories,subcategory_name',
+            'subcategory_description' => 'nullable|string',
+            'subcategory_image' => 'nullable|file|mimetypes:image/jpeg,image/png,image/jpg,image/gif,image/webp|max:2048',
+        ]);
 
-            $imagePath = null;
+        $imagePath = null;
 
-            if ($request->hasFile('subcategory_image')) {
-                $file = $request->file('subcategory_image');
+        if ($request->hasFile('subcategory_image')) {
+            $file = $request->file('subcategory_image');
 
-                // Donne un nom unique et propre au fichier
-                $fileName = time() . '_' . Str::slug($request->subcategory_name) . '.' . $file->getClientOriginalExtension();
+            // Donne un nom unique et propre au fichier
+            $fileName = time().'_'.Str::slug($request->subcategory_name).'.'.$file->getClientOriginalExtension();
 
-                // Stocke le fichier dans le dossier public/storage/subcategory_images
-                $imagePath = $file->storeAs('subcategory_images', $fileName, 'public');
-            }
-
-            SubCategory::create([
-                'category_id' => $request->category_id,
-                'subcategory_name' => $request->subcategory_name,
-                'subcategory_slug' => Str::slug($request->subcategory_name),
-                'subcategory_description' => $request->subcategory_description,
-                'subcategory_image' => $imagePath, // stocké en BDD sous "subcategory_images/monfichier.jpg"
-            ]);
-
-            return redirect()->route('admin.subcategories.all')->with('success', 'Sous-catégorie ajoutée avec succès !');
+            // Stocke le fichier dans le dossier public/storage/subcategory_images
+            $imagePath = $file->storeAs('subcategory_images', $fileName, 'public');
         }
 
+        SubCategory::create([
+            'category_id' => $request->category_id,
+            'subcategory_name' => $request->subcategory_name,
+            'subcategory_slug' => Str::slug($request->subcategory_name),
+            'subcategory_description' => $request->subcategory_description,
+            'subcategory_image' => $imagePath, // stocké en BDD sous "subcategory_images/monfichier.jpg"
+        ]);
 
+        return redirect()->route('admin.subcategories.all')->with('success', 'Sous-catégorie ajoutée avec succès !');
+    }
 
     // ✅ Affiche le formulaire d'édition
     public function EditSubCategory($id)
@@ -227,9 +228,9 @@ class CategoryController extends Controller
         $request->validate([
             'id' => 'required|exists:subcategories,id',
             'category_id' => 'required|exists:categories,id',
-            'subcategory_name' => 'required|string|max:255|unique:subcategories,subcategory_name,' . $request->id,
+            'subcategory_name' => 'required|string|max:255|unique:subcategories,subcategory_name,'.$request->id,
             'subcategory_description' => 'nullable|string',
-            'subcategory_image' => 'nullable|file|mimetypes:image/jpeg,image/png,image/jpg,image/gif,image/webp,image/svg+xml|max:2048',
+            'subcategory_image' => 'nullable|file|mimetypes:image/jpeg,image/png,image/jpg,image/gif,image/webp|max:2048',
         ]);
 
         $subcategory = SubCategory::findOrFail($request->id);

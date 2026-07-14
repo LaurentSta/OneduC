@@ -40,8 +40,8 @@ class LectureController extends Controller
         );
 
         // Redirection automatique si spécifiée
-        if ($request->has('redirect_to')) {
-            return redirect($request->input('redirect_to'));
+        if ($request->has('redirect_to') && ($redirectTo = $this->internalRedirectPath($request->input('redirect_to')))) {
+            return redirect()->to($redirectTo);
         }
 
         return redirect()->back()->with('success', 'Leçon validée !');
@@ -138,5 +138,23 @@ class LectureController extends Controller
         $module = $lecture->section?->module;
 
         abort_unless($module && $module->isVisibleTo(auth()->user()), 404);
+    }
+
+    private function internalRedirectPath(mixed $target): ?string
+    {
+        $target = trim((string) $target);
+
+        if (
+            $target === ''
+            || str_contains($target, "\0")
+            || preg_match('/[\r\n]/', $target)
+            || preg_match('/^[a-z][a-z0-9+.-]*:/i', $target)
+            || str_starts_with($target, '//')
+            || ! str_starts_with($target, '/')
+        ) {
+            return null;
+        }
+
+        return $target;
     }
 }
