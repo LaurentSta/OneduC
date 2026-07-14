@@ -229,9 +229,11 @@ class LiveQuizSessionController extends Controller
     {
         $participant = $this->participantOrFail($session);
 
-        $participant->update(['last_seen_at' => now()]);
+        if (! $participant->last_seen_at || $participant->last_seen_at->lt(now()->subSeconds(10))) {
+            $participant->update(['last_seen_at' => now()]);
+        }
 
-        return response()->json($this->buildSnapshot($session->fresh(), $participant->fresh('attempt')));
+        return response()->json($this->buildSnapshot($session->fresh(), $participant));
     }
 
     private function participantForCurrentUser(LiveQuizSession $session): ?LiveQuizSessionParticipant
@@ -259,9 +261,9 @@ class LiveQuizSessionController extends Controller
 
             foreach ($configuredBlanks as $blankKey => $blankConfig) {
                 $merged[$blankKey] = [
-                    'answer' => data_get($givenBlanks, $blankKey . '.answer', ''),
+                    'answer' => data_get($givenBlanks, $blankKey.'.answer', ''),
                     'accepted_answers' => is_array($blankConfig['accepted_answers'] ?? null) ? $blankConfig['accepted_answers'] : [],
-                    'is_correct' => (bool) data_get($givenBlanks, $blankKey . '.is_correct', false),
+                    'is_correct' => (bool) data_get($givenBlanks, $blankKey.'.is_correct', false),
                 ];
             }
 
@@ -390,8 +392,8 @@ class LiveQuizSessionController extends Controller
                         'lecture' => $nextLecture->id,
                     ])
                     : route('stagiaire.module.section', [
-                    'module' => $session->module_id,
-                    'section' => $nextSection->id,
+                        'module' => $session->module_id,
+                        'section' => $nextSection->id,
                     ]),
             ];
         }
