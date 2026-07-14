@@ -267,9 +267,12 @@ class User extends Authenticatable
                 })
                 ->pluck('id');
 
+            // forceDelete() explicite : Group utilise SoftDeletes depuis le 14/07/2026,
+            // mais cette purge est une suppression de compte formateur documentée comme
+            // physique (RGPD) — elle ne doit pas devenir une simple mise à jour deleted_at.
             Group::query()
                 ->where('instructor_id', $formateurId)
-                ->delete();
+                ->forceDelete();
 
             foreach ($candidateStagiaireIds as $stagiaireId) {
                 $stagiaire = User::query()

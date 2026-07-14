@@ -1,0 +1,2263 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Using nullsafe property access "\?\-\>timestamp" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 3
+			path: app/Domains/Learners/Support/LearnerModuleProgress.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\ModuleLecture\:\:\$module\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Domains/ModulesFormateur/Actions/CreerQuestionQuiz.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\ModuleLecture\:\:\$section\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Domains/ModulesFormateur/Actions/DupliquerLecon.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\ModuleLecture\:\:\$module\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Domains/ModulesFormateur/Actions/GenererAudioLecon.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\QuizQuestion\:\:\$lecture\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Domains/ModulesFormateur/Actions/ModifierQuestionQuiz.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\ModuleLecture\:\:\$module\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Domains/ModulesFormateur/Actions/PromouvoirLeconEnChapitre.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\QuizQuestion\:\:\$lecture\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Domains/ModulesFormateur/Actions/SupprimerQuestionQuiz.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\ModuleLecture\:\:\$module\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Domains/ModulesFormateur/Support/DonneesModule.php
+
+		-
+			message: '#^Parameter \#1 \$boolean of function abort_unless expects bool, stdClass\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Domains/Outils/Carrousel/Http/Controllers/Formateur/CarrouselController.php
+
+		-
+			message: '#^Parameter \#1 \$boolean of function abort_unless expects bool, stdClass\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Domains/Outils/Carrousel/Http/Controllers/Formateur/CarrouselSlideController.php
+
+		-
+			message: '#^Parameter \#1 \$boolean of function abort_unless expects bool, object\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: app/Domains/Outils/Carrousel/Support/DepotCarrousel.php
+
+		-
+			message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'
+			identifier: larastan.noEnvCallsOutsideOfConfig
+			count: 1
+			path: app/Domains/Outils/Carrousel/config.php
+
+		-
+			message: '#^Parameter \#1 \$boolean of function abort_unless expects bool, stdClass\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Domains/Outils/CartesRetourner/Http/Controllers/Formateur/CartesRetournerCarteController.php
+
+		-
+			message: '#^Parameter \#1 \$boolean of function abort_unless expects bool, stdClass\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Domains/Outils/CartesRetourner/Http/Controllers/Formateur/CartesRetournerController.php
+
+		-
+			message: '#^Parameter \#1 \$boolean of function abort_unless expects bool, object\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: app/Domains/Outils/CartesRetourner/Support/DepotCartesRetourner.php
+
+		-
+			message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'
+			identifier: larastan.noEnvCallsOutsideOfConfig
+			count: 1
+			path: app/Domains/Outils/CartesRetourner/config.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$statut\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Domains/Outils/Emargement/Actions/SignerPresence.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$motif_absence\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Domains/Outils/Emargement/Support/GenererPdfEmargement.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$signatureBase64\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Domains/Outils/Emargement/Support/GenererPdfEmargement.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$statut\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Domains/Outils/Emargement/Support/GenererPdfEmargement.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$user\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Domains/Outils/Emargement/Support/GenererPdfEmargement.php
+
+		-
+			message: '#^Offset ''apres_midi''\|''journee''\|''matin''\|''soiree'' on array\{matin\: ''Matin'', apres_midi\: ''Après\-midi'', journee\: ''Journée complète'', soiree\: ''Soirée''\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Domains/Outils/Emargement/Support/GenererPdfEmargement.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Domains/Outils/Emargement/Support/GenererPdfEmargement.php
+
+		-
+			message: '#^Parameter \#1 \$boolean of function abort_unless expects bool, stdClass\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Domains/Outils/Memoire/Http/Controllers/Formateur/MemoireController.php
+
+		-
+			message: '#^Parameter \#1 \$boolean of function abort_unless expects bool, stdClass\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Domains/Outils/Memoire/Http/Controllers/Stagiaire/ParticipationMemoireController.php
+
+		-
+			message: '#^Parameter \#1 \$boolean of function abort_unless expects bool, object\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Domains/Outils/Memoire/Support/DepotMemoire.php
+
+		-
+			message: '#^Parameter \#1 \$boolean of function abort_unless expects bool, stdClass\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Domains/Outils/Memoire/Support/DepotMemoire.php
+
+		-
+			message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'
+			identifier: larastan.noEnvCallsOutsideOfConfig
+			count: 1
+			path: app/Domains/Outils/Memoire/config.php
+
+		-
+			message: '#^Parameter \#1 \$boolean of function abort_unless expects bool, stdClass\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Domains/Outils/Pendu/Http/Controllers/Formateur/PenduController.php
+
+		-
+			message: '#^Parameter \#1 \$boolean of function abort_unless expects bool, stdClass\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: app/Domains/Outils/Pendu/Http/Controllers/Stagiaire/ParticipationPenduController.php
+
+		-
+			message: '#^Parameter \#1 \$boolean of function abort_unless expects bool, object\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: app/Domains/Outils/Pendu/Support/DepotPendu.php
+
+		-
+			message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'
+			identifier: larastan.noEnvCallsOutsideOfConfig
+			count: 1
+			path: app/Domains/Outils/Pendu/config.php
+
+		-
+			message: '#^Parameter \#1 \$boolean of function abort_unless expects bool, stdClass\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Domains/Outils/TriCartes/Http/Controllers/Formateur/TriCartesCarteController.php
+
+		-
+			message: '#^Parameter \#1 \$boolean of function abort_unless expects bool, stdClass\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Domains/Outils/TriCartes/Http/Controllers/Formateur/TriCartesCategorieController.php
+
+		-
+			message: '#^Parameter \#1 \$boolean of function abort_unless expects bool, stdClass\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Domains/Outils/TriCartes/Http/Controllers/Formateur/TriCartesController.php
+
+		-
+			message: '#^Parameter \#1 \$boolean of function abort_unless expects bool, stdClass\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Domains/Outils/TriCartes/Http/Controllers/Stagiaire/ParticipationTriCartesController.php
+
+		-
+			message: '#^Parameter \#1 \$boolean of function abort_unless expects bool, object\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: app/Domains/Outils/TriCartes/Support/DepotTriCartes.php
+
+		-
+			message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'
+			identifier: larastan.noEnvCallsOutsideOfConfig
+			count: 1
+			path: app/Domains/Outils/TriCartes/config.php
+
+		-
+			message: '#^Match arm comparison between ''stagiaire'' and ''stagiaire'' is always true\.$#'
+			identifier: match.alwaysTrue
+			count: 1
+			path: app/Http/Controllers/AdminController.php
+
+		-
+			message: '#^Relation ''formateur'' is not found in App\\Models\\User model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/AdminController.php
+
+		-
+			message: '#^Relation ''groupesStagiaire'' is not found in App\\Models\\User model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/AdminController.php
+
+		-
+			message: '#^Relation ''stagiaires'' is not found in App\\Models\\User model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/AdminController.php
+
+		-
+			message: '#^Relation ''students'' is not found in App\\Models\\Group model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/AdminController.php
+
+		-
+			message: '#^Match arm comparison between ''stagiaire'' and ''stagiaire'' is always true\.$#'
+			identifier: match.alwaysTrue
+			count: 1
+			path: app/Http/Controllers/Auth/AuthenticatedSessionController.php
+
+		-
+			message: '#^Parameter \#1 \$user of class Illuminate\\Auth\\Events\\Verified constructor expects Illuminate\\Contracts\\Auth\\MustVerifyEmail, App\\Models\\User\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Auth/VerifyEmailController.php
+
+		-
+			message: '#^Relation ''competencies'' is not found in App\\Models\\Badge model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/Backend/BadgeController.php
+
+		-
+			message: '#^Relation ''category'' is not found in App\\Models\\SubCategory model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Backend/CategoryController.php
+
+		-
+			message: '#^Relation ''formateur'' is not found in App\\Models\\Module model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Backend/CategoryController.php
+
+		-
+			message: '#^Relation ''modules'' is not found in App\\Models\\SubCategory model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Backend/CategoryController.php
+
+		-
+			message: '#^Relation ''badges'' is not found in App\\Models\\Competency model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Backend/CompetencyController.php
+
+		-
+			message: '#^Relation ''objectives'' is not found in App\\Models\\Competency model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Backend/CompetencyController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>attempts_count" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/Backend/EvaluationController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>session_time" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/Backend/EvaluationController.php
+
+		-
+			message: '#^Relation ''instructor'' is not found in App\\Models\\Group model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Backend/GroupeController.php
+
+		-
+			message: '#^Relation ''students'' is not found in App\\Models\\Group model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Backend/GroupeController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Group\:\:\$modules\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Backend/ModuleController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Module\:\:\$sections\.$#'
+			identifier: property.notFound
+			count: 10
+			path: app/Http/Controllers/Backend/ModuleController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\ModuleSection\:\:\$lectures\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Backend/ModuleController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Module\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\Module\>\:\:\$sections\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Backend/ModuleController.php
+
+		-
+			message: '#^Relation ''category'' is not found in App\\Models\\Module model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Backend/ModuleController.php
+
+		-
+			message: '#^Relation ''formateur'' is not found in App\\Models\\Module model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Backend/ModuleController.php
+
+		-
+			message: '#^Relation ''modules'' is not found in App\\Models\\Group model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/Backend/ModuleController.php
+
+		-
+			message: '#^Relation ''sections'' is not found in App\\Models\\Module model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/Backend/ModuleController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>answered" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Http/Controllers/Backend/ModuleController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>correct" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Http/Controllers/Backend/ModuleController.php
+
+		-
+			message: '#^Variable \$planned on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.variable
+			count: 1
+			path: app/Http/Controllers/Backend/ModuleController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\ModuleLecture\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\ModuleLecture\>\:\:\$quiz_questions_count\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Backend/ModuleLectureController.php
+
+		-
+			message: '#^Relation ''lecture'' is not found in App\\Models\\QuizQuestion model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Backend/ModuleLectureController.php
+
+		-
+			message: '#^Relation ''objectives'' is not found in App\\Models\\ModuleLecture model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Backend/ModuleLectureController.php
+
+		-
+			message: '#^Relation ''lecture'' is not found in App\\Models\\QuizQuestion model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Backend/ModuleSectionController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$groupesObserve\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Backend/ObservateurController.php
+
+		-
+			message: '#^Relation ''groupesObserve'' is not found in App\\Models\\User model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Backend/ObservateurController.php
+
+		-
+			message: '#^Relation ''instructor'' is not found in App\\Models\\Group model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Backend/ObservateurController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\PilotTask\:\:\$subscriptions\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Backend/PilotageController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$unreadNotifications\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Backend/PilotageController.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Support\\Collection\<int, Illuminate\\Notifications\\DatabaseNotification\>\:\:markAsRead\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Controllers/Backend/PilotageController.php
+
+		-
+			message: '#^Relation ''creator'' is not found in App\\Models\\PilotProject model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Backend/PilotageController.php
+
+		-
+			message: '#^Relation ''creator'' is not found in App\\Models\\PilotTask model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Backend/PilotageController.php
+
+		-
+			message: '#^Relation ''module'' is not found in App\\Models\\PilotProject model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Backend/PilotageController.php
+
+		-
+			message: '#^Relation ''module'' is not found in App\\Models\\PilotTask model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Backend/PilotageController.php
+
+		-
+			message: '#^Relation ''project'' is not found in App\\Models\\PilotTask model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Backend/PilotageController.php
+
+		-
+			message: '#^Relation ''responsible'' is not found in App\\Models\\PilotTask model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Backend/PilotageController.php
+
+		-
+			message: '#^Relation ''user'' is not found in App\\Models\\ActivityJournalEntry model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Backend/PilotageController.php
+
+		-
+			message: '#^Relation ''options'' is not found in App\\Models\\QuizQuestion model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Backend/QuizQuestionController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/BuzzerParticipationController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$instructor_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/BuzzerParticipationController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/BuzzerParticipationController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$result\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/BuzzerParticipationController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$score\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/BuzzerParticipationController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$user\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/BuzzerParticipationController.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:coFormateurs\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Controllers/BuzzerParticipationController.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:students\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Controllers/BuzzerParticipationController.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:users\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Controllers/BuzzerParticipationController.php
+
+		-
+			message: '#^Parameter \#1 \$boolean of function abort_unless expects bool, Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: app/Http/Controllers/BuzzerParticipationController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Http/Controllers/BuzzerParticipationController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>id" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Http/Controllers/BuzzerParticipationController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/BuzzerParticipationController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>result" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Http/Controllers/BuzzerParticipationController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$instructor_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/ComponentFinderParticipationController.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:coFormateurs\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Controllers/ComponentFinderParticipationController.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:students\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Controllers/ComponentFinderParticipationController.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:users\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Controllers/ComponentFinderParticipationController.php
+
+		-
+			message: '#^Parameter \#1 \$boolean of function abort_unless expects bool, Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: app/Http/Controllers/ComponentFinderParticipationController.php
+
+		-
+			message: '#^Access to property \$id on an unknown class App\\Http\\Controllers\\Evaluation\.$#'
+			identifier: class.notFound
+			count: 2
+			path: app/Http/Controllers/EvaluationSCORMController.php
+
+		-
+			message: '#^Call to an undefined method App\\Http\\Controllers\\EvaluationSCORMController\:\:viewBase\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Controllers/EvaluationSCORMController.php
+
+		-
+			message: '#^Parameter \$evaluation of method App\\Http\\Controllers\\EvaluationSCORMController\:\:fin\(\) has invalid type App\\Http\\Controllers\\Evaluation\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/EvaluationSCORMController.php
+
+		-
+			message: '#^Property App\\Models\\ScormEvaluationScore\:\:\$is_completed \(int\) does not accept bool\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Http/Controllers/EvaluationSCORMController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>attempts_count" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/EvaluationSCORMController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>session_time" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/EvaluationSCORMController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Formateur/EmargementController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$motif_absence\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Formateur/EmargementController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$signatureBase64\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Formateur/EmargementController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$signature_type\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Formateur/EmargementController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$stagiaire_nom_snapshot\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Formateur/EmargementController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$statut\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Formateur/EmargementController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Http/Controllers/Formateur/EmargementController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Module\:\:\$groups\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Formateur/FormateurModuleController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Module\:\:\$sections\.$#'
+			identifier: property.notFound
+			count: 7
+			path: app/Http/Controllers/Formateur/FormateurModuleController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\ModuleLecture\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\ModuleLecture\>\:\:\$module\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Formateur/FormateurModuleController.php
+
+		-
+			message: '#^Relation ''groups'' is not found in App\\Models\\Module model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/Formateur/FormateurModuleController.php
+
+		-
+			message: '#^Relation ''modules'' is not found in App\\Models\\Group model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Formateur/FormateurModuleController.php
+
+		-
+			message: '#^Relation ''sections'' is not found in App\\Models\\Module model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Formateur/FormateurModuleController.php
+
+		-
+			message: '#^Parameter \#1 \$view of function view expects view\-string\|null, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Formateur/FormateurProfileController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\User\>\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Formateur/FormateurStagiaireController.php
+
+		-
+			message: '#^Relation ''groupesStagiaire'' is not found in App\\Models\\User model\.$#'
+			identifier: larastan.relationExistence
+			count: 8
+			path: app/Http/Controllers/Formateur/FormateurStagiaireController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Group\:\:\$coFormateurs\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Formateur/GroupeController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Group\:\:\$students\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Formateur/GroupeController.php
+
+		-
+			message: '#^Relation ''coFormateurs'' is not found in App\\Models\\Group model\.$#'
+			identifier: larastan.relationExistence
+			count: 3
+			path: app/Http/Controllers/Formateur/GroupeController.php
+
+		-
+			message: '#^Relation ''instructor'' is not found in App\\Models\\Group model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/Formateur/GroupeController.php
+
+		-
+			message: '#^Relation ''modules'' is not found in App\\Models\\Group model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/Formateur/GroupeController.php
+
+		-
+			message: '#^Relation ''observers'' is not found in App\\Models\\Group model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/Formateur/GroupeController.php
+
+		-
+			message: '#^Relation ''sections'' is not found in App\\Models\\Module model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/Formateur/GroupeController.php
+
+		-
+			message: '#^Relation ''students'' is not found in App\\Models\\Group model\.$#'
+			identifier: larastan.relationExistence
+			count: 3
+			path: app/Http/Controllers/Formateur/GroupeController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\ModuleSection\:\:\$lectures\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Formateur/GroupeModuleLessonController.php
+
+		-
+			message: '#^Relation ''lectures'' is not found in App\\Models\\ModuleSection model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Formateur/GroupeModuleLessonController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\QuizAttemptQuestion\:\:\$attempt\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Formateur/LiveQuizSessionController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$attempt\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Formateur/LiveQuizSessionController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$options\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Formateur/LiveQuizSessionController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$position\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Formateur/LiveQuizSessionController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$question_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Formateur/LiveQuizSessionController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$type\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Formateur/LiveQuizSessionController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Formateur/MesFormationsController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$module_title\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Formateur/MesFormationsController.php
+
+		-
+			message: '#^Anonymous function has an unused use \$request\.$#'
+			identifier: closure.unusedUse
+			count: 1
+			path: app/Http/Controllers/Formateur/MesFormationsController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) expects callable\(Illuminate\\Database\\Eloquent\\Model, int\)\: \(array\{type\: ''module'', id\: int, title\: string, position\: int\<0, max\>, lesson_count\: int\<0, max\>, question_count\: int, duration_label\: string\}\|array\{type\: ''poll'', id\: lowercase\-string&non\-falsy\-string, position\: int\<0, max\>, poll_questions\: array, poll_duration\: int\<1, max\>\|null\}\|array\{type\: ''wordcloud'', id\: lowercase\-string&non\-falsy\-string, position\: int\<0, max\>, wc_title\: string, wc_questions\: array, wc_duration\: int\<1, max\>\|null\}\), Closure\(App\\Models\\FormateurParcoursItem\)\: \(array\{type\: ''module'', id\: int, title\: string, position\: int\<0, max\>, lesson_count\: int\<0, max\>, question_count\: int, duration_label\: string\}\|array\{type\: ''poll'', id\: lowercase\-string&non\-falsy\-string, position\: int\<0, max\>, poll_questions\: array, poll_duration\: int\<1, max\>\|null\}\|array\{type\: ''wordcloud'', id\: lowercase\-string&non\-falsy\-string, position\: int\<0, max\>, wc_title\: string, wc_questions\: array, wc_duration\: int\<1, max\>\|null\}\) given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Formateur/MesFormationsController.php
+
+		-
+			message: '#^Relation ''sections'' is not found in App\\Models\\Module model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Formateur/MesFormationsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\ModuleLecture\:\:\$module\.$#'
+			identifier: property.notFound
+			count: 8
+			path: app/Http/Controllers/Formateur/ModuleBuilderController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\ModuleLecture\:\:\$section\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Formateur/ModuleBuilderController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\ModuleSection\:\:\$module\.$#'
+			identifier: property.notFound
+			count: 7
+			path: app/Http/Controllers/Formateur/ModuleBuilderController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Module\:\:\$sections\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Formateur/ModuleQuizBankController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\ModuleSection\:\:\$lectures\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Formateur/ModuleQuizBankController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\QuizQuestion\:\:\$lecture\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Formateur/ModuleQuizBankController.php
+
+		-
+			message: '#^Relation ''options'' is not found in App\\Models\\QuizQuestion model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Formateur/ModuleQuizBankController.php
+
+		-
+			message: '#^Relation ''groups'' is not found in App\\Models\\Module model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Formateur/ObjectiveController.php
+
+		-
+			message: '#^Relation ''lecture'' is not found in App\\Models\\LectureObjective model\.$#'
+			identifier: larastan.relationExistence
+			count: 5
+			path: app/Http/Controllers/Formateur/ObjectiveController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Formateur/OutilsBuzzerController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$score\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Formateur/OutilsBuzzerController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$user\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Formateur/OutilsBuzzerController.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>\:\:accessibleByTrainer\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Controllers/Formateur/OutilsBuzzerController.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Relations\\BelongsTo\:\:accessibleByTrainer\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Controllers/Formateur/OutilsBuzzerController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Http/Controllers/Formateur/OutilsBuzzerController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>id" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/Formateur/OutilsBuzzerController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/Formateur/OutilsBuzzerController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>result" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/Formateur/OutilsBuzzerController.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>\:\:accessibleByTrainer\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Controllers/Formateur/OutilsComposantController.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Relations\\BelongsTo\:\:accessibleByTrainer\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Controllers/Formateur/OutilsComposantController.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>\:\:accessibleByTrainer\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Controllers/Formateur/OutilsEchelleController.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Relations\\BelongsTo\:\:accessibleByTrainer\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Controllers/Formateur/OutilsEchelleController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Module\:\:\$groups\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Formateur/OutilsLiveQuizController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Module\:\:\$sections\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Formateur/OutilsLiveQuizController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\ModuleSection\:\:\$lectures\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Formateur/OutilsLiveQuizController.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>\:\:accessibleByTrainer\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Controllers/Formateur/OutilsLiveQuizController.php
+
+		-
+			message: '#^Relation ''groups'' is not found in App\\Models\\Module model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/Formateur/OutilsLiveQuizController.php
+
+		-
+			message: '#^Relation ''sections'' is not found in App\\Models\\Module model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Formateur/OutilsLiveQuizController.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>\:\:accessibleByTrainer\(\)\.$#'
+			identifier: method.notFound
+			count: 4
+			path: app/Http/Controllers/Formateur/OutilsNumeriquesController.php
+
+		-
+			message: '#^Relation ''lectures'' is not found in App\\Models\\Module model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/Formateur/OutilsNumeriquesController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Category\:\:\$subcategories\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Formateur/OutilsPowerPointController.php
+
+		-
+			message: '#^Relation ''category'' is not found in App\\Models\\Module model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Formateur/OutilsPowerPointController.php
+
+		-
+			message: '#^Relation ''lectures'' is not found in App\\Models\\Module model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/Formateur/OutilsPowerPointController.php
+
+		-
+			message: '#^Relation ''subCategory'' is not found in App\\Models\\Module model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Formateur/OutilsPowerPointController.php
+
+		-
+			message: '#^Relation ''subcategories'' is not found in App\\Models\\Category model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Formateur/OutilsPowerPointController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Module\:\:\$sections\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Formateur/OutilsQuizQuestionsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\ModuleSection\:\:\$lectures\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Formateur/OutilsQuizQuestionsController.php
+
+		-
+			message: '#^Relation ''sections'' is not found in App\\Models\\Module model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Formateur/OutilsQuizQuestionsController.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>\:\:accessibleByTrainer\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Controllers/Formateur/OutilsVraiFauxController.php
+
+		-
+			message: '#^Parameter \#1 \$array \(list\<string\>\) of array_values is already a list, call has no effect\.$#'
+			identifier: arrayValues.list
+			count: 1
+			path: app/Http/Controllers/Formateur/ParcoursController.php
+
+		-
+			message: '#^Parameter \#1 \$boolean of function abort_unless expects bool, array\<string, mixed\>\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Formateur/ParcoursController.php
+
+		-
+			message: '#^Parameter \#1 \$questionnaire of class App\\Mail\\ModuleQuestionnaireSubmitted constructor expects array, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Formateur/ParcoursController.php
+
+		-
+			message: '#^Property App\\Http\\Controllers\\Formateur\\ProgressionController\:\:\$learningAnalytics is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: app/Http/Controllers/Formateur/ProgressionController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Group\:\:\$inactive_count\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Formateur/ProgressionGroupesController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Group\:\:\$lecons_terminees_count\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Formateur/ProgressionGroupesController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Group\:\:\$modules_count\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Formateur/ProgressionGroupesController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Group\:\:\$not_started_count\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Formateur/ProgressionGroupesController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Group\:\:\$stagiaires_count\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Formateur/ProgressionGroupesController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Group\:\:\$taux_reussite\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Formateur/ProgressionGroupesController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Group\:\:\$total_site_time\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Formateur/ProgressionGroupesController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Module\:\:\$avg_score\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Formateur/ProgressionModulesController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Module\:\:\$groupes_count\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Formateur/ProgressionModulesController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Module\:\:\$stagiaires_count\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Formateur/ProgressionModulesController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Module\:\:\$start_rate\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Formateur/ProgressionModulesController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Module\:\:\$started_count\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Formateur/ProgressionModulesController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Module\:\:\$top_failed\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Formateur/ProgressionModulesController.php
+
+		-
+			message: '#^Called ''pluck'' on Laravel collection, but could have been retrieved as a query\.$#'
+			identifier: larastan.noUnnecessaryCollectionCall
+			count: 1
+			path: app/Http/Controllers/Formateur/ProgressionModulesController.php
+
+		-
+			message: '#^Relation ''groups'' is not found in App\\Models\\Module model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Formateur/ProgressionModulesController.php
+
+		-
+			message: '#^Parameter \#3 \$inactivityDays of method App\\Http\\Controllers\\Formateur\\ProgressionStagiaireController\:\:assessDropoutRisk\(\) expects int\|null, float\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Formateur/ProgressionStagiaireController.php
+
+		-
+			message: '#^Property App\\Http\\Controllers\\Formateur\\ProgressionStagiaireController\:\:\$learningAnalytics is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: app/Http/Controllers/Formateur/ProgressionStagiaireController.php
+
+		-
+			message: '#^Relation ''attempt'' is not found in App\\Models\\QuizAttemptQuestion model\.$#'
+			identifier: larastan.relationExistence
+			count: 3
+			path: app/Http/Controllers/Formateur/ProgressionStagiaireController.php
+
+		-
+			message: '#^Relation ''groupesStagiaire'' is not found in App\\Models\\User model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Formateur/ProgressionStagiaireController.php
+
+		-
+			message: '#^Relation ''lecture'' is not found in App\\Models\\Progression model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/Formateur/ProgressionStagiaireController.php
+
+		-
+			message: '#^Result of && is always false\.$#'
+			identifier: booleanAnd.alwaysFalse
+			count: 1
+			path: app/Http/Controllers/Formateur/ProgressionStagiaireController.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between float and 1 will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: app/Http/Controllers/Formateur/ProgressionStagiaireController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$last_completed_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Formateur/ProgressionStagiairesController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$lecons_terminees_count\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Formateur/ProgressionStagiairesController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$taux_reussite\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Formateur/ProgressionStagiairesController.php
+
+		-
+			message: '#^Relation ''groupesStagiaire'' is not found in App\\Models\\User model\.$#'
+			identifier: larastan.relationExistence
+			count: 3
+			path: app/Http/Controllers/Formateur/ProgressionStagiairesController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\ModuleLecture\:\:\$module\.$#'
+			identifier: property.notFound
+			count: 9
+			path: app/Http/Controllers/Formateur/QuizQuestionController.php
+
+		-
+			message: '#^Parameter \#1 \$group of static method App\\Http\\Controllers\\Formateur\\RoueAleatoireController\:\:entriesFromGroup\(\) expects App\\Models\\Group, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Formateur/RoueAleatoireController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$instructor_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Formateur/WordCloudController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Formateur/WordCloudController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$students\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Formateur/WordCloudController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>instructor_id" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/Formateur/WordCloudController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Group\:\:\$alert_count\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/FormateurController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Group\:\:\$inactive_count\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/FormateurController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Group\:\:\$last_completed_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/FormateurController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Group\:\:\$learners_count\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/FormateurController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Group\:\:\$lecons_terminees_count\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/FormateurController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Group\:\:\$not_started_count\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/FormateurController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Group\:\:\$taux_reussite\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/FormateurController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Module\:\:\$attention_detail\.$#'
+			identifier: property.notFound
+			count: 4
+			path: app/Http/Controllers/FormateurController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Module\:\:\$attention_label\.$#'
+			identifier: property.notFound
+			count: 4
+			path: app/Http/Controllers/FormateurController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Module\:\:\$attention_score\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/FormateurController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Module\:\:\$attention_variant\.$#'
+			identifier: property.notFound
+			count: 4
+			path: app/Http/Controllers/FormateurController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Module\:\:\$avg_score\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/FormateurController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Module\:\:\$groupes_count\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/FormateurController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Module\:\:\$stagiaires_count\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/FormateurController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Module\:\:\$start_rate\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/FormateurController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Module\:\:\$started_count\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/FormateurController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Module\:\:\$top_failed_failures\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/FormateurController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Module\:\:\$top_failed_question\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/FormateurController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Module\:\:\$top_failed_rate\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/FormateurController.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>\:\:accessibleByTrainer\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Http/Controllers/FormateurController.php
+
+		-
+			message: '#^Relation ''groupesStagiaire'' is not found in App\\Models\\User model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/FormateurController.php
+
+		-
+			message: '#^Relation ''groups'' is not found in App\\Models\\Module model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/FormateurController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\ModuleLecture\:\:\$section\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Frontend/LectureController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\ModuleLecture\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\ModuleLecture\>\:\:\$section\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Frontend/LectureController.php
+
+		-
+			message: '#^Relation ''section'' is not found in App\\Models\\ModuleLecture model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Frontend/LectureController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Module\:\:\$sections\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Frontend/MFormationsController.php
+
+		-
+			message: '#^Call to function is_string\(\) with null will always evaluate to false\.$#'
+			identifier: function.impossibleType
+			count: 1
+			path: app/Http/Controllers/Frontend/MFormationsController.php
+
+		-
+			message: '#^Relation ''category'' is not found in App\\Models\\Module model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Frontend/MFormationsController.php
+
+		-
+			message: '#^Relation ''formateur'' is not found in App\\Models\\Module model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Frontend/MFormationsController.php
+
+		-
+			message: '#^Relation ''lesson'' is not found in App\\Models\\LessonFeedback model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/LessonFeedbackController.php
+
+		-
+			message: '#^Relation ''user'' is not found in App\\Models\\LessonFeedback model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/LessonFeedbackController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$unreadNotifications\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/NotificationController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\ModuleSection\:\:\$lectures\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Observateur/GroupeController.php
+
+		-
+			message: '#^Relation ''lectures'' is not found in App\\Models\\ModuleSection model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Observateur/GroupeController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Group\:\:\$lecons_terminees_count\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Observateur/ProgressionController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Group\:\:\$modules_count\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Observateur/ProgressionController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Group\:\:\$stagiaires_count\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Observateur/ProgressionController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Group\:\:\$taux_reussite\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Observateur/ProgressionController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Group\:\:\$total_site_time\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Observateur/ProgressionController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$last_completed_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Observateur/ProgressionController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$lecons_terminees_count\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Observateur/ProgressionController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$taux_reussite\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Observateur/ProgressionController.php
+
+		-
+			message: '#^Relation ''attempt'' is not found in App\\Models\\QuizAttemptQuestion model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/Observateur/ProgressionController.php
+
+		-
+			message: '#^Relation ''groupesStagiaire'' is not found in App\\Models\\User model\.$#'
+			identifier: larastan.relationExistence
+			count: 4
+			path: app/Http/Controllers/Observateur/ProgressionController.php
+
+		-
+			message: '#^Relation ''lecture'' is not found in App\\Models\\Progression model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Observateur/ProgressionController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Group\:\:\$last_completed_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/ObservateurController.php
+
+		-
+			message: '#^Relation ''groupesStagiaire'' is not found in App\\Models\\User model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/ObservateurController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$instructor_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/PollParticipationController.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:coFormateurs\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Controllers/PollParticipationController.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:users\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Controllers/PollParticipationController.php
+
+		-
+			message: '#^Parameter \#1 \$boolean of function abort_unless expects bool, Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/PollParticipationController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$instructor_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/QuestionWallParticipationController.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:users\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Controllers/QuestionWallParticipationController.php
+
+		-
+			message: '#^Parameter \#1 \$boolean of function abort_unless expects bool, Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/QuestionWallParticipationController.php
+
+		-
+			message: '#^Property App\\Models\\ScormScore\:\:\$is_completed \(int\) does not accept true\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Http/Controllers/SCORMController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$instructor_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/ScaleParticipationController.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:coFormateurs\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Controllers/ScaleParticipationController.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:users\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Controllers/ScaleParticipationController.php
+
+		-
+			message: '#^Parameter \#1 \$boolean of function abort_unless expects bool, Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/ScaleParticipationController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Stagiaire/EmargementController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\QuizAttemptQuestion\:\:\$attempt\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Stagiaire/LiveQuizSessionController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\QuizQuestion\:\:\$options\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Stagiaire/LiveQuizSessionController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$attemptQuestions\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Http/Controllers/Stagiaire/LiveQuizSessionController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$lecture_title\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Stagiaire/LiveQuizSessionController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$position\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Stagiaire/LiveQuizSessionController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$question_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Stagiaire/LiveQuizSessionController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$sections\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Stagiaire/LiveQuizSessionController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Stagiaire\\LiveQuizSessionController\:\:participantForCurrentUser\(\) should return App\\Models\\LiveQuizSessionParticipant\|null but returns Illuminate\\Database\\Eloquent\\Model\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Controllers/Stagiaire/LiveQuizSessionController.php
+
+		-
+			message: '#^Parameter \#1 \$attempt of method App\\Http\\Controllers\\Stagiaire\\LiveQuizSessionController\:\:buildAttemptSummary\(\) expects App\\Models\\QuizAttempt, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Stagiaire/LiveQuizSessionController.php
+
+		-
+			message: '#^Parameter \#1 \$boolean of function abort_unless expects bool, App\\Models\\LiveQuizSessionParticipant\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Stagiaire/LiveQuizSessionController.php
+
+		-
+			message: '#^Parameter \#2 \$lecture of method App\\Http\\Controllers\\Stagiaire\\LiveQuizSessionController\:\:createAttemptForSession\(\) expects App\\Models\\ModuleLecture, Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Stagiaire/LiveQuizSessionController.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between ''cloze'' and ''cloze'' will always evaluate to true\.$#'
+			identifier: identical.alwaysTrue
+			count: 1
+			path: app/Http/Controllers/Stagiaire/LiveQuizSessionController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>given_answer" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/Stagiaire/LiveQuizSessionController.php
+
+		-
+			message: '#^Relation ''students'' is not found in App\\Models\\Group model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/Stagiaire/ParcoursWordCloudController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Stagiaire/QuestionWallController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Module\:\:\$sections\.$#'
+			identifier: property.notFound
+			count: 9
+			path: app/Http/Controllers/Stagiaire/QuizController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Stagiaire\\QuizController\:\:attemptHasColumn\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: app/Http/Controllers/Stagiaire/QuizController.php
+
+		-
+			message: '#^Relation ''options'' is not found in App\\Models\\QuizQuestion model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Stagiaire/QuizController.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between ''groupe''\|''officiel''\|int\<min, \-1\>\|int\<1, max\> and '''' will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: app/Http/Controllers/Stagiaire/QuizController.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between ''cloze'' and ''cloze'' will always evaluate to true\.$#'
+			identifier: identical.alwaysTrue
+			count: 1
+			path: app/Http/Controllers/Stagiaire/QuizController.php
+
+		-
+			message: '#^Variable \$planned on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.variable
+			count: 1
+			path: app/Http/Controllers/Stagiaire/QuizController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Stagiaire/WordCloudController.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>\:\:active\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Controllers/Stagiaire/WordCloudController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Group\:\:\$formateurParcours\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/StagiaireController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Group\:\:\$instructor\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/StagiaireController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Group\:\:\$modules\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/StagiaireController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Module\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\Module\>\:\:\$sections\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Http/Controllers/StagiaireController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\VideoSegmentTracking\:\:\$first_seen_at\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/StagiaireController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\VideoSegmentTracking\:\:\$last_seen_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/StagiaireController.php
+
+		-
+			message: '#^Relation ''attempt'' is not found in App\\Models\\QuizAttemptQuestion model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/StagiaireController.php
+
+		-
+			message: '#^Relation ''formateurParcours'' is not found in App\\Models\\Group model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/StagiaireController.php
+
+		-
+			message: '#^Relation ''module'' is not found in App\\Models\\ModuleLecture model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/StagiaireController.php
+
+		-
+			message: '#^Relation ''modules'' is not found in App\\Models\\Group model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/StagiaireController.php
+
+		-
+			message: '#^Relation ''sections'' is not found in App\\Models\\Module model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/StagiaireController.php
+
+		-
+			message: '#^Relation ''students'' is not found in App\\Models\\Group model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/StagiaireController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>is_completed" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/StagiaireController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>items" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/StagiaireController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>lesson_status" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/StagiaireController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>session_time" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/StagiaireController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>timestamp" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 3
+			path: app/Http/Controllers/StagiaireController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>total_time_seconds" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/StagiaireController.php
+
+		-
+			message: '#^Using nullsafe property access on non\-nullable type mixed\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/StagiaireController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>last_score" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/UserController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>lesson_status" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/UserController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$groupesStagiaire\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/UtilisateurController.php
+
+		-
+			message: '#^Relation ''formateur'' is not found in App\\Models\\User model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/UtilisateurController.php
+
+		-
+			message: '#^Relation ''groupesEncadres'' is not found in App\\Models\\User model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/UtilisateurController.php
+
+		-
+			message: '#^Relation ''groupesFormateur'' is not found in App\\Models\\User model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/UtilisateurController.php
+
+		-
+			message: '#^Relation ''groupesStagiaire'' is not found in App\\Models\\User model\.$#'
+			identifier: larastan.relationExistence
+			count: 4
+			path: app/Http/Controllers/UtilisateurController.php
+
+		-
+			message: '#^Relation ''instructor'' is not found in App\\Models\\Group model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/UtilisateurController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$instructor_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/VraiFauxParticipationController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$is_active\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/VraiFauxParticipationController.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:coFormateurs\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Controllers/VraiFauxParticipationController.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:students\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Http/Controllers/VraiFauxParticipationController.php
+
+		-
+			message: '#^Parameter \#1 \$boolean of function abort_unless expects bool, Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/VraiFauxParticipationController.php
+
+		-
+			message: '#^Method App\\Http\\Middleware\\Role\:\:redirectByRole\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: app/Http/Middleware/Role.php
+
+		-
+			message: '#^Method App\\Models\\BuzzerQuestion\:\:currentHolder\(\) should return App\\Models\\BuzzerAttempt\|null but returns Illuminate\\Database\\Eloquent\\Model\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Models/BuzzerQuestion.php
+
+		-
+			message: '#^Method App\\Models\\BuzzerSession\:\:currentQuestion\(\) should return App\\Models\\BuzzerQuestion\|null but returns Illuminate\\Database\\Eloquent\\Model\|null\.$#'
+			identifier: return.type
+			count: 2
+			path: app/Models/BuzzerSession.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Group\:\:\$coFormateurs\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/Group.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/GroupWhiteboard.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/GroupWhiteboard.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) expects callable\(Illuminate\\Database\\Eloquent\\Model, int\)\: array, Closure\(App\\Models\\GroupWhiteboardItem\)\: array given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Models/GroupWhiteboard.php
+
+		-
+			message: '#^Method App\\Models\\LiveQuizSession\:\:currentSessionQuestion\(\) should return App\\Models\\LiveQuizSessionQuestion\|null but returns Illuminate\\Database\\Eloquent\\Model\|null\.$#'
+			identifier: return.type
+			count: 2
+			path: app/Models/LiveQuizSession.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Module\:\:\$sections\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Models/Module.php
+
+		-
+			message: '#^Call to an undefined method Spatie\\Image\\Drivers\\ImageDriver\:\:nonQueued\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Models/Module.php
+
+		-
+			message: '#^Relation ''groupesStagiaire'' is not found in App\\Models\\User model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Models/Module.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$activeVersion\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/ModuleLecture.php
+
+		-
+			message: '#^Method App\\Models\\ModuleLecture\:\:resolveScormVersion\(\) should return App\\Models\\ScormPackageVersion\|null but returns Illuminate\\Database\\Eloquent\\Model\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Models/ModuleLecture.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>index_path" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Models/ModuleLecture.php
+
+		-
+			message: '#^Cannot call method greaterThanOrEqualTo\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Relation ''groupesStagiaire'' is not found in App\\Models\\User model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Notifications/FormateurMessageNotification.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$prenom\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Notifications/FormateurMessageNotification.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\PilotTask\:\:\$project\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Notifications/PilotageTaskNotification.php
+
+		-
+			message: '#^Method App\\Services\\ConsommationIADashboardService\:\:resumeParFormateur\(\) should return Illuminate\\Support\\Collection\<int, array\<string, mixed\>\> but returns Illuminate\\Support\\Collection\<int, array\{id\: int, nom\: string, appels\: int, total_tokens\: int, derniere_generation\: mixed\}\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Services/ConsommationIADashboardService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\ScormInteraction\:\:\$last_interaction_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/LearningAnalyticsService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\ScormResult\:\:\$last_started_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/LearningAnalyticsService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\VideoSegmentTracking\:\:\$last_video_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/LearningAnalyticsService.php
+
+		-
+			message: '#^Call to function is_null\(\) with int will always evaluate to false\.$#'
+			identifier: function.impossibleType
+			count: 2
+			path: app/Services/LearningAnalyticsService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>timestamp" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Services/LearningAnalyticsService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\QuizQuestion\:\:\$lecture\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/QuizQuestionBuilder.php
+
+		-
+			message: '#^Offset 1 on array\{list\<string\>, list\<non\-empty\-string\>\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/QuizQuestionBuilder.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\QuizQuestion\:\:\$options\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/QuizService.php
+
+		-
+			message: '#^Offset ''is_correct'' on array\{answer\: string, normalized_answer\: string, accepted_answers\: array\<int, string\>, is_correct\: bool, points\: int, earned_points\: int\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/QuizService.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between ''cloze'' and ''cloze'' will always evaluate to true\.$#'
+			identifier: identical.alwaysTrue
+			count: 1
+			path: app/Services/QuizService.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 1
+			path: app/Services/QuizService.php
+
+		-
+			message: '#^Method App\\Services\\TrainerPathQualityDashboardService\:\:activityStats\(\) should return Illuminate\\Support\\Collection\<int, array\<string, mixed\>\> but returns Illuminate\\Support\\Collection\<int, non\-empty\-array\<string, mixed\>\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Services/TrainerPathQualityDashboardService.php
+
+		-
+			message: '#^Method App\\Services\\TrainerPathQualityDashboardService\:\:trainerRows\(\) should return Illuminate\\Support\\Collection\<int, array\<string, mixed\>\> but returns Illuminate\\Support\\Collection\<int, array\{id\: int, name\: string, email\: string, started\: bool, completed_steps\: int, required_steps\: int, is_completed\: bool, completed_at\: mixed, \.\.\.\}\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Services/TrainerPathQualityDashboardService.php
+
+		-
+			message: '#^Parameter \#1 \$completedRows of method App\\Services\\TrainerPathQualityDashboardService\:\:transferIndicator\(\) expects Illuminate\\Support\\Collection\<int, array\<string, mixed\>\>, Illuminate\\Support\\Collection\<int, array\<string, mixed\>\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/TrainerPathQualityDashboardService.php
+
+		-
+			message: '#^Parameter \#1 \$trainers of method App\\Services\\TrainerPathQualityDashboardService\:\:trainerRows\(\) expects Illuminate\\Support\\Collection\<int, object\>, Illuminate\\Support\\Collection\<int, stdClass\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/TrainerPathQualityDashboardService.php
+
+		-
+			message: '#^Parameter \#2 \$attempts of method App\\Services\\TrainerPathQualityDashboardService\:\:activityStats\(\) expects Illuminate\\Support\\Collection\<int, object\>, Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\TrainerPathActivityAttempt\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/TrainerPathQualityDashboardService.php
+
+		-
+			message: '#^Parameter \#2 \$attempts of method App\\Services\\TrainerPathQualityDashboardService\:\:trainerRows\(\) expects Illuminate\\Support\\Collection\<int, object\>, Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\TrainerPathActivityAttempt\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/TrainerPathQualityDashboardService.php
+
+		-
+			message: '#^Parameter \#4 \$questionnaires of method App\\Services\\TrainerPathQualityDashboardService\:\:trainerRows\(\) expects Illuminate\\Support\\Collection\<int\|string, Illuminate\\Support\\Collection\<int, object\>\>, Illuminate\\Support\\Collection\<\(int\|string\), Illuminate\\Support\\Collection\<int, stdClass\>\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/TrainerPathQualityDashboardService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\PilotTask\:\:\$project\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Support/PilotageNotifier.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>notify_in_app" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Support/PilotageNotifier.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>notify_mail" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Support/PilotageNotifier.php

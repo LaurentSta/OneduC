@@ -14,6 +14,9 @@ class RoueAleatoireParticipationController extends Controller
         $session = RandomWheelSession::where('access_code', strtoupper($code))
             ->with('group')
             ->firstOrFail();
+
+        $this->ensureCanParticipate($session);
+
         RoueAleatoireController::syncEntriesFromGroup($session);
 
         $stateUrl = route('roue.state', $code);
@@ -26,8 +29,25 @@ class RoueAleatoireParticipationController extends Controller
         $session = RandomWheelSession::where('access_code', strtoupper($code))
             ->with('group')
             ->firstOrFail();
+
+        $this->ensureCanParticipate($session);
+
         RoueAleatoireController::syncEntriesFromGroup($session);
 
         return response()->json(RoueAleatoireController::buildState($session));
+    }
+
+    private function ensureCanParticipate(RandomWheelSession $session): void
+    {
+        /** @var \App\Models\Group|null $group */
+        $group = $session->group;
+
+        abort_unless($group && (bool) $group->is_active, 404);
+
+        $isMember = $group->students()
+            ->where('users.id', auth()->id())
+            ->exists();
+
+        abort_unless($isMember, 404);
     }
 }

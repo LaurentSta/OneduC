@@ -20,7 +20,7 @@ Le formateur charge une liste d'éléments (participants, sujets, rôles), la ro
 
 1. Le formateur crée une roue pour un groupe depuis `/formateur/roue-aleatoire`, avec une liste d'entrées (les entrées peuvent être synchronisées depuis les membres du groupe).
 2. Il ajuste la liste des participants (`updateParticipants`), puis lance le tirage (`spin`) ; le résultat est mémorisé (`current_pick_id`, historique des tirages dans `picks`).
-3. La roue peut être projetée à l'écran via `/oneduc/roue/{code}` : cette vue de participation est en lecture seule et **accessible sans compte**, pensée pour être affichée sur un écran commun plutôt que consultée individuellement.
+3. La roue peut être projetée à l'écran via `/oneduc/roue/{code}` : cette vue de participation est en lecture seule, pensée pour être affichée sur un écran commun plutôt que consultée individuellement. Depuis le 14 juillet 2026, elle exige une authentification et une appartenance au groupe actif (voir [10-securite-rgpd.md](../10-securite-rgpd.md)).
 4. Le formateur peut réinitialiser (`reset`) pour relancer une série de tirages.
 
 ## Dans quel contexte l'utiliser
@@ -33,7 +33,7 @@ Le formateur charge une liste d'éléments (participants, sujets, rôles), la ro
 
 **Routes formateur** (`routes/formateur.php`, préfixe `/formateur/roue-aleatoire`, nom `formateur.roue.`) : `index`, `store`, `{session}` (show), `{session}/participants`, `{session}/spin`, `{session}/reset`, `{session}/state` (`RoueAleatoireController`).
 
-**Route de participation** (`routes/web.php`, hors middleware `auth`) : `GET /oneduc/roue/{code}` (`roue.join`) et `GET /oneduc/roue/{code}/state` (`RoueAleatoireParticipationController`) — vue projection en lecture seule.
+**Route de participation** (`routes/web.php`, sous middleware `auth`) : `GET /oneduc/roue/{code}` (`roue.join`) et `GET /oneduc/roue/{code}/state` (`RoueAleatoireParticipationController`) — vue projection en lecture seule.
 
 **Modèles / tables** : `RandomWheelSession` (`random_wheel_sessions` : `access_code`, `entries` JSON, `active_entry_ids` JSON, `picks` JSON, `current_pick_id`, `spun_at`).
 

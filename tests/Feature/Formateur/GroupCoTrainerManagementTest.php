@@ -314,7 +314,7 @@ it('deletes only the group links without deleting students or trainer-authored m
         ->delete(route('formateur.groupes.destroy', $group->id))
         ->assertRedirect(route('formateur.groupes.index'));
 
-    $this->assertDatabaseMissing('groups', ['id' => $group->id]);
+    $this->assertSoftDeleted('groups', ['id' => $group->id]);
     $this->assertDatabaseMissing('group_user', [
         'group_id' => $group->id,
         'user_id' => $student->id,

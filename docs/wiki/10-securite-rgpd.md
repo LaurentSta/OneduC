@@ -79,6 +79,7 @@ Pour les nouveaux formulaires de gestion des formateurs et stagiaires, le contex
 | Import mort `ScormInteractionController` | Supprimé de `routes/scorm.php` dès le correctif S7 du 5 juillet 2026 |
 | `StoreModuleRequest::authorize()` et `StoreGroupeRequest::authorize()` retournaient `false` | Corrigé le 14 juillet 2026 — `authorize()` retourne désormais `true`, conforme à la convention des autres FormRequests du projet (`ContactRequest`, `LoginRequest`, `ScormImportRequest`) : l'autorisation réelle reste au middleware de route, pas au FormRequest |
 | Gap `Module::isVisibleTo()` — `StagiaireController::StagiaireModuleDetail()` et `Frontend\LectureController` | `Frontend\LectureController` appelait déjà `isVisibleTo()` via `assertCanViewLecture()` depuis le 8 juillet 2026 (`show`, `showScorm`, `showScormBlock`, `showSlides`, toutes derrière le middleware `auth`). `StagiaireModuleDetail()` ne l'appelait toujours pas ; corrigé le 14 juillet 2026 avec un `abort_unless($module->isVisibleTo($user), 403)`, couvert par un nouveau test dans `tests/Feature/ModuleVisibilityTest.php` |
+| Modèle d'autorisation incohérent entre les 7 outils interactifs (point 12 ci-dessous) | Décision produit tranchée le 14 juillet 2026 : uniformiser vers authentification + appartenance groupe. Nuage de mots et Roue aléatoire suivent désormais le même pattern que Tableau blanc/Minuteur (`$group->students()->where('users.id', auth()->id())->exists()`), routes sous middleware `auth` dans `routes/web.php`. Couvert par 4 nouveaux tests de refus d'accès (`tests/Feature/Stagiaire/WordCloudAccessTest.php`, `tests/Feature/Formateur/RandomWheelNamesTest.php`) |
 
 ### Corrections du 7 juillet 2026
 
@@ -106,7 +107,6 @@ Le contrôleur vérifie l'existence des tables optionnelles avant de les utilise
 | # | Risque | Localisation | Impact |
 |---|--------|--------------|--------|
 | 11 | `/register` (scaffold Breeze) reste public et crée des comptes `role => 'stagiaire'` sans code d'accès ni invitation | `routes/auth.php`, `Auth\RegisteredUserController::store` | Contourne le modèle d'accès par code documenté plus haut. **Décision produit à trancher** : désactiver la route ou assumer l'auto-inscription. |
-| 12 | Modèle d'autorisation incohérent entre les 7 outils interactifs : Nuage de mots et Roue aléatoire sont accessibles sans authentification, les 5 autres (Sondage, Mur de questions, Quiz live, Tableau blanc, Minuteur) exigent une authentification et/ou une appartenance de groupe | `routes/web.php` (routes de participation), contrôleurs `Formateur/*Controller` | Confidentialité effective variable d'un outil à l'autre pour un usage a priori similaire. **Décision produit à trancher** avant toute uniformisation. |
 
 ---
 
@@ -120,9 +120,16 @@ La suppression d'un compte stagiaire déclenche immédiatement `cleanupRelatedSt
 - Les tentatives quiz
 - Les réponses aux outils
 
-La suppression d'un compte formateur via `cleanupOwnedGroupsAndLinkedStagiaires()` supprime physiquement tous les groupes dont il est `instructor_id`. Pour chaque stagiaire lié directement au formateur ou à l'un de ces groupes, le code recherche un autre formateur ou un autre groupe principal : il réaffecte le stagiaire lorsque c'est possible, sinon il supprime aussi son compte et déclenche sa purge de données liées.
+La suppression d'un compte formateur via `cleanupOwnedGroupsAndLinkedStagiaires()` supprime **toujours physiquement** (`forceDelete()`, explicite depuis le 14 juillet 2026) tous les groupes dont il est `instructor_id`, y compris leurs données pédagogiques liées par `ON DELETE CASCADE` (séances, progressions, sessions d'outils live). Ce comportement reste volontairement une purge RGPD irréversible, distincte du point suivant. Pour chaque stagiaire lié directement au formateur ou à l'un de ces groupes, le code recherche un autre formateur ou un autre groupe principal : il réaffecte le stagiaire lorsque c'est possible, sinon il supprime aussi son compte et déclenche sa purge de données liées.
 
-La suppression directe d'un groupe admin est également physique, car le modèle `Group` n'utilise pas `SoftDeletes`. Ces trois opérations nécessitent une confirmation explicite, une vérification préalable des rattachements et une trace dans le journal admin. Il n'existe actuellement ni corbeille de groupes ni restauration complète des données pédagogiques purgées.
+### `Group` utilise `SoftDeletes` depuis le 14 juillet 2026
+
+La suppression directe d'un groupe (admin ou formateur, hors purge de compte formateur ci-dessus) est désormais **réversible** : le modèle `Group` utilise `SoftDeletes`, la ligne `groups` n'est plus jamais physiquement effacée par un `delete()` classique, ce qui empêche les contraintes `ON DELETE CASCADE` de se déclencher — séances, progressions, sessions d'outils live et pivots `group_user`/`group_module` (sauf détachement manuel explicite, voir `Formateur\GroupeController::destroy()`) survivent à la suppression.
+
+Points techniques à connaître :
+- **Unicité `name`/`emargement_code`** : les contraintes `UNIQUE` en base ont été retirées (remplacées par des index simples) car MySQL ne peut pas exprimer nativement "unique parmi les lignes non supprimées". L'unicité est appliquée côté validation Laravel via `Rule::unique(...)->withoutTrashed()`, ce qui permet de recréer un groupe avec le même nom qu'un groupe supprimé.
+- **Requêtes SQL brutes** : les 5 domaines d'outils autonomes (Pendu, Mémoire, TriCartes, Carrousel, CartesRetourner — voir [07-outils-animation.md](07-outils-animation.md)) interrogent `groups`/`group_user` via `DB::table()` plutôt qu'Eloquent, par choix architectural (indépendance vis-à-vis d'Eloquent, testée explicitement). Ces requêtes ont été mises à jour pour filtrer `groups.deleted_at IS NULL` explicitement, sans quoi elles ignoreraient silencieusement le soft delete.
+- **Restauration** : pas d'interface de restauration pour l'instant (pas de "corbeille" côté admin) — un groupe soft-supprimé est récupérable en base (`Group::withTrashed()->find($id)->restore()`) mais uniquement via un accès direct, pas depuis l'UI.
 
 ---
 
@@ -146,18 +153,37 @@ Oneduc collecte des données d'apprentissage qui sont des **données personnelle
 | Activité horodatée | `progressions`, `quiz_attempts` | Reporting |
 | Adresse email | `users` | Authentification, communication |
 
-### Points à documenter avant mise en production
+### Politique publique : déjà tranchée, ce wiki était en retard
 
-1. **Durée de conservation** : combien de temps les données de formation sont-elles conservées ?
-2. **Finalités** : formation initiale, attestation, amélioration du contenu ?
-3. **Base légale** : contrat de formation (art. 6.1.b), intérêt légitime, consentement ?
-4. **Droit d'accès** : procédure pour qu'un stagiaire obtienne ses données
-5. **Droit à l'effacement** : la méthode `cleanupRelatedStagiaireData()` existe mais doit être documentée et exposée à l'utilisateur
-6. **Portabilité** : export des données en format lisible (pas encore implémenté)
-7. **Sous-traitants** : hébergeur, service mail, Discord (si utilisé)
+Contrairement à ce que cette page affirmait jusqu'au 14 juillet 2026, la durée de conservation, les finalités et la base légale **sont déjà décidées et publiées** sur `/confidentialite` (`resources/views/frontend/contenu/confidentialite.blade.php`, datée du 16 mai 2026) — ce wiki technique n'avait simplement pas été recroisé avec la page publique. Ne pas re-décider ces points sans relire d'abord cette page.
+
+Résumé de la politique publiée :
+
+1. **Finalités** : gestion du compte/accès, suivi de la progression pédagogique, sécurité et journaux techniques.
+2. **Base légale** : exécution du contrat (art. 6.1.b) pour compte et suivi pédagogique ; intérêt légitime (art. 6.1.f) pour la sécurité/logs.
+3. **Durée de conservation** : compte = durée de l'inscription + 3 ans après clôture ; données pédagogiques = durée de la formation + 5 ans ; journaux techniques = 12 mois.
+4. **Droit d'accès / rectification / effacement / portabilité / opposition** : listés sur la page, exercice via `contact@oneduc.fr`, réponse sous 1 mois, réclamation possible auprès de la CNIL.
+5. **Sous-traitants déclarés** : IONOS SARL (hébergement, UE, aucun transfert hors UE) ; Mistral AI ajouté le 14 juillet 2026 (génération de contenu pédagogique assistée par IA côté formateur — prompts de contenu de cours envoyés à l'API Mistral, pas de données personnelles de stagiaire transmises).
+
+### Écarts réels entre la politique publiée et le code (vérifiés le 14 juillet 2026)
+
+Ces deux points restent de vraies lacunes techniques, pas des décisions en attente :
+
+1. **Rétention non appliquée automatiquement** : les durées ci-dessus (3 ans, 5 ans, 12 mois) ne sont enforced par aucune tâche planifiée (`routes/console.php` ne contient qu'une commande de nettoyage de questions de quiz orphelines, rien sur la rétention/anonymisation). Aujourd'hui, l'effacement ne se produit que sur suppression manuelle d'un compte (`cleanupRelatedStagiaireData()`, `cleanupOwnedGroupsAndLinkedStagiaires()`). Tant qu'aucune tâche planifiée n'existe, un compte inactif au-delà de la durée annoncée n'est pas purgé automatiquement. **Ne pas implémenter dans la précipitation** : une purge automatisée est une opération destructive et irréversible sur des données réelles, elle mérite sa propre revue dédiée (quels comptes exactement, quel préavis, quel test) plutôt qu'un ajout rapide.
+2. **Portabilité non implémentée** : la page publique promet un export dans un format structuré ; aucun code ne l'implémente (`grep` sur les contrôleurs ne remonte aucun endpoint d'export). En attendant, la demande peut être honorée manuellement (export SQL/CSV ponctuel par un admin) dans le délai d'un mois annoncé — mais cette procédure manuelle n'était documentée nulle part avant aujourd'hui (voir ci-dessous).
+
+### Procédure interne en cas de demande stagiaire/formateur (droit d'accès, effacement, portabilité)
+
+Non documentée avant le 14 juillet 2026, ajoutée ici pour que quiconque reçoit un message sur `contact@oneduc.fr` sache quoi faire en attendant l'outillage en libre-service :
+
+1. **Droit d'accès** : un admin exporte manuellement les lignes concernant l'utilisateur (`users`, `progressions`, `quiz_attempts`, `scorm_scores`, etc.) et les transmet dans un format lisible (CSV/PDF).
+2. **Droit à l'effacement** : un admin supprime le compte depuis l'interface admin — déclenche `cleanupRelatedStagiaireData()` (stagiaire) ou `cleanupOwnedGroupsAndLinkedStagiaires()` (formateur). Rappel : purge physique immédiate et non réversible sur les données liées (voir plus haut, section "Suppression de compte et données liées").
+3. **Droit à la portabilité** : même export manuel que le droit d'accès, dans un format structuré (CSV a minima).
+4. Toute demande doit être traitée sous 1 mois (délai annoncé publiquement), et tracée (date de la demande, action réalisée) — pas encore de registre dédié : à créer si le volume de demandes le justifie.
 
 ### Ce qui est déjà en place
 
+- Politique de confidentialité publique complète et à jour dans ses grandes lignes (`/confidentialite`), avec un point de vigilance : la mention des sous-traitants a été corrigée le 14 juillet 2026 pour inclure Mistral AI
 - Soft delete de la ligne utilisateur, avec avertissement nécessaire car les données liées peuvent être purgées immédiatement par les événements du modèle
 - Nettoyage automatique des données liées à la suppression de compte, destructif et non intégralement réversible
 - Aucun tiers tracker côté frontend identifié

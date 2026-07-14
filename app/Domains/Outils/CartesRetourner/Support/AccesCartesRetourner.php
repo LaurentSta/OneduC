@@ -10,6 +10,7 @@ class AccesCartesRetourner
     {
         return DB::table('groups')
             ->where('groups.id', $groupId)
+            ->whereNull('groups.deleted_at')
             ->where(function ($query) use ($formateurId): void {
                 $query->where('groups.instructor_id', $formateurId)
                     ->orWhereExists(function ($pivot) use ($formateurId): void {
@@ -26,9 +27,11 @@ class AccesCartesRetourner
     public function estStagiaireDuGroupe(int $groupId, int $userId): bool
     {
         return DB::table('group_user')
-            ->where('group_id', $groupId)
-            ->where('user_id', $userId)
-            ->where('role_in_group', 'stagiaire')
+            ->join('groups', 'groups.id', '=', 'group_user.group_id')
+            ->where('group_user.group_id', $groupId)
+            ->where('group_user.user_id', $userId)
+            ->where('group_user.role_in_group', 'stagiaire')
+            ->whereNull('groups.deleted_at')
             ->exists();
     }
 

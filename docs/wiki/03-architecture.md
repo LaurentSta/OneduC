@@ -90,7 +90,7 @@ Le rôle est choisi à la création parmi `formateur` et `stagiaire`, puis devie
 
 Les suppressions restent portées par les routes historiques `admin.formateurs.destroy` et `admin.stagiaires.destroy`. Elles déclenchent les événements destructifs du modèle `User` décrits dans [Sécurité & RGPD](10-securite-rgpd.md).
 
-Le CRUD groupes admin est porté par `Backend\GroupeController`. La création et la modification sont transactionnelles, exigent un formateur principal existant dont le rôle vaut `formateur`, et n'acceptent comme membres que des comptes existants dont le rôle vaut `stagiaire`. Les comptes supprimés logiquement sont exclus par la validation. La synchronisation écrit explicitement le rôle `stagiaire` dans le pivot ; la suppression du groupe reste physique car `Group` n'utilise pas `SoftDeletes`.
+Le CRUD groupes admin est porté par `Backend\GroupeController`. La création et la modification sont transactionnelles, exigent un formateur principal existant dont le rôle vaut `formateur`, et n'acceptent comme membres que des comptes existants dont le rôle vaut `stagiaire`. Les comptes supprimés logiquement sont exclus par la validation. La synchronisation écrit explicitement le rôle `stagiaire` dans le pivot ; la suppression du groupe est réversible depuis le 14 juillet 2026 (`Group` utilise `SoftDeletes`, voir [10-securite-rgpd.md](10-securite-rgpd.md)).
 
 La remise à zéro de progression est réservée aux comptes `stagiaire` et s'exécute dans une transaction. Elle efface les tentatives de quiz, les progressions, les suivis vidéo, les données SCORM classiques, d'évaluation et de blocs de contenu modernes (`content_block_scorm_*`), puis remet `total_site_time` à zéro. Une erreur provoque le rollback de l'ensemble.
 

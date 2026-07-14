@@ -54,6 +54,7 @@ class ModuleCompletionNotifier
             ->where('group_user.user_id', $stagiaire->id)
             ->where('group_user.role_in_group', 'stagiaire')
             ->whereNotNull('groups.instructor_id')
+            ->whereNull('groups.deleted_at')
             ->pluck('groups.instructor_id')
             ->map(fn ($id) => (int) $id)
             ->all();

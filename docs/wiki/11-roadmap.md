@@ -37,7 +37,7 @@ La segmentation interne a démarré avec `app/Domains/ModulesFormateur` et `app/
 |---------|-------------|---------|
 | `attempts_count` SCORM jamais incrémenté | `SCORMController.php` | Moyenne |
 | `scorm_interactions` non alimenté pour les leçons | `SCORMController::saveProgress()` | Haute — métriques analytiques vides |
-| `Group` sans `SoftDeletes` | `app/Models/Group.php` | Moyenne — données orphelines |
+| ~~`Group` sans `SoftDeletes`~~ | `app/Models/Group.php` | Corrigé le 14 juillet 2026 — voir [Sécurité & RGPD](10-securite-rgpd.md) |
 | Stagiaire multi-groupe — `.first()` uniquement | `StagiaireController.php:244` | Haute — modules masqués |
 | `ModuleController` 1185 lignes | `Backend/ModuleController.php` | Maintenance difficile |
 | `StagiaireController` 794 lignes | `StagiaireController.php` | Encore volumineux, mais progression module extraite |
@@ -53,7 +53,7 @@ Une comparaison du code sur `main` (85 contrôleurs, 61 modèles, 411 routes) av
 - [ ] Documenter la messagerie formateur → stagiaire (`FormateurStagiaireController`, modèle `FormateurMessage`, notification et/ou email)
 - [ ] Documenter le pilotage interne (Kanban admin : `PilotProject`, `PilotTask`, commentaires, abonnements, notifications)
 - [ ] Documenter le dashboard qualité parcours formateur module 2 (`TrainerPathQualityController`, `TrainerPathActivityAttempt`)
-- [ ] Documenter la participation publique anonyme aux outils live (`/oneduc/mot`, `/sondage`, `/echelle`, `/questions`, `/roue` — sans compte ni connexion) et croiser avec la page Sécurité pour vérifier le throttling
+- [ ] Documenter la participation publique anonyme aux outils live restants (`/sondage`, `/echelle`, `/questions` — sans compte ni connexion) et croiser avec la page Sécurité pour vérifier le throttling. `/oneduc/mot` et `/oneduc/roue` ne sont plus concernés depuis le 14 juillet 2026 (authentification + groupe désormais requis, voir [10-securite-rgpd.md](10-securite-rgpd.md))
 - [ ] Documenter le vote sur le mur de questions (`QuestionWallVote`)
 - [ ] Documenter les questionnaires de fin de module et les activités notées du parcours formateur (`TrainerModuleQuestionnaireSubmission`, mail `ModuleQuestionnaireSubmitted`)
 - [ ] Documenter le système de notifications et les endpoints `notification-status` (Live Quiz, Mur de questions, Tableau blanc côté stagiaire)
@@ -99,7 +99,7 @@ Une comparaison du code sur `main` (85 contrôleurs, 61 modèles, 411 routes) av
 - [ ] Créer des Laravel Policies (`ModulePolicy`, `GroupPolicy`, `LecturePolicy`) pour centraliser les autorisations
 - [ ] Découper `ModuleController` : extraire `ModuleNavigationService`, `ModuleCompletionService`, `StudentLectureAccessService`
 - [ ] Continuer la segmentation en domaines internes : Groupes, Progression/Analytics, SCORM/Quiz, Outils d'animation
-- [ ] Ajouter `SoftDeletes` sur `Group` avec migration `deleted_at`
+- [x] Ajouter `SoftDeletes` sur `Group` avec migration `deleted_at` (14 juillet 2026)
 - [x] Valider l'unicité de l'email dans `AdminController::AdminProfilStore()`
 - [ ] Séparer la désactivation, l'archivage réversible et la purge définitive des comptes formateur et stagiaire
 - [x] Ajouter la vérification d'appartenance à la leçon dans `POST /scorm/save-progress` (et `save-block-progress`, `evaluation-progress`)

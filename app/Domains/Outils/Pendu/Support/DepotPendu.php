@@ -26,6 +26,7 @@ class DepotPendu
                     ->whereColumn('group_user.group_id', 'groups.id')
                     ->where('group_user.role_in_group', 'stagiaire');
             }, 'students_count')
+            ->whereNull('groups.deleted_at')
             ->where(function ($query) use ($formateurId): void {
                 $query->where('groups.instructor_id', $formateurId)
                     ->orWhereExists(function ($pivot) use ($formateurId): void {

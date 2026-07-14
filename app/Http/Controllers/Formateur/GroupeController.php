@@ -63,7 +63,7 @@ class GroupeController extends Controller
         ]);
 
         $request->validate([
-            'nom' => ['required', 'string', 'max:150', Rule::unique('groups', 'name')],
+            'nom' => ['required', 'string', 'max:150', Rule::unique('groups', 'name')->withoutTrashed()],
             'description' => ['nullable', 'string', 'max:2000'],
             'is_active' => ['required', 'boolean'],
             'emargement_enabled' => ['nullable', 'boolean'],
@@ -281,7 +281,7 @@ class GroupeController extends Controller
                 'required',
                 'string',
                 'max:150',
-                Rule::unique('groups', 'name')->ignore($id),
+                Rule::unique('groups', 'name')->ignore($id)->withoutTrashed(),
             ],
             'description' => ['nullable', 'string', 'max:2000'],
             'is_active' => ['required', 'boolean'],

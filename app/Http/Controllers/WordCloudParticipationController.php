@@ -28,6 +28,8 @@ class WordCloudParticipationController extends Controller
             ->where('access_code', strtoupper($code))
             ->firstOrFail();
 
+        $this->ensureCanParticipate($wordCloud);
+
         $questions = $wordCloud->questions_array;
         $activeQuestionIndex = $wordCloud->active_question_index;
         $activeQuestion = $wordCloud->active_question;
@@ -47,6 +49,8 @@ class WordCloudParticipationController extends Controller
         $wordCloud = WordCloud::query()
             ->where('access_code', strtoupper($code))
             ->firstOrFail();
+
+        $this->ensureCanParticipate($wordCloud);
 
         if (!$wordCloud->is_active) {
             return back()->withErrors(['answer' => 'Ce nuage est fermé pour le moment.']);
@@ -88,6 +92,8 @@ class WordCloudParticipationController extends Controller
             ->where('access_code', strtoupper($code))
             ->firstOrFail();
 
+        $this->ensureCanParticipate($wordCloud);
+
         return response()->json([
             'active' => $wordCloud->is_active,
             'current_question_index' => $wordCloud->active_question_index,
@@ -102,6 +108,8 @@ class WordCloudParticipationController extends Controller
         $wordCloud = WordCloud::query()
             ->where('access_code', strtoupper($code))
             ->firstOrFail();
+
+        $this->ensureCanParticipate($wordCloud);
 
         $qi = (int) $request->query('q', $wordCloud->active_question_index);
         $questionIndex = min(max($qi, 0), max(0, count($wordCloud->questions_array) - 1));
@@ -129,6 +137,20 @@ class WordCloudParticipationController extends Controller
         ]);
 
         return redirect()->route('wordcloud.join.code', ['code' => strtoupper(trim($data['code']))]);
+    }
+
+    private function ensureCanParticipate(WordCloud $wordCloud): void
+    {
+        /** @var \App\Models\Group|null $group */
+        $group = $wordCloud->group;
+
+        abort_unless($group && (bool) $group->is_active, 404);
+
+        $isMember = $group->students()
+            ->where('users.id', auth()->id())
+            ->exists();
+
+        abort_unless($isMember, 404);
     }
 
     private function normalizeAnswer(string $answer): ?string
