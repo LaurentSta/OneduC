@@ -34,7 +34,7 @@ Chaque page indique en tête son public visé. Les pages mixtes regroupent la pa
 | 04 | [Profils utilisateurs](04-profils-utilisateurs.md) | Admin, Formateur, Stagiaire, Observateur — droits et espaces |
 | 05 | [Modules, SCORM & Quiz](05-modules-scorm-quiz.md) | Contenu pédagogique, builder formateur, import SCORM, quiz natifs, progression |
 | 06 | [Groupes & Parcours](06-groupes-parcours.md) | Groupes de formation, co-formateurs, parcours ordonnés |
-| 07 | [Outils d'animation pédagogique](07-outils-animation.md) | Activités live intégrées, tableau blanc, minuteur, pages collaboratives |
+| 07 | [Outils d'animation pédagogique](07-outils-animation.md) | Activités live intégrées, tableau blanc, minuteur, pages collaboratives — sommaire avec une [fiche dédiée par outil](outils/) |
 | 08 | [Tableaux de bord](08-tableaux-de-bord.md) | Analytics Admin, Formateur, Stagiaire — sources de données |
 | 09 | [Design system](09-design-system.md) | Tokens Tailwind, composants, typographie, accessibilité |
 | 10 | [Sécurité & RGPD](10-securite-rgpd.md) | Middleware, authentification, données personnelles |

@@ -2,91 +2,36 @@
 
 *Public : formateurs pour la présentation des outils ; la partie technique en fin de page s'adresse aux développeurs.*
 
-**Statut au 10 juillet 2026** : ces outils sont développés côté code (contrôleurs, routes et accès aux données) mais **ne sont pas encore activés en environnement de production**. Le contenu ci-dessous décrit le fonctionnement prévu/en place dans le code, pas une fonctionnalité disponible pour les formateurs aujourd'hui.
+**Statut au 14 juillet 2026** : ces outils sont développés côté code (contrôleurs, routes et accès aux données) mais **ne sont pas encore activés en environnement de production**. Le contenu ci-dessous décrit le fonctionnement prévu/en place dans le code, pas une fonctionnalité disponible pour les formateurs aujourd'hui.
 
 Oneduc intègre 13 activités live plus une intégration de pages collaboratives HedgeDoc. Ils fonctionnent en présentiel, en distanciel ou en hybride, et vivent dans le même environnement que les modules et les groupes. Une séance n'a donc pas besoin de trois onglets et deux comptes externes pour fonctionner.
 
 Ces outils sont volontairement distincts de l'**émargement** (feuille de présence, document administratif à valeur d'audit) — voir la page dédiée [16 — Émargement](16-emargement.md).
 
-Seuls les stagiaires membres du groupe peuvent participer à un outil actif. Les résultats s'affichent côté formateur avec un délai de 2 à 3 secondes.
+En règle générale, seuls les stagiaires membres du groupe peuvent participer à un outil actif, et les résultats s'affichent côté formateur avec un délai de 2 à 3 secondes. Trois outils dérogent volontairement à la vérification d'appartenance au groupe côté participation, car ils sont pensés pour une projection ou une lecture ouverte plutôt qu'une identification individuelle : le [nuage de mots](outils/nuage-de-mots.md) autonome (aucune authentification requise pour soumettre un mot), la [roue aléatoire](outils/roue-aleatoire.md) (vue de tirage en lecture seule) et la lecture du [mur de questions](outils/mur-de-questions.md) (poser une question ou voter reste protégé). Le détail est précisé sur la fiche de chaque outil.
 
 ---
 
 ## Les 14 outils
 
-### 1. Quiz live
+Chaque outil a désormais sa propre fiche dédiée : fonctionnement, contexte d'usage pédagogique, modalités (synchrone/asynchrone, présentiel/distanciel, individuel/collectif) et partie technique (routes, tables, configuration). Cette page reste le point d'entrée et regroupe ce qui est commun à tous.
 
-Le formateur lance un quiz en direct, les stagiaires répondent sur leur appareil, les résultats s'affichent au fil des réponses. Les questions peuvent venir de la banque de questions native. Les résultats sont distincts des quiz de formation : la progression n'est pas impactée. Fonctionne aussi bien sur grand écran en présentiel qu'en partage d'écran à distance.
-
-### 2. Nuage de mots
-
-Les stagiaires soumettent un ou plusieurs mots sur un thème donné. Le nuage se construit en temps réel, la taille des mots suit leur fréquence. Utile pour faire émerger les représentations initiales d'un groupe. Peut être intégré dans un parcours.
-
-Le formateur peut l'utiliser comme outil autonome en choisissant un groupe et en lançant une session active, ou l'insérer dans un parcours. Côté stagiaire, l'accès reste centralisé : la carte "Nuage de mots" de `/stagiaire/outils` affiche un bouton de participation vers la session active ou, à défaut, vers le nuage du parcours actif. Quand un nuage autonome est ouvert pour son groupe, un message est créé dans `/stagiaire/messages`, une notification non lue alimente le macaron orange de la cloche, et l'alerte de cloche affiche aussi le code avec le lien de participation.
-
-La vue stagiaire reste volontairement centrée sur la saisie des mots : elle n'affiche pas le nuage en direct. La projection du nuage collectif est portée par la vue live formateur, utilisable en présentiel comme en distanciel via partage d'écran.
-
-Un formateur peut supprimer un nuage autonome depuis la liste des nuages. La suppression retire le nuage et ses réponses associées, sans supprimer le groupe ni les comptes stagiaires.
-
-### 3. Sondage
-
-Choix unique ou multiple. Le formateur crée les options, les stagiaires votent, les résultats s'affichent en barres ou en camembert. Se lance en quelques secondes. Peut être intégré dans un parcours.
-
-### 4. Vrai ou Faux
-
-Le formateur crée des affirmations courtes avec une réponse attendue (`Vrai` ou `Faux`) et, si besoin, une explication. Les stagiaires répondent depuis un code d'accès ; le formateur voit les résultats en direct et peut commenter les bonnes réponses. L'outil suit le pattern session/réponses avec `true_false_sessions` et `true_false_session_responses`.
-
-L'outil est activable/désactivable séparément via `config('outils.vraifaux.enabled')` (`OUTILS_VRAIFAUX_ENABLED`). Quand il est désactivé, ses routes et sa tuile formateur ne sont pas exposées.
-
-### 5. Buzzer Quiz
-
-Le formateur prépare une série de questions, lance la manche, puis les stagiaires buzzent depuis leur appareil. Le plus rapide répond à voix haute ou à distance ; le formateur valide ou refuse la réponse et le classement se met à jour. L'outil s'appuie sur `buzzer_sessions`, `buzzer_questions`, `buzzer_attempts` et `buzzer_participants`.
-
-L'outil est activable/désactivable via `config('outils.buzzer.enabled')` (`OUTILS_BUZZER_ENABLED`).
-
-### 6. Échelle
-
-Les stagiaires positionnent leur avis sur une échelle de 1 à N : niveau de confiance, accord/désaccord... Le formateur voit la distribution des réponses. Pratique pour évaluer le sentiment de compréhension en fin de séquence.
-
-L'outil est activable/désactivable via `config('outils.echelle.enabled')` (`OUTILS_ECHELLE_ENABLED`).
-
-### 7. Zone de clic
-
-Le formateur importe une image, dessine des zones à retrouver et nomme chaque composant. Les stagiaires doivent cliquer au bon endroit ; leur score et la réussite par composant remontent côté formateur. L'outil utilise `component_finder_sessions` et `component_finder_attempts`.
-
-L'outil est activable/désactivable via `config('outils.composants.enabled')` (`OUTILS_COMPOSANTS_ENABLED`).
-
-### 8. Mur de questions
-
-Les stagiaires posent leurs questions en texte libre. Le formateur les voit arriver en temps réel et peut les marquer comme traitées. Donne la parole à ceux qui n'osent pas la prendre, et évite de perdre les questions en distanciel.
-
-### 9. Roue aléatoire
-
-Le formateur charge une liste (participants, sujets, rôles), la roue tourne et désigne un élément au hasard. Inspiration : [Picker](https://github.com/koddsson/picker).
-
-### 10. Tableau blanc collaboratif
-
-Tableau blanc partagé basé sur [Excalidraw](https://github.com/excalidraw/excalidraw). Formateur et stagiaires dessinent et annotent ensemble. Un seul tableau blanc actif par groupe.
-
-### 11. Minuteur
-
-Minuteur visible par tous les participants, contrôlé par le formateur (démarrer, pause, réinitialiser). Un seul minuteur actif par groupe. Utile pour rythmer des ateliers ou des activités chronométrées.
-
-### 12. Jeu du pendu
-
-Le formateur choisit un mot ou une expression. Les stagiaires du groupe proposent collectivement des lettres et voient la partie évoluer toutes les trois secondes. Les co-formateurs du groupe peuvent aussi piloter la session. Les tables `hangman_sessions` et `hangman_guesses` sont gérées par le domaine autonome `app/Domains/Outils/Pendu/`.
-
-Le domaine utilise Query Builder et des transactions SQL, sans modèle Eloquent. Il est activable avec `OUTILS_PENDU_ENABLED` ; désactivé, il n'enregistre ni routes, ni vues de dashboard, ni requêtes liées au Pendu.
-
-### 13. Jeu de mémoire
-
-Le formateur prépare de trois à dix paires. Le stagiaire retourne les cartes, puis son nombre de coups, ses erreurs et sa durée alimentent le classement en direct. Le serveur recalcule les erreurs à partir du nombre de paires et de coups au lieu de faire confiance à la valeur envoyée par le navigateur.
-
-Les tables `memory_sessions` et `memory_attempts`, les routes et les vues sont contenues dans `app/Domains/Outils/Memoire/`. Le domaine fonctionne sans modèle Eloquent et s'active avec `OUTILS_MEMOIRE_ENABLED`.
-
-### 14. Pages collaboratives (HedgeDoc)
-
-Accès formateur à une page collaborative externe HedgeDoc, via `/formateur/pages-collaboratives`. Contrairement aux autres outils, il n'y a ni participation stagiaire ni stockage de réponses dans Oneduc — c'est une redirection vers l'instance HedgeDoc configurée.
+| # | Outil | Résumé | Synchrone/Asynchrone | Présentiel/Distanciel | Participation |
+|---|-------|--------|-----------------------|------------------------|----------------|
+| 1 | [Quiz live](outils/quiz-live.md) | Quiz en direct sur la banque de questions d'une leçon | Synchrone | Les deux | Collective |
+| 2 | [Nuage de mots](outils/nuage-de-mots.md) | Mots soumis en direct, taille selon fréquence | Asynchrone (saisie libre) | Les deux | Individuelle → rendu collectif |
+| 3 | [Sondage](outils/sondage.md) | Choix unique/multiple, résultats en barres/camembert | Synchrone | Les deux | Individuelle → rendu collectif |
+| 4 | [Vrai ou Faux](outils/vrai-ou-faux.md) | Affirmations courtes avec explication | Synchrone | Les deux | Individuelle → débrief collectif |
+| 5 | [Buzzer Quiz](outils/buzzer-quiz.md) | Le plus rapide répond, classement en direct | Synchrone | Les deux | Individuelle, compétitive |
+| 6 | [Échelle](outils/echelle.md) | Curseur de 1 à 10, moyenne et distribution | Synchrone | Les deux | Individuelle → rendu collectif |
+| 7 | [Zone de clic](outils/zone-de-clic.md) | Cliquer sur les bons composants d'une image | Synchrone | Les deux | Individuelle, notée |
+| 8 | [Mur de questions](outils/mur-de-questions.md) | Questions libres, anonymat optionnel, vote | Asynchrone | Les deux | Individuelle + votes |
+| 9 | [Roue aléatoire](outils/roue-aleatoire.md) | Tirage au sort projeté à l'écran | Synchrone | Les deux | Spectateur (pas de compte requis) |
+| 10 | [Tableau blanc](outils/tableau-blanc.md) | Espace Excalidraw partagé, un par groupe | Synchrone | Les deux | Collaborative |
+| 11 | [Minuteur](outils/minuteur.md) | Compte à rebours partagé, un par groupe | Synchrone | Les deux | Spectateur |
+| 12 | [Jeu du pendu](outils/pendu.md) | Un mot deviné collectivement, lettre par lettre | Synchrone | Les deux | Collective |
+| 13 | [Jeu de mémoire](outils/memoire.md) | Paires à retrouver, classement individuel | Asynchrone | Les deux | Individuelle |
+| 14 | [Pages collaboratives (HedgeDoc)](outils/pages-collaboratives.md) | Document Markdown coédité, externe à Oneduc | Les deux | Les deux | Collaborative, non tracée |
 
 ---
 
