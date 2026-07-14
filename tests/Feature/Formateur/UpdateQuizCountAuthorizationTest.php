@@ -24,6 +24,7 @@ function createUpdateQuizCountModule(User $formateur): array
         'category_id' => $category->id,
         'subcategory_id' => $subcategory->id,
         'formateur_id' => $formateur->id,
+        'is_trainer_authored' => true,
         'module_title' => 'Module quiz count',
         'module_name' => 'Module quiz count',
         'module_name_slug' => 'module-quiz-count-'.uniqid(),
