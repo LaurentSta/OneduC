@@ -1,5 +1,10 @@
+{{--
+  z-[60] : strictement au-dessus du bouton d'aide flottant (z-50,
+  resources/views/frontend/master.blade.php) qui, à z-index égal,
+  interceptait les clics sur "Accepter"/"Refuser" en bas d'écran.
+--}}
 <div
-    class="js-cookie-consent fixed bottom-0 left-0 z-50 w-full bg-[#004461] text-white shadow-lg px-4 py-4 flex flex-col md:flex-row items-center justify-between gap-4"
+    class="js-cookie-consent fixed bottom-0 left-0 z-[60] w-full bg-[#004461] text-white shadow-lg px-4 py-4 flex flex-col md:flex-row items-center justify-between gap-4"
     role="alert"
     aria-live="polite"
 >

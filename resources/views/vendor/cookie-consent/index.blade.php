@@ -6,16 +6,38 @@
 
         window.laravelCookieConsent = (function () {
 
-            const COOKIE_VALUE = 1;
+            const COOKIE_NAME = '{{ $cookieConsentConfig['cookie_name'] }}';
+            const COOKIE_VALUE_ACCEPTED = '1';
+            const COOKIE_VALUE_DECLINED = '0';
             const COOKIE_DOMAIN = '{{ config('session.domain') ?? request()->getHost() }}';
 
             function consentWithCookies() {
-                setCookie('{{ $cookieConsentConfig['cookie_name'] }}', COOKIE_VALUE, {{ $cookieConsentConfig['cookie_lifetime'] }});
+                setCookie(COOKIE_NAME, COOKIE_VALUE_ACCEPTED, {{ $cookieConsentConfig['cookie_lifetime'] }});
                 hideCookieDialog();
+                document.dispatchEvent(new CustomEvent('cookie-consent:accepted'));
+            }
+
+            function declineCookies() {
+                // Même cookie, valeur 0 : suffit à empêcher la bannière de
+                // se réafficher (le composeur du package ne vérifie que
+                // l'existence du cookie, pas sa valeur), sans marquer un
+                // consentement qui n'a pas été donné.
+                setCookie(COOKIE_NAME, COOKIE_VALUE_DECLINED, {{ $cookieConsentConfig['cookie_lifetime'] }});
+                hideCookieDialog();
+                document.dispatchEvent(new CustomEvent('cookie-consent:declined'));
+            }
+
+            function getCookieValue(name) {
+                const match = document.cookie.split('; ').find((row) => row.startsWith(name + '='));
+                return match ? match.split('=')[1] : null;
             }
 
             function cookieExists(name) {
-                return (document.cookie.split('; ').indexOf(name + '=' + COOKIE_VALUE) !== -1);
+                return getCookieValue(name) !== null;
+            }
+
+            function hasAccepted() {
+                return getCookieValue(COOKIE_NAME) === COOKIE_VALUE_ACCEPTED;
             }
 
             function hideCookieDialog() {
@@ -36,18 +58,26 @@
                     + '{{ config('session.same_site') ? ';samesite='.config('session.same_site') : null }}';
             }
 
-            if (cookieExists('{{ $cookieConsentConfig['cookie_name'] }}')) {
+            if (cookieExists(COOKIE_NAME)) {
                 hideCookieDialog();
             }
 
-            const buttons = document.getElementsByClassName('js-cookie-consent-agree');
+            const agreeButtons = document.getElementsByClassName('js-cookie-consent-agree');
 
-            for (let i = 0; i < buttons.length; ++i) {
-                buttons[i].addEventListener('click', consentWithCookies);
+            for (let i = 0; i < agreeButtons.length; ++i) {
+                agreeButtons[i].addEventListener('click', consentWithCookies);
+            }
+
+            const declineButtons = document.getElementsByClassName('js-cookie-consent-decline');
+
+            for (let i = 0; i < declineButtons.length; ++i) {
+                declineButtons[i].addEventListener('click', declineCookies);
             }
 
             return {
                 consentWithCookies: consentWithCookies,
+                declineCookies: declineCookies,
+                hasAccepted: hasAccepted,
                 hideCookieDialog: hideCookieDialog
             };
         })();
