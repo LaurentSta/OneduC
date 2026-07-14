@@ -141,7 +141,8 @@ document.addEventListener('DOMContentLoaded', () => {
         <li>Voir les progrès de ses apprenants.</li>
         <li>Utiliser des jeux et des activités interactives.</li>
       </ul>
-      <p>C'est <strong>gratuit</strong>.</p>
+      <p>C'est <strong>gratuit</strong> pendant les 30 premiers jours.</p>
+      <p>Après, il faut <strong>adhérer à l'association Onéduc</strong> pour continuer.</p>
       <p>Il n'y a <strong>rien à installer</strong> sur l'ordinateur.</p>
       <p>Pour commencer, cliquez sur <strong class="text-orangeone">« Je suis formateur »</strong>.</p>
       <p>Si vous avez reçu un <strong>code d'accès</strong> de votre formateur,<br>cliquez sur <strong class="text-bleuone">« J'ai un code d'accès »</strong>.</p>
