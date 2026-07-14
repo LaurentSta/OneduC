@@ -35,6 +35,9 @@ class ConvertLectureSlides implements ShouldQueue
     public function handle(SlideConversionEnvironment $environment): void
     {
         $lecture = ModuleLecture::find($this->lectureId);
+        $libreOfficeProfileDir = null;
+        $libreOfficeHomeDir = null;
+        $generatedPdfPath = null;
 
         if (!$lecture) {
             Storage::disk('local')->delete($this->uploadedFilePath);
@@ -68,9 +71,6 @@ class ConvertLectureSlides implements ShouldQueue
             $slidesAbsoluteDir = Storage::disk('public')->path($slidesRelativeDir);
 
             $pdfPath = $sourcePath;
-            $generatedPdfPath = null;
-            $libreOfficeProfileDir = null;
-            $libreOfficeHomeDir = null;
 
             if (in_array($extension, ['ppt', 'pptx'], true)) {
                 $sofficePath = $environment->sofficePath();
@@ -78,8 +78,7 @@ class ConvertLectureSlides implements ShouldQueue
                     throw new RuntimeException('LibreOffice Impress (soffice) est requis pour convertir les fichiers PowerPoint.');
                 }
 
-                $tmpBase = storage_path('app/tmp/libreoffice');
-                File::ensureDirectoryExists($tmpBase, 0755, true);
+                $tmpBase = rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR);
 
                 $libreOfficeProfileDir = $tmpBase . DIRECTORY_SEPARATOR . 'profile_' . $lecture->id . '_' . Str::random(8);
                 $libreOfficeHomeDir = $tmpBase . DIRECTORY_SEPARATOR . 'home_' . $lecture->id . '_' . Str::random(8);
@@ -95,7 +94,7 @@ class ConvertLectureSlides implements ShouldQueue
                         'HOME' => $libreOfficeHomeDir,
                         'XDG_CONFIG_HOME' => $libreOfficeHomeDir . DIRECTORY_SEPARATOR . '.config',
                         'XDG_CACHE_HOME' => $libreOfficeHomeDir . DIRECTORY_SEPARATOR . '.cache',
-                        'SAL_USE_VCLPLUGIN' => 'gen',
+                        'TMPDIR' => $tmpBase,
                     ])
                     ->run([
                     $sofficePath,
@@ -163,17 +162,6 @@ class ConvertLectureSlides implements ShouldQueue
                 }
             }
 
-            if ($generatedPdfPath && is_file($generatedPdfPath)) {
-                @unlink($generatedPdfPath);
-            }
-
-            if ($libreOfficeProfileDir) {
-                File::deleteDirectory($libreOfficeProfileDir);
-            }
-            if ($libreOfficeHomeDir) {
-                File::deleteDirectory($libreOfficeHomeDir);
-            }
-
             $lecture->update([
                 'content_type' => 'slides',
                 'slides_status' => 'ready',
@@ -198,6 +186,16 @@ class ConvertLectureSlides implements ShouldQueue
                 'error' => $e->getMessage(),
             ]);
         } finally {
+            if ($generatedPdfPath && is_file($generatedPdfPath)) {
+                @unlink($generatedPdfPath);
+            }
+            if ($libreOfficeProfileDir) {
+                File::deleteDirectory($libreOfficeProfileDir);
+            }
+            if ($libreOfficeHomeDir) {
+                File::deleteDirectory($libreOfficeHomeDir);
+            }
+
             // On conserve les fichiers source persistés (slides/sources/*)
             // afin de permettre une relance de conversion côté admin.
             if (str_starts_with($this->uploadedFilePath, 'slides/uploads/')) {
