@@ -147,6 +147,25 @@ Mettre à jour cette valeur avec l'IP locale de la machine de développement pou
 
 ---
 
+## Base de données de test dédiée
+
+Les tests (`php artisan test` / Pest) tournent sur une base **MySQL/MariaDB dédiée**, distincte de la base de développement — SQLite n'est pas supporté par ce projet (la baseline de schéma est MySQL-only, voir `database/schema/mysql-schema.sql`).
+
+1. Créer la base :
+   ```sql
+   CREATE DATABASE oneduc_testing;
+   ```
+2. Copier `.env.testing.example` vers `.env.testing` et renseigner `DB_USERNAME`/`DB_PASSWORD` (ce fichier n'est pas versionné) :
+   ```bash
+   cp .env.testing.example .env.testing
+   php artisan key:generate --env=testing
+   ```
+3. Lancer les tests normalement : Laravel charge automatiquement `.env.testing` quand `APP_ENV=testing` (positionné par `phpunit.xml`).
+
+Sans cette base dédiée créée au préalable, `php artisan test` échoue avec une erreur de connexion à la base de données.
+
+---
+
 ## Commandes utiles
 
 ```bash
