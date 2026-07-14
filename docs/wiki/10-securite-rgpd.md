@@ -120,9 +120,16 @@ La suppression d'un compte stagiaire déclenche immédiatement `cleanupRelatedSt
 - Les tentatives quiz
 - Les réponses aux outils
 
-La suppression d'un compte formateur via `cleanupOwnedGroupsAndLinkedStagiaires()` supprime physiquement tous les groupes dont il est `instructor_id`. Pour chaque stagiaire lié directement au formateur ou à l'un de ces groupes, le code recherche un autre formateur ou un autre groupe principal : il réaffecte le stagiaire lorsque c'est possible, sinon il supprime aussi son compte et déclenche sa purge de données liées.
+La suppression d'un compte formateur via `cleanupOwnedGroupsAndLinkedStagiaires()` supprime **toujours physiquement** (`forceDelete()`, explicite depuis le 14 juillet 2026) tous les groupes dont il est `instructor_id`, y compris leurs données pédagogiques liées par `ON DELETE CASCADE` (séances, progressions, sessions d'outils live). Ce comportement reste volontairement une purge RGPD irréversible, distincte du point suivant. Pour chaque stagiaire lié directement au formateur ou à l'un de ces groupes, le code recherche un autre formateur ou un autre groupe principal : il réaffecte le stagiaire lorsque c'est possible, sinon il supprime aussi son compte et déclenche sa purge de données liées.
 
-La suppression directe d'un groupe admin est également physique, car le modèle `Group` n'utilise pas `SoftDeletes`. Ces trois opérations nécessitent une confirmation explicite, une vérification préalable des rattachements et une trace dans le journal admin. Il n'existe actuellement ni corbeille de groupes ni restauration complète des données pédagogiques purgées.
+### `Group` utilise `SoftDeletes` depuis le 14 juillet 2026
+
+La suppression directe d'un groupe (admin ou formateur, hors purge de compte formateur ci-dessus) est désormais **réversible** : le modèle `Group` utilise `SoftDeletes`, la ligne `groups` n'est plus jamais physiquement effacée par un `delete()` classique, ce qui empêche les contraintes `ON DELETE CASCADE` de se déclencher — séances, progressions, sessions d'outils live et pivots `group_user`/`group_module` (sauf détachement manuel explicite, voir `Formateur\GroupeController::destroy()`) survivent à la suppression.
+
+Points techniques à connaître :
+- **Unicité `name`/`emargement_code`** : les contraintes `UNIQUE` en base ont été retirées (remplacées par des index simples) car MySQL ne peut pas exprimer nativement "unique parmi les lignes non supprimées". L'unicité est appliquée côté validation Laravel via `Rule::unique(...)->withoutTrashed()`, ce qui permet de recréer un groupe avec le même nom qu'un groupe supprimé.
+- **Requêtes SQL brutes** : les 5 domaines d'outils autonomes (Pendu, Mémoire, TriCartes, Carrousel, CartesRetourner — voir [07-outils-animation.md](07-outils-animation.md)) interrogent `groups`/`group_user` via `DB::table()` plutôt qu'Eloquent, par choix architectural (indépendance vis-à-vis d'Eloquent, testée explicitement). Ces requêtes ont été mises à jour pour filtrer `groups.deleted_at IS NULL` explicitement, sans quoi elles ignoreraient silencieusement le soft delete.
+- **Restauration** : pas d'interface de restauration pour l'instant (pas de "corbeille" côté admin) — un groupe soft-supprimé est récupérable en base (`Group::withTrashed()->find($id)->restore()`) mais uniquement via un accès direct, pas depuis l'UI.
 
 ---
 

@@ -188,6 +188,66 @@ it('relie la route de suppression à destroy et supprime le groupe', function ()
         ->assertRedirect(route('admin.groupes'))
         ->assertSessionHas('success');
 
-    $this->assertDatabaseMissing('groups', ['id' => $groupe->id]);
-    $this->assertDatabaseMissing('group_user', ['group_id' => $groupe->id]);
+    $this->assertSoftDeleted('groups', ['id' => $groupe->id]);
+    // Backend\GroupeController::destroy() ne détache pas manuellement les pivots :
+    // avec SoftDeletes, la ligne groups reste en base (deleted_at renseigné) donc
+    // la contrainte ON DELETE CASCADE ne se déclenche jamais et group_user survit,
+    // ce qui permet une restauration complète si besoin.
+    $this->assertDatabaseHas('group_user', [
+        'group_id' => $groupe->id,
+        'user_id' => $stagiaire->id,
+        'role_in_group' => 'stagiaire',
+    ]);
+});
+
+it('permet de recréer un groupe avec le même nom qu\'un groupe supprimé', function () {
+    $admin = creerUtilisateurPourGestionGroupesAdministrateur('admin', 'renom');
+    $formateur = creerUtilisateurPourGestionGroupesAdministrateur('formateur', 'renom');
+    $groupe = creerGroupePourGestionGroupesAdministrateur($formateur, 'renom');
+    $nom = $groupe->name;
+
+    $this->actingAs($admin)
+        ->delete(route('admin.groupes.delete', $groupe))
+        ->assertRedirect(route('admin.groupes'));
+
+    $this->assertSoftDeleted('groups', ['id' => $groupe->id]);
+
+    $reponse = $this->actingAs($admin)
+        ->post(route('admin.groupes.store'), [
+            'name' => $nom,
+            'formateur_id' => $formateur->id,
+        ]);
+
+    $reponse->assertRedirect(route('admin.groupes'))
+        ->assertSessionDoesntHaveErrors('name');
+
+    $this->assertDatabaseHas('groups', [
+        'name' => $nom,
+        'deleted_at' => null,
+    ]);
+    expect(Group::withTrashed()->where('name', $nom)->count())->toBe(2);
+});
+
+it('préserve les données pédagogiques liées quand un groupe est supprimé', function () {
+    $admin = creerUtilisateurPourGestionGroupesAdministrateur('admin', 'preservation');
+    $formateur = creerUtilisateurPourGestionGroupesAdministrateur('formateur', 'preservation');
+    $groupe = creerGroupePourGestionGroupesAdministrateur($formateur, 'preservation');
+
+    $seance = \App\Models\Seance::query()->create([
+        'group_id' => $groupe->id,
+        'formateur_id' => $formateur->id,
+        'date' => now()->toDateString(),
+        'titre' => 'Séance à préserver',
+        'statut' => 'planifiee',
+    ]);
+
+    $this->actingAs($admin)
+        ->delete(route('admin.groupes.delete', $groupe))
+        ->assertRedirect(route('admin.groupes'));
+
+    $this->assertSoftDeleted('groups', ['id' => $groupe->id]);
+    // Avant SoftDeletes, ON DELETE CASCADE aurait effacé cette séance en même
+    // temps que le groupe. Avec SoftDeletes, la ligne groups n'est jamais
+    // physiquement supprimée : la cascade SQL ne se déclenche pas.
+    $this->assertDatabaseHas('seances', ['id' => $seance->id]);
 });

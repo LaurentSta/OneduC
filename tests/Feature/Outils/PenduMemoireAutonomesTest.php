@@ -98,6 +98,33 @@ test('seul un stagiaire du groupe peut proposer une lettre au pendu', function (
     expect(DB::table('hangman_guesses')->count())->toBe(1);
 });
 
+test('un stagiaire perd l accès au pendu quand son groupe est supprimé', function () {
+    ['formateur' => $formateur, 'stagiaire' => $stagiaire, 'group' => $group] = creerContexteOutilsAutonomes();
+
+    $sessionId = DB::table('hangman_sessions')->insertGetId([
+        'formateur_id' => $formateur->id,
+        'group_id' => $group->id,
+        'title' => 'Pendu',
+        'word' => 'Écran',
+        'max_attempts' => 6,
+        'guessed_letters' => json_encode([]),
+        'status' => 'in_progress',
+        'access_code' => 'PDDEL1',
+        'is_active' => true,
+        'opened_at' => now(),
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $group->delete();
+
+    $this->actingAs($stagiaire)
+        ->post(route('pendu.submit', 'PDDEL1'), ['letter' => 'e'])
+        ->assertForbidden();
+
+    expect(DB::table('hangman_guesses')->where('hangman_session_id', $sessionId)->count())->toBe(0);
+});
+
 test('le jeu de mémoire recalcule les erreurs côté serveur', function () {
     ['formateur' => $formateur, 'stagiaire' => $stagiaire, 'exterieur' => $exterieur, 'group' => $group] = creerContexteOutilsAutonomes();
 

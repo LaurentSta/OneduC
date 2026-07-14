@@ -121,7 +121,7 @@ La personnalisation des leçons par groupe passe par `group_module_lectures`, g�
 ### Limitations connues
 
 - Un stagiaire dans plusieurs groupes actifs ne voit que les modules du premier groupe retourné (`.first()` dans `StagiaireController::StagiaireModules()`). Bug à corriger en phase 2.
-- Le modèle `Group` n'a pas de `SoftDeletes` : une suppression de groupe, y compris depuis le CRUD administrateur, est physique et peut laisser des données de progression orphelines. La confirmation d'interface ne constitue pas une sauvegarde.
+- Le modèle `Group` utilise `SoftDeletes` depuis le 14 juillet 2026 : une suppression de groupe (admin ou formateur) est réversible en base et préserve les données de progression liées — voir [10-securite-rgpd.md](10-securite-rgpd.md). Aucune interface de restauration n'existe encore côté admin.
 - La suppression d'un formateur déclenche la suppression physique de ses groupes. Les stagiaires sans autre formateur ni autre groupe principal peuvent alors être supprimés logiquement, avec purge immédiate d'une partie de leurs données liées.
 
 ---

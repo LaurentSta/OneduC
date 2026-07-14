@@ -350,6 +350,7 @@ class TrainerPathQualityDashboardService
         $hasSandboxColumn = Schema::hasColumn('groups', 'is_sandbox');
         $groups = DB::table('groups')
             ->whereIn('instructor_id', $completedRows->pluck('id'))
+            ->whereNull('deleted_at')
             ->when($hasSandboxColumn, fn ($query) => $query->where('is_sandbox', false))
             ->when(! $hasSandboxColumn, fn ($query) => $query->whereRaw('1 = 0'))
             ->orderBy('created_at')

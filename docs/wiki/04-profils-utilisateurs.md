@@ -44,7 +44,7 @@ Pour un stagiaire, les rattachements sélectionnés sont synchronisés dans `gro
 
 Le middleware `RecordAdminActivity` journalise les actions POST/PUT/PATCH/DELETE réussies dans `activity_journal_entries`. Les nouveaux formulaires utilisateurs n'y versent pas les noms, coordonnées, identifiants, mots de passe ni codes d'accès ; les informations opérationnelles non nominatives, comme le rôle ou le statut, peuvent rester dans le contexte. La remise à zéro passe par `admin.stagiaires.reset`, protégée par la chaîne complète et refusée si le compte ciblé n'est pas stagiaire.
 
-> **Avertissement — suppressions destructives :** le trait `SoftDeletes` du compte ne rend pas toutes les données récupérables. Supprimer un stagiaire efface immédiatement de nombreuses données pédagogiques liées. Supprimer un formateur supprime physiquement ses groupes et peut aussi supprimer les stagiaires qui ne disposent d'aucun autre rattachement. La suppression d'un groupe admin est elle aussi physique. Ces actions doivent rester exceptionnelles et être confirmées après vérification des rattachements.
+> **Avertissement — suppressions destructives :** le trait `SoftDeletes` du compte ne rend pas toutes les données récupérables. Supprimer un stagiaire efface immédiatement de nombreuses données pédagogiques liées. Supprimer un formateur supprime physiquement ses groupes (purge RGPD volontaire) et peut aussi supprimer les stagiaires qui ne disposent d'aucun autre rattachement. La suppression directe d'un groupe (admin ou formateur) est en revanche réversible depuis le 14 juillet 2026 (`Group` utilise `SoftDeletes`, voir [10-securite-rgpd.md](10-securite-rgpd.md)). Ces actions doivent rester exceptionnelles et être confirmées après vérification des rattachements.
 
 ---
 

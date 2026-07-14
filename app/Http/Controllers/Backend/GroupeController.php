@@ -120,7 +120,7 @@ class GroupeController extends Controller
                 'required',
                 'string',
                 'max:255',
-                Rule::unique('groups', 'name')->ignore($groupe?->id),
+                Rule::unique('groups', 'name')->ignore($groupe?->id)->withoutTrashed(),
             ],
             'description' => ['nullable', 'string', 'max:5000'],
             'formateur_id' => [
