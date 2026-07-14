@@ -79,6 +79,7 @@ Pour les nouveaux formulaires de gestion des formateurs et stagiaires, le contex
 | Import mort `ScormInteractionController` | Supprimé de `routes/scorm.php` dès le correctif S7 du 5 juillet 2026 |
 | `StoreModuleRequest::authorize()` et `StoreGroupeRequest::authorize()` retournaient `false` | Corrigé le 14 juillet 2026 — `authorize()` retourne désormais `true`, conforme à la convention des autres FormRequests du projet (`ContactRequest`, `LoginRequest`, `ScormImportRequest`) : l'autorisation réelle reste au middleware de route, pas au FormRequest |
 | Gap `Module::isVisibleTo()` — `StagiaireController::StagiaireModuleDetail()` et `Frontend\LectureController` | `Frontend\LectureController` appelait déjà `isVisibleTo()` via `assertCanViewLecture()` depuis le 8 juillet 2026 (`show`, `showScorm`, `showScormBlock`, `showSlides`, toutes derrière le middleware `auth`). `StagiaireModuleDetail()` ne l'appelait toujours pas ; corrigé le 14 juillet 2026 avec un `abort_unless($module->isVisibleTo($user), 403)`, couvert par un nouveau test dans `tests/Feature/ModuleVisibilityTest.php` |
+| Modèle d'autorisation incohérent entre les 7 outils interactifs (point 12 ci-dessous) | Décision produit tranchée le 14 juillet 2026 : uniformiser vers authentification + appartenance groupe. Nuage de mots et Roue aléatoire suivent désormais le même pattern que Tableau blanc/Minuteur (`$group->students()->where('users.id', auth()->id())->exists()`), routes sous middleware `auth` dans `routes/web.php`. Couvert par 4 nouveaux tests de refus d'accès (`tests/Feature/Stagiaire/WordCloudAccessTest.php`, `tests/Feature/Formateur/RandomWheelNamesTest.php`) |
 
 ### Corrections du 7 juillet 2026
 
@@ -106,7 +107,6 @@ Le contrôleur vérifie l'existence des tables optionnelles avant de les utilise
 | # | Risque | Localisation | Impact |
 |---|--------|--------------|--------|
 | 11 | `/register` (scaffold Breeze) reste public et crée des comptes `role => 'stagiaire'` sans code d'accès ni invitation | `routes/auth.php`, `Auth\RegisteredUserController::store` | Contourne le modèle d'accès par code documenté plus haut. **Décision produit à trancher** : désactiver la route ou assumer l'auto-inscription. |
-| 12 | Modèle d'autorisation incohérent entre les 7 outils interactifs : Nuage de mots et Roue aléatoire sont accessibles sans authentification, les 5 autres (Sondage, Mur de questions, Quiz live, Tableau blanc, Minuteur) exigent une authentification et/ou une appartenance de groupe | `routes/web.php` (routes de participation), contrôleurs `Formateur/*Controller` | Confidentialité effective variable d'un outil à l'autre pour un usage a priori similaire. **Décision produit à trancher** avant toute uniformisation. |
 
 ---
 

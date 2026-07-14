@@ -36,14 +36,14 @@ Quand un nuage autonome s'ouvre pour son groupe, le stagiaire reçoit un message
 
 ## Bon à savoir
 
-- Contrairement aux autres outils de la page, **le nuage de mots autonome ne vérifie ni authentification ni appartenance au groupe** : quiconque connaît le code d'accès (`/oneduc/mot/{code}`) peut soumettre un mot. C'est une particularité à garder en tête si le code est partagé au-delà du groupe visé.
+- Depuis le 14 juillet 2026, le nuage de mots autonome exige une authentification et une appartenance au groupe actif, au même titre que les 5 autres outils live (Sondage, Mur de questions, Quiz live, Tableau blanc, Minuteur) — voir [10-securite-rgpd.md](../10-securite-rgpd.md). Un visiteur non connecté ou hors groupe est redirigé/rejeté même en connaissant le code d'accès.
 - Supprimer un nuage autonome retire le nuage et ses réponses, sans toucher au groupe ni aux comptes stagiaires.
 
 ## Partie technique
 
 **Routes formateur** (`routes/formateur.php`, préfixe `/formateur/nuages-de-mots`, nom `formateur.nuages.`) : `index`, `store`, `{wordCloud}/live`, `{wordCloud}/question`, `{wordCloud}/close`, `{wordCloud}/live/data`, `destroy` (`FormateurWordCloudController`). Vue live par groupe côté parcours : `formateur.groupes.wordcloud.live` / `.data` (`GroupeWordCloudController`).
 
-**Routes de participation** (`routes/web.php`, préfixe `/oneduc/mot`, **hors middleware `auth`**) : `home`, `resolveCode`, `join/{code}`, `submit`, `state`, `live.data` (`WordCloudParticipationController`).
+**Routes de participation** (`routes/web.php`, préfixe `/oneduc/mot`, **sous middleware `auth`**) : `home`, `resolveCode`, `join/{code}`, `submit`, `state`, `live.data` (`WordCloudParticipationController`).
 
 **Routes stagiaire (parcours)** (`routes/stagiaire.php`, préfixe `/wordcloud`) : `notification-status`, `parcours.show`, `parcours.submit`, `parcours.data` (`ParcoursWordCloudController` / `WordCloudController`).
 

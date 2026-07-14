@@ -53,7 +53,7 @@ Une comparaison du code sur `main` (85 contrôleurs, 61 modèles, 411 routes) av
 - [ ] Documenter la messagerie formateur → stagiaire (`FormateurStagiaireController`, modèle `FormateurMessage`, notification et/ou email)
 - [ ] Documenter le pilotage interne (Kanban admin : `PilotProject`, `PilotTask`, commentaires, abonnements, notifications)
 - [ ] Documenter le dashboard qualité parcours formateur module 2 (`TrainerPathQualityController`, `TrainerPathActivityAttempt`)
-- [ ] Documenter la participation publique anonyme aux outils live (`/oneduc/mot`, `/sondage`, `/echelle`, `/questions`, `/roue` — sans compte ni connexion) et croiser avec la page Sécurité pour vérifier le throttling
+- [ ] Documenter la participation publique anonyme aux outils live restants (`/sondage`, `/echelle`, `/questions` — sans compte ni connexion) et croiser avec la page Sécurité pour vérifier le throttling. `/oneduc/mot` et `/oneduc/roue` ne sont plus concernés depuis le 14 juillet 2026 (authentification + groupe désormais requis, voir [10-securite-rgpd.md](10-securite-rgpd.md))
 - [ ] Documenter le vote sur le mur de questions (`QuestionWallVote`)
 - [ ] Documenter les questionnaires de fin de module et les activités notées du parcours formateur (`TrainerModuleQuestionnaireSubmission`, mail `ModuleQuestionnaireSubmitted`)
 - [ ] Documenter le système de notifications et les endpoints `notification-status` (Live Quiz, Mur de questions, Tableau blanc côté stagiaire)
