@@ -11,8 +11,16 @@
 | Node.js | 18+ |
 | NPM | 9+ |
 | MySQL / MariaDB | 8.0+ / 10.4+ recommandé |
+| LibreOffice Impress | Conversion des fichiers PowerPoint en PDF (outil « PowerPoint vers module ») |
+| Poppler (`pdftocairo`) | Conversion des pages PDF en diapositives (outil « PowerPoint vers module ») |
 
 > Le fichier `.env.example` Laravel indique encore `DB_CONNECTION=sqlite`, mais le dépôt contient une baseline de schéma **MySQL** (`database/schema/mysql-schema.sql`). Pour une installation fiable d'Oneduc, utiliser MySQL/MariaDB ou générer explicitement une baseline SQLite équivalente.
+
+Sous Debian/Ubuntu, les dépendances de l'outil « PowerPoint vers module » peuvent être installées avec :
+
+```bash
+sudo apt install libreoffice-impress poppler-utils
+```
 
 ---
 
@@ -120,6 +128,8 @@ Mettre à jour cette valeur avec l'IP locale de la machine de développement pou
 | `COOKIE_CONSENT_ENABLED` | Active/désactive le bandeau cookies Spatie | Non (défaut : `true`) |
 | `MISTRAL_API_KEY` | Clé API Mistral pour la génération de leçon par IA (builder formateur) | Non (fonctionnalité désactivée sans clé) |
 | `MISTRAL_MODEL` | Modèle Mistral utilisé | Non (défaut : `mistral-large-latest`) |
+| `SLIDES_SOFFICE_BINARY` | Chemin ou commande LibreOffice utilisée pour convertir les `.ppt/.pptx` | Non (défaut : `soffice`) |
+| `SLIDES_PDFTOCAIRO_BINARY` | Chemin ou commande Poppler utilisée pour générer les images | Non (défaut : `pdftocairo`) |
 
 ---
 
@@ -209,6 +219,7 @@ En production, ces dossiers doivent être sauvegardés séparément du code sour
 - Désactiver `APP_DEBUG=false` obligatoirement
 - Configurer un vrai driver mail (SMTP)
 - Configurer `QUEUE_CONNECTION=database` et lancer un worker queue en continu (`php artisan queue:work`)
+- Installer LibreOffice Impress et Poppler pour activer la création de modules depuis PowerPoint/PDF
 - Configurer le scheduler Laravel dans cron (`php artisan schedule:run`)
 - Vérifier que `APP_NAME`, `APP_LOCALE`, `APP_FALLBACK_LOCALE`, `APP_TIMEZONE` et les valeurs mail ne gardent pas les valeurs génériques de `.env.example`
 - Vérifier les routes exposées publiquement (voir [Sécurité](10-securite-rgpd.md))

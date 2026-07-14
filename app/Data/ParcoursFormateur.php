@@ -774,6 +774,7 @@ class ParcoursFormateur
             ],
             'success_message' => 'Vous avez correctement réparti les éléments dans les trois étapes de préparation.',
             'result_title' => "C'est noté !",
+            'shuffle_items' => true,
             'dropzones' => self::preparationDropzones(),
             'items' => $items,
         ];

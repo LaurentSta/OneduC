@@ -94,6 +94,7 @@
             resultTitle: @js($currentActivity['result_title'] ?? 'Résultat'),
             feedbackMessages: @js($currentActivity['feedback_messages'] ?? []),
             feedbackAsModal: @js($usesModalFeedback),
+            shuffleItems: @js($currentActivity['shuffle_items'] ?? false),
         })"
         class="space-y-4"
     >
@@ -840,6 +841,7 @@
                 resultTitle: config.resultTitle || 'Résultat',
                 feedbackMessages: config.feedbackMessages || {},
                 feedbackAsModal: Boolean(config.feedbackAsModal),
+                shuffleItems: Boolean(config.shuffleItems),
                 placements: {},
                 pool: [],
                 selectedCardId: null,
@@ -881,6 +883,9 @@
 
                     this.placements = this.normalizePlacements(config.initialPlacements || {});
                     this.rebuildPool();
+                    if (this.shuffleItems && !this.completed) {
+                        this.shufflePool();
+                    }
                     this.message = this.completed ? this.successMessage : '';
                     if (this.completed) {
                         this.completionVariant = 'A';
@@ -956,6 +961,22 @@
                     this.pool = this.cards
                         .map((card) => card.id)
                         .filter((cardId) => !placedIds.has(cardId));
+                },
+
+                shufflePool() {
+                    const original = [...this.pool];
+                    const shuffled = [...original];
+
+                    for (let index = shuffled.length - 1; index > 0; index--) {
+                        const randomIndex = Math.floor(Math.random() * (index + 1));
+                        [shuffled[index], shuffled[randomIndex]] = [shuffled[randomIndex], shuffled[index]];
+                    }
+
+                    if (shuffled.length > 1 && shuffled.every((cardId, index) => cardId === original[index])) {
+                        shuffled.push(shuffled.shift());
+                    }
+
+                    this.pool = shuffled;
                 },
 
                 selectedCardLabel() {
@@ -1193,6 +1214,9 @@
                     this.wrongItems = [];
                     this.placements = this.normalizePlacements({});
                     this.rebuildPool();
+                    if (this.shuffleItems) {
+                        this.shufflePool();
+                    }
                 },
             };
         };

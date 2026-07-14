@@ -99,6 +99,18 @@ class OutilsNumeriquesController extends Controller
 
         $openSeancesCount = Seance::whereIn('group_id', $groups->pluck('id'))->where('statut', 'ouverte')->count();
 
-        return view('formateur.outils.index', compact('recentWordclouds', 'groups', 'recentQuestionWalls', 'recentPolls', 'recentScales', 'recentTrueFalseSessions', 'recentBuzzerSessions', 'recentComponentFinderSessions', 'recentModules', 'openSeancesCount'));
+        $recentPowerPointModules = Module::query()
+            ->where('formateur_id', $formateurId)
+            ->whereHas('lectures', fn ($query) => $query->where('content_type', 'slides'))
+            ->with([
+                'lectures' => fn ($query) => $query
+                    ->where('content_type', 'slides')
+                    ->latest('id'),
+            ])
+            ->latest()
+            ->limit(5)
+            ->get();
+
+        return view('formateur.outils.index', compact('recentWordclouds', 'groups', 'recentQuestionWalls', 'recentPolls', 'recentScales', 'recentTrueFalseSessions', 'recentBuzzerSessions', 'recentComponentFinderSessions', 'recentModules', 'openSeancesCount', 'recentPowerPointModules'));
     }
 }

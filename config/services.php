@@ -62,4 +62,9 @@ return [
         'model' => env('PIPER_MODEL_PATH', storage_path('app/piper/voices/fr_FR-siwis-medium.onnx')),
     ],
 
+    'slides' => [
+        'soffice_binary' => env('SLIDES_SOFFICE_BINARY', 'soffice'),
+        'pdftocairo_binary' => env('SLIDES_PDFTOCAIRO_BINARY', 'pdftocairo'),
+    ],
+
 ];
