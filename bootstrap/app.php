@@ -11,17 +11,13 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        
-        // 👇 AJOUTE CETTE PARTIE 👇
         $middleware->alias([
-            'role' => \App\Http\Middleware\Role::class, // (Tu dois sûrement déjà avoir celui-ci)
-            'track.time' => \App\Http\Middleware\TrackSessionTime::class, // (Et celui-ci vu tes logs)
-            'force.password.change' => \App\Http\Middleware\ForcePasswordChange::class, // ✅ C'est celui-ci qui manque !
+            'role' => \App\Http\Middleware\Role::class,
+            'track.time' => \App\Http\Middleware\TrackSessionTime::class,
+            'force.password.change' => \App\Http\Middleware\ForcePasswordChange::class,
             'admin.activity' => \App\Http\Middleware\RecordAdminActivity::class,
             'association.member' => \App\Http\Middleware\EnsureAssociationMembership::class,
         ]);
-        // 👆 FIN DE L'AJOUT 👆
-
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
