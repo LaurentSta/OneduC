@@ -2,8 +2,11 @@
 @php $segments = $segments ?? []; $lecture = $lecture ?? null; @endphp
 
 @if(count($segments) > 1)
-    <div x-data="{ revealed: @js(array_merge([true], array_fill(0, count($segments) - 1, false))) }">
-        @foreach($segments as $segIndex => $segmentBlocks)
+    <div x-data="{
+            revealed: @js(array_merge([true], array_fill(0, count($segments) - 1, false))),
+            answered: @js(array_map(fn ($segment) => ($segment['kind'] ?? 'content') !== 'quiz', $segments)),
+         }">
+        @foreach($segments as $segIndex => $segment)
             {{-- The background bleeds full-width of the scroll pane; the text inside
                  stays constrained to the usual reading column. --}}
             <div x-show="revealed[{{ $segIndex }}]"
@@ -16,13 +19,18 @@
                  @endif
             >
                 <div class="max-w-3xl mx-auto px-6 @if($segIndex > 0) py-6 @endif">
-                    @foreach($segmentBlocks as $block)
-                        @include('shared.lecture_block_single', ['block' => $block, 'lecture' => $lecture])
-                    @endforeach
+                    @if(($segment['kind'] ?? 'content') === 'quiz')
+                        @include('shared.lecture_quiz_activity', ['question' => $segment['question'], 'segIndex' => $segIndex])
+                    @else
+                        @foreach($segment['blocks'] ?? [] as $block)
+                            @include('shared.lecture_block_single', ['block' => $block, 'lecture' => $lecture])
+                        @endforeach
+                    @endif
                 </div>
             </div>
             @if($segIndex + 1 < count($segments))
-                <div class="max-w-3xl mx-auto px-6 mb-6" x-show="revealed[{{ $segIndex }}] && !revealed[{{ $segIndex + 1 }}]">
+                <div class="max-w-3xl mx-auto px-6 mb-6"
+                     x-show="revealed[{{ $segIndex }}] && !revealed[{{ $segIndex + 1 }}] && answered[{{ $segIndex }}]">
                     <button type="button"
                             @click="revealed[{{ $segIndex + 1 }}] = true; $store.lectureProgress.revealedCount++; $nextTick(() => window.oneducSmoothScrollBy($el.closest('.overflow-y-auto'), 320, 900))"
                             class="btn-oneduc-blue w-full !py-3">
@@ -35,7 +43,7 @@
     </div>
 @else
     <div class="max-w-3xl mx-auto px-6">
-        @foreach(($segments[0] ?? []) as $block)
+        @foreach(($segments[0]['blocks'] ?? []) as $block)
             @include('shared.lecture_block_single', ['block' => $block, 'lecture' => $lecture])
         @endforeach
     </div>

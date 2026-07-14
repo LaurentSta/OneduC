@@ -55,4 +55,13 @@ class QuizQuestion extends Model
     {
         return $this->belongsTo(ModuleLecture::class, 'lecture_id');
     }
+
+    /**
+     * Questions actives et pouvant être intercalées automatiquement comme
+     * activité en fin de leçon (cloze exclu pour l'instant, cf. lecture_blocks.blade.php).
+     */
+    public function scopeEligibleForInlineActivity($query)
+    {
+        return $query->where('is_active', true)->whereIn('type', ['single', 'multiple', 'boolean']);
+    }
 }

@@ -23,6 +23,25 @@
 
     $activeLessonId = isset($selectedLecture) ? (int) $selectedLecture->id : null;
 
+    // Accordéon : chapitre ouvert par défaut = chapitre actif, sinon le premier chapitre
+    $initialOpenSectionId = $activeSectionId ?: optional($module->sections->first())->id;
+
+    // Carte d'en-tête : progression réelle, agrégée sur tout le module
+    $sidebarChapterCount = $module->sections->count();
+    $sidebarTotalLessons = 0;
+    $sidebarCompletedLessons = 0;
+    foreach ($module->sections as $sidebarSection) {
+      foreach ($sidebarSection->lectures as $sidebarLecture) {
+        $sidebarTotalLessons++;
+        if (($lectureStats[$sidebarLecture->id]['status'] ?? null) === 'completed') {
+          $sidebarCompletedLessons++;
+        }
+      }
+    }
+    $sidebarProgressPercent = $sidebarTotalLessons > 0
+      ? (int) round(($sidebarCompletedLessons / $sidebarTotalLessons) * 100)
+      : 0;
+
     $statusIcon = function (?string $status): array {
       $s = strtolower((string) $status);
 
@@ -60,8 +79,50 @@
     };
   @endphp
 
-  <div class="flex-1 overflow-y-auto custom-scrollbar bg-gray-50/30">
+  <div x-data="{ openSidebarSection: @js($initialOpenSectionId) }" class="flex-1 overflow-y-auto custom-scrollbar bg-gray-50/30">
     <div class="py-4 px-3">
+      <div class="mb-3 rounded-xl border border-orange-100 bg-white px-3 py-2.5 shadow-sm">
+        <p class="text-[9px] font-black uppercase tracking-[0.18em] text-orangeone">
+          Plan de la formation
+        </p>
+        <h2 class="mt-1 text-[15px] font-black leading-tight text-bleuone" title="{{ $module->module_title }}">
+          {{ $module->module_title }}
+        </h2>
+
+        @if($sidebarTotalLessons > 0)
+          <div class="mt-2.5">
+            <div class="mb-1 flex items-end justify-between gap-2">
+              <span class="font-varela text-[9px] font-black uppercase tracking-[0.16em] text-slate-400">
+                Votre avancée
+              </span>
+              <span class="font-varela text-[13px] font-black text-orangeone">
+                {{ $sidebarProgressPercent }}%
+              </span>
+            </div>
+            <div class="h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
+              <div
+                class="h-full rounded-full bg-orangeone transition-all duration-1000 ease-out"
+                style="width: {{ $sidebarProgressPercent }}%"
+              ></div>
+            </div>
+          </div>
+        @endif
+
+        <p class="mt-1 flex items-center justify-between gap-2 text-[10px] font-semibold text-slate-500">
+          @if($sidebarTotalLessons > 0)
+            <span class="whitespace-nowrap text-slate-400">
+              {{ $sidebarCompletedLessons }} / {{ $sidebarTotalLessons }} leçon{{ $sidebarTotalLessons > 1 ? 's' : '' }} terminée{{ $sidebarCompletedLessons > 1 ? 's' : '' }}
+            </span>
+          @endif
+
+          <span class="whitespace-nowrap">
+            {{ $sidebarChapterCount }} chapitre{{ $sidebarChapterCount > 1 ? 's' : '' }}
+            ·
+            {{ $sidebarTotalLessons }} leçon{{ $sidebarTotalLessons > 1 ? 's' : '' }}
+          </span>
+        </p>
+      </div>
+
       <ol class="space-y-3">
         @foreach ($module->sections as $sIndex => $section)
           @php
@@ -76,28 +137,46 @@
 
             // Page "chapitre" : on est sur la section sans leçon sélectionnée
             $isSectionPage = ($isActiveChapter && !isset($selectedLecture));
+
+            $isChapterCompleted = $totalL > 0 && $doneValidated >= $totalL;
+
+            $chapterHeaderBgClass = $isChapterCompleted
+              ? 'bg-vertone/5'
+              : ($isSectionPage
+                ? 'bg-orange-50'
+                : ($isActiveChapter ? 'bg-blue-50/40' : 'hover:bg-gray-50'));
+            $chapterHeaderBorderClass = $isChapterCompleted
+              ? 'border-vertone'
+              : ($isSectionPage
+                ? 'border-orangeone'
+                : ($isActiveChapter ? 'border-bleuone' : 'border-transparent'));
+            $chapterNumberClass = $isChapterCompleted
+              ? 'bg-vertone text-white border-vertone'
+              : ($isSectionPage
+                ? 'bg-orangeone text-white border-orangeone'
+                : ($isActiveChapter ? 'bg-bleuone text-white border-bleuone' : 'bg-gray-100 text-gray-500 border-gray-200'));
+            $chapterTitleClass = $isChapterCompleted
+              ? 'text-bleuone'
+              : ($isSectionPage ? 'text-orangeone' : 'text-bleuone');
           @endphp
 
           <li class="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
             {{-- EN-TÊTE CHAPITRE --}}
-            <div class="grid" style="grid-template-columns: 48px 1fr;">
+            <div class="flex items-stretch">
               <a
                 href="{{ route('stagiaire.module.section', ['module' => $module->id, 'section' => $section->id]) }}"
-                class="col-span-2 grid items-center transition-all py-4 border-l-4
-                  {{ $isSectionPage ? 'bg-orange-50 border-orangeone' : ($isActiveChapter ? 'bg-blue-50/40 border-bleuone' : 'hover:bg-gray-50 border-transparent') }}"
+                class="flex-1 min-w-0 grid items-center transition-all py-4 border-l-4 {{ $chapterHeaderBgClass }} {{ $chapterHeaderBorderClass }}"
                 style="grid-template-columns: 44px 1fr;"
                 aria-current="{{ $isSectionPage ? 'page' : 'false' }}"
               >
                 <div class="flex justify-center">
-                  <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-black border
-                    {{ $isSectionPage ? 'bg-orangeone text-white border-orangeone' : ($isActiveChapter ? 'bg-bleuone text-white border-bleuone' : 'bg-gray-100 text-gray-500 border-gray-200') }}">
+                  <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-black border {{ $chapterNumberClass }}">
                     {{ $chapterNo }}
                   </div>
                 </div>
 
-                <div class="min-w-0 pr-10 relative">
-                  <h3 class="text-[15px] font-bold leading-tight truncate max-w-[190px]
-                    {{ $isSectionPage ? 'text-orangeone' : 'text-bleuone' }}"
+                <div class="min-w-0 pr-2">
+                  <h3 class="text-[15px] font-bold leading-tight truncate max-w-[190px] {{ $chapterTitleClass }}"
                     title="{{ $section->section_title }}"
                   >
                     Ch. {{ $chapterNo }} - {{ $section->section_title }}
@@ -106,74 +185,122 @@
                   <span class="text-[11px] font-bold text-gray-400 mt-1 block italic">
                     {{ $doneValidated }}/{{ $totalL }} leçons terminées
                   </span>
-
                 </div>
               </a>
 
-              {{-- LISTE DES LEÇONS --}}
-              <div class="col-span-2 border-t border-gray-50 bg-white">
-                <ul class="py-1">
-                  @foreach ($section->lectures as $lec)
-                    @php
-                      $lessonNo = $loop->iteration;
-                      $st = $lectureStats[$lec->id] ?? [];
-                      $status = $st['status'] ?? 'not_started';
+              <button
+                type="button"
+                @click="openSidebarSection = (openSidebarSection === {{ $section->id }} ? null : {{ $section->id }})"
+                class="flex w-11 flex-shrink-0 items-center justify-center border-l-4 border-transparent transition {{ $chapterHeaderBgClass }}"
+                :aria-expanded="(openSidebarSection === {{ $section->id }}).toString()"
+                aria-controls="sidebar-section-{{ $section->id }}"
+                aria-label="Afficher ou masquer les leçons du chapitre {{ $chapterNo }}"
+              >
+                <span
+                  class="flex h-8 w-8 items-center justify-center rounded-full border border-orange-100 bg-orange-50 text-orangeone transition"
+                  :class="openSidebarSection === {{ $section->id }} ? 'bg-orangeone text-white border-orangeone' : ''"
+                >
+                  <svg
+                    :class="openSidebarSection === {{ $section->id }} ? 'rotate-180' : ''"
+                    class="h-5 w-5 transition-transform duration-200"
+                    fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"
+                  >
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </span>
+              </button>
+            </div>
 
-                      $isActiveLesson = ($activeLessonId && (int) $activeLessonId === (int) $lec->id);
+            {{-- LISTE DES LEÇONS --}}
+            <div
+              id="sidebar-section-{{ $section->id }}"
+              x-show="openSidebarSection === {{ $section->id }}"
+              x-collapse.duration.400ms
+              x-cloak
+              class="border-t border-gray-50 bg-white"
+            >
+              <ul class="py-1">
+                @foreach ($section->lectures as $lec)
+                  @php
+                    $lessonNo = $loop->iteration;
+                    $st = $lectureStats[$lec->id] ?? [];
+                    $status = $st['status'] ?? 'not_started';
 
-                      $ico = $statusIcon($status);
-                      $q   = $quizLabel($st);
-                    @endphp
+                    $isActiveLesson = ($activeLessonId && (int) $activeLessonId === (int) $lec->id);
 
-                    <li>
-                      <a
-                        href="{{ route('stagiaire.module.lecture', ['module' => $module->id, 'section' => $section->id, 'lecture' => $lec->id]) }}"
-                        class="block py-3 px-3 transition-all border-l-4
-                          {{ $isActiveLesson ? 'bg-orange-50 border-orangeone' : 'hover:bg-gray-50 border-transparent' }}"
-                        aria-current="{{ $isActiveLesson ? 'page' : 'false' }}"
-                      >
-                        <div class="flex items-start gap-2">
-                          <div class="w-6 flex justify-center pt-[2px]">
-                            <span class="text-[16px] font-black {{ $ico['class'] }}" aria-label="{{ $ico['label'] }}">
-                              {{ $ico['icon'] }}
+                    $ico = $statusIcon($status);
+                    $q   = $quizLabel($st);
+                    $lectureUrl = route('stagiaire.module.lecture', ['module' => $module->id, 'section' => $section->id, 'lecture' => $lec->id]);
+                    $activityCount = $lec->quizQuestions()->eligibleForInlineActivity()->count();
+                  @endphp
+
+                  <li>
+                    <a
+                      href="{{ $lectureUrl }}"
+                      class="block py-3 px-3 transition-all border-l-4
+                        {{ $isActiveLesson ? 'bg-orange-50 border-orangeone' : 'hover:bg-gray-50 border-transparent' }}"
+                      aria-current="{{ $isActiveLesson ? 'page' : 'false' }}"
+                    >
+                      <div class="flex items-start gap-2">
+                        <div class="w-6 flex justify-center pt-[2px]">
+                          <span class="text-[16px] font-black {{ $ico['class'] }}" aria-label="{{ $ico['label'] }}">
+                            {{ $ico['icon'] }}
+                          </span>
+                        </div>
+
+                        <div class="min-w-0 flex-1">
+                          <div class="flex items-start justify-between gap-2">
+                            <span
+                              class="block text-[14px] font-bold leading-snug truncate
+                                {{ $isActiveLesson ? 'text-orangeone' : 'text-gray-700' }}"
+                              title="{{ $lec->lecture_title }}"
+                            >
+                              Leç. {{ $lessonNo }} - {{ $lec->lecture_title }}
                             </span>
+
+                            @if($isActiveLesson)
+                              <span class="text-[10px] font-black uppercase tracking-tighter text-orangeone/70 whitespace-nowrap">
+                                Lecture en cours
+                              </span>
+                            @endif
                           </div>
 
+                          <div class="mt-1 flex items-center justify-between gap-2">
+                            <span class="text-[11px] font-bold {{ $q['class'] }}">
+                              {{ $q['text'] }}
+                            </span>
+
+                            @if(!empty($q['count']))
+                              <span class="text-[11px] font-black text-gray-500 tabular-nums" aria-label="Avancement du quiz">
+                                {{ $q['count'] }}
+                              </span>
+                            @endif
+                          </div>
+                        </div>
+                      </div>
+                    </a>
+
+                    @if($activityCount > 0)
+                      <a
+                        href="{{ $lectureUrl }}"
+                        class="ml-6 block py-2 px-3 border-l-4 border-transparent hover:bg-gray-50 transition-all"
+                      >
+                        <div class="flex items-center gap-2">
+                          <div class="w-6 flex justify-center">
+                            <span class="text-[16px] font-black text-gray-400" aria-hidden="true">✎</span>
+                          </div>
                           <div class="min-w-0 flex-1">
-                            <div class="flex items-start justify-between gap-2">
-                              <span
-                                class="block text-[14px] font-bold leading-snug truncate
-                                  {{ $isActiveLesson ? 'text-orangeone' : 'text-gray-700' }}"
-                                title="{{ $lec->lecture_title }}"
-                              >
-                                Leç. {{ $lessonNo }} - {{ $lec->lecture_title }}
-                              </span>
-
-                              @if($isActiveLesson)
-                                <span class="text-[10px] font-black uppercase tracking-tighter text-orangeone/70 whitespace-nowrap">
-                                  Lecture en cours
-                                </span>
-                              @endif
-                            </div>
-
-                            <div class="mt-1 flex items-center justify-between gap-2">
-                              <span class="text-[11px] font-bold {{ $q['class'] }}">
-                                {{ $q['text'] }}
-                              </span>
-
-                              @if(!empty($q['count']))
-                                <span class="text-[11px] font-black text-gray-500 tabular-nums" aria-label="Avancement du quiz">
-                                  {{ $q['count'] }}
-                                </span>
-                              @endif
-                            </div>
+                            <span class="block text-[13px] font-bold leading-snug text-gray-600">Activité</span>
+                            <span class="block text-[11px] font-semibold text-gray-400">
+                              {{ $activityCount }} question{{ $activityCount > 1 ? 's' : '' }}
+                            </span>
                           </div>
                         </div>
                       </a>
-                    </li>
-                  @endforeach
-                </ul>
-              </div>
+                    @endif
+                  </li>
+                @endforeach
+              </ul>
             </div>
           </li>
         @endforeach
