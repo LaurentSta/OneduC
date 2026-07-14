@@ -312,6 +312,61 @@ it('creates a stagiaire message and unread notification when a formateur launche
         ->and($toolsPage->getContent())->toMatch('/data-bell-badge\s+class="[^"]*bg-orangeone/');
 });
 
+it('denies an unauthenticated visitor from joining a word cloud', function () {
+    $formateur = createWordCloudAccessUser('formateur');
+    $stagiaire = createWordCloudAccessUser('stagiaire');
+    $group = createWordCloudAccessGroup($formateur, $stagiaire);
+
+    $wordCloud = WordCloud::query()->create([
+        'group_id' => $group->id,
+        'title' => 'Nuage prive anonyme',
+        'question' => 'Un mot ?',
+        'questions' => ['Un mot ?'],
+        'access_code' => 'ANON01',
+        'is_active' => true,
+        'opened_at' => now(),
+    ]);
+
+    $this->get(route('wordcloud.join.code', ['code' => $wordCloud->access_code]))
+        ->assertRedirect(route('login'));
+
+    $this->post(route('wordcloud.submit', ['code' => $wordCloud->access_code]), [
+        'question_index' => 0,
+        'answer' => 'Intrus',
+    ])->assertRedirect(route('login'));
+
+    expect($wordCloud->entries()->count())->toBe(0);
+});
+
+it('denies a stagiaire outside the group from joining a word cloud', function () {
+    $formateur = createWordCloudAccessUser('formateur');
+    $stagiaire = createWordCloudAccessUser('stagiaire');
+    $outsider = createWordCloudAccessUser('stagiaire');
+    $group = createWordCloudAccessGroup($formateur, $stagiaire);
+
+    $wordCloud = WordCloud::query()->create([
+        'group_id' => $group->id,
+        'title' => 'Nuage prive intrus',
+        'question' => 'Un mot ?',
+        'questions' => ['Un mot ?'],
+        'access_code' => 'OUT001',
+        'is_active' => true,
+        'opened_at' => now(),
+    ]);
+
+    $this->actingAs($outsider)
+        ->get(route('wordcloud.join.code', ['code' => $wordCloud->access_code]))
+        ->assertNotFound();
+
+    $this->actingAs($outsider)
+        ->post(route('wordcloud.submit', ['code' => $wordCloud->access_code]), [
+            'question_index' => 0,
+            'answer' => 'Intrus',
+        ])->assertNotFound();
+
+    expect($wordCloud->entries()->count())->toBe(0);
+});
+
 it('lets the owning formateur delete a word cloud without deleting the group or stagiaire', function () {
     $formateur = createWordCloudAccessUser('formateur');
     $stagiaire = createWordCloudAccessUser('stagiaire');

@@ -106,23 +106,32 @@ Route::get('/lecture/{id}', [\App\Http\Controllers\Frontend\LectureController::c
 
 // ----------------------------------------------------------
 // ☁️ Jeu - Nuage de mot (participation)
+// Authentification + appartenance groupe requises, comme les
+// 5 autres outils live (Sondage, Mur de questions, Quiz live,
+// Tableau blanc, Minuteur).
 // ----------------------------------------------------------
-Route::get('/oneduc/mot', [WordCloudParticipationController::class, 'home'])->name('wordcloud.join');
-Route::post('/oneduc/mot', [WordCloudParticipationController::class, 'resolveCode'])->name('wordcloud.resolve');
-Route::get('/oneduc/mot/{code}', [WordCloudParticipationController::class, 'joinByCode'])->name('wordcloud.join.code');
-Route::post('/oneduc/mot/{code}', [WordCloudParticipationController::class, 'submit'])
-    ->middleware('throttle:30,1')
-    ->name('wordcloud.submit');
-Route::get('/oneduc/mot/{code}/state', [WordCloudParticipationController::class, 'state'])
-    ->name('wordcloud.state');
-Route::get('/oneduc/mot/{code}/data', [WordCloudParticipationController::class, 'liveData'])
-    ->name('wordcloud.live.data');
+Route::middleware('auth')->group(function () {
+    Route::get('/oneduc/mot', [WordCloudParticipationController::class, 'home'])->name('wordcloud.join');
+    Route::post('/oneduc/mot', [WordCloudParticipationController::class, 'resolveCode'])->name('wordcloud.resolve');
+    Route::get('/oneduc/mot/{code}', [WordCloudParticipationController::class, 'joinByCode'])->name('wordcloud.join.code');
+    Route::post('/oneduc/mot/{code}', [WordCloudParticipationController::class, 'submit'])
+        ->middleware('throttle:30,1')
+        ->name('wordcloud.submit');
+    Route::get('/oneduc/mot/{code}/state', [WordCloudParticipationController::class, 'state'])
+        ->name('wordcloud.state');
+    Route::get('/oneduc/mot/{code}/data', [WordCloudParticipationController::class, 'liveData'])
+        ->name('wordcloud.live.data');
+});
 
 // ----------------------------------------------------------
 // 🎡 Roue aléatoire (participation)
+// Authentification + appartenance groupe requises, même
+// justification que le Nuage de mots ci-dessus.
 // ----------------------------------------------------------
-Route::get('/oneduc/roue/{code}', [RoueAleatoireParticipationController::class, 'show'])->name('roue.join');
-Route::get('/oneduc/roue/{code}/state', [RoueAleatoireParticipationController::class, 'state'])->name('roue.state');
+Route::middleware('auth')->group(function () {
+    Route::get('/oneduc/roue/{code}', [RoueAleatoireParticipationController::class, 'show'])->name('roue.join');
+    Route::get('/oneduc/roue/{code}/state', [RoueAleatoireParticipationController::class, 'state'])->name('roue.state');
+});
 
 // ----------------------------------------------------------
 // ❓ Mur de questions (participation)

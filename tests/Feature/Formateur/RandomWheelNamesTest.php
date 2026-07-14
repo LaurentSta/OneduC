@@ -116,7 +116,55 @@ it('returns refreshed entries to the stagiaire live wheel state', function () {
         'current_pick_id' => null,
     ]);
 
-    $this->get(route('roue.state', $session->access_code))
+    $this->actingAs($student)
+        ->get(route('roue.state', $session->access_code))
         ->assertOk()
         ->assertJsonPath('entries.0.name', 'Nadia Bernard');
+});
+
+it('denies an unauthenticated visitor from joining a random wheel session', function () {
+    $formateur = createRandomWheelFormateur();
+    $group = createRandomWheelGroup($formateur);
+    $student = attachRandomWheelStudent($group);
+
+    $session = RandomWheelSession::query()->create([
+        'formateur_id' => $formateur->id,
+        'group_id' => $group->id,
+        'access_code' => 'ANON99',
+        'entries' => [['id' => $student->id, 'name' => 'Camille Martin']],
+        'active_entry_ids' => [$student->id],
+        'picks' => [],
+        'current_pick_id' => null,
+    ]);
+
+    $this->get(route('roue.join', $session->access_code))
+        ->assertRedirect(route('login'));
+
+    $this->get(route('roue.state', $session->access_code))
+        ->assertRedirect(route('login'));
+});
+
+it('denies a stagiaire outside the group from joining a random wheel session', function () {
+    $formateur = createRandomWheelFormateur();
+    $group = createRandomWheelGroup($formateur);
+    $student = attachRandomWheelStudent($group);
+    $outsider = User::factory()->create(['role' => 'stagiaire', 'status' => true]);
+
+    $session = RandomWheelSession::query()->create([
+        'formateur_id' => $formateur->id,
+        'group_id' => $group->id,
+        'access_code' => 'OUT099',
+        'entries' => [['id' => $student->id, 'name' => 'Camille Martin']],
+        'active_entry_ids' => [$student->id],
+        'picks' => [],
+        'current_pick_id' => null,
+    ]);
+
+    $this->actingAs($outsider)
+        ->get(route('roue.join', $session->access_code))
+        ->assertNotFound();
+
+    $this->actingAs($outsider)
+        ->get(route('roue.state', $session->access_code))
+        ->assertNotFound();
 });
