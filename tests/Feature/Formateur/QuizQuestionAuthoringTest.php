@@ -75,6 +75,10 @@ function createQuizAuthoringLecture(User $owner): array
 it('lets the owning trainer create, update and delete a quiz question, tagging it with created_by', function () {
     $formateurA = createQuizAuthoringUser('formateur');
     ['lecture' => $lecture] = createQuizAuthoringLecture($formateurA);
+    $quizBankUrl = route('formateur.modules.builder.quiz-questions.index', [
+        'module' => $lecture->module_id,
+        'lecture' => $lecture->id,
+    ]);
 
     $storeToken = 'csrf-quiz-author-store';
     $storeResponse = $this->actingAs($formateurA)
@@ -90,7 +94,7 @@ it('lets the owning trainer create, update and delete a quiz question, tagging i
             ],
         ]);
 
-    $storeResponse->assertRedirect(route('formateur.modules.builder.lectures.quiz.questions.index', $lecture));
+    $storeResponse->assertRedirect($quizBankUrl);
 
     $question = QuizQuestion::query()->where('lecture_id', $lecture->id)->firstOrFail();
     expect($question->created_by)->toBe($formateurA->id);
@@ -110,7 +114,7 @@ it('lets the owning trainer create, update and delete a quiz question, tagging i
             ],
         ]);
 
-    $updateResponse->assertRedirect(route('formateur.modules.builder.lectures.quiz.questions.index', $lecture));
+    $updateResponse->assertRedirect($quizBankUrl);
     expect($question->fresh()->question_text)->toBe('Combien font 2+2 (modifie) ?');
 
     $deleteToken = 'csrf-quiz-author-delete';
@@ -120,7 +124,7 @@ it('lets the owning trainer create, update and delete a quiz question, tagging i
             '_token' => $deleteToken,
         ]);
 
-    $deleteResponse->assertRedirect(route('formateur.modules.builder.lectures.quiz.questions.index', $lecture));
+    $deleteResponse->assertRedirect($quizBankUrl);
     expect(QuizQuestion::query()->find($question->id))->toBeNull();
 });
 
