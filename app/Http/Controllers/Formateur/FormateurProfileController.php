@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Mail\FormateurWelcome;
 use App\Mail\NewFormateurNotification;
 use App\Models\User;
-use App\Services\CodeGeneratorService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -47,23 +46,23 @@ class FormateurProfileController extends Controller
         $user = User::findOrFail($id);
 
         $request->validate([
-            'name'     => 'nullable|string|max:255',
-            'prenom'   => 'nullable|string|max:255',
+            'name' => 'nullable|string|max:255',
+            'prenom' => 'nullable|string|max:255',
             'username' => 'nullable|string|max:255',
-            'email'    => 'nullable|email|max:255',
-            'phone'    => 'nullable|string|max:30',
-            'photo'    => 'nullable|image|max:2048',
+            'email' => 'nullable|email|max:255',
+            'phone' => 'nullable|string|max:30',
+            'photo' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
-        $user->name     = $request->name;
-        $user->prenom   = $request->prenom;
+        $user->name = $request->name;
+        $user->prenom = $request->prenom;
         $user->username = $request->username;
-        $user->email    = $request->email;
-        $user->phone    = $request->phone;
+        $user->email = $request->email;
+        $user->phone = $request->phone;
 
         if ($request->file('photo')) {
             $file = $request->file('photo');
-            $filename = Str::uuid() . '.' . $file->extension();
+            $filename = Str::uuid().'.'.$file->extension();
             $file->move(public_path('/upload/formateur_images'), $filename);
             $user->photo = $filename;
         }
@@ -89,10 +88,10 @@ class FormateurProfileController extends Controller
 
         $request->validate([
             'currentPassword' => 'required',
-            'newPassword'     => 'required|min:8|confirmed',
+            'newPassword' => 'required|min:8|confirmed',
         ]);
 
-        if (!Hash::check($request->currentPassword, $user->password)) {
+        if (! Hash::check($request->currentPassword, $user->password)) {
             return back()->withErrors([
                 'currentPassword' => 'Le mot de passe actuel est incorrect.',
             ]);
@@ -122,7 +121,7 @@ class FormateurProfileController extends Controller
                 ->with('openDeleteAccountModal', true);
         }
 
-        if (!Hash::check((string) $request->input('password'), (string) $user->password)) {
+        if (! Hash::check((string) $request->input('password'), (string) $user->password)) {
             return back()
                 ->withErrors(['password' => 'Le mot de passe actuel est incorrect.'], 'accountDeletion')
                 ->with('openDeleteAccountModal', true);
@@ -161,25 +160,25 @@ class FormateurProfileController extends Controller
         }
 
         $validated = $request->validate([
-            'prenom'               => 'required|string|max:255',
-            'name'                 => 'required|string|max:255',
-            'email'                => 'required|email|unique:users,email',
-            'password'             => 'required|string|min:8|confirmed',
-            'phone'                => 'nullable|string|max:30',
-            'societe'              => 'nullable|string|max:150',
-            'address'              => 'nullable|string|max:255',
+            'prenom' => 'required|string|max:255',
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            'password' => 'required|string|min:8|confirmed',
+            'phone' => 'nullable|string|max:30',
+            'societe' => 'nullable|string|max:150',
+            'address' => 'nullable|string|max:255',
             'g-recaptcha-response' => 'required|captcha',
         ]);
 
         $formateur = User::create([
-            'prenom'   => $validated['prenom'],
-            'name'     => $validated['name'],
-            'email'    => $validated['email'],
-            'phone'    => $validated['phone'] ?? null,
-            'address'  => $validated['address'] ?? null,
-            'societe'  => $validated['societe'] ?? null,
+            'prenom' => $validated['prenom'],
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'phone' => $validated['phone'] ?? null,
+            'address' => $validated['address'] ?? null,
+            'societe' => $validated['societe'] ?? null,
             'password' => Hash::make($validated['password']),
-            'role'     => 'formateur',
+            'role' => 'formateur',
             'adhesion_status' => 'pending',
         ]);
 
@@ -187,15 +186,15 @@ class FormateurProfileController extends Controller
 
         Mail::to($formateur->email)->send(new FormateurWelcome([
             'prenom' => $formateur->prenom,
-            'nom'    => $formateur->name,
-            'email'  => $formateur->email,
+            'nom' => $formateur->name,
+            'email' => $formateur->email,
         ]));
 
         Mail::to('contact@oneduc.fr')->send(new NewFormateurNotification([
-            'prenom'  => $formateur->prenom,
-            'nom'     => $formateur->name,
-            'email'   => $formateur->email,
-            'phone'   => $formateur->phone,
+            'prenom' => $formateur->prenom,
+            'nom' => $formateur->name,
+            'email' => $formateur->email,
+            'phone' => $formateur->phone,
             'societe' => $formateur->societe,
         ]));
 

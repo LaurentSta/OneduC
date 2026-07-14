@@ -80,6 +80,17 @@ Pour les nouveaux formulaires de gestion des formateurs et stagiaires, le contex
 | `StoreModuleRequest::authorize()` et `StoreGroupeRequest::authorize()` retournaient `false` | Corrigé le 14 juillet 2026 — `authorize()` retourne désormais `true`, conforme à la convention des autres FormRequests du projet (`ContactRequest`, `LoginRequest`, `ScormImportRequest`) : l'autorisation réelle reste au middleware de route, pas au FormRequest |
 | Gap `Module::isVisibleTo()` — `StagiaireController::StagiaireModuleDetail()` et `Frontend\LectureController` | `Frontend\LectureController` appelait déjà `isVisibleTo()` via `assertCanViewLecture()` depuis le 8 juillet 2026 (`show`, `showScorm`, `showScormBlock`, `showSlides`, toutes derrière le middleware `auth`). `StagiaireModuleDetail()` ne l'appelait toujours pas ; corrigé le 14 juillet 2026 avec un `abort_unless($module->isVisibleTo($user), 403)`, couvert par un nouveau test dans `tests/Feature/ModuleVisibilityTest.php` |
 
+### Corrections du 7 juillet 2026
+
+| Point | Correctif |
+|-------|-----------|
+| XSS stocké dans les blocs de contenu texte libre (builder de module) | `NettoyeurBlocsModule` filtre désormais le HTML par allowlist de balises/attributs avant stockage |
+| Open redirect sur la validation de leçon | `Frontend\LectureController` valide que la cible de redirection reste un chemin interne |
+| Zip slip / manifest hors-répertoire à l'import SCORM | `ScormImporter` rejette les entrées ZIP avec segments `..` et vérifie que le manifest reste dans le dossier extrait |
+| IDOR sur `FormateurModuleController::updateQuizCount()` | Vérification que le module appartient bien au formateur avant modification (renforcée depuis via `AccesModule::assertOwner()`) |
+| Upload SVG accepté comme photo de profil (XSS stocké potentiel) | `UserController::UserProfilStore()` et `FormateurProfileController::FormateurProfilStore()` restreignent désormais l'upload à `mimes:jpg,jpeg,png` |
+| Upload SVG accepté comme image de catégorie/sous-catégorie | `CategoryController` retire `image/svg+xml` des types acceptés |
+
 Suite de tests complète verte : **268 tests** au 14 juillet 2026.
 
 ---
@@ -89,6 +100,13 @@ Suite de tests complète verte : **268 tests** au 14 juillet 2026.
 La route `POST /admin/stagiaires/{user}/reset-progression` (`admin.stagiaires.reset`) refuse toute cible dont le rôle n'est pas `stagiaire`. L'effacement est exécuté dans une transaction : réponses et tentatives de quiz, progressions, suivi vidéo, notifications de fin de module, temps total de connexion, ainsi que les résultats, scores et interactions SCORM classiques et d'évaluation sont supprimés. Les tables modernes `content_block_scorm_scores` et `content_block_scorm_results` sont également couvertes.
 
 Le contrôleur vérifie l'existence des tables optionnelles avant de les utiliser. Si une exception survient, la transaction est annulée et l'administrateur reçoit un message d'échec ; aucune réussite partielle ne doit être présentée comme une remise à zéro complète.
+
+### Points produit encore ouverts (identifiés le 7 juillet 2026, non traités depuis)
+
+| # | Risque | Localisation | Impact |
+|---|--------|--------------|--------|
+| 11 | `/register` (scaffold Breeze) reste public et crée des comptes `role => 'stagiaire'` sans code d'accès ni invitation | `routes/auth.php`, `Auth\RegisteredUserController::store` | Contourne le modèle d'accès par code documenté plus haut. **Décision produit à trancher** : désactiver la route ou assumer l'auto-inscription. |
+| 12 | Modèle d'autorisation incohérent entre les 7 outils interactifs : Nuage de mots et Roue aléatoire sont accessibles sans authentification, les 5 autres (Sondage, Mur de questions, Quiz live, Tableau blanc, Minuteur) exigent une authentification et/ou une appartenance de groupe | `routes/web.php` (routes de participation), contrôleurs `Formateur/*Controller` | Confidentialité effective variable d'un outil à l'autre pour un usage a priori similaire. **Décision produit à trancher** avant toute uniformisation. |
 
 ---
 

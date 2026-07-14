@@ -83,7 +83,7 @@ class UserController extends Controller
             'email' => 'required|email|max:255',
             'phoneNumber' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:255',
-            'photo' => 'nullable|image|max:2048',
+            'photo' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
         // ✅ Mise à jour des champs

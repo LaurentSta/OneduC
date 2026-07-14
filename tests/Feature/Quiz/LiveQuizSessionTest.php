@@ -12,6 +12,7 @@ use App\Models\QuizQuestion;
 use App\Models\SubCategory;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 uses(RefreshDatabase::class);
@@ -20,9 +21,9 @@ function createLiveQuizUser(string $role): User
 {
     return User::query()->create([
         'prenom' => ucfirst($role),
-        'name' => ucfirst($role) . ' Live',
-        'username' => $role . '_live_' . uniqid(),
-        'email' => $role . '.live.' . uniqid() . '@example.test',
+        'name' => ucfirst($role).' Live',
+        'username' => $role.'_live_'.uniqid(),
+        'email' => $role.'.live.'.uniqid().'@example.test',
         'password' => Hash::make('password'),
         'role' => $role,
         'status' => true,
@@ -35,23 +36,23 @@ function createLiveQuizContext(User $formateur): array
     $suffix = uniqid();
 
     $category = Category::query()->create([
-        'category_name' => 'Categorie live ' . $suffix,
-        'category_slug' => 'categorie-live-' . $suffix,
+        'category_name' => 'Categorie live '.$suffix,
+        'category_slug' => 'categorie-live-'.$suffix,
     ]);
 
     $subcategory = SubCategory::query()->create([
         'category_id' => $category->id,
-        'subcategory_name' => 'Sous-categorie live ' . $suffix,
-        'subcategory_slug' => 'sous-categorie-live-' . $suffix,
+        'subcategory_name' => 'Sous-categorie live '.$suffix,
+        'subcategory_slug' => 'sous-categorie-live-'.$suffix,
     ]);
 
     $module = Module::query()->create([
         'category_id' => $category->id,
         'subcategory_id' => $subcategory->id,
         'formateur_id' => $formateur->id,
-        'module_title' => 'Module live ' . $suffix,
-        'module_name' => 'Module live ' . $suffix,
-        'module_name_slug' => 'module-live-' . $suffix,
+        'module_title' => 'Module live '.$suffix,
+        'module_name' => 'Module live '.$suffix,
+        'module_name_slug' => 'module-live-'.$suffix,
         'status' => 1,
     ]);
 
@@ -96,10 +97,10 @@ it('creates a live quiz session from the questions of a lesson', function () {
     $response = $this->actingAs($formateur)
         ->withSession(['_token' => $token])
         ->post(route('formateur.live-quiz.store', [
-        'module' => $module->id,
-        'section' => $section->id,
-        'lecture' => $lecture->id,
-    ]), ['_token' => $token]);
+            'module' => $module->id,
+            'section' => $section->id,
+            'lecture' => $lecture->id,
+        ]), ['_token' => $token]);
 
     $session = LiveQuizSession::query()->latest('id')->first();
 
@@ -151,27 +152,27 @@ it('records stagiaire answers in a live session and finalizes the attempt when t
     $this->actingAs($formateur)
         ->withSession(['_token' => $formateurToken])
         ->post(route('formateur.live-quiz.store', [
-        'module' => $module->id,
-        'section' => $section->id,
-        'lecture' => $lecture->id,
-    ]), ['_token' => $formateurToken]);
+            'module' => $module->id,
+            'section' => $section->id,
+            'lecture' => $lecture->id,
+        ]), ['_token' => $formateurToken]);
 
     $session = LiveQuizSession::query()->latest('id')->firstOrFail();
 
     $this->actingAs($formateur)
         ->withSession(['_token' => $formateurToken])
         ->post(route('formateur.live-quiz.start', [
-        'module' => $module->id,
-        'section' => $section->id,
-        'lecture' => $lecture->id,
-        'session' => $session->id,
-    ]), ['_token' => $formateurToken]);
+            'module' => $module->id,
+            'section' => $section->id,
+            'lecture' => $lecture->id,
+            'session' => $session->id,
+        ]), ['_token' => $formateurToken]);
 
     $joinResponse = $this->actingAs($stagiaire)
         ->withSession(['_token' => $stagiaireToken])
         ->post(route('stagiaire.live-quiz.join', [
-        'session' => $session->id,
-    ]), ['_token' => $stagiaireToken]);
+            'session' => $session->id,
+        ]), ['_token' => $stagiaireToken]);
 
     $participant = LiveQuizSessionParticipant::query()->where('user_id', $stagiaire->id)->first();
 
@@ -185,12 +186,12 @@ it('records stagiaire answers in a live session and finalizes the attempt when t
     $answerResponse = $this->actingAs($stagiaire)
         ->withSession(['_token' => $stagiaireToken])
         ->post(route('stagiaire.live-quiz.answer', [
-        'session' => $session->id,
-    ]), [
-        '_token' => $stagiaireToken,
-        'answer' => $correctOption->id,
-        'time_spent' => 12,
-    ]);
+            'session' => $session->id,
+        ]), [
+            '_token' => $stagiaireToken,
+            'answer' => $correctOption->id,
+            'time_spent' => 12,
+        ]);
 
     $answerResponse->assertRedirect(route('stagiaire.live-quiz.show', ['session' => $session->id]));
 
@@ -203,20 +204,20 @@ it('records stagiaire answers in a live session and finalizes the attempt when t
     $this->actingAs($formateur)
         ->withSession(['_token' => $formateurToken])
         ->post(route('formateur.live-quiz.reveal', [
-        'module' => $module->id,
-        'section' => $section->id,
-        'lecture' => $lecture->id,
-        'session' => $session->id,
-    ]), ['_token' => $formateurToken]);
+            'module' => $module->id,
+            'section' => $section->id,
+            'lecture' => $lecture->id,
+            'session' => $session->id,
+        ]), ['_token' => $formateurToken]);
 
     $this->actingAs($formateur)
         ->withSession(['_token' => $formateurToken])
         ->post(route('formateur.live-quiz.next', [
-        'module' => $module->id,
-        'section' => $section->id,
-        'lecture' => $lecture->id,
-        'session' => $session->id,
-    ]), ['_token' => $formateurToken]);
+            'module' => $module->id,
+            'section' => $section->id,
+            'lecture' => $lecture->id,
+            'session' => $session->id,
+        ]), ['_token' => $formateurToken]);
 
     $attempt->refresh();
     $session->refresh();
@@ -225,4 +226,54 @@ it('records stagiaire answers in a live session and finalizes the attempt when t
     expect($attempt->finished_at)->not->toBeNull();
     expect((int) $attempt->percent)->toBe(100);
     expect((int) $attempt->total_time_seconds)->toBe(12);
+});
+
+it('does not rewrite last_seen_at on every snapshot poll within the throttle window', function () {
+    $formateur = createLiveQuizUser('formateur');
+    $stagiaire = createLiveQuizUser('stagiaire');
+    $context = createLiveQuizContext($formateur);
+    $formateurToken = 'csrf-live-formateur-throttle';
+    $stagiaireToken = 'csrf-live-stagiaire-throttle';
+
+    QuizQuestion::query()->create([
+        'lecture_id' => $context['lecture']->id,
+        'question_text' => 'Question unique',
+        'type' => 'boolean',
+        'is_active' => true,
+    ]);
+
+    $this->actingAs($formateur)
+        ->withSession(['_token' => $formateurToken])
+        ->post(route('formateur.live-quiz.store', [
+            'module' => $context['module']->id,
+            'section' => $context['section']->id,
+            'lecture' => $context['lecture']->id,
+        ]), ['_token' => $formateurToken]);
+
+    $session = LiveQuizSession::query()->latest('id')->firstOrFail();
+
+    $this->actingAs($stagiaire)
+        ->withSession(['_token' => $stagiaireToken])
+        ->post(route('stagiaire.live-quiz.join', ['session' => $session->id]), ['_token' => $stagiaireToken]);
+
+    $participant = LiveQuizSessionParticipant::query()->where('user_id', $stagiaire->id)->firstOrFail();
+    $recentSeenAt = $participant->last_seen_at;
+
+    DB::enableQueryLog();
+    $response = $this->actingAs($stagiaire)
+        ->getJson(route('stagiaire.live-quiz.snapshot', ['session' => $session->id]));
+    $queries = collect(DB::getQueryLog())->pluck('query')->implode(' | ');
+    DB::disableQueryLog();
+
+    $response->assertOk();
+    expect($participant->fresh()->last_seen_at->eq($recentSeenAt))->toBeTrue();
+    expect($queries)->not->toContain('update `live_quiz_session_participants`');
+
+    $participant->update(['last_seen_at' => now()->subSeconds(20)]);
+
+    $this->actingAs($stagiaire)
+        ->getJson(route('stagiaire.live-quiz.snapshot', ['session' => $session->id]))
+        ->assertOk();
+
+    expect($participant->fresh()->last_seen_at->gt(now()->subSeconds(5)))->toBeTrue();
 });
