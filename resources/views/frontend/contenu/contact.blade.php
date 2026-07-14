@@ -1,5 +1,6 @@
 @extends('frontend.master')
 @section('title', 'Centre de support')
+@section('description', "Une question sur Onéduc ? Contactez l'équipe du support pour obtenir de l'aide sur votre espace formateur ou apprenant.")
 @section('home')
 
 <div class="container mx-auto px-4 pt-8 pb-2">

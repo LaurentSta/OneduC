@@ -1,5 +1,6 @@
 @extends('frontend.master')
 @section('title', 'Adhérer à l’association Onéduc')
+@section('description', "Adhérez à l'association Onéduc pour soutenir la plateforme et continuer à utiliser l'espace formateur au-delà de la période de découverte.")
 
 @section('home')
 <section class="relative overflow-hidden bg-gray-50 py-16 md:py-20">

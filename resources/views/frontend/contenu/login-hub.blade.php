@@ -1,5 +1,8 @@
 @extends('frontend.master')
 
+@section('title', 'Connexion - Onéduc')
+@section('description', "Connectez-vous à votre espace Onéduc : formateur, apprenant ou observateur.")
+
 @section('home')
 <section class="min-h-[80vh] flex items-center justify-center bg-[#f8f7fa] py-12">
     <div class="max-w-6xl mx-auto px-6 w-full">

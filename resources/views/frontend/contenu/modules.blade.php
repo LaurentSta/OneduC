@@ -1,5 +1,8 @@
 @extends('frontend.master')
 
+@section('title', 'Catalogue des formations - Onéduc')
+@section('description', 'Parcourez le catalogue des formations Onéduc : modules d\'inclusion numérique, quiz et contenus pédagogiques accessibles à tous.')
+
 @section('home')
 <section class="py-12 bg-gray-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

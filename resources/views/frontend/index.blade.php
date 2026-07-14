@@ -1,5 +1,8 @@
 @extends('frontend.master')
 
+@section('title', 'Onéduc - Plateforme de formation pour l\'inclusion numérique')
+@section('description', 'Onéduc est une plateforme de formation gratuite pensée pour l\'inclusion numérique : parcours, quiz, SCORM et suivi pédagogique, sans installation ni carte bancaire.')
+
 @section('home')
 {{-- HERO SECTION --}}
   <section class="relative overflow-hidden bg-white pt-10 pb-20 lg:pt-20">
@@ -751,6 +754,7 @@
     <div class="mx-auto mb-14 max-w-3xl text-center">
       <h2 class="mb-4 text-center font-raleway text-[34px] font-extrabold leading-tight text-bleuone md:text-[40px]">Ils utilisent Onéduc</h2>
       <p class="mx-auto max-w-2xl font-lisible text-lg leading-relaxed text-slate-600">Des retours de formateurs qui cherchent un outil simple, clair et adapté à leurs publics.</p>
+      <p class="mx-auto mt-3 max-w-2xl font-lisible text-sm text-slate-400">Profils illustratifs, représentatifs des usages types d'Onéduc.</p>
     </div>
 
     <div class="grid grid-cols-1 gap-5 font-lisible md:grid-cols-3">
