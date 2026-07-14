@@ -65,3 +65,29 @@ it('returns 404 when trying to open an inactive module detail page anonymously',
     $this->get(route('frontend.modules.show', ['category' => $inactive->category_id, 'module' => $inactive->id]))
         ->assertNotFound();
 });
+
+it('renders a page-specific title, description and a valid Course JSON-LD block for a public module', function () {
+    $module = makeCatalogTestModule([
+        'module_title' => 'Module de test SEO',
+        'description' => 'Une description <strong>avec balises</strong> pour le module.',
+    ]);
+
+    $response = $this->get(route('frontend.modules.show', ['category' => $module->category_id, 'module' => $module->id]));
+
+    $response->assertOk();
+    $response->assertSeeInOrder(['<title>Module de test SEO - Onéduc</title>'], false);
+    $response->assertSee('Une description avec balises pour le module.', false);
+
+    preg_match_all('#<script type="application/ld\+json">(.*?)</script>#s', $response->getContent(), $matches);
+    $blocks = array_map(fn (string $json) => json_decode($json, true), $matches[1]);
+
+    expect($blocks)->not->toBeEmpty();
+    foreach ($blocks as $block) {
+        expect($block)->not->toBeNull(); // json_decode ne doit jamais échouer
+    }
+
+    $courseBlock = collect($blocks)->firstWhere('@type', 'Course');
+    expect($courseBlock)->not->toBeNull()
+        ->and($courseBlock['name'])->toBe('Module de test SEO')
+        ->and($courseBlock['provider']['name'])->toBe('Onéduc');
+});

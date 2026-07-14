@@ -3,10 +3,47 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" href="{{ asset('favicon.ico') }}" type="image/x-icon">
   <title>@yield('title', 'Onéduc - Accueil')</title>
   <meta name="description" content="@yield('description', 'Onéduc est une plateforme de formation pensée pour l inclusion numerique, la lisibilite des parcours et l accompagnement pedagogique.')">
+  <link rel="canonical" href="@yield('canonical', url()->current())">
+
+  {{-- Open Graph --}}
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Onéduc">
+  <meta property="og:locale" content="fr_FR">
+  <meta property="og:title" content="@yield('title', 'Onéduc - Accueil')">
+  <meta property="og:description" content="@yield('description', 'Onéduc est une plateforme de formation pensée pour l inclusion numerique, la lisibilite des parcours et l accompagnement pedagogique.')">
+  <meta property="og:url" content="@yield('canonical', url()->current())">
+  <meta property="og:image" content="@yield('og_image', asset('frontend/assets/img/branding/logo.png'))">
+
+  {{-- Twitter Card --}}
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="@yield('title', 'Onéduc - Accueil')">
+  <meta name="twitter:description" content="@yield('description', 'Onéduc est une plateforme de formation pensée pour l inclusion numerique, la lisibilite des parcours et l accompagnement pedagogique.')">
+  <meta name="twitter:image" content="@yield('og_image', asset('frontend/assets/img/branding/logo.png'))">
+
+  {{-- Données structurées : identité de l'association, sur toutes les pages publiques --}}
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "EducationalOrganization",
+    "name": "Onéduc",
+    "url": "{{ route('index') }}",
+    "logo": "{{ asset('frontend/assets/img/branding/logo.png') }}",
+    "description": "Association loi 1901 portant une plateforme de formation pensée pour l'inclusion numérique.",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "78 rue Danton, boîte n°10",
+      "postalCode": "93310",
+      "addressLocality": "Le Pré-Saint-Gervais",
+      "addressCountry": "FR"
+    }
+  }
+  </script>
+  @stack('structured-data')
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&family=Varela+Round&display=swap" rel="stylesheet">
@@ -141,7 +178,8 @@ document.addEventListener('DOMContentLoaded', () => {
         <li>Voir les progrès de ses apprenants.</li>
         <li>Utiliser des jeux et des activités interactives.</li>
       </ul>
-      <p>C'est <strong>gratuit</strong>.</p>
+      <p>C'est <strong>gratuit</strong> pendant les 30 premiers jours.</p>
+      <p>Après, il faut <strong>adhérer à l'association Onéduc</strong> pour continuer.</p>
       <p>Il n'y a <strong>rien à installer</strong> sur l'ordinateur.</p>
       <p>Pour commencer, cliquez sur <strong class="text-orangeone">« Je suis formateur »</strong>.</p>
       <p>Si vous avez reçu un <strong>code d'accès</strong> de votre formateur,<br>cliquez sur <strong class="text-bleuone">« J'ai un code d'accès »</strong>.</p>

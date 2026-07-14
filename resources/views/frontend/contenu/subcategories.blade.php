@@ -1,5 +1,8 @@
 @extends('frontend.master')
 
+@section('title', 'Sous-catégories ' . $category->category_name . ' - Onéduc')
+@section('description', 'Explorez les sous-catégories de formations ' . $category->category_name . ' sur Onéduc.')
+
 @section('home')
 <div class="container mx-auto px-4 py-8">
 

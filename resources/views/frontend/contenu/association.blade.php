@@ -1,4 +1,6 @@
 @extends('frontend.master')
+@section('title', "L'association Onéduc")
+@section('description', "Onéduc est portée par une association loi 1901 dédiée à l'inclusion numérique et à la formation accompagnée.")
 @section('home')
 <div class="max-w-[1248px] mx-auto px-4">
   <div class="bg-white rounded-[24px] shadow-md p-8 my-10 w-full">

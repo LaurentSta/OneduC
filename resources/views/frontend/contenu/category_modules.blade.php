@@ -1,5 +1,8 @@
 @extends('frontend.master')
 
+@section('title', 'Formations ' . $category->category_name . ' - Onéduc')
+@section('description', 'Découvrez les formations disponibles dans la catégorie ' . $category->category_name . ' sur Onéduc, la plateforme d\'inclusion numérique.')
+
 @section('home')
 <div class="container mx-auto px-4 pt-8 pb-4">
     <div class="bg-white rounded-[20px] shadow-md p-8 mb-6 w-full">

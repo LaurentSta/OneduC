@@ -1,5 +1,6 @@
 @extends('frontend.master')
 @section('title', "Accès Stagiaire - Oneduc.fr")
+@section('description', "Rejoignez votre formation sur Onéduc en saisissant le code d'accès transmis par votre formateur, sans compte ni mot de passe.")
 @section('home')
 
 {{-- RECOUPÉRATION DE TA BANDEROLE --}}

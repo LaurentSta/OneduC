@@ -23,6 +23,8 @@ use Illuminate\Support\Facades\Storage;
 // ----------------------------------------------------------
 // Page d'accueil du site
 Route::get('/', [\App\Http\Controllers\UserController::class, 'Index'])->name('index');
+// Sitemap XML pour les moteurs de recherche
+Route::get('/sitemap.xml', [\App\Http\Controllers\Frontend\SitemapController::class, 'index'])->name('sitemap');
 // Présentation du projet Onéduc
 Route::get('/le-projet-oneduc-fr', [\App\Http\Controllers\UserController::class, 'Projet'])->name('projet');
 // Présentation de l'association

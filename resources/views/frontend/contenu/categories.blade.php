@@ -1,4 +1,6 @@
 @extends('frontend.master')
+@section('title', 'Parcours de formation - Onéduc')
+@section('description', 'Découvrez les parcours de formation proposés par Onéduc, organisés par catégorie et accessibles à tous.')
 @section('home')
 
 {{-- BLOC INTRO — Les parcours --}}

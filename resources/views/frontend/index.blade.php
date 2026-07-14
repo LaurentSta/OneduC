@@ -1,5 +1,8 @@
 @extends('frontend.master')
 
+@section('title', 'Onéduc - Plateforme de formation pour l\'inclusion numérique')
+@section('description', 'Onéduc est une plateforme de formation gratuite pensée pour l\'inclusion numérique : parcours, quiz, SCORM et suivi pédagogique, sans installation ni carte bancaire.')
+
 @section('home')
 {{-- HERO SECTION --}}
   <section class="relative overflow-hidden bg-white pt-10 pb-20 lg:pt-20">
@@ -43,16 +46,39 @@
         <div class="w-full lg:w-1/2 relative">
           {{-- Correction layout : suppression du w-1/2 interne qui réduisait la vidéo à 25% de la largeur --}}
           <div class="w-full flex justify-center items-center py-10">
-            <div class="aspect-video w-full max-w-xl rounded-xl overflow-hidden shadow-lg">
-              <iframe
-                src="https://www.youtube.com/embed/Bw4_SlnqZj8?autoplay=1&mute=1&loop=1&playlist=Bw4_SlnqZj8&controls=0&showinfo=0&modestbranding=1"
-                width="560" height="315"
-                class="w-full h-full"
-                frameborder="0"
-                allowfullscreen
-                allow="autoplay"
-                title="Présentation de la plateforme Onéduc">
-              </iframe>
+            {{--
+              La vidéo YouTube n'est chargée qu'après consentement aux cookies
+              (ou sur clic explicite, qui vaut action volontaire) : avant ça,
+              seule une image statique (i.ytimg.com, sans cookie ni script
+              tiers) est affichée. Script de chargement en bas de page
+              (@push('scripts')).
+            --}}
+            <div
+              class="aspect-video w-full max-w-xl rounded-xl overflow-hidden shadow-lg"
+              data-oneduc-consent-video
+              data-video-id="Bw4_SlnqZj8"
+              data-video-title="Présentation de la plateforme Onéduc"
+            >
+              <button
+                type="button"
+                class="group relative block h-full w-full"
+                data-oneduc-consent-video-play
+                aria-label="Lancer la vidéo de présentation Onéduc"
+              >
+                <img
+                  src="https://i.ytimg.com/vi/Bw4_SlnqZj8/hqdefault.jpg"
+                  alt=""
+                  loading="lazy"
+                  class="h-full w-full object-cover"
+                >
+                <span class="absolute inset-0 flex items-center justify-center bg-black/30 transition group-hover:bg-black/45">
+                  <span class="flex h-16 w-16 items-center justify-center rounded-full bg-white/90 shadow-lg transition group-hover:scale-105">
+                    <svg class="ml-1 h-7 w-7 text-bleuone" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                      <path d="M6 4l12 6-12 6V4z" />
+                    </svg>
+                  </span>
+                </span>
+              </button>
             </div>
           </div>
         </div>
@@ -728,6 +754,7 @@
     <div class="mx-auto mb-14 max-w-3xl text-center">
       <h2 class="mb-4 text-center font-raleway text-[34px] font-extrabold leading-tight text-bleuone md:text-[40px]">Ils utilisent Onéduc</h2>
       <p class="mx-auto max-w-2xl font-lisible text-lg leading-relaxed text-slate-600">Des retours de formateurs qui cherchent un outil simple, clair et adapté à leurs publics.</p>
+      <p class="mx-auto mt-3 max-w-2xl font-lisible text-sm text-slate-400">Profils illustratifs, représentatifs des usages types d'Onéduc.</p>
     </div>
 
     <div class="grid grid-cols-1 gap-5 font-lisible md:grid-cols-3">
@@ -773,7 +800,7 @@
 
     <div class="space-y-4 font-lisible">
       @foreach([
-        ['q' => 'Est-ce vraiment gratuit ?',             'r' => "Oui, Onéduc est entièrement gratuit pour les formateurs et les apprenants. Pas d'abonnement, pas de carte bancaire."],
+        ['q' => 'Est-ce vraiment gratuit ?',             'r' => "Pour les apprenants, oui : entièrement gratuit, sans compte ni carte bancaire. Pour les formateurs, l'accès est gratuit pendant une période de découverte de 30 jours ; au-delà, la poursuite de l'usage de l'espace formateur nécessite une adhésion à l'association Onéduc (cotisation annuelle via HelloAsso, montant indiqué dans le formulaire)."],
         ['q' => "Que se passe-t-il après l'inscription ?", 'r' => "Vous accédez directement à votre espace formateur. Vous pouvez créer votre premier groupe, ajouter des contenus et inviter vos apprenants avec un code d'accès."],
         ['q' => 'Faut-il installer quelque chose ?',     'r' => "Non. Onéduc fonctionne entièrement dans votre navigateur internet (Chrome, Firefox, Edge…). Aucune installation n'est nécessaire, ni sur votre ordinateur ni sur celui de vos apprenants."],
         ['q' => 'Mes apprenants doivent-ils créer un compte ?', 'r' => "Non. Vos apprenants rejoignent votre formation en saisissant simplement le code d'accès que vous leur donnez. Pas de compte, pas de mot de passe à retenir."],
@@ -808,5 +835,55 @@
     </div>
   </div>
 </section>
+
+@push('scripts')
+<script>
+  (function () {
+    const container = document.querySelector('[data-oneduc-consent-video]');
+    if (!container) {
+      return;
+    }
+
+    const videoId = container.dataset.videoId;
+    const videoTitle = container.dataset.videoTitle || '';
+    const playButton = container.querySelector('[data-oneduc-consent-video-play]');
+
+    function hasCookieConsentAccepted() {
+      const match = document.cookie.split('; ').find((row) => row.startsWith('laravel_cookie_consent='));
+      return match ? match.split('=')[1] === '1' : false;
+    }
+
+    function loadVideo() {
+      if (container.querySelector('iframe')) {
+        return;
+      }
+
+      const iframe = document.createElement('iframe');
+      iframe.src = 'https://www.youtube-nocookie.com/embed/' + videoId
+        + '?autoplay=1&mute=1&loop=1&playlist=' + videoId + '&controls=0&showinfo=0&modestbranding=1';
+      iframe.className = 'w-full h-full';
+      iframe.setAttribute('frameborder', '0');
+      iframe.setAttribute('allow', 'autoplay');
+      iframe.setAttribute('allowfullscreen', '');
+      iframe.setAttribute('title', videoTitle);
+
+      container.innerHTML = '';
+      container.appendChild(iframe);
+    }
+
+    if (playButton) {
+      playButton.addEventListener('click', loadVideo);
+    }
+
+    if (hasCookieConsentAccepted()) {
+      loadVideo();
+    }
+
+    // Si la bannière de consentement est encore affichée sur cette même page
+    // et que l'utilisateur accepte, on charge la vidéo sans attendre un rechargement.
+    document.addEventListener('cookie-consent:accepted', loadVideo);
+  })();
+</script>
+@endpush
 
 @endsection
