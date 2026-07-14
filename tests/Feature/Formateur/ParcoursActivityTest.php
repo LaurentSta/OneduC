@@ -117,8 +117,7 @@ it('stores a successful parcours activity attempt and reopens the activity as va
     $page->assertSee('Activité validée');
     $page->assertSee('Leçon suivante');
     $page->assertSee('shuffleItems: true', false);
-    $page->assertSee('Votre mission');
-    $page->assertSee('Les paramètres du groupe : titre et dates.');
+    $page->assertSee('Les paramètres du groupe : titre, dates et repères généraux.');
     $page->assertSee('Les personnes à inscrire et leurs coordonnées.');
-    $page->assertSee('Les contenus de formation que suivront les stagiaires.');
+    $page->assertSee('Les contenus de formation que les stagiaires vont suivre.');
 });
