@@ -3,29 +3,22 @@
 @section('formateur')
 <div class="w-full px-6 lg:px-8"
      x-data="{
-       groups: {{ Js::from($toolGroups) }},
-       groupId: '',
+       modules: {{ Js::from($toolModules) }},
        moduleId: '',
        lectureId: '',
-       get selectedGroup()   { return this.groups.find(g => String(g.id) === String(this.groupId)) || null; },
-       get modules()         { return this.selectedGroup?.modules || []; },
+       groupId: '',
        get selectedModule()  { return this.modules.find(m => String(m.id) === String(this.moduleId)) || null; },
        get lectures()        { return this.selectedModule?.lectures || []; },
-       get canLaunch()       { return this.groupId && this.moduleId && this.lectureId; },
-       syncModule() {
-         if (!this.modules.some(m => String(m.id) === String(this.moduleId))) {
-           this.moduleId  = this.modules[0]?.id ?? '';
-           this.lectureId = this.lectures[0]?.id ?? '';
-         }
-       },
+       get groups()          { return this.selectedModule?.groups || []; },
+       get selectedLecture() { return this.lectures.find(l => String(l.id) === String(this.lectureId)) || null; },
+       get canLaunch()       { return this.moduleId && this.lectureId && (this.selectedLecture?.questions_count > 0); },
        syncLecture() {
          if (!this.lectures.some(l => String(l.id) === String(this.lectureId))) {
            this.lectureId = this.lectures[0]?.id ?? '';
          }
        },
        init() {
-         this.$watch('groupId',  () => this.syncModule());
-         this.$watch('moduleId', () => this.syncLecture());
+         this.$watch('moduleId', () => { this.syncLecture(); this.groupId = ''; });
        }
      }">
 
@@ -57,9 +50,9 @@
       <div class="bg-white rounded-[20px] shadow-md p-6 sticky top-6">
         <p class="font-varela text-base font-bold text-bleuone mb-4">Nouvelle session</p>
 
-        @if($toolGroups->isEmpty())
+        @if($toolModules->isEmpty())
           <div class="rounded-[10px] bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-700">
-            Aucun groupe avec quiz disponible. Assignez des formations contenant des questions actives à vos groupes.
+            Vous n'avez pas encore de formation avec des leçons. Créez d'abord une formation dans "Mes créations".
           </div>
         @else
           <form method="POST"
@@ -71,23 +64,11 @@
             <input type="hidden" name="module_id"  :value="moduleId">
             <input type="hidden" name="lecture_id" :value="lectureId">
 
-            {{-- Groupe --}}
-            <div>
-              <label class="block text-xs font-semibold text-gray-600 mb-1">Groupe</label>
-              <select x-model="groupId" required
-                      class="w-full rounded-[10px] border border-gray-300 px-3 py-2.5 text-sm focus:border-[#004461] focus:outline-none focus:ring-2 focus:ring-[#004461]/20">
-                <option value="">Choisir un groupe…</option>
-                <template x-for="g in groups" :key="g.id">
-                  <option :value="String(g.id)" x-text="g.name"></option>
-                </template>
-              </select>
-            </div>
-
             {{-- Formation --}}
             <div>
               <label class="block text-xs font-semibold text-gray-600 mb-1">Formation</label>
-              <select x-model="moduleId" :disabled="!modules.length" required
-                      class="w-full rounded-[10px] border border-gray-300 px-3 py-2.5 text-sm focus:border-[#004461] focus:outline-none focus:ring-2 focus:ring-[#004461]/20 disabled:opacity-50">
+              <select x-model="moduleId" required
+                      class="w-full rounded-[10px] border border-gray-300 px-3 py-2.5 text-sm focus:border-[#004461] focus:outline-none focus:ring-2 focus:ring-[#004461]/20">
                 <option value="">Choisir une formation…</option>
                 <template x-for="m in modules" :key="m.id">
                   <option :value="String(m.id)" x-text="m.title"></option>
@@ -97,15 +78,36 @@
 
             {{-- Leçon --}}
             <div>
-              <label class="block text-xs font-semibold text-gray-600 mb-1">Leçon avec quiz</label>
-              <select x-model="lectureId" :disabled="!lectures.length" required name="lecture_id"
+              <label class="block text-xs font-semibold text-gray-600 mb-1">Leçon</label>
+              <select x-model="lectureId" :disabled="!lectures.length" required
                       class="w-full rounded-[10px] border border-gray-300 px-3 py-2.5 text-sm focus:border-[#004461] focus:outline-none focus:ring-2 focus:ring-[#004461]/20 disabled:opacity-50">
                 <option value="">Choisir une leçon…</option>
                 <template x-for="l in lectures" :key="l.id">
-                  <option :value="String(l.id)" x-text="l.label"></option>
+                  <option :value="String(l.id)" x-text="l.label + (l.questions_count ? ' (' + l.questions_count + ' question' + (l.questions_count > 1 ? 's' : '') + ')' : ' (aucune question)')"></option>
                 </template>
               </select>
-              <p class="mt-1 text-[10px] text-gray-400">Seules les leçons avec des questions actives sont listées.</p>
+
+              <template x-if="selectedLecture && !selectedLecture.questions_count">
+                <div class="mt-2 rounded-[10px] bg-amber-50 border border-amber-200 px-3 py-2 text-[11px] text-amber-700">
+                  <span>Cette leçon n'a pas encore de questions actives.</span>
+                  <template x-if="selectedLecture.manage_url">
+                    <a :href="selectedLecture.manage_url" target="_blank" class="block font-bold underline mt-0.5">Ajouter des questions →</a>
+                  </template>
+                </div>
+              </template>
+            </div>
+
+            {{-- Groupe (optionnel) --}}
+            <div>
+              <label class="block text-xs font-semibold text-gray-600 mb-1">Groupe (optionnel)</label>
+              <select x-model="groupId" :disabled="!groups.length"
+                      class="w-full rounded-[10px] border border-gray-300 px-3 py-2.5 text-sm focus:border-[#004461] focus:outline-none focus:ring-2 focus:ring-[#004461]/20 disabled:opacity-50">
+                <option value="">Tous les groupes de la formation</option>
+                <template x-for="g in groups" :key="g.id">
+                  <option :value="String(g.id)" x-text="g.name"></option>
+                </template>
+              </select>
+              <p class="mt-1 text-[10px] text-gray-400">Sert uniquement à étiqueter la session — les stagiaires rejoignent avec le code, quel que soit leur groupe.</p>
             </div>
 
             <button type="submit"
@@ -123,7 +125,7 @@
           <div class="mt-5 rounded-[10px] bg-[#004461]/5 border border-[#004461]/10 px-4 py-3">
             <p class="text-xs text-[#004461] font-semibold mb-1">Comment ça marche ?</p>
             <ol class="text-[11px] text-gray-600 space-y-1 list-decimal list-inside leading-relaxed">
-              <li>Choisissez groupe, formation et leçon</li>
+              <li>Choisissez formation puis leçon</li>
               <li>Cliquez "Lancer" — le cockpit s'ouvre</li>
               <li>Les stagiaires scannent le QR code ou saisissent le code</li>
               <li>Pilotez les questions, affichez les corrections</li>

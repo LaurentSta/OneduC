@@ -8,6 +8,9 @@
 
   @vite(['resources/css/app.css','resources/js/app.js'])
 
+  {{-- Tabler Icons (classes "ti ti-*") --}}
+  <link rel="stylesheet" href="{{ asset('backend/assets/vendor/fonts/tabler-icons.css') }}">
+
   {{-- Video.js (utilisé dans chapitre.blade.php) --}}
   <link href="https://vjs.zencdn.net/8.9.0/video-js.css" rel="stylesheet" />
   <script src="https://vjs.zencdn.net/8.9.0/video.min.js"></script>

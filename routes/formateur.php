@@ -12,6 +12,7 @@ use App\Http\Controllers\Formateur\LessonResourceController;
 use App\Http\Controllers\Formateur\LiveQuizSessionController;
 use App\Http\Controllers\Formateur\MesFormationsController;
 use App\Http\Controllers\Formateur\ModuleBuilderController;
+use App\Http\Controllers\Formateur\ModuleQuizBankController;
 use App\Http\Controllers\Formateur\ObjectiveController;
 use App\Http\Controllers\Formateur\OnboardingController;
 use App\Http\Controllers\Formateur\OutilsBuzzerController;
@@ -307,10 +308,17 @@ Route::middleware(['auth', 'role:formateur', 'association.member'])
                 Route::post('/', [FormateurQuizQuestionController::class, 'store'])->name('store');
                 Route::post('/import', [FormateurQuizQuestionController::class, 'importCsv'])->name('import');
                 Route::get('/import/modele', [FormateurQuizQuestionController::class, 'downloadCsvTemplate'])->name('import.template');
+                Route::post('/generer-ia', [FormateurQuizQuestionController::class, 'generateIA'])->name('generate-ia');
                 Route::get('/{question}/edition', [FormateurQuizQuestionController::class, 'edit'])->name('edit');
                 Route::put('/{question}', [FormateurQuizQuestionController::class, 'update'])->name('update');
                 Route::delete('/{question}', [FormateurQuizQuestionController::class, 'destroy'])->name('destroy');
             });
+
+            // Vue unifiée de la banque de questions pour toute la formation (arborescence + distribution)
+            Route::prefix('{module}/quiz-questions')->name('quiz-questions.')->group(function () {
+                Route::get('/', [ModuleQuizBankController::class, 'index'])->name('index');
+            });
+            Route::post('/quiz-questions/{question}/deplacer', [ModuleQuizBankController::class, 'move'])->name('quiz-questions.move');
         });
 
         Route::redirect('/word-clouds', '/formateur/nuages-de-mots', 301);

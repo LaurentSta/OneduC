@@ -39,22 +39,23 @@ class LiveQuizSessionController extends Controller
     public function launch(Request $request): RedirectResponse
     {
         $data = $request->validate([
-            'group_id' => ['required', 'exists:groups,id'],
+            'group_id' => ['nullable', 'exists:groups,id'],
             'module_id' => ['required', 'exists:modules,id'],
             'lecture_id' => ['required', 'exists:module_lectures,id'],
         ]);
 
-        $group = Group::query()
-            ->where('id', (int) $data['group_id'])
-            ->where('instructor_id', (int) auth()->id())
-            ->firstOrFail();
+        $module = Module::query()->findOrFail((int) $data['module_id']);
+        abort_unless($module->isVisibleTo(auth()->user()), 403);
 
-        $module = Module::query()
-            ->where('id', (int) $data['module_id'])
-            ->where('formateur_id', (int) auth()->id())
-            ->firstOrFail();
+        $group = null;
+        if (! empty($data['group_id'])) {
+            $group = Group::query()
+                ->where('id', (int) $data['group_id'])
+                ->accessibleByTrainer((int) auth()->id())
+                ->firstOrFail();
 
-        abort_unless($group->modules()->where('modules.id', $module->id)->exists(), 403);
+            abort_unless($group->modules()->where('modules.id', $module->id)->exists(), 403);
+        }
 
         $lecture = ModuleLecture::query()
             ->where('id', (int) $data['lecture_id'])

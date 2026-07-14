@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Formateur;
 
 use App\Http\Controllers\Controller;
-use App\Models\Group;
 use App\Models\LiveQuizSession;
 use App\Models\Module;
 use App\Models\ModuleSection;
@@ -15,63 +14,58 @@ class OutilsLiveQuizController extends Controller
     {
         $formateurId = (int) auth()->id();
 
-        $toolGroups = Group::query()
-            ->accessibleByTrainer($formateurId)
+        $toolModules = Module::query()
+            ->where(function ($q) use ($formateurId) {
+                $q->authoredByTrainer($formateurId)
+                    ->orWhereHas('groups', fn ($gq) => $gq->accessibleByTrainer($formateurId));
+            })
             ->with([
-                'modules' => function ($query) {
-                    $query->orderBy('group_module.position')
-                        ->with([
-                            'sections' => function ($sectionQuery) {
-                                $sectionQuery->orderBy('id')
-                                    ->select('id', 'module_id', 'section_title')
-                                    ->with([
-                                        'lectures' => function ($lectureQuery) {
-                                            $lectureQuery
-                                                ->whereHas('quizQuestions', fn ($q) => $q->where('is_active', true))
-                                                ->orderBy('position')
-                                                ->orderBy('id')
-                                                ->select('id', 'module_id', 'section_id', 'lecture_title', 'position');
-                                        },
-                                    ]);
-                            },
-                        ])
-                        ->select('modules.id', 'modules.module_name', 'modules.module_title');
+                'sections' => function ($query) {
+                    $query->orderBy('id')
+                        ->select('id', 'module_id', 'section_title')
+                        ->with(['lectures' => function ($lectureQuery) {
+                            $lectureQuery
+                                ->select('id', 'module_id', 'section_id', 'lecture_title', 'position')
+                                ->withCount(['quizQuestions as active_questions_count' => fn ($q) => $q->where('is_active', true)])
+                                ->orderBy('position')
+                                ->orderBy('id');
+                        }]);
+                },
+                'groups' => function ($query) use ($formateurId) {
+                    $query->accessibleByTrainer($formateurId)
+                        ->orderBy('groups.name')
+                        ->select('groups.id', 'groups.name');
                 },
             ])
-            ->orderBy('name')
-            ->get(['id', 'name'])
-            ->map(function (Group $group) {
-                $modules = $group->modules
-                    ->map(function (Module $m) {
-                        $lectures = $m->sections->flatMap(function (ModuleSection $section) {
-                            return $section->lectures->map(fn ($l) => [
-                                'id'         => (int) $l->id,
-                                'section_id' => (int) $l->section_id,
-                                'label'      => trim($section->section_title . ' · ' . $l->lecture_title),
-                            ]);
-                        })->values();
+            ->orderBy('module_title')
+            ->get(['id', 'module_name', 'module_title', 'formateur_id', 'is_trainer_authored'])
+            ->map(function (Module $module) use ($formateurId) {
+                $canManage = (bool) $module->is_trainer_authored && (int) $module->formateur_id === $formateurId;
 
-                        if ($lectures->isEmpty()) {
-                            return null;
-                        }
+                $lectures = $module->sections->flatMap(function (ModuleSection $section) use ($canManage, $module) {
+                    return $section->lectures->map(fn ($lecture) => [
+                        'id' => (int) $lecture->id,
+                        'section_id' => (int) $lecture->section_id,
+                        'label' => trim($section->section_title.' · '.$lecture->lecture_title),
+                        'questions_count' => (int) $lecture->active_questions_count,
+                        'manage_url' => $canManage
+                            ? route('formateur.modules.builder.quiz-questions.index', ['module' => $module->id, 'lecture' => $lecture->id])
+                            : null,
+                    ]);
+                })->values();
 
-                        return [
-                            'id'       => (int) $m->id,
-                            'title'    => (string) ($m->module_title ?: $m->module_name ?: 'Module'),
-                            'lectures' => $lectures,
-                        ];
-                    })
-                    ->filter()
-                    ->values();
-
-                if ($modules->isEmpty()) {
+                if ($lectures->isEmpty()) {
                     return null;
                 }
 
                 return [
-                    'id'      => (int) $group->id,
-                    'name'    => (string) $group->name,
-                    'modules' => $modules,
+                    'id' => (int) $module->id,
+                    'title' => (string) ($module->module_title ?: $module->module_name ?: 'Module'),
+                    'lectures' => $lectures,
+                    'groups' => $module->groups->map(fn ($group) => [
+                        'id' => (int) $group->id,
+                        'name' => (string) $group->name,
+                    ])->values(),
                 ];
             })
             ->filter()
@@ -83,6 +77,6 @@ class OutilsLiveQuizController extends Controller
             ->limit(15)
             ->get();
 
-        return view('formateur.outils.quiz_index', compact('toolGroups', 'sessions'));
+        return view('formateur.outils.quiz_index', compact('toolModules', 'sessions'));
     }
 }
