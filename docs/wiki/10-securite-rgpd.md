@@ -71,26 +71,16 @@ Pour les nouveaux formulaires de gestion des formateurs et stagiaires, le contex
 | Route `/admin/stagiaires/{id}/debug-progression` | Aucune route correspondante trouvée dans `php artisan route:list --json` |
 | `POST /admin/stagiaires/{user}/reset-progression` | Route présente dans `routes/admin.php`, protégée par `auth`, `role:admin`, `admin.activity` |
 | Tests liés au middleware `association.member` | La suite du 5 juillet passe sur ces scénarios |
-| `/inscription`, connexion par code, `LessonFeedbackController::store()`, `Module::isVisibleTo()`, SCORM (`save-progress`/`save-block-progress`/`evaluation-progress`), `last_session_time`, contrat d'upload image du builder | Corrigés le 5 juillet 2026 (voir [Checklist de publication](13-publication-github.md), Axe 1, S3 à S9). Suite de tests complète verte (124 tests). |
+| `/inscription`, connexion par code, `LessonFeedbackController::store()`, `Module::isVisibleTo()`, SCORM (`save-progress`/`save-block-progress`/`evaluation-progress`), `last_session_time`, contrat d'upload image du builder | Corrigés le 5 juillet 2026 (voir [Checklist de publication](13-publication-github.md), Axe 1, S3 à S9). |
 | Connexion email d'un compte inactif | `LoginRequest` exige désormais `status = true` pendant l'authentification |
 | Unicité de l'email du profil administrateur | `AdminController::AdminProfilStore()` utilise `Rule::unique(...)->ignore($user->id)` |
 | Données personnelles des nouveaux formulaires utilisateurs dans le journal admin | Les champs nominatifs, coordonnées, mots de passe et codes d'accès sont exclus du contexte journalisé |
 | Remise à zéro partielle de la progression | L'opération est transactionnelle et couvre désormais quiz, progression, vidéo, SCORM classique, évaluations et blocs SCORM modernes |
+| Import mort `ScormInteractionController` | Supprimé de `routes/scorm.php` dès le correctif S7 du 5 juillet 2026 |
+| `StoreModuleRequest::authorize()` et `StoreGroupeRequest::authorize()` retournaient `false` | Corrigé le 14 juillet 2026 — `authorize()` retourne désormais `true`, conforme à la convention des autres FormRequests du projet (`ContactRequest`, `LoginRequest`, `ScormImportRequest`) : l'autorisation réelle reste au middleware de route, pas au FormRequest |
+| Gap `Module::isVisibleTo()` — `StagiaireController::StagiaireModuleDetail()` et `Frontend\LectureController` | `Frontend\LectureController` appelait déjà `isVisibleTo()` via `assertCanViewLecture()` depuis le 8 juillet 2026 (`show`, `showScorm`, `showScormBlock`, `showSlides`, toutes derrière le middleware `auth`). `StagiaireModuleDetail()` ne l'appelait toujours pas ; corrigé le 14 juillet 2026 avec un `abort_unless($module->isVisibleTo($user), 403)`, couvert par un nouveau test dans `tests/Feature/ModuleVisibilityTest.php` |
 
-### Gap identifié lors du correctif S3 (à traiter)
-
-`Module::isVisibleTo()` est désormais le point de vérité pour la visibilité d'un module, mais deux points d'accès ne l'appellent pas et n'ont **aucune** vérification d'appartenance groupe :
-- `StagiaireController::StagiaireModuleDetail()` (route `stagiaire.module.detail`) — ne vérifie que `Module::active()`
-- `Frontend\LectureController` (`show`, `showScorm`, `showScormBlock`, `showSlides`) — aucune vérification ; `showScorm` (route `lecture.scorm`) n'est même pas derrière le middleware `auth`
-
-Un stagiaire authentifié (ou, pour `showScorm`, un visiteur non authentifié) peut donc encore accéder au détail ou au contenu d'une leçon dont le module n'est pas affecté à son groupe, en devinant/énumérant les identifiants. À corriger avant publication, ou au minimum documenter le risque.
-
-### Points restants (hors périmètre du correctif du 5 juillet 2026)
-
-| # | Risque | Localisation | Impact |
-|---|--------|--------------|--------|
-| 8 | `StoreModuleRequest::authorize()` et `StoreGroupeRequest::authorize()` retournent `false` | `app/Http/Requests/` | FormRequests inutilisables tant qu'ils ne sont pas corrigés |
-| 10 | Import mort `ScormInteractionController` | `routes/scorm.php` | Dette technique faible, à nettoyer |
+Suite de tests complète verte : **268 tests** au 14 juillet 2026.
 
 ---
 

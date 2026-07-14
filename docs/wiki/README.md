@@ -41,9 +41,19 @@ Chaque page indique en tête son public visé. Les pages mixtes regroupent la pa
 | 11 | [Roadmap](11-roadmap.md) | Feuille de route en 4 phases, bugs connus, dette technique |
 | 12 | [Glossaire](12-glossaire.md) | Vocabulaire unifié du projet |
 | 13 | [Prêt à publier sur GitHub](13-publication-github.md) | Checklist avant publication — sécurité, licence, nettoyage |
-| 14 | [Audit site du 5 juillet 2026](14-audit-site-2026-07-05.md) | Crawl public, état des routes, tests/build, priorités de correction |
 | 15 | [Génération de contenu par IA](15-generation-ia.md) | Génération de leçons/formations par IA (Mistral), garde-fous, configuration |
 | 16 | [Émargement](16-emargement.md) | Feuille de présence par séance datée, signature graphique, export PDF Qualiopi/OPCO |
+| 17 | [Audit site du 14 juillet 2026](17-audit-site-2026-07-14.md) | Suivi de l'audit du 5 juillet, faille d'accès module corrigée, crawl public 100% sain |
+
+---
+
+## Pages archivées
+
+Pages conservées pour l'historique, remplacées par une page plus récente.
+
+| # | Page | Remplacée par |
+|---|------|----------------|
+| 14 | [Audit site du 5 juillet 2026](14-audit-site-2026-07-05.md) | [Audit site du 14 juillet 2026](17-audit-site-2026-07-14.md) |
 
 ---
 
@@ -82,17 +92,17 @@ Fichiers légaux à la racine du projet :
 
 ## État vérifié du dépôt
 
-Analyse réalisée le **5 juillet 2026** depuis `/var/www/Oneduc_Dev`.
+Analyse réalisée le **14 juillet 2026** depuis `/var/www/Oneduc_Dev` (voir [Audit du 14 juillet 2026](17-audit-site-2026-07-14.md) pour le détail).
 
 | Vérification | Résultat |
 |--------------|----------|
-| Routes Laravel | 411 routes déclarées (`php artisan route:list --json`) |
-| Crawl public | 23 routes GET publiques sans paramètres testées : 22 en HTTP 200, `/inscription` en HTTP 500 |
-| Tests automatisés | `php artisan test` : 103 tests passés, 1 échec, 505 assertions |
+| Routes Laravel | 513 routes déclarées (`php artisan route:list --json`) |
+| Crawl public | 23 routes GET publiques sans paramètres testées : 22 en HTTP 200, `/inscription` en redirection 301 volontaire — 0 erreur 500 |
+| Tests automatisés | `php artisan test` : 268 tests passés, 0 échec, 1295 assertions |
 | Build frontend | `npm run build` réussi, avec avertissements Vite sur les chunks volumineux |
-| Schéma base de données | Baseline MySQL dans `database/schema/mysql-schema.sql` + 5 migrations post-baseline, toutes marquées `Ran` localement |
-| Point d'attention publication | `/inscription` cassée, test ModuleBuilder rouge, connexion stagiaire par code sans throttling, route de feedback leçon à corriger, historique Git à vérifier |
+| Schéma base de données | Baseline MySQL dans `database/schema/mysql-schema.sql` + migrations post-baseline, toutes marquées `Ran` localement |
+| Point d'attention publication | Historique Git à vérifier avant publication ; dette technique restante documentée dans [11-roadmap.md](11-roadmap.md) |
 
 ---
 
-*Dernière mise à jour : 5 juillet 2026 — Version locale vérifiée : Laravel 11.42.0, PHP 8.3.6, Tailwind CSS v4, React 19 pour certains écrans riches*
+*Dernière mise à jour : 14 juillet 2026 — Version locale vérifiée : Laravel 11.42.0, PHP 8.3.6, Tailwind CSS v4, React 19 pour certains écrans riches*

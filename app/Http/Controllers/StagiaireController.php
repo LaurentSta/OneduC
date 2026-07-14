@@ -56,6 +56,8 @@ class StagiaireController extends Controller
             ->active()
             ->findOrFail($id);
 
+        abort_unless($module->isVisibleTo($user), 403);
+
         // 1. Compter les réponses SCORM par leçon
         $scormCounts = ScormInteraction::where('user_id', $user->id)
             ->select('lecture_id', DB::raw('count(*) as total'))

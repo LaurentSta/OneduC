@@ -76,6 +76,30 @@ test('a stagiaire with no group assignment cannot open the lesson of an active m
         ->assertNotFound();
 });
 
+test('a stagiaire with no group assignment cannot open the module detail page of an active module', function () {
+    ['module' => $module] = seedModuleVisibilityContext();
+
+    $stagiaire = User::factory()->create(['role' => 'stagiaire', 'password_changed_at' => now()]);
+
+    $this->actingAs($stagiaire)
+        ->get(route('stagiaire.module.detail', ['module' => $module->id]))
+        ->assertForbidden();
+});
+
+test('a stagiaire in a group with the module assigned can open the module detail page', function () {
+    ['owner' => $owner, 'module' => $module] = seedModuleVisibilityContext();
+
+    $stagiaire = User::factory()->create(['role' => 'stagiaire', 'password_changed_at' => now()]);
+
+    $group = Group::query()->create(['name' => 'Groupe visibilite '.uniqid(), 'instructor_id' => $owner->id]);
+    DB::table('group_user')->insert(['group_id' => $group->id, 'user_id' => $stagiaire->id, 'role_in_group' => 'stagiaire']);
+    DB::table('group_module')->insert(['group_id' => $group->id, 'module_id' => $module->id]);
+
+    $this->actingAs($stagiaire)
+        ->get(route('stagiaire.module.detail', ['module' => $module->id]))
+        ->assertOk();
+});
+
 test('the owning formateur can open the lesson of their own trainer-authored module', function () {
     ['owner' => $owner, 'module' => $module, 'section' => $section, 'lecture' => $lecture] = seedModuleVisibilityContext();
 
