@@ -60,6 +60,9 @@
         <h2 class="text-lg font-semibold mt-6 mb-2">Destinataires des données</h2>
         <p>
           Vos données sont hébergées par <strong>IONOS SARL</strong> (sous-traitant), qui agit exclusivement selon nos instructions.
+          Pour la génération assistée de contenu pédagogique par les formateurs (rédaction de leçons, de quiz), certains
+          contenus de cours sont transmis à <strong>Mistral AI</strong> (société française) via son API ; aucune donnée
+          personnelle de stagiaire n’est transmise à ce service.
           Aucun transfert de données n’est effectué en dehors de l’Union européenne.
           Vos données ne sont jamais vendues ni cédées à des tiers à des fins commerciales.
         </p>
@@ -88,7 +91,7 @@
           <strong>CNIL</strong> : <a href="https://www.cnil.fr" class="underline text-blue-600" target="_blank">www.cnil.fr</a>.
         </p>
 
-        <p class="mt-6 text-sm text-gray-500">Dernière mise à jour : 16 mai 2026</p>
+        <p class="mt-6 text-sm text-gray-500">Dernière mise à jour : 14 juillet 2026</p>
       </div>
     </div>
 
