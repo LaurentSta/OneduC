@@ -89,8 +89,10 @@ class QuizService
                 continue;
             }
 
-            $earnedPoints += $isCorrect ? 1.0 : 0.0;
-            $maxPoints += 1.0;
+            $questionPoints = (float) ($row->question->points ?? 1);
+
+            $earnedPoints += $isCorrect ? $questionPoints : 0.0;
+            $maxPoints += $questionPoints;
         }
 
         if ($maxPoints <= 0) {

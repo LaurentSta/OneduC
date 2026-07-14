@@ -28,6 +28,7 @@ class QuizQuestionBuilder
             'question_text' => ['required', 'string'],
             'type' => ['required', 'in:boolean,single,multiple,cloze'],
             'is_active' => ['nullable', 'boolean'],
+            'points' => ['nullable', 'integer', 'min:0'],
 
             // QCM / Vrai-Faux
             'options' => ['nullable', 'array'],
@@ -63,6 +64,7 @@ class QuizQuestionBuilder
                 'question_text' => $data['question_text'],
                 'type' => $data['type'],
                 'is_active' => $data['is_active'] ?? true,
+                'points' => (int) ($data['points'] ?? 1),
                 'created_by' => $createdBy,
             ]);
 
@@ -131,6 +133,7 @@ class QuizQuestionBuilder
                 'question_text' => $data['question_text'],
                 'type' => $data['type'],
                 'is_active' => $data['is_active'] ?? $question->is_active,
+                'points' => (int) ($data['points'] ?? $question->points ?? 1),
             ]);
 
             $updates = [];
@@ -246,11 +249,11 @@ class QuizQuestionBuilder
     public function csvTemplateContent(): string
     {
         $lines = [
-            'question_text;type;is_active;option_1;option_1_correct;option_2;option_2_correct;option_3;option_3_correct;option_4;option_4_correct;cloze_raw_text;cloze_blank_1_key;cloze_blank_1_answers;cloze_blank_1_points;cloze_blank_2_key;cloze_blank_2_answers;cloze_blank_2_points',
-            '"2+2 = ?";single;1;"3";0;"4";1;"5";0;"";0;"";"";"";"";"";"";""',
-            '"Choisissez les fruits";multiple;1;"Pomme";1;"Carotte";0;"Banane";1;"Poire";1;"";"";"";"";"";"";""',
-            '"Le ciel est bleu";boolean;1;"";1;"";0;"";0;"";0;"";"";"";"";"";"";""',
-            '"Paris est la capitale de {{country}}";cloze;1;"";0;"";0;"";0;"";0;"Paris est la capitale de {{country}}";"country";"France|Republique francaise";1;"";"";""',
+            'question_text;type;is_active;points;option_1;option_1_correct;option_2;option_2_correct;option_3;option_3_correct;option_4;option_4_correct;cloze_raw_text;cloze_blank_1_key;cloze_blank_1_answers;cloze_blank_1_points;cloze_blank_2_key;cloze_blank_2_answers;cloze_blank_2_points',
+            '"2+2 = ?";single;1;1;"3";0;"4";1;"5";0;"";0;"";"";"";"";"";"";""',
+            '"Choisissez les fruits";multiple;1;1;"Pomme";1;"Carotte";0;"Banane";1;"Poire";1;"";"";"";"";"";"";""',
+            '"Le ciel est bleu";boolean;1;1;"";1;"";0;"";0;"";0;"";"";"";"";"";"";""',
+            '"Paris est la capitale de {{country}}";cloze;1;1;"";0;"";0;"";0;"";0;"Paris est la capitale de {{country}}";"country";"France|Republique francaise";1;"";"";""',
         ];
 
         return implode("\n", $lines);
@@ -467,6 +470,7 @@ class QuizQuestionBuilder
             'question_text' => $data['question_text'],
             'type' => $data['type'],
             'is_active' => $data['is_active'] ?? true,
+            'points' => (int) ($data['points'] ?? 1),
             'payload' => null,
             'created_by' => $createdBy,
         ]);
@@ -577,10 +581,14 @@ class QuizQuestionBuilder
             throw new \InvalidArgumentException("`type` invalide: {$type}.");
         }
 
+        $pointsRaw = $row['points'] ?? '1';
+        $points = is_numeric($pointsRaw) ? max(0, (int) $pointsRaw) : 1;
+
         $data = [
             'question_text' => $questionText,
             'type' => $type,
             'is_active' => $isActive,
+            'points' => $points,
         ];
 
         if ($type === 'cloze') {

@@ -12,7 +12,7 @@
           Leçon : <span class="font-semibold text-gray-800">{{ $lecture->lecture_title }}</span>
         </p>
       </div>
-      <a href="{{ route('formateur.modules.builder.lectures.quiz.questions.index', ['lecture' => $lecture->id]) }}"
+      <a href="{{ route('formateur.modules.builder.quiz-questions.index', ['module' => $lecture->module_id, 'lecture' => $lecture->id]) }}"
          class="text-bleuone hover:underline text-sm font-medium">
         &larr; Retour à la banque de questions
       </a>
@@ -91,6 +91,15 @@
           </div>
 
           <input type="hidden" name="type" x-model="currentType">
+        </div>
+
+        {{-- Points --}}
+        <div x-show="currentType !== 'cloze'">
+          <label class="block text-sm font-bold text-gray-700 mb-2" for="points">Points de la question</label>
+          <input type="number" name="points" id="points" min="0" step="1"
+                 value="{{ old('points', $question->points ?? 1) }}"
+                 class="w-32 px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orangeone focus:border-orangeone shadow-sm">
+          <p class="mt-1 text-xs text-gray-500">Nombre de points gagnés si la question est correcte (compte dans le score du quiz).</p>
         </div>
       </div>
 

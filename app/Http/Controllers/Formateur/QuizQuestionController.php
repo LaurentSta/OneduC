@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Formateur;
 
 use App\Domains\ModulesFormateur\Actions\CreerQuestionQuiz;
+use App\Domains\ModulesFormateur\Actions\GenererQuestionsQuizIA;
 use App\Domains\ModulesFormateur\Actions\ModifierQuestionQuiz;
 use App\Domains\ModulesFormateur\Actions\SupprimerQuestionQuiz;
 use App\Domains\ModulesFormateur\Support\AccesModule;
@@ -21,24 +22,19 @@ class QuizQuestionController extends Controller
         private readonly CreerQuestionQuiz $creerQuestionQuiz,
         private readonly ModifierQuestionQuiz $modifierQuestionQuiz,
         private readonly SupprimerQuestionQuiz $supprimerQuestionQuiz,
+        private readonly GenererQuestionsQuizIA $genererQuestionsQuizIA,
     ) {}
 
     /**
-     * Liste des questions de la banque d'une leçon (formateur propriétaire uniquement).
+     * Ancien point d'entrée par leçon : redirige vers la vue unifiée par formation.
      */
     public function index(ModuleLecture $lecture)
     {
         $this->access->assertOwner($lecture->module);
 
-        $questions = QuizQuestion::where('lecture_id', $lecture->id)
-            ->with(['options' => fn ($q) => $q->orderBy('position')])
-            ->withCount('options')
-            ->orderBy('id')
-            ->get();
-
-        return view('formateur.modules-builder.quiz-questions.index', [
-            'lecture' => $lecture,
-            'questions' => $questions,
+        return redirect()->route('formateur.modules.builder.quiz-questions.index', [
+            'module' => $lecture->module_id,
+            'lecture' => $lecture->id,
         ]);
     }
 
@@ -60,8 +56,29 @@ class QuizQuestionController extends Controller
         $this->creerQuestionQuiz->execute($lecture, $data, $request);
 
         return redirect()
-            ->route('formateur.modules.builder.lectures.quiz.questions.index', $lecture)
+            ->route('formateur.modules.builder.quiz-questions.index', ['module' => $lecture->module_id, 'lecture' => $lecture->id])
             ->with('success', 'Question créée avec succès.');
+    }
+
+    public function generateIA(Request $request, ModuleLecture $lecture)
+    {
+        $this->access->assertOwner($lecture->module);
+
+        $validated = $request->validate([
+            'count' => ['required', 'integer', 'min:1', 'max:15'],
+        ]);
+
+        try {
+            $created = $this->genererQuestionsQuizIA->execute($lecture, (int) $validated['count'], (int) auth()->id());
+        } catch (\Illuminate\Http\Client\ConnectionException $e) {
+            return back()->with('error', "La génération par l'IA a pris trop de temps. Réessayez.");
+        } catch (\RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        return redirect()
+            ->route('formateur.modules.builder.quiz-questions.index', ['module' => $lecture->module_id, 'lecture' => $lecture->id])
+            ->with('success', "{$created} question(s) générée(s) par l'IA, à relire et activer avant utilisation.");
     }
 
     public function edit(ModuleLecture $lecture, QuizQuestion $question)
@@ -87,7 +104,7 @@ class QuizQuestionController extends Controller
         $this->modifierQuestionQuiz->execute($question, $data, $request);
 
         return redirect()
-            ->route('formateur.modules.builder.lectures.quiz.questions.index', $lecture)
+            ->route('formateur.modules.builder.quiz-questions.index', ['module' => $lecture->module_id, 'lecture' => $lecture->id])
             ->with('success', 'Question mise à jour.');
     }
 
@@ -99,7 +116,7 @@ class QuizQuestionController extends Controller
         $this->supprimerQuestionQuiz->execute($question);
 
         return redirect()
-            ->route('formateur.modules.builder.lectures.quiz.questions.index', $lecture)
+            ->route('formateur.modules.builder.quiz-questions.index', ['module' => $lecture->module_id, 'lecture' => $lecture->id])
             ->with('success', 'Question supprimée.');
     }
 
@@ -114,7 +131,7 @@ class QuizQuestionController extends Controller
         $result = $this->builder->importCsv($lecture, $validated['csv_file'], (int) auth()->id());
 
         $redirect = redirect()
-            ->route('formateur.modules.builder.lectures.quiz.questions.index', $lecture)
+            ->route('formateur.modules.builder.quiz-questions.index', ['module' => $lecture->module_id, 'lecture' => $lecture->id])
             ->with('success', "Import CSV terminé: {$result['created']} question(s) créée(s).");
 
         if (! empty($result['errors'])) {
