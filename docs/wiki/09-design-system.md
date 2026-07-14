@@ -115,9 +115,11 @@ Styles : fond blanc, padding 8, arrondi 3xl, ombre douce, bord transparent au re
 
 ---
 
-## Pattern de carte standard (dashboards)
+## Patterns de cartes des dashboards
 
-Le pattern de carte utilisé dans tous les tableaux de bord :
+### Formateur, stagiaire et observateur
+
+Le pattern historique reste utilisé dans les tableaux de bord formateur, stagiaire et observateur :
 
 ```html
 <div class="bg-white rounded-[20px] shadow-md p-6">
@@ -125,7 +127,19 @@ Le pattern de carte utilisé dans tous les tableaux de bord :
 </div>
 ```
 
-`rounded-[20px]` est la valeur arbitraire Tailwind utilisée de façon cohérente sur l'ensemble des dashboards. Ne pas utiliser `rounded-3xl` (32px) ou `rounded-2xl` (16px) sur ces éléments pour maintenir la cohérence visuelle.
+`rounded-[20px]` reste la valeur de référence pour ces espaces. Ne pas modifier ce pattern lors d'une intervention limitée à l'administration.
+
+### Administration
+
+L'administration utilise une variante plus dense et plus sobre :
+
+```html
+<section class="rounded-xl border border-slate-200 bg-white p-4">
+  <!-- contenu administratif -->
+</section>
+```
+
+Les cartes admin utilisent principalement un rayon de `12px` (`rounded-xl`), une bordure `slate-200` et des espacements de `12px` à `20px`. La hiérarchie visuelle repose d'abord sur les bordures, les fonds neutres et la typographie ; les ombres sont réservées aux éléments superposés comme les menus du header via `.admin-elevation`.
 
 ## Pattern d'en-tête de page
 
@@ -144,7 +158,92 @@ Les pages internes formateur et stagiaire utilisent un en-tête compact commun :
 </header>
 ```
 
-Les anciennes tailles `text-titre` et `text-sous-titre` restent disponibles pour les pages publiques ou les héros, mais ne doivent plus être utilisées pour les en-têtes courants des dashboards stagiaire et formateur.
+Les anciennes tailles `text-titre` et `text-sous-titre` restent disponibles pour les pages publiques ou les héros, mais ne doivent plus être utilisées pour les en-têtes courants des dashboards stagiaire, formateur et administrateur.
+
+### En-tête de page administrateur
+
+Les pages administrateur utilisent un en-tête sans carte englobante, séparé du contenu par une bordure basse :
+
+```html
+<header class="flex flex-col gap-4 border-b border-slate-200 pb-5 xl:flex-row xl:items-end xl:justify-between">
+  <div>
+    <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Section</p>
+    <h1 class="!mb-1 !text-2xl !font-semibold text-slate-950">Titre</h1>
+    <p class="text-sm text-slate-600">Description opérationnelle.</p>
+  </div>
+  <div class="flex flex-wrap gap-2"><!-- actions principales --></div>
+</header>
+```
+
+La densité est obtenue en réduisant les espacements et les rayons, pas en supprimant les libellés ou en réduisant le corps de texte principal sous `14px`.
+
+---
+
+## Socle de l'administration
+
+### Dimensions et comportement du shell
+
+Le layout `resources/views/admin/admin_dashboard.blade.php` définit trois dimensions :
+
+| Élément | Dimension | Comportement |
+|---------|-----------|--------------|
+| Header | `56px` (`3.5rem`) | Fixe en haut de l'écran |
+| Sidebar dépliée | `248px` (`15.5rem`) | Affiche icônes, groupes et libellés |
+| Sidebar repliée | `72px` (`4.5rem`) | Conserve les icônes et les infobulles natives des liens |
+
+À partir du breakpoint `lg` (`1024px`), le bouton du header alterne entre les largeurs `248px` et `72px`. L'état est conservé dans `localStorage` sous la clé `admin-navigation-reduite`.
+
+Sous `1024px`, la navigation devient un tiroir latéral :
+
+- elle s'ouvre depuis le bouton du header ;
+- un overlay masque le contenu en arrière-plan ;
+- un clic sur l'overlay, le bouton de fermeture, un lien ou la touche Échap ferme le tiroir ;
+- le défilement de la page est bloqué tant que le tiroir est ouvert.
+
+La navigation est regroupée en quatre domaines :
+
+- **Utilisateurs** : comptes, formateurs, stagiaires, observateurs et groupes ;
+- **Pédagogie** : catégories, modules, évaluations, référentiels, compétences et badges ;
+- **Pilotage** : projets et tâches, qualité des parcours, consommation IA, notifications, journal et retours ;
+- **Outils** : outils collaboratifs actuellement exposés à l'administrateur.
+
+Le header affiche le contexte courant, un accès à la création d'utilisateur, les notifications et le menu du compte. Alpine est chargé par Vite via `resources/js/app.js` ; le layout admin ne charge pas une seconde instance depuis un CDN.
+
+### Tableaux, badges et actions
+
+Les styles admin sont centralisés dans `resources/css/admin-tables.css`.
+
+Deux classes de tableau coexistent :
+
+- `.admin-table-dense` pour les nouvelles listes paginées côté serveur ;
+- `.table-oneduc` pour les listes historiques encore pilotées par DataTables.
+
+Leur présentation commune utilise un corps de `13px`, des en-têtes de `11px` en capitales, des cellules d'environ `10px × 12px`, des séparateurs discrets et un fond visible au survol ou lorsqu'un élément de la ligne reçoit le focus. Les nouvelles tables fournissent un `<caption>` pour les lecteurs d'écran et des en-têtes avec `scope="col"`.
+
+Les badges compacts utilisent la classe `.admin-badge` et un libellé textuel visible :
+
+| Variante | Usage actuel |
+|----------|--------------|
+| `.admin-badge--blue` | Rôle formateur |
+| `.admin-badge--violet` | Rôle stagiaire |
+| `.admin-badge--success` | Compte actif ou état positif |
+| `.admin-badge--neutral` | Compte inactif ou état neutre |
+
+Les actions secondaires d'une ligne utilisent `.admin-icon-button`, avec les variantes `--warning` et `--danger`. Chaque bouton doit conserver un `title` et un libellé `.sr-only` explicites ; l'icône seule n'est pas un nom accessible.
+
+Dans l'interface admin, les CTA à texte blanc utilisent la nuance orange foncée `#c43d1f` (survol `#a8321a`). L'orange de marque `#E94D2A` reste disponible pour les accents, icônes et contours de focus, mais son contraste avec un texte blanc est insuffisant pour du texte courant.
+
+### Filtres et formulaires
+
+La barre de filtres de la gestion des utilisateurs suit ces règles :
+
+- formulaire GET, afin que l'état soit partageable dans l'URL ;
+- champs de `40px` de hauteur, texte de `14px` et rayon de `8px` ;
+- recherche, rôle, statut, rattachement, tri et nombre de résultats par page ;
+- bouton visible pour appliquer les filtres et bouton nommé pour les effacer ;
+- pagination Laravel côté serveur.
+
+Les formulaires admin historiques peuvent utiliser les classes `.form-oneduc-card`, `.form-oneduc-section`, `.form-oneduc-input`, `.form-oneduc-select`, `.form-oneduc-textarea` et `.btn-oneduc-sm`. Leur version actuelle adopte également des rayons de `8px` à `12px`, des champs de `40px` et un focus explicite.
 
 ---
 
@@ -153,7 +252,7 @@ Les anciennes tailles `text-titre` et `text-sous-titre` restent disponibles pour
 Toutes les pages (front public, dashboards formateur/stagiaire/observateur/admin) partagent le même mécanisme de fondu à la navigation, centralisé dans `resources/js/app.js` (fonction `initPageTransitions`) et `resources/css/app.css` (règles `#page-transition`).
 
 Fonctionnement :
-- Chaque layout place le contenu de page dans `<main id="page-transition">`.
+- Chaque layout place le contenu de page dans un élément `#page-transition`. Dans le layout admin, cet élément est imbriqué dans `<main id="contenu-principal">` afin de fournir une cible distincte au lien d'évitement.
 - Au chargement, `body.page-is-entering` fait apparaître le contenu en fondu (translateY + opacity, ~260ms).
 - Au clic sur un lien interne, `body.page-is-leaving` fait disparaître le contenu (~180ms) avant la navigation réelle.
 - Respecte `prefers-reduced-motion: reduce` (désactivé si l'utilisateur le demande).
@@ -173,6 +272,7 @@ Alpine.js est utilisé pour :
 - Le polling AJAX des tableaux de bord en temps réel (`setInterval`)
 - Les composants modaux
 - L'affichage conditionnel dans les formulaires complexes
+- Le repli desktop et le tiroir mobile de la navigation administrateur
 
 Les modales partagées (`x-modal` / `x-confirm-modal`) sont téléportées dans le `<body>` et centrées dans le viewport. Elles ne doivent pas dépendre de la position de scroll ou d'un conteneur parent.
 
@@ -192,6 +292,14 @@ Pattern de polling AJAX type :
 ### Ce qui est en place
 
 - Attributs `aria-label` et `aria-current` dans les sidebars de navigation
+- Lien « Aller au contenu principal » visible au focus dans le layout administrateur
+- Contours de focus explicites : orange sur les actions du shell admin, bleu de marque sur les champs de formulaire
+- Fermeture du tiroir mobile administrateur avec Échap, l'overlay ou un bouton nommé
+- Focus déplacé dans le tiroir mobile à son ouverture, contenu parcouru en boucle avec Tab et restitution du focus au déclencheur à la fermeture
+- Messages flash globaux refermables : erreurs et avertissements annoncés avec `role="alert"`, succès et informations avec `role="status"`
+- Captions masquées visuellement et cellules d'en-tête `scope="col"` dans les nouvelles tables admin
+- Badges de rôle et de statut accompagnés d'un texte, sans dépendre uniquement de la couleur
+- Modales de confirmation déclarées avec `role="dialog"` et `aria-modal`, reliées à leur titre et leur description, avec focus initial, piège clavier et restitution du focus
 - `image_alt` et `audio_transcript` prévus dans les questions quiz
 - Polices lisibles (Varela Round arrondie, Arial en fallback)
 

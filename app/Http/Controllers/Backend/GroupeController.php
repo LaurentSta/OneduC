@@ -1,152 +1,159 @@
 <?php
-// /home/laurents/Oneduc_Dev/app/Http/Controllers/Backend/GroupeController.php
+
 namespace App\Http\Controllers\Backend;
 
 use App\Http\Controllers\Controller;
 use App\Models\Group;
-use App\Models\User; // Ajout pour récupérer les formateurs et stagiaires
+use App\Models\User;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Storage;
-use Intervention\Image\Facades\Image;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
+use Illuminate\View\View;
 
 class GroupeController extends Controller
 {
-    /**
-     * Afficher la liste des groupes (si besoin)
-     */
-    public function AllGroupe()
+    public function AllGroupe(): View
     {
-        $groupes = Group::all();
+        $groupes = Group::query()
+            ->with('instructor:id,prenom,name,email,status')
+            ->withCount('students')
+            ->orderBy('name')
+            ->get();
+
         return view('admin.backend.groupes.groupes', compact('groupes'));
     }
 
-    /**
-     * Afficher le formulaire de création d'un groupe
-     */
-    public function AddGroupe()
+    public function AddGroupe(): View
     {
-        // Récupération des formateurs (avec un rôle 'formateur' par exemple)
-        $formateurs = User::where('role', 'formateur')->get();
-
-        // Récupération des stagiaires (avec un rôle 'stagiaire' par exemple)
-        $stagiaires = User::where('role', 'stagiaire')->get();
+        [$formateurs, $stagiaires] = $this->utilisateursDisponibles();
 
         return view('admin.backend.groupes.add_groupe', compact('formateurs', 'stagiaires'));
     }
 
-    /**
-     * Enregistrer un nouveau groupe
-     */
-    public function StoreGroupe(Request $request)
+    public function StoreGroupe(Request $request): RedirectResponse
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'formateur_id' => 'required|exists:users,id',
-            'stagiaires' => 'nullable|array',
-            'stagiaires.*' => 'exists:users,id',
-            'groupe_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
-        ]);
+        $donnees = $request->validate($this->reglesValidation());
 
-        $imagePath = $request->hasFile('groupe_image')
-            ? $request->file('groupe_image')->store('groupe_images', 'public')
-            : null;
+        DB::transaction(function () use ($donnees): void {
+            $groupe = Group::query()->create([
+                'name' => $donnees['name'],
+                'description' => $donnees['description'] ?? null,
+                'instructor_id' => $donnees['formateur_id'],
+            ]);
 
-        $group = Group::create([
-            'name' => $request->name,
-            'description' => $request->description,
-            'instructor_id' => $request->formateur_id,
-            'groupe_image' => $imagePath,
-        ]);
+            $this->synchroniserStagiaires($groupe, $donnees['stagiaires'] ?? []);
+        });
 
-        // Attacher les stagiaires si besoin
-        if ($request->has('stagiaires')) {
-            $group->students()->sync($request->stagiaires);
-        }
-
-        return redirect()->route('groupes')->with('success', 'Groupe ajouté avec succès 🎉');
+        return redirect()
+            ->route('admin.groupes')
+            ->with('success', 'Le groupe a été créé avec succès.');
     }
 
-    /**
-     * Afficher le formulaire d'édition d'un groupe
-     */
-    public function EditGroupe($id)
+    public function EditGroupe(int $id): View
     {
-        $groupe = Group::findOrFail($id);
-
-        // Récupération des formateurs
-        $formateurs = User::where('role', 'formateur')->get();
-
-        // Récupération des stagiaires
-        $stagiaires = User::where('role', 'stagiaire')->get();
+        $groupe = Group::query()
+            ->with('students:id,prenom,name,email,status')
+            ->findOrFail($id);
+        [$formateurs, $stagiaires] = $this->utilisateursDisponibles();
 
         return view('admin.backend.groupes.edit_groupe', compact('groupe', 'formateurs', 'stagiaires'));
     }
 
-    /**
-     * Mettre à jour un groupe existant
-     */
-    public function UpdateGroupe(Request $request)
+    public function UpdateGroupe(Request $request, int $id): RedirectResponse
     {
-        $request->validate([
-            'id' => 'required|exists:groups,id',
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'formateur_id' => 'required|exists:users,id',
-            'stagiaires' => 'nullable|array',
-            'stagiaires.*' => 'exists:users,id',
-            'groupe_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-        ]);
+        $groupe = Group::query()->findOrFail($id);
+        $donnees = $request->validate($this->reglesValidation($groupe));
 
-        $groupe = Group::findOrFail($request->id);
+        DB::transaction(function () use ($donnees, $groupe): void {
+            $groupe->update([
+                'name' => $donnees['name'],
+                'description' => $donnees['description'] ?? null,
+                'instructor_id' => $donnees['formateur_id'],
+            ]);
 
-        $data = [
-            'name' => $request->name,
-            'description' => $request->description,
-            'instructor_id' => $request->formateur_id,
-        ];
+            $this->synchroniserStagiaires($groupe, $donnees['stagiaires'] ?? []);
+        });
 
-        if ($request->hasFile('groupe_image')) {
-            if ($groupe->groupe_image && Storage::disk('public')->exists($groupe->groupe_image)) {
-                Storage::disk('public')->delete($groupe->groupe_image);
-            }
-
-            $data['groupe_image'] = $request->file('groupe_image')->store('groupe_images', 'public');
-        }
-
-        $groupe->update($data);
-
-        // Synchroniser les stagiaires
-        if ($request->has('stagiaires')) {
-            $groupe->students()->sync($request->stagiaires);
-        }
-
-        return redirect()->route('groupes')->with('success', 'Groupe mis à jour avec succès 🎉');
+        return redirect()
+            ->route('admin.groupes')
+            ->with('success', 'Le groupe a été mis à jour avec succès.');
     }
 
-    /**
-     * Supprimer un groupe
-     */
-    public function destroy($id)
+    public function destroy(int $id): RedirectResponse
     {
-        $groupe = Group::findOrFail($id);
-
-        // Supprimer l'image
-        if ($groupe->groupe_image && Storage::disk('public')->exists($groupe->groupe_image)) {
-            Storage::disk('public')->delete($groupe->groupe_image);
-        }
-
-        // Détacher les relations (facultatif selon ta logique)
-        $groupe->students()->detach();
-
+        $groupe = Group::query()->findOrFail($id);
         $groupe->delete();
 
-        return redirect()->route('formateur.groupes.index')->with('success', 'Groupe supprimé avec succès.');
-
+        return redirect()
+            ->route('admin.groupes')
+            ->with('success', 'Le groupe a été supprimé.');
     }
 
+    /**
+     * @return array{0: \Illuminate\Database\Eloquent\Collection<int, User>, 1: \Illuminate\Database\Eloquent\Collection<int, User>}
+     */
+    private function utilisateursDisponibles(): array
+    {
+        $formateurs = User::query()
+            ->where('role', 'formateur')
+            ->orderBy('name')
+            ->orderBy('prenom')
+            ->get(['id', 'prenom', 'name', 'email', 'status']);
 
+        $stagiaires = User::query()
+            ->where('role', 'stagiaire')
+            ->orderBy('name')
+            ->orderBy('prenom')
+            ->get(['id', 'prenom', 'name', 'email', 'status']);
 
+        return [$formateurs, $stagiaires];
+    }
 
+    /**
+     * @return array<string, mixed>
+     */
+    private function reglesValidation(?Group $groupe = null): array
+    {
+        return [
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('groups', 'name')->ignore($groupe?->id),
+            ],
+            'description' => ['nullable', 'string', 'max:5000'],
+            'formateur_id' => [
+                'required',
+                'integer',
+                Rule::exists('users', 'id')
+                    ->where(fn ($query) => $query
+                        ->where('role', 'formateur')
+                        ->whereNull('deleted_at')),
+            ],
+            'stagiaires' => ['nullable', 'array'],
+            'stagiaires.*' => [
+                'integer',
+                'distinct',
+                Rule::exists('users', 'id')
+                    ->where(fn ($query) => $query
+                        ->where('role', 'stagiaire')
+                        ->whereNull('deleted_at')),
+            ],
+        ];
+    }
+
+    /**
+     * @param  array<int|string, mixed>  $stagiaireIds
+     */
+    private function synchroniserStagiaires(Group $groupe, array $stagiaireIds): void
+    {
+        $affectations = collect($stagiaireIds)
+            ->mapWithKeys(fn ($stagiaireId): array => [
+                (int) $stagiaireId => ['role_in_group' => 'stagiaire'],
+            ])
+            ->all();
+
+        $groupe->students()->sync($affectations);
+    }
 }

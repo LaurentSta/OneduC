@@ -83,6 +83,7 @@ Une comparaison du code sur `main` (85 contrôleurs, 61 modèles, 411 routes) av
 - [x] Corriger `LessonFeedbackController::store()` avec la bonne route de redirection selon le rôle/contexte
 - [x] Ajouter `throttle:10,1` ou rate limiter dédié sur la route de connexion par code d'accès
 - [x] Ajouter la colonne `last_session_time` à `scorm_scores` ou modifier le cumul de temps SCORM
+- [x] Refaire le socle d'administration avec un tableau de bord dense, une gestion unifiée des formateurs et stagiaires et un CRUD groupes fiabilisé (14 juillet 2026)
 - [ ] Incrémenter correctement `attempts_count` SCORM
 - [ ] Supprimer l'import mort `ScormInteractionController` dans `routes/scorm.php`
 - [ ] Corriger `StoreModuleRequest::authorize()` et `StoreGroupeRequest::authorize()`
@@ -102,7 +103,8 @@ Une comparaison du code sur `main` (85 contrôleurs, 61 modèles, 411 routes) av
 - [ ] Découper `ModuleController` : extraire `ModuleNavigationService`, `ModuleCompletionService`, `StudentLectureAccessService`
 - [ ] Continuer la segmentation en domaines internes : Groupes, Progression/Analytics, SCORM/Quiz, Outils d'animation
 - [ ] Ajouter `SoftDeletes` sur `Group` avec migration `deleted_at`
-- [ ] Valider l'unicité de l'email dans `AdminController::AdminProfilStore()`
+- [x] Valider l'unicité de l'email dans `AdminController::AdminProfilStore()`
+- [ ] Séparer la désactivation, l'archivage réversible et la purge définitive des comptes formateur et stagiaire
 - [x] Ajouter la vérification d'appartenance à la leçon dans `POST /scorm/save-progress` (et `save-block-progress`, `evaluation-progress`)
 - [ ] Découper `StagiaireController` : dashboard, modules, résultats, outils
 - [ ] Mettre en place une arborescence d'objectifs (objectif pédagogique général au niveau de la formation → objectifs opérationnels au niveau de chaque leçon, `LectureObjective`), construite soit au moment de la génération par IA, soit au moment de la création manuelle par le formateur

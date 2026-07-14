@@ -4,59 +4,69 @@ namespace App\Http\Controllers\Backend;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Throwable;
 
 class StagiaireController extends Controller
 {
-    /**
-     * Réinitialise toute la progression (Méthode "Nucléaire")
-     * Force la suppression en désactivant temporairement les contraintes SQL.
-     */
-    public function resetProgression(User $user)
-{
-    // CORRECTION ICI : on vérifie 'stagiaire' et non 'user'
-    // On autorise si c'est un stagiaire OU si c'est l'admin connecté (pour test)
-    if ($user->role !== 'stagiaire' && auth()->id() !== $user->id) {
-        return back()->with('error', 'Action non autorisée sur ce compte (seuls les stagiaires peuvent être réinitialisés).');
-    }
+    public function resetProgression(User $user): RedirectResponse
+    {
+        if ($user->role !== 'stagiaire') {
+            return back()->with('error', 'Seul un compte stagiaire peut être réinitialisé.');
+        }
 
-    try {
-        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        try {
+            DB::transaction(function () use ($user): void {
+                $tentativesQuiz = DB::table('quiz_attempts')
+                    ->where('user_id', $user->id)
+                    ->pluck('id');
 
-        DB::transaction(function () use ($user) {
-            $id = $user->id;
+                if ($tentativesQuiz->isNotEmpty()) {
+                    DB::table('quiz_attempt_questions')
+                        ->whereIn('attempt_id', $tentativesQuiz)
+                        ->delete();
+                }
 
-            // --- VIDAGE COMPLET ---
-            // ... (le reste du code de suppression reste identique) ...
-            
-            // 1. Quiz
-            DB::table('quiz_attempt_questions')
-                ->join('quiz_attempts', 'quiz_attempt_questions.attempt_id', '=', 'quiz_attempts.id')
-                ->where('quiz_attempts.user_id', $id)
-                ->delete();
-            DB::table('quiz_attempts')->where('user_id', $id)->delete();
+                $tablesParUtilisateur = [
+                    'quiz_attempts',
+                    'scorm_scores',
+                    'scorm_interactions',
+                    'scorm_results',
+                    'scorm_evaluation_scores',
+                    'scorm_evaluation_results',
+                    'scorm_evaluation_interactions',
+                    'content_block_scorm_scores',
+                    'content_block_scorm_results',
+                    'video_segment_trackings',
+                    'progressions',
+                ];
 
-            // 2. SCORM
-            DB::table('scorm_scores')->where('user_id', $id)->delete();
-            DB::table('scorm_interactions')->where('user_id', $id)->delete();
-            DB::table('scorm_results')->where('user_id', $id)->delete();
-            DB::table('scorm_evaluation_scores')->where('user_id', $id)->delete();
+                foreach ($tablesParUtilisateur as $table) {
+                    if (! Schema::hasTable($table)) {
+                        continue;
+                    }
 
-            // 3. Vidéos & Progression
-            DB::table('video_segment_trackings')->where('user_id', $id)->delete();
-            DB::table('progressions')->where('user_id', $id)->delete();
+                    DB::table($table)
+                        ->where('user_id', $user->id)
+                        ->delete();
+                }
 
-            // 4. Temps
-            $user->update(['total_site_time' => 0]);
-        });
+                if (Schema::hasTable('module_completion_notifications')) {
+                    DB::table('module_completion_notifications')
+                        ->where('stagiaire_id', $user->id)
+                        ->delete();
+                }
 
-        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+                $user->update(['total_site_time' => 0]);
+            });
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return back()->with('error', 'La progression n’a pas pu être réinitialisée. Merci de réessayer.');
+        }
 
         return back()->with('success', "La progression de {$user->name} a été remise à zéro.");
-
-    } catch (\Exception $e) {
-        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
-        return back()->with('error', "Erreur : " . $e->getMessage());
     }
-}
 }

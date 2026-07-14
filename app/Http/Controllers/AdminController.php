@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Data\ParcoursFormateur;
 use App\Models\Category;
+use App\Models\Group;
 use App\Models\Module;
-use App\Models\ScormResult;
 use App\Models\SubCategory;
 use App\Models\TrainerPathActivityAttempt;
 use App\Models\User;
@@ -135,38 +135,39 @@ class AdminController extends Controller
         $moduleCount = Module::count();
         $categoryCount = Category::count();
         $subCategoryCount = SubCategory::count();
-        $groupCount = \App\Models\Group::count(); // ✅ Nouveau compteur
-        $formateurCount = User::where('role', 'formateur')->count(); // ✅
-        $stagiaireCount = User::where('role', 'stagiaire')->count(); // ✅
-        $groupCount = \App\Models\Group::count(); // ✅ Nouveau compteur
+        $groupCount = Group::count();
+        $groupesActifsCount = Group::where('is_active', true)->count();
+        $formateurCount = User::where('role', 'formateur')->count();
+        $stagiaireCount = User::where('role', 'stagiaire')->count();
+        $utilisateurCount = $formateurCount + $stagiaireCount;
+        $utilisateurActifCount = User::whereIn('role', ['formateur', 'stagiaire'])
+            ->where('status', true)
+            ->count();
+        $utilisateurInactifCount = $utilisateurCount - $utilisateurActifCount;
         $sectionCount = \App\Models\ModuleSection::count();
         $lectureCount = \App\Models\ModuleLecture::count();
-        // Synthèse SCORM par utilisateur et module
-        $scormSummaries = ScormResult::with(['user', 'lecture'])
-            ->selectRaw('user_id, lecture_id, MAX(updated_at) as last_update')
-            ->groupBy('user_id', 'lecture_id')
-            ->get()
-            ->map(function ($row) {
-                $score = ScormResult::where('user_id', $row->user_id)
-                    ->where('lecture_id', $row->lecture_id)
-                    ->where('scorm_key', 'cmi.core.score.raw')
-                    ->orderByDesc('updated_at')
-                    ->first();
-
-                $status = ScormResult::where('user_id', $row->user_id)
-                    ->where('lecture_id', $row->lecture_id)
-                    ->where('scorm_key', 'cmi.core.lesson_status')
-                    ->orderByDesc('updated_at')
-                    ->first();
-
-                return [
-                    'user' => $row->user?->username ?? 'N/A',
-                    'module' => $row->lecture?->lecture_title ?? 'N/A',
-                    'score' => $score?->scorm_value ?? '-',
-                    'status' => $status?->scorm_value ?? '-',
-                    'date' => $row->last_update,
-                ];
-            });
+        $formateursEnAttenteCount = User::where('role', 'formateur')
+            ->where('status', false)
+            ->count();
+        $adhesionsARegulariserCount = User::where('role', 'formateur')
+            ->where(function ($query): void {
+                $query->where('adhesion_status', '!=', 'active')
+                    ->orWhereDate('adhesion_valid_until', '<', today());
+            })
+            ->count();
+        $stagiairesSansGroupeCount = User::where('role', 'stagiaire')
+            ->whereDoesntHave('groupesStagiaire')
+            ->count();
+        $groupesSansStagiaireCount = Group::whereDoesntHave('students')->count();
+        $comptesCreesCeMoisCount = User::whereIn('role', ['formateur', 'stagiaire'])
+            ->where('created_at', '>=', now()->startOfMonth())
+            ->count();
+        $utilisateursRecents = User::whereIn('role', ['formateur', 'stagiaire'])
+            ->with(['formateur:id,prenom,name'])
+            ->withCount(['groupesStagiaire', 'groupesEncadres', 'groupesFormateur'])
+            ->latest()
+            ->limit(8)
+            ->get();
 
         return view('admin.index', compact(
             'moduleCount',
@@ -175,11 +176,19 @@ class AdminController extends Controller
             'formateurCount',
             'stagiaireCount',
             'groupCount',
+            'groupesActifsCount',
+            'utilisateurCount',
+            'utilisateurActifCount',
+            'utilisateurInactifCount',
             'sectionCount',
             'lectureCount',
-            'scormSummaries'
+            'formateursEnAttenteCount',
+            'adhesionsARegulariserCount',
+            'stagiairesSansGroupeCount',
+            'groupesSansStagiaireCount',
+            'comptesCreesCeMoisCount',
+            'utilisateursRecents'
         ));
-
     }
 
     public function AdminLogout(Request $request)
