@@ -96,7 +96,7 @@ class ModuleBuilderController extends Controller
 
         return redirect()
             ->route('formateur.modules.builder.edit', $module)
-            ->with('success', 'Module créé. Ajoutez maintenant des chapitres et des leçons.');
+            ->with('success', 'Formation créée. Ajoutez maintenant des chapitres et des leçons.');
     }
 
     public function generateStructureIA(Request $request)
@@ -137,7 +137,7 @@ class ModuleBuilderController extends Controller
 
         return redirect()
             ->route('formateur.modules.builder.edit', $newModule)
-            ->with('success', 'Module dupliqué. Vous pouvez maintenant le personnaliser librement.');
+            ->with('success', 'Formation dupliquée. Vous pouvez maintenant la personnaliser librement.');
     }
 
     public function edit(Module $module)
@@ -176,7 +176,7 @@ class ModuleBuilderController extends Controller
             return response()->json(['success' => true]);
         }
 
-        return back()->with('success', 'Module mis à jour.');
+        return back()->with('success', 'Formation mise à jour.');
     }
 
     public function updateOptions(Request $request, Module $module)
@@ -206,7 +206,7 @@ class ModuleBuilderController extends Controller
             $request->file('module_video_file'),
         );
 
-        return back()->with('success', 'Options du module mises à jour.');
+        return back()->with('success', 'Options de la formation mises à jour.');
     }
 
     public function destroy(Module $module)
@@ -215,7 +215,7 @@ class ModuleBuilderController extends Controller
 
         $module->delete();
 
-        return redirect()->route('formateur.modules.builder.index')->with('success', 'Module supprimé.');
+        return redirect()->route('formateur.modules.builder.index')->with('success', 'Formation supprimée.');
     }
 
     public function storeSection(Request $request, Module $module)

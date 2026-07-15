@@ -7,7 +7,7 @@
   class="max-w-[1285px] mx-auto px-8"
   x-data="{
     tab: '{{ in_array(request('tab'), ['parcours', 'creations']) ? request('tab') : 'catalogue' }}',
-    filtersOpen: {{ request()->filled('search') ? 'true' : 'false' }},
+    filtersOpen: {{ request()->filled('search') || request()->filled('categorie') ? 'true' : 'false' }},
     setTab(value) {
       this.tab = value;
       const url = new URL(window.location.href);
@@ -150,7 +150,7 @@
         x-transition:leave-end="opacity-0 scale-95"
         class="mb-6">
     <div class="flex flex-wrap items-end gap-3 rounded-[10px] border border-gray-200 bg-white p-3 shadow-sm">
-      <div class="w-full md:w-1/2">
+      <div class="w-full md:flex-1">
         <label for="search" class="sr-only">Recherche</label>
         <input type="text"
                id="search"
@@ -160,11 +160,25 @@
                class="h-10 w-full rounded-md border border-gray-300 px-4 text-sm font-lisible shadow-sm focus:border-orangeone focus:ring-orangeone">
       </div>
 
+      <div class="w-full md:w-64">
+        <label for="categorie" class="sr-only">Catégorie</label>
+        <select id="categorie"
+                name="categorie"
+                class="h-10 w-full rounded-md border border-gray-300 px-3 text-sm font-lisible shadow-sm focus:border-orangeone focus:ring-orangeone">
+          <option value="">Toutes les catégories</option>
+          @foreach($categories as $categorie)
+            <option value="{{ $categorie->id }}" @selected((int) $categorieId === $categorie->id)>
+              {{ $categorie->category_name }}
+            </option>
+          @endforeach
+        </select>
+      </div>
+
       <button type="submit" class="btn-oneduc h-10 !text-sm">
         Rechercher
       </button>
 
-      @if(request()->filled('search'))
+      @if(request()->filled('search') || request()->filled('categorie'))
         <a href="{{ route('formateur.formations.index') }}"
            class="btn-oneduc-outline h-10 !text-sm">
           Réinitialiser
@@ -172,10 +186,17 @@
       @endif
     </div>
 
-    @if(request('search'))
+    @if(request('search') || $categorieId > 0)
       <p class="pt-2 text-sm text-gray-600 font-varela">
-        Recherche active :
-        <span class="text-orangeone font-semibold">{{ request('search') }}</span>
+        Filtres actifs :
+        @if(request('search'))
+          <span class="text-orangeone font-semibold">{{ request('search') }}</span>
+        @endif
+        @if($categorieId > 0)
+          <span class="text-orangeone font-semibold">
+            {{ $categories->firstWhere('id', $categorieId)?->category_name ?? 'Catégorie inconnue' }}
+          </span>
+        @endif
       </p>
     @endif
   </form>
@@ -230,7 +251,12 @@
               <tr class="border-t {{ $index % 2 === 0 ? 'bg-white' : 'bg-orangeone/8' }} hover:bg-orangeone/15 transition-colors">
                 <td class="px-6 py-4 font-medium">{{ $modules->firstItem() + $index }}</td>
 
-                <td class="px-6 py-4 font-semibold text-gray-900">{{ $titre }}</td>
+                <td class="px-6 py-4">
+                  <p class="font-semibold text-gray-900">{{ $titre }}</p>
+                  <p class="mt-1 text-xs text-gray-500">
+                    Catégorie : {{ $module->category?->category_name ?? 'Non renseignée' }}
+                  </p>
+                </td>
 
                 <td class="px-6 py-4 text-gray-700">
                   {{ optional($module->created_at)->format('d/m/Y') ?? '—' }}

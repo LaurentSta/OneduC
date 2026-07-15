@@ -54,9 +54,9 @@ class CreerModule
 
     private function resolveTrainerCategory(): Category
     {
-        return Category::firstOrCreate(
+        return Category::updateOrCreate(
             ['category_slug' => 'modules-formateurs'],
-            ['category_name' => 'Modules formateurs']
+            ['category_name' => 'Formations formateurs']
         );
     }
 

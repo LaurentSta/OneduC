@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Formateur;
 
 use App\Domains\ModulesFormateur\Support\AccesModule;
 use App\Http\Controllers\Controller;
+use App\Models\Category;
 use App\Models\FormateurParcours;
 use App\Models\Group;
 use App\Models\Module;
@@ -32,21 +33,31 @@ class FormateurModuleController extends Controller
         $formateurId = auth()->id();
         $accessibleGroupIds = $this->accessibleTrainerGroupIds($formateurId);
         $search = trim((string) $request->query('search', ''));
+        $categorieId = $request->integer('categorie');
 
-        $modules = Module::query()
+        $requeteModulesAccessibles = Module::query()
             ->where(function ($q) use ($accessibleGroupIds, $formateurId) {
                 $q->whereHas('groups', function ($g) use ($accessibleGroupIds) {
                     $g->whereIn('groups.id', $accessibleGroupIds->all());
                 })
                     ->orWhere('formateur_id', $formateurId);
-            })
+            });
+
+        $categories = Category::query()
+            ->whereIn('id', (clone $requeteModulesAccessibles)->select('category_id'))
+            ->orderBy('category_name')
+            ->get(['id', 'category_name']);
+
+        $modules = (clone $requeteModulesAccessibles)
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('module_title', 'like', "%{$search}%")
                         ->orWhere('module_name', 'like', "%{$search}%");
                 });
             })
+            ->when($categorieId > 0, fn ($query) => $query->where('category_id', $categorieId))
             ->with([
+                'category:id,category_name',
                 'sections' => function ($q) {
                     $q->select('id', 'module_id')->orderBy('id');
                 },
@@ -73,7 +84,14 @@ class FormateurModuleController extends Controller
             ->orderByDesc('updated_at')
             ->get();
 
-        return view('formateur.formations.index', compact('modules', 'search', 'mesParcours', 'mesCreations'));
+        return view('formateur.formations.index', compact(
+            'modules',
+            'search',
+            'categorieId',
+            'categories',
+            'mesParcours',
+            'mesCreations'
+        ));
     }
 
     public function moduleDetail(Request $request, Module $module)
