@@ -78,6 +78,8 @@
   <div class="grid grid-cols-3 gap-4 sm:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5">
 
     {{-- ── POWERPOINT VERS MODULE ────────────────────────────────────── --}}
+    {{-- Tuile masquée temporairement : affichage incorrect signalé, correctif pas encore déployé. --}}
+    {{--
     <div x-show="filtre === 'all' || filtre === 'creation'" class="flex flex-col bg-white rounded-[20px] shadow-md overflow-hidden">
       <div class="bg-violet-600 px-6 py-5 flex items-center gap-3">
         <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/20">
@@ -134,6 +136,7 @@
         </a>
       </div>
     </div>
+    --}}
 
     {{-- ── NUAGE DE MOTS ──────────────────────────────────────────────── --}}
     <x-oneduc.outil-tile
