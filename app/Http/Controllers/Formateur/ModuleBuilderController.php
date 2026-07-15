@@ -24,12 +24,14 @@ use App\Domains\ModulesFormateur\Actions\TeleverserVideoModule;
 use App\Domains\ModulesFormateur\Support\AccesModule;
 use App\Domains\ModulesFormateur\Support\DonneesModule;
 use App\Http\Controllers\Controller;
+use App\Models\Category;
 use App\Models\Group;
 use App\Models\Module;
 use App\Models\ModuleLecture;
 use App\Models\ModuleSection;
 use App\Services\ConsommationIADashboardService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class ModuleBuilderController extends Controller
 {
@@ -103,20 +105,26 @@ class ModuleBuilderController extends Controller
     {
         $validated = $request->validate([
             'theme' => 'nullable|string|max:500',
-            'document' => 'nullable|file|mimes:pdf,docx,txt|max:20480',
+            'document' => 'nullable|file|mimes:pdf,docx,pptx,txt|max:20480',
+            'niveau_public' => ['nullable', 'string', Rule::in(['debutant', 'intermediaire', 'avance', 'mixte'])],
+            'contexte_public' => 'nullable|string|max:300',
+            'contraintes_public' => 'nullable|string|max:300',
         ]);
 
         if (blank($validated['theme'] ?? null) && ! $request->hasFile('document')) {
             return back()->withInput()->with('error', "Merci de renseigner un thème ou d'importer un document.");
         }
 
-        set_time_limit(270);
+        set_time_limit(310);
 
         try {
             $module = $this->genererStructureFormationIA->execute(
                 $validated['theme'] ?? null,
                 $request->file('document'),
-                (int) auth()->id()
+                (int) auth()->id(),
+                $validated['niveau_public'] ?? null,
+                $validated['contexte_public'] ?? null,
+                $validated['contraintes_public'] ?? null,
             );
         } catch (\Illuminate\Http\Client\ConnectionException $e) {
             return back()->withInput()->with('error', "La génération par l'IA a pris trop de temps. Réessayez, éventuellement avec un thème plus court ou un document plus léger.");
@@ -151,9 +159,12 @@ class ModuleBuilderController extends Controller
             ->orderBy('name')
             ->get();
 
+        $categories = Category::orderBy('category_name')->get();
+
         return view('formateur.modules-builder.edit', [
             'module' => $module,
             'accessibleGroups' => $accessibleGroups,
+            'categories' => $categories,
         ]);
     }
 
@@ -184,6 +195,7 @@ class ModuleBuilderController extends Controller
         $this->access->assertOwner($module);
 
         $validated = $request->validate([
+            'category_id' => 'required|integer|exists:categories,id',
             'label' => 'nullable|string|max:255',
             'duree' => 'nullable|string|max:100',
             'estimated_question_seconds' => 'nullable|integer|min:1|max:600',
@@ -318,7 +330,7 @@ class ModuleBuilderController extends Controller
         $this->access->assertOwner($section->module);
 
         $validated = $request->validate([
-            'document' => 'required|file|mimes:pdf,docx,txt|max:20480',
+            'document' => 'required|file|mimes:pdf,docx,pptx,txt|max:20480',
             'lecture_title' => 'nullable|string|max:255',
         ]);
 

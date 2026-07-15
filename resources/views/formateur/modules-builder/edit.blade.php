@@ -38,8 +38,14 @@
           </ol>
         </nav>
       </div>
-      <a href="{{ route('formateur.formations.preview', $module) }}" target="_blank" rel="noopener"
-         class="btn-oneduc-outline !px-4 !py-2 !text-sm">Aperçu</a>
+      <div class="flex items-center gap-2">
+        <button type="button" x-data x-on:click="$dispatch('open-options-formation')" title="Options de la formation"
+                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:border-bleuone hover:text-bleuone transition-colors">
+          <i class="ti ti-settings text-lg"></i>
+        </button>
+        <a href="{{ route('formateur.formations.preview', $module) }}" target="_blank" rel="noopener"
+           class="btn-oneduc-outline !px-4 !py-2 !text-sm">Aperçu</a>
+      </div>
     </div>
   </header>
 
@@ -155,7 +161,7 @@
             <div class="p-6">
               <h2 class="text-lg font-raleway font-medium text-bleuone">Générer une leçon avec l'IA</h2>
               <p class="mt-2 text-sm text-gray-600">
-                Importez un document (PDF, Word .docx ou texte brut) : l'IA (Mistral) en extrait le contenu et pré-remplit une nouvelle leçon.
+                Importez un document (PDF, Word .docx, PowerPoint .pptx ou texte brut) : l'IA (Mistral) en extrait le contenu et pré-remplit une nouvelle leçon.
                 Relisez et ajustez le contenu avant de le proposer aux stagiaires.
               </p>
 
@@ -180,9 +186,9 @@
 
                 <div>
                   <label class="block text-sm text-gray-600 mb-1">Document source</label>
-                  <input type="file" name="document" accept=".pdf,.docx,.txt" required
+                  <input type="file" name="document" accept=".pdf,.docx,.pptx,.txt" required
                          class="block w-full text-sm text-gray-600 file:mr-3 file:rounded-full file:border-0 file:bg-gray-100 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-gray-700 hover:file:bg-gray-200">
-                  <p class="mt-1 text-xs text-gray-400">PDF, Word (.docx) ou texte brut, 20 Mo max.</p>
+                  <p class="mt-1 text-xs text-gray-400">PDF, Word (.docx), PowerPoint (.pptx) ou texte brut, 20 Mo max.</p>
                 </div>
 
                 <div class="flex justify-end gap-3">
@@ -198,13 +204,22 @@
   </div>
 
   {{-- Options du module & groupes assignés --}}
-  <div class="bg-white rounded-[20px] shadow-md p-6 mb-8" x-data="{ open: false }">
-    <button type="button" @click="open = !open" class="w-full flex items-center justify-between text-left">
-      <p class="font-varela text-base font-bold text-bleuone">Options de la formation</p>
-      <span class="text-gray-400 transition-transform" :class="open ? 'rotate-180' : ''">⌄</span>
+  <div class="bg-white rounded-[20px] shadow-md p-6 mb-8" id="options-formation" x-data="{ open: false }"
+       x-on:open-options-formation.window="open = true; $nextTick(() => $el.scrollIntoView({ behavior: 'smooth', block: 'start' }))">
+    <button type="button" @click="open = !open"
+            class="w-full flex items-center justify-between text-left rounded-2xl bg-bleuone/5 hover:bg-bleuone/10 transition-colors px-4 py-3">
+      <span class="flex items-center gap-3">
+        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-bleuone text-white">
+          <i class="ti ti-settings text-lg"></i>
+        </span>
+        <span class="font-varela text-base font-bold text-bleuone">Options de la formation</span>
+      </span>
+      <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-bleuone transition-transform duration-500" :class="open ? 'rotate-180' : ''">
+        <i class="ti ti-chevron-down text-xl"></i>
+      </span>
     </button>
 
-    <div x-show="open" x-cloak class="mt-4 space-y-6">
+    <div x-show="open" x-collapse.duration.500ms class="mt-4 space-y-6">
     <form method="POST" action="{{ route('formateur.modules.builder.options.update', $module) }}"
           enctype="multipart/form-data" class="space-y-6">
       @csrf
@@ -246,6 +261,18 @@
       <div>
         <p class="mb-3 text-xs font-bold uppercase tracking-widest text-gray-400">Paramètres</p>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div>
+            <label class="block text-sm text-gray-600 mb-1">Catégorie</label>
+            <select name="category_id" required
+                    class="w-full rounded-lg border border-gray-200 px-3 py-1.5 text-sm focus:border-orangeone focus:outline-none focus:ring-1 focus:ring-orangeone">
+              @foreach($categories as $category)
+                <option value="{{ $category->id }}" @selected(old('category_id', $module->category_id) == $category->id)>
+                  {{ $category->category_name }}
+                </option>
+              @endforeach
+            </select>
+          </div>
+
           <div>
             <label class="block text-sm text-gray-600 mb-1">Label</label>
             <input type="text" name="label" value="{{ old('label', $module->label) }}" placeholder="Ex : Gratuit / Premium"

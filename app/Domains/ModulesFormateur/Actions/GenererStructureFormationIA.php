@@ -37,13 +37,27 @@ Réponds UNIQUEMENT avec un objet JSON de la forme :
   ]
 }
 Règles :
-- Propose 3 à 5 objectifs pédagogiques concis, formulés à la deuxième personne du pluriel (ex : "Vous saurez identifier...", "Vous serez capable de...").
+- Formule tous les titres (formation, chapitres, leçons) de façon complète et concise : 30 caractères maximum. N'utilise jamais de points de suspension ou de troncature — si une idée ne tient pas en 30 caractères, reformule-la plus court plutôt que de la couper.
+- Propose 3 à 5 objectifs pédagogiques, un verbe d'action mesurable et observable par objectif (ex : identifier, expliquer, appliquer, analyser, évaluer, concevoir). N'utilise jamais de verbes non mesurables comme "comprendre", "savoir", "connaître" ou "être sensibilisé à".
+- Chaque objectif doit énoncer un résultat observable et vérifiable (ex : "Vous serez capable d'identifier les 3 principaux risques de phishing" plutôt que "Vous comprendrez les risques de phishing"). Un seul verbe d'action principal par objectif.
+- Structure la progression des chapitres selon les niveaux cognitifs de la taxonomie de Bloom : commence par les niveaux "se souvenir" et "comprendre", termine par "appliquer", "analyser" ou "évaluer" si le niveau du public le permet.
+- Adapte le vocabulaire, la complexité des explications et les exemples utilisés au profil du public cible fourni par le formateur (niveau, contexte).
 - Propose entre 3 et 5 chapitres, chacun avec 2 à 4 leçons.
-- Chaque leçon doit avoir un contenu rédigé et structuré (plusieurs blocs "text" si besoin), pas juste un titre.
+- Chaque leçon doit contenir 5 à 7 blocs "text" qui suivent toujours ce plan, dans cet ordre :
+  1. Accroche : 2 à 3 phrases qui contextualisent l'intérêt du sujet pour le public visé.
+  2. Développement : 2 à 4 blocs, un par sous-partie, chacun débutant par un titre <h3>, suivi d'explications et d'une liste à puces des points clés ou des étapes.
+  3. Exemple concret : un bloc <h3>Exemple concret</h3> avec une mise en situation ancrée dans le contexte du public cible.
+  4. À retenir : un dernier bloc <h3>À retenir</h3> avec une liste de 3 à 5 points de synthèse, dont le point le plus important mis en avant dans un <blockquote>.
 - Utilise uniquement les balises HTML suivantes dans "html" : p, br, strong, em, u, ul, ol, li, h2, h3, h4, blockquote, a, code, pre.
-- Structure la progression de façon pédagogique (du plus simple au plus avancé).
 - N'ajoute aucun texte hors de l'objet JSON.
 PROMPT;
+
+    private const NIVEAUX = [
+        'debutant' => 'Débutant',
+        'intermediaire' => 'Intermédiaire',
+        'avance' => 'Avancé',
+        'mixte' => 'Mixte (niveaux variés)',
+    ];
 
     public function __construct(
         private readonly CreerModule $creerModule,
@@ -57,8 +71,14 @@ PROMPT;
         private readonly ImporterImagesDocument $importerImages,
     ) {}
 
-    public function execute(?string $theme, ?UploadedFile $document, int $trainerId): Module
-    {
+    public function execute(
+        ?string $theme,
+        ?UploadedFile $document,
+        int $trainerId,
+        ?string $niveauPublic = null,
+        ?string $contextePublic = null,
+        ?string $contraintesPublic = null,
+    ): Module {
         if ($this->limiteur->tropDeTentatives($trainerId)) {
             throw new RuntimeException('Limite de 3 générations IA par jour atteinte. Réessayez demain.');
         }
@@ -83,6 +103,21 @@ PROMPT;
         if ($theme !== '') {
             $userPromptParts[] = 'Thème demandé par le formateur : '.$theme;
         }
+
+        $profil = [];
+        if ($niveauPublic !== null && isset(self::NIVEAUX[$niveauPublic])) {
+            $profil[] = 'Niveau : '.self::NIVEAUX[$niveauPublic];
+        }
+        if ($contextePublic !== null && trim($contextePublic) !== '') {
+            $profil[] = 'Contexte / secteur : '.trim($contextePublic);
+        }
+        if ($contraintesPublic !== null && trim($contraintesPublic) !== '') {
+            $profil[] = 'Contraintes ou pré-requis : '.trim($contraintesPublic);
+        }
+        if ($profil !== []) {
+            $userPromptParts[] = "Profil du public cible :\n- ".implode("\n- ", $profil);
+        }
+
         if ($sourceText !== '') {
             $userPromptParts[] = "Document source à structurer en formation :\n\n".$sourceText;
         }
@@ -90,8 +125,8 @@ PROMPT;
         $raw = $this->mistral->chat(
             self::SYSTEM_PROMPT,
             implode("\n\n", $userPromptParts),
-            timeoutSeconds: 260,
-            maxTokens: 12000,
+            timeoutSeconds: 300,
+            maxTokens: 20000,
             trainerId: $trainerId,
         );
 

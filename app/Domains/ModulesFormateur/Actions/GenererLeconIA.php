@@ -21,7 +21,11 @@ Tu es un assistant pédagogique qui transforme un document source en une leçon 
 Réponds UNIQUEMENT avec un objet JSON de la forme :
 {"title": "Titre concis de la leçon", "blocks": [{"type": "text", "html": "<h2>...</h2><p>...</p>"}]}
 Règles :
-- Découpe le contenu en plusieurs blocs "text" cohérents (un bloc par grande partie du document).
+- Structure la leçon en 5 à 7 blocs "text" qui suivent toujours ce plan, dans cet ordre :
+  1. Accroche : 2 à 3 phrases qui contextualisent l'intérêt du sujet pour le lecteur.
+  2. Développement : 2 à 4 blocs, un par sous-partie du contenu source, chacun débutant par un titre <h3>, suivi d'explications et d'une liste à puces des points clés ou des étapes.
+  3. Exemple concret : un bloc <h3>Exemple concret</h3> avec une mise en situation issue ou dérivée du document source.
+  4. À retenir : un dernier bloc <h3>À retenir</h3> avec une liste de 3 à 5 points de synthèse, dont le point le plus important mis en avant dans un <blockquote>.
 - Utilise uniquement les balises HTML suivantes dans "html" : p, br, strong, em, u, ul, ol, li, h2, h3, h4, blockquote, a, code, pre.
 - Reformule et structure le contenu de façon pédagogique, sans inventer d'informations absentes du document.
 - N'ajoute aucun texte hors de l'objet JSON.
@@ -59,6 +63,7 @@ PROMPT;
         $raw = $this->mistral->chat(
             self::SYSTEM_PROMPT,
             "Voici le contenu du document source à transformer en leçon :\n\n".$sourceText,
+            timeoutSeconds: 150,
             trainerId: $trainerId,
         );
 
