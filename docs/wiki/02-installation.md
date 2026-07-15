@@ -6,7 +6,7 @@
 
 | Outil | Version minimale |
 |-------|-----------------|
-| PHP | 8.2+ |
+| PHP | 8.3+ |
 | Composer | 2.x |
 | Node.js | 18+ |
 | NPM | 9+ |
@@ -139,7 +139,7 @@ Mettre à jour cette valeur avec l'IP locale de la machine de développement pou
 
 | Package | Usage |
 |---------|-------|
-| `laravel/framework` ^11 | Framework principal |
+| `laravel/framework` ^13 | Framework principal |
 | `anhskohbo/no-captcha` | Captcha sur formulaires publics |
 | `spatie/laravel-cookie-consent` | Bandeau RGPD cookies |
 | `laravel-lang/common` | Traductions Laravel |

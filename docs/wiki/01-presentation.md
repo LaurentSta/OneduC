@@ -117,7 +117,7 @@ Cette section s'adresse aux développeurs et administrateurs système. Les forma
 
 | Composant | Technologie |
 |-----------|-------------|
-| Backend | Laravel 11 / PHP 8.2+ |
+| Backend | Laravel 13 / PHP 8.4+ |
 | Frontend | Blade, Tailwind CSS v4, Vite, Alpine.js |
 | Écrans riches | React 19, Excalidraw, Tiptap, XYFlow |
 | Base de données | MySQL / MariaDB |
