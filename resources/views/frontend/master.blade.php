@@ -27,7 +27,7 @@
   {{-- Données structurées : identité de l'association, sur toutes les pages publiques --}}
   <script type="application/ld+json">
   {
-    "@context": "https://schema.org",
+    "@@context": "https://schema.org",
     "@type": "EducationalOrganization",
     "name": "Onéduc",
     "url": "{{ route('index') }}",

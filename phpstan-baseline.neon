@@ -61,7 +61,7 @@ parameters:
 			path: app/Domains/Outils/Carrousel/Http/Controllers/Formateur/CarrouselSlideController.php
 
 		-
-			message: '#^Parameter \#1 \$boolean of function abort_unless expects bool, object\|null given\.$#'
+			message: '#^Parameter \#1 \$boolean of function abort_unless expects bool, stdClass\|null given\.$#'
 			identifier: argument.type
 			count: 2
 			path: app/Domains/Outils/Carrousel/Support/DepotCarrousel.php
@@ -85,7 +85,7 @@ parameters:
 			path: app/Domains/Outils/CartesRetourner/Http/Controllers/Formateur/CartesRetournerController.php
 
 		-
-			message: '#^Parameter \#1 \$boolean of function abort_unless expects bool, object\|null given\.$#'
+			message: '#^Parameter \#1 \$boolean of function abort_unless expects bool, stdClass\|null given\.$#'
 			identifier: argument.type
 			count: 2
 			path: app/Domains/Outils/CartesRetourner/Support/DepotCartesRetourner.php
@@ -151,15 +151,9 @@ parameters:
 			path: app/Domains/Outils/Memoire/Http/Controllers/Stagiaire/ParticipationMemoireController.php
 
 		-
-			message: '#^Parameter \#1 \$boolean of function abort_unless expects bool, object\|null given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Domains/Outils/Memoire/Support/DepotMemoire.php
-
-		-
 			message: '#^Parameter \#1 \$boolean of function abort_unless expects bool, stdClass\|null given\.$#'
 			identifier: argument.type
-			count: 1
+			count: 2
 			path: app/Domains/Outils/Memoire/Support/DepotMemoire.php
 
 		-
@@ -181,7 +175,7 @@ parameters:
 			path: app/Domains/Outils/Pendu/Http/Controllers/Stagiaire/ParticipationPenduController.php
 
 		-
-			message: '#^Parameter \#1 \$boolean of function abort_unless expects bool, object\|null given\.$#'
+			message: '#^Parameter \#1 \$boolean of function abort_unless expects bool, stdClass\|null given\.$#'
 			identifier: argument.type
 			count: 2
 			path: app/Domains/Outils/Pendu/Support/DepotPendu.php
@@ -217,7 +211,7 @@ parameters:
 			path: app/Domains/Outils/TriCartes/Http/Controllers/Stagiaire/ParticipationTriCartesController.php
 
 		-
-			message: '#^Parameter \#1 \$boolean of function abort_unless expects bool, object\|null given\.$#'
+			message: '#^Parameter \#1 \$boolean of function abort_unless expects bool, stdClass\|null given\.$#'
 			identifier: argument.type
 			count: 2
 			path: app/Domains/Outils/TriCartes/Support/DepotTriCartes.php
@@ -442,12 +436,6 @@ parameters:
 			message: '#^Access to an undefined property App\\Models\\PilotTask\:\:\$subscriptions\.$#'
 			identifier: property.notFound
 			count: 2
-			path: app/Http/Controllers/Backend/PilotageController.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\User\:\:\$unreadNotifications\.$#'
-			identifier: property.notFound
-			count: 1
 			path: app/Http/Controllers/Backend/PilotageController.php
 
 		-
@@ -1511,12 +1499,6 @@ parameters:
 			identifier: larastan.relationExistence
 			count: 2
 			path: app/Http/Controllers/LessonFeedbackController.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\User\:\:\$unreadNotifications\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Controllers/NotificationController.php
 
 		-
 			message: '#^Access to an undefined property App\\Models\\ModuleSection\:\:\$lectures\.$#'
