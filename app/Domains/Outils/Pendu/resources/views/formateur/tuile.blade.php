@@ -1,9 +1,12 @@
 <x-oneduc.outil-tile
-  x-show="filtre === 'all' || filtre === 'animation'"
   tool-id="pendu"
   title="Jeu du pendu"
   icon-bg="bg-orangeone"
   :badge-count="$sessionsPenduRecentes->count()"
+  :categories="['animation']"
+  :modalites="['presentiel', 'distanciel']"
+  :temporalite="['synchrone']"
+  :contexte="['libre']"
   cta-route="{{ route('formateur.pendu.index') }}"
   cta-label="Gérer les pendus"
   cta-bg="bg-orangeone hover:bg-orangeone-hover"
