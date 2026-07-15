@@ -1,9 +1,12 @@
 <x-oneduc.outil-tile
-  x-show="filtre === 'all' || filtre === 'animation'"
   tool-id="tri-cartes"
   title="Cartes à trier"
   icon-bg="bg-emerald-600"
   :badge-count="$sessionsTriCartesRecentes->count()"
+  :categories="['animation']"
+  :modalites="['presentiel', 'distanciel']"
+  :temporalite="['asynchrone']"
+  :contexte="['libre']"
   cta-route="{{ route('formateur.tri-cartes.index') }}"
   cta-label="Gérer les tris"
   cta-bg="bg-emerald-600 hover:bg-emerald-700"

@@ -1,9 +1,12 @@
 <x-oneduc.outil-tile
-  x-show="filtre === 'all' || filtre === 'animation'"
   tool-id="cartes-retourner"
   title="Cartes à retourner"
   icon-bg="bg-purple-600"
   :badge-count="$sessionsCartesRetournerRecentes->count()"
+  :categories="['animation']"
+  :modalites="['presentiel', 'distanciel']"
+  :temporalite="['asynchrone']"
+  :contexte="['libre']"
   cta-route="{{ route('formateur.cartes-retourner.index') }}"
   cta-label="Gérer les cartes"
   cta-bg="bg-purple-600 hover:bg-purple-700"

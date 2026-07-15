@@ -1,9 +1,12 @@
 <x-oneduc.outil-tile
-  x-show="filtre === 'all' || filtre === 'animation'"
   tool-id="carrousel"
   title="Carrousel"
   icon-bg="bg-bleuone"
   :badge-count="$sessionsCarrouselRecentes->count()"
+  :categories="['animation']"
+  :modalites="['presentiel', 'distanciel']"
+  :temporalite="['asynchrone']"
+  :contexte="['libre']"
   cta-route="{{ route('formateur.carrousel.index') }}"
   cta-label="Gérer les carrousels"
   cta-bg="bg-bleuone hover:bg-bleuone-hover"

@@ -1,9 +1,12 @@
 <x-oneduc.outil-tile
-  x-show="filtre === 'all' || filtre === 'animation'"
   tool-id="memoire"
   title="Jeu de mémoire"
   icon-bg="bg-bleuone"
   :badge-count="$sessionsMemoireRecentes->count()"
+  :categories="['animation']"
+  :modalites="['presentiel', 'distanciel']"
+  :temporalite="['asynchrone']"
+  :contexte="['libre']"
   cta-route="{{ route('formateur.memoire.index') }}"
   cta-label="Gérer les jeux de mémoire"
   cta-bg="bg-bleuone hover:bg-bleuone-light"

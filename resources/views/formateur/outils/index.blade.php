@@ -1,7 +1,25 @@
 @extends('formateur.dashboard')
 
 @section('formateur')
-<div class="w-full px-6 lg:px-8" x-data="{ filtre: 'all', selectedTool: null }">
+<div class="w-full px-6 lg:px-8"
+     x-data="{
+        selectedTool: null,
+        filtres: { categories: [], modalites: [], temporalite: [], contexte: [] },
+        outilVisible(groupes) {
+            return Object.entries(this.filtres).every(([cle, actifs]) =>
+                !actifs.length || (groupes[cle] || []).some(v => actifs.includes(v))
+            );
+        },
+        reinitialiserFiltres() {
+            this.filtres = { categories: [], modalites: [], temporalite: [], contexte: [] };
+        },
+        get visibleCount() {
+            return [...document.querySelectorAll('[data-outil-filtres]')]
+                .filter(el => this.outilVisible(JSON.parse(el.dataset.outilFiltres)))
+                .length;
+        },
+     }"
+     @keydown.escape.window="selectedTool = null">
 
   {{-- En-tête --}}
   <div class="rounded-[20px] border border-gray-100 bg-white shadow-md my-6">
@@ -35,47 +53,97 @@
     </div>
   </div>
 
-  {{-- Barre de filtres --}}
-  <div class="bg-white rounded-[16px] shadow-sm px-5 py-3 mb-6 flex flex-wrap items-center gap-2">
-    <span class="text-xs font-bold text-gray-400 uppercase tracking-wider shrink-0 mr-1">Famille</span>
+  {{-- Filtres + grille des outils --}}
+  <div class="flex flex-col gap-6 lg:flex-row lg:items-start mb-8">
 
-    <button @click="filtre = 'all'"
-      :class="filtre === 'all' ? 'bg-bleuone text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
-      class="rounded-full px-4 py-1.5 text-sm font-semibold transition">
-      Tous les outils
-    </button>
+    {{-- Panneau de filtres --}}
+    <aside class="w-full lg:w-64 lg:shrink-0" x-data="{ panelOuvert: false }">
+      <div class="rounded-2xl border border-gray-100 bg-white shadow-md lg:sticky lg:top-8">
 
-    <button @click="filtre = 'interaction'"
-      :class="filtre === 'interaction' ? 'bg-bleuone text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
-      class="rounded-full px-4 py-1.5 text-sm font-semibold transition">
-      Interaction &amp; Feedback
-    </button>
+        <button type="button"
+                class="flex w-full items-center justify-between px-5 py-4 text-left lg:hidden"
+                @click="panelOuvert = !panelOuvert">
+          <span class="text-sm font-bold text-gray-800">Filtres</span>
+          <svg class="h-4 w-4 text-gray-400 transition-transform" :class="panelOuvert ? 'rotate-180' : ''"
+               xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+          </svg>
+        </button>
 
-    <button @click="filtre = 'collaboration'"
-      :class="filtre === 'collaboration' ? 'bg-bleuone text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
-      class="rounded-full px-4 py-1.5 text-sm font-semibold transition">
-      Collaboration
-    </button>
+        <div class="space-y-5 px-5 pb-5 lg:block lg:pt-5" :class="panelOuvert ? 'block' : 'hidden'">
 
-    <button @click="filtre = 'animation'"
-      :class="filtre === 'animation' ? 'bg-bleuone text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
-      class="rounded-full px-4 py-1.5 text-sm font-semibold transition">
-      Animation de session
-    </button>
+          <div class="flex items-center justify-between">
+            <span class="hidden text-sm font-bold text-gray-800 lg:inline">Filtres</span>
+            <button type="button" @click="reinitialiserFiltres()" class="text-xs font-semibold text-bleuone hover:underline">
+              Réinitialiser
+            </button>
+          </div>
 
-    <button @click="filtre = 'creation'"
-      :class="filtre === 'creation' ? 'bg-bleuone text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
-      class="rounded-full px-4 py-1.5 text-sm font-semibold transition">
-      Création de contenu
-    </button>
-  </div>
+          <p class="text-xs text-gray-400" x-text="visibleCount + ' outil(s) affiché(s)'"></p>
 
-  {{-- Grille des outils + panneau d'explication --}}
-  <div class="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-start mb-8">
+          {{-- Groupe : Catégorie --}}
+          <fieldset>
+            <legend class="mb-2 text-xs font-bold uppercase tracking-wider text-gray-400">Catégorie</legend>
+            <div class="space-y-1.5">
+              @foreach(['interaction' => 'Interaction & Feedback', 'collaboration' => 'Collaboration', 'animation' => 'Animation de session', 'creation' => 'Création de contenu'] as $valeur => $libelle)
+                <label class="flex items-center gap-2 text-sm text-gray-700">
+                  <input type="checkbox" value="{{ $valeur }}" x-model="filtres.categories"
+                         class="rounded border-gray-300 text-bleuone focus:ring-bleuone">
+                  {{ $libelle }}
+                </label>
+              @endforeach
+            </div>
+          </fieldset>
 
-  {{-- Grille des outils : tuiles compactes, détail au clic --}}
-  <div class="lg:col-span-8">
-  <div class="grid grid-cols-3 gap-4 sm:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5">
+          {{-- Groupe : Modalité --}}
+          <fieldset>
+            <legend class="mb-2 text-xs font-bold uppercase tracking-wider text-gray-400">Modalité</legend>
+            <div class="space-y-1.5">
+              @foreach(['presentiel' => 'Présentiel', 'distanciel' => 'Distanciel'] as $valeur => $libelle)
+                <label class="flex items-center gap-2 text-sm text-gray-700">
+                  <input type="checkbox" value="{{ $valeur }}" x-model="filtres.modalites"
+                         class="rounded border-gray-300 text-bleuone focus:ring-bleuone">
+                  {{ $libelle }}
+                </label>
+              @endforeach
+            </div>
+          </fieldset>
+
+          {{-- Groupe : Temporalité --}}
+          <fieldset>
+            <legend class="mb-2 text-xs font-bold uppercase tracking-wider text-gray-400">Temporalité</legend>
+            <div class="space-y-1.5">
+              @foreach(['synchrone' => 'Synchrone', 'asynchrone' => 'Asynchrone'] as $valeur => $libelle)
+                <label class="flex items-center gap-2 text-sm text-gray-700">
+                  <input type="checkbox" value="{{ $valeur }}" x-model="filtres.temporalite"
+                         class="rounded border-gray-300 text-bleuone focus:ring-bleuone">
+                  {{ $libelle }}
+                </label>
+              @endforeach
+            </div>
+          </fieldset>
+
+          {{-- Groupe : Contexte d'intégration --}}
+          <fieldset>
+            <legend class="mb-2 text-xs font-bold uppercase tracking-wider text-gray-400">Contexte d'intégration</legend>
+            <div class="space-y-1.5">
+              @foreach(['lecon' => 'Dans une leçon', 'parcours' => 'Dans un parcours', 'libre' => 'Usage libre'] as $valeur => $libelle)
+                <label class="flex items-center gap-2 text-sm text-gray-700">
+                  <input type="checkbox" value="{{ $valeur }}" x-model="filtres.contexte"
+                         class="rounded border-gray-300 text-bleuone focus:ring-bleuone">
+                  {{ $libelle }}
+                </label>
+              @endforeach
+            </div>
+          </fieldset>
+
+        </div>
+      </div>
+    </aside>
+
+    {{-- Grille des outils : tuiles compactes, détail au clic --}}
+    <div class="min-w-0 flex-1">
+      <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
 
     {{-- ── POWERPOINT VERS MODULE ────────────────────────────────────── --}}
     {{-- Tuile masquée temporairement : affichage incorrect signalé, correctif pas encore déployé. --}}
@@ -140,8 +208,11 @@
 
     {{-- ── NUAGE DE MOTS ──────────────────────────────────────────────── --}}
     <x-oneduc.outil-tile
-      x-show="filtre === 'all' || filtre === 'interaction'"
       tool-id="nuage-de-mots"
+      :categories="['interaction']"
+      :modalites="['presentiel', 'distanciel']"
+      :temporalite="['synchrone', 'asynchrone']"
+      :contexte="['parcours', 'libre']"
       title="Nuage de mots"
       icon-bg="bg-amber-500"
       :badge-count="$recentWordclouds->count()"
@@ -185,8 +256,11 @@
 
     {{-- ── QUIZ EN DIRECT ─────────────────────────────────────────────── --}}
     <x-oneduc.outil-tile
-      x-show="filtre === 'all' || filtre === 'interaction'"
       tool-id="quiz"
+      :categories="['interaction']"
+      :modalites="['presentiel', 'distanciel']"
+      :temporalite="['synchrone']"
+      :contexte="['libre']"
       title="Quiz en direct"
       icon-bg="bg-[#004461]"
       cta-route="{{ route('formateur.outils.quiz.index') }}"
@@ -210,8 +284,11 @@
 
     {{-- ── BANQUE DE QUESTIONS DE QUIZ ──────────────────────────────────── --}}
     <x-oneduc.outil-tile
-      x-show="filtre === 'all' || filtre === 'interaction'"
       tool-id="quiz-questions"
+      :categories="['interaction']"
+      :modalites="['presentiel', 'distanciel']"
+      :temporalite="['asynchrone']"
+      :contexte="['lecon']"
       title="Banque de questions"
       icon-bg="bg-orangeone"
       cta-route="{{ route('formateur.outils.quiz-questions.index') }}"
@@ -235,8 +312,11 @@
 
     {{-- ── TABLEAU BLANC ──────────────────────────────────────────────── --}}
     <x-oneduc.outil-tile
-      x-show="filtre === 'all' || filtre === 'collaboration'"
       tool-id="tableau-blanc"
+      :categories="['collaboration']"
+      :modalites="['presentiel', 'distanciel']"
+      :temporalite="['synchrone']"
+      :contexte="['libre']"
       title="Tableau blanc"
       icon-bg="bg-[#E94D2A]"
       :badge-count="$groups->count()"
@@ -281,8 +361,11 @@
 
     {{-- ── MUR DE QUESTIONS ANONYME ─────────────────────────────────── --}}
     <x-oneduc.outil-tile
-      x-show="filtre === 'all' || filtre === 'interaction'"
       tool-id="mur-questions"
+      :categories="['interaction']"
+      :modalites="['presentiel', 'distanciel']"
+      :temporalite="['synchrone']"
+      :contexte="['libre']"
       title="Mur de questions"
       icon-bg="bg-indigo-600"
       :badge-count="$recentQuestionWalls->count()"
@@ -328,8 +411,11 @@
 
     {{-- ── SONDAGE ─────────────────────────────────────────────────────── --}}
     <x-oneduc.outil-tile
-      x-show="filtre === 'all' || filtre === 'interaction'"
       tool-id="sondage"
+      :categories="['interaction']"
+      :modalites="['presentiel', 'distanciel']"
+      :temporalite="['synchrone']"
+      :contexte="['libre']"
       title="Sondage"
       icon-bg="bg-teal-600"
       :badge-count="$recentPolls->count()"
@@ -379,8 +465,11 @@
     {{-- ── VRAI OU FAUX ───────────────────────────────────────────────── --}}
     @if(config('outils.vraifaux.enabled'))
     <x-oneduc.outil-tile
-      x-show="filtre === 'all' || filtre === 'interaction'"
       tool-id="vrai-faux"
+      :categories="['interaction']"
+      :modalites="['presentiel', 'distanciel']"
+      :temporalite="['synchrone']"
+      :contexte="['libre']"
       title="Vrai ou Faux"
       icon-bg="bg-orangeone"
       :badge-count="$recentTrueFalseSessions->count()"
@@ -431,8 +520,11 @@
     {{-- ── BUZZER QUIZ ───────────────────────────────────────────────── --}}
     @if(config('outils.buzzer.enabled'))
     <x-oneduc.outil-tile
-      x-show="filtre === 'all' || filtre === 'interaction'"
       tool-id="buzzer"
+      :categories="['interaction']"
+      :modalites="['presentiel', 'distanciel']"
+      :temporalite="['synchrone']"
+      :contexte="['libre']"
       title="Buzzer Quiz"
       icon-bg="bg-red-600"
       :badge-count="$recentBuzzerSessions->count()"
@@ -480,8 +572,11 @@
     {{-- ── ÉCHELLE DE POSITIONNEMENT ──────────────────────────────────── --}}
     @if(config('outils.echelle.enabled'))
     <x-oneduc.outil-tile
-      x-show="filtre === 'all' || filtre === 'interaction'"
       tool-id="echelle"
+      :categories="['interaction']"
+      :modalites="['presentiel', 'distanciel']"
+      :temporalite="['synchrone']"
+      :contexte="['libre']"
       title="Échelle de positionnement"
       icon-bg="bg-indigo-600"
       :badge-count="$recentScales->count()"
@@ -530,8 +625,11 @@
     {{-- ── ZONE DE CLIC ───────────────────────────────────────── --}}
     @if(config('outils.composants.enabled'))
     <x-oneduc.outil-tile
-      x-show="filtre === 'all' || filtre === 'interaction'"
       tool-id="composants"
+      :categories="['interaction']"
+      :modalites="['presentiel', 'distanciel']"
+      :temporalite="['synchrone']"
+      :contexte="['libre']"
       title="Zone de clic"
       icon-bg="bg-orangeone"
       :badge-count="$recentComponentFinderSessions->count()"
@@ -578,8 +676,11 @@
 
     {{-- ── ROUE ALÉATOIRE ─────────────────────────────────────────────── --}}
     <x-oneduc.outil-tile
-      x-show="filtre === 'all' || filtre === 'animation'"
       tool-id="roue"
+      :categories="['animation']"
+      :modalites="['presentiel', 'distanciel']"
+      :temporalite="['synchrone']"
+      :contexte="['libre']"
       title="Roue aléatoire"
       icon-bg="bg-violet-600"
       cta-route="{{ route('formateur.roue.index') }}"
@@ -604,8 +705,11 @@
     {{-- ── MINUTEUR COLLABORATIF ──────────────────────────────────────── --}}
     @if(config('outils.minuteur.enabled'))
     <x-oneduc.outil-tile
-      x-show="filtre === 'all' || filtre === 'animation'"
       tool-id="minuteur"
+      :categories="['animation']"
+      :modalites="['presentiel', 'distanciel']"
+      :temporalite="['synchrone']"
+      :contexte="['libre']"
       title="Minuteur"
       icon-bg="bg-rose-600"
       :badge-count="$groups->count()"
@@ -648,8 +752,11 @@
 
     {{-- ── ÉMARGEMENT (FEUILLE DE PRÉSENCE) ─────────────────────────────── --}}
     <x-oneduc.outil-tile
-      x-show="filtre === 'all'"
       tool-id="emargement"
+      :categories="[]"
+      :modalites="['presentiel']"
+      :temporalite="['synchrone']"
+      :contexte="['libre']"
       title="Émargement"
       icon-bg="bg-slate-600"
       :badge-count="$openSeancesCount"
@@ -674,8 +781,11 @@
 
     {{-- ── MES MODULES (MODULE BUILDER) ───────────────────────────────── --}}
     <x-oneduc.outil-tile
-      x-show="filtre === 'all'"
       tool-id="modules"
+      :categories="['creation']"
+      :modalites="['presentiel', 'distanciel']"
+      :temporalite="['asynchrone']"
+      :contexte="['parcours']"
       title="Mes créations"
       icon-bg="bg-emerald-600"
       :badge-count="$recentModules->count()"
@@ -721,8 +831,11 @@
 
     {{-- ── PAGE COLLABORATIVE (HEDGEDOC) ─────────────────────────────── --}}
     <x-oneduc.outil-tile
-      x-show="filtre === 'all' || filtre === 'collaboration'"
       tool-id="page-collaborative"
+      :categories="['collaboration']"
+      :modalites="['presentiel', 'distanciel']"
+      :temporalite="['synchrone']"
+      :contexte="['libre']"
       title="Page collaborative"
       icon-bg="bg-cyan-600"
       cta-route="{{ route('formateur.pages-collaboratives.index') }}"
@@ -744,25 +857,13 @@
       </x-slot:badges>
     </x-oneduc.outil-tile>
 
-    {{-- Point d'extension pour les outils autonomes enregistrés par leur provider. --}}
-    @foreach($outilsAutonomes ?? [] as $outilAutonome)
-      @include($outilAutonome['vue'], $outilAutonome['donnees'] ?? [])
-    @endforeach
+      {{-- Point d'extension pour les outils autonomes enregistrés par leur provider. --}}
+      @foreach($outilsAutonomes ?? [] as $outilAutonome)
+        @include($outilAutonome['vue'], $outilAutonome['donnees'] ?? [])
+      @endforeach
 
-  </div>
-  </div>
-
-  {{-- Panneau d'explication de l'outil sélectionné --}}
-  <aside class="lg:col-span-4 lg:sticky lg:top-8">
-    <div id="outil-detail-panel" class="rounded-2xl border border-gray-100 bg-white p-5 shadow-md">
-      <div x-show="!selectedTool">
-        <h3 class="mb-2 font-bold text-gray-900">Découvrez vos outils</h3>
-        <p class="text-xs leading-relaxed text-gray-600">
-          Cliquez sur un outil dans la liste pour voir à quoi il sert, dans quel contexte l'utiliser (présentiel, distanciel, synchrone...) et accéder directement à sa gestion.
-        </p>
       </div>
     </div>
-  </aside>
 
   </div>
 
