@@ -243,7 +243,8 @@
             </svg>
             Tableau de bord
           </a>
-        @else
+        @endauth
+        @guest
             {{-- On pointe vers la nouvelle page de choix --}}
             <a href="{{ route('login.selection') }}" class="btn-oneduc flex items-center gap-2">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -252,7 +253,7 @@
               </svg>
               Connexion
             </a>
-          @endauth
+          @endguest
 
       </div>
     </div>
