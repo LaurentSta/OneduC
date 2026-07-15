@@ -23,6 +23,9 @@ Réponds UNIQUEMENT avec un objet JSON de la forme :
 Règles :
 - Les types autorisés sont "single" (une seule bonne réponse), "multiple" (une ou plusieurs bonnes réponses) et "boolean" (Vrai/Faux, exactement 2 options : Vrai, Faux).
 - Chaque question "single" ou "multiple" doit avoir entre 2 et 5 options, dont au moins une correcte.
+- Formule chaque question autour d'une seule idée, sans ambiguïté. Évite les tournures négatives piégeuses (ex : "Lequel de ces éléments n'est PAS...") sauf si le mot-clé négatif est mis en évidence (majuscules ou gras).
+- Les mauvaises réponses (distracteurs) doivent être plausibles et de longueur comparable à la bonne réponse — n'en fais pas systématiquement la plus longue ou la plus détaillée.
+- Adapte le niveau cognitif des questions au contenu : ne te limite pas au rappel factuel, propose aussi des questions d'application ou d'analyse quand le contenu de la leçon le permet.
 - Base-toi uniquement sur le contenu fourni, sans inventer d'informations absentes.
 - N'ajoute aucun texte hors de l'objet JSON.
 PROMPT;

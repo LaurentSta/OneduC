@@ -112,10 +112,45 @@
         </div>
 
         <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Niveau des stagiaires (optionnel)</label>
+          <select name="niveau_public"
+                  class="w-full rounded-[10px] border border-gray-300 px-3 py-2.5 text-sm focus:border-orangeone focus:outline-none focus:ring-2 focus:ring-orange-100">
+            <option value="">Non précisé</option>
+            <option value="debutant" @selected(old('niveau_public') === 'debutant')>Débutant</option>
+            <option value="intermediaire" @selected(old('niveau_public') === 'intermediaire')>Intermédiaire</option>
+            <option value="avance" @selected(old('niveau_public') === 'avance')>Avancé</option>
+            <option value="mixte" @selected(old('niveau_public') === 'mixte')>Mixte (niveaux variés)</option>
+          </select>
+          @error('niveau_public')
+            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+          @enderror
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Contexte ou secteur d'activité (optionnel)</label>
+          <input type="text" name="contexte_public" value="{{ old('contexte_public') }}" maxlength="300"
+                 placeholder="Ex : agents d'accueil en collectivité"
+                 class="w-full rounded-[10px] border border-gray-300 px-3 py-2.5 text-sm focus:border-orangeone focus:outline-none focus:ring-2 focus:ring-orange-100">
+          @error('contexte_public')
+            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+          @enderror
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Contraintes ou pré-requis particuliers (optionnel)</label>
+          <textarea name="contraintes_public" rows="2" maxlength="300"
+                    placeholder="Ex : aucun pré-requis technique, session de 2h max"
+                    class="w-full rounded-[10px] border border-gray-300 px-3 py-2.5 text-sm focus:border-orangeone focus:outline-none focus:ring-2 focus:ring-orange-100">{{ old('contraintes_public') }}</textarea>
+          @error('contraintes_public')
+            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+          @enderror
+        </div>
+
+        <div>
           <label class="block text-xs font-semibold text-gray-600 mb-1">Document source (optionnel)</label>
-          <input type="file" name="document" accept=".pdf,.docx,.txt"
+          <input type="file" name="document" accept=".pdf,.docx,.pptx,.txt"
                  class="block w-full text-sm text-gray-600 file:mr-3 file:rounded-full file:border-0 file:bg-gray-100 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-gray-700 hover:file:bg-gray-200">
-          <p class="mt-1 text-xs text-gray-400">PDF, Word (.docx) ou texte brut, 20 Mo max.</p>
+          <p class="mt-1 text-xs text-gray-400">PDF, Word (.docx), PowerPoint (.pptx) ou texte brut, 20 Mo max.</p>
           @error('document')
             <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
           @enderror
@@ -128,7 +163,7 @@
 
         <button type="submit" :disabled="loading" class="btn-oneduc !py-2.5 !text-sm disabled:cursor-not-allowed disabled:opacity-60">
           <span x-show="!loading">Générer la formation</span>
-          <span x-show="loading" x-cloak>Génération en cours… (jusqu'à 4 minutes)</span>
+          <span x-show="loading" x-cloak>Génération en cours… (jusqu'à 5 minutes)</span>
         </button>
       </form>
     </div>

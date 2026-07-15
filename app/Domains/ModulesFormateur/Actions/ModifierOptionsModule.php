@@ -36,6 +36,7 @@ class ModifierOptionsModule
             'module_image' => $imagePath,
             'header_image' => $headerImagePath,
             'module_video' => $moduleVideo,
+            'category_id' => $data['category_id'],
             'label' => $data['label'] ?? null,
             'duree' => $data['duree'] ?? null,
             'estimated_question_seconds' => $data['estimated_question_seconds'] ?? null,

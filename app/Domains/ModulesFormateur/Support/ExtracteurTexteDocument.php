@@ -13,7 +13,7 @@ class ExtracteurTexteDocument
 {
     private const MAX_IMAGES = 10;
 
-    private const WORD_IMAGE_MIMES = [
+    private const OFFICE_IMAGE_MIMES = [
         'png' => 'image/png',
         'jpg' => 'image/jpeg',
         'jpeg' => 'image/jpeg',
@@ -28,6 +28,7 @@ class ExtracteurTexteDocument
         $text = match ($extension) {
             'pdf' => $this->extractPdf($file),
             'docx' => $this->extractWord($file),
+            'pptx' => $this->extractPowerPoint($file),
             'txt' => (string) file_get_contents($file->getRealPath()),
             default => throw new RuntimeException('Format de document non supporté.'),
         };
@@ -62,6 +63,7 @@ class ExtracteurTexteDocument
         return match ($extension) {
             'pdf' => $this->extractImagesFromPdf($file),
             'docx' => $this->extractImagesFromWord($file),
+            'pptx' => $this->extractImagesFromOffice($file, 'ppt/media/'),
             default => [],
         };
     }
@@ -119,6 +121,16 @@ class ExtracteurTexteDocument
      */
     private function extractImagesFromWord(UploadedFile $file): array
     {
+        return $this->extractImagesFromOffice($file, 'word/media/');
+    }
+
+    /**
+     * Extrait les images intégrées d'une archive OOXML (docx ou pptx) sous le préfixe de dossier donné.
+     *
+     * @return array<int, array{path: string, mime: string}>
+     */
+    private function extractImagesFromOffice(UploadedFile $file, string $mediaPrefix): array
+    {
         $zip = new ZipArchive;
         if ($zip->open($file->getRealPath()) !== true) {
             return [];
@@ -128,12 +140,12 @@ class ExtracteurTexteDocument
 
         for ($i = 0; $i < $zip->numFiles && count($images) < self::MAX_IMAGES; $i++) {
             $name = $zip->getNameIndex($i);
-            if (! is_string($name) || ! str_starts_with($name, 'word/media/')) {
+            if (! is_string($name) || ! str_starts_with($name, $mediaPrefix)) {
                 continue;
             }
 
             $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
-            if (! isset(self::WORD_IMAGE_MIMES[$ext])) {
+            if (! isset(self::OFFICE_IMAGE_MIMES[$ext])) {
                 continue;
             }
 
@@ -144,7 +156,7 @@ class ExtracteurTexteDocument
 
             $path = tempnam(sys_get_temp_dir(), 'oneduc_img_').'.'.$ext;
             file_put_contents($path, $content);
-            $images[] = ['path' => $path, 'mime' => self::WORD_IMAGE_MIMES[$ext]];
+            $images[] = ['path' => $path, 'mime' => self::OFFICE_IMAGE_MIMES[$ext]];
         }
 
         $zip->close();
@@ -184,5 +196,55 @@ class ExtracteurTexteDocument
         }
 
         return '';
+    }
+
+    private function extractPowerPoint(UploadedFile $file): string
+    {
+        $zip = new ZipArchive;
+        if ($zip->open($file->getRealPath()) !== true) {
+            throw new RuntimeException('Impossible de lire ce fichier PowerPoint.');
+        }
+
+        $slideFiles = [];
+        for ($i = 0; $i < $zip->numFiles; $i++) {
+            $name = $zip->getNameIndex($i);
+            if (is_string($name) && preg_match('#^ppt/slides/slide(\d+)\.xml$#', $name, $matches)) {
+                $slideFiles[(int) $matches[1]] = $name;
+            }
+        }
+        ksort($slideFiles);
+
+        $slides = [];
+        foreach ($slideFiles as $name) {
+            $xml = $zip->getFromName($name);
+            if (is_string($xml) && $xml !== '') {
+                $slides[] = $this->powerPointSlideText($xml);
+            }
+        }
+
+        $zip->close();
+
+        return implode("\n\n", array_filter($slides, fn ($slide) => $slide !== ''));
+    }
+
+    /**
+     * Extrait le texte visible d'une diapositive à partir de son XML brut (ppt/slides/slideN.xml),
+     * en regroupant les runs <a:t> par paragraphe <a:p> sans dépendre d'un parseur OOXML complet.
+     */
+    private function powerPointSlideText(string $xml): string
+    {
+        $paragraphs = [];
+
+        if (preg_match_all('#<a:p>(.*?)</a:p>#s', $xml, $paragraphMatches)) {
+            foreach ($paragraphMatches[1] as $paragraphXml) {
+                preg_match_all('#<a:t[^>]*>(.*?)</a:t>#s', $paragraphXml, $runMatches);
+                $line = trim(html_entity_decode(implode('', $runMatches[1]), ENT_QUOTES | ENT_XML1, 'UTF-8'));
+                if ($line !== '') {
+                    $paragraphs[] = $line;
+                }
+            }
+        }
+
+        return implode("\n", $paragraphs);
     }
 }
