@@ -27,6 +27,7 @@
       <div class="bg-white rounded-[20px] shadow-md p-6 sticky top-6"
            x-data='{
              questions: [{ question: "", choices: ["", ""] }],
+             groupId: "{{ old("group_id", "") }}",
              addQuestion() {
                if (this.questions.length < 10) this.questions.push({ question: "", choices: ["", ""] });
              },
@@ -54,25 +55,23 @@
           </div>
         @endif
 
-        @if($groups->isEmpty())
-          <div class="rounded-[10px] bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-700">
-            Aucun groupe disponible. Créez un groupe pour diffuser un sondage.
-          </div>
-        @else
           <form method="POST" action="{{ route('formateur.sondages.store') }}" class="space-y-4">
             @csrf
 
             <div>
-              <label class="block text-xs font-semibold text-gray-600 mb-1">Groupe</label>
-              <select name="group_id" required
+              <label class="block text-xs font-semibold text-gray-600 mb-1">Groupe <span class="font-normal text-gray-400">(optionnel)</span></label>
+              <select name="group_id" x-model="groupId"
                       class="w-full rounded-[10px] border border-gray-300 px-3 py-2.5 text-sm focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-200">
-                <option value="">Choisir un groupe...</option>
+                <option value="">Aucun — créer un sondage réutilisable dans un parcours</option>
                 @foreach($groups as $group)
                   <option value="{{ $group->id }}" {{ old('group_id') == $group->id ? 'selected' : '' }}>
                     {{ $group->name }} ({{ $group->students_count }} stagiaire{{ $group->students_count > 1 ? 's' : '' }})
                   </option>
                 @endforeach
               </select>
+              <p class="mt-1 text-[11px] text-gray-400" x-show="!groupId">
+                Sans groupe, le sondage n'est pas lancé : vous pourrez le glisser dans un parcours.
+              </p>
             </div>
 
             <div>
@@ -157,10 +156,9 @@
 
             <button type="submit"
                     class="w-full inline-flex items-center justify-center gap-2 rounded-[10px] bg-teal-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-teal-700 transition">
-              Créer et lancer le sondage
+              <span x-text="groupId ? 'Créer et lancer le sondage' : 'Créer le sondage'"></span>
             </button>
           </form>
-        @endif
       </div>
     </div>
 
@@ -169,6 +167,7 @@
         @php
           $questions = collect($session->questions ?? []);
           $first = $questions->first();
+          $isDraft = $session->group_id === null;
         @endphp
         <div class="bg-white rounded-[20px] shadow-md p-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div class="flex items-start gap-3 min-w-0">
@@ -180,16 +179,21 @@
             <div class="min-w-0">
               <div class="flex flex-wrap items-center gap-2 mb-0.5">
                 <p class="text-sm font-bold text-gray-900 truncate">{{ $session->title }}</p>
-                <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold {{ $session->is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500' }}">
-                  {{ $session->is_active ? 'Ouvert' : 'Fermé' }}
+                <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold {{ $isDraft ? 'bg-violet-100 text-violet-700' : ($session->is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500') }}">
+                  {{ $isDraft ? 'Modèle (parcours)' : ($session->is_active ? 'Ouvert' : 'Fermé') }}
                 </span>
               </div>
               <p class="text-xs text-gray-500 truncate">{{ $first['question'] ?? 'Question non définie' }}</p>
               <p class="text-[10px] text-gray-400 mt-1">
-                Groupe : <span class="font-semibold">{{ $session->group?->name ?? '—' }}</span>
-                · Code : <span class="font-mono font-semibold text-teal-700">{{ $session->access_code }}</span>
-                · {{ $questions->count() }} question{{ $questions->count() > 1 ? 's' : '' }}
-                · {{ $session->responses_count }} réponse{{ $session->responses_count > 1 ? 's' : '' }}
+                @if($isDraft)
+                  Pas encore lancé pour un groupe
+                  · {{ $questions->count() }} question{{ $questions->count() > 1 ? 's' : '' }}
+                @else
+                  Groupe : <span class="font-semibold">{{ $session->group?->name }}</span>
+                  · Code : <span class="font-mono font-semibold text-teal-700">{{ $session->access_code }}</span>
+                  · {{ $questions->count() }} question{{ $questions->count() > 1 ? 's' : '' }}
+                  · {{ $session->responses_count }} réponse{{ $session->responses_count > 1 ? 's' : '' }}
+                @endif
               </p>
             </div>
           </div>

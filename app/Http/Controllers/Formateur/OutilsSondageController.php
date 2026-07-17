@@ -41,7 +41,7 @@ class OutilsSondageController extends Controller
         $formateurId = (int) auth()->id();
 
         $data = $request->validate([
-            'group_id' => ['required', 'exists:groups,id'],
+            'group_id' => ['nullable', 'exists:groups,id'],
             'title' => ['nullable', 'string', 'max:255'],
             'questions' => ['required', 'array', 'min:1', 'max:10'],
             'questions.*.question' => ['required', 'string', 'max:500'],
@@ -49,9 +49,12 @@ class OutilsSondageController extends Controller
             'questions.*.choices.*' => ['required', 'string', 'max:200'],
         ]);
 
-        $group = Group::query()
-            ->accessibleByTrainer($formateurId)
-            ->findOrFail((int) $data['group_id']);
+        $group = null;
+        if (! empty($data['group_id'])) {
+            $group = Group::query()
+                ->accessibleByTrainer($formateurId)
+                ->findOrFail((int) $data['group_id']);
+        }
 
         $questions = collect($data['questions'])
             ->map(function (array $question): array {
@@ -71,16 +74,22 @@ class OutilsSondageController extends Controller
 
         $session = PollSession::query()->create([
             'formateur_id' => $formateurId,
-            'group_id' => $group->id,
+            'group_id' => $group?->id,
             'title' => trim((string) ($data['title'] ?? '')) ?: 'Sondage',
             'questions' => $questions->all(),
             'access_code' => CodeGeneratorService::generateUniqueCode(PollSession::class),
-            'is_active' => true,
-            'opened_at' => now(),
+            'is_active' => (bool) $group,
+            'opened_at' => $group ? now() : null,
             'closed_at' => null,
         ]);
 
-        return redirect()->route('formateur.sondages.show', $session);
+        if ($group) {
+            return redirect()->route('formateur.sondages.show', $session);
+        }
+
+        return redirect()
+            ->route('formateur.sondages.index')
+            ->with('success', "Sondage créé. Vous pouvez l'utiliser dans un parcours ou le lancer plus tard pour un groupe.");
     }
 
     public function show(PollSession $pollSession): View

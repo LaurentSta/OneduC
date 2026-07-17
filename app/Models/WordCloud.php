@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class WordCloud extends Model
 {
     protected $fillable = [
+        'formateur_id',
         'module_id',
         'group_id',
         'title',
@@ -50,6 +51,11 @@ class WordCloud extends Model
     public function getActiveQuestionAttribute(): ?string
     {
         return $this->questions_array[$this->active_question_index] ?? null;
+    }
+
+    public function formateur(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'formateur_id');
     }
 
     public function module(): BelongsTo

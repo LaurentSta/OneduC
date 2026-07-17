@@ -1,4 +1,4 @@
-@if($cookieConsentConfig['enabled'] && ! $alreadyConsentedWithCookies)
+@if($cookieConsentConfig['enabled'])
 
     @include('cookie-consent::dialogContents')
 
@@ -7,78 +7,128 @@
         window.laravelCookieConsent = (function () {
 
             const COOKIE_NAME = '{{ $cookieConsentConfig['cookie_name'] }}';
-            const COOKIE_VALUE_ACCEPTED = '1';
-            const COOKIE_VALUE_DECLINED = '0';
+            const COOKIE_LIFETIME_DAYS = {{ $cookieConsentConfig['cookie_lifetime'] }};
             const COOKIE_DOMAIN = '{{ config('session.domain') ?? request()->getHost() }}';
 
-            function consentWithCookies() {
-                setCookie(COOKIE_NAME, COOKIE_VALUE_ACCEPTED, {{ $cookieConsentConfig['cookie_lifetime'] }});
-                hideCookieDialog();
-                document.dispatchEvent(new CustomEvent('cookie-consent:accepted'));
-            }
+            const banner = document.querySelector('.js-cookie-consent');
+            const modalBackdrop = document.querySelector('.js-cookie-consent-modal-backdrop');
 
-            function declineCookies() {
-                // Même cookie, valeur 0 : suffit à empêcher la bannière de
-                // se réafficher (le composeur du package ne vérifie que
-                // l'existence du cookie, pas sa valeur), sans marquer un
-                // consentement qui n'a pas été donné.
-                setCookie(COOKIE_NAME, COOKIE_VALUE_DECLINED, {{ $cookieConsentConfig['cookie_lifetime'] }});
-                hideCookieDialog();
-                document.dispatchEvent(new CustomEvent('cookie-consent:declined'));
-            }
+            function getConsent() {
+                const match = document.cookie.split('; ').find((row) => row.startsWith(COOKIE_NAME + '='));
 
-            function getCookieValue(name) {
-                const match = document.cookie.split('; ').find((row) => row.startsWith(name + '='));
-                return match ? match.split('=')[1] : null;
-            }
+                if (!match) {
+                    return null;
+                }
 
-            function cookieExists(name) {
-                return getCookieValue(name) !== null;
-            }
-
-            function hasAccepted() {
-                return getCookieValue(COOKIE_NAME) === COOKIE_VALUE_ACCEPTED;
-            }
-
-            function hideCookieDialog() {
-                const dialogs = document.getElementsByClassName('js-cookie-consent');
-
-                for (let i = 0; i < dialogs.length; ++i) {
-                    dialogs[i].style.display = 'none';
+                try {
+                    const consent = JSON.parse(decodeURIComponent(match.split('=')[1]));
+                    return consent && typeof consent === 'object' ? consent : null;
+                } catch (e) {
+                    return null;
                 }
             }
 
-            function setCookie(name, value, expirationInDays) {
+            function hasConsented(category) {
+                const consent = getConsent();
+                return !!(consent && consent[category]);
+            }
+
+            function setCookie(consent) {
                 const date = new Date();
-                date.setTime(date.getTime() + (expirationInDays * 24 * 60 * 60 * 1000));
-                document.cookie = name + '=' + value
+                date.setTime(date.getTime() + (COOKIE_LIFETIME_DAYS * 24 * 60 * 60 * 1000));
+                document.cookie = COOKIE_NAME + '=' + encodeURIComponent(JSON.stringify(consent))
                     + ';expires=' + date.toUTCString()
                     + ';domain=' + COOKIE_DOMAIN
                     + ';path=/{{ config('session.secure') ? ';secure' : null }}'
                     + '{{ config('session.same_site') ? ';samesite='.config('session.same_site') : null }}';
             }
 
-            if (cookieExists(COOKIE_NAME)) {
-                hideCookieDialog();
+            function hideBanner() {
+                if (banner) {
+                    banner.style.display = 'none';
+                }
             }
 
-            const agreeButtons = document.getElementsByClassName('js-cookie-consent-agree');
+            function openPreferences() {
+                if (!modalBackdrop) {
+                    return;
+                }
 
-            for (let i = 0; i < agreeButtons.length; ++i) {
-                agreeButtons[i].addEventListener('click', consentWithCookies);
+                const consent = getConsent() || { essentiel: true };
+
+                modalBackdrop.querySelectorAll('.js-cookie-consent-category').forEach((input) => {
+                    input.checked = !!consent[input.dataset.category];
+                });
+
+                modalBackdrop.classList.remove('hidden');
+                modalBackdrop.classList.add('flex');
             }
 
-            const declineButtons = document.getElementsByClassName('js-cookie-consent-decline');
+            function closePreferences() {
+                if (!modalBackdrop) {
+                    return;
+                }
 
-            for (let i = 0; i < declineButtons.length; ++i) {
-                declineButtons[i].addEventListener('click', declineCookies);
+                modalBackdrop.classList.add('hidden');
+                modalBackdrop.classList.remove('flex');
+            }
+
+            function saveConsent(consent) {
+                setCookie(consent);
+                hideBanner();
+                closePreferences();
+                document.dispatchEvent(new CustomEvent('cookie-consent:updated', { detail: consent }));
+            }
+
+            function acceptAll() {
+                saveConsent({ essentiel: true, video: true });
+            }
+
+            function declineAll() {
+                saveConsent({ essentiel: true, video: false });
+            }
+
+            function saveFromModal() {
+                const consent = { essentiel: true };
+
+                modalBackdrop.querySelectorAll('.js-cookie-consent-category').forEach((input) => {
+                    consent[input.dataset.category] = input.checked;
+                });
+
+                saveConsent(consent);
+            }
+
+            document.querySelectorAll('.js-cookie-consent-agree').forEach((btn) => btn.addEventListener('click', acceptAll));
+            document.querySelectorAll('.js-cookie-consent-decline').forEach((btn) => btn.addEventListener('click', declineAll));
+            document.querySelectorAll('.js-cookie-consent-save').forEach((btn) => btn.addEventListener('click', saveFromModal));
+            document.querySelectorAll('.js-cookie-consent-modal-close').forEach((btn) => btn.addEventListener('click', closePreferences));
+
+            document.querySelectorAll('.js-cookie-consent-manage').forEach((btn) => btn.addEventListener('click', (event) => {
+                event.preventDefault();
+                openPreferences();
+            }));
+
+            if (modalBackdrop) {
+                modalBackdrop.addEventListener('click', (event) => {
+                    if (event.target === modalBackdrop) {
+                        closePreferences();
+                    }
+                });
+            }
+
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape' && modalBackdrop && !modalBackdrop.classList.contains('hidden')) {
+                    closePreferences();
+                }
+            });
+
+            if (getConsent()) {
+                hideBanner();
             }
 
             return {
-                consentWithCookies: consentWithCookies,
-                declineCookies: declineCookies,
-                hasAccepted: hasAccepted,
-                hideCookieDialog: hideCookieDialog
+                hasConsented: hasConsented,
+                openPreferences: openPreferences,
             };
         })();
     </script>

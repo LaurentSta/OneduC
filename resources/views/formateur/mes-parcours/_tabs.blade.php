@@ -1,4 +1,4 @@
-{{-- Utilisé uniquement sur les pages mes-formations/* (show, create, edit) --}}
+{{-- Utilisé uniquement sur les pages mes-parcours/* (show, create, edit) --}}
 <div class="flex gap-2 mb-6">
     <a href="{{ route('formateur.formations.index') }}"
        title="Formations disponibles pour vos groupes"

@@ -38,14 +38,14 @@
               <span class="mx-2 text-gray-400">/</span>
             </li>
             <li class="flex items-center">
-              <a href="{{ route('formateur.mes-formations.index') }}" class="text-orangeone hover:underline">Mes parcours</a>
+              <a href="{{ route('formateur.mes-parcours.index') }}" class="text-orangeone hover:underline">Mes parcours</a>
               <span class="mx-2 text-gray-400">/</span>
             </li>
             <li class="text-gray-400">{{ Str::limit($parcours->title, 40) }}</li>
           </ol>
         </nav>
 
-        <a href="{{ route('formateur.mes-formations.edit', $parcours) }}"
+        <a href="{{ route('formateur.mes-parcours.edit', $parcours) }}"
            class="mt-4 inline-flex items-center gap-2 px-5 py-2.5 rounded-[10px] bg-[#E94D2A] text-white font-medium hover:bg-[#cf4121] transition text-sm">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>

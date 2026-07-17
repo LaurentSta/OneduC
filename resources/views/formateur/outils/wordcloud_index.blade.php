@@ -43,20 +43,23 @@
         @endif
 
         <form method="POST" action="{{ route('formateur.nuages.store') }}" class="space-y-4"
-              x-data="{ questions: {{ old('questions') ? json_encode(old('questions')) : "['']" }} }">
+              x-data="{ questions: {{ old('questions') ? json_encode(old('questions')) : "['']" }}, groupId: '{{ old('group_id', '') }}' }">
           @csrf
 
           <div>
-            <label class="block text-xs font-semibold text-gray-600 mb-1">Groupe</label>
-            <select name="group_id" required
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Groupe <span class="font-normal text-gray-400">(optionnel)</span></label>
+            <select name="group_id" x-model="groupId"
                     class="w-full rounded-[10px] border border-gray-300 px-3 py-2.5 text-sm focus:border-bleuone focus:outline-none focus:ring-2 focus:ring-bleuone/15">
-              <option value="">Choisir un groupe…</option>
+              <option value="">Aucun — créer un nuage réutilisable dans un parcours</option>
               @foreach($groups as $group)
                 <option value="{{ $group->id }}" {{ old('group_id') == $group->id ? 'selected' : '' }}>
                   {{ $group->name }}
                 </option>
               @endforeach
             </select>
+            <p class="mt-1 text-[11px] text-gray-400" x-show="!groupId">
+              Sans groupe, le nuage n'est pas lancé : vous pourrez le glisser dans un parcours.
+            </p>
           </div>
 
           <div>
@@ -122,7 +125,7 @@
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
             </svg>
-            Lancer le nuage de mots
+            <span x-text="groupId ? 'Lancer le nuage de mots' : 'Créer le nuage de mots'"></span>
           </button>
         </form>
       </div>
@@ -131,6 +134,7 @@
     {{-- Liste des nuages --}}
     <div class="lg:col-span-2 space-y-4">
       @forelse($wordClouds as $wc)
+        @php $isDraft = $wc->group_id === null; @endphp
         <div class="bg-white rounded-[20px] shadow-md p-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div class="flex items-start gap-3 min-w-0">
             <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl {{ $wc->is_active ? 'bg-bleuone/10 text-bleuone' : 'bg-gray-100 text-gray-400' }}">
@@ -142,31 +146,37 @@
               <div class="flex flex-wrap items-center gap-2 mb-0.5">
                 <p class="text-sm font-bold text-gray-900 truncate">{{ $wc->title }}</p>
                 <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold
-                  {{ $wc->is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500' }}">
-                  {{ $wc->is_active ? 'Actif' : 'Fermé' }}
+                  {{ $isDraft ? 'bg-violet-100 text-violet-700' : ($wc->is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500') }}">
+                  {{ $isDraft ? 'Modèle (parcours)' : ($wc->is_active ? 'Actif' : 'Fermé') }}
                 </span>
               </div>
               <p class="text-xs text-gray-500 truncate">{{ $wc->question }}</p>
               <p class="text-[10px] text-gray-400 mt-1">
-                Groupe : <span class="font-semibold">{{ $wc->group?->name ?? '—' }}</span>
-                · Code : <span class="font-mono font-semibold text-orangeone">{{ $wc->access_code }}</span>
+                @if($isDraft)
+                  Pas encore lancé pour un groupe
+                @else
+                  Groupe : <span class="font-semibold">{{ $wc->group?->name }}</span>
+                  · Code : <span class="font-mono font-semibold text-orangeone">{{ $wc->access_code }}</span>
+                @endif
               </p>
             </div>
           </div>
           <div class="flex gap-2 shrink-0">
-            <a href="{{ route('formateur.nuages.live', $wc) }}"
-               class="inline-flex items-center gap-1.5 rounded-[8px] bg-bleuone px-3 py-1.5 text-xs font-bold text-white hover:bg-bleuone-light transition">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-              </svg>
-              Voir en direct
-            </a>
-            <a href="{{ route('wordcloud.join.code', $wc->access_code) }}"
-               target="_blank"
-               class="inline-flex items-center gap-1.5 rounded-[8px] border border-gray-300 bg-white px-3 py-1.5 text-xs font-bold text-gray-600 hover:bg-gray-50 transition">
-              Lien stagiaire
-            </a>
+            @unless($isDraft)
+              <a href="{{ route('formateur.nuages.live', $wc) }}"
+                 class="inline-flex items-center gap-1.5 rounded-[8px] bg-bleuone px-3 py-1.5 text-xs font-bold text-white hover:bg-bleuone-light transition">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                </svg>
+                Voir en direct
+              </a>
+              <a href="{{ route('wordcloud.join.code', $wc->access_code) }}"
+                 target="_blank"
+                 class="inline-flex items-center gap-1.5 rounded-[8px] border border-gray-300 bg-white px-3 py-1.5 text-xs font-bold text-gray-600 hover:bg-gray-50 transition">
+                Lien stagiaire
+              </a>
+            @endunless
             <form method="POST"
                   action="{{ route('formateur.nuages.destroy', $wc) }}"
                   onsubmit="return confirm('Supprimer ce nuage de mots ? Les réponses associées seront supprimées.');">

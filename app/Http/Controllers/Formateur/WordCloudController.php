@@ -21,7 +21,10 @@ class WordCloudController extends Controller
         $formateurId = (int) auth()->id();
 
         $wordClouds = WordCloud::query()
-            ->whereHas('group', fn ($q) => $q->where('instructor_id', $formateurId))
+            ->where(function ($q) use ($formateurId) {
+                $q->where('formateur_id', $formateurId)
+                    ->orWhereHas('group', fn ($g) => $g->where('instructor_id', $formateurId));
+            })
             ->with('group')
             ->latest()
             ->get();
@@ -39,7 +42,7 @@ class WordCloudController extends Controller
         $formateurId = (int) auth()->id();
 
         $data = $request->validate([
-            'group_id' => ['required', 'exists:groups,id'],
+            'group_id' => ['nullable', 'exists:groups,id'],
             'title' => ['required', 'string', 'max:255'],
             'questions' => ['required', 'array', 'min:1', 'max:10'],
             'questions.*' => ['required', 'string', 'max:500'],
@@ -57,29 +60,39 @@ class WordCloudController extends Controller
                 ->withInput();
         }
 
-        $group = Group::query()
-            ->where('id', (int) $data['group_id'])
-            ->where('instructor_id', $formateurId)
-            ->firstOrFail();
+        $group = null;
+        if (! empty($data['group_id'])) {
+            $group = Group::query()
+                ->where('id', (int) $data['group_id'])
+                ->where('instructor_id', $formateurId)
+                ->firstOrFail();
+        }
 
         $wordCloud = WordCloud::query()->create([
-            'group_id' => $group->id,
+            'formateur_id' => $formateurId,
+            'group_id' => $group?->id,
             'module_id' => null,
             'title' => (string) $data['title'],
             'questions' => $questions,
             'question' => $questions[0], // rétro-compatibilité
             'current_question_index' => 0,
             'access_code' => CodeGeneratorService::generateUniqueCode(WordCloud::class),
-            'is_active' => true,
-            'opened_at' => now(),
+            'is_active' => (bool) $group,
+            'opened_at' => $group ? now() : null,
             'closed_at' => null,
         ]);
 
-        $this->notifyStudents($wordCloud);
+        if ($group) {
+            $this->notifyStudents($wordCloud);
+
+            return redirect()
+                ->route('formateur.nuages.live', $wordCloud)
+                ->with('success', 'Nuage de mots lancé.');
+        }
 
         return redirect()
-            ->route('formateur.nuages.live', $wordCloud)
-            ->with('success', 'Nuage de mots lancé.');
+            ->route('formateur.nuages.index')
+            ->with('success', 'Nuage de mots créé. Vous pouvez l\'utiliser dans un parcours ou le lancer plus tard pour un groupe.');
     }
 
     public function live(WordCloud $wordCloud): View
@@ -212,9 +225,8 @@ class WordCloudController extends Controller
 
     private function assertOwnership(WordCloud $wordCloud): void
     {
-        abort_unless(
-            (int) ($wordCloud->group?->instructor_id ?? 0) === (int) auth()->id(),
-            403
-        );
+        $ownerId = (int) ($wordCloud->formateur_id ?? $wordCloud->group?->instructor_id ?? 0);
+
+        abort_unless($ownerId === (int) auth()->id(), 403);
     }
 }

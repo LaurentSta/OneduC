@@ -6,13 +6,15 @@ use App\Http\Controllers\Controller;
 use App\Models\FormateurParcours;
 use App\Models\FormateurParcoursItem;
 use App\Models\Module;
+use App\Models\PollSession;
+use App\Models\WordCloud;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
-class MesFormationsController extends Controller
+class MesParcoursController extends Controller
 {
     public function index(): View
     {
@@ -22,17 +24,19 @@ class MesFormationsController extends Controller
             ->orderByDesc('created_at')
             ->paginate(12);
 
-        return view('formateur.mes-formations.index', compact('parcours'));
+        return view('formateur.mes-parcours.index', compact('parcours'));
     }
 
     public function create(): View
     {
         $availableModules = $this->buildAvailableModulesPayload();
+        $toolTemplates    = $this->buildToolTemplatesPayload();
 
-        return view('formateur.mes-formations.create', [
+        return view('formateur.mes-parcours.create', [
             'availableModules' => $availableModules,
+            'toolTemplates'    => $toolTemplates,
             'selectedItems'    => [],
-            'storeUrl'         => route('formateur.mes-formations.store'),
+            'storeUrl'         => route('formateur.mes-parcours.store'),
             'method'           => 'POST',
         ]);
     }
@@ -55,7 +59,7 @@ class MesFormationsController extends Controller
 
         return response()->json([
             'success'      => true,
-            'redirect_url' => route('formateur.mes-formations.show', $parcours),
+            'redirect_url' => route('formateur.mes-parcours.show', $parcours),
         ]);
     }
 
@@ -67,7 +71,7 @@ class MesFormationsController extends Controller
 
         $selectedItems = $this->buildSelectedItemsPayload($parcours);
 
-        return view('formateur.mes-formations.show', compact('parcours', 'selectedItems'));
+        return view('formateur.mes-parcours.show', compact('parcours', 'selectedItems'));
     }
 
     public function edit(FormateurParcours $parcours): View
@@ -77,13 +81,15 @@ class MesFormationsController extends Controller
         $parcours->load('items.module');
 
         $availableModules = $this->buildAvailableModulesPayload();
+        $toolTemplates    = $this->buildToolTemplatesPayload();
         $selectedItems    = $this->buildSelectedItemsPayload($parcours);
 
-        return view('formateur.mes-formations.edit', [
+        return view('formateur.mes-parcours.edit', [
             'parcours'        => $parcours,
             'availableModules' => $availableModules,
+            'toolTemplates'    => $toolTemplates,
             'selectedItems'    => $selectedItems,
-            'storeUrl'         => route('formateur.mes-formations.update', $parcours),
+            'storeUrl'         => route('formateur.mes-parcours.update', $parcours),
             'method'           => 'PUT',
         ]);
     }
@@ -105,7 +111,7 @@ class MesFormationsController extends Controller
 
         return response()->json([
             'success'      => true,
-            'redirect_url' => route('formateur.mes-formations.show', $parcours),
+            'redirect_url' => route('formateur.mes-parcours.show', $parcours),
         ]);
     }
 
@@ -116,7 +122,7 @@ class MesFormationsController extends Controller
         $parcours->delete();
 
         return redirect()
-            ->route('formateur.mes-formations.index')
+            ->route('formateur.mes-parcours.index')
             ->with('success', 'Formation supprimée.');
     }
 
@@ -205,11 +211,49 @@ class MesFormationsController extends Controller
         FormateurParcoursItem::insert($rows->all());
     }
 
+    private function buildToolTemplatesPayload(): array
+    {
+        $formateurId = auth()->id();
+
+        $wordClouds = WordCloud::query()
+            ->where('formateur_id', $formateurId)
+            ->whereNull('group_id')
+            ->latest()
+            ->get()
+            ->map(fn (WordCloud $wc) => [
+                'id'             => 'wc-'.$wc->id,
+                'type'           => 'wordcloud',
+                'wc_title'       => $wc->title,
+                'wc_questions'   => $wc->questions_array,
+                'wc_duration'    => null,
+                'poll_questions' => [],
+                'poll_duration'  => null,
+            ]);
+
+        $polls = PollSession::query()
+            ->where('formateur_id', $formateurId)
+            ->whereNull('group_id')
+            ->latest()
+            ->get()
+            ->map(fn (PollSession $poll) => [
+                'id'             => 'poll-'.$poll->id,
+                'type'           => 'poll',
+                'wc_title'       => null,
+                'wc_questions'   => [],
+                'wc_duration'    => null,
+                'poll_questions' => $poll->questions ?? [],
+                'poll_duration'  => null,
+            ]);
+
+        return $wordClouds->concat($polls)->values()->all();
+    }
+
     private function buildAvailableModulesPayload(): array
     {
         return Module::active()
             ->with([
                 'sections.lectures:id,module_id,section_id,duration,question_count,quiz_enabled,quiz_questions_per_attempt',
+                'category:id,category_name',
             ])
             ->orderBy('module_title')
             ->get()
@@ -234,6 +278,8 @@ class MesFormationsController extends Controller
                     'lesson_count'   => $lessonCount,
                     'question_count' => $questionCount,
                     'duration_label' => (string) ($module->formatted_duration ?? 'Rythme libre'),
+                    'category_id'    => $module->category?->id,
+                    'category_name'  => $module->category?->category_name ?? 'Non catégorisées',
                 ];
             })
             ->values()

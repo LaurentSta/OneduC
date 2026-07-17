@@ -10,7 +10,7 @@ use App\Http\Controllers\Formateur\GroupeModuleLessonController;
 use App\Http\Controllers\Formateur\GroupeWordCloudController;
 use App\Http\Controllers\Formateur\LessonResourceController;
 use App\Http\Controllers\Formateur\LiveQuizSessionController;
-use App\Http\Controllers\Formateur\MesFormationsController;
+use App\Http\Controllers\Formateur\MesParcoursController;
 use App\Http\Controllers\Formateur\ModuleBuilderController;
 use App\Http\Controllers\Formateur\ModuleQuizBankController;
 use App\Http\Controllers\Formateur\ObjectiveController;
@@ -170,7 +170,9 @@ Route::middleware(['auth', 'role:formateur', 'association.member'])
         Route::get('/banque-de-questions-quiz', [OutilsQuizQuestionsController::class, 'index'])
             ->name('outils.quiz-questions.index');
 
-        Route::prefix('/sondages')->name('sondages.')->group(function () {
+        Route::redirect('/sondages', '/formateur/outils-numeriques/sondages', 301);
+
+        Route::prefix('/outils-numeriques/sondages')->name('sondages.')->group(function () {
             Route::get('/', [OutilsSondageController::class, 'index'])->name('index');
             Route::post('/', [OutilsSondageController::class, 'store'])->name('store');
             Route::get('/{pollSession}', [OutilsSondageController::class, 'show'])->name('show');
@@ -246,15 +248,15 @@ Route::middleware(['auth', 'role:formateur', 'association.member'])
             Route::get('/{wall}/state', [QuestionWallController::class, 'state'])->name('state');
         });
 
-        // 📚 Mes formations créées
-        Route::prefix('/mes-formations')->name('mes-formations.')->group(function () {
-            Route::get('/', [MesFormationsController::class, 'index'])->name('index');
-            Route::get('/create', [MesFormationsController::class, 'create'])->name('create');
-            Route::post('/', [MesFormationsController::class, 'store'])->name('store');
-            Route::get('/{parcours}', [MesFormationsController::class, 'show'])->name('show');
-            Route::get('/{parcours}/edit', [MesFormationsController::class, 'edit'])->name('edit');
-            Route::put('/{parcours}', [MesFormationsController::class, 'update'])->name('update');
-            Route::delete('/{parcours}', [MesFormationsController::class, 'destroy'])->name('destroy');
+        // 📚 Mes parcours créés
+        Route::prefix('/mes-parcours')->name('mes-parcours.')->group(function () {
+            Route::get('/', [MesParcoursController::class, 'index'])->name('index');
+            Route::get('/create', [MesParcoursController::class, 'create'])->name('create');
+            Route::post('/', [MesParcoursController::class, 'store'])->name('store');
+            Route::get('/{parcours}', [MesParcoursController::class, 'show'])->name('show');
+            Route::get('/{parcours}/edit', [MesParcoursController::class, 'edit'])->name('edit');
+            Route::put('/{parcours}', [MesParcoursController::class, 'update'])->name('update');
+            Route::delete('/{parcours}', [MesParcoursController::class, 'destroy'])->name('destroy');
         });
 
         // 📂 Formations
@@ -333,9 +335,10 @@ Route::middleware(['auth', 'role:formateur', 'association.member'])
             Route::post('/quiz-questions/{question}/deplacer', [ModuleQuizBankController::class, 'move'])->name('quiz-questions.move');
         });
 
-        Route::redirect('/word-clouds', '/formateur/nuages-de-mots', 301);
+        Route::redirect('/word-clouds', '/formateur/outils-numeriques/nuages-de-mots', 301);
+        Route::redirect('/nuages-de-mots', '/formateur/outils-numeriques/nuages-de-mots', 301);
 
-        Route::prefix('/nuages-de-mots')
+        Route::prefix('/outils-numeriques/nuages-de-mots')
             ->name('nuages.')
             ->group(function () {
                 Route::get('/', [FormateurWordCloudController::class, 'index'])->name('index');

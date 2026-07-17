@@ -700,7 +700,7 @@ Lucas;Bernard;lucas.bernard@entreprise.fr</pre>
               <p class="text-xs text-[#004461]/70 font-medium uppercase tracking-wide">Parcours de formation associé</p>
               <p class="text-sm font-bold text-[#004461] truncate">{{ $group->formateurParcours->title }}</p>
             </div>
-            <a href="{{ route('formateur.mes-formations.edit', $group->formateur_parcours_id) }}"
+            <a href="{{ route('formateur.mes-parcours.edit', $group->formateur_parcours_id) }}"
                target="_blank"
                class="shrink-0 inline-flex items-center gap-1.5 rounded-[8px] border border-[#004461]/30 bg-white px-3 py-1.5 text-xs font-semibold text-[#004461] hover:bg-[#004461] hover:text-white transition">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

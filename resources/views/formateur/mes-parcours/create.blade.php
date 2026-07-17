@@ -19,14 +19,14 @@
               <span class="mx-2 text-gray-400">/</span>
             </li>
             <li class="flex items-center">
-              <a href="{{ route('formateur.mes-formations.index') }}" class="text-orangeone hover:underline">Mes formations</a>
+              <a href="{{ route('formateur.mes-parcours.index') }}" class="text-orangeone hover:underline">Mes parcours</a>
               <span class="mx-2 text-gray-400">/</span>
             </li>
             <li class="text-gray-400">Créer</li>
           </ol>
         </nav>
       </div>
-      <a href="{{ route('formateur.mes-formations.index') }}"
+      <a href="{{ route('formateur.mes-parcours.index') }}"
          class="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
@@ -36,7 +36,7 @@
     </div>
   </header>
 
-  @include('formateur.mes-formations._form')
+  @include('formateur.mes-parcours._form')
 
 </div>
 
