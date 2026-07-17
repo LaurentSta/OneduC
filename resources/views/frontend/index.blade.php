@@ -846,11 +846,10 @@
 
     const videoId = container.dataset.videoId;
     const videoTitle = container.dataset.videoTitle || '';
-    const playButton = container.querySelector('[data-oneduc-consent-video-play]');
+    const posterHtml = container.innerHTML;
 
-    function hasCookieConsentAccepted() {
-      const match = document.cookie.split('; ').find((row) => row.startsWith('laravel_cookie_consent='));
-      return match ? match.split('=')[1] === '1' : false;
+    function hasVideoConsent() {
+      return !!(window.laravelCookieConsent && window.laravelCookieConsent.hasConsented('video'));
     }
 
     function loadVideo() {
@@ -871,17 +870,30 @@
       container.appendChild(iframe);
     }
 
-    if (playButton) {
-      playButton.addEventListener('click', loadVideo);
+    function unloadVideo() {
+      if (!container.querySelector('iframe')) {
+        return;
+      }
+
+      container.innerHTML = posterHtml;
+      container.querySelector('[data-oneduc-consent-video-play]').addEventListener('click', loadVideo);
     }
 
-    if (hasCookieConsentAccepted()) {
+    container.querySelector('[data-oneduc-consent-video-play]').addEventListener('click', loadVideo);
+
+    if (hasVideoConsent()) {
       loadVideo();
     }
 
-    // Si la bannière de consentement est encore affichée sur cette même page
-    // et que l'utilisateur accepte, on charge la vidéo sans attendre un rechargement.
-    document.addEventListener('cookie-consent:accepted', loadVideo);
+    // Bandeau/modale de préférences encore ouverts sur cette même page : on
+    // (dé)charge la vidéo sans attendre un rechargement.
+    document.addEventListener('cookie-consent:updated', (event) => {
+      if (event.detail && event.detail.video) {
+        loadVideo();
+      } else {
+        unloadVideo();
+      }
+    });
   })();
 </script>
 @endpush

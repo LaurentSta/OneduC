@@ -129,6 +129,7 @@
           <a href="{{ route('confidentialite') }}" class="hover:text-white underline underline-offset-4 transition">Politique de confidentialité</a>
           <a href="{{ route('conditions-utilisation') }}" class="hover:text-white underline underline-offset-4 transition">Conditions d'utilisation</a>
           <a href="{{ route('cookies') }}" class="hover:text-white underline underline-offset-4 transition">Cookies</a>
+          <button type="button" class="js-cookie-consent-manage bg-transparent border-0 p-0 font-[inherit] text-inherit cursor-pointer hover:text-white underline underline-offset-4 transition">Gérer mes cookies</button>
         </div>
       </div>
     </div>
