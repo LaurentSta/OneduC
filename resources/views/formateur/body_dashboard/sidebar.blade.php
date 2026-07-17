@@ -9,7 +9,7 @@
         || request()->routeIs('formateur.objectifs.*')
         || request()->routeIs('formateur.quiz.*')
         || request()->routeIs('formateur.lesson.quiz.*')
-        || request()->routeIs('formateur.mes-formations.*');
+        || request()->routeIs('formateur.mes-parcours.*');
 
     $isOutilsActive = request()->routeIs('formateur.outils.*')
         || request()->routeIs('formateur.nuages.*')

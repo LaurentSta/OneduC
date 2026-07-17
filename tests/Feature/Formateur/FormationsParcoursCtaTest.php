@@ -43,7 +43,7 @@ it('keeps the same CTA behavior on the dedicated parcours index', function () {
     $formateur = createParcoursCtaFormateur();
 
     $emptyResponse = $this->actingAs($formateur)
-        ->get(route('formateur.mes-formations.index'));
+        ->get(route('formateur.mes-parcours.index'));
 
     $emptyResponse->assertOk();
     $emptyResponse->assertSee('Créer mon premier parcours');
@@ -56,7 +56,7 @@ it('keeps the same CTA behavior on the dedicated parcours index', function () {
     ]);
 
     $filledResponse = $this->actingAs($formateur)
-        ->get(route('formateur.mes-formations.index'));
+        ->get(route('formateur.mes-parcours.index'));
 
     $filledResponse->assertOk();
     $filledResponse->assertSee('Créer un parcours');

@@ -5,6 +5,7 @@
 
 @php
   $builderMode = $builderMode ?? 'edit';
+  $toolTemplates = $toolTemplates ?? [];
 @endphp
 
 <div class="bg-white rounded-[20px] shadow-md px-8 py-6 mb-6">
@@ -22,16 +23,6 @@
              class="w-full rounded-[10px] border border-gray-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E94D2A] focus:border-transparent"
              placeholder="Ex : Formation initiale CAP cuisine">
     </div>
-
-    <div>
-      <label for="formation-description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-      <textarea id="formation-description"
-                name="description"
-                rows="3"
-                maxlength="2000"
-                class="w-full rounded-[10px] border border-gray-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E94D2A] focus:border-transparent"
-                placeholder="Décrivez l'objectif de cette formation…">{{ old('description', $parcours->description ?? '') }}</textarea>
-    </div>
   </div>
 </div>
 
@@ -39,6 +30,9 @@
 <div
   data-parcours-builder
   data-available-modules='@json($availableModules)'
+  data-tool-templates='@json($toolTemplates)'
+  data-wordcloud-url="{{ route('formateur.nuages.index') }}"
+  data-sondage-url="{{ route('formateur.sondages.index') }}"
   data-selected-items='@json($selectedItems)'
   data-csrf-token="{{ csrf_token() }}"
   data-store-url="{{ $storeUrl }}"

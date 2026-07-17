@@ -25,12 +25,12 @@
         @foreach($cartes as $carte)
           <button type="button" class="flip-card cursor-pointer text-left" onclick="this.classList.toggle('is-flipped')">
             <div class="flip-card-inner">
-              <div class="flip-card-face flip-card-front border border-gray-100 bg-slate-50">
+              <div class="flip-card-face flip-card-front border border-purple-200 bg-purple-50">
                 @if($carte->recto_image_path)
                   <img src="{{ \Illuminate\Support\Facades\Storage::url($carte->recto_image_path) }}" alt="" class="max-h-24 w-auto rounded-[8px] object-contain">
                 @endif
                 @if($carte->recto_text)
-                  <p class="text-sm font-semibold text-gray-800">{{ $carte->recto_text }}</p>
+                  <p class="text-sm font-semibold text-purple-900">{{ $carte->recto_text }}</p>
                 @endif
               </div>
               <div class="flip-card-face flip-card-back border border-orangeone/30 bg-orange-50">

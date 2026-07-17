@@ -9,6 +9,6 @@
 @endphp
 
 <div class="mx-auto w-full max-w-[1285px]">
-    @include('formateur.mes-formations._form')
+    @include('formateur.mes-parcours._form')
 </div>
 @endif

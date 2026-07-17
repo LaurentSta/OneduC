@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createRoot } from 'react-dom/client';
 import { Background, Controls, MarkerType, Position, ReactFlow } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
+import { CloudIcon, PollIcon, pollTitle, pollChoices, WordCloudForm, PollForm } from './shared/tool-forms.jsx';
 
 const FLOW_COLUMNS = 3;
 const FLOW_HORIZONTAL_GAP = 340;
@@ -102,14 +103,60 @@ function normalizeAvailableModules(rawModules) {
       lesson_count:   Math.max(0, Number(raw?.lesson_count ?? 0) || 0),
       question_count: Math.max(0, Number(raw?.question_count ?? 0) || 0),
       duration_label: String(raw?.duration_label ?? '').trim() || 'Rythme libre',
+      category_id:    raw?.category_id != null ? String(raw.category_id) : 'uncategorized',
+      category_name:  String(raw?.category_name ?? '').trim() || 'Non catégorisées',
     });
   });
   return out;
 }
 
+function buildCategories(modules) {
+  const map = new Map();
+  modules.forEach((m) => {
+    if (!map.has(m.category_id)) map.set(m.category_id, { id: m.category_id, name: m.category_name, count: 0 });
+    map.get(m.category_id).count += 1;
+  });
+  return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name, 'fr'));
+}
+
 let _wcCounter = 0;
 function newWcId()   { return `wc-new-${++_wcCounter}`; }
 function newPollId() { return `poll-new-${++_wcCounter}`; }
+
+function normalizeToolTemplates(rawTemplates) {
+  if (!Array.isArray(rawTemplates)) return [];
+  return rawTemplates
+    .map((raw) => {
+      const id = String(raw?.id ?? '').trim();
+      if (!id) return null;
+      if (raw?.type === 'wordcloud') {
+        return {
+          type: 'wordcloud',
+          id,
+          wc_title: String(raw?.wc_title ?? '').trim(),
+          wc_questions: Array.isArray(raw?.wc_questions)
+            ? raw.wc_questions.map((q) => String(q).trim()).filter(Boolean)
+            : [],
+          wc_duration: raw?.wc_duration ? Number(raw.wc_duration) : null,
+        };
+      }
+      if (raw?.type === 'poll') {
+        return {
+          type: 'poll',
+          id,
+          poll_questions: Array.isArray(raw?.poll_questions)
+            ? raw.poll_questions.map((pq) => ({
+                question: String(pq?.question ?? '').trim(),
+                choices: Array.isArray(pq?.choices) ? pq.choices.map(String) : [],
+              })).filter((pq) => pq.question)
+            : [],
+          poll_duration: raw?.poll_duration ? Number(raw.poll_duration) : null,
+        };
+      }
+      return null;
+    })
+    .filter(Boolean);
+}
 
 function normalizeSelectedItems(rawItems, moduleMap) {
   if (!Array.isArray(rawItems)) return [];
@@ -168,32 +215,6 @@ function OpenBookIcon({ className = 'h-4 w-4' }) {
         d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
     </svg>
   );
-}
-
-function CloudIcon({ className = 'h-4 w-4' }) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8"
-        d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
-    </svg>
-  );
-}
-
-function PollIcon({ className = 'h-4 w-4' }) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8"
-        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-    </svg>
-  );
-}
-
-function pollTitle(item) {
-  return item.poll_questions?.[0]?.question || item.poll_question || 'Sondage';
-}
-
-function pollChoices(item) {
-  return item.poll_questions?.[0]?.choices || item.poll_choices || [];
 }
 
 function ToolButton({ label, className, onClick, disabled = false }) {
@@ -284,256 +305,92 @@ function Metric({ label, value }) {
   );
 }
 
-// ─── Word cloud inline form ───────────────────────────────────────────────────
-
-
-function WordCloudForm({ onAdd, onCancel, initialValues = null }) {
-  const [title, setTitle]       = useState(initialValues?.wc_title ?? '');
-  const [questions, setQuestions] = useState(
-    initialValues?.wc_questions?.length ? initialValues.wc_questions : ['']
-  );
-  const [duration, setDuration] = useState(
-    initialValues?.wc_duration ? String(initialValues.wc_duration) : ''
-  );
-  const isEdit = initialValues !== null;
-
-  const validQuestions = questions.filter(q => q.trim());
-  const canAdd = title.trim() && validQuestions.length > 0;
-
-  const updateQuestion = (i, val) => setQuestions(qs => qs.map((q, idx) => idx === i ? val : q));
-  const addQuestion    = () => { if (questions.length < 10) setQuestions(qs => [...qs, '']); };
-  const removeQuestion = (i) => { if (questions.length > 1) setQuestions(qs => qs.filter((_, idx) => idx !== i)); };
-
+function ChevronRightIcon({ className = 'h-5 w-5' }) {
   return (
-    <div className="rounded-[12px] border border-amber-200 bg-amber-50 p-4 space-y-3">
-      <p className="text-sm font-semibold text-amber-800 flex items-center gap-2">
-        <CloudIcon className="h-4 w-4" />
-        {isEdit ? 'Modifier le nuage de mots' : 'Nouveau nuage de mots'}
-      </p>
-
-      <div>
-        <label className="block text-xs font-medium text-gray-700 mb-1">
-          Titre <span className="text-red-500">*</span>
-        </label>
-        <input
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          maxLength={255}
-          placeholder="Ex : Bilan de la formation"
-          className="w-full rounded-[8px] border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
-        />
-      </div>
-
-      <div>
-        <div className="flex items-center justify-between mb-1">
-          <label className="text-xs font-medium text-gray-700">
-            Questions posées aux stagiaires <span className="text-red-500">*</span>
-          </label>
-          {questions.length < 10 && (
-            <button type="button" onClick={addQuestion}
-              className="text-[11px] font-semibold text-amber-700 hover:text-amber-900 flex items-center gap-0.5 transition">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"/>
-              </svg>
-              Ajouter une question
-            </button>
-          )}
-        </div>
-        <div className="space-y-2">
-          {questions.map((q, i) => (
-            <div key={i} className="flex items-center gap-2">
-              <span className="text-[11px] font-bold text-amber-600 w-5 shrink-0 text-right">{i + 1}.</span>
-              <input
-                type="text"
-                value={q}
-                onChange={(e) => updateQuestion(i, e.target.value)}
-                maxLength={500}
-                placeholder="Ex : En un mot, comment vous sentez-vous ?"
-                className="flex-1 rounded-[8px] border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
-              />
-              {questions.length > 1 && (
-                <button type="button" onClick={() => removeQuestion(i)}
-                  className="text-gray-400 hover:text-red-500 transition shrink-0">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"/>
-                  </svg>
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div>
-        <label className="block text-xs font-medium text-gray-700 mb-1">
-          Durée totale pour l'ensemble des questions
-          <span className="ml-1 font-normal text-gray-400">(optionnel)</span>
-        </label>
-        <div className="flex items-center gap-2">
-          <input
-            type="number"
-            min="1"
-            max="120"
-            value={duration}
-            onChange={(e) => setDuration(e.target.value)}
-            placeholder="—"
-            className="w-24 rounded-[8px] border border-gray-300 px-3 py-1.5 text-sm text-center focus:outline-none focus:ring-2 focus:ring-amber-400"
-          />
-          <span className="text-sm text-gray-500">minutes</span>
-        </div>
-      </div>
-
-      <div className="flex gap-2 justify-end">
-        <button type="button" onClick={onCancel}
-          className="px-3 py-1.5 rounded-[8px] border border-gray-300 text-sm text-gray-600 hover:bg-gray-50 transition">
-          Annuler
-        </button>
-        <button type="button"
-          onClick={() => {
-            if (!canAdd) return;
-            onAdd({ wc_title: title.trim(), wc_questions: validQuestions, wc_duration: duration ? Number(duration) : null });
-          }}
-          disabled={!canAdd}
-          className="px-3 py-1.5 rounded-[8px] bg-amber-500 text-white text-sm font-medium hover:bg-amber-600 disabled:opacity-40 disabled:cursor-not-allowed transition">
-          {isEdit ? 'Enregistrer' : 'Ajouter'}
-        </button>
-      </div>
-    </div>
+    <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
+    </svg>
   );
 }
 
-const emptyPollQuestion = () => ({ question: '', choices: ['', ''] });
+// ─── Bloc "cube" du plan (glissable) ───────────────────────────────────────────
 
-function PollQuestionBlock({ pq, index, total, onChange, onRemove }) {
-  const setChoice = (ci, val) => onChange({ ...pq, choices: pq.choices.map((c, i) => i === ci ? val : c) });
-  const addChoice = () => { if (pq.choices.length < 5) onChange({ ...pq, choices: [...pq.choices, ''] }); };
-  const removeChoice = (ci) => { if (pq.choices.length > 2) onChange({ ...pq, choices: pq.choices.filter((_, i) => i !== ci) }); };
+function CubeCard({ item, isEditing, onDragStart, onDragOver, onDragEnd, onRemove, onOpenEdit, onCloseEdit, onUpdate }) {
+  const isWc = item.type === 'wordcloud';
+  const isPoll = item.type === 'poll';
+  const borderColor = isWc ? 'border-amber-400' : isPoll ? 'border-teal-500' : 'border-[#004461]';
+  const bg = isWc ? 'bg-amber-50' : isPoll ? 'bg-teal-50' : 'bg-white';
 
   return (
-    <div className="rounded-[10px] border border-teal-200 bg-white p-3 space-y-2">
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-xs font-bold text-teal-700">Question {index + 1}</span>
-        {total > 1 && (
-          <button type="button" onClick={onRemove} className="text-gray-400 hover:text-red-500 transition">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
-          </button>
-        )}
-      </div>
-      <input type="text" value={pq.question}
-        onChange={(e) => onChange({ ...pq, question: e.target.value })}
-        maxLength={500} placeholder="Ex : Comment vous sentez-vous après cette formation ?"
-        className="w-full rounded-[8px] border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
-      />
-      <div className="space-y-1.5 pl-2 border-l-2 border-teal-100">
-        {pq.choices.map((c, ci) => (
-          <div key={ci} className="flex items-center gap-2">
-            <span className="text-[11px] font-bold text-teal-500 w-4 shrink-0">{ci + 1}.</span>
-            <input type="text" value={c}
-              onChange={(e) => setChoice(ci, e.target.value)}
-              maxLength={200} placeholder={`Choix ${ci + 1}`}
-              className="flex-1 rounded-[8px] border border-gray-300 px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
-            />
-            {pq.choices.length > 2 && (
-              <button type="button" onClick={() => removeChoice(ci)} className="text-gray-400 hover:text-red-500 transition shrink-0">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"/>
-                </svg>
-              </button>
-            )}
+    <div className="flex flex-col">
+      <div
+        draggable
+        onDragStart={onDragStart}
+        onDragOver={onDragOver}
+        onDragEnd={onDragEnd}
+        className={`group relative w-[240px] cursor-grab select-none rounded-[10px] border-2 ${borderColor} ${bg} px-3.5 py-3 shadow-sm transition active:cursor-grabbing`}
+      >
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex min-w-0 items-start gap-2">
+            {isWc
+              ? <CloudIcon className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+              : isPoll
+                ? <PollIcon className="mt-0.5 h-4 w-4 shrink-0 text-teal-600" />
+                : <OpenBookIcon className="mt-0.5 h-4 w-4 shrink-0 text-[#004461]" />}
+            <span className="truncate text-[12px] font-semibold leading-snug text-slate-900">
+              {`${item.position}. ${isWc ? (item.wc_title || 'Nuage de mots') : isPoll ? pollTitle(item) : item.title}`}
+            </span>
           </div>
-        ))}
-        {pq.choices.length < 5 && (
-          <button type="button" onClick={addChoice} className="text-[11px] text-teal-600 hover:text-teal-800 flex items-center gap-1 transition">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"/>
+          <button type="button" onClick={onRemove} aria-label="Retirer cette étape"
+            className="shrink-0 rounded-full p-1 text-gray-400 opacity-0 transition group-hover:opacity-100 group-hover:text-gray-600 hover:!bg-red-50 hover:!text-red-600">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
-            Ajouter un choix
+          </button>
+        </div>
+
+        {isWc && item.wc_questions?.length > 0 && (
+          <p className="mt-2 text-[11px] italic text-amber-700 line-clamp-2">
+            « {item.wc_questions[0]} »
+            {item.wc_questions.length > 1 && <span className="ml-1 font-semibold not-italic">+{item.wc_questions.length - 1}</span>}
+          </p>
+        )}
+
+        {isPoll && pollChoices(item).length > 0 && (
+          <p className="mt-2 truncate text-[11px] text-teal-700">{pollChoices(item).join(' / ')}</p>
+        )}
+
+        {!isWc && !isPoll && (
+          <div className="mt-2.5 grid grid-cols-3 gap-1.5">
+            <Metric label="Leçons" value={item.lesson_count} />
+            <Metric label="Questions" value={item.question_count} />
+            <Metric label="Durée" value={item.duration_label} />
+          </div>
+        )}
+
+        {(isWc || isPoll) && !isEditing && (
+          <button type="button" onClick={onOpenEdit}
+            className="mt-2 text-[11px] font-semibold text-[#004461] hover:underline">
+            Modifier
           </button>
         )}
       </div>
-    </div>
-  );
-}
 
-function PollForm({ onAdd, onCancel, initialValues = null }) {
-  const [pollQuestions, setPollQuestions] = useState(
-    initialValues?.poll_questions?.length ? initialValues.poll_questions : [emptyPollQuestion()]
-  );
-  const [duration, setDuration] = useState(
-    initialValues?.poll_duration ? String(initialValues.poll_duration) : ''
-  );
-  const isEdit = initialValues !== null;
-
-  const updatePq  = (i, val) => setPollQuestions(pqs => pqs.map((pq, idx) => idx === i ? val : pq));
-  const addPq     = () => { if (pollQuestions.length < 10) setPollQuestions(pqs => [...pqs, emptyPollQuestion()]); };
-  const removePq  = (i) => { if (pollQuestions.length > 1) setPollQuestions(pqs => pqs.filter((_, idx) => idx !== i)); };
-
-  const validPqs = pollQuestions.filter(pq => pq.question.trim() && pq.choices.filter(c => c.trim()).length >= 2);
-  const canSubmit = validPqs.length > 0;
-
-  return (
-    <div className="rounded-[12px] border border-teal-200 bg-teal-50 p-4 space-y-3">
-      <p className="text-sm font-semibold text-teal-800 flex items-center gap-2">
-        <PollIcon className="h-4 w-4" />
-        {isEdit ? 'Modifier le sondage' : 'Nouveau sondage'}
-      </p>
-
-      <div className="space-y-3">
-        {pollQuestions.map((pq, i) => (
-          <PollQuestionBlock key={i} pq={pq} index={i} total={pollQuestions.length}
-            onChange={(val) => updatePq(i, val)}
-            onRemove={() => removePq(i)}
-          />
-        ))}
-      </div>
-
-      {pollQuestions.length < 10 && (
-        <button type="button" onClick={addPq}
-          className="text-xs font-semibold text-teal-700 hover:text-teal-900 flex items-center gap-1 transition">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"/>
-          </svg>
-          Ajouter une question
-        </button>
-      )}
-
-      <div>
-        <label className="block text-xs font-medium text-gray-700 mb-1">
-          Durée totale pour l'ensemble des questions
-          <span className="ml-1 font-normal text-gray-400">(optionnel)</span>
-        </label>
-        <div className="flex items-center gap-2">
-          <input type="number" min="1" max="120" value={duration}
-            onChange={(e) => setDuration(e.target.value)}
-            placeholder="—"
-            className="w-24 rounded-[8px] border border-gray-300 px-3 py-1.5 text-sm text-center focus:outline-none focus:ring-2 focus:ring-teal-400"
-          />
-          <span className="text-sm text-gray-500">minutes</span>
+      {isEditing && (
+        <div className="mt-2 w-[300px]">
+          {isWc
+            ? <WordCloudForm initialValues={item} onAdd={onUpdate} onCancel={onCloseEdit} />
+            : <PollForm initialValues={item} onAdd={onUpdate} onCancel={onCloseEdit} />
+          }
         </div>
-      </div>
-
-      <div className="flex gap-2 justify-end">
-        <button type="button" onClick={onCancel}
-          className="px-3 py-1.5 rounded-[8px] border border-gray-300 text-sm text-gray-600 hover:bg-gray-50 transition">
-          Annuler
-        </button>
-        <button type="button"
-          onClick={() => { if (canSubmit) onAdd({ poll_questions: validPqs, poll_duration: duration ? Number(duration) : null }); }}
-          disabled={!canSubmit}
-          className="px-3 py-1.5 rounded-[8px] bg-teal-600 text-white text-sm font-medium hover:bg-teal-700 disabled:opacity-40 disabled:cursor-not-allowed transition">
-          {isEdit ? 'Enregistrer' : 'Ajouter'}
-        </button>
-      </div>
+      )}
     </div>
   );
 }
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-function ParcoursBuilder({ availableModules = [], initialItems = [], csrfToken, storeUrl, method, mode }) {
+function ParcoursBuilder({ availableModules = [], toolTemplates = [], wordcloudUrl = '', sondageUrl = '', initialItems = [], csrfToken, storeUrl, method, mode }) {
   const isPreview = mode === 'preview';
   const isSimulation = mode === 'simulation';
 
@@ -542,6 +399,8 @@ function ParcoursBuilder({ availableModules = [], initialItems = [], csrfToken, 
     () => new Map(normalizedAvailableModules.map((m) => [m.id, m])),
     [normalizedAvailableModules],
   );
+
+  const normalizedToolTemplates = useMemo(() => normalizeToolTemplates(toolTemplates), [toolTemplates]);
 
   const [items, setItems] = useState(() => normalizeSelectedItems(initialItems, availableModuleMap));
   const [newModuleId, setNewModuleId]     = useState('');
@@ -556,6 +415,10 @@ function ParcoursBuilder({ availableModules = [], initialItems = [], csrfToken, 
   const [flowInstance, setFlowInstance]   = useState(null);
   const canvasRef = useRef(null);
 
+  const [selectedCategoryId, setSelectedCategoryId] = useState('');
+  const [dragSource, setDragSource]         = useState(null); // { kind: 'module'|'item'|'readytool', id }
+  const [dropTargetIndex, setDropTargetIndex] = useState(null);
+
   const selectedModuleIds = useMemo(
     () => new Set(items.filter((i) => i.type === 'module').map((i) => i.id)),
     [items],
@@ -564,6 +427,23 @@ function ParcoursBuilder({ availableModules = [], initialItems = [], csrfToken, 
   const selectableModules = useMemo(
     () => normalizedAvailableModules.filter((m) => !selectedModuleIds.has(m.id)),
     [normalizedAvailableModules, selectedModuleIds],
+  );
+
+  const catalogCategories = useMemo(() => buildCategories(selectableModules), [selectableModules]);
+
+  const placedTemplateIds = useMemo(
+    () => new Set(items.filter((i) => i.template_id).map((i) => i.template_id)),
+    [items],
+  );
+
+  const readyTools = useMemo(
+    () => normalizedToolTemplates.filter((t) => !placedTemplateIds.has(t.id)),
+    [normalizedToolTemplates, placedTemplateIds],
+  );
+
+  const catalogModules = useMemo(
+    () => selectedCategoryId ? selectableModules.filter((m) => m.category_id === selectedCategoryId) : [],
+    [selectableModules, selectedCategoryId],
   );
 
   // ── React Flow nodes & edges ──────────────────────────────────────────────
@@ -755,6 +635,112 @@ function ParcoursBuilder({ availableModules = [], initialItems = [], csrfToken, 
       [next[index], next[swapIndex]] = [next[swapIndex], next[index]];
       return renumber(next);
     });
+  };
+
+  const insertModuleAt = (moduleId, targetIndex) => {
+    setAddError('');
+    if (selectedModuleIds.has(moduleId)) {
+      setAddError('Cette formation est déjà dans le parcours.');
+      return;
+    }
+    const mod = availableModuleMap.get(moduleId);
+    if (!mod) { setAddError('Formation introuvable.'); return; }
+    setItems((current) => {
+      const next = [...current];
+      const at = Math.max(0, Math.min(targetIndex, next.length));
+      next.splice(at, 0, {
+        type: 'module', id: mod.id, title: mod.title, position: 0,
+        lesson_count: mod.lesson_count, question_count: mod.question_count, duration_label: mod.duration_label,
+      });
+      return renumber(next);
+    });
+  };
+
+  const moveItemTo = (itemId, targetIndex) => {
+    setItems((current) => {
+      const fromIndex = current.findIndex((i) => String(i.id) === String(itemId));
+      if (fromIndex < 0) return current;
+      const next = [...current];
+      const [moved] = next.splice(fromIndex, 1);
+      let at = targetIndex;
+      if (fromIndex < targetIndex) at -= 1;
+      at = Math.max(0, Math.min(at, next.length));
+      next.splice(at, 0, moved);
+      return renumber(next);
+    });
+  };
+
+  // ── Outils numériques : modèles construits en amont, placés dans le plan ───
+
+  const placeReadyTool = (templateId, targetIndex) => {
+    const tpl = normalizedToolTemplates.find((t) => String(t.id) === String(templateId));
+    if (!tpl) return;
+    const newItem = tpl.type === 'wordcloud'
+      ? { type: 'wordcloud', id: newWcId(), template_id: tpl.id, position: 0, wc_title: tpl.wc_title, wc_questions: tpl.wc_questions, wc_duration: tpl.wc_duration }
+      : { type: 'poll', id: newPollId(), template_id: tpl.id, position: 0, poll_questions: tpl.poll_questions, poll_duration: tpl.poll_duration };
+    setItems((current) => {
+      const next = [...current];
+      const at = Math.max(0, Math.min(targetIndex, next.length));
+      next.splice(at, 0, newItem);
+      return renumber(next);
+    });
+  };
+
+  // ── Drag and drop (catalogue → plan, réordonnancement du plan) ─────────────
+
+  const handleCatalogDragStart = (e, moduleId) => {
+    e.dataTransfer.effectAllowed = 'copy';
+    e.dataTransfer.setData('text/plain', `module:${moduleId}`);
+    setDragSource({ kind: 'module', id: moduleId });
+  };
+
+  const handleReadyToolDragStart = (e, toolId) => {
+    e.dataTransfer.effectAllowed = 'copy';
+    e.dataTransfer.setData('text/plain', `readytool:${toolId}`);
+    setDragSource({ kind: 'readytool', id: toolId });
+  };
+
+  const handleCubeDragStart = (e, itemId) => {
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', `item:${itemId}`);
+    setDragSource({ kind: 'item', id: itemId });
+  };
+
+  const handleCubeDragOver = (e, index) => {
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = dragSource?.kind === 'item' ? 'move' : 'copy';
+    const rect = e.currentTarget.getBoundingClientRect();
+    const isBefore = (e.clientX - rect.left) < rect.width / 2;
+    setDropTargetIndex(isBefore ? index : index + 1);
+  };
+
+  const handlePlanDragOver = (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = dragSource?.kind === 'item' ? 'move' : 'copy';
+    if (dropTargetIndex === null) setDropTargetIndex(items.length);
+  };
+
+  const handleDragEnd = () => {
+    setDragSource(null);
+    setDropTargetIndex(null);
+  };
+
+  const handlePlanDrop = (e) => {
+    e.preventDefault();
+    const raw = e.dataTransfer.getData('text/plain');
+    const [kind, id] = raw.split(':');
+    const targetIndex = dropTargetIndex ?? items.length;
+
+    if (kind === 'module') {
+      insertModuleAt(toPositiveInt(id), targetIndex);
+    } else if (kind === 'item') {
+      moveItemTo(id, targetIndex);
+    } else if (kind === 'readytool') {
+      placeReadyTool(id, targetIndex);
+    }
+
+    handleDragEnd();
   };
 
   const resetSimulationActivity = () => {
@@ -1022,185 +1008,241 @@ function ParcoursBuilder({ availableModules = [], initialItems = [], csrfToken, 
     );
   }
 
-  return (
-    <div className={!isPreview ? 'grid gap-4 xl:grid-cols-[minmax(0,1fr)_18rem]' : 'space-y-4'}>
+  if (isPreview) {
+    return (
       <div className="space-y-4">
-
-      {/* Toolbar add */}
-      {!isPreview && (
-        <div className="bg-white rounded-[20px] shadow-md px-8 py-6 space-y-4">
-          <h2 className="text-base font-semibold text-gray-800">Étapes du parcours</h2>
-
-          {/* Add module */}
-          <div className="flex flex-col gap-3 md:flex-row md:items-end">
-            <div className="w-full">
-              <select
-                value={newModuleId}
-                onChange={(e) => { setAddError(''); setNewModuleId(e.target.value); }}
-                className="w-full rounded-[10px] border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E94D2A]"
-              >
-                <option value="">— Sélectionner une formation à ajouter —</option>
-                {selectableModules.map((m) => (
-                  <option key={`opt-${m.id}`} value={m.id}>{m.title}</option>
-                ))}
-              </select>
-              {addError && <p className="mt-1 text-sm text-red-600">{addError}</p>}
-            </div>
-            <button type="button" onClick={addModule} disabled={!newModuleId}
-              className="inline-flex items-center gap-2 rounded-[10px] bg-[#004461] px-4 py-2 text-sm font-bold text-white hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition md:shrink-0">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-              </svg>
-              Ajouter une formation
-            </button>
-          </div>
-
-          {!isSimulation && showWcForm && (
-            <WordCloudForm onAdd={addWordCloud} onCancel={() => setShowWcForm(false)} />
-          )}
-          {!isSimulation && showPollForm && (
-            <PollForm onAdd={addPoll} onCancel={() => setShowPollForm(false)} />
-          )}
-        </div>
-      )}
-
-      {/* Ordered list */}
-      <div className="bg-white rounded-[20px] shadow-md overflow-hidden">
-        {items.length === 0 ? (
-          <div className="px-8 py-10 text-center text-gray-400">
-            {isPreview ? 'Aucune étape dans ce parcours.' : (isSimulation ? 'Ajoutez des formations ci-dessus.' : 'Ajoutez des formations, des nuages de mots ou des sondages ci-dessus.')}
-          </div>
-        ) : (
-          <table className="min-w-full text-left text-sm text-gray-800">
-            <thead className="bg-[#004461] text-xs uppercase text-white">
-              <tr>
-                <th className="w-[64px] px-4 py-3 text-center">#</th>
-                <th className="px-4 py-3">Étape</th>
-                <th className="px-4 py-3">Détail</th>
-                {!isPreview && <th className="px-4 py-3 text-right">Actions</th>}
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((item, index) => {
-                const isWc   = item.type === 'wordcloud';
-                const isPoll = item.type === 'poll';
-                const rowBg  = index % 2 === 0 ? 'bg-white' : isWc ? 'bg-amber-50/40' : isPoll ? 'bg-teal-50/40' : 'bg-slate-50/40';
-                return (
-                  <React.Fragment key={item.id}>
-                  <tr className={`${rowBg} border-t transition-colors`}>
-                    <td className="px-4 py-3 text-center font-bold text-[#004461]">{item.position}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        {isWc
-                          ? <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-700"><CloudIcon className="h-3 w-3" />Nuage de mots</span>
-                          : isPoll
-                            ? <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-teal-100 text-teal-700"><PollIcon className="h-3 w-3" />Sondage</span>
-                            : <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 text-[#004461]"><OpenBookIcon className="h-3 w-3" />Formation</span>
-                        }
-                        <span className="font-medium">
-                          {isWc ? item.wc_title : isPoll ? pollTitle(item) : item.title}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-gray-500 text-xs max-w-[260px] truncate">
-                      {isWc
-                        ? item.wc_questions?.length > 0 ? `« ${item.wc_questions[0]} »${item.wc_questions.length > 1 ? ` +${item.wc_questions.length - 1}` : ''}` : '—'
-                        : isPoll
-                          ? pollChoices(item).join(' / ')
-                          : `${item.lesson_count} leç. — ${item.duration_label}`
-                      }
-                    </td>
-                    {!isPreview && (
-                      <td className="px-4 py-3 text-right">
-                        <div className="inline-flex gap-2">
-                          <button type="button" onClick={() => moveItem(item.id, -1)} disabled={index === 0}
-                            aria-label="Monter"
-                            className="inline-flex h-8 w-8 items-center justify-center rounded border border-gray-300 text-[#004461] hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-                              <path d="m18 15-6-6-6 6" />
-                            </svg>
-                          </button>
-                          <button type="button" onClick={() => moveItem(item.id, +1)} disabled={index === items.length - 1}
-                            aria-label="Descendre"
-                            className="inline-flex h-8 w-8 items-center justify-center rounded border border-gray-300 text-[#004461] hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-                              <path d="m6 9 6 6 6-6" />
-                            </svg>
-                          </button>
-                          {(isWc || isPoll) && (
-                            <button type="button"
-                              onClick={() => setEditingItemId(editingItemId === item.id ? null : item.id)}
-                              className="rounded border border-gray-300 px-2 py-1 text-xs text-gray-600 hover:border-[#004461] hover:text-[#004461] transition">
-                              {editingItemId === item.id ? 'Fermer' : 'Modifier'}
-                            </button>
-                          )}
-                          <button type="button" onClick={() => removeItem(item.id)}
-                            className="rounded border border-gray-300 px-2 py-1 text-xs text-gray-600 hover:border-red-300 hover:text-red-600 transition">
-                            Retirer
-                          </button>
+        <div className="bg-white rounded-[20px] shadow-md overflow-hidden">
+          {items.length === 0 ? (
+            <div className="px-8 py-10 text-center text-gray-400">Aucune étape dans ce parcours.</div>
+          ) : (
+            <table className="min-w-full text-left text-sm text-gray-800">
+              <thead className="bg-[#004461] text-xs uppercase text-white">
+                <tr>
+                  <th className="w-[64px] px-4 py-3 text-center">#</th>
+                  <th className="px-4 py-3">Étape</th>
+                  <th className="px-4 py-3">Détail</th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((item, index) => {
+                  const isWc   = item.type === 'wordcloud';
+                  const isPoll = item.type === 'poll';
+                  const rowBg  = index % 2 === 0 ? 'bg-white' : isWc ? 'bg-amber-50/40' : isPoll ? 'bg-teal-50/40' : 'bg-slate-50/40';
+                  return (
+                    <tr key={item.id} className={`${rowBg} border-t transition-colors`}>
+                      <td className="px-4 py-3 text-center font-bold text-[#004461]">{item.position}</td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          {isWc
+                            ? <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-700"><CloudIcon className="h-3 w-3" />Nuage de mots</span>
+                            : isPoll
+                              ? <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-teal-100 text-teal-700"><PollIcon className="h-3 w-3" />Sondage</span>
+                              : <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 text-[#004461]"><OpenBookIcon className="h-3 w-3" />Formation</span>
+                          }
+                          <span className="font-medium">
+                            {isWc ? item.wc_title : isPoll ? pollTitle(item) : item.title}
+                          </span>
                         </div>
                       </td>
-                    )}
-                  </tr>
-                  {editingItemId === item.id && (
-                    <tr key={`edit-${item.id}`} className="border-t">
-                      <td colSpan={4} className="px-4 py-3">
+                      <td className="px-4 py-3 text-gray-500 text-xs max-w-[260px] truncate">
                         {isWc
-                          ? <WordCloudForm
-                              initialValues={item}
-                              onAdd={(data) => updateItem(item.id, data)}
-                              onCancel={() => setEditingItemId(null)}
-                            />
-                          : <PollForm
-                              initialValues={item}
-                              onAdd={(data) => updateItem(item.id, data)}
-                              onCancel={() => setEditingItemId(null)}
-                            />
+                          ? item.wc_questions?.length > 0 ? `« ${item.wc_questions[0]} »${item.wc_questions.length > 1 ? ` +${item.wc_questions.length - 1}` : ''}` : '—'
+                          : isPoll
+                            ? pollChoices(item).join(' / ')
+                            : `${item.lesson_count} leç. — ${item.duration_label}`
                         }
                       </td>
                     </tr>
-                  )}
-                  </React.Fragment>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
+
+        <div className="overflow-hidden rounded-[20px] border border-gray-200 bg-white shadow-md">
+          <div ref={canvasRef} className="h-[360px] w-full">
+            <ReactFlow
+              nodes={flowNodes}
+              edges={flowEdges}
+              onInit={(instance) => setFlowInstance(instance)}
+              nodesDraggable={false}
+              nodesConnectable={false}
+              elementsSelectable={false}
+              zoomOnDoubleClick={false}
+              proOptions={{ hideAttribution: true }}
+            >
+              <Controls showInteractive={false} position="bottom-right" />
+              <Background gap={18} size={1} color="#ddd" />
+            </ReactFlow>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid gap-4 xl:grid-cols-[22rem_minmax(0,1fr)]">
+
+      {/* Colonne gauche : catalogue de formations */}
+      <div className="space-y-4 xl:sticky xl:top-4 xl:self-start">
+        <div className="overflow-hidden rounded-[20px] bg-white shadow-md">
+          {/* Bandeau : choix de catégorie */}
+          <div className="border-b border-gray-100 px-6 py-4">
+            <h2 className="text-base font-semibold text-gray-800 mb-2">Catalogue</h2>
+            <label className="block text-xs font-medium text-gray-700 mb-1">Catégorie</label>
+            <select
+              value={selectedCategoryId}
+              onChange={(e) => { setAddError(''); setSelectedCategoryId(e.target.value); }}
+              className="w-full rounded-[10px] border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E94D2A]"
+            >
+              <option value="">— Choisir une catégorie —</option>
+              {catalogCategories.map((c) => (
+                <option key={`cat-${c.id}`} value={c.id}>{c.name} ({c.count})</option>
+              ))}
+            </select>
+            {addError && <p className="mt-1 text-sm text-red-600">{addError}</p>}
+          </div>
+
+          {/* Fenêtre : formations de la catégorie choisie */}
+          <div className="max-h-[420px] space-y-2 overflow-y-auto bg-slate-50 px-4 py-4">
+            {!selectedCategoryId ? (
+              <p className="py-6 text-center text-sm italic text-gray-400">Sélectionnez une catégorie pour afficher les formations disponibles.</p>
+            ) : catalogModules.length === 0 ? (
+              <p className="py-6 text-center text-sm italic text-gray-400">Toutes les formations de cette catégorie sont déjà dans le parcours.</p>
+            ) : (
+              catalogModules.map((m) => (
+                <div
+                  key={m.id}
+                  draggable
+                  onDragStart={(e) => handleCatalogDragStart(e, m.id)}
+                  onDragEnd={handleDragEnd}
+                  onClick={() => insertModuleAt(m.id, items.length)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); insertModuleAt(m.id, items.length); } }}
+                  className="cursor-grab select-none rounded-[10px] border border-gray-200 bg-white px-3 py-2.5 text-left shadow-sm transition hover:border-[#E94D2A] hover:shadow-md active:cursor-grabbing"
+                >
+                  <div className="flex items-start gap-2">
+                    <OpenBookIcon className="mt-0.5 h-4 w-4 shrink-0 text-[#004461]" />
+                    <span className="text-sm font-semibold leading-snug text-slate-900">{m.title}</span>
+                  </div>
+                  <div className="mt-1.5 flex gap-3 text-[11px] text-gray-500">
+                    <span>{m.lesson_count} leç.</span>
+                    <span>{m.duration_label}</span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        <div className="space-y-3 rounded-[20px] bg-white px-5 py-5 shadow-md">
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-base font-semibold text-gray-800">Outils numériques</h2>
+            <div className="flex shrink-0 gap-2 text-xs font-semibold">
+              <a href={wordcloudUrl} target="_blank" rel="noopener" className="text-amber-600 hover:underline">+ Nuage de mots</a>
+              <a href={sondageUrl} target="_blank" rel="noopener" className="text-teal-600 hover:underline">+ Sondage</a>
+            </div>
+          </div>
+
+          {readyTools.length === 0 ? (
+            <p className="text-sm italic text-gray-400">
+              Aucun outil réutilisable pour l'instant. Créez un
+              {' '}<a href={wordcloudUrl} target="_blank" rel="noopener" className="text-orangeone hover:underline">nuage de mots</a>
+              {' '}ou un <a href={sondageUrl} target="_blank" rel="noopener" className="text-orangeone hover:underline">sondage</a> sans
+              choisir de groupe, puis revenez ici pour le glisser dans le plan.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {readyTools.map((t) => {
+                const isWc = t.type === 'wordcloud';
+                return (
+                  <div
+                    key={t.id}
+                    draggable
+                    onDragStart={(e) => handleReadyToolDragStart(e, t.id)}
+                    onDragEnd={handleDragEnd}
+                    onClick={() => placeReadyTool(t.id, items.length)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); placeReadyTool(t.id, items.length); } }}
+                    className={`cursor-grab select-none rounded-[10px] border px-3 py-2.5 text-left shadow-sm transition active:cursor-grabbing ${isWc ? 'border-amber-200 bg-amber-50 hover:border-amber-400' : 'border-teal-200 bg-teal-50 hover:border-teal-400'}`}
+                  >
+                    <div className="flex items-start gap-2">
+                      {isWc
+                        ? <CloudIcon className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+                        : <PollIcon className="mt-0.5 h-4 w-4 shrink-0 text-teal-600" />}
+                      <span className="truncate text-sm font-semibold text-slate-900">
+                        {isWc ? (t.wc_title || 'Nuage de mots') : pollTitle(t)}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-[11px] text-gray-500">
+                      {isWc ? `${t.wc_questions?.length ?? 0} question(s)` : `${t.poll_questions?.length ?? 0} question(s)`}
+                    </p>
+                  </div>
                 );
               })}
-            </tbody>
-          </table>
-        )}
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* React Flow graph */}
-      <div className="overflow-hidden rounded-[20px] border border-gray-200 bg-white shadow-md">
-        <div ref={canvasRef} className="h-[360px] w-full">
-          <ReactFlow
-            nodes={flowNodes}
-            edges={flowEdges}
-            onInit={(instance) => setFlowInstance(instance)}
-            nodesDraggable={false}
-            nodesConnectable={false}
-            elementsSelectable={false}
-            zoomOnDoubleClick={false}
-            proOptions={{ hideAttribution: true }}
+      {/* Colonne droite : le plan du parcours */}
+      <div className="space-y-4">
+        <div className="bg-white rounded-[20px] shadow-md px-6 py-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-semibold text-gray-800">Plan du parcours</h2>
+            <span className="text-xs text-gray-400">Glissez une formation ou un outil ici</span>
+          </div>
+
+          <div
+            onDragOver={handlePlanDragOver}
+            onDrop={handlePlanDrop}
+            onDragLeave={(e) => { if (e.currentTarget === e.target) setDropTargetIndex(null); }}
+            className={`flex min-h-[180px] flex-wrap items-start gap-3 rounded-[14px] border-2 border-dashed p-4 transition-colors ${dragSource ? 'border-[#E94D2A] bg-orange-50/40' : 'border-gray-200'}`}
           >
-            <Controls showInteractive={false} position="bottom-right" />
-            <Background gap={18} size={1} color="#ddd" />
-          </ReactFlow>
+            {items.length === 0 && (
+              <div className="flex w-full items-center justify-center py-10 text-sm text-gray-400">
+                Glissez ou cliquez une formation ou un outil numérique pour commencer.
+              </div>
+            )}
+            {items.map((item, index) => (
+              <React.Fragment key={item.id}>
+                {dropTargetIndex === index && <div className="my-1 h-[100px] w-1 shrink-0 self-center rounded-full bg-[#E94D2A]" />}
+                <CubeCard
+                  item={item}
+                  isEditing={editingItemId === item.id}
+                  onDragStart={(e) => handleCubeDragStart(e, item.id)}
+                  onDragOver={(e) => handleCubeDragOver(e, index)}
+                  onDragEnd={handleDragEnd}
+                  onRemove={() => removeItem(item.id)}
+                  onOpenEdit={() => setEditingItemId(item.id)}
+                  onCloseEdit={() => setEditingItemId(null)}
+                  onUpdate={(data) => updateItem(item.id, data)}
+                />
+                {index < items.length - 1 && (
+                  <ChevronRightIcon className="mt-8 h-5 w-5 shrink-0 text-[#E94D2A]" />
+                )}
+              </React.Fragment>
+            ))}
+            {dropTargetIndex === items.length && items.length > 0 && (
+              <div className="my-1 h-[100px] w-1 shrink-0 self-center rounded-full bg-[#E94D2A]" />
+            )}
+          </div>
         </div>
-      </div>
 
-      {/* Hint : aucun module dans le parcours */}
-      {!isPreview && items.length > 0 && !items.some(i => i.type === 'module') && (
-        <div className="flex items-start gap-3 rounded-[10px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 shrink-0 mt-0.5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <span>
-            Ce parcours ne contient pas encore de formation. Vous pouvez l'enregistrer tel quel, mais il ne pourra pas être utilisé dans un groupe. Ajoutez au moins une étape de type <strong>formation</strong> pour débloquer cette fonctionnalité.
-          </span>
-        </div>
-      )}
+        {items.length > 0 && !items.some(i => i.type === 'module') && (
+          <div className="flex items-start gap-3 rounded-[10px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 shrink-0 mt-0.5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>
+              Ce parcours ne contient pas encore de formation. Vous pouvez l'enregistrer tel quel, mais il ne pourra pas être utilisé dans un groupe. Ajoutez au moins une étape de type <strong>formation</strong> pour débloquer cette fonctionnalité.
+            </span>
+          </div>
+        )}
 
-      {/* Save button */}
-      {!isPreview && (
         <div className="flex items-center justify-end gap-4 py-2">
           {saveError && <p className="text-sm text-red-600">{saveError}</p>}
           <button type="button" onClick={handleSave}
@@ -1216,27 +1258,10 @@ function ParcoursBuilder({ availableModules = [], initialItems = [], csrfToken, 
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
               </svg>
             )}
-            {saving ? 'Enregistrement…' : (isSimulation ? 'Créer le parcours' : 'Enregistrer la formation')}
+            {saving ? 'Enregistrement…' : 'Enregistrer la formation'}
           </button>
         </div>
-      )}
       </div>
-
-      {!isPreview && (
-        <aside className="space-y-3 self-start rounded-[20px] bg-white px-5 py-5 shadow-md xl:sticky xl:top-4">
-          <h2 className="text-base font-semibold text-gray-800">Outils numériques</h2>
-          <ToolButton
-            label="Nuage de mots"
-            className="bg-amber-500 hover:bg-amber-600"
-            onClick={() => { setShowWcForm((v) => !v); setShowPollForm(false); }}
-          />
-          <ToolButton
-            label="Sondage"
-            className="bg-teal-600 hover:bg-teal-700"
-            onClick={() => { setShowPollForm((v) => !v); setShowWcForm(false); }}
-          />
-        </aside>
-      )}
     </div>
   );
 }
@@ -1262,6 +1287,9 @@ function mountParcoursBuilder() {
     createRoot(mount).render(
       <ParcoursBuilder
         availableModules={parseJsonDataset(mount, 'availableModules', [])}
+        toolTemplates={parseJsonDataset(mount, 'toolTemplates', [])}
+        wordcloudUrl={mount.dataset.wordcloudUrl ?? ''}
+        sondageUrl={mount.dataset.sondageUrl ?? ''}
         initialItems={initialItems}
         csrfToken={mount.dataset.csrfToken ?? ''}
         storeUrl={mount.dataset.storeUrl ?? ''}
