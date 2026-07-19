@@ -8,14 +8,18 @@ use App\Models\FormateurParcoursItem;
 use App\Models\Module;
 use App\Models\PollSession;
 use App\Models\WordCloud;
+use App\Support\Parcours\RegistreOutilsParcours;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class MesParcoursController extends Controller
 {
+    public function __construct(private readonly RegistreOutilsParcours $registre) {}
+
     public function index(): View
     {
         $parcours = FormateurParcours::query()
@@ -98,7 +102,14 @@ class MesParcoursController extends Controller
     {
         $this->authorizeOwnership($parcours);
 
-        $data = $request->validate($this->validationRules());
+        $modulesConserves = $parcours->items()
+            ->where('type', 'module')
+            ->whereNotNull('module_id')
+            ->pluck('module_id')
+            ->map(fn ($moduleId) => (int) $moduleId)
+            ->all();
+
+        $data = $request->validate($this->validationRules($modulesConserves));
 
         DB::transaction(function () use ($data, $parcours) {
             $parcours->update([
@@ -133,15 +144,31 @@ class MesParcoursController extends Controller
         abort_unless($parcours->formateur_id === (int) auth()->id(), 403);
     }
 
-    private function validationRules(): array
+    private function validationRules(array $modulesConserves = []): array
     {
+        $formateurId = (int) auth()->id();
+
         return [
             'title'                  => ['required', 'string', 'max:255'],
             'description'            => ['nullable', 'string', 'max:2000'],
             'items'                  => ['required', 'array', 'min:1'],
-            'items.*.type'            => ['required', 'string', 'in:module,wordcloud,poll'],
+            'items.*.type'            => ['required', 'string', 'in:module,wordcloud,poll,outil'],
             'items.*.position'        => ['required', 'integer', 'min:1'],
-            'items.*.module_id'       => ['nullable', 'integer', 'exists:modules,id'],
+            'items.*.module_id'       => [
+                'nullable',
+                'integer',
+                Rule::exists('modules', 'id')->where(function ($query) use ($formateurId, $modulesConserves): void {
+                    $query->where(function ($selection) use ($formateurId, $modulesConserves): void {
+                        $selection->where(function ($assignable) use ($formateurId): void {
+                            $this->appliquerFiltreModuleAssignable($assignable, $formateurId);
+                        });
+
+                        if ($modulesConserves !== []) {
+                            $selection->orWhereIn('id', $modulesConserves);
+                        }
+                    });
+                }),
+            ],
             'items.*.wc_title'        => ['nullable', 'string', 'max:255'],
             'items.*.wc_questions'    => ['nullable', 'array', 'min:1', 'max:10'],
             'items.*.wc_questions.*'  => ['nullable', 'string', 'max:500'],
@@ -150,6 +177,8 @@ class MesParcoursController extends Controller
             'items.*.poll_questions.*.choices'  => ['nullable', 'array', 'min:2', 'max:5'],
             'items.*.poll_questions.*.choices.*'=> ['nullable', 'string', 'max:200'],
             'items.*.poll_duration'             => ['nullable', 'integer', 'min:1', 'max:120'],
+            'items.*.outil' => ['nullable', 'string', 'max:64'],
+            'items.*.configuration' => ['nullable', 'array'],
         ];
     }
 
@@ -166,6 +195,8 @@ class MesParcoursController extends Controller
                     'position'              => $index + 1,
                     'type'                  => $item['type'],
                     'module_id'             => null,
+                    'outil'                 => null,
+                    'configuration'         => null,
                     'wc_title'              => null,
                     'wc_questions'          => null,
                     'wc_duration'           => null,
@@ -186,6 +217,17 @@ class MesParcoursController extends Controller
                     );
                     $base['wc_duration'] = is_numeric($item['wc_duration'] ?? null) && (int) $item['wc_duration'] > 0
                         ? (int) $item['wc_duration'] : null;
+                } elseif ($item['type'] === 'outil') {
+                    $outil = trim((string) ($item['outil'] ?? ''));
+                    $base['outil'] = $outil;
+                    $base['configuration'] = json_encode(
+                        $this->registre->valider(
+                            $outil,
+                            $item['configuration'] ?? [],
+                            'items.'.$index.'.configuration',
+                        ),
+                        JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE,
+                    );
                 } else {
                     $base['poll_questions'] = json_encode(
                         collect($item['poll_questions'] ?? [])
@@ -245,12 +287,23 @@ class MesParcoursController extends Controller
                 'poll_duration'  => null,
             ]);
 
-        return $wordClouds->concat($polls)->values()->all();
+        $outilsGeneriques = collect($this->registre->actifs())
+            ->map(fn (array $definition, string $cle) => [
+                'id' => 'outil-modele-'.$cle,
+                'type' => 'outil',
+                'outil' => $cle,
+                'outil_label' => $definition['libelle'],
+                'configuration' => $definition['configuration_defaut'],
+                'execution_disponible' => false,
+            ]);
+
+        return $wordClouds->concat($polls)->concat($outilsGeneriques)->values()->all();
     }
 
     private function buildAvailableModulesPayload(): array
     {
-        return Module::active()
+        return Module::query()
+            ->assignableAuFormateur((int) auth()->id())
             ->with([
                 'sections.lectures:id,module_id,section_id,duration,question_count,quiz_enabled,quiz_questions_per_attempt',
                 'category:id,category_name',
@@ -284,6 +337,25 @@ class MesParcoursController extends Controller
             })
             ->values()
             ->all();
+    }
+
+    private function appliquerFiltreModuleAssignable($query, int $formateurId): void
+    {
+        $query
+            ->where('status', 1)
+            ->where(function ($visibilite) use ($formateurId): void {
+                $visibilite
+                    ->where(function ($catalogue): void {
+                        $catalogue
+                            ->where('is_trainer_authored', false)
+                            ->where('publication_state', Module::PUBLICATION_PUBLISHED);
+                    })
+                    ->orWhere(function ($creationFormateur) use ($formateurId): void {
+                        $creationFormateur
+                            ->where('is_trainer_authored', true)
+                            ->where('formateur_id', $formateurId);
+                    });
+            });
     }
 
     private function buildSelectedItemsPayload(FormateurParcours $parcours): array
@@ -325,6 +397,22 @@ class MesParcoursController extends Controller
                         'wc_title'     => (string) ($item->wc_title ?? ''),
                         'wc_questions' => $item->wc_questions ?? [],
                         'wc_duration'  => $item->wc_duration ? (int) $item->wc_duration : null,
+                    ];
+                }
+
+                if ($item->type === 'outil') {
+                    $configuration = $item->configuration ?? [];
+                    $libelle = $this->registre->libelle((string) $item->outil);
+
+                    return [
+                        'type' => 'outil',
+                        'id' => 'outil-'.$item->id,
+                        'position' => (int) $item->position,
+                        'outil' => (string) $item->outil,
+                        'outil_label' => $libelle,
+                        'title' => (string) ($configuration['titre'] ?? $libelle),
+                        'configuration' => $configuration,
+                        'execution_disponible' => false,
                     ];
                 }
 

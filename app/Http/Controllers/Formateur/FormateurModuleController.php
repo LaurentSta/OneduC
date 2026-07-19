@@ -36,12 +36,7 @@ class FormateurModuleController extends Controller
         $categorieId = $request->integer('categorie');
 
         $requeteModulesAccessibles = Module::query()
-            ->where(function ($q) use ($accessibleGroupIds, $formateurId) {
-                $q->whereHas('groups', function ($g) use ($accessibleGroupIds) {
-                    $g->whereIn('groups.id', $accessibleGroupIds->all());
-                })
-                    ->orWhere('formateur_id', $formateurId);
-            });
+            ->visibleAuFormateur($formateurId);
 
         $categories = Category::query()
             ->whereIn('id', (clone $requeteModulesAccessibles)->select('category_id'))
@@ -99,10 +94,7 @@ class FormateurModuleController extends Controller
         $formateurId = auth()->id();
         $accessibleGroupIds = $this->accessibleTrainerGroupIds($formateurId);
 
-        $isAllowed = ($module->formateur_id === $formateurId)
-            || $module->groups()->whereIn('groups.id', $accessibleGroupIds->all())->exists();
-
-        abort_unless($isAllowed, 403);
+        abort_unless($module->isVisibleTo($request->user()), 403);
 
         $module->load([
             'formateur',
@@ -194,10 +186,7 @@ class FormateurModuleController extends Controller
         $formateurId = auth()->id();
         $accessibleGroupIds = $this->accessibleTrainerGroupIds($formateurId);
 
-        $isAllowed = ($module->formateur_id === $formateurId)
-            || $module->groups()->whereIn('groups.id', $accessibleGroupIds->all())->exists();
-
-        abort_unless($isAllowed, 403);
+        abort_unless($module->isVisibleTo(auth()->user()), 403);
 
         $module->load('sections.lectures');
 

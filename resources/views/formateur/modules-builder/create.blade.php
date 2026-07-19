@@ -1,18 +1,33 @@
-{{-- resources/views/formateur/modules-builder/create.blade.php --}}
-@extends('formateur.dashboard')
+{{-- Vue de création partagée par les espaces formateur et administrateur. --}}
+@php
+  $constructeurAdmin = (bool) ($constructeurAdmin ?? false);
+  $layoutConstructeur = $layoutConstructeur ?? ($constructeurAdmin ? 'admin.admin_dashboard' : 'formateur.dashboard');
+  $sectionConstructeur = $sectionConstructeur ?? ($constructeurAdmin ? 'admin' : 'formateur');
+  $nomRoutesConstructeur = $nomRoutesConstructeur ?? ($constructeurAdmin
+      ? 'admin.formations.constructeur'
+      : 'formateur.modules.builder');
+  $urlAccueilConstructeur = $urlAccueilConstructeur ?? ($constructeurAdmin
+      ? (Route::has('admin.dashboard') ? route('admin.dashboard') : url('/admin'))
+      : route('formateur.dashboard'));
+  $urlRetourConstructeur = $urlRetourConstructeur ?? ($constructeurAdmin
+      ? route($nomRoutesConstructeur.'.index')
+      : route('formateur.formations.index', ['tab' => 'creations']));
+@endphp
 
-@section('formateur')
+@extends($layoutConstructeur)
+
+@section($sectionConstructeur)
 
 <div class="max-w-[1285px] mx-auto px-8">
 
   <header class="bg-white rounded-[20px] shadow-md px-8 pt-4 pb-6 w-full mb-6">
     <div class="flex items-center justify-between">
       <div>
-        <x-typography variant="titre">Créer une formation</x-typography>
+        <x-typography variant="titre">{{ $constructeurAdmin ? 'Créer une formation officielle' : 'Créer une formation' }}</x-typography>
         <nav class="text-sm font-varela text-gray-600 mt-2" aria-label="Fil d'Ariane">
           <ol class="inline-flex items-center space-x-1">
             <li class="flex items-center">
-              <a href="{{ route('formateur.dashboard') }}" class="text-orangeone hover:underline flex items-center">
+              <a href="{{ $urlAccueilConstructeur }}" class="text-orangeone hover:underline flex items-center" aria-label="Accueil">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9.75L12 3l9 6.75V19a2 2 0 01-2 2h-4a1 1 0 01-1-1v-5H10v5a1 1 0 01-1 1H5a2 2 0 01-2-2V9.75z"/>
                 </svg>
@@ -20,14 +35,14 @@
               <span class="mx-2 text-gray-400">/</span>
             </li>
             <li class="flex items-center">
-              <a href="{{ route('formateur.formations.index', ['tab' => 'creations']) }}" class="text-orangeone hover:underline">Créations</a>
+              <a href="{{ $urlRetourConstructeur }}" class="text-orangeone hover:underline">{{ $constructeurAdmin ? 'Catalogue Oneduc' : 'Créations' }}</a>
               <span class="mx-2 text-gray-400">/</span>
             </li>
             <li class="text-gray-400">Créer</li>
           </ol>
         </nav>
       </div>
-      <a href="{{ route('formateur.formations.index', ['tab' => 'creations']) }}"
+      <a href="{{ $urlRetourConstructeur }}"
          class="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
@@ -49,6 +64,13 @@
     </div>
   @endif
 
+  @if($constructeurAdmin)
+    <div class="mb-6 max-w-xl rounded-[12px] border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-800">
+      <p class="font-semibold">Formation officielle du catalogue Oneduc</p>
+      <p class="mt-1">Elle est créée en brouillon avec un premier chapitre vide. Vous choisirez explicitement quand la publier.</p>
+    </div>
+  @endif
+
   <div class="max-w-xl" x-data="{ mode: @js(old('theme') !== null || $errors->has('document') ? 'ia' : 'manuel') }">
     <div class="mb-4 inline-flex rounded-full border border-gray-200 bg-white p-1 text-sm shadow-sm">
       <button type="button"
@@ -66,7 +88,7 @@
     </div>
 
     <div x-show="mode === 'manuel'" class="bg-white rounded-[20px] shadow-md p-6">
-      <form method="POST" action="{{ route('formateur.modules.builder.store') }}" class="space-y-4">
+      <form method="POST" action="{{ route($nomRoutesConstructeur.'.store') }}" class="space-y-4">
         @csrf
 
         <div>
@@ -79,6 +101,28 @@
           @enderror
         </div>
 
+        @if($constructeurAdmin && isset($categories))
+          <div>
+            <label for="categorie-formation-manuelle" class="block text-xs font-semibold text-gray-600 mb-1">Catégorie</label>
+            <select id="categorie-formation-manuelle" name="category_id"
+                    class="w-full rounded-[10px] border border-gray-300 px-3 py-2.5 text-sm focus:border-orangeone focus:outline-none focus:ring-2 focus:ring-orange-100">
+              <option value="">À classer ultérieurement</option>
+              @foreach($categories as $category)
+                <option value="{{ $category->id }}" @selected((string) old('category_id') === (string) $category->id)>
+                  {{ $category->category_name }}
+                </option>
+              @endforeach
+            </select>
+            @error('category_id')
+              <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+            @enderror
+          </div>
+        @endif
+
+        @include('shared.formations-constructeur.formateur-referent', [
+          'idChampReferent' => 'formateur-referent-manuel',
+        ])
+
         <div>
           <label class="block text-xs font-semibold text-gray-600 mb-1">Description</label>
           <textarea name="description" rows="4" maxlength="5000"
@@ -89,7 +133,7 @@
         <p class="text-xs text-gray-400">Vous pourrez ajouter les chapitres et les leçons juste après la création.</p>
 
         <button type="submit" class="btn-oneduc !py-2.5 !text-sm">
-          Créer la formation
+          {{ $constructeurAdmin ? 'Créer le brouillon' : 'Créer la formation' }}
         </button>
       </form>
     </div>
@@ -97,7 +141,7 @@
     <div x-show="mode === 'ia'" x-cloak
          x-data="{ loading: false }"
          class="bg-white rounded-[20px] shadow-md p-6">
-      <form method="POST" action="{{ route('formateur.modules.builder.generate-structure-ia') }}"
+      <form method="POST" action="{{ route($nomRoutesConstructeur.'.generate-structure-ia') }}"
             enctype="multipart/form-data" class="space-y-4" x-on:submit="loading = true">
         @csrf
 
@@ -110,6 +154,25 @@
             <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
           @enderror
         </div>
+
+        @if($constructeurAdmin && isset($categories))
+          <div>
+            <label for="categorie-formation-ia" class="block text-xs font-semibold text-gray-600 mb-1">Catégorie</label>
+            <select id="categorie-formation-ia" name="category_id"
+                    class="w-full rounded-[10px] border border-gray-300 px-3 py-2.5 text-sm focus:border-orangeone focus:outline-none focus:ring-2 focus:ring-orange-100">
+              <option value="">À classer ultérieurement</option>
+              @foreach($categories as $category)
+                <option value="{{ $category->id }}" @selected((string) old('category_id') === (string) $category->id)>
+                  {{ $category->category_name }}
+                </option>
+              @endforeach
+            </select>
+          </div>
+        @endif
+
+        @include('shared.formations-constructeur.formateur-referent', [
+          'idChampReferent' => 'formateur-referent-ia',
+        ])
 
         <div>
           <label class="block text-xs font-semibold text-gray-600 mb-1">Niveau des stagiaires (optionnel)</label>
@@ -162,7 +225,7 @@
         </p>
 
         <button type="submit" :disabled="loading" class="btn-oneduc !py-2.5 !text-sm disabled:cursor-not-allowed disabled:opacity-60">
-          <span x-show="!loading">Générer la formation</span>
+          <span x-show="!loading">{{ $constructeurAdmin ? 'Générer le brouillon' : 'Générer la formation' }}</span>
           <span x-show="loading" x-cloak>Génération en cours… (jusqu'à 5 minutes)</span>
         </button>
       </form>

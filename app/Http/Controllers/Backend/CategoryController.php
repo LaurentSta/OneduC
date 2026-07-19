@@ -104,7 +104,7 @@ class CategoryController extends Controller
     {
         $category = Category::findOrFail($id);
         $subcategories = SubCategory::where('category_id', $id)
-            ->with('modules') // 👈 Important ici !
+            ->with(['modules' => fn ($query) => $query->publiclyListable()])
             ->latest()
             ->get();
 
@@ -117,10 +117,9 @@ class CategoryController extends Controller
         $category = Category::findOrFail($id);
 
         $modules = Module::query()
+            ->publiclyListable()
             ->with('formateur:id,name,prenom')
             ->where('category_id', $id)
-            // visiteurs + rôles non admin → seulement actifs
-            ->when(! auth()->check() || auth()->user()->role !== 'admin', fn ($q) => $q->active())
             ->select([
                 'id',
                 'category_id',

@@ -78,14 +78,15 @@ PROMPT;
         ?string $niveauPublic = null,
         ?string $contextePublic = null,
         ?string $contraintesPublic = null,
+        ?array $contexteCatalogue = null,
     ): Module {
         if ($this->limiteur->tropDeTentatives($trainerId)) {
-            throw new RuntimeException('Limite de 3 générations IA par jour atteinte. Réessayez demain.');
+            throw new RuntimeException('Limite de '.$this->limiteur->limiteQuotidienne($trainerId).' générations IA par jour atteinte. Réessayez demain.');
         }
 
         if ($this->limiteurBudget->budgetDepasse($trainerId)) {
             throw new RuntimeException(
-                'Vous avez atteint votre plafond mensuel de '.number_format($this->limiteurBudget->limiteMensuelle(), 0, ',', ' ').' tokens IA. Réessayez le mois prochain.'
+                'Vous avez atteint votre plafond mensuel de '.number_format($this->limiteurBudget->limiteMensuelle($trainerId), 0, ',', ' ').' tokens IA. Réessayez le mois prochain.'
             );
         }
 
@@ -148,12 +149,21 @@ PROMPT;
             ->values()
             ->all();
 
-        return DB::transaction(function () use ($decoded, $title, $objectifs, $trainerId, $document) {
-            $module = $this->creerModule->creerModuleVide([
+        return DB::transaction(function () use ($decoded, $title, $objectifs, $trainerId, $document, $contexteCatalogue) {
+            $donneesModule = [
                 'module_title' => Str::limit($title, 255, ''),
                 'description' => $decoded['description'] ?? null,
                 'objectifs' => $objectifs !== [] ? $objectifs : null,
-            ], $trainerId);
+                'category_id' => $contexteCatalogue['category_id'] ?? null,
+            ];
+
+            $module = $contexteCatalogue !== null
+                ? $this->creerModule->creerFormationCatalogueVide(
+                    $donneesModule,
+                    $trainerId,
+                    $contexteCatalogue['formateur_id'] ?? null,
+                )
+                : $this->creerModule->creerModuleVide($donneesModule, $trainerId);
 
             $imageBlocks = $document ? $this->importerImages->importer($document, $module) : [];
             $isFirstLesson = true;

@@ -40,12 +40,12 @@ PROMPT;
     public function execute(ModuleLecture $lecture, int $count, int $trainerId): int
     {
         if ($this->limiteur->tropDeTentatives($trainerId, 'quiz')) {
-            throw new RuntimeException('Limite de 3 générations IA par jour atteinte. Réessayez demain.');
+            throw new RuntimeException('Limite de '.$this->limiteur->limiteQuotidienne($trainerId).' générations IA par jour atteinte. Réessayez demain.');
         }
 
         if ($this->limiteurBudget->budgetDepasse($trainerId)) {
             throw new RuntimeException(
-                'Vous avez atteint votre plafond mensuel de '.number_format($this->limiteurBudget->limiteMensuelle(), 0, ',', ' ').' tokens IA. Réessayez le mois prochain.'
+                'Vous avez atteint votre plafond mensuel de '.number_format($this->limiteurBudget->limiteMensuelle($trainerId), 0, ',', ' ').' tokens IA. Réessayez le mois prochain.'
             );
         }
 

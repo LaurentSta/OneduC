@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Backend;
 
+use App\Domains\ModulesFormateur\Support\AccesFormationCatalogue;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\Scorm\ScormImportRequest;
 use App\Models\ModuleLecture;
@@ -13,9 +14,12 @@ use Throwable;
 
 class ScormLibraryController extends Controller
 {
+    public function __construct(private readonly AccesFormationCatalogue $accesCatalogue) {}
+
     public function importForLecture(ScormImportRequest $request, ScormImporter $importer): RedirectResponse
     {
         $lecture = ModuleLecture::findOrFail($request->lecture_id);
+        $this->accesCatalogue->assertEditable($lecture->module()->firstOrFail());
         $lecture->loadMissing(['scormPackage.activeVersion', 'scormPackageVersion']);
         $previousPath = $lecture->scorm_index_path;
 

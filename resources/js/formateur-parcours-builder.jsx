@@ -3,6 +3,13 @@ import { createRoot } from 'react-dom/client';
 import { Background, Controls, MarkerType, Position, ReactFlow } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { CloudIcon, PollIcon, pollTitle, pollChoices, WordCloudForm, PollForm } from './shared/tool-forms.jsx';
+import {
+  GenericToolForm,
+  GenericToolStatusBadge,
+  genericToolPayload,
+  genericToolTitle,
+  normalizeGenericTool,
+} from './shared/generic-parcours-tool.jsx';
 
 const FLOW_COLUMNS = 3;
 const FLOW_HORIZONTAL_GAP = 340;
@@ -122,13 +129,18 @@ function buildCategories(modules) {
 let _wcCounter = 0;
 function newWcId()   { return `wc-new-${++_wcCounter}`; }
 function newPollId() { return `poll-new-${++_wcCounter}`; }
+function newGenericToolId(outil) { return `outil-new-${outil}-${++_wcCounter}`; }
 
 function normalizeToolTemplates(rawTemplates) {
   if (!Array.isArray(rawTemplates)) return [];
   return rawTemplates
-    .map((raw) => {
+    .map((raw, index) => {
       const id = String(raw?.id ?? '').trim();
       if (!id) return null;
+      if (raw?.type === 'outil') {
+        const outil = normalizeGenericTool(raw, index);
+        return outil ? { ...outil, id } : null;
+      }
       if (raw?.type === 'wordcloud') {
         return {
           type: 'wordcloud',
@@ -162,6 +174,9 @@ function normalizeSelectedItems(rawItems, moduleMap) {
   if (!Array.isArray(rawItems)) return [];
   return rawItems
     .map((raw, index) => {
+      if (raw?.type === 'outil') {
+        return normalizeGenericTool(raw, index);
+      }
       if (raw?.type === 'wordcloud') {
         return {
           type:         'wordcloud',
@@ -213,6 +228,15 @@ function OpenBookIcon({ className = 'h-4 w-4' }) {
     <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8"
         d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+    </svg>
+  );
+}
+
+function GenericToolIcon({ className = 'h-4 w-4' }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M12 3v3m0 12v3M3 12h3m12 0h3M5.64 5.64l2.12 2.12m8.48 8.48 2.12 2.12m0-12.72-2.12 2.12M7.76 16.24l-2.12 2.12" />
+      <circle cx="12" cy="12" r="4" strokeWidth="1.8" />
     </svg>
   );
 }
@@ -318,8 +342,9 @@ function ChevronRightIcon({ className = 'h-5 w-5' }) {
 function CubeCard({ item, isEditing, onDragStart, onDragOver, onDragEnd, onRemove, onOpenEdit, onCloseEdit, onUpdate }) {
   const isWc = item.type === 'wordcloud';
   const isPoll = item.type === 'poll';
-  const borderColor = isWc ? 'border-amber-400' : isPoll ? 'border-teal-500' : 'border-[#004461]';
-  const bg = isWc ? 'bg-amber-50' : isPoll ? 'bg-teal-50' : 'bg-white';
+  const isGenericTool = item.type === 'outil';
+  const borderColor = isWc ? 'border-amber-400' : isPoll ? 'border-teal-500' : isGenericTool ? 'border-slate-400' : 'border-[#004461]';
+  const bg = isWc ? 'bg-amber-50' : isPoll ? 'bg-teal-50' : isGenericTool ? 'bg-slate-50' : 'bg-white';
 
   return (
     <div className="flex flex-col">
@@ -336,9 +361,11 @@ function CubeCard({ item, isEditing, onDragStart, onDragOver, onDragEnd, onRemov
               ? <CloudIcon className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
               : isPoll
                 ? <PollIcon className="mt-0.5 h-4 w-4 shrink-0 text-teal-600" />
-                : <OpenBookIcon className="mt-0.5 h-4 w-4 shrink-0 text-[#004461]" />}
+                : isGenericTool
+                  ? <GenericToolIcon className="mt-0.5 h-4 w-4 shrink-0 text-slate-600" />
+                  : <OpenBookIcon className="mt-0.5 h-4 w-4 shrink-0 text-[#004461]" />}
             <span className="truncate text-[12px] font-semibold leading-snug text-slate-900">
-              {`${item.position}. ${isWc ? (item.wc_title || 'Nuage de mots') : isPoll ? pollTitle(item) : item.title}`}
+              {`${item.position}. ${isWc ? (item.wc_title || 'Nuage de mots') : isPoll ? pollTitle(item) : isGenericTool ? genericToolTitle(item) : item.title}`}
             </span>
           </div>
           <button type="button" onClick={onRemove} aria-label="Retirer cette étape"
@@ -360,7 +387,13 @@ function CubeCard({ item, isEditing, onDragStart, onDragOver, onDragEnd, onRemov
           <p className="mt-2 truncate text-[11px] text-teal-700">{pollChoices(item).join(' / ')}</p>
         )}
 
-        {!isWc && !isPoll && (
+        {isGenericTool && (
+          <div className="mt-2.5">
+            <GenericToolStatusBadge />
+          </div>
+        )}
+
+        {!isWc && !isPoll && !isGenericTool && (
           <div className="mt-2.5 grid grid-cols-3 gap-1.5">
             <Metric label="Leçons" value={item.lesson_count} />
             <Metric label="Questions" value={item.question_count} />
@@ -368,7 +401,7 @@ function CubeCard({ item, isEditing, onDragStart, onDragOver, onDragEnd, onRemov
           </div>
         )}
 
-        {(isWc || isPoll) && !isEditing && (
+        {(isWc || isPoll || isGenericTool) && !isEditing && (
           <button type="button" onClick={onOpenEdit}
             className="mt-2 text-[11px] font-semibold text-[#004461] hover:underline">
             Modifier
@@ -380,7 +413,9 @@ function CubeCard({ item, isEditing, onDragStart, onDragOver, onDragEnd, onRemov
         <div className="mt-2 w-[300px]">
           {isWc
             ? <WordCloudForm initialValues={item} onAdd={onUpdate} onCancel={onCloseEdit} />
-            : <PollForm initialValues={item} onAdd={onUpdate} onCancel={onCloseEdit} />
+            : isPoll
+              ? <PollForm initialValues={item} onAdd={onUpdate} onCancel={onCloseEdit} />
+              : <GenericToolForm item={item} onSave={onUpdate} onCancel={onCloseEdit} />
           }
         </div>
       )}
@@ -452,6 +487,7 @@ function ParcoursBuilder({ availableModules = [], toolTemplates = [], wordcloudU
     items.map((item, index) => {
       const isWc   = item.type === 'wordcloud';
       const isPoll = item.type === 'poll';
+      const isGenericTool = item.type === 'outil';
 
       let nodeLabel;
       if (isWc) {
@@ -503,6 +539,20 @@ function ParcoursBuilder({ availableModules = [], toolTemplates = [], wordcloudU
             )}
           </div>
         );
+      } else if (isGenericTool) {
+        nodeLabel = (
+          <div className="min-w-[220px] max-w-[220px]">
+            <div className="flex items-start gap-2">
+              <GenericToolIcon className="mt-0.5 h-4 w-4 shrink-0 text-slate-600" />
+              <span className="text-[12px] font-semibold leading-snug text-slate-900">
+                {`${item.position}. ${genericToolTitle(item)}`}
+              </span>
+            </div>
+            <div className="mt-2">
+              <GenericToolStatusBadge />
+            </div>
+          </div>
+        );
       } else {
         nodeLabel = (
           <div className="min-w-[220px] max-w-[220px]">
@@ -533,7 +583,9 @@ function ParcoursBuilder({ availableModules = [], toolTemplates = [], wordcloudU
           ? { border: '2px solid #f59e0b', borderRadius: '8px', width: 260, padding: '12px 14px', background: '#fffbeb' }
           : isPoll
             ? { border: '2px solid #0d9488', borderRadius: '8px', width: 260, padding: '12px 14px', background: '#f0fdfa' }
-            : { border: '2px solid #004461', borderRadius: '8px', width: 260, padding: '12px 14px', background: '#fff' },
+            : isGenericTool
+              ? { border: '2px solid #94a3b8', borderRadius: '8px', width: 260, padding: '12px 14px', background: '#f8fafc' }
+              : { border: '2px solid #004461', borderRadius: '8px', width: 260, padding: '12px 14px', background: '#fff' },
       };
     }),
     [items],
@@ -675,9 +727,21 @@ function ParcoursBuilder({ availableModules = [], toolTemplates = [], wordcloudU
   const placeReadyTool = (templateId, targetIndex) => {
     const tpl = normalizedToolTemplates.find((t) => String(t.id) === String(templateId));
     if (!tpl) return;
-    const newItem = tpl.type === 'wordcloud'
-      ? { type: 'wordcloud', id: newWcId(), template_id: tpl.id, position: 0, wc_title: tpl.wc_title, wc_questions: tpl.wc_questions, wc_duration: tpl.wc_duration }
-      : { type: 'poll', id: newPollId(), template_id: tpl.id, position: 0, poll_questions: tpl.poll_questions, poll_duration: tpl.poll_duration };
+    let newItem;
+    if (tpl.type === 'wordcloud') {
+      newItem = { type: 'wordcloud', id: newWcId(), template_id: tpl.id, position: 0, wc_title: tpl.wc_title, wc_questions: tpl.wc_questions, wc_duration: tpl.wc_duration };
+    } else if (tpl.type === 'poll') {
+      newItem = { type: 'poll', id: newPollId(), template_id: tpl.id, position: 0, poll_questions: tpl.poll_questions, poll_duration: tpl.poll_duration };
+    } else {
+      newItem = {
+        ...tpl,
+        id: newGenericToolId(tpl.outil),
+        template_id: tpl.id,
+        position: 0,
+        configuration: { ...(tpl.configuration ?? {}) },
+        execution_disponible: false,
+      };
+    }
     setItems((current) => {
       const next = [...current];
       const at = Math.max(0, Math.min(targetIndex, next.length));
@@ -768,7 +832,8 @@ function ParcoursBuilder({ availableModules = [], toolTemplates = [], wordcloudU
     items: items.map((item) => {
       if (item.type === 'module')    return { type: 'module',    module_id: item.id, position: item.position };
       if (item.type === 'wordcloud') return { type: 'wordcloud', wc_title: item.wc_title, wc_questions: item.wc_questions ?? [], wc_duration: item.wc_duration ?? null, position: item.position };
-      return { type: 'poll', poll_questions: item.poll_questions ?? [], poll_duration: item.poll_duration ?? null, position: item.position };
+      if (item.type === 'poll')      return { type: 'poll', poll_questions: item.poll_questions ?? [], poll_duration: item.poll_duration ?? null, position: item.position };
+      return genericToolPayload(item);
     }),
   });
 
@@ -903,6 +968,7 @@ function ParcoursBuilder({ availableModules = [], toolTemplates = [], wordcloudU
                   {items.map((item, index) => {
                     const isWc = item.type === 'wordcloud';
                     const isPoll = item.type === 'poll';
+                    const isGenericTool = item.type === 'outil';
 
                     return (
                     <tr key={item.id} className={`${index % 2 === 0 ? 'bg-white' : isWc ? 'bg-amber-50/40' : isPoll ? 'bg-teal-50/40' : 'bg-slate-50/40'} border-t transition-colors`}>
@@ -913,10 +979,12 @@ function ParcoursBuilder({ availableModules = [], toolTemplates = [], wordcloudU
                             ? <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-700"><CloudIcon className="h-3 w-3" />Nuage de mots</span>
                             : isPoll
                               ? <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-teal-100 text-teal-700"><PollIcon className="h-3 w-3" />Sondage</span>
-                              : <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 text-[#004461]"><OpenBookIcon className="h-3 w-3" />Formation</span>
+                              : isGenericTool
+                                ? <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-700"><GenericToolIcon className="h-3 w-3" />{item.outil_label || item.outil}</span>
+                                : <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 text-[#004461]"><OpenBookIcon className="h-3 w-3" />Formation</span>
                           }
                           <span className="font-medium">
-                            {isWc ? item.wc_title : isPoll ? pollTitle(item) : item.title}
+                            {isWc ? item.wc_title : isPoll ? pollTitle(item) : isGenericTool ? genericToolTitle(item) : item.title}
                           </span>
                         </div>
                       </td>
@@ -925,7 +993,9 @@ function ParcoursBuilder({ availableModules = [], toolTemplates = [], wordcloudU
                           ? item.wc_questions?.length > 0 ? `« ${item.wc_questions[0]} »${item.wc_questions.length > 1 ? ` +${item.wc_questions.length - 1}` : ''}` : '—'
                           : item.type === 'poll'
                             ? pollChoices(item).join(' / ')
-                            : `${item.lesson_count} leç. — ${item.duration_label}`
+                            : item.type === 'outil'
+                              ? <GenericToolStatusBadge />
+                              : `${item.lesson_count} leç. — ${item.duration_label}`
                         }
                       </td>
                       <td className="px-4 py-3 text-right">
@@ -1027,6 +1097,7 @@ function ParcoursBuilder({ availableModules = [], toolTemplates = [], wordcloudU
                 {items.map((item, index) => {
                   const isWc   = item.type === 'wordcloud';
                   const isPoll = item.type === 'poll';
+                  const isGenericTool = item.type === 'outil';
                   const rowBg  = index % 2 === 0 ? 'bg-white' : isWc ? 'bg-amber-50/40' : isPoll ? 'bg-teal-50/40' : 'bg-slate-50/40';
                   return (
                     <tr key={item.id} className={`${rowBg} border-t transition-colors`}>
@@ -1037,10 +1108,12 @@ function ParcoursBuilder({ availableModules = [], toolTemplates = [], wordcloudU
                             ? <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-700"><CloudIcon className="h-3 w-3" />Nuage de mots</span>
                             : isPoll
                               ? <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-teal-100 text-teal-700"><PollIcon className="h-3 w-3" />Sondage</span>
-                              : <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 text-[#004461]"><OpenBookIcon className="h-3 w-3" />Formation</span>
+                              : isGenericTool
+                                ? <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-700"><GenericToolIcon className="h-3 w-3" />{item.outil_label || item.outil}</span>
+                                : <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 text-[#004461]"><OpenBookIcon className="h-3 w-3" />Formation</span>
                           }
                           <span className="font-medium">
-                            {isWc ? item.wc_title : isPoll ? pollTitle(item) : item.title}
+                            {isWc ? item.wc_title : isPoll ? pollTitle(item) : isGenericTool ? genericToolTitle(item) : item.title}
                           </span>
                         </div>
                       </td>
@@ -1049,7 +1122,9 @@ function ParcoursBuilder({ availableModules = [], toolTemplates = [], wordcloudU
                           ? item.wc_questions?.length > 0 ? `« ${item.wc_questions[0]} »${item.wc_questions.length > 1 ? ` +${item.wc_questions.length - 1}` : ''}` : '—'
                           : isPoll
                             ? pollChoices(item).join(' / ')
-                            : `${item.lesson_count} leç. — ${item.duration_label}`
+                            : isGenericTool
+                              ? <GenericToolStatusBadge />
+                              : `${item.lesson_count} leç. — ${item.duration_label}`
                         }
                       </td>
                     </tr>
@@ -1157,6 +1232,8 @@ function ParcoursBuilder({ availableModules = [], toolTemplates = [], wordcloudU
             <div className="space-y-2">
               {readyTools.map((t) => {
                 const isWc = t.type === 'wordcloud';
+                const isPoll = t.type === 'poll';
+                const isGenericTool = t.type === 'outil';
                 return (
                   <div
                     key={t.id}
@@ -1167,19 +1244,25 @@ function ParcoursBuilder({ availableModules = [], toolTemplates = [], wordcloudU
                     role="button"
                     tabIndex={0}
                     onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); placeReadyTool(t.id, items.length); } }}
-                    className={`cursor-grab select-none rounded-[10px] border px-3 py-2.5 text-left shadow-sm transition active:cursor-grabbing ${isWc ? 'border-amber-200 bg-amber-50 hover:border-amber-400' : 'border-teal-200 bg-teal-50 hover:border-teal-400'}`}
+                    className={`cursor-grab select-none rounded-[10px] border px-3 py-2.5 text-left shadow-sm transition active:cursor-grabbing ${isWc ? 'border-amber-200 bg-amber-50 hover:border-amber-400' : isPoll ? 'border-teal-200 bg-teal-50 hover:border-teal-400' : 'border-slate-200 bg-slate-50 hover:border-slate-400'}`}
                   >
                     <div className="flex items-start gap-2">
                       {isWc
                         ? <CloudIcon className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
-                        : <PollIcon className="mt-0.5 h-4 w-4 shrink-0 text-teal-600" />}
+                        : isPoll
+                          ? <PollIcon className="mt-0.5 h-4 w-4 shrink-0 text-teal-600" />
+                          : <GenericToolIcon className="mt-0.5 h-4 w-4 shrink-0 text-slate-600" />}
                       <span className="truncate text-sm font-semibold text-slate-900">
-                        {isWc ? (t.wc_title || 'Nuage de mots') : pollTitle(t)}
+                        {isWc ? (t.wc_title || 'Nuage de mots') : isPoll ? pollTitle(t) : genericToolTitle(t)}
                       </span>
                     </div>
-                    <p className="mt-1 text-[11px] text-gray-500">
-                      {isWc ? `${t.wc_questions?.length ?? 0} question(s)` : `${t.poll_questions?.length ?? 0} question(s)`}
-                    </p>
+                    {isGenericTool ? (
+                      <div className="mt-1.5"><GenericToolStatusBadge /></div>
+                    ) : (
+                      <p className="mt-1 text-[11px] text-gray-500">
+                        {isWc ? `${t.wc_questions?.length ?? 0} question(s)` : `${t.poll_questions?.length ?? 0} question(s)`}
+                      </p>
+                    )}
                   </div>
                 );
               })}

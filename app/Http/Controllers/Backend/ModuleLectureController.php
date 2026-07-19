@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers\Backend;
 
+use App\Domains\ModulesFormateur\Support\AccesFormationCatalogue;
 use App\Http\Controllers\Controller;
 use App\Jobs\ConvertLectureSlides;
 use App\Models\LectureObjective;
+use App\Models\Module;
 use App\Models\ModuleLecture;
 use App\Models\ModuleSection;
 use App\Models\QuizQuestion;
@@ -17,9 +19,12 @@ use Illuminate\Support\Str;
 
 class ModuleLectureController extends Controller
 {
+    public function __construct(private readonly AccesFormationCatalogue $accesCatalogue) {}
+
     public function AddModuleLecture($id)
     {
-        $module  = \App\Models\Module::findOrFail($id);
+        $module = Module::findOrFail($id);
+        $this->accesCatalogue->assertEditable($module);
         $section = ModuleSection::where('module_id', $id)->latest()->get();
 
         return view('admin.backend.modules.section.add_module_lecture', compact('module', 'section'));
@@ -28,6 +33,7 @@ class ModuleLectureController extends Controller
     public function MoveLectureUp($id)
     {
         $lecture = ModuleLecture::findOrFail($id);
+        $this->assertLectureEditable($lecture);
 
         $prev = ModuleLecture::where('section_id', $lecture->section_id)
             ->where('position', '<', $lecture->position)
@@ -46,6 +52,7 @@ class ModuleLectureController extends Controller
     public function MoveLectureDown($id)
     {
         $lecture = ModuleLecture::findOrFail($id);
+        $this->assertLectureEditable($lecture);
 
         $next = ModuleLecture::where('section_id', $lecture->section_id)
             ->where('position', '>', $lecture->position)
@@ -69,11 +76,18 @@ class ModuleLectureController extends Controller
             'lecture_title' => 'required|string|max:255',
         ]);
 
-        $lastPosition = ModuleLecture::where('section_id', $request->section_id)->max('position') ?? 0;
+        $module = Module::findOrFail((int) $request->input('module_id'));
+        $this->accesCatalogue->assertEditable($module);
+        $section = ModuleSection::query()
+            ->whereKey((int) $request->input('section_id'))
+            ->where('module_id', $module->id)
+            ->firstOrFail();
+
+        $lastPosition = ModuleLecture::where('section_id', $section->id)->max('position') ?? 0;
 
         ModuleLecture::create([
             'module_id'                  => $request->module_id,
-            'section_id'                 => $request->section_id,
+            'section_id'                 => $section->id,
             'lecture_title'              => $request->lecture_title,
             'position'                   => $lastPosition + 1,
             'content_type'               => 'scorm',
@@ -137,6 +151,7 @@ class ModuleLectureController extends Controller
         ]);
 
         $lecture = ModuleLecture::findOrFail((int) $validated['lecture_id']);
+        $this->assertLectureEditable($lecture);
         $file = $request->file('slides_file');
 
         if (!empty($lecture->slides_source_path)) {
@@ -170,6 +185,7 @@ class ModuleLectureController extends Controller
         ]);
 
         $lecture = ModuleLecture::findOrFail((int) $validated['lecture_id']);
+        $this->assertLectureEditable($lecture);
         $sourcePath = (string) ($lecture->slides_source_path ?? '');
 
         if ($sourcePath === '' || !Storage::disk('local')->exists($sourcePath)) {
@@ -214,6 +230,7 @@ class ModuleLectureController extends Controller
         ]);
 
         $lecture = ModuleLecture::findOrFail($validated['id']);
+        $this->assertLectureEditable($lecture);
 
         $useActive   = ($request->input('use_active_scorm_version', '1') === '1');
         $quizEnabled = ($request->input('quiz_enabled', '0') === '1');
@@ -272,6 +289,8 @@ class ModuleLectureController extends Controller
         $lecture = ModuleLecture::find($id);
 
         if ($lecture) {
+            $this->assertLectureEditable($lecture);
+
             DB::transaction(function () use ($lecture): void {
                 $this->deleteLectureAndDependencies($lecture);
             });
@@ -297,6 +316,11 @@ class ModuleLectureController extends Controller
         $this->deleteQuestionsForLecture((int) $lecture->id);
         LectureObjective::query()->where('lecture_id', $lecture->id)->delete();
         $lecture->delete();
+    }
+
+    private function assertLectureEditable(ModuleLecture $lecture): void
+    {
+        $this->accesCatalogue->assertEditable($lecture->module()->firstOrFail());
     }
 
     private function deleteQuestionsForLecture(int $lectureId): void

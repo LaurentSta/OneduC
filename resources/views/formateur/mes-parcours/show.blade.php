@@ -7,12 +7,14 @@
   $moduleItems  = $items->where('type', 'module');
   $wcItems      = $items->where('type', 'wordcloud');
   $pollItems    = $items->where('type', 'poll');
+  $outilItems   = $items->where('type', 'outil');
 
   $statModules   = $moduleItems->count();
   $statLecons    = (int) $moduleItems->sum('lesson_count');
   $statQuestions = (int) $moduleItems->sum('question_count');
   $statWc        = $wcItems->count();
   $statPoll      = $pollItems->count();
+  $statOutils    = $outilItems->count();
   $statEtapes    = $items->count();
 @endphp
 
@@ -114,8 +116,8 @@
           </div>
 
           {{-- Outils interactifs --}}
-          @if($statWc > 0 || $statPoll > 0)
-          <div class="flex gap-2 pt-1">
+          @if($statWc > 0 || $statPoll > 0 || $statOutils > 0)
+          <div class="flex flex-wrap gap-2 pt-1">
             @if($statWc > 0)
             <span class="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/></svg>
@@ -126,6 +128,12 @@
             <span class="inline-flex items-center gap-1.5 rounded-full bg-teal-100 px-3 py-1 text-xs font-semibold text-teal-700">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
               {{ $statPoll }} sondage{{ $statPoll > 1 ? 's' : '' }}
+            </span>
+            @endif
+            @if($statOutils > 0)
+            <span class="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+              <i class="ti ti-settings" aria-hidden="true"></i>
+              {{ $statOutils }} configuration{{ $statOutils > 1 ? 's' : '' }} — session non lancée
             </span>
             @endif
           </div>

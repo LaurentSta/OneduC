@@ -2,9 +2,9 @@
 
 namespace App\Domains\ModulesFormateur\Support;
 
+use App\Domains\CatalogueFormations\Support\AccesScormVersionne;
 use App\Models\Module;
 use App\Models\ScormPackageVersion;
-use App\Support\LearningAssetPath;
 use DOMDocument;
 use DOMElement;
 use DOMNode;
@@ -13,6 +13,10 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class NettoyeurBlocsModule
 {
+    public function __construct(
+        private readonly AccesScormVersionne $accesScormVersionne,
+    ) {}
+
     private const ALLOWED_HTML_TAGS = [
         'p' => true,
         'br' => true,
@@ -63,6 +67,8 @@ class NettoyeurBlocsModule
         if (! is_array($decoded)) {
             return [];
         }
+
+        $module = Module::find($moduleId);
 
         $validMediaIds = Media::query()
             ->where('model_type', Module::class)
@@ -157,7 +163,7 @@ class NettoyeurBlocsModule
                     }
 
                     $version = ScormPackageVersion::find($versionId);
-                    if (! $version || $version->folder !== LearningAssetPath::lessonBlockScormFolder($moduleId, $key)) {
+                    if (! $version || ! $module || ! $this->accesScormVersionne->autorise($module, $key, $version)) {
                         break;
                     }
 

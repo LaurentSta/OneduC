@@ -100,7 +100,7 @@ class OutilsNumeriquesController extends Controller
         $openSeancesCount = Seance::whereIn('group_id', $groups->pluck('id'))->where('statut', 'ouverte')->count();
 
         $recentPowerPointModules = Module::query()
-            ->where('formateur_id', $formateurId)
+            ->authoredByTrainer($formateurId)
             ->whereHas('lectures', fn ($query) => $query->where('content_type', 'slides'))
             ->with([
                 'lectures' => fn ($query) => $query

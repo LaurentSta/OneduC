@@ -185,6 +185,26 @@
                   Sondage
                 </span>
               </div>
+            @elseif($item->type === 'outil')
+              @php
+                $configurationOutil = collect($item->configuration ?? []);
+                $libelleOutil = trim((string) ($configurationOutil->get('titre') ?: Str::headline(str_replace(['-', '_'], ' ', (string) ($item->outil ?? 'activité')))));
+              @endphp
+              <div class="flex items-center gap-4 bg-slate-50/70 px-6 py-4">
+                <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-200 text-sm font-bold text-slate-700">
+                  {{ $stepNum }}
+                </div>
+                <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-200 text-slate-700">
+                  <i class="ti ti-settings text-base" aria-hidden="true"></i>
+                </div>
+                <div class="min-w-0 flex-1">
+                  <p class="truncate text-sm font-semibold text-slate-800">{{ $libelleOutil ?: 'Activité' }}</p>
+                  <p class="mt-0.5 text-xs text-slate-500">Cette étape sera ouverte par le formateur pendant la séance.</p>
+                </div>
+                <span class="inline-flex items-center rounded-full bg-slate-200 px-2.5 py-0.5 text-[10px] font-semibold text-slate-700">
+                  Configuration — session non lancée
+                </span>
+              </div>
             @endif
           @endforeach
         </div>

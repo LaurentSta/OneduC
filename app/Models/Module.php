@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 use Spatie\Image\Enums\Fit;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -13,6 +15,31 @@ class Module extends Model implements HasMedia
 {
     use InteractsWithMedia;
     use SoftDeletes;
+
+    public const PUBLICATION_DRAFT = 'draft';
+
+    public const PUBLICATION_PUBLISHED = 'published';
+
+    public const PUBLICATION_ARCHIVED = 'archived';
+
+    protected static function booted(): void
+    {
+        static::creating(function (Module $module): void {
+            if ((bool) $module->is_trainer_authored) {
+                return;
+            }
+
+            $module->catalogue_key ??= (string) Str::uuid();
+            $module->version_number ??= 1;
+            $module->publication_state ??= (bool) $module->status
+                ? self::PUBLICATION_PUBLISHED
+                : self::PUBLICATION_DRAFT;
+
+            if ($module->publication_state === self::PUBLICATION_PUBLISHED) {
+                $module->published_at ??= now();
+            }
+        });
+    }
 
     public function registerMediaCollections(): void
     {
@@ -36,7 +63,8 @@ class Module extends Model implements HasMedia
     private const DEFAULT_ESTIMATED_SECONDS_PER_QUESTION = 30;
 
     protected $fillable = [
-        'category_id', 'subcategory_id', 'formateur_id', 'is_trainer_authored',
+        'category_id', 'subcategory_id', 'formateur_id', 'created_by', 'is_trainer_authored',
+        'catalogue_key', 'version_number', 'publication_state', 'published_at', 'source_module_id',
         'module_image', 'header_image',
         'module_title', 'module_name', 'module_name_slug', 'description', 'objectifs',
         'module_video', 'label', 'duree', 'resources', 'certificat', 'prerequi',
@@ -65,6 +93,21 @@ class Module extends Model implements HasMedia
     public function formateur()
     {
         return $this->belongsTo(User::class, 'formateur_id');
+    }
+
+    public function referent()
+    {
+        return $this->belongsTo(User::class, 'formateur_id');
+    }
+
+    public function auteur()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function moduleSource()
+    {
+        return $this->belongsTo(self::class, 'source_module_id')->withTrashed();
     }
 
     public function sections()
@@ -104,9 +147,107 @@ class Module extends Model implements HasMedia
         return $q->where('formateur_id', $trainerId)->where('is_trainer_authored', true);
     }
 
-    public function scopePubliclyListable($q)
+    public function scopeCatalogue(Builder $query): Builder
     {
-        return $q->where('status', 1)->where('is_trainer_authored', false);
+        return $query->where('is_trainer_authored', false);
+    }
+
+    public function scopePublishedCatalogue(Builder $query): Builder
+    {
+        return $query
+            ->catalogue()
+            ->where('publication_state', self::PUBLICATION_PUBLISHED);
+    }
+
+    public function scopePubliclyListable(Builder $query): Builder
+    {
+        return $query
+            ->publishedCatalogue()
+            ->where('status', true);
+    }
+
+    public function scopeAssignable(Builder $query): Builder
+    {
+        return $query
+            ->where('status', true)
+            ->where(function (Builder $visibilite): void {
+                $visibilite
+                    ->where('is_trainer_authored', true)
+                    ->orWhere(function (Builder $catalogue): void {
+                        $catalogue
+                            ->where('is_trainer_authored', false)
+                            ->where('publication_state', self::PUBLICATION_PUBLISHED);
+                    });
+            });
+    }
+
+    public function scopeAssignableAuFormateur(Builder $query, int $formateurId): Builder
+    {
+        return $query
+            ->assignable()
+            ->where(function (Builder $visibilite) use ($formateurId): void {
+                $visibilite
+                    ->where(function (Builder $catalogue): void {
+                        $catalogue
+                            ->where('is_trainer_authored', false)
+                            ->where('publication_state', self::PUBLICATION_PUBLISHED);
+                    })
+                    ->orWhere(function (Builder $creationFormateur) use ($formateurId): void {
+                        $creationFormateur
+                            ->where('is_trainer_authored', true)
+                            ->where('formateur_id', $formateurId);
+                    });
+            });
+    }
+
+    public function scopeVisibleAuFormateur(Builder $query, int $formateurId): Builder
+    {
+        return $query->where(function (Builder $visibilite) use ($formateurId): void {
+            $visibilite
+                ->where(function (Builder $cataloguePublie): void {
+                    $cataloguePublie->publishedCatalogue()->where('status', true);
+                })
+                ->orWhere(function (Builder $creationPersonnelle) use ($formateurId): void {
+                    $creationPersonnelle
+                        ->authoredByTrainer($formateurId)
+                        ->where('status', true);
+                })
+                ->orWhere(function (Builder $viaGroupe) use ($formateurId): void {
+                    $viaGroupe
+                        ->whereHas('groups', fn (Builder $groupes) => $groupes->accessibleByTrainer($formateurId))
+                        ->where(function (Builder $contenu): void {
+                            $contenu
+                                ->where(function (Builder $archiveCatalogue): void {
+                                    $archiveCatalogue
+                                        ->where('is_trainer_authored', false)
+                                        ->where('publication_state', self::PUBLICATION_ARCHIVED);
+                                })
+                                ->orWhere(function (Builder $cataloguePublie): void {
+                                    $cataloguePublie
+                                        ->where('is_trainer_authored', false)
+                                        ->where('publication_state', self::PUBLICATION_PUBLISHED)
+                                        ->where('status', true);
+                                })
+                                ->orWhere(function (Builder $creationPersonnelle): void {
+                                    $creationPersonnelle
+                                        ->where('is_trainer_authored', true)
+                                        ->where('status', true);
+                                });
+                        });
+                });
+        });
+    }
+
+    public function scopeVersionsOf(Builder $query, Module|string $formation): Builder
+    {
+        $cleCatalogue = $formation instanceof self
+            ? $formation->catalogue_key
+            : $formation;
+
+        return $query
+            ->catalogue()
+            ->where('catalogue_key', $cleCatalogue)
+            ->orderByDesc('version_number');
     }
 
     protected $casts = [
@@ -114,14 +255,12 @@ class Module extends Model implements HasMedia
         'is_trainer_authored' => 'boolean',
         'objectifs' => 'array',
         'estimated_question_seconds' => 'integer',
+        'version_number' => 'integer',
+        'published_at' => 'datetime',
     ];
 
     public function isVisibleTo(?\App\Models\User $user): bool
     {
-        if (! $this->status) {
-            return false;
-        }
-
         if (! $user) {
             return false;
         }
@@ -131,9 +270,17 @@ class Module extends Model implements HasMedia
         }
 
         if ($user->role === 'formateur') {
-            // Module de catalogue (auteur admin) : parcourable/duplicable par tout formateur.
-            if (! $this->is_trainer_authored) {
-                return true;
+            if ($this->estArchivee()) {
+                return $this->groups()->accessibleByTrainer((int) $user->id)->exists();
+            }
+
+            if (! $this->status) {
+                return false;
+            }
+
+            // Une version publiée du catalogue reste parcourable par tout formateur.
+            if ($this->estFormationCatalogue()) {
+                return $this->estPubliee();
             }
 
             if ((int) $this->formateur_id === (int) $user->id) {
@@ -143,11 +290,43 @@ class Module extends Model implements HasMedia
             return $this->groups()->accessibleByTrainer((int) $user->id)->exists();
         }
 
+        if (! $this->status) {
+            return false;
+        }
+
         if ($user->role === 'stagiaire') {
             return $user->aAccesAuModule($this->id);
         }
 
         return false;
+    }
+
+    public function estFormationCatalogue(): bool
+    {
+        return ! (bool) $this->is_trainer_authored;
+    }
+
+    public function estBrouillonCatalogue(): bool
+    {
+        return $this->estFormationCatalogue()
+            && $this->publication_state === self::PUBLICATION_DRAFT;
+    }
+
+    public function estPubliee(): bool
+    {
+        return $this->estFormationCatalogue()
+            && $this->publication_state === self::PUBLICATION_PUBLISHED;
+    }
+
+    public function estArchivee(): bool
+    {
+        return $this->estFormationCatalogue()
+            && $this->publication_state === self::PUBLICATION_ARCHIVED;
+    }
+
+    public function estModifiableParAdministrateur(): bool
+    {
+        return $this->estBrouillonCatalogue();
     }
 
     // --- C'EST ICI QU'ON AJOUTE LE CALCUL DU TEMPS ---

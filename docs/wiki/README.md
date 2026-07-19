@@ -32,8 +32,9 @@ Chaque page indique en tête son public visé. Les pages mixtes regroupent la pa
 | 02 | [Installation & configuration](02-installation.md) | Prérequis, mise en route dev, variables d'environnement |
 | 03 | [Architecture technique](03-architecture.md) | Structure Laravel, routing multi-rôle, services, schéma SQL baseline |
 | 04 | [Profils utilisateurs](04-profils-utilisateurs.md) | Admin, Formateur, Stagiaire, Observateur — droits et espaces |
-| 05 | [Modules, SCORM & Quiz](05-modules-scorm-quiz.md) | Contenu pédagogique, builder formateur, import SCORM, quiz natifs, progression |
+| 05 | [Modules, SCORM & Quiz](05-modules-scorm-quiz.md) | Contenu pédagogique, builders formateur/admin, versions, SCORM, quiz et progression |
 | 06 | [Groupes & Parcours](06-groupes-parcours.md) | Groupes de formation, co-formateurs, parcours ordonnés |
+| — | [Modèles globaux de parcours](modeles-parcours.md) | Catalogue admin de modèles, duplication formateur et limite runtime actuelle |
 | 07 | [Outils d'animation pédagogique](07-outils-animation.md) | Activités live intégrées, tableau blanc, minuteur, pages collaboratives — sommaire avec une [fiche dédiée par outil](outils/) |
 | 08 | [Tableaux de bord](08-tableaux-de-bord.md) | Analytics Admin, Formateur, Stagiaire — sources de données |
 | 09 | [Design system](09-design-system.md) | Tokens Tailwind, composants, typographie, accessibilité |

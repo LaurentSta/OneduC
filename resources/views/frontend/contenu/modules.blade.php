@@ -62,9 +62,12 @@
                         <h3 class="text-lg font-bold text-gray-900 mb-1">
                             <a href="{{ $moduleUrl }}">{{ $module->module_title }}</a>
                         </h3>
-                        <p class="text-sm text-gray-700 mb-2">
-                            Formateur : <strong>{{ $module->formateur->name ?? 'À définir' }}</strong>
-                        </p>
+                        <div class="mb-2 space-y-1 text-sm text-gray-700">
+                            <p>Auteur : <strong>Catalogue Oneduc</strong></p>
+                            @if(!empty($module->formateur_id))
+                                <p>Référent : <strong>{{ trim(($module->formateur?->prenom ?? '').' '.($module->formateur?->name ?? '')) }}</strong></p>
+                            @endif
+                        </div>
                         <div class="flex items-center justify-between">
                             <p class="text-md font-semibold text-gray-800">
                                 {{ $module->is_free ? 'Gratuit' : number_format($module->price, 2, ',', ' ') . ' €' }}

@@ -4,6 +4,7 @@
 
 namespace App\Http\Controllers\Backend;
 
+use App\Domains\CatalogueFormations\Actions\PublierVersionFormationCatalogue;
 use App\Http\Controllers\Concerns\InteractsWithLectureProgressStats;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
@@ -30,6 +31,10 @@ use Illuminate\Support\Str;
 class ModuleController extends Controller
 {
     use InteractsWithLectureProgressStats;
+
+    public function __construct(
+        private readonly PublierVersionFormationCatalogue $publierVersionFormationCatalogue,
+    ) {}
 
     private function viewBase(): string
     {
@@ -63,9 +68,27 @@ class ModuleController extends Controller
 
     public function toggleStatus(Module $module)
     {
-        $module->update(['status' => $module->status ? 0 : 1]);
+        if ($module->is_trainer_authored) {
+            return back()->with('error', "Une création personnelle de formateur ne peut pas être modifiée depuis l'administration.");
+        }
 
-        return back()->with('success', $module->status ? 'Module activé' : 'Module désactivé');
+        if ($module->estArchivee()) {
+            return back()->with('error', "Une version archivée ne peut pas être réactivée. Créez une nouvelle version brouillon.");
+        }
+
+        if ($module->estPubliee()) {
+            $module->forceFill([
+                'publication_state' => Module::PUBLICATION_ARCHIVED,
+                // Les groupes existants doivent conserver leur version.
+                'status' => $module->groups()->exists(),
+            ])->save();
+
+            return back()->with('success', 'Module archivé.');
+        }
+
+        $this->publierVersionFormationCatalogue->execute($module);
+
+        return back()->with('success', 'Module publié.');
     }
 
     public function AddModule()
@@ -83,7 +106,7 @@ class ModuleController extends Controller
         $request->validate([
             'module_name' => 'required|string|max:255',
             'module_title' => 'required|string|max:255',
-            'formateur_id' => 'required|exists:users,id',
+            'formateur_id' => 'nullable|exists:users,id',
             'category_id' => 'required|exists:categories,id',
             'subcategory_id' => 'nullable|exists:subcategories,id',
             'certificat' => 'required|in:1,0',
@@ -122,6 +145,8 @@ class ModuleController extends Controller
             'category_id' => $request->category_id,
             'subcategory_id' => $request->subcategory_id,
             'formateur_id' => $request->formateur_id,
+            'created_by' => auth()->id(),
+            'is_trainer_authored' => false,
             'module_name' => $request->module_name,
             'module_name_slug' => Str::slug($request->module_name),
             'module_title' => $request->module_title,
@@ -138,7 +163,9 @@ class ModuleController extends Controller
             'bestseller' => $request->has('bestseller') ? 1 : 0,
             'vedette' => $request->has('vedette') ? 1 : 0,
             'surevalue' => $request->has('surevalue') ? 1 : 0,
-            'status' => $request->has('status') ? 1 : 0,
+            'status' => false,
+            'publication_state' => Module::PUBLICATION_DRAFT,
+            'published_at' => null,
             'evaluation_id' => $request->evaluation_id,
         ]);
 
@@ -148,7 +175,7 @@ class ModuleController extends Controller
             ]);
         }
 
-        return redirect()->route('admin.modules')->with('success', 'Module ajouté avec succès !');
+        return redirect()->route('admin.modules')->with('success', 'Brouillon de module ajouté avec succès !');
     }
 
     public function EditModule($id)
@@ -166,6 +193,14 @@ class ModuleController extends Controller
     {
         $module = Module::findOrFail($id);
 
+        if ($module->is_trainer_authored) {
+            return back()->with('error', "Une création personnelle de formateur ne peut pas être modifiée depuis l'administration.");
+        }
+
+        if (! $module->estBrouillonCatalogue()) {
+            return back()->with('error', 'Une formation publiée ou archivée est immuable. Créez une nouvelle version brouillon.');
+        }
+
         $request->validate([
             'module_name' => 'required|string|max:255',
             'module_title' => 'required|string|max:255',
@@ -175,7 +210,7 @@ class ModuleController extends Controller
             'module_video' => 'nullable|string|max:255',
             'module_video_file' => 'nullable|file|mimes:mp4,m4v,mov,avi,webm|max:307200',
             'evaluation_id' => 'nullable|exists:evaluations,id',
-            'formateur_id' => 'required|exists:users,id',
+            'formateur_id' => 'nullable|exists:users,id',
             'module_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
             'header_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
             'estimated_question_seconds' => 'nullable|integer|min:1|max:600',
@@ -216,6 +251,8 @@ class ModuleController extends Controller
             $this->deleteManagedModuleVideo($module->module_video, $module->id);
         }
 
+        $publier = $request->has('status');
+
         $module->update([
             'category_id' => $request->category_id,
             'subcategory_id' => $request->subcategory_id,
@@ -236,16 +273,26 @@ class ModuleController extends Controller
             'bestseller' => $request->has('bestseller') ? 1 : 0,
             'vedette' => $request->has('vedette') ? 1 : 0,
             'surevalue' => $request->has('surevalue') ? 1 : 0,
-            'status' => $request->has('status') ? 1 : 0,
             'evaluation_id' => $request->evaluation_id,
         ]);
 
-        return redirect()->route('admin.modules')->with('success', 'Module mis à jour avec succès !');
+        if ($publier) {
+            $this->publierVersionFormationCatalogue->execute($module->fresh());
+        }
+
+        return redirect()->route('admin.modules')->with(
+            'success',
+            $publier ? 'Module mis à jour et publié !' : 'Brouillon de module mis à jour !',
+        );
     }
 
     public function DeleteModule($id)
     {
         $module = Module::findOrFail($id);
+
+        if ($module->is_trainer_authored || ! $module->estBrouillonCatalogue()) {
+            return back()->with('error', 'Seul un brouillon du catalogue peut être supprimé.');
+        }
 
         if ($module->module_image) {
             Storage::disk('public')->delete($module->module_image);

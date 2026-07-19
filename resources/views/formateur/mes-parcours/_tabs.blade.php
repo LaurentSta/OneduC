@@ -15,4 +15,11 @@
        class="px-4 py-2 rounded-full text-sm font-medium transition bg-[#E94D2A] text-white shadow">
         Parcours
     </a>
+    @if(Route::has('formateur.modeles-parcours.index'))
+        <a href="{{ route('formateur.modeles-parcours.index') }}"
+           title="Consultez et dupliquez les modèles de parcours proposés par Oneduc"
+           class="px-4 py-2 rounded-full text-sm font-medium transition bg-white text-gray-600 border border-gray-200 hover:border-[#E94D2A] hover:text-[#E94D2A] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orangeone">
+            Modèles Oneduc
+        </a>
+    @endif
 </div>
