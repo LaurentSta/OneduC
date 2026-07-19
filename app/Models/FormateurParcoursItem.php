@@ -14,6 +14,8 @@ class FormateurParcoursItem extends Model
         'position',
         'type',
         'module_id',
+        'outil',
+        'configuration',
         'wc_title',
         'wc_questions',
         'wc_duration',
@@ -22,8 +24,9 @@ class FormateurParcoursItem extends Model
     ];
 
     protected $casts = [
-        'wc_questions'   => 'array',
+        'wc_questions' => 'array',
         'poll_questions' => 'array',
+        'configuration' => 'array',
     ];
 
     public function parcours(): BelongsTo
@@ -49,5 +52,10 @@ class FormateurParcoursItem extends Model
     public function isPoll(): bool
     {
         return $this->type === 'poll';
+    }
+
+    public function isOutil(): bool
+    {
+        return $this->type === 'outil';
     }
 }

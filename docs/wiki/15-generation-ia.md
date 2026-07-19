@@ -1,16 +1,16 @@
 # 15 — Génération de contenu par IA
 
-*Public : formateurs (usage) et développeurs (partie technique en fin de page).*
+*Public : formateurs et administrateurs de contenu (usage), développeurs (partie technique en fin de page).*
 
 ## Vue d'ensemble
 
-Le builder formateur intègre plusieurs générations de contenu assistées par IA :
+Le builder formateur et le nouveau constructeur admin intègrent plusieurs générations de contenu assistées par IA :
 
 1. **Générer une leçon** à partir d'un document existant, à l'intérieur d'un chapitre déjà créé — via l'API **Mistral** (choisie notamment pour son hébergement européen, un critère RGPD plus simple à défendre que des fournisseurs hors UE).
 2. **Générer une formation complète** (chapitres + leçons + contenu rédigé) à partir d'un thème et/ou d'un document, dès l'écran de création — même moteur Mistral.
 3. **Générer l'audio d'une leçon** (lecture du texte à voix haute) — via **Piper**, un moteur de synthèse vocale auto-hébergé (gratuit, open-source), plutôt qu'une API cloud payante.
 
-Dans tous les cas, **rien n'est publié automatiquement** : le contenu généré atterrit dans l'éditeur normal du builder, à relire et ajuster par le formateur avant de le proposer aux stagiaires.
+Dans tous les cas, **rien n'est publié automatiquement** : le contenu généré atterrit dans l'éditeur normal, à relire et ajuster. Dans le catalogue admin, il reste au statut brouillon jusqu'à une action de publication explicite.
 
 ## Utilisation côté formateur
 
@@ -31,6 +31,12 @@ Depuis l'écran **« Créer une formation »**, onglet **« Générer avec l'IA 
 
 L'IA propose 3 à 5 chapitres de 2 à 4 leçons chacune, avec un contenu déjà rédigé pour chaque leçon, ainsi que 3 à 5 **objectifs pédagogiques** pour la formation. La génération peut prendre **jusqu'à 4 minutes** — la page affiche un indicateur de chargement pendant l'attente.
 
+### Utilisation côté administrateur
+
+Le constructeur `/admin/formations/constructeur` expose les mêmes générations de structure, de leçon, de quiz et d'audio dans le contexte du catalogue officiel. La structure générée devient un brouillon appartenant au catalogue Oneduc ; l'administrateur peut lui associer un formateur référent facultatif, compléter ses métadonnées, ses médias, ses quiz et ses blocs SCORM, conserver les leçons SCORM/slides natives issues d'une copie, puis prévisualiser l'ensemble avant publication.
+
+L'activité IA de l'administration utilise un quota **plateforme** séparé de ceux des formateurs. Plusieurs comptes admin partagent donc le même compteur quotidien admin et le même budget mensuel admin ; leurs appels ne consomment pas le quota personnel d'un formateur, même lorsqu'un formateur référent est associé à la formation.
+
 ### Objectifs pédagogiques
 
 Les objectifs générés par l'IA sont enregistrés sur la formation et visibles dans l'onglet **« Objectifs »** de sa page de présentation (le même endroit où s'affichent les objectifs saisis manuellement). Ils sont modifiables à tout moment dans le panneau **« Options de la formation »** du plan de la formation (champ « Objectifs pédagogiques », un par ligne) — comme le reste du contenu généré par IA, à relire avant de proposer la formation aux stagiaires.
@@ -45,7 +51,8 @@ Quand un document source (PDF ou Word) contient des images, elles sont automatiq
 
 ### Limites à connaître
 
-- **Quota** : 3 générations IA par jour et par formateur (leçon depuis document + formation complète partagent le même compteur ; l'audio a son propre compteur séparé, également 3/jour). Au-delà, un message invite à réessayer le lendemain.
+- **Quota formateur** : 3 générations IA par jour et par formateur (leçon depuis document + formation complète partagent le compteur `texte` ; le quiz et l'audio utilisent leurs compteurs de type séparés, avec la même limite).
+- **Quota admin plateforme** : 20 générations par jour et par type par défaut, partagées entre les comptes admin et configurables avec `MISTRAL_ADMIN_DAILY_GENERATION_LIMIT`.
 - **Modération de contenu** : un thème ou document manifestement inapproprié (violence, haine, contenu sexuel, etc.) est refusé immédiatement, sans consommer le quota.
 - Le contenu généré doit être relu : l'IA peut se tromper ou mal interpréter un document mal structuré.
 
@@ -67,6 +74,9 @@ Depuis l'écran d'édition d'une leçon (`/formateur/mes-modules/lectures/{id}/e
 |----------|------|--------|
 | `MISTRAL_API_KEY` | Clé API Mistral | Oui (fonctionnalité désactivée sans clé) |
 | `MISTRAL_MODEL` | Modèle de chat utilisé | Non (défaut : `mistral-large-latest`) |
+| `MISTRAL_MONTHLY_TOKEN_LIMIT` | Budget mensuel d'un formateur | Non (défaut : 500 000 tokens) |
+| `MISTRAL_ADMIN_MONTHLY_TOKEN_LIMIT` | Budget mensuel partagé de la plateforme admin | Non (défaut : 2 000 000 tokens) |
+| `MISTRAL_ADMIN_DAILY_GENERATION_LIMIT` | Limite quotidienne admin, par type et partagée entre admins | Non (défaut : 20) |
 | `PIPER_BINARY_PATH` | Chemin vers l'exécutable `piper` | Non (défaut : `storage/app/piper/piper/piper`) |
 | `PIPER_MODEL_PATH` | Chemin vers le modèle de voix `.onnx` | Non (défaut : `storage/app/piper/voices/fr_FR-siwis-medium.onnx`) |
 
@@ -90,7 +100,8 @@ curl -sL -o storage/app/piper/voices/fr_FR-siwis-medium.onnx.json \
 | `Support/MistralClient.php` | Appels HTTP bruts à l'API Mistral : `chat()` (complétion JSON) et `moderate()` (modération). Journalise la conso token de chaque appel (voir plus bas) |
 | `Support/ExtracteurTexteDocument.php` | Extraction de texte (`extract()`) et d'images (`extractImages()`) : `smalot/pdfparser` (PDF), `phpoffice/phpword`/`ZipArchive` (.docx), lecture directe (.txt) |
 | `Support/GardeFouPromptIA.php` | Vérifie le thème/document via `MistralClient::moderate()`, lève une exception si contenu bloquant |
-| `Support/LimiteurGenerationIA.php` | Quota de 3 générations/jour/formateur via `RateLimiter` (cache Laravel, table `cache`) |
+| `Support/LimiteurGenerationIA.php` | Quotas journaliers par rôle via `RateLimiter` : compteurs personnels formateur et compteurs plateforme admin |
+| `Support/LimiteurBudgetTokensIA.php` | Budget mensuel personnel formateur ou budget mensuel partagé entre comptes admin |
 | `Actions/GenererLeconIA.php` | Orchestration : document → texte → garde-fous → prompt → blocs de leçon → images |
 | `Actions/GenererStructureFormationIA.php` | Orchestration : thème/document → texte → garde-fous → prompt → module + chapitres + leçons → images |
 | `Actions/ImporterImagesDocument.php` | Extrait les images d'un document et les rattache au module (`TeleverserImageModule`), renvoie des blocs `image` prêts à insérer |
@@ -107,7 +118,7 @@ curl -sL -o storage/app/piper/voices/fr_FR-siwis-medium.onnx.json \
 
 ### Flux — génération de formation complète
 
-1. `ModuleBuilderController::generateStructureIA()` (route `formateur.modules.builder.generate-structure-ia`, POST `/mes-modules/generer-ia`) valide thème/document et appelle `GenererStructureFormationIA::execute()`. `set_time_limit(270)` est posé avant l'appel : la génération complète peut prendre 1 à 4 minutes.
+1. `ModuleBuilderController::generateStructureIA()` côté formateur ou `ConstructeurFormationController::genererStructureIA()` côté admin valide thème/document et appelle `GenererStructureFormationIA::execute()`. Une limite d'exécution étendue est posée avant l'appel : la génération complète peut prendre 1 à 4 minutes.
 2. Si un document est fourni, `ExtracteurTexteDocument` en extrait le texte. Le thème et/ou le texte du document sont combinés dans le prompt utilisateur envoyé à Mistral.
 3. `MistralClient::chat()` est appelé avec un timeout de 260 s et jusqu'à 12000 tokens de réponse, en mode JSON strict. Le prompt demande 3 à 5 chapitres de 2 à 4 leçons, chaque leçon avec un contenu déjà rédigé (blocs `text`), ainsi qu'un tableau `objectifs` (3 à 5 chaînes). **Historique** : ce plafond était initialement à 8000 tokens ; des générations volumineuses tronquaient la réponse JSON (`completion_tokens` pile à la limite), rendant le JSON invalide et faisant échouer silencieusement la génération (redirection `back()` vers une page sans rapport, faute d'URL précédente utile en session) — relevé et corrigé après plusieurs échecs reproductibles en test.
 4. `$decoded['objectifs']` est nettoyé (`strip_tags`, limite 255 car/objectif, 8 objectifs max) puis passé à `creerModuleVide()`, qui l'enregistre dans `Module::objectifs` (colonne cast `array`). Le module est créé via `CreerModule::creerModuleVide()` (variante de `CreerModule::execute()` sans la structure d'exemple). Si un document est fourni, `ImporterImagesDocument` en extrait les images et les rattache au module, **avant** la création des chapitres/leçons.
@@ -128,14 +139,14 @@ Point d'attention : `Illuminate\Http\Client\ConnectionException` (timeout résea
 
 ### Garde-fous : modération et quota
 
-Les deux actions IA appliquent systématiquement, dans cet ordre, avant tout appel de génération coûteux :
+Les actions IA concernées appliquent systématiquement, dans cet ordre, avant tout appel de génération coûteux :
 
-1. **Quota** (`LimiteurGenerationIA`) : vérifie via `RateLimiter::tooManyAttempts()` qu'un formateur n'a pas dépassé **3 générations IA par jour** (clé `ia-generation-formateur:{type}:{id}`, fenêtre glissante de 24 h). `$type` vaut `texte` (défaut, partagé par `GenererLeconIA` et `GenererStructureFormationIA`) ou `audio` (`GenererAudioLecon`) — deux compteurs indépendants. Si dépassé, lève une `RuntimeException` immédiatement, avant tout appel réseau.
-2. **Budget mensuel** (`LimiteurBudgetTokensIA`) : compare la somme des `total_tokens` de la table `consommations_ia` du formateur pour le mois en cours à un plafond configurable (`MISTRAL_MONTHLY_TOKEN_LIMIT`, `config('services.mistral.monthly_token_limit')`, défaut **500 000 tokens/mois**). Si atteint ou dépassé, `RuntimeException` immédiate — avant même l'extraction du document ou l'appel de modération, pour ne pas consommer davantage de tokens inutilement. Blocage dur : pas de dépassement toléré, le compteur se réinitialise au mois suivant (basé sur `created_at`, pas de table de reset séparée).
+1. **Quota** (`LimiteurGenerationIA`) : vérifie via `RateLimiter::tooManyAttempts()` la limite du rôle, dans une fenêtre de 24 h. Pour un formateur, la clé `ia-generation-formateur:{type}:{id}` et la limite de 3 sont personnelles. Pour l'administration, la clé `ia-generation-admin:{type}` est commune aux comptes admin et la limite vient de `MISTRAL_ADMIN_DAILY_GENERATION_LIMIT` (20 par défaut). Les types `texte`, `quiz` et `audio` ont des compteurs indépendants. Si la limite est dépassée, une `RuntimeException` est levée avant tout appel réseau.
+2. **Budget mensuel** (`LimiteurBudgetTokensIA`) : compare la somme des `total_tokens` du mois en cours au plafond correspondant. Un formateur est limité par `MISTRAL_MONTHLY_TOKEN_LIMIT` (500 000 tokens par défaut). L'administration agrège tous les enregistrements dont l'acteur a le rôle `admin` et applique `MISTRAL_ADMIN_MONTHLY_TOKEN_LIMIT` (2 000 000 tokens par défaut). Les deux enveloppes sont séparées. Si le plafond est atteint, le blocage est immédiat ; le compteur repart avec le mois suivant, à partir de `created_at`.
 3. **Modération** (`GardeFouPromptIA` + `MistralClient::moderate()`) : envoie le thème et/ou le texte extrait du document à l'endpoint `POST /v1/moderations` (modèle `mistral-moderation-latest`). Catégories bloquantes : `sexual`, `hate_and_discrimination`, `violence_and_threats`, `dangerous`, `criminal`, `selfharm`, `jailbreaking`. **Volontairement exclues** : `health`, `financial`, `law`, `pii` — une plateforme de formation professionnelle traite légitimement ces sujets (premiers secours, gestion budgétaire, droit du travail, protection des données), les inclure aurait généré trop de faux positifs. Rejet immédiat (`RuntimeException` avec le nom des catégories déclenchées) si une catégorie bloquante est détectée à `true`.
 4. Seulement si la modération passe, `LimiteurGenerationIA::enregistrerTentative()` incrémente le compteur de quota — **juste avant** l'appel de génération proprement dit, donc un contenu rejeté par la modération ne consomme pas de quota, mais un timeout Mistral (après modération) en consomme un (l'appel a réellement eu lieu).
 
-La page « Ma consommation IA » du formateur (`/formateur/mes-modules/consommation-ia`) affiche une barre de progression du plafond mensuel, pour que le formateur comprenne pourquoi la génération est bloquée sans avoir à consulter les logs.
+La page « Ma consommation IA » du formateur (`/formateur/mes-modules/consommation-ia`) affiche sa consommation personnelle. La vue équivalente du constructeur admin agrège les appels de tous les comptes admin et affiche la progression du budget plateforme ; l'association d'un référent à une formation n'affecte pas cette attribution.
 
 `GenererLeconIA::execute()` et `GenererStructureFormationIA::execute()` prennent donc un paramètre `int $trainerId` en plus du document/thème.
 
@@ -148,6 +159,7 @@ Chaque appel Mistral (`chat()` et `moderate()`) est tracé à deux endroits, dan
 
 Deux vues exploitent `ConsommationIADashboardService` (`app/Services/ConsommationIADashboardService.php`) :
 - **Admin** — `/admin/pilotage/consommation-ia` (`admin.pilotage.consommation-ia`, `ConsommationIAController`) : total de tokens et de générations par formateur, tous formateurs confondus, triés par consommation décroissante.
+- **Constructeur admin** — `/admin/formations/constructeur/consommation-ia` : totaux, historique et budget mensuel agrégés pour les acteurs ayant le rôle `admin`.
 - **Formateur** — `/formateur/mes-modules/consommation-ia` (`formateur.modules.builder.consommation-ia`, `ModuleBuilderController::consommationIA()`) : ses propres totaux (générations, tokens prompt/réponse) + historique paginé de ses générations. Lien accessible depuis l'en-tête de la page « Mes créations ».
 
 Volontairement limité aux tokens bruts, sans estimation de coût en euros : les tarifs Mistral varient selon le modèle et changent dans le temps, un coût affiché deviendrait vite trompeur sans mise à jour manuelle régulière.

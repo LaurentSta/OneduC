@@ -18,7 +18,7 @@ class GenererAudioLecon
     public function execute(ModuleLecture $lecture, int $trainerId): Media
     {
         if ($this->limiteur->tropDeTentatives($trainerId, 'audio')) {
-            throw new RuntimeException('Limite de 3 générations audio par jour atteinte. Réessayez demain.');
+            throw new RuntimeException('Limite de '.$this->limiteur->limiteQuotidienne($trainerId).' générations audio par jour atteinte. Réessayez demain.');
         }
 
         $texte = $this->extraireTexteLisible($lecture);

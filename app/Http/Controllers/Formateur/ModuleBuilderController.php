@@ -139,6 +139,7 @@ class ModuleBuilderController extends Controller
 
     public function duplicate(Module $catalogModule)
     {
+        abort_if($catalogModule->is_trainer_authored, 404);
         abort_unless($catalogModule->isVisibleTo(auth()->user()), 404);
 
         $newModule = $this->dupliquerModuleCatalogue->execute($catalogModule, (int) auth()->id());

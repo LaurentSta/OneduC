@@ -42,6 +42,40 @@ class CreerModule
         ]);
     }
 
+    public function creerFormationCatalogueVide(array $data, int $administrateurId, ?int $formateurReferentId = null): Module
+    {
+        [$categorie, $sousCategorie] = $this->classificationCatalogue(
+            isset($data['category_id']) ? (int) $data['category_id'] : null,
+        );
+
+        return Module::create([
+            'module_title' => $data['module_title'],
+            'module_name' => $data['module_title'],
+            'module_name_slug' => Str::slug($data['module_title']).'-'.Str::lower(Str::random(6)),
+            'description' => $data['description'] ?? null,
+            'objectifs' => $data['objectifs'] ?? null,
+            'formateur_id' => $formateurReferentId,
+            'created_by' => $administrateurId,
+            'category_id' => $categorie->id,
+            'subcategory_id' => $sousCategorie->id,
+            'status' => false,
+            'is_trainer_authored' => false,
+            'publication_state' => Module::PUBLICATION_DRAFT,
+        ]);
+    }
+
+    public function classerDansCatalogue(Module $module, ?int $categorieId = null): Module
+    {
+        [$categorie, $sousCategorie] = $this->classificationCatalogue($categorieId);
+
+        $module->update([
+            'category_id' => $categorie->id,
+            'subcategory_id' => $sousCategorie->id,
+        ]);
+
+        return $module;
+    }
+
     private function seedExempleDeStructure(Module $module): void
     {
         $premierChapitre = $this->creerChapitre->execute($module, 'Chapitre 1');
@@ -66,5 +100,28 @@ class CreerModule
             ['subcategory_slug' => 'contenu-personnalise'],
             ['category_id' => $category->id, 'subcategory_name' => 'Contenu personnalisé']
         );
+    }
+
+    /**
+     * @return array{0: Category, 1: SubCategory}
+     */
+    private function classificationCatalogue(?int $categorieId): array
+    {
+        $categorie = $categorieId
+            ? Category::query()->findOrFail($categorieId)
+            : Category::query()->firstOrCreate(
+                ['category_slug' => 'catalogue-oneduc'],
+                ['category_name' => 'Catalogue Oneduc'],
+            );
+
+        $sousCategorie = SubCategory::query()->firstOrCreate(
+            [
+                'category_id' => $categorie->id,
+                'subcategory_slug' => 'catalogue-oneduc-'.$categorie->id,
+            ],
+            ['subcategory_name' => 'Catalogue Oneduc'],
+        );
+
+        return [$categorie, $sousCategorie];
     }
 }

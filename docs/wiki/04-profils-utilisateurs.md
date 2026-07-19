@@ -25,7 +25,15 @@ L'administrateur pilote la plateforme. Il gère le catalogue de modules, les com
 
 **Progression stagiaire** : remettre à zéro, dans une transaction unique, les quiz, progressions, temps de connexion, suivis vidéo et données SCORM classiques, d'évaluation et de blocs modernes.
 
-**Contenu pédagogique** : créer les modules du catalogue avec leurs sections et leçons, importer des packages SCORM et des slides, gérer la banque de questions quiz (avec import CSV), les évaluations SCORM et les catégories.
+**Contenu pédagogique** : créer les formations officielles du catalogue Oneduc avec leurs chapitres et leçons, importer des packages SCORM et des slides, gérer les médias, l'audio, la banque de questions quiz (avec import CSV et génération IA), les évaluations SCORM et les catégories. Le nouveau constructeur admin reprend l'éditeur de plan et l'éditeur de blocs du formateur. Une création manuelle commence volontairement par un seul « Chapitre 1 » vide, sans leçon préremplie.
+
+**Cycle de publication** : préparer une formation en brouillon, la relire dans l'aperçu, puis la publier explicitement. Une version publiée est immuable : toute évolution part d'une nouvelle version brouillon. La publication d'une nouvelle version n'impose aucune mise à jour aux groupes existants ; l'administrateur choisit les groupes à basculer, tandis que les autres restent rattachés à leur version précédente. Une version archivée disparaît du catalogue disponible, mais reste accessible aux groupes qui l'utilisent encore.
+
+**Origine et référent** : les formations officielles sont attribuées au catalogue Oneduc. Un formateur référent peut être associé facultativement pour le suivi pédagogique, sans devenir propriétaire du master officiel. Il peut l'utiliser ou en créer une copie personnelle indépendante pour l'adapter.
+
+**Créations formateur** : consulter les créations personnelles des formateurs en lecture seule et en dupliquer une dans le catalogue. La duplication crée une formation officielle indépendante ; elle ne modifie jamais l'original du formateur.
+
+**Modèles de parcours** : préparer, publier et archiver des modèles globaux combinant des formations officielles et la configuration pédagogique des outils activés. Un formateur duplique un modèle publié dans « Mes parcours » avant de l'adapter. Voir [Modèles globaux de parcours](modeles-parcours.md).
 
 **Pilotage** : un module interne de suivi de projets (Kanban, tâches, journal, notifications), les référentiels de compétences, la consultation des retours stagiaires.
 
@@ -33,11 +41,13 @@ L'administrateur pilote la plateforme. Il gère le catalogue de modules, les com
 
 ### Ce qu'il ne peut pas encore faire
 
-Exporter des données en CSV ou PDF, générer des certificats, gérer plusieurs organisations.
+Exporter des données en CSV ou PDF, générer des certificats, gérer plusieurs organisations. Les étapes génériques d'outil enregistrées dans les modèles globaux de parcours ne créent pas encore automatiquement leur session d'exécution ; ce raccord doit être réalisé outil par outil.
+
+> **État d'intégration :** le nouveau constructeur de formations admin est disponible sur ses routes dédiées, mais reste en phase d'intégration et de vérification. L'ancien éditeur admin n'est pas encore remplacé ; aucun basculement d'interface définitif n'est annoncé à ce stade.
 
 ### Détails techniques
 
-Routes : `routes/admin.php` — middleware `auth` + `role:admin` + `admin.activity`.
+Routes principales : `routes/admin.php` — middleware `auth` + `role:admin` + `admin.activity`. Le constructeur moderne est isolé dans `routes/admin-constructeur-formations.php` sous `admin.formations.constructeur.*`, et les modèles globaux dans `routes/admin-modeles-parcours.php` sous `admin.modeles-parcours.*`.
 Le contrôleur `UtilisateurController` et les routes `admin.utilisateurs.*` gèrent uniquement les rôles `formateur` et `stagiaire`. La création impose un email unique et un mot de passe confirmé d'au moins 12 caractères. La modification vérifie aussi l'unicité de l'email en excluant le compte courant ; le profil de l'administrateur applique désormais la même règle.
 
 Pour un stagiaire, les rattachements sélectionnés sont synchronisés dans `group_user` avec `role_in_group = 'stagiaire'`. Si aucun `formateur_id` n'est fourni mais qu'un groupe est sélectionné, le formateur principal du premier groupe devient le formateur référent. Pour un formateur, les statuts d'adhésion acceptés sont `pending`, `active` et `expired` ; une adhésion activée sans date reçoit par défaut une validité d'un an.
@@ -60,9 +70,11 @@ Son accès dépend de son adhésion à l'association : adhésion active, ou comp
 
 **Suivi** : vue par groupe (taux de réussite, stagiaires actifs, inactifs, non démarrés), vue par stagiaire leçon par leçon, vue par module, repérage des apprenants à risque.
 
-**Parcours** : assembler des modules, nuages de mots et sondages dans un parcours ordonné, puis l'associer à un groupe. Dans l'interface, ce sont "Mes parcours".
+**Parcours** : assembler des modules, nuages de mots et sondages dans un parcours ordonné, puis l'associer à un groupe. Dans l'interface, ce sont « Mes parcours ». Il peut aussi parcourir le catalogue des modèles globaux publiés par l'administration et en créer une copie personnelle avant adaptation.
 
-**Modules personnels** : créer ses propres modules dans un éditeur de plan continu (chapitres et leçons, réordonnancement au clavier ou à la souris, duplication de leçon), éditer chaque leçon en blocs de contenu (texte, image, citation, séparateur), téléverser ses images, ou dupliquer un module du catalogue pour l'adapter. Les modules personnels n'apparaissent pas dans le catalogue public.
+**Modules personnels** : créer ses propres modules dans un éditeur de plan continu (chapitres et leçons, réordonnancement au clavier ou à la souris, duplication de leçon), éditer chaque leçon en blocs de contenu (texte, image, citation, séparateur), téléverser ses images, ou dupliquer un module du catalogue pour l'adapter. Cette copie est indépendante du master officiel : les changements ultérieurs de l'un n'altèrent pas l'autre. Les modules personnels n'apparaissent pas dans le catalogue public.
+
+Être désigné comme référent d'une formation officielle n'autorise pas le formateur à modifier le master publié. Toute personnalisation passe par sa copie personnelle.
 
 Limite à connaître : les leçons SCORM ou slides copiées depuis le catalogue restent dans la copie, mais leur contenu importé n'est pas modifiable — seul le titre peut être renommé.
 

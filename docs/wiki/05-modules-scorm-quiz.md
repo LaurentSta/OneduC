@@ -1,6 +1,6 @@
 # 05 — Modules, SCORM & Quiz
 
-*Public : développeurs. Pour l'usage du builder et des quiz côté formateur, voir [Profils utilisateurs](04-profils-utilisateurs.md).*
+*Public : développeurs et administrateurs de contenu. Pour l'usage des builders et des quiz selon le rôle, voir [Profils utilisateurs](04-profils-utilisateurs.md).*
 
 ## Hiérarchie du contenu pédagogique
 
@@ -28,8 +28,12 @@ Fichier : `app/Models/Module.php`
 Champs principaux :
 - `module_title` / `module_name` / `module_name_slug` / `description` / `objectifs`
 - `category_id` / `subcategory_id`
-- `formateur_id` (formateur associé au module)
+- `formateur_id` (formateur référent facultatif pour une formation officielle, propriétaire pour une création personnelle)
+- `created_by` (auteur technique de la création ou de la version)
 - `is_trainer_authored` (module créé par un formateur, exclu du catalogue public)
+- `catalogue_key` / `version_number` (identité stable d'une formation officielle et numéro de version)
+- `publication_state` (`draft`, `published`, `archived`) / `published_at`
+- `source_module_id` (version ou création à l'origine de la copie)
 - `status` (actif/inactif — modifiable par le formateur depuis le panneau Options du builder)
 - `certificat`, `label`, `duree`, `resources`, `prerequi`, `module_video`, `module_image`, `header_image` (modifiables par le formateur depuis le panneau Options du builder)
 - `bestseller`, `vedette`, `surevalue` (flags marketing catalogue admin uniquement, non exposés au formateur)
@@ -43,16 +47,19 @@ Le modèle calcule une durée pédagogique via :
 
 ### Création des modules et visibilité
 
-Deux flux coexistent :
+Trois flux coexistent pendant l'intégration du nouveau constructeur :
 
 | Flux | Contrôleur | Usage |
 |------|------------|-------|
-| Catalogue admin | `Backend/ModuleController` | Création complète des modules publics, SCORM, slides, quiz, évaluations |
+| Catalogue admin historique | `Backend/ModuleController` | Éditeur admin actuellement conservé pour la continuité, notamment les flux SCORM/slides historiques |
+| Catalogue admin moderne | `Backend/ConstructeurFormationController` | Plan continu, blocs, médias, audio, SCORM, quiz, IA, aperçu et cycle de versions des formations officielles |
 | Modules formateur | `Formateur/ModuleBuilderController` | Création de modules personnels (avec structure d'exemple pré-remplie), plan continu chapitres/leçons, options du module, duplication d'un module catalogue, assignation aux groupes |
 
 Les modules personnels ont `is_trainer_authored = true`. Ils sont visibles dans l'espace du formateur propriétaire et des groupes auxquels ils sont affectés, mais exclus de la liste publique (`Module::publiclyListable()`).
 
 À la création (`CreerModule`), le module est pré-rempli avec une structure d'exemple : 2 chapitres, le premier avec 2 leçons, le second avec 1 leçon — pour éviter la page blanche et montrer le fonctionnement du plan continu. Le formateur est libre de renommer ou supprimer ces éléments.
+
+Le flux manuel du constructeur admin est différent : `CreerModule::creerFormationCatalogueVide()` crée un brouillon officiel, puis ajoute seulement un « Chapitre 1 », sans leçon. L'administrateur construit donc explicitement la structure destinée au catalogue. Il choisit la catégorie ; la sous-catégorie technique « Catalogue Oneduc » est créée ou retrouvée automatiquement dans cette catégorie, puis réalignée si la catégorie change.
 
 ### Génération de formation complète par IA
 
@@ -110,6 +117,47 @@ Les leçons SCORM ou slides issues d'une duplication catalogue restent présente
 ### Génération de leçon par IA
 
 Depuis l'écran du plan de module, un bouton « + Générer une leçon (IA) » permet d'importer un document pour pré-remplir une leçon dans un chapitre donné. Voir [Génération de contenu par IA](15-generation-ia.md) pour le détail (flux, garde-fous, configuration).
+
+---
+
+## Constructeur admin moderne — phase d'intégration
+
+Le constructeur sous `/admin/formations/constructeur` réutilise les mêmes composants d'édition du plan et des blocs que le builder formateur, avec des routes et des contrôles d'accès propres à l'administration. Il ajoute les responsabilités du catalogue : choix de la catégorie, classification technique automatique, formateur référent facultatif, aperçu, publication, archivage et bascule de groupes.
+
+> Ce constructeur ne remplace pas encore l'éditeur admin historique. Les deux flux coexistent pendant les tests de parité ; aucun cutover n'est documenté à ce stade.
+
+### Cycle de vie d'une formation officielle
+
+```text
+Brouillon (`draft`)
+  ├── édition, aperçu et suppression autorisés
+  └── publication explicite
+        ↓
+Publiée (`published`)
+  ├── immuable
+  ├── assignable et visible au catalogue
+  └── nouvelle version → copie brouillon avec même `catalogue_key`
+        ↓
+Archivée (`archived`)
+  ├── retirée des nouvelles affectations
+  └── encore lisible par les groupes déjà épinglés dessus
+```
+
+La publication vérifie au minimum le titre, la catégorie et sa sous-catégorie technique, l'existence d'un chapitre, la présence d'au moins une leçon dans chaque chapitre et un contenu publiable dans chaque leçon. La sous-catégorie est gérée automatiquement par le constructeur : elle n'est pas demandée à l'administrateur. Lors de la publication d'une nouvelle version, l'ancienne version publiée est archivée mais reste active pour ses groupes existants.
+
+Les groupes ne suivent jamais automatiquement la dernière version. `BasculerGroupesVersionFormation` remplace uniquement, à la demande de l'administrateur, la version utilisée par les groupes sélectionnés et conserve la position du module. Si un parcours est partagé par plusieurs groupes, une copie du parcours est créée pour éviter de modifier le programme des autres groupes.
+
+### Copies et intégrité des contenus
+
+`CreerVersionFormationCatalogue` réalise une copie profonde des chapitres, leçons, objectifs et compétences, quiz et options, ressources de leçon et médias Spatie. Les images de couverture et d'en-tête, les médias de quiz et les fichiers de ressources sont copiés dans des emplacements propres à la nouvelle formation. Les répertoires et sources de slides sont également dupliqués.
+
+Pour une leçon SCORM complète, la copie est épinglée sur la version de package résolue au moment de la duplication. À la publication, toute leçon encore configurée pour suivre la version SCORM active est figée sur une `ScormPackageVersion` précise. Les blocs SCORM issus d'une même lignée de catalogue restent autorisés via `AccesScormVersionne`, sans ouvrir l'accès à un package arbitraire.
+
+L'administration peut consulter une création personnelle de formateur, mais pas modifier son original. L'action de duplication produit un nouveau brouillon officiel, avec une nouvelle `catalogue_key`, dont les changements futurs sont indépendants. Réciproquement, un formateur qui adapte une formation officielle travaille dans une copie personnelle indépendante ; un éventuel formateur référent ne reçoit pas de droit d'écriture sur le master.
+
+### Quiz et médias
+
+Les routes `admin.formations.constructeur.lectures.quiz.questions.*` exposent dans le constructeur la création, la modification, la suppression, l'import CSV et la génération IA des questions. L'éditeur de leçon conserve les blocs texte, image, audio, vidéo et SCORM ; l'aperçu sait aussi ouvrir les leçons SCORM ou slides historiques dans leur rendu natif. Ce maintien natif évite une conversion destructive des contenus existants.
 
 ---
 

@@ -58,7 +58,7 @@ class MFormationsController extends Controller
 
     private function renderModuleDetail(Module $module)
     {
-        abort_unless((bool) $module->status && ! $module->is_trainer_authored, 404);
+        abort_unless((bool) $module->status && $module->estPubliee(), 404);
 
         $module->loadMissing([
             'category',

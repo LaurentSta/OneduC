@@ -34,6 +34,8 @@ Pour chaque groupe, le formateur peut masquer une leçon (sans la supprimer du m
 
 Un module peut être affecté à plusieurs groupes en même temps, avec un ordre d'affichage et un statut d'activation propres à chaque groupe.
 
+Pour une formation officielle versionnée, l'affectation porte sur une version précise. Un groupe ne suit pas automatiquement une publication plus récente : il reste épinglé sur sa version jusqu'à une bascule explicite par l'administration. Cela protège le déroulé d'une session déjà commencée.
+
 ---
 
 ## Gérer un groupe (côté administrateur)
@@ -58,11 +60,14 @@ Deux notions coexistent, et il ne faut pas les confondre :
 
 **Les parcours créés par le formateur** sont les parcours pédagogiques qu'un formateur assemble pour ses groupes : une séquence ordonnée de modules, nuages de mots et sondages. Un parcours peut être associé à un groupe ; les modules sont alors présentés au stagiaire dans l'ordre du parcours.
 
+**Les modèles globaux de parcours** sont préparés par l'administration pour constituer un catalogue Oneduc réutilisable. Ils peuvent référencer des formations officielles et des étapes génériques d'outils activés. Un modèle publié est immuable ; le formateur en crée une copie personnelle avant de l'adapter. L'archivage retire le modèle du catalogue sans modifier les copies déjà créées. Le détail du cycle et du registre est décrit dans [Modèles globaux de parcours](modeles-parcours.md).
+
 ### Ce que les parcours ne font pas encore
 
 - Pas de prérequis bloquants : un stagiaire peut accéder aux modules dans n'importe quel ordre.
 - Pas de validation de compétences ni de jalons obligatoires.
 - Pas de certificat en fin de parcours.
+- Les étapes génériques d'outils d'un modèle sont stockées et dupliquées comme configuration pédagogique, mais elles ne matérialisent pas encore une session runtime liée au groupe. Aucun code d'accès, participant, vote, réponse, score ou résultat n'est copié ni créé par la duplication.
 
 ---
 
@@ -108,7 +113,16 @@ La personnalisation des leçons par groupe passe par `group_module_lectures`, g�
 ### Modèles des parcours
 
 - Parcours formateur Oneduc : contenu codé en dur dans `app/Data/ParcoursFormateur.php` (`ParcoursController`). Détail dans [docs/parcours-formateur.md](../parcours-formateur.md).
-- Parcours créés par le formateur : `FormateurParcours` (en-tête) + `FormateurParcoursItem` (éléments ordonnés, types `module`, `wordcloud`, `poll`), gérés par `Formateur/MesFormationsController`. L'association au groupe passe par `groups.formateur_parcours_id` ; quand elle existe, `StagiaireModules()` suit l'ordre du parcours.
+- Parcours créés par le formateur : `FormateurParcours` (en-tête) + `FormateurParcoursItem` (éléments ordonnés, types historiques `module`, `wordcloud`, `poll`, plus le type générique `outil`), gérés par `Formateur/MesParcoursController`. L'association au groupe passe par `groups.formateur_parcours_id` ; quand elle existe, `StagiaireModules()` suit l'ordre du parcours.
+- Modèles globaux : `ModeleParcours` + `ModeleParcoursItem`, avec les statuts `brouillon`, `publie`, `archive`. `FormateurParcours.modele_parcours_id` conserve la provenance d'une copie, sans créer de dépendance d'édition avec le modèle source.
+
+`App\Support\Parcours\RegistreOutilsParcours` centralise les clés d'outils, leurs règles de configuration et leur activation. Il interdit explicitement les données runtime (`access_code`, identifiants de session/groupe/utilisateur, participants, réponses, votes, scores et résultats). `DupliquerModeleParcours` copie uniquement les étapes validées.
+
+### Bascule manuelle d'une version de formation
+
+`BasculerGroupesVersionFormation` recherche, pour chaque groupe sélectionné, la version actuelle portant la même `catalogue_key`, puis remplace le pivot `group_module` par la version publiée cible en conservant sa position. Les groupes non sélectionnés ne changent pas.
+
+Si le module figure dans un parcours utilisé par un seul groupe, l'élément est mis à jour sur place. Si ce parcours est partagé, l'action le duplique pour le groupe basculé avant de remplacer le module, afin que les autres groupes conservent exactement leur programme et leur version.
 
 ### Flux d'invitation stagiaire
 

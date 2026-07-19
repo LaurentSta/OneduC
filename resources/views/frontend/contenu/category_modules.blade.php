@@ -43,8 +43,9 @@
                         <h5 class="text-lg font-bold text-gray-800">{{ $module->module_title }}</h5>
 
                         <div class="flex flex-wrap gap-3 text-xs text-gray-500">
-                            @if(!empty($module->formateur?->name))
-                                <span>Formateur : {{ $module->formateur->name }}</span>
+                            <span>Auteur : Catalogue Oneduc</span>
+                            @if(!empty($module->formateur_id))
+                                <span>Référent : {{ trim(($module->formateur?->prenom ?? '').' '.($module->formateur?->name ?? '')) }}</span>
                             @endif
                             @if(!empty($module->duree))
                                 <span>Duree : {{ $module->duree }}</span>

@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers\Backend;
 
+use App\Domains\ModulesFormateur\Support\AccesFormationCatalogue;
 use App\Domains\ModulesFormateur\Support\NettoyeurBlocsModule;
 use App\Http\Controllers\Controller;
 use App\Models\LectureObjective;
+use App\Models\Module;
 use App\Models\ModuleLecture;
 use App\Models\ModuleSection;
 use App\Models\QuizQuestion;
@@ -16,12 +18,15 @@ use Illuminate\Support\Str;
 
 class ModuleSectionController extends Controller
 {
+    public function __construct(private readonly AccesFormationCatalogue $accesCatalogue) {}
+
     public function AddModuleSection(Request $request)
     {
-        $cid = $request->module_id;
+        $module = Module::findOrFail((int) $request->input('module_id'));
+        $this->accesCatalogue->assertEditable($module);
 
         ModuleSection::insert([
-            'module_id' => $cid,
+            'module_id' => $module->id,
             'section_title' => $request->section_title,
         ]);
 
@@ -49,6 +54,7 @@ class ModuleSectionController extends Controller
         ]);
 
         $section = ModuleSection::findOrFail($id);
+        $this->assertSectionEditable($section);
 
         $sectionHtml = app(NettoyeurBlocsModule::class)
             ->sanitizeHtmlFragment((string) $request->input('section_html', ''));
@@ -82,6 +88,8 @@ class ModuleSectionController extends Controller
         $section = ModuleSection::find($id);
 
         if ($section) {
+            $this->assertSectionEditable($section);
+
             DB::transaction(function () use ($section): void {
                 $lectureIds = ModuleLecture::query()
                     ->where('section_id', $section->id)
@@ -158,6 +166,11 @@ class ModuleSectionController extends Controller
         $disk->putFileAs($storageFolder, $video, $fileName);
 
         return route('media.storage', ['path' => $storageFolder.'/'.$fileName], false);
+    }
+
+    private function assertSectionEditable(ModuleSection $section): void
+    {
+        $this->accesCatalogue->assertEditable($section->module()->firstOrFail());
     }
 
     private function deleteLectureAndDependencies(ModuleLecture $lecture): void

@@ -280,6 +280,8 @@ Route::middleware(['auth'])->group(function () {
 // ----------------------------------------------------------
 // Routes spécifiques au rôle administrateur
 require __DIR__.'/admin.php';
+require __DIR__.'/admin-constructeur-formations.php';
+require __DIR__.'/admin-modeles-parcours.php';
 
 // ----------------------------------------------------------
 // 🟠 Formateur

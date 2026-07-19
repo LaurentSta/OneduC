@@ -19,9 +19,10 @@ class ObjectiveController extends Controller
 
         $modules = Module::query()
             ->where(function ($q) use ($formateurId) {
-                $q->where('formateur_id', $formateurId)
-                    ->orWhereHas('groups', function ($g) use ($formateurId) {
-                        $g->where('instructor_id', $formateurId);
+                $q->where(function ($creationPersonnelle) use ($formateurId): void {
+                    $creationPersonnelle->authoredByTrainer($formateurId);
+                })->orWhereHas('groups', function ($groupes) use ($formateurId) {
+                    $groupes->accessibleByTrainer($formateurId);
                     });
             })
             ->orderByRaw('COALESCE(module_title, module_name)')

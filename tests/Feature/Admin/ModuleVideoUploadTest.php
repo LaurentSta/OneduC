@@ -75,6 +75,7 @@ it('stores an uploaded module video in the public module videos folder', functio
         'category_id' => $categoryId,
         'subcategory_id' => $subcategoryId,
         'certificat' => '1',
+        'status' => '1',
         'module_video_file' => UploadedFile::fake()->create('intro-module.mp4', 2048, 'video/mp4'),
     ]);
 
@@ -85,6 +86,8 @@ it('stores an uploaded module video in the public module videos folder', functio
     expect($module->module_video)->not->toBeNull();
     expect($module->module_video)->toStartWith('/media/storage/modules/videos/modules/module_' . $module->id . '/');
     expect(Storage::disk('public')->exists(Str::after($module->module_video, '/media/storage/')))->toBeTrue();
+    expect($module->publication_state)->toBe(Module::PUBLICATION_DRAFT);
+    expect($module->status)->toBeFalse();
 });
 
 it('replaces the previous uploaded module video during update', function () {
@@ -101,7 +104,9 @@ it('replaces the previous uploaded module video during update', function () {
         'module_name_slug' => 'excel-debutant-01',
         'module_title' => 'Excel Debutant',
         'certificat' => true,
-        'status' => true,
+        'is_trainer_authored' => false,
+        'publication_state' => Module::PUBLICATION_DRAFT,
+        'status' => false,
     ]);
 
     $oldStoragePath = 'modules/videos/modules/module_' . $module->id . '/ancienne-video.mp4';

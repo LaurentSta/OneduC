@@ -30,7 +30,9 @@ it('sanitizes chapter introduction html before rendering it to learners', functi
         'module_title' => 'Module securite',
         'module_name' => 'Module securite',
         'module_name_slug' => 'module-securite-'.uniqid(),
-        'status' => true,
+        'is_trainer_authored' => false,
+        'publication_state' => Module::PUBLICATION_DRAFT,
+        'status' => false,
     ]);
 
     $section = ModuleSection::query()->create([

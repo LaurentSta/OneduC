@@ -8,7 +8,7 @@ import { OutlineDocument } from './outline-document';
 import { ChapterHeading } from './chapter-heading-node';
 import { LessonItem } from './lesson-item-node';
 import { OutlineKeymap } from './outline-keymap';
-import { createOutlineApi } from './api';
+import { createOutlineApi, resolveOutlineEndpoint } from './api';
 import { createSyncQueue } from './sync-queue';
 import { createReconciler } from './reconcile';
 import { nextClientKey } from './client-key';
@@ -20,7 +20,15 @@ function stableClientKey(node) {
   return nextClientKey(node.type === 'chapterHeading' ? 'section' : 'lecture');
 }
 
-function buildInitialDoc(nodes, basePath) {
+function lectureEditUrl(basePath, endpoints, lectureId) {
+  return resolveOutlineEndpoint(
+    endpoints.editLecture,
+    `${basePath}/lectures/${lectureId}/edition`,
+    { lecture: lectureId },
+  );
+}
+
+function buildInitialDoc(nodes, basePath, endpoints) {
   // A brand-new module seeds a single empty chapter — no placeholder lesson
   // underneath it. Pressing Enter naturally creates the first lesson line;
   // pre-seeding one too would leave a stray empty line behind it, since
@@ -36,19 +44,19 @@ function buildInitialDoc(nodes, basePath) {
         sectionId: node.sectionId ?? null,
         lectureId: node.lectureId ?? null,
         contentType: node.contentType ?? 'blocks',
-        editUrl: node.lectureId ? `${basePath}/lectures/${node.lectureId}/edition` : null,
+        editUrl: node.lectureId ? lectureEditUrl(basePath, endpoints, node.lectureId) : null,
       },
       content: node.title ? [{ type: 'text', text: node.title }] : undefined,
     })),
   };
 }
 
-function OutlineEditorApp({ moduleId, basePath, initialNodes }) {
+function OutlineEditorApp({ moduleId, basePath, apiEndpoints, initialNodes }) {
   const apiRef = useRef(null);
   const queueRef = useRef(null);
   const reconcilerRef = useRef(null);
 
-  if (!apiRef.current) apiRef.current = createOutlineApi(basePath, moduleId);
+  if (!apiRef.current) apiRef.current = createOutlineApi(basePath, moduleId, apiEndpoints);
   if (!queueRef.current) queueRef.current = createSyncQueue();
 
   function syncNodeMove({ clientKey, type }) {
@@ -133,13 +141,13 @@ function OutlineEditorApp({ moduleId, basePath, initialNodes }) {
         onMove: syncNodeMove,
       }),
     ],
-    content: buildInitialDoc(initialNodes, basePath),
+    content: buildInitialDoc(initialNodes, basePath, apiEndpoints),
     onCreate: ({ editor: createdEditor }) => {
       reconcilerRef.current = createReconciler({
         editor: createdEditor,
         api: apiRef.current,
         queue: queueRef.current,
-        buildEditUrl: (lectureId) => `${basePath}/lectures/${lectureId}/edition`,
+        buildEditUrl: (lectureId) => lectureEditUrl(basePath, apiEndpoints, lectureId),
       });
       reconcilerRef.current.seed(createdEditor.state.doc);
     },
@@ -228,7 +236,7 @@ function OutlineEditorApp({ moduleId, basePath, initialNodes }) {
               clientKey: nextClientKey('lecture'),
               lectureId: duplicate.id,
               contentType: duplicate.content_type,
-              editUrl: `${basePath}/lectures/${duplicate.id}/edition`,
+              editUrl: lectureEditUrl(basePath, apiEndpoints, duplicate.id),
             },
             duplicate.lecture_title ? state.schema.text(duplicate.lecture_title) : undefined
           );
@@ -266,6 +274,14 @@ export function mountOutlineEditor() {
 
     const moduleId = container.dataset.moduleId;
     const basePath = container.dataset.basePath || '';
+    let apiEndpoints = {};
+
+    try {
+      apiEndpoints = JSON.parse(container.dataset.apiEndpoints || '{}');
+      if (!apiEndpoints || typeof apiEndpoints !== 'object' || Array.isArray(apiEndpoints)) apiEndpoints = {};
+    } catch (e) {
+      apiEndpoints = {};
+    }
 
     let initialNodes = [];
     try {
@@ -276,7 +292,12 @@ export function mountOutlineEditor() {
     }
 
     createRoot(container).render(
-      <OutlineEditorApp moduleId={moduleId} basePath={basePath} initialNodes={initialNodes} />
+      <OutlineEditorApp
+        moduleId={moduleId}
+        basePath={basePath}
+        apiEndpoints={apiEndpoints}
+        initialNodes={initialNodes}
+      />
     );
   });
 }

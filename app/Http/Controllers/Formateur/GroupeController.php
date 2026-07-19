@@ -36,7 +36,8 @@ class GroupeController extends Controller
 
     public function create()
     {
-        $modules = Module::active()
+        $modules = Module::query()
+            ->assignableAuFormateur((int) auth()->id())
             ->with([
                 'sections.lectures:id,module_id,section_id,duration,question_count,quiz_enabled,quiz_questions_per_attempt',
             ])
@@ -75,7 +76,11 @@ class GroupeController extends Controller
                 Rule::exists('formateur_parcours', 'id')->where('formateur_id', auth()->id()),
             ],
             'modules' => ['required', 'array', 'min:1'],
-            'modules.*' => [Rule::exists('modules', 'id')->where('status', 1)],
+            'modules.*' => [
+                Rule::exists('modules', 'id')->where(function ($query) use ($currentTrainerId): void {
+                    $this->appliquerFiltreModuleAssignable($query, $currentTrainerId);
+                }),
+            ],
             'module_positions' => ['nullable', 'array'],
             'module_positions.*' => ['nullable', 'integer', 'min:1'],
             'stagiaires' => ['nullable', 'array'],
@@ -216,7 +221,17 @@ class GroupeController extends Controller
             ->with(['modules', 'students', 'observers', 'coFormateurs', 'instructor'])
             ->firstOrFail();
 
-        $modules = Module::active()
+        $formateurId = (int) auth()->id();
+        $modulesConserves = $group->modules->pluck('id')->map(fn ($moduleId) => (int) $moduleId)->all();
+
+        $modules = Module::query()
+            ->where(function ($selection) use ($formateurId, $modulesConserves): void {
+                $selection
+                    ->whereIn('id', $modulesConserves)
+                    ->orWhere(function ($assignable) use ($formateurId): void {
+                        $assignable->assignableAuFormateur($formateurId);
+                    });
+            })
             ->with([
                 'sections.lectures:id,module_id,section_id,duration,question_count,quiz_enabled,quiz_questions_per_attempt',
             ])
@@ -295,12 +310,16 @@ class GroupeController extends Controller
             ],
             'modules' => ['required', 'array', 'min:1'],
             'modules.*' => [
-                Rule::exists('modules', 'id')->where(function ($query) use ($currentModuleIds): void {
-                    $query->where('status', 1);
+                Rule::exists('modules', 'id')->where(function ($query) use ($currentModuleIds, $currentTrainerId): void {
+                    $query->where(function ($selection) use ($currentModuleIds, $currentTrainerId): void {
+                        $selection->where(function ($assignable) use ($currentTrainerId): void {
+                            $this->appliquerFiltreModuleAssignable($assignable, $currentTrainerId);
+                        });
 
-                    if ($currentModuleIds->isNotEmpty()) {
-                        $query->orWhereIn('id', $currentModuleIds->all());
-                    }
+                        if ($currentModuleIds->isNotEmpty()) {
+                            $selection->orWhereIn('id', $currentModuleIds->all());
+                        }
+                    });
                 }),
             ],
             'module_positions' => ['nullable', 'array'],
@@ -563,6 +582,25 @@ class GroupeController extends Controller
             'stagiaires.*.email.distinct' => 'Chaque stagiaire doit avoir une adresse e-mail différente.',
             'end_date.after_or_equal' => 'La date de fin doit être postérieure ou égale à la date de démarrage.',
         ];
+    }
+
+    private function appliquerFiltreModuleAssignable($query, int $formateurId): void
+    {
+        $query
+            ->where('status', 1)
+            ->where(function ($visibilite) use ($formateurId): void {
+                $visibilite
+                    ->where(function ($catalogue): void {
+                        $catalogue
+                            ->where('is_trainer_authored', false)
+                            ->where('publication_state', Module::PUBLICATION_PUBLISHED);
+                    })
+                    ->orWhere(function ($creationFormateur) use ($formateurId): void {
+                        $creationFormateur
+                            ->where('is_trainer_authored', true)
+                            ->where('formateur_id', $formateurId);
+                    });
+            });
     }
 
     private function groupValidationAttributes(): array

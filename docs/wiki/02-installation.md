@@ -126,8 +126,11 @@ Mettre à jour cette valeur avec l'IP locale de la machine de développement pou
 | `NOCAPTCHA_SITEKEY` | Clé publique reCAPTCHA si les formulaires publics l'utilisent | Selon usage |
 | `NOCAPTCHA_SECRET` | Secret reCAPTCHA | Selon usage |
 | `COOKIE_CONSENT_ENABLED` | Active/désactive le bandeau cookies Spatie | Non (défaut : `true`) |
-| `MISTRAL_API_KEY` | Clé API Mistral pour la génération de leçon par IA (builder formateur) | Non (fonctionnalité désactivée sans clé) |
+| `MISTRAL_API_KEY` | Clé API Mistral pour la génération de contenu dans les constructeurs formateur et admin | Non (fonctionnalité désactivée sans clé) |
 | `MISTRAL_MODEL` | Modèle Mistral utilisé | Non (défaut : `mistral-large-latest`) |
+| `MISTRAL_MONTHLY_TOKEN_LIMIT` | Budget mensuel personnel d'un formateur | Non (défaut : `500000`) |
+| `MISTRAL_ADMIN_MONTHLY_TOKEN_LIMIT` | Budget mensuel plateforme partagé entre les comptes admin | Non (défaut : `2000000`) |
+| `MISTRAL_ADMIN_DAILY_GENERATION_LIMIT` | Quota quotidien admin, par type et partagé entre les comptes admin | Non (défaut : `20`) |
 | `SLIDES_SOFFICE_BINARY` | Chemin ou commande LibreOffice utilisée pour convertir les `.ppt/.pptx` | Non (défaut : `soffice`) |
 | `SLIDES_PDFTOCAIRO_BINARY` | Chemin ou commande Poppler utilisée pour générer les images | Non (défaut : `pdftocairo`) |
 

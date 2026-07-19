@@ -11,11 +11,16 @@ class FormateurParcours extends Model
 {
     protected $table = 'formateur_parcours';
 
-    protected $fillable = ['formateur_id', 'title', 'description'];
+    protected $fillable = ['formateur_id', 'modele_parcours_id', 'title', 'description'];
 
     public function formateur(): BelongsTo
     {
         return $this->belongsTo(User::class, 'formateur_id');
+    }
+
+    public function modeleSource(): BelongsTo
+    {
+        return $this->belongsTo(ModeleParcours::class, 'modele_parcours_id');
     }
 
     public function items(): HasMany

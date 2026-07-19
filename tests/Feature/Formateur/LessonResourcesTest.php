@@ -61,6 +61,7 @@ function seedLessonResourceContext(): array
         'module_title' => 'Module ressources',
         'module_name' => 'Module ressources',
         'module_name_slug' => 'module-ressources',
+        'is_trainer_authored' => true,
         'status' => true,
     ]);
 

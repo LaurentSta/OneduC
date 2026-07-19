@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Formateur;
 
+use App\Domains\ModulesFormateur\Support\AccesModule;
 use App\Http\Controllers\Controller;
 use App\Jobs\ConvertLectureSlides;
 use App\Models\Category;
@@ -20,6 +21,8 @@ use Illuminate\View\View;
 
 class OutilsPowerPointController extends Controller
 {
+    public function __construct(private readonly AccesModule $accesModule) {}
+
     public function index(SlideConversionEnvironment $environment): View
     {
         $categories = Category::query()
@@ -28,7 +31,7 @@ class OutilsPowerPointController extends Controller
             ->get();
 
         $presentations = Module::query()
-            ->where('formateur_id', auth()->id())
+            ->authoredByTrainer((int) auth()->id())
             ->whereHas('lectures', fn ($query) => $query->where('content_type', 'slides'))
             ->with([
                 'category:id,category_name',
@@ -84,6 +87,8 @@ class OutilsPowerPointController extends Controller
                     'category_id' => (int) $data['category_id'],
                     'subcategory_id' => (int) $data['subcategory_id'],
                     'formateur_id' => (int) auth()->id(),
+                    'created_by' => (int) auth()->id(),
+                    'is_trainer_authored' => true,
                     'module_title' => $title,
                     'module_name' => $title,
                     'module_name_slug' => Str::slug($title).'-'.Str::lower(Str::random(6)),
@@ -210,7 +215,7 @@ class OutilsPowerPointController extends Controller
 
     private function assertOwnership(Module $module): void
     {
-        abort_unless((int) $module->formateur_id === (int) auth()->id(), 403);
+        $this->accesModule->assertOwner($module);
     }
 
     private function slideLecture(Module $module): ModuleLecture

@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Domains\ModulesFormateur\Support\LimiteurBudgetTokensIA;
 use App\Models\ConsommationIA;
+use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -46,8 +48,7 @@ class ConsommationIADashboardService
      */
     public function resumePourFormateur(int $formateurId): array
     {
-        $totaux = ConsommationIA::query()
-            ->where('formateur_id', $formateurId)
+        $totaux = $this->requetePourActeur($formateurId)
             ->selectRaw('
                 COUNT(*) as appels,
                 SUM(total_tokens) as total_tokens,
@@ -65,13 +66,22 @@ class ConsommationIADashboardService
             ],
             'budget' => [
                 'consomme_ce_mois' => $this->limiteurBudget->tokensConsommesCeMois($formateurId),
-                'limite_mensuelle' => $this->limiteurBudget->limiteMensuelle(),
+                'limite_mensuelle' => $this->limiteurBudget->limiteMensuelle($formateurId),
                 'depasse' => $this->limiteurBudget->budgetDepasse($formateurId),
             ],
-            'historique' => ConsommationIA::query()
-                ->where('formateur_id', $formateurId)
+            'historique' => $this->requetePourActeur($formateurId)
                 ->latest()
                 ->paginate(20),
         ];
+    }
+
+    private function requetePourActeur(int $userId): Builder
+    {
+        $requete = ConsommationIA::query();
+        $estAdministrateur = User::query()->whereKey($userId)->where('role', 'admin')->exists();
+
+        return $estAdministrateur
+            ? $requete->whereHas('formateur', fn (Builder $query) => $query->where('role', 'admin'))
+            : $requete->where('formateur_id', $userId);
     }
 }

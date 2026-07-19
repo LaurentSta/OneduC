@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Formateur;
 
+use App\Domains\ModulesFormateur\Support\AccesModule;
 use App\Http\Controllers\Controller;
 use App\Models\LessonResource;
 use App\Models\Module;
@@ -14,6 +15,8 @@ use Illuminate\Support\Str;
 
 class LessonResourceController extends Controller
 {
+    public function __construct(private readonly AccesModule $accesModule) {}
+
     public function store(Request $request, Module $module, ModuleSection $section, ModuleLecture $lecture): RedirectResponse
     {
         $this->assertCanManage($request, $module, $section, $lecture);
@@ -94,7 +97,7 @@ class LessonResourceController extends Controller
         abort_unless((int) $section->module_id === (int) $module->id, 404);
         abort_unless((int) $lecture->module_id === (int) $module->id, 404);
         abort_unless((int) $lecture->section_id === (int) $section->id, 404);
-        abort_unless((int) $module->formateur_id === (int) $user->id, 403);
+        $this->accesModule->assertOwner($module, (int) $user->id);
 
         if ($resource) {
             abort_unless((int) $resource->module_id === (int) $module->id, 404);

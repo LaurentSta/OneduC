@@ -10,6 +10,8 @@ Oneduc suit une architecture **Laravel MVC standard** avec une séparation nette
 routes/
 ├── web.php           ← routes publiques et authentification générale
 ├── admin.php         ← espace /admin (middleware: auth, role:admin, admin.activity)
+├── admin-constructeur-formations.php ← constructeur moderne et versions du catalogue admin
+├── admin-modeles-parcours.php ← modèles globaux admin + catalogue de copies formateur
 ├── formateur.php     ← espace /formateur (middleware: auth, role:formateur, association.member)
 ├── stagiaire.php     ← espace /stagiaire (middleware: auth, role:stagiaire, track.time)
 ├── observateur.php   ← espace /observateur (middleware: auth, role:observateur)
@@ -47,6 +49,8 @@ app/Http/Controllers/
 │
 ├── Backend/                         ← Contrôleurs admin
 │   ├── ModuleController.php         ← CRUD modules + navigation section/leçon (1185 lignes)
+│   ├── ConstructeurFormationController.php ← constructeur moderne des formations officielles
+│   ├── VersionFormationCatalogueController.php ← version, publication, archivage et bascule groupes
 │   ├── ModuleSectionController.php
 │   ├── ModuleLectureController.php
 │   ├── ScormLibraryController.php   ← Import SCORM
@@ -56,11 +60,15 @@ app/Http/Controllers/
 │   ├── PilotageController.php       ← Projets, tâches, journal (756 lignes)
 │   └── EvaluationController.php
 │
+├── Admin/
+│   └── ModeleParcoursController.php ← modèles globaux de parcours
+│
 ├── Formateur/
 │   ├── GroupeController.php         ← Gestion groupes formateur (686 lignes)
 │   ├── GroupeModuleLessonController.php ← Personnalisation leçons par groupe
 │   ├── ModuleBuilderController.php  ← Orchestration HTTP du builder de modules formateur (455 lignes)
-│   ├── MesFormationsController.php  ← FormateurParcours
+│   ├── MesParcoursController.php    ← FormateurParcours
+│   ├── CatalogueModelesParcoursController.php ← duplication des modèles globaux publiés
 │   ├── ParcoursController.php       ← Parcours onboarding formateur
 │   ├── ProgressionGroupesController.php
 │   ├── ProgressionStagiaireController.php ← Détail stagiaire (630 lignes)
@@ -110,6 +118,13 @@ Domaines extraits :
 
 ```text
 app/Domains/
+├── CatalogueFormations/
+│   ├── Actions/
+│   │   ├── CreerVersionFormationCatalogue.php
+│   │   ├── PublierVersionFormationCatalogue.php
+│   │   └── BasculerGroupesVersionFormation.php
+│   └── Support/
+│       └── AccesScormVersionne.php
 ├── ModulesFormateur/
 │   ├── Actions/
 │   │   ├── CreerModule.php
@@ -139,22 +154,27 @@ app/Domains/
 │       ├── PiperTtsClient.php
 │       ├── GardeFouPromptIA.php
 │       └── LimiteurGenerationIA.php
+├── Parcours/
+│   └── Actions/
+│       └── DupliquerModeleParcours.php
 └── Learners/
     └── Support/
         └── LearnerModuleProgress.php
 ```
 
-Les noms de fichiers/classes de `ModulesFormateur` sont volontairement en français (convention retenue pour tout le code métier propre à Oneduc, par opposition aux termes techniques génériques du framework Laravel qui restent en anglais). `ModuleBuilderController` délègue maintenant la création, duplication, réordonnancement, déplacement de leçons, promotion en chapitre, upload d'images/vidéos/SCORM, options module et assignation aux groupes à `ModulesFormateur`. `StagiaireController` délègue le calcul de progression des modules et les statuts de quiz natifs à `Learners\Support\LearnerModuleProgress`.
+Les noms de fichiers/classes métier sont volontairement en français (convention retenue pour le code propre à Oneduc, par opposition aux termes techniques génériques du framework Laravel qui restent en anglais). `ModuleBuilderController` et `ConstructeurFormationController` partagent les actions de création, réordonnancement, médias, SCORM, IA et quiz de `ModulesFormateur`. Le domaine `CatalogueFormations` porte les règles spécifiques d'immuabilité et de version, tandis que `Parcours` porte la copie structurelle des modèles globaux. `StagiaireController` délègue le calcul de progression des modules et les statuts de quiz natifs à `Learners\Support\LearnerModuleProgress`.
+
+Le constructeur admin moderne reste une surface d'intégration parallèle au CRUD `Backend\ModuleController`. Le routage dédié permet de tester la parité sans remplacer prématurément les écrans historiques.
 
 Prochaines zones candidates :
-- `Backend/ModuleController` : navigation module/section/leçon, progression, médias ;
+- `Backend/ModuleController` : navigation module/section/leçon et progression encore historiques ;
 - `StagiaireController` : dashboard, modules, résultats, outils ;
 - `Formateur/GroupeController` : création groupe, stagiaires, co-formateurs, invitations ;
 - `ProgressionStagiaireController` : timeline, présence, risque d'abandon.
 
 ---
 
-## Modèles Eloquent (61 modèles)
+## Modèles Eloquent centraux
 
 ### Modèles centraux
 
@@ -167,6 +187,8 @@ Prochaines zones candidates :
 | `ModuleLecture` | `module_lectures` | Leçon individuelle |
 | `FormateurParcours` | `formateur_parcours` | Parcours de formation créé par un formateur |
 | `FormateurParcoursItem` | `formateur_parcours_items` | Élément ordonné d'un parcours |
+| `ModeleParcours` | `modeles_parcours` | Modèle global administré, publié puis copié par les formateurs |
+| `ModeleParcoursItem` | `modele_parcours_items` | Formation officielle ou configuration générique d'outil ordonnée |
 
 ### Modèles de progression
 
@@ -190,7 +212,7 @@ Prochaines zones candidates :
 | `ScormPackage` | `scorm_packages` | Référence d'un package SCORM (slug stable) |
 | `ScormPackageVersion` | `scorm_package_versions` | Version d'un package SCORM importé |
 
-Le modèle `Module` utilise `SoftDeletes` et distingue les modules catalogue des modules créés par les formateurs via `is_trainer_authored`.
+Le modèle `Module` utilise `SoftDeletes` et distingue les modules catalogue des modules créés par les formateurs via `is_trainer_authored`. Les formations officielles partagent une `catalogue_key` entre versions et portent un état `draft`, `published` ou `archived`. `created_by` identifie l'acteur de création ; `formateur_id` devient un référent facultatif dans ce contexte.
 
 ---
 
@@ -226,8 +248,8 @@ Les écrans Blade restent majoritaires, mais plusieurs interfaces chargent React
 
 | Point de montage | Bundle chargé | Usage |
 |------------------|---------------|-------|
-| `[data-outline-editor]` | `resources/js/outline-editor/OutlineEditor.jsx` | Plan continu du builder de modules formateur |
-| `[data-block-editor]` | `resources/js/formateur-module-builder-editor.jsx` | Édition riche du contenu d'une leçon en blocs |
+| `[data-outline-editor]` | `resources/js/outline-editor/OutlineEditor.jsx` | Plan continu partagé par les builders formateur et admin |
+| `[data-block-editor]` | `resources/js/formateur-module-builder-editor.jsx` | Édition riche partagée du contenu d'une leçon en blocs |
 | `[data-whiteboard-app]` | `resources/js/group-whiteboard-excalidraw.jsx` | Tableau blanc de groupe |
 | `[data-parcours-builder]` | `resources/js/formateur-parcours-builder.jsx` | Assemblage de parcours formateur |
 
@@ -237,7 +259,7 @@ Le nouvel éditeur de plan du module builder utilise Tiptap/ProseMirror avec deu
 - `reconcile.js` et `sync-queue.js` : création/renommage avec debounce et file de synchronisation ;
 - `api.js` : appels JSON vers `ModuleBuilderController`.
 
-Le contenu détaillé des leçons reste séparé dans la page `resources/views/formateur/modules-builder/lecture-edit.blade.php`, qui monte l'éditeur de blocs existant.
+Le contenu détaillé des leçons reste séparé dans la page `resources/views/formateur/modules-builder/lecture-edit.blade.php`, réutilisée par la vue admin avec un contexte de routes dédié. Les vues `resources/views/admin/backend/formations-constructeur/` restent donc minces et ne dupliquent pas le composant d'édition.
 
 ---
 

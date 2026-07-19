@@ -80,6 +80,7 @@ function createPowerPointToolModule(User $trainer, string $status = 'ready'): ar
         'module_name' => 'Présentation test',
         'module_name_slug' => 'presentation-test-'.Str::lower(Str::random(4)),
         'certificat' => false,
+        'is_trainer_authored' => true,
         'status' => false,
     ]);
     $section = ModuleSection::query()->create([
@@ -145,6 +146,7 @@ it('creates a draft module and starts slide conversion from an uploaded presenta
     $response->assertRedirect(route('formateur.outils.powerpoint.show', $module));
 
     expect($module->status)->toBeFalse();
+    expect($module->is_trainer_authored)->toBeTrue();
     expect($module->sections()->firstOrFail()->section_title)->toBe('Les fondamentaux');
     expect($lecture->lecture_title)->toBe('Diaporama principal');
     expect($lecture->content_type)->toBe('slides');
@@ -207,4 +209,26 @@ it('prevents another trainer from managing a PowerPoint module', function () {
     $this->actingAs($otherTrainer)
         ->post(route('formateur.outils.powerpoint.publish', $module), ['published' => true])
         ->assertForbidden();
+});
+
+it('empêche le référent de gérer une présentation du catalogue officiel', function () {
+    $referent = createPowerPointToolTrainer('referent');
+    ['module' => $module] = createPowerPointToolModule($referent);
+    $module->forceFill([
+        'is_trainer_authored' => false,
+        'publication_state' => Module::PUBLICATION_PUBLISHED,
+        'published_at' => now(),
+        'status' => true,
+    ])->save();
+
+    $this->actingAs($referent)
+        ->post(route('formateur.outils.powerpoint.retry', $module))
+        ->assertForbidden();
+
+    $this->actingAs($referent)
+        ->post(route('formateur.outils.powerpoint.publish', $module), ['published' => false])
+        ->assertForbidden();
+
+    expect($module->fresh()->status)->toBeTrue()
+        ->and($module->fresh()->publication_state)->toBe(Module::PUBLICATION_PUBLISHED);
 });

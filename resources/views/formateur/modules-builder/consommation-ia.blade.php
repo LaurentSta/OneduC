@@ -1,7 +1,19 @@
-{{-- resources/views/formateur/modules-builder/consommation-ia.blade.php --}}
-@extends('formateur.dashboard')
+{{-- Vue de consommation IA partagée par les espaces formateur et administrateur. --}}
+@php
+  $constructeurAdmin = (bool) ($constructeurAdmin ?? false);
+  $layoutConstructeur = $layoutConstructeur ?? ($constructeurAdmin ? 'admin.admin_dashboard' : 'formateur.dashboard');
+  $sectionConstructeur = $sectionConstructeur ?? ($constructeurAdmin ? 'admin' : 'formateur');
+  $nomRoutesConstructeur = $nomRoutesConstructeur ?? ($constructeurAdmin
+      ? 'admin.formations.constructeur'
+      : 'formateur.modules.builder');
+  $urlAccueilConstructeur = $urlAccueilConstructeur ?? ($constructeurAdmin
+      ? (Route::has('admin.dashboard') ? route('admin.dashboard') : url('/admin'))
+      : route('formateur.outils.index'));
+@endphp
 
-@section('formateur')
+@extends($layoutConstructeur)
+
+@section($sectionConstructeur)
 <div class="w-full px-6 lg:px-8">
 
   {{-- En-tête --}}
@@ -9,18 +21,22 @@
     <nav class="text-sm font-varela text-gray-500 mb-2">
       <ol class="inline-flex items-center space-x-1">
         <li>
-          <a href="{{ route('formateur.outils.index') }}" class="text-orangeone hover:underline">Outils numériques</a>
+          <a href="{{ $urlAccueilConstructeur }}" class="text-orangeone hover:underline">{{ $constructeurAdmin ? 'Administration' : 'Outils numériques' }}</a>
         </li>
         <li><span class="mx-2 text-gray-400">/</span></li>
         <li>
-          <a href="{{ route('formateur.modules.builder.index') }}" class="text-orangeone hover:underline">Mes créations</a>
+          <a href="{{ route($nomRoutesConstructeur.'.index') }}" class="text-orangeone hover:underline">{{ $constructeurAdmin ? 'Catalogue Oneduc' : 'Mes créations' }}</a>
         </li>
         <li><span class="mx-2 text-gray-400">/</span></li>
-        <li class="text-gray-400">Ma consommation IA</li>
+        <li class="text-gray-400">{{ $constructeurAdmin ? 'Budget IA du catalogue' : 'Ma consommation IA' }}</li>
       </ol>
     </nav>
-    <p class="font-raleway text-2xl text-bleuone">Ma consommation IA</p>
-    <p class="text-sm text-gray-500 mt-1">Nombre de tokens Mistral consommés lors de vos générations de leçons et de formations par IA.</p>
+    <h1 class="font-raleway text-2xl text-bleuone">{{ $constructeurAdmin ? 'Budget IA du catalogue' : 'Ma consommation IA' }}</h1>
+    <p class="text-sm text-gray-500 mt-1">
+      {{ $constructeurAdmin
+          ? 'Suivi du budget plateforme réservé aux générations des formations officielles.'
+          : 'Nombre de tokens Mistral consommés lors de vos générations de leçons et de formations par IA.' }}
+    </p>
   </header>
 
   @php

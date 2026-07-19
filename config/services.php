@@ -55,6 +55,8 @@ return [
         'api_key' => env('MISTRAL_API_KEY', ''),
         'model' => env('MISTRAL_MODEL', 'mistral-large-latest'),
         'monthly_token_limit' => env('MISTRAL_MONTHLY_TOKEN_LIMIT', 500000),
+        'admin_monthly_token_limit' => env('MISTRAL_ADMIN_MONTHLY_TOKEN_LIMIT', 2000000),
+        'admin_daily_generation_limit' => env('MISTRAL_ADMIN_DAILY_GENERATION_LIMIT', 20),
     ],
 
     'piper' => [
