@@ -6,6 +6,7 @@ use App\Http\Controllers\Backend\ModuleController;
 use App\Http\Controllers\Stagiaire\EmargementController;
 use App\Http\Controllers\Stagiaire\FirstLoginController;
 use App\Http\Controllers\Stagiaire\LiveQuizSessionController;
+use App\Http\Controllers\Stagiaire\ParcoursOutilController;
 use App\Http\Controllers\Stagiaire\ParcoursWordCloudController;
 use App\Http\Controllers\Stagiaire\QuestionWallController;
 use App\Http\Controllers\Stagiaire\QuizController; // ✅ Import du nouveau contrôleur
@@ -177,6 +178,13 @@ Route::middleware(['auth', 'role:stagiaire', 'track.time'])
                     Route::get('/{item}', [ParcoursWordCloudController::class, 'show'])->name('parcours.show');
                     Route::post('/{item}/submit', [ParcoursWordCloudController::class, 'submit'])->name('parcours.submit');
                     Route::get('/{item}/data', [ParcoursWordCloudController::class, 'liveData'])->name('parcours.data');
+                });
+
+            // Outils génériques de parcours (buzzer, échelle, vrai/faux, roue, composants)
+            Route::prefix('/outil')
+                ->name('outil.')
+                ->group(function () {
+                    Route::get('/parcours/{item}', [ParcoursOutilController::class, 'show'])->name('parcours.show');
                 });
 
         }); // Fin du middleware force.password.change

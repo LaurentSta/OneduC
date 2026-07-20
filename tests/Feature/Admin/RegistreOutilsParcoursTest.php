@@ -38,6 +38,16 @@ it('valide la configuration par défaut de chaque outil actif', function () {
     }
 });
 
+it('marque vrai-faux comme exécutable en parcours, les 4 autres pas encore', function () {
+    $registre = app(RegistreOutilsParcours::class);
+
+    expect($registre->executionDisponible('vrai-faux'))->toBeTrue()
+        ->and($registre->executionDisponible('buzzer'))->toBeFalse()
+        ->and($registre->executionDisponible('echelle'))->toBeFalse()
+        ->and($registre->executionDisponible('roue'))->toBeFalse()
+        ->and($registre->executionDisponible('composants'))->toBeFalse();
+});
+
 it('écarte un outil désactivé même si sa configuration est valide', function () {
     config()->set('outils.minuteur.enabled', false);
     $registre = app(RegistreOutilsParcours::class);

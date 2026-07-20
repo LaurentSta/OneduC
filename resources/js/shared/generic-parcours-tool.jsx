@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { VraiFauxToolForm } from './outils/vrai-faux-form';
 
 export function genericToolTitle(item) {
   return String(item?.configuration?.titre ?? item?.title ?? item?.outil_label ?? item?.outil ?? 'Activité').trim();
@@ -21,7 +22,7 @@ export function normalizeGenericTool(raw, index = 0) {
     outil,
     outil_label: String(raw?.outil_label ?? outil).trim(),
     configuration,
-    execution_disponible: false,
+    execution_disponible: Boolean(raw?.execution_disponible),
   };
 }
 
@@ -34,7 +35,15 @@ export function genericToolPayload(item) {
   };
 }
 
-export function GenericToolStatusBadge() {
+export function GenericToolStatusBadge({ executionDisponible = false }) {
+  if (executionDisponible) {
+    return (
+      <span className="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
+        Prêt à être lancé pour un groupe
+      </span>
+    );
+  }
+
   return (
     <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
       Configuration — session non lancée
@@ -43,6 +52,14 @@ export function GenericToolStatusBadge() {
 }
 
 export function GenericToolForm({ item, onSave, onCancel }) {
+  if (item?.outil === 'vrai-faux') {
+    return <VraiFauxToolForm item={item} onSave={onSave} onCancel={onCancel} />;
+  }
+
+  return <RawConfigurationForm item={item} onSave={onSave} onCancel={onCancel} />;
+}
+
+function RawConfigurationForm({ item, onSave, onCancel }) {
   const configurationInitiale = useMemo(
     () => JSON.stringify(item?.configuration ?? {}, null, 2),
     [item],

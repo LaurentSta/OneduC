@@ -7,6 +7,7 @@ use App\Http\Controllers\Formateur\FormateurProfileController;
 use App\Http\Controllers\Formateur\FormateurStagiaireController;
 use App\Http\Controllers\Formateur\GroupeController;
 use App\Http\Controllers\Formateur\GroupeModuleLessonController;
+use App\Http\Controllers\Formateur\GroupeOutilController;
 use App\Http\Controllers\Formateur\GroupeWordCloudController;
 use App\Http\Controllers\Formateur\LessonResourceController;
 use App\Http\Controllers\Formateur\LiveQuizSessionController;
@@ -126,6 +127,13 @@ Route::middleware(['auth', 'role:formateur', 'association.member'])
             ->group(function () {
                 Route::get('/{item}/live', [GroupeWordCloudController::class, 'live'])->name('live');
                 Route::get('/{item}/data', [GroupeWordCloudController::class, 'liveData'])->name('data');
+            });
+
+        // 🧩 Outils génériques de parcours (buzzer, échelle, vrai/faux, roue, composants)
+        Route::prefix('/groupes/{group}/outils')
+            ->name('groupes.outils.')
+            ->group(function () {
+                Route::get('/{item}/lancer', [GroupeOutilController::class, 'launch'])->name('launch');
             });
 
         // 📈 Progression des stagiaires

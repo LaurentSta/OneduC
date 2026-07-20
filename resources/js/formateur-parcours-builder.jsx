@@ -389,7 +389,7 @@ function CubeCard({ item, isEditing, onDragStart, onDragOver, onDragEnd, onRemov
 
         {isGenericTool && (
           <div className="mt-2.5">
-            <GenericToolStatusBadge />
+            <GenericToolStatusBadge executionDisponible={item.execution_disponible} />
           </div>
         )}
 
@@ -549,7 +549,7 @@ function ParcoursBuilder({ availableModules = [], toolTemplates = [], wordcloudU
               </span>
             </div>
             <div className="mt-2">
-              <GenericToolStatusBadge />
+              <GenericToolStatusBadge executionDisponible={item.execution_disponible} />
             </div>
           </div>
         );
@@ -739,7 +739,6 @@ function ParcoursBuilder({ availableModules = [], toolTemplates = [], wordcloudU
         template_id: tpl.id,
         position: 0,
         configuration: { ...(tpl.configuration ?? {}) },
-        execution_disponible: false,
       };
     }
     setItems((current) => {
@@ -994,7 +993,7 @@ function ParcoursBuilder({ availableModules = [], toolTemplates = [], wordcloudU
                           : item.type === 'poll'
                             ? pollChoices(item).join(' / ')
                             : item.type === 'outil'
-                              ? <GenericToolStatusBadge />
+                              ? <GenericToolStatusBadge executionDisponible={item.execution_disponible} />
                               : `${item.lesson_count} leç. — ${item.duration_label}`
                         }
                       </td>
@@ -1123,7 +1122,7 @@ function ParcoursBuilder({ availableModules = [], toolTemplates = [], wordcloudU
                           : isPoll
                             ? pollChoices(item).join(' / ')
                             : isGenericTool
-                              ? <GenericToolStatusBadge />
+                              ? <GenericToolStatusBadge executionDisponible={item.execution_disponible} />
                               : `${item.lesson_count} leç. — ${item.duration_label}`
                         }
                       </td>
@@ -1257,7 +1256,7 @@ function ParcoursBuilder({ availableModules = [], toolTemplates = [], wordcloudU
                       </span>
                     </div>
                     {isGenericTool ? (
-                      <div className="mt-1.5"><GenericToolStatusBadge /></div>
+                      <div className="mt-1.5"><GenericToolStatusBadge executionDisponible={t.execution_disponible} /></div>
                     ) : (
                       <p className="mt-1 text-[11px] text-gray-500">
                         {isWc ? `${t.wc_questions?.length ?? 0} question(s)` : `${t.poll_questions?.length ?? 0} question(s)`}

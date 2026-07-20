@@ -144,6 +144,49 @@
     </div>
   </header>
 
+  {{-- Groupes utilisant ce parcours --}}
+  @php
+    $registreOutils = app(\App\Support\Parcours\RegistreOutilsParcours::class);
+    $etapesLancables = $parcours->items->filter(function ($item) use ($registreOutils) {
+        return $item->type === 'wordcloud'
+            || ($item->type === 'outil' && $registreOutils->executionDisponible((string) $item->outil));
+    })->values();
+  @endphp
+
+  <div class="bg-white rounded-[20px] shadow-md px-8 py-6 w-full mb-6">
+    <p class="font-raleway text-lg text-bleuone mb-1">Groupes utilisant ce parcours</p>
+    <p class="text-sm text-gray-500 mb-4">Lancez une activité pour un groupe précis pendant la séance.</p>
+
+    @if($parcours->groups->isEmpty())
+      <p class="text-sm text-gray-400">Aucun groupe n'est encore lié à ce parcours. Associez un groupe depuis sa fiche pour pouvoir lancer une activité.</p>
+    @elseif($etapesLancables->isEmpty())
+      <p class="text-sm text-gray-400">Ce parcours ne contient pas encore d'activité lançable (nuage de mots ou vrai/faux).</p>
+    @else
+      <div class="space-y-4">
+        @foreach($parcours->groups as $group)
+          <div class="rounded-[12px] border border-gray-200 p-4">
+            <p class="text-sm font-bold text-gray-900 mb-2">{{ $group->name }}</p>
+            <div class="flex flex-wrap gap-2">
+              @foreach($etapesLancables as $item)
+                @if($item->type === 'wordcloud')
+                  <a href="{{ route('formateur.groupes.wordcloud.live', [$group, $item]) }}"
+                     class="inline-flex items-center gap-1.5 rounded-[8px] bg-amber-50 border border-amber-200 px-3 py-1.5 text-xs font-semibold text-amber-700 hover:bg-amber-100 transition">
+                    {{ $item->position }}. {{ $item->wc_title ?: 'Nuage de mots' }} — Lancer
+                  </a>
+                @else
+                  <a href="{{ route('formateur.groupes.outils.launch', [$group, $item]) }}"
+                     class="inline-flex items-center gap-1.5 rounded-[8px] bg-slate-50 border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition">
+                    {{ $item->position }}. {{ $registreOutils->libelle((string) $item->outil) }} — Lancer
+                  </a>
+                @endif
+              @endforeach
+            </div>
+          </div>
+        @endforeach
+      </div>
+    @endif
+  </div>
+
   {{-- Preview React Flow (mode lecture seule) --}}
   <div
     data-parcours-builder

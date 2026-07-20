@@ -5,7 +5,7 @@
 
   {{-- En-tête --}}
   <header class="bg-white rounded-[20px] shadow-md px-8 pt-5 pb-6 my-6">
-    <div class="flex flex-wrap items-center justify-between gap-4">
+    <div class="flex flex-wrap items-center justify-between gap-6">
       <div>
         <nav class="text-sm font-varela text-gray-500 mb-2">
           <ol class="inline-flex items-center space-x-1">
@@ -16,9 +16,23 @@
             <li class="text-gray-400">Nuage de mots</li>
           </ol>
         </nav>
-        <p class="font-raleway text-2xl text-bleuone">Nuages de mots</p>
+        <div class="flex items-center gap-1.5">
+          <p class="font-raleway text-2xl text-bleuone">Nuages de mots</p>
+          <span class="relative inline-flex group">
+            <svg xmlns="http://www.w3.org/2000/svg" tabindex="0" class="h-4 w-4 text-gray-400 hover:text-bleuone focus:text-bleuone outline-none cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span class="pointer-events-none absolute left-0 top-full z-20 mt-2 hidden w-80 -translate-x-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-[11px] leading-4 text-slate-700 shadow-lg group-hover:block group-focus-within:block">
+              <strong class="text-bleuone">Définition —</strong> un nuage de mots (ou « tag cloud ») est une représentation visuelle d'un ensemble de mots-clés dans laquelle la taille de chaque mot est proportionnelle à sa fréquence : plus un mot est cité par le groupe, plus il apparaît grand.
+              <br><br>
+              <strong class="text-bleuone">Utilisation —</strong> posez une question ouverte, les stagiaires répondent en direct depuis leur appareil et le nuage se met à jour à l'écran. Idéal en brise-glace, en sondage d'opinion ou en synthèse pour faire ressortir le vocabulaire dominant d'un groupe.
+            </span>
+          </span>
+        </div>
+        <p class="text-sm text-gray-600 mt-1 max-w-xl">Un nuage de mots est une représentation visuelle de mots-clés dans laquelle la taille de chaque mot reflète sa fréquence : plus il est cité par le groupe, plus il apparaît grand.</p>
         <p class="text-sm text-gray-500 mt-1">Préparez une ou plusieurs questions. Les stagiaires les découvrent ensuite une par une.</p>
       </div>
+      <img src="{{ asset('images/svg/NuageDeMots.svg') }}" alt="Nuages de mots" class="hidden sm:block w-48 h-auto shrink-0">
     </div>
   </header>
 
@@ -52,30 +66,53 @@
         @endif
 
         <form method="POST" action="{{ route('formateur.nuages.store') }}" class="space-y-4"
-              x-data="{ questions: {{ old('questions') ? json_encode(old('questions')) : "['']" }}, groupId: '{{ old('group_id', '') }}' }">
+              x-data="{
+                questions: {{ old('questions') ? json_encode(old('questions')) : "['']" }},
+                groupId: '{{ old('group_id', '') }}',
+                mode: '{{ old('group_id') || $groups->isNotEmpty() ? 'lancer' : 'modele' }}'
+              }">
           @csrf
 
           <div>
-            <label class="mb-1 flex items-center gap-1 text-xs font-semibold text-gray-600">
-              Groupe <span class="font-normal text-gray-400">(optionnel)</span>
-              <span class="relative inline-flex group">
-                <svg xmlns="http://www.w3.org/2000/svg" tabindex="0" class="h-3.5 w-3.5 text-gray-400 hover:text-bleuone focus:text-bleuone outline-none cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-                <span class="pointer-events-none absolute left-1/2 top-full z-20 mt-2 hidden w-56 -translate-x-1/2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-[11px] leading-4 text-slate-700 shadow-lg group-hover:block group-focus-within:block">
-                  Sans groupe, le nuage n'est pas lancé : vous pourrez le glisser dans un parcours.
+            <label class="block text-xs font-semibold text-gray-600 mb-2">Que voulez-vous faire ?</label>
+            <div class="grid grid-cols-2 gap-2">
+              <button type="button" @click="mode = 'lancer'"
+                      {{ $groups->isEmpty() ? 'disabled' : '' }}
+                      :class="mode === 'lancer' ? 'border-bleuone bg-bleuone/5' : 'border-gray-200 hover:border-gray-300'"
+                      class="rounded-[10px] border-2 px-3 py-2.5 text-left transition disabled:cursor-not-allowed disabled:opacity-40">
+                <span class="block text-sm font-bold" :class="mode === 'lancer' ? 'text-bleuone' : 'text-gray-700'">Lancer pour un groupe</span>
+                <span class="block text-[11px] text-gray-500 mt-0.5">
+                  @if($groups->isEmpty())
+                    Créez d'abord un groupe
+                  @else
+                    Disponible tout de suite pour vos stagiaires
+                  @endif
                 </span>
-              </span>
-            </label>
-            <select name="group_id" x-model="groupId"
+              </button>
+              <button type="button" @click="mode = 'modele'; groupId = ''"
+                      :class="mode === 'modele' ? 'border-bleuone bg-bleuone/5' : 'border-gray-200 hover:border-gray-300'"
+                      class="rounded-[10px] border-2 px-3 py-2.5 text-left transition">
+                <span class="block text-sm font-bold" :class="mode === 'modele' ? 'text-bleuone' : 'text-gray-700'">Créer un modèle</span>
+                <span class="block text-[11px] text-gray-500 mt-0.5">À réutiliser plus tard dans un parcours</span>
+              </button>
+            </div>
+          </div>
+
+          <div x-show="mode === 'lancer'" x-cloak>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Groupe</label>
+            <select name="group_id" x-model="groupId" :required="mode === 'lancer'"
                     class="w-full rounded-[10px] border border-gray-300 px-3 py-2.5 text-sm focus:border-bleuone focus:outline-none focus:ring-2 focus:ring-bleuone/15">
-              <option value="">Aucun — créer un nuage réutilisable dans un parcours</option>
+              <option value="">Choisir un groupe…</option>
               @foreach($groups as $group)
                 <option value="{{ $group->id }}" {{ old('group_id') == $group->id ? 'selected' : '' }}>
                   {{ $group->name }}
                 </option>
               @endforeach
             </select>
+          </div>
+
+          <div x-show="mode === 'modele'" x-cloak class="rounded-[10px] border border-violet-200 bg-violet-50 px-3 py-2.5 text-[11px] text-violet-700">
+            Ce nuage sera enregistré comme modèle, disponible dans le catalogue de vos parcours. Vous pourrez le lancer pour un groupe plus tard.
           </div>
 
           <div>
@@ -151,7 +188,7 @@
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
             </svg>
-            <span x-text="groupId ? 'Lancer le nuage de mots' : 'Créer le nuage de mots'"></span>
+            <span x-text="mode === 'lancer' ? 'Lancer le nuage de mots' : 'Enregistrer le modèle'"></span>
           </button>
         </form>
       </div>

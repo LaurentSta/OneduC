@@ -11,6 +11,7 @@ class TrueFalseSession extends Model
     protected $fillable = [
         'formateur_id',
         'group_id',
+        'formateur_parcours_item_id',
         'title',
         'questions',
         'access_code',
@@ -34,6 +35,11 @@ class TrueFalseSession extends Model
     public function group(): BelongsTo
     {
         return $this->belongsTo(Group::class);
+    }
+
+    public function parcoursItem(): BelongsTo
+    {
+        return $this->belongsTo(FormateurParcoursItem::class, 'formateur_parcours_item_id');
     }
 
     public function responses(): HasMany
