@@ -86,6 +86,11 @@ class RegistreOutilsParcours
         return (string) ($this->definitions()[$cle]['libelle'] ?? $cle);
     }
 
+    public function executionDisponible(string $cle): bool
+    {
+        return (bool) ($this->definitions()[$cle]['execution_disponible'] ?? false);
+    }
+
     /**
      * @return array<string, mixed>
      */
@@ -203,7 +208,7 @@ class RegistreOutilsParcours
             'vrai-faux' => [
                 'libelle' => 'Vrai ou Faux',
                 'configuration_activation' => 'outils.vraifaux.enabled',
-                'execution_disponible' => false,
+                'execution_disponible' => true,
                 'configuration_defaut' => ['titre' => 'Vrai ou Faux', 'consigne' => null, 'affirmations' => [['texte' => 'Affirmation à compléter', 'reponse' => true]]],
                 'regles' => $reglesCommunes + [
                     'affirmations' => ['required', 'array', 'min:1', 'max:50'],

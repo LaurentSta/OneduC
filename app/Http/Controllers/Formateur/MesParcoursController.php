@@ -71,7 +71,7 @@ class MesParcoursController extends Controller
     {
         $this->authorizeOwnership($parcours);
 
-        $parcours->load('items.module');
+        $parcours->load('items.module', 'groups');
 
         $selectedItems = $this->buildSelectedItemsPayload($parcours);
 
@@ -294,7 +294,7 @@ class MesParcoursController extends Controller
                 'outil' => $cle,
                 'outil_label' => $definition['libelle'],
                 'configuration' => $definition['configuration_defaut'],
-                'execution_disponible' => false,
+                'execution_disponible' => $this->registre->executionDisponible($cle),
             ]);
 
         return $wordClouds->concat($polls)->concat($outilsGeneriques)->values()->all();
@@ -412,7 +412,7 @@ class MesParcoursController extends Controller
                         'outil_label' => $libelle,
                         'title' => (string) ($configuration['titre'] ?? $libelle),
                         'configuration' => $configuration,
-                        'execution_disponible' => false,
+                        'execution_disponible' => $this->registre->executionDisponible((string) $item->outil),
                     ];
                 }
 

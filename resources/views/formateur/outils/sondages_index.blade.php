@@ -28,6 +28,7 @@
            x-data='{
              questions: [{ question: "", choices: ["", ""] }],
              groupId: "{{ old("group_id", "") }}",
+             mode: "{{ old("group_id") || $groups->isNotEmpty() ? "lancer" : "modele" }}",
              addQuestion() {
                if (this.questions.length < 10) this.questions.push({ question: "", choices: ["", ""] });
              },
@@ -59,19 +60,45 @@
             @csrf
 
             <div>
-              <label class="block text-xs font-semibold text-gray-600 mb-1">Groupe <span class="font-normal text-gray-400">(optionnel)</span></label>
-              <select name="group_id" x-model="groupId"
+              <label class="block text-xs font-semibold text-gray-600 mb-2">Que voulez-vous faire ?</label>
+              <div class="grid grid-cols-2 gap-2">
+                <button type="button" @click="mode = 'lancer'"
+                        {{ $groups->isEmpty() ? 'disabled' : '' }}
+                        :class="mode === 'lancer' ? 'border-teal-500 bg-teal-50' : 'border-gray-200 hover:border-gray-300'"
+                        class="rounded-[10px] border-2 px-3 py-2.5 text-left transition disabled:cursor-not-allowed disabled:opacity-40">
+                  <span class="block text-sm font-bold" :class="mode === 'lancer' ? 'text-teal-700' : 'text-gray-700'">Lancer pour un groupe</span>
+                  <span class="block text-[11px] text-gray-500 mt-0.5">
+                    @if($groups->isEmpty())
+                      Créez d'abord un groupe
+                    @else
+                      Disponible tout de suite pour vos stagiaires
+                    @endif
+                  </span>
+                </button>
+                <button type="button" @click="mode = 'modele'; groupId = ''"
+                        :class="mode === 'modele' ? 'border-teal-500 bg-teal-50' : 'border-gray-200 hover:border-gray-300'"
+                        class="rounded-[10px] border-2 px-3 py-2.5 text-left transition">
+                  <span class="block text-sm font-bold" :class="mode === 'modele' ? 'text-teal-700' : 'text-gray-700'">Créer un modèle</span>
+                  <span class="block text-[11px] text-gray-500 mt-0.5">À réutiliser plus tard dans un parcours</span>
+                </button>
+              </div>
+            </div>
+
+            <div x-show="mode === 'lancer'" x-cloak>
+              <label class="block text-xs font-semibold text-gray-600 mb-1">Groupe</label>
+              <select name="group_id" x-model="groupId" :required="mode === 'lancer'"
                       class="w-full rounded-[10px] border border-gray-300 px-3 py-2.5 text-sm focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-200">
-                <option value="">Aucun — créer un sondage réutilisable dans un parcours</option>
+                <option value="">Choisir un groupe…</option>
                 @foreach($groups as $group)
                   <option value="{{ $group->id }}" {{ old('group_id') == $group->id ? 'selected' : '' }}>
                     {{ $group->name }} ({{ $group->students_count }} stagiaire{{ $group->students_count > 1 ? 's' : '' }})
                   </option>
                 @endforeach
               </select>
-              <p class="mt-1 text-[11px] text-gray-400" x-show="!groupId">
-                Sans groupe, le sondage n'est pas lancé : vous pourrez le glisser dans un parcours.
-              </p>
+            </div>
+
+            <div x-show="mode === 'modele'" x-cloak class="rounded-[10px] border border-violet-200 bg-violet-50 px-3 py-2.5 text-[11px] text-violet-700">
+              Ce sondage sera enregistré comme modèle, disponible dans le catalogue de vos parcours. Vous pourrez le lancer pour un groupe plus tard.
             </div>
 
             <div>
@@ -156,7 +183,7 @@
 
             <button type="submit"
                     class="w-full inline-flex items-center justify-center gap-2 rounded-[10px] bg-teal-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-teal-700 transition">
-              <span x-text="groupId ? 'Créer et lancer le sondage' : 'Créer le sondage'"></span>
+              <span x-text="mode === 'lancer' ? 'Créer et lancer le sondage' : 'Enregistrer le modèle'"></span>
             </button>
           </form>
       </div>

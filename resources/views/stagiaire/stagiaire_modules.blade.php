@@ -189,6 +189,8 @@
               @php
                 $configurationOutil = collect($item->configuration ?? []);
                 $libelleOutil = trim((string) ($configurationOutil->get('titre') ?: Str::headline(str_replace(['-', '_'], ' ', (string) ($item->outil ?? 'activité')))));
+                $outilExecutable = $item->outil === 'vrai-faux'
+                    && app(\App\Support\Parcours\RegistreOutilsParcours::class)->executionDisponible('vrai-faux');
               @endphp
               <div class="flex items-center gap-4 bg-slate-50/70 px-6 py-4">
                 <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-200 text-sm font-bold text-slate-700">
@@ -199,11 +201,23 @@
                 </div>
                 <div class="min-w-0 flex-1">
                   <p class="truncate text-sm font-semibold text-slate-800">{{ $libelleOutil ?: 'Activité' }}</p>
-                  <p class="mt-0.5 text-xs text-slate-500">Cette étape sera ouverte par le formateur pendant la séance.</p>
+                  @if(!$outilExecutable)
+                    <p class="mt-0.5 text-xs text-slate-500">Cette étape sera ouverte par le formateur pendant la séance.</p>
+                  @endif
                 </div>
-                <span class="inline-flex items-center rounded-full bg-slate-200 px-2.5 py-0.5 text-[10px] font-semibold text-slate-700">
-                  Configuration — session non lancée
-                </span>
+                @if($outilExecutable)
+                  <a href="{{ route('stagiaire.outil.parcours.show', $item) }}"
+                     class="shrink-0 inline-flex items-center gap-1 rounded-[8px] bg-slate-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-slate-700 transition">
+                    Accéder
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                  </a>
+                @else
+                  <span class="inline-flex items-center rounded-full bg-slate-200 px-2.5 py-0.5 text-[10px] font-semibold text-slate-700">
+                    Configuration — session non lancée
+                  </span>
+                @endif
               </div>
             @endif
           @endforeach
