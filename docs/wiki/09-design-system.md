@@ -302,6 +302,10 @@ Pattern de polling AJAX type :
 - Modales de confirmation déclarées avec `role="dialog"` et `aria-modal`, reliées à leur titre et leur description, avec focus initial, piège clavier et restitution du focus
 - `image_alt` et `audio_transcript` prévus dans les questions quiz
 - Polices lisibles (Varela Round arrondie, Arial en fallback)
+- Lien « Aller au contenu principal » visible au focus dans les layouts public, administrateur, formateur, stagiaire et observateur
+- Lien « Accessibilité » réservé au pied de page du site public, sans ajout dans les tableaux de bord applicatifs
+- Information bêta non bloquante, distincte des dialogues et du gestionnaire de cookies
+- Dialogue FALC fondé sur le composant modal partagé avec focus initial, piège clavier, Échap et restitution du focus
 
 ### Points d'amélioration identifiés
 
@@ -310,6 +314,9 @@ Pattern de polling AJAX type :
 - Les grandes icônes décoratives doivent avoir `aria-hidden="true"`
 - Le SCORM en iframe peut poser des problèmes de navigation clavier et lecteur d'écran
 - Les contenus SCORM importés peuvent avoir une accessibilité très variable — la plateforme n'impose pas de contrôle à l'import
+- L'audit complet RGAA 4.1.2 et la mesure du taux de conformité restent à réaliser
+
+La démarche et son plan de publication sont détaillés dans [Accessibilité et démarche RGAA](18-accessibilite-rgaa.md).
 
 ### Vérifications recommandées
 

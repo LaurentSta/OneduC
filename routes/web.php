@@ -40,6 +40,11 @@ Route::view('/mentions-legales', 'frontend.contenu.mentions-legales')->name('men
 Route::view('/conditions-utilisation', 'frontend.contenu.conditions-utilisation')->name('conditions-utilisation');
 Route::view('/confidentialite', 'frontend.contenu.confidentialite')->name('confidentialite');
 Route::view('/cookies', 'frontend.contenu.cookies')->name('cookies');
+Route::view('/accessibilite', 'frontend.contenu.accessibilite')->name('accessibilite');
+Route::view('/accessibilite/schema-pluriannuel', 'frontend.contenu.schema-pluriannuel-accessibilite')
+    ->name('accessibilite.schema');
+Route::view('/accessibilite/plan-action-2026', 'frontend.contenu.plan-action-accessibilite-2026')
+    ->name('accessibilite.plan-2026');
 
 // Route pour le Hub de connexion (Version corrigée)
 Route::get('/connexion-choix', function () {

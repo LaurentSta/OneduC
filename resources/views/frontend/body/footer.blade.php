@@ -68,29 +68,18 @@
         </ul>
       </nav>
 
-      <nav class="space-y-5" aria-label="Accès rapides">
+      <nav class="space-y-5" aria-label="Accessibilité et informations légales">
         <h3 class="inline-flex items-center gap-3 font-varela text-sm font-semibold uppercase tracking-[0.18em] text-white">
           <span class="h-px w-8 bg-white/55"></span>
-          Accès rapides
+          Informations légales
         </h3>
         <ul class="space-y-3 text-white/90">
-          <li class="relative" x-data="{ tip: false }">
-            <a href="{{ route('stagiaire.code.form') }}" class="inline-flex underline-offset-4 transition hover:text-white hover:underline">
-              Code d'accès stagiaire
-            </a>
-            <button type="button"
-              @mouseenter="tip=true" @mouseleave="tip=false"
-              @focus="tip=true" @blur="tip=false"
-              class="ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/50 text-xs leading-none text-white transition hover:border-white hover:bg-white hover:text-orangeone"
-              aria-describedby="tooltip-code-acces"
-              aria-label="En savoir plus sur le code d'accès stagiaire">?</button>
-            <span id="tooltip-code-acces" role="tooltip" x-show="tip" x-transition
-              class="absolute bottom-full left-0 z-10 mb-2 w-72 rounded-lg bg-white p-3 text-sm leading-relaxed text-bleuone shadow-xl pointer-events-none">
-              Le code d'accès est donné par votre formateur quand la connexion par e-mail n'est pas possible.
-            </span>
-          </li>
-          <li><a href="{{ route('charte-graphique') }}" class="inline-flex underline-offset-4 transition hover:text-white hover:underline">Charte graphique</a></li>
-          <li><a href="{{ route('contact') }}" class="inline-flex underline-offset-4 transition hover:text-white hover:underline">Nous contacter</a></li>
+          <li><a href="{{ route('accessibilite') }}" class="inline-flex underline-offset-4 transition hover:text-white hover:underline">Accessibilité</a></li>
+          <li><a href="{{ route('mentions-legales') }}" class="inline-flex underline-offset-4 transition hover:text-white hover:underline">Mentions légales</a></li>
+          <li><a href="{{ route('confidentialite') }}" class="inline-flex underline-offset-4 transition hover:text-white hover:underline">Politique de confidentialité</a></li>
+          <li><a href="{{ route('conditions-utilisation') }}" class="inline-flex underline-offset-4 transition hover:text-white hover:underline">Conditions d'utilisation</a></li>
+          <li><a href="{{ route('cookies') }}" class="inline-flex underline-offset-4 transition hover:text-white hover:underline">Cookies</a></li>
+          <li><button type="button" class="js-cookie-consent-manage inline-flex bg-transparent border-0 p-0 font-[inherit] text-inherit cursor-pointer underline-offset-4 transition hover:text-white hover:underline">Gérer mes cookies</button></li>
         </ul>
       </nav>
 
@@ -122,16 +111,7 @@
     </div>
 
     <div class="mt-10 border-t border-white/30 pt-6 text-sm text-white/90 md:mt-12">
-      <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <p>© {{ date('Y') }} Oneduc. Tous droits réservés.</p>
-        <div class="flex flex-wrap gap-x-5 gap-y-2">
-          <a href="{{ route('mentions-legales') }}" class="hover:text-white underline underline-offset-4 transition">Mentions légales</a>
-          <a href="{{ route('confidentialite') }}" class="hover:text-white underline underline-offset-4 transition">Politique de confidentialité</a>
-          <a href="{{ route('conditions-utilisation') }}" class="hover:text-white underline underline-offset-4 transition">Conditions d'utilisation</a>
-          <a href="{{ route('cookies') }}" class="hover:text-white underline underline-offset-4 transition">Cookies</a>
-          <button type="button" class="js-cookie-consent-manage bg-transparent border-0 p-0 font-[inherit] text-inherit cursor-pointer hover:text-white underline underline-offset-4 transition">Gérer mes cookies</button>
-        </div>
-      </div>
+      <p>© {{ date('Y') }} Oneduc. Tous droits réservés.</p>
     </div>
   </div>
 </footer>
