@@ -43,7 +43,7 @@
             @click="toggle()"
             :aria-expanded="open.toString()"
             aria-haspopup="true"
-            class="relative z-50 px-2 flex items-center gap-1 hover:text-orangeone transition focus:outline-none"
+            class="relative z-50 px-2 flex items-center gap-1 rounded hover:text-orangeone transition focus:outline-none focus:ring-2 focus:ring-bleuone focus:ring-offset-2"
           >
             Association
             <!-- Icône flèche -->
@@ -98,6 +98,7 @@
         >
           <button
             type="button"
+            x-ref="accessibilityTrigger"
             @click="toggle()"
             :aria-expanded="open.toString()"
             aria-haspopup="true"
@@ -121,7 +122,7 @@
             <p class="text-sm font-semibold text-bleuone">Options d'accessibilité</p>
             <button
               type="button"
-              @click="close(); document.dispatchEvent(new CustomEvent('open-falc'))"
+              @click="$refs.accessibilityTrigger.focus(); close(); $dispatch('open-modal', 'falc')"
               class="mt-3 flex w-full items-center justify-between rounded-xl border border-orangeone/20 bg-orangeone/10 px-4 py-3 text-left font-varela text-sm font-semibold text-orangeone transition hover:border-orangeone hover:bg-orangeone hover:text-white focus:outline-none focus:ring-2 focus:ring-orangeone"
             >
               <span>Lire en FALC</span>

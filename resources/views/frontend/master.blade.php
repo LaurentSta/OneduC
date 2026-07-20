@@ -50,6 +50,12 @@
   @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="oneduc-public bg-white text-gray-900 font-sans " style="background-color: #f8f7fa;">
+    <a
+      href="#contenu-principal"
+      class="fixed left-4 top-4 z-[100] -translate-y-24 rounded-md bg-white px-4 py-3 font-semibold text-bleuone shadow-lg transition focus:translate-y-0 focus:outline-none focus:ring-2 focus:ring-bleuone focus:ring-offset-2"
+    >
+      Aller au contenu principal
+    </a>
 <!--======================================
         START HEADER AREA
     ======================================-->
@@ -59,13 +65,12 @@
       <!-- Pop-up Beta -->
 <div
     id="beta-popup"
-    class="fixed inset-0 hidden items-center justify-center bg-black bg-opacity-50 z-50 min-h-screen p-4"
-    role="dialog"
-    aria-modal="true"
+    class="fixed inset-x-4 top-4 z-50 hidden max-h-[calc(100vh-2rem)] overflow-y-auto sm:left-auto sm:right-6 sm:max-w-md"
+    role="status"
+    aria-live="polite"
     aria-hidden="true"
-    aria-labelledby="beta-popup-title"
 >
-  <div class="bg-white rounded-lg shadow-lg max-w-md mx-auto p-6 text-center transition-transform duration-200 ease-out">
+  <div class="rounded-lg border-2 border-bleuone bg-white p-6 text-center shadow-lg">
     <h2 id="beta-popup-title" class="text-xl font-bold text-bleuone mb-4">Version Bêta</h2>
     <p class="text-gray-700 mb-6">
       Ce site est actuellement en <strong>version bêta</strong>.<br>
@@ -78,7 +83,7 @@
         type="button"
         class="btn-oneduc"
       >
-        Continuer
+        J’ai compris
       </button>
     </div>
   </div>
@@ -88,11 +93,10 @@
     <!--======================================
             END HEADER AREA
     ======================================-->
-     <main
-        id="page-transition"
-        class="page-transition-root"
-    >
-        @yield('home')
+    <main id="contenu-principal" tabindex="-1">
+      <div id="page-transition" class="page-transition-root">
+          @yield('home')
+      </div>
     </main>
 
     <!-- ================================
@@ -121,16 +125,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (!alreadySeen) {
     popup.classList.remove('hidden');
-    popup.classList.add('flex');
     popup.setAttribute('aria-hidden', 'false');
-    document.body.classList.add('overflow-hidden');
   }
 
   const closePopup = () => {
-    popup.classList.remove('flex');
     popup.classList.add('hidden');
     popup.setAttribute('aria-hidden', 'true');
-    document.body.classList.remove('overflow-hidden');
 
     try {
       window.localStorage.setItem(storageKey, '1');
@@ -140,12 +140,6 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   continueBtn.addEventListener('click', closePopup);
-
-  popup.addEventListener('click', event => {
-    if (event.target === popup) {
-      closePopup();
-    }
-  });
 });
 </script>
 
@@ -159,17 +153,15 @@ document.addEventListener('DOMContentLoaded', () => {
 </a>
 
 {{-- Modal FALC (Facile à Lire et à Comprendre) --}}
-<div id="falc-modal"
-  class="fixed inset-0 hidden items-center justify-center bg-black bg-opacity-60 z-50 p-4"
-  role="dialog" aria-modal="true" aria-labelledby="falc-title" aria-hidden="true">
-  <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full mx-auto p-8 space-y-6 overflow-y-auto max-h-[90vh]">
+<x-modal name="falc" maxWidth="2xl" focusable aria-labelledby="falc-title" aria-describedby="falc-description">
+  <div class="max-h-[90vh] space-y-6 overflow-y-auto p-8">
     <div class="flex justify-between items-start gap-4">
       <h2 id="falc-title" class="text-2xl font-raleway font-bold text-bleuone">Onéduc — Version facile à lire</h2>
-      <button type="button" id="falc-close" class="flex-shrink-0 text-gray-400 hover:text-gray-700 transition focus:outline-none focus:ring-2 focus:ring-bleuone rounded" aria-label="Fermer">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      <button type="button" x-on:click="$dispatch('close-modal', 'falc')" class="flex-shrink-0 text-gray-500 hover:text-gray-800 transition focus:outline-none focus:ring-2 focus:ring-bleuone rounded" aria-label="Fermer la version facile à lire">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
       </button>
     </div>
-    <div class="space-y-4 font-lisible text-xl leading-relaxed text-gray-800">
+    <div id="falc-description" class="space-y-4 font-lisible text-xl leading-relaxed text-gray-800">
       <p><strong>Onéduc</strong> est un outil pour les <strong>formateurs</strong>.</p>
       <p>Les formateurs aident des personnes à apprendre.</p>
       <p>Avec Onéduc, un formateur peut :</p>
@@ -185,45 +177,12 @@ document.addEventListener('DOMContentLoaded', () => {
       <p>Si vous avez reçu un <strong>code d'accès</strong> de votre formateur,<br>cliquez sur <strong class="text-bleuone">« J'ai un code d'accès »</strong>.</p>
     </div>
     <div class="flex justify-center pt-2">
-      <button type="button" id="falc-close-btn" class="btn-oneduc">Fermer</button>
+      <button type="button" x-on:click="$dispatch('close-modal', 'falc')" class="btn-oneduc">Fermer</button>
     </div>
   </div>
-</div>
+</x-modal>
 
 @include('partials.a11y-scripts')
-
-<script>
-// Gestion du modal FALC
-(function () {
-  document.addEventListener('DOMContentLoaded', function () {
-    var modal      = document.getElementById('falc-modal');
-    var closeBtn   = document.getElementById('falc-close');
-    var closeBtnOk = document.getElementById('falc-close-btn');
-    if (!modal) return;
-
-    function openFalc() {
-      modal.classList.remove('hidden');
-      modal.classList.add('flex');
-      modal.setAttribute('aria-hidden', 'false');
-      document.body.classList.add('overflow-hidden');
-      if (closeBtn) closeBtn.focus();
-    }
-
-    function closeFalc() {
-      modal.classList.remove('flex');
-      modal.classList.add('hidden');
-      modal.setAttribute('aria-hidden', 'true');
-      document.body.classList.remove('overflow-hidden');
-    }
-
-    document.addEventListener('open-falc', openFalc);
-    if (closeBtn)   closeBtn.addEventListener('click',   closeFalc);
-    if (closeBtnOk) closeBtnOk.addEventListener('click', closeFalc);
-    modal.addEventListener('click', function (e) { if (e.target === modal) closeFalc(); });
-    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeFalc(); });
-  });
-})();
-</script>
 
 @stack('scripts')
 </body>

@@ -118,7 +118,8 @@ Une comparaison du code sur `main` (85 contrôleurs, 61 modèles, 411 routes) av
 - [ ] Afficher les compétences acquises et non acquises côté stagiaire
 - [ ] Ajouter des règles d'acquisition de badges automatiques
 - [ ] Implémenter un moteur de prérequis minimal (accès conditionnel entre modules)
-- [ ] Audit d'accessibilité WCAG 2.1 niveau AA et corrections (contrastes, ARIA, navigation clavier)
+- [x] Publier la déclaration d'accessibilité « non conforme », le schéma 2026-2028 et le plan d'action 2026
+- [ ] Réaliser un audit RGAA 4.1.2 représentatif et corriger les non-conformités prioritaires (contrastes, clavier, formulaires, médias, SCORM)
 - [ ] Documentation utilisateur : guide stagiaire, guide formateur (PDF + vidéo)
 - [ ] Nettoyer les vues de template génériques (`resources/views/content/apps/*`)
 - [x] Appliquer dans les menus la convention du glossaire : "Ma formation" côté stagiaire, "Catalogue" / "Créations" / "Parcours" côté formateur (2026, voir [12-glossaire.md](12-glossaire.md))

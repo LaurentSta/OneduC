@@ -44,6 +44,9 @@ it('serves a well formed sitemap with the static pages and an xml content type',
     $body = $response->getContent();
     expect(simplexml_load_string($body))->not->toBeFalse();
     expect($body)->toContain(route('index'))
+        ->toContain(route('accessibilite'))
+        ->toContain(route('accessibilite.schema'))
+        ->toContain(route('accessibilite.plan-2026'))
         ->toContain(route('confidentialite'))
         ->toContain(route('frontend.modules.index'));
 });

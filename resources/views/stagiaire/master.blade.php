@@ -37,6 +37,13 @@
   "
   class="bg-gray-100 text-gray-900 font-sans">
 
+    <a
+      href="#page-transition"
+      class="fixed left-3 top-3 z-[70] -translate-y-20 rounded-md bg-white px-4 py-2 text-sm font-semibold text-bleuone transition focus:translate-y-0 focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-orangeone"
+    >
+      Aller au contenu principal
+    </a>
+
     {{-- HEADER --}}
     @include('stagiaire.body_dashboard.header')
 
@@ -46,6 +53,7 @@
         {{-- CONTENU PRINCIPAL --}}
         <main
             id="page-transition"
+            tabindex="-1"
             class="flex-1 p-6"
             :class="{ 'transition-[margin-left] duration-300': sidebarTransitionsReady, 'lg:ml-48': !sidebarCollapsed }">
             @yield('content')

@@ -28,6 +28,9 @@ class SitemapController extends Controller
         ['route' => 'conditions-utilisation', 'changefreq' => 'yearly', 'priority' => '0.2'],
         ['route' => 'confidentialite', 'changefreq' => 'yearly', 'priority' => '0.2'],
         ['route' => 'cookies', 'changefreq' => 'yearly', 'priority' => '0.2'],
+        ['route' => 'accessibilite', 'changefreq' => 'monthly', 'priority' => '0.4'],
+        ['route' => 'accessibilite.schema', 'changefreq' => 'monthly', 'priority' => '0.3'],
+        ['route' => 'accessibilite.plan-2026', 'changefreq' => 'monthly', 'priority' => '0.3'],
     ];
 
     public function index(): Response
