@@ -5,6 +5,7 @@
 use App\Http\Controllers\Backend\ModuleController;
 use App\Http\Controllers\Stagiaire\EmargementController;
 use App\Http\Controllers\Stagiaire\FirstLoginController;
+use App\Http\Controllers\Stagiaire\GroupQuizSessionController;
 use App\Http\Controllers\Stagiaire\LiveQuizSessionController;
 use App\Http\Controllers\Stagiaire\ParcoursOutilController;
 use App\Http\Controllers\Stagiaire\ParcoursWordCloudController;
@@ -168,6 +169,16 @@ Route::middleware(['auth', 'role:stagiaire', 'track.time'])
                     Route::get('/sessions/{session}', [LiveQuizSessionController::class, 'show'])->name('show');
                     Route::post('/sessions/{session}/answer', [LiveQuizSessionController::class, 'answer'])->name('answer');
                     Route::get('/sessions/{session}/snapshot', [LiveQuizSessionController::class, 'snapshot'])->name('snapshot');
+                });
+
+            Route::prefix('/quiz-en-direct')
+                ->name('group-quiz.')
+                ->group(function () {
+                    Route::get('/notification-status', [GroupQuizSessionController::class, 'notificationStatus'])->name('notification-status');
+                    Route::get('/join/{code}', [GroupQuizSessionController::class, 'joinByCode'])->name('join-code');
+                    Route::get('/{session}', [GroupQuizSessionController::class, 'show'])->name('show');
+                    Route::post('/{session}/answer', [GroupQuizSessionController::class, 'answer'])->name('answer');
+                    Route::get('/{session}/snapshot', [GroupQuizSessionController::class, 'snapshot'])->name('snapshot');
                 });
 
             // Nuage de mots (parcours)

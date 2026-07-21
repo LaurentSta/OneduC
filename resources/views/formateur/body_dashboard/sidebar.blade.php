@@ -5,19 +5,22 @@
 
     $isStagiairesActive = request()->routeIs('formateur.stagiaires.*');
 
+    $isQuestionsFormationActive = request()->routeIs('formateur.outils.quiz-questions.*')
+        || request()->routeIs('formateur.modules.builder.*');
+
     $isFormationsActive = request()->routeIs('formateur.formations.*')
         || request()->routeIs('formateur.objectifs.*')
         || request()->routeIs('formateur.quiz.*')
         || request()->routeIs('formateur.lesson.quiz.*')
-        || request()->routeIs('formateur.mes-parcours.*');
+        || request()->routeIs('formateur.mes-parcours.*')
+        || $isQuestionsFormationActive;
 
-    $isOutilsActive = request()->routeIs('formateur.outils.*')
+    $isOutilsActive = (request()->routeIs('formateur.outils.*') && ! $isQuestionsFormationActive)
         || request()->routeIs('formateur.nuages.*')
         || request()->routeIs('formateur.sondages.*')
         || request()->routeIs('formateur.pages-collaboratives.*')
         || request()->routeIs('formateur.live-quiz.*')
-        || request()->routeIs('formateur.groupes.whiteboard.*')
-        || request()->routeIs('formateur.modules.builder.*');
+        || request()->routeIs('formateur.groupes.whiteboard.*');
 
     $isProgressionActive = request()->routeIs('formateur.progressions.*')
         || request()->routeIs('formateur.progression.*');

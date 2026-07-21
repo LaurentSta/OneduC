@@ -9,6 +9,7 @@ use App\Http\Controllers\Formateur\GroupeController;
 use App\Http\Controllers\Formateur\GroupeModuleLessonController;
 use App\Http\Controllers\Formateur\GroupeOutilController;
 use App\Http\Controllers\Formateur\GroupeWordCloudController;
+use App\Http\Controllers\Formateur\GroupQuizSessionController;
 use App\Http\Controllers\Formateur\LessonResourceController;
 use App\Http\Controllers\Formateur\LiveQuizSessionController;
 use App\Http\Controllers\Formateur\MesParcoursController;
@@ -26,6 +27,7 @@ use App\Http\Controllers\Formateur\OutilsQuizQuestionsController;
 use App\Http\Controllers\Formateur\OutilsSondageController;
 use App\Http\Controllers\Formateur\OutilsVraiFauxController;
 use App\Http\Controllers\Formateur\ParcoursController;
+use App\Http\Controllers\Formateur\PollQuestionnaireController;
 use App\Http\Controllers\Formateur\ProgressionController;
 use App\Http\Controllers\Formateur\ProgressionGroupesController;
 use App\Http\Controllers\Formateur\ProgressionModulesController;
@@ -34,6 +36,7 @@ use App\Http\Controllers\Formateur\ProgressionStagiairesController;
 use App\Http\Controllers\Formateur\OutilsPowerPointController;
 use App\Http\Controllers\Formateur\QuestionWallController;
 use App\Http\Controllers\Formateur\QuizQuestionController as FormateurQuizQuestionController;
+use App\Http\Controllers\Formateur\QuestionnaireController;
 use App\Http\Controllers\Formateur\RoueAleatoireController;
 use App\Http\Controllers\Formateur\WhiteboardController;
 use App\Http\Controllers\Formateur\WordCloudController as FormateurWordCloudController;
@@ -178,15 +181,48 @@ Route::middleware(['auth', 'role:formateur', 'association.member'])
         Route::get('/banque-de-questions-quiz', [OutilsQuizQuestionsController::class, 'index'])
             ->name('outils.quiz-questions.index');
 
+        Route::prefix('/outils-numeriques/questionnaires')
+            ->name('questionnaires.')
+            ->group(function () {
+                Route::post('/', [QuestionnaireController::class, 'store'])->name('store');
+                Route::delete('/{questionnaire}', [QuestionnaireController::class, 'destroy'])->name('destroy');
+                Route::post('/{questionnaire}/questions', [QuestionnaireController::class, 'storeQuestion'])->name('questions.store');
+                Route::post('/{questionnaire}/questions/generer-ia', [QuestionnaireController::class, 'generateIA'])->name('questions.generate-ia');
+                Route::post('/{questionnaire}/questions/{question}/toggle', [QuestionnaireController::class, 'toggleQuestion'])->name('questions.toggle');
+                Route::delete('/{questionnaire}/questions/{question}', [QuestionnaireController::class, 'destroyQuestion'])->name('questions.destroy');
+            });
+
+        Route::prefix('/outils-numeriques/quiz-en-direct')
+            ->name('group-quiz.')
+            ->group(function () {
+                Route::post('/launch', [GroupQuizSessionController::class, 'launch'])->name('launch');
+                Route::get('/{session}', [GroupQuizSessionController::class, 'show'])->name('show');
+                Route::post('/{session}/start', [GroupQuizSessionController::class, 'start'])->name('start');
+                Route::post('/{session}/reveal', [GroupQuizSessionController::class, 'reveal'])->name('reveal');
+                Route::post('/{session}/next', [GroupQuizSessionController::class, 'next'])->name('next');
+                Route::post('/{session}/close', [GroupQuizSessionController::class, 'close'])->name('close');
+                Route::get('/{session}/snapshot', [GroupQuizSessionController::class, 'snapshot'])->name('snapshot');
+                Route::delete('/{session}', [GroupQuizSessionController::class, 'destroy'])->name('destroy');
+            });
+
         Route::redirect('/sondages', '/formateur/outils-numeriques/sondages', 301);
 
         Route::prefix('/outils-numeriques/sondages')->name('sondages.')->group(function () {
             Route::get('/', [OutilsSondageController::class, 'index'])->name('index');
-            Route::post('/', [OutilsSondageController::class, 'store'])->name('store');
+            Route::post('/launch', [OutilsSondageController::class, 'launch'])->name('launch');
             Route::get('/{pollSession}', [OutilsSondageController::class, 'show'])->name('show');
             Route::post('/{pollSession}/toggle', [OutilsSondageController::class, 'toggle'])->name('toggle');
             Route::get('/{pollSession}/state', [OutilsSondageController::class, 'state'])->name('state');
         });
+
+        Route::prefix('/outils-numeriques/sondage-questionnaires')
+            ->name('sondage-questionnaires.')
+            ->group(function () {
+                Route::post('/', [PollQuestionnaireController::class, 'store'])->name('store');
+                Route::delete('/{questionnaire}', [PollQuestionnaireController::class, 'destroy'])->name('destroy');
+                Route::post('/{questionnaire}/questions', [PollQuestionnaireController::class, 'storeQuestion'])->name('questions.store');
+                Route::delete('/{questionnaire}/questions/{index}', [PollQuestionnaireController::class, 'destroyQuestion'])->name('questions.destroy');
+            });
 
         if (config('outils.vraifaux.enabled')) {
             Route::prefix('/vrai-faux')->name('vraifaux.')->group(function () {

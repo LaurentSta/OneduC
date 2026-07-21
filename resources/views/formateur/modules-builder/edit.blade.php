@@ -81,7 +81,7 @@
         @if(Route::has($nomRoutesConstructeur.'.quiz-questions.index'))
           <a href="{{ route($nomRoutesConstructeur.'.quiz-questions.index', $module) }}"
              class="btn-oneduc-outline !px-4 !py-2 !text-sm">
-            Questions de quiz
+            Questions de la formation
           </a>
         @endif
         @if($constructeurAdmin && $etatPublication === 'draft' && Route::has($nomRoutesConstructeur.'.publish'))

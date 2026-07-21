@@ -343,7 +343,14 @@ Les quiz natifs sont construits sur quatre modèles :
 
 ### Import par CSV
 
-La banque de questions est disponible côté admin (`Backend\QuizQuestionController`) et côté formateur, pour ses propres leçons, depuis "Outils numériques" (tuile "Banque de questions", `formateur.outils.quiz-questions.index`) ou directement depuis l'onglet "Quiz" de la leçon (bouton "Gérer les questions"). Les deux contrôleurs (admin/formateur) délèguent la validation, la construction des options/payload cloze et l'import CSV au service partagé `App\Services\QuizQuestionBuilder`, pour éviter la duplication. Les questions créées par un formateur sont tracées via `quiz_questions.created_by`.
+La banque technique est présentée au formateur sous le libellé plus direct **Questions de la formation**. Elle appartient à la préparation du contenu et non aux outils d'animation : le formateur y accède depuis **Formations → Mes créations**, depuis le bouton **Questions de la formation** d'une création, ou depuis l'onglet Quiz d'une leçon. La vue transversale `formateur.outils.quiz-questions.index` est conservée comme point d'entrée vers les questions de toutes ses formations, mais elle n'est plus affichée comme une tuile dans **Outils numériques**.
+
+Une question préparée dans une leçon peut avoir deux usages distincts :
+
+- le **quiz de validation**, réalisé en autonomie par le stagiaire après la leçon ;
+- le **quiz en direct**, animé et piloté par le formateur pendant une session.
+
+Les deux contrôleurs admin/formateur délèguent la validation, la construction des options/payload cloze et l'import CSV au service partagé `App\Services\QuizQuestionBuilder`, pour éviter la duplication. Les questions créées par un formateur sont tracées via `quiz_questions.created_by`.
 
 ### Scoring
 

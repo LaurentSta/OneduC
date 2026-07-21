@@ -264,7 +264,7 @@
       title="Quiz en direct"
       icon-bg="bg-[#004461]"
       cta-route="{{ route('formateur.outils.quiz.index') }}"
-      cta-label="Gérer les quiz en direct"
+      cta-label="Lancer un quiz en direct"
       cta-bg="bg-[#004461] hover:bg-[#005577]"
     >
       <x-slot:icon>
@@ -273,7 +273,7 @@
         </svg>
       </x-slot:icon>
       <x-slot:description>
-        Lancez une session de quiz synchronisée avec votre groupe. Les stagiaires répondent en temps réel depuis leur espace et vous visualisez les résultats question par question.
+        Animez une session synchronisée avec votre groupe à partir des questions déjà préparées dans une formation. Les résultats restent distincts du quiz de validation réalisé en autonomie.
       </x-slot:description>
       <x-slot:badges>
         <span class="rounded-full bg-green-100 px-2.5 py-0.5 font-semibold text-green-700">Présentiel</span>

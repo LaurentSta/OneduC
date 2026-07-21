@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Group;
 use App\Models\PollSession;
 use App\Models\PollSessionResponse;
 use App\Models\User;
@@ -31,7 +32,7 @@ class PollParticipationController extends Controller
     {
         $pollSession = PollSession::query()
             ->where('access_code', strtoupper(trim($code)))
-            ->with('group')
+            ->with(['group', 'questionnaire'])
             ->firstOrFail();
 
         $this->ensureCanParticipate($pollSession, auth()->user());
@@ -51,6 +52,7 @@ class PollParticipationController extends Controller
     {
         $pollSession = PollSession::query()
             ->where('access_code', strtoupper(trim($code)))
+            ->with('questionnaire')
             ->firstOrFail();
 
         $this->ensureCanParticipate($pollSession, $request->user());
@@ -92,6 +94,7 @@ class PollParticipationController extends Controller
     {
         $pollSession = PollSession::query()
             ->where('access_code', strtoupper(trim($code)))
+            ->with('questionnaire')
             ->firstOrFail();
 
         $this->ensureCanParticipate($pollSession, auth()->user());
@@ -152,13 +155,19 @@ class PollParticipationController extends Controller
     {
         abort_unless($user instanceof User, 403);
 
-        $group = $pollSession->group;
-        abort_unless($group, 404);
+        $formateurId = (int) $pollSession->formateur_id;
+        $userId = (int) $user->id;
 
-        $isOwner = (int) $group->instructor_id === (int) $user->id;
-        $isCoTrainer = $group->coFormateurs()->where('users.id', (int) $user->id)->exists();
-        $isMember = $group->users()->where('users.id', (int) $user->id)->exists();
+        if ($userId === $formateurId) {
+            return;
+        }
 
-        abort_unless($isOwner || $isCoTrainer || $isMember, 403);
+        $isAllowed = Group::query()
+            ->accessibleByTrainer($formateurId)
+            ->when($pollSession->group_id, fn ($query) => $query->where('id', $pollSession->group_id))
+            ->whereHas('users', fn ($query) => $query->where('users.id', $userId))
+            ->exists();
+
+        abort_unless($isAllowed, 403);
     }
 }

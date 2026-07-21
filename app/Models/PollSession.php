@@ -11,8 +11,7 @@ class PollSession extends Model
     protected $fillable = [
         'formateur_id',
         'group_id',
-        'title',
-        'questions',
+        'poll_questionnaire_id',
         'access_code',
         'is_active',
         'opened_at',
@@ -20,7 +19,6 @@ class PollSession extends Model
     ];
 
     protected $casts = [
-        'questions' => 'array',
         'is_active' => 'boolean',
         'opened_at' => 'datetime',
         'closed_at' => 'datetime',
@@ -36,8 +34,23 @@ class PollSession extends Model
         return $this->belongsTo(Group::class);
     }
 
+    public function questionnaire(): BelongsTo
+    {
+        return $this->belongsTo(PollQuestionnaire::class, 'poll_questionnaire_id');
+    }
+
     public function responses(): HasMany
     {
         return $this->hasMany(PollSessionResponse::class);
+    }
+
+    public function getTitleAttribute(): string
+    {
+        return (string) ($this->questionnaire?->title ?? '');
+    }
+
+    public function getQuestionsAttribute(): array
+    {
+        return $this->questionnaire?->questions ?? [];
     }
 }
