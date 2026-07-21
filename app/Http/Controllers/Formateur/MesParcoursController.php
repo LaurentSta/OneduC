@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\FormateurParcours;
 use App\Models\FormateurParcoursItem;
 use App\Models\Module;
-use App\Models\PollSession;
+use App\Models\PollQuestionnaire;
 use App\Models\WordCloud;
 use App\Support\Parcours\RegistreOutilsParcours;
 use Illuminate\Http\JsonResponse;
@@ -272,12 +272,11 @@ class MesParcoursController extends Controller
                 'poll_duration'  => null,
             ]);
 
-        $polls = PollSession::query()
+        $polls = PollQuestionnaire::query()
             ->where('formateur_id', $formateurId)
-            ->whereNull('group_id')
             ->latest()
             ->get()
-            ->map(fn (PollSession $poll) => [
+            ->map(fn (PollQuestionnaire $poll) => [
                 'id'             => 'poll-'.$poll->id,
                 'type'           => 'poll',
                 'wc_title'       => null,

@@ -14,7 +14,7 @@
       </div>
       <a href="{{ route('formateur.modules.builder.quiz-questions.index', ['module' => $lecture->module_id, 'lecture' => $lecture->id]) }}"
          class="text-bleuone hover:underline text-sm font-medium">
-        &larr; Retour à la banque de questions
+        &larr; Retour aux questions de la formation
       </a>
     </div>
 

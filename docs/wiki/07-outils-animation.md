@@ -18,7 +18,7 @@ Chaque outil a désormais sa propre fiche dédiée : fonctionnement, contexte d'
 
 | # | Outil | Résumé | Synchrone/Asynchrone | Présentiel/Distanciel | Participation |
 |---|-------|--------|-----------------------|------------------------|----------------|
-| 1 | [Quiz live](outils/quiz-live.md) | Quiz en direct sur la banque de questions d'une leçon | Synchrone | Les deux | Collective |
+| 1 | [Quiz en direct](outils/quiz-live.md) | Animation pilotée à partir des questions préparées dans une leçon | Synchrone | Les deux | Collective |
 | 2 | [Nuage de mots](outils/nuage-de-mots.md) | Mots soumis en direct, taille selon fréquence | Asynchrone (saisie libre) | Les deux | Individuelle → rendu collectif |
 | 3 | [Sondage](outils/sondage.md) | Choix unique/multiple, résultats en barres/camembert | Synchrone | Les deux | Individuelle → rendu collectif |
 | 4 | [Vrai ou Faux](outils/vrai-ou-faux.md) | Affirmations courtes avec explication | Synchrone | Les deux | Individuelle → débrief collectif |

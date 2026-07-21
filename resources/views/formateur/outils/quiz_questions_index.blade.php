@@ -17,15 +17,15 @@
     <nav class="text-sm font-varela text-gray-500 mb-2">
       <ol class="inline-flex items-center space-x-1">
         <li>
-          <a href="{{ route('formateur.outils.index') }}" class="text-orangeone hover:underline">Outils numériques</a>
+          <a href="{{ route('formateur.modules.builder.index') }}" class="text-orangeone hover:underline">Mes créations</a>
         </li>
         <li><span class="mx-2 text-gray-400">/</span></li>
-        <li class="text-gray-400">Banque de questions de quiz</li>
+        <li class="text-gray-400">Questions de mes formations</li>
       </ol>
     </nav>
-    <p class="font-raleway text-2xl text-bleuone">Banque de questions de quiz</p>
+    <p class="font-raleway text-2xl text-bleuone">Questions de mes formations</p>
     <p class="text-sm text-gray-500 mt-1">
-      Choisissez une formation pour voir quelles leçons ont déjà des questions et gérer leur banque.
+      Préparez les questions utilisées pour le quiz de validation d'une leçon ou pour une animation en direct.
     </p>
   </header>
 
@@ -56,7 +56,7 @@
           <a :href="canManage ? manageUrl : '#'"
              :class="canManage ? 'bg-orangeone hover:bg-orangeone-hover' : 'bg-gray-300 cursor-not-allowed pointer-events-none'"
              class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-[10px] px-4 py-2.5 text-sm font-bold text-white transition">
-            Voir toute l'arborescence
+            Préparer les questions
           </a>
         </div>
       </div>
@@ -91,7 +91,7 @@
           <div class="flex flex-col items-center justify-center rounded-[20px] border-2 border-dashed border-gray-200 bg-white py-20 text-center">
             <i class="ti ti-help-circle text-3xl text-gray-300 mb-3"></i>
             <p class="text-sm font-semibold text-gray-700">Aucune leçon n'a encore de questions</p>
-            <p class="text-xs text-gray-400 mt-1">Utilisez "Voir toute l'arborescence" pour en créer.</p>
+            <p class="text-xs text-gray-400 mt-1">Utilisez « Préparer les questions » pour en créer.</p>
           </div>
         </template>
 

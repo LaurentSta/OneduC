@@ -20,7 +20,7 @@
         </nav>
         <p class="font-raleway text-2xl text-bleuone">{{ $pollSession->title }}</p>
         <p class="text-sm text-gray-500 mt-1">
-          Groupe : <span class="font-semibold">{{ $pollSession->group?->name ?? '—' }}</span>
+          Groupe : <span class="font-semibold">{{ $pollSession->group?->name ?? 'Tous les groupes' }}</span>
           · Code : <span class="font-mono font-semibold text-teal-700">{{ $pollSession->access_code }}</span>
         </p>
       </div>

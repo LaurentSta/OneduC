@@ -4,7 +4,7 @@
 
 **Statut au 14 juillet 2026** : développé côté code mais pas encore activé en production — voir le statut général sur la page [07 — Outils d'animation](../07-outils-animation.md).
 
-Le quiz en direct rejoue, en mode synchronisé, les questions déjà rédigées dans la banque de questions d'une leçon. Les résultats de la session live sont indépendants de la progression pédagogique : ils ne modifient pas le score du quiz de fin de leçon que le stagiaire repassera en autonomie.
+Le quiz en direct rejoue, en mode synchronisé, les questions déjà préparées dans une leçon. Il s'agit d'un outil d'animation piloté par le formateur, à distinguer du quiz de validation que le stagiaire réalise seul après la leçon. Les résultats de la session live sont indépendants de la progression pédagogique : ils ne modifient pas le score du quiz de validation.
 
 ## En bref
 
@@ -14,12 +14,12 @@ Le quiz en direct rejoue, en mode synchronisé, les questions déjà rédigées 
 | Lieu | Présentiel (écran de projection) ou distanciel (partage d'écran) |
 | Participation | Collective, dans un groupe |
 | Compte requis | Oui (élève rattaché au groupe) |
-| Contenu source | Banque de questions d'une leçon précise |
+| Contenu source | Questions préparées dans une leçon précise |
 | Activable/désactivable | Toujours actif, pas de variable d'environnement dédiée |
 
 ## Comment ça marche
 
-1. Le formateur ouvre `/formateur/quiz-en-direct` : la page liste ses formations, avec pour chaque leçon le nombre de questions actives dans sa banque.
+1. Le formateur ouvre **Outils numériques → Quiz en direct** : la page liste ses formations, avec pour chaque leçon le nombre de questions actives déjà préparées.
 2. Il choisit une leçon et un groupe, puis lance une session. Un code d'accès court est généré.
 3. Les stagiaires rejoignent depuis `/stagiaire/live-quiz` en saisissant le code, ou via un lien direct.
 4. Le formateur avance manuellement question par question (`current_position`) ; les réponses des stagiaires remontent en direct, puis il révèle la bonne réponse avant de passer à la suivante.
@@ -33,7 +33,8 @@ Le quiz en direct rejoue, en mode synchronisé, les questions déjà rédigées 
 
 ## Bon à savoir
 
-- Le lancement du quiz en direct reste dans l'espace **Outils** — il n'y a volontairement pas de bouton de lancement directement dans la page d'une leçon, même si c'est là que la banque de questions est rédigée.
+- Le lancement du quiz en direct reste dans l'espace **Outils numériques**.
+- La préparation des questions reste dans **Formations → Mes créations**. Un lien contextuel **Préparer les questions** est proposé depuis l'écran de lancement lorsqu'il manque du contenu.
 - Comme les autres activités live, les résultats s'affichent côté formateur avec un délai de 2 à 3 secondes (polling, pas de WebSocket).
 
 ## Partie technique

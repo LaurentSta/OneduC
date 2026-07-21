@@ -11,6 +11,7 @@ class QuizQuestion extends Model
 
     protected $fillable = [
         'lecture_id',
+        'questionnaire_id',
         'type',
         'question_text',
         'image_path',
@@ -25,10 +26,11 @@ class QuizQuestion extends Model
     ];
 
     protected $casts = [
-        'position'   => 'integer',
-        'lecture_id' => 'integer',
-        'points'     => 'integer',
-        'payload'    => 'array',
+        'position'         => 'integer',
+        'lecture_id'       => 'integer',
+        'questionnaire_id' => 'integer',
+        'points'           => 'integer',
+        'payload'          => 'array',
     ];
 
     /**
@@ -54,6 +56,15 @@ class QuizQuestion extends Model
     public function lecture()
     {
         return $this->belongsTo(ModuleLecture::class, 'lecture_id');
+    }
+
+    /**
+     * Une question de quiz en direct group-only appartient à un questionnaire,
+     * indépendant de toute leçon (lecture_id est alors null).
+     */
+    public function questionnaire()
+    {
+        return $this->belongsTo(QuizQuestionnaire::class, 'questionnaire_id');
     }
 
     /**

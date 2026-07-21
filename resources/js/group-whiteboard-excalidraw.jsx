@@ -86,7 +86,7 @@ function ExcalidrawWhiteboard({ config }) {
     }, [config.routes?.snapshot, config.poll_interval_ms, excalidrawAPI]);
 
     return (
-        <div style={{ height: '82vh', borderRadius: '20px', overflow: 'hidden' }}>
+        <div style={{ height: '100%', width: '100%' }}>
             <Excalidraw
                 excalidrawAPI={(api) => setExcalidrawAPI(api)}
                 initialData={initialData}

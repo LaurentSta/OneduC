@@ -8,13 +8,19 @@
     <nav class="flex mb-4 text-xs font-semibold uppercase tracking-wider text-gray-400" aria-label="Breadcrumb">
         <ol class="inline-flex items-center space-x-2">
             <li>
-                <a href="{{ route('formateur.outils.quiz-questions.index') }}" class="hover:text-orangeone flex items-center">
-                    <i class="ti ti-apps mr-1 text-sm"></i> Banque de questions
+                <a href="{{ route('formateur.modules.builder.index') }}" class="hover:text-orangeone flex items-center">
+                    <i class="ti ti-books mr-1 text-sm"></i> Mes créations
                 </a>
             </li>
             <li class="flex items-center">
                 <i class="ti ti-chevron-right mx-1"></i>
-                <span class="text-bleuone">{{ $module->module_title ?: $module->module_name }}</span>
+                <a href="{{ route('formateur.modules.builder.edit', $module) }}" class="hover:text-orangeone">
+                    {{ $module->module_title ?: $module->module_name }}
+                </a>
+            </li>
+            <li class="flex items-center">
+                <i class="ti ti-chevron-right mx-1"></i>
+                <span class="text-bleuone">Questions</span>
             </li>
         </ol>
     </nav>
@@ -22,8 +28,8 @@
     {{-- En-tête --}}
     <div class="flex flex-col md:flex-row md:items-end md:justify-between border-b-2 border-bleuone pb-3 mb-6 gap-4">
         <div>
-            <h1 class="text-xl font-bold text-bleuone uppercase tracking-tight">Banque de questions</h1>
-            <p class="text-gray-500 text-[10px] italic">{{ $module->module_title ?: $module->module_name }}</p>
+            <h1 class="text-xl font-bold text-bleuone uppercase tracking-tight">Questions de la formation</h1>
+            <p class="text-gray-500 text-[10px] italic">Une même question peut servir au quiz de validation et au quiz en direct.</p>
         </div>
     </div>
 

@@ -9,10 +9,10 @@
   $titreListeConstructeur = $constructeurAdmin ? 'Catalogue Oneduc' : 'Mes créations';
   $descriptionListeConstructeur = $constructeurAdmin
       ? 'Créez, versionnez et affectez les formations officielles du catalogue.'
-      : 'Créez vos propres formations (chapitres + leçons en texte riche) et assignez-les à vos groupes.';
+      : 'Préparez vos formations, leurs leçons et leurs questions, puis assignez-les à vos groupes.';
   $urlAccueilConstructeur = $urlAccueilConstructeur ?? ($constructeurAdmin
       ? (Route::has('admin.dashboard') ? route('admin.dashboard') : url('/admin'))
-      : route('formateur.outils.index'));
+      : route('formateur.formations.index'));
   $nomRouteDuplicationFormateur = Route::has($nomRoutesConstructeur.'.duplicate-trainer')
       ? $nomRoutesConstructeur.'.duplicate-trainer'
       : (Route::has($nomRoutesConstructeur.'.duplicate') ? $nomRoutesConstructeur.'.duplicate' : null);
@@ -31,7 +31,7 @@
         <nav class="text-sm font-varela text-gray-500 mb-2">
           <ol class="inline-flex items-center space-x-1">
             <li>
-              <a href="{{ $urlAccueilConstructeur }}" class="text-orangeone hover:underline">{{ $constructeurAdmin ? 'Administration' : 'Outils numériques' }}</a>
+              <a href="{{ $urlAccueilConstructeur }}" class="text-orangeone hover:underline">{{ $constructeurAdmin ? 'Administration' : 'Formations' }}</a>
             </li>
             <li><span class="mx-2 text-gray-400">/</span></li>
             <li class="text-gray-400">{{ $titreListeConstructeur }}</li>
@@ -42,6 +42,13 @@
         </div>
       </div>
       <div class="flex flex-wrap items-center gap-3">
+        @if(!$constructeurAdmin && Route::has('formateur.outils.quiz-questions.index'))
+          <a href="{{ route('formateur.outils.quiz-questions.index') }}"
+             class="btn-oneduc-outline !px-4 !py-2 !text-sm">
+            <i class="ti ti-list-check" aria-hidden="true"></i>
+            Questions de mes formations
+          </a>
+        @endif
         @if(Route::has($nomRoutesConstructeur.'.consommation-ia'))
           <a href="{{ route($nomRoutesConstructeur.'.consommation-ia') }}"
              class="text-sm font-medium text-orangeone hover:underline whitespace-nowrap">

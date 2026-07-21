@@ -15,27 +15,28 @@
   $openSeanceForStagiaire = null;
 
   if ($authUser && ($authUser->role ?? null) === 'stagiaire') {
-      $lectureIds = $authUser->groupesStagiaire()
-          ->active()
-          ->with(['modules.sections.lectures:id,section_id,module_id'])
-          ->get()
-          ->flatMap->modules
-          ->unique('id')
-          ->flatMap(fn ($module) => $module->sections ?? collect())
-          ->flatMap(fn ($section) => $section->lectures ?? collect())
-          ->pluck('id')
-          ->filter()
-          ->unique()
-          ->values();
+      $stagiaireGroupIds = $authUser->groupesStagiaire()->active()->pluck('groups.id');
 
-      if ($lectureIds->isNotEmpty()) {
-          $activeLiveQuizSession = \App\Models\LiveQuizSession::query()
-              ->whereIn('lecture_id', $lectureIds->all())
+      if ($stagiaireGroupIds->isNotEmpty()) {
+          $stagiaireInstructorIds = \App\Models\Group::query()
+              ->whereIn('id', $stagiaireGroupIds)
+              ->pluck('instructor_id')
+              ->unique()
+              ->values();
+
+          $activeLiveQuizSession = \App\Models\GroupQuizSession::query()
               ->whereNull('ended_at')
+              ->where(function ($query) use ($stagiaireGroupIds, $stagiaireInstructorIds): void {
+                  $query->whereIn('group_id', $stagiaireGroupIds)
+                      ->orWhere(function ($sub) use ($stagiaireInstructorIds): void {
+                          $sub->whereNull('group_id')->whereIn('formateur_id', $stagiaireInstructorIds);
+                      });
+              })
               ->whereIn('status', [
-                  \App\Models\LiveQuizSession::STATUS_QUESTION_OPEN,
-                  \App\Models\LiveQuizSession::STATUS_ANSWER_REVEALED,
+                  \App\Models\GroupQuizSession::STATUS_QUESTION_OPEN,
+                  \App\Models\GroupQuizSession::STATUS_ANSWER_REVEALED,
               ])
+              ->with('group')
               ->latest('id')
               ->first();
       }
@@ -111,12 +112,12 @@
   $activeToolIndicatorCount = ($activeLiveQuizSession ? 1 : 0) + ($activeWordCloud ? 1 : 0) + ($availableWhiteboardGroup ? 1 : 0) + ($activeQuestionWall ? 1 : 0) + ($openSeanceForStagiaire ? 1 : 0);
   $bellIndicatorCount = $unreadCount > 0 ? $unreadCount : $activeToolIndicatorCount;
   $liveQuizUrl = $activeLiveQuizSession
-      ? route('stagiaire.live-quiz.join-code', ['code' => $activeLiveQuizSession->access_code])
+      ? route('stagiaire.group-quiz.join-code', ['code' => $activeLiveQuizSession->access_code])
       : null;
   $liveQuizNotificationStatusUrl = $authUser
       && ($authUser->role ?? null) === 'stagiaire'
-      && \Illuminate\Support\Facades\Route::has('stagiaire.live-quiz.notification-status')
-      ? route('stagiaire.live-quiz.notification-status')
+      && \Illuminate\Support\Facades\Route::has('stagiaire.group-quiz.notification-status')
+      ? route('stagiaire.group-quiz.notification-status')
       : null;
 @endphp
 
@@ -203,7 +204,7 @@
             <div>
               <p data-live-quiz-label class="text-xs font-semibold text-orange-700">Session en cours</p>
               <p data-live-quiz-title class="text-xs text-gray-700 mt-1">
-                {{ $activeLiveQuizSession->lecture?->lecture_title ?? 'Une session est disponible' }}
+                {{ $activeLiveQuizSession->group?->name ?? 'Tous les groupes' }}
               </p>
               <p data-live-quiz-meta class="mt-1 text-[11px] text-gray-500">
                 Code {{ $activeLiveQuizSession->access_code }} · Appuyer pour rejoindre
@@ -506,7 +507,7 @@
         liveLink.setAttribute('href', data.join_url || '#');
 
         if (liveTitle) {
-          liveTitle.textContent = data.lecture_title || 'Une session est disponible';
+          liveTitle.textContent = data.group_name || 'Tous les groupes';
         }
 
         if (liveMeta) {

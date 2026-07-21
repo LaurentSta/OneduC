@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Background, Controls, MarkerType, Position, ReactFlow } from '@xyflow/react';
+import { Background, Controls, Handle, MarkerType, Position, ReactFlow, useViewport } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { CloudIcon, PollIcon, pollTitle, pollChoices, WordCloudForm, PollForm } from './shared/tool-forms.jsx';
 import {
@@ -14,6 +14,36 @@ import {
 const FLOW_COLUMNS = 3;
 const FLOW_HORIZONTAL_GAP = 340;
 const FLOW_VERTICAL_GAP = 200;
+
+const PATH_GAP_X = 190;
+const PATH_WAVE_AMPLITUDE = 90;
+
+const ISO_GRID_GAP = 34;
+const ISO_GRID_COLOR = 'rgba(59,111,163,0.35)';
+const ISO_GRID_DOT_RADIUS = 1.5;
+
+// Grille dont le motif (un point par tuile carrée non pivotée, placé au croisement
+// des deux diagonales) suit le pan/zoom du canvas — contrairement à un
+// <Background variant="lines"> pivoté en CSS, dont le décalage x/y est calculé
+// avant la rotation et part donc dans la mauvaise direction au panoramique.
+function IsometricBackground({ gap = ISO_GRID_GAP, color = ISO_GRID_COLOR, dotRadius = ISO_GRID_DOT_RADIUS }) {
+  const { x, y, zoom } = useViewport();
+  const scaledGap = gap * zoom;
+  const scaledRadius = dotRadius * zoom;
+  const offsetX = ((x % scaledGap) + scaledGap) % scaledGap;
+  const offsetY = ((y % scaledGap) + scaledGap) % scaledGap;
+
+  return (
+    <svg className="absolute inset-0 h-full w-full" style={{ pointerEvents: 'none' }}>
+      <defs>
+        <pattern id="iso-grid-pattern" x={offsetX} y={offsetY} width={scaledGap} height={scaledGap} patternUnits="userSpaceOnUse">
+          <circle cx={scaledGap / 2} cy={scaledGap / 2} r={scaledRadius} fill={color} />
+        </pattern>
+      </defs>
+      <rect x="0" y="0" width="100%" height="100%" fill="url(#iso-grid-pattern)" />
+    </svg>
+  );
+}
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -46,6 +76,13 @@ function nodePosition(index) {
   const col = index % FLOW_COLUMNS;
   const row = Math.floor(index / FLOW_COLUMNS);
   return { x: col * FLOW_HORIZONTAL_GAP, y: row * FLOW_VERTICAL_GAP + 40 };
+}
+
+function pathNodePosition(index) {
+  return {
+    x: index * PATH_GAP_X,
+    y: Math.sin(index * 1.05) * PATH_WAVE_AMPLITUDE + PATH_WAVE_AMPLITUDE,
+  };
 }
 
 function normalizeForMatch(value) {
@@ -240,6 +277,56 @@ function GenericToolIcon({ className = 'h-4 w-4' }) {
     </svg>
   );
 }
+
+const PATH_NODE_THEME = {
+  wordcloud: { ring: 'border-amber-400', bg: 'bg-amber-50', icon: 'text-amber-600', dot: '#fbbf24' },
+  poll:      { ring: 'border-teal-500',  bg: 'bg-teal-50',  icon: 'text-teal-600',  dot: '#14b8a6' },
+  outil:     { ring: 'border-slate-400', bg: 'bg-slate-50', icon: 'text-slate-600', dot: '#94a3b8' },
+  module:    { ring: 'border-[#004461]', bg: 'bg-white',    icon: 'text-[#004461]', dot: '#004461' },
+};
+
+// Le nœud (150px de large) est plus large que le cercle (64px) pour laisser la
+// place au libellé en dessous : on recale donc les Handles sur les bords du
+// cercle plutôt que sur la boîte englobante du nœud, sinon ils tombent au milieu
+// du libellé.
+const PATH_NODE_WIDTH = 150;
+const PATH_CIRCLE_SIZE = 64;
+const PATH_CIRCLE_CENTER_Y = PATH_CIRCLE_SIZE / 2;
+const PATH_CIRCLE_LEFT_X = (PATH_NODE_WIDTH - PATH_CIRCLE_SIZE) / 2;
+const PATH_CIRCLE_RIGHT_X = PATH_CIRCLE_LEFT_X + PATH_CIRCLE_SIZE;
+
+function pathHandleStyle(x, color) {
+  return {
+    top: PATH_CIRCLE_CENTER_Y,
+    left: x,
+    transform: 'translate(-50%, -50%)',
+    width: 10,
+    height: 10,
+    borderRadius: '9999px',
+    background: color,
+    border: '2px solid white',
+    boxShadow: '0 0 0 1px rgba(0,0,0,0.08)',
+  };
+}
+
+function PathNode({ data }) {
+  const theme = PATH_NODE_THEME[data.kind] ?? PATH_NODE_THEME.module;
+
+  return (
+    <div className="flex w-[150px] flex-col items-center gap-2">
+      <Handle type="target" position={Position.Left} style={pathHandleStyle(PATH_CIRCLE_LEFT_X, theme.dot)} />
+      <div className={`flex h-16 w-16 shrink-0 items-center justify-center rounded-full border-4 bg-white shadow-md ${theme.ring}`}>
+        <span className={theme.icon}>{data.icon}</span>
+      </div>
+      <span className="line-clamp-2 text-center text-[11px] font-semibold leading-snug text-slate-700">
+        {data.position}. {data.title}
+      </span>
+      <Handle type="source" position={Position.Right} style={pathHandleStyle(PATH_CIRCLE_RIGHT_X, theme.dot)} />
+    </div>
+  );
+}
+
+const PATH_NODE_TYPES = { path: PathNode };
 
 function ToolButton({ label, className, onClick, disabled = false }) {
   return (
@@ -600,6 +687,49 @@ function ParcoursBuilder({ availableModules = [], toolTemplates = [], wordcloudU
       pathOptions: { borderRadius: 22, offset: 40 },
       markerEnd: { type: MarkerType.ArrowClosed, color: '#e94d2a' },
       style: { stroke: '#e94d2a', strokeWidth: 3 },
+    })),
+    [items],
+  );
+
+  // ── Preview "chemin" (nœuds circulaires, tracé en pointillés) ───────────────
+
+  const previewFlowNodes = useMemo(() =>
+    items.map((item, index) => {
+      const kind = item.type === 'wordcloud' ? 'wordcloud'
+        : item.type === 'poll' ? 'poll'
+          : item.type === 'outil' ? 'outil'
+            : 'module';
+
+      const icon = kind === 'wordcloud' ? <CloudIcon className="h-7 w-7" />
+        : kind === 'poll' ? <PollIcon className="h-7 w-7" />
+          : kind === 'outil' ? <GenericToolIcon className="h-7 w-7" />
+            : <OpenBookIcon className="h-7 w-7" />;
+
+      const title = kind === 'wordcloud' ? (item.wc_title || 'Nuage de mots')
+        : kind === 'poll' ? pollTitle(item)
+          : kind === 'outil' ? genericToolTitle(item)
+            : item.title;
+
+      return {
+        id: String(item.id),
+        type: 'path',
+        data: { kind, icon, title, position: item.position },
+        position: pathNodePosition(index),
+        draggable: false,
+        selectable: false,
+      };
+    }),
+    [items],
+  );
+
+  const previewFlowEdges = useMemo(() =>
+    items.slice(1).map((item, index) => ({
+      id: `path-edge-${items[index].id}-${item.id}`,
+      source: String(items[index].id),
+      target: String(item.id),
+      type: 'bezier',
+      animated: true,
+      style: { stroke: '#004461', strokeWidth: 2, strokeDasharray: '6 6' },
     })),
     [items],
   );
@@ -1135,10 +1265,11 @@ function ParcoursBuilder({ availableModules = [], toolTemplates = [], wordcloudU
         </div>
 
         <div className="overflow-hidden rounded-[20px] border border-gray-200 bg-white shadow-md">
-          <div ref={canvasRef} className="h-[360px] w-full">
+          <div ref={canvasRef} className="h-[440px] w-full bg-[#fbfcfe]">
             <ReactFlow
-              nodes={flowNodes}
-              edges={flowEdges}
+              nodes={previewFlowNodes}
+              edges={previewFlowEdges}
+              nodeTypes={PATH_NODE_TYPES}
               onInit={(instance) => setFlowInstance(instance)}
               nodesDraggable={false}
               nodesConnectable={false}
@@ -1147,7 +1278,7 @@ function ParcoursBuilder({ availableModules = [], toolTemplates = [], wordcloudU
               proOptions={{ hideAttribution: true }}
             >
               <Controls showInteractive={false} position="bottom-right" />
-              <Background gap={18} size={1} color="#ddd" />
+              <IsometricBackground />
             </ReactFlow>
           </div>
         </div>

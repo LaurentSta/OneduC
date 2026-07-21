@@ -355,8 +355,8 @@
 
                                     $badgeText = $usesNativeQuiz
                                       ? ($plannedCount > 0
-                                        ? "Questions posees : {$plannedCount}"
-                                        : ($quizCount > 0 ? "Banque quiz : {$quizCount}" : "Quiz non parametre"))
+                                        ? "Quiz de validation : {$plannedCount} questions"
+                                        : ($quizCount > 0 ? "Questions préparées : {$quizCount}" : "Quiz de validation non paramétré"))
                                       : ($declaredCount > 0 ? "SCORM : {$declaredCount}" : "Non defini");
                                   @endphp
 

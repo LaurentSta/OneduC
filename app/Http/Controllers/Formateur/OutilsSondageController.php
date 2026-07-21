@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Formateur;
 
 use App\Http\Controllers\Controller;
 use App\Models\Group;
+use App\Models\PollQuestionnaire;
 use App\Models\PollSession;
 use App\Models\PollSessionResponse;
 use App\Services\CodeGeneratorService;
@@ -25,28 +26,29 @@ class OutilsSondageController extends Controller
             ->orderBy('name')
             ->get(['id', 'name']);
 
+        $questionnaires = PollQuestionnaire::query()
+            ->where('formateur_id', $formateurId)
+            ->orderByDesc('id')
+            ->get();
+
         $sessions = PollSession::query()
             ->where('formateur_id', $formateurId)
-            ->with('group')
+            ->with(['group', 'questionnaire'])
             ->withCount('responses')
             ->latest()
             ->limit(20)
             ->get();
 
-        return view('formateur.outils.sondages_index', compact('groups', 'sessions'));
+        return view('formateur.outils.sondages_index', compact('groups', 'questionnaires', 'sessions'));
     }
 
-    public function store(Request $request): RedirectResponse
+    public function launch(Request $request): RedirectResponse
     {
         $formateurId = (int) auth()->id();
 
         $data = $request->validate([
             'group_id' => ['nullable', 'exists:groups,id'],
-            'title' => ['nullable', 'string', 'max:255'],
-            'questions' => ['required', 'array', 'min:1', 'max:10'],
-            'questions.*.question' => ['required', 'string', 'max:500'],
-            'questions.*.choices' => ['required', 'array', 'min:2', 'max:5'],
-            'questions.*.choices.*' => ['required', 'string', 'max:200'],
+            'poll_questionnaire_id' => ['required', 'exists:poll_questionnaires,id'],
         ]);
 
         $group = null;
@@ -56,46 +58,29 @@ class OutilsSondageController extends Controller
                 ->findOrFail((int) $data['group_id']);
         }
 
-        $questions = collect($data['questions'])
-            ->map(function (array $question): array {
-                return [
-                    'question' => trim((string) $question['question']),
-                    'choices' => collect($question['choices'])
-                        ->map(fn ($choice) => trim((string) $choice))
-                        ->filter()
-                        ->values()
-                        ->all(),
-                ];
-            })
-            ->filter(fn (array $question): bool => $question['question'] !== '' && count($question['choices']) >= 2)
-            ->values();
+        $questionnaire = PollQuestionnaire::query()
+            ->where('formateur_id', $formateurId)
+            ->findOrFail((int) $data['poll_questionnaire_id']);
 
-        abort_if($questions->isEmpty(), 422, 'Le sondage doit contenir au moins une question valide.');
+        abort_if(empty($questionnaire->questions), 422, 'Ce sondage ne contient encore aucune question.');
 
         $session = PollSession::query()->create([
             'formateur_id' => $formateurId,
             'group_id' => $group?->id,
-            'title' => trim((string) ($data['title'] ?? '')) ?: 'Sondage',
-            'questions' => $questions->all(),
+            'poll_questionnaire_id' => $questionnaire->id,
             'access_code' => CodeGeneratorService::generateUniqueCode(PollSession::class),
-            'is_active' => (bool) $group,
-            'opened_at' => $group ? now() : null,
+            'is_active' => true,
+            'opened_at' => now(),
             'closed_at' => null,
         ]);
 
-        if ($group) {
-            return redirect()->route('formateur.sondages.show', $session);
-        }
-
-        return redirect()
-            ->route('formateur.sondages.index')
-            ->with('success', "Sondage créé. Vous pouvez l'utiliser dans un parcours ou le lancer plus tard pour un groupe.");
+        return redirect()->route('formateur.sondages.show', $session);
     }
 
     public function show(PollSession $pollSession): View
     {
         $this->assertOwnership($pollSession);
-        $pollSession->load('group');
+        $pollSession->load(['group', 'questionnaire']);
 
         $stats = $this->buildStatsPayload($pollSession);
 
