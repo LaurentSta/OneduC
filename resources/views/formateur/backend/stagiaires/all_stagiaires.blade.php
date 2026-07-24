@@ -38,7 +38,7 @@
 
       {{-- Bloc image --}}
       <div class="lg:col-span-4 flex justify-center lg:justify-end">
-        <img src="{{ asset('images/svg/ListesStagiaires.svg') }}"
+        <img src="{{ asset('images/svg/header/StagiairesBis.svg') }}"
              alt="Illustration des stagiaires"
              class="max-w-[220px] h-auto">
       </div>

@@ -48,7 +48,7 @@
         </div>
       </div>
       <div class="lg:col-span-4 flex justify-center lg:justify-end">
-        <img src="{{ asset('images/svg/Modules.svg') }}" alt="Outils numériques" class="max-w-[220px] h-auto opacity-90">
+        <img src="{{ asset('images/svg/header/Outils.svg') }}" alt="Outils numériques" class="max-w-[220px] h-auto opacity-90">
       </div>
     </div>
   </div>
