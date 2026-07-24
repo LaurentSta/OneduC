@@ -40,6 +40,12 @@ return [
         'secret' => env('NOCAPTCHA_SECRET'),
     ],
 
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => env('GOOGLE_REDIRECT_URI', rtrim(env('APP_URL', 'http://localhost'), '/').'/auth/google/callback'),
+    ],
+
     'discord' => [
         'support_invite_url' => env('DISCORD_SUPPORT_INVITE_URL', ''),
         'support_webhook_url' => env('DISCORD_SUPPORT_WEBHOOK_URL', ''),
