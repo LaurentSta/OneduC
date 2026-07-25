@@ -38,7 +38,7 @@
 
       {{-- Illustration --}}
       <div class="lg:col-span-4 flex justify-center lg:justify-end">
-        <img src="{{ asset('images/svg/Progressions.svg') }}"
+        <img src="{{ asset('images/svg/header/Progression.svg') }}"
              alt="Illustration progression des stagiaires"
              class="max-w-[220px] h-auto">
       </div>

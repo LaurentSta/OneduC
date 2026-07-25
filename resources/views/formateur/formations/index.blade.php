@@ -57,7 +57,7 @@
       </div>
 
       <div class="lg:col-span-4 flex justify-center lg:justify-end">
-        <img src="{{ asset('images/svg/Modules.svg') }}"
+        <img src="{{ asset('images/svg/header/Formations.svg') }}"
              alt="Illustration des formations"
              class="max-w-[220px] h-auto"
              loading="lazy">
